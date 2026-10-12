@@ -6,6 +6,7 @@ on:
       - fix/vietnamese-on-every-launch
     paths:
       - lang/audit_vi.py
+      - lang/check_vi_format.py
       - .github/workflows/audit-vietnamese.yml
   workflow_dispatch:
 
@@ -52,6 +53,11 @@ jobs:
           set -eo pipefail
           gzip -dc lang/po/vi.po.gz > /tmp/cataclysm-vi.po
           python3 lang/audit_vi.py lang/po/cataclysm-dda.pot /tmp/cataclysm-vi.po
+
+      - name: Scan placeholders, markup, gzip and Unicode
+        shell: bash
+        run: |
+          python3 lang/check_vi_format.py lang/po/cataclysm-dda.pot /tmp/cataclysm-vi.po
 
       - name: Commit audit results on independent branch
         shell: bash
