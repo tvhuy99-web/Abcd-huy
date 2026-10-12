@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="installationFailed">Installation Failed</string>
+    <string name="gameDataFolder">CDDA Game Data</string>
     <string name="installTitle">Installing game data...</string>
     <string name="upgradeTitle">Upgrading game data...</string>
     <string name="helpTitle">Help &amp; Controls</string>

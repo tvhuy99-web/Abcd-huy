@@ -1366,8 +1366,15 @@ std::unordered_set<std::string> options_manager::get_langs_with_translation_file
 
 std::vector<options_manager::id_and_option> options_manager::get_lang_options()
 {
-    // English is supplied by the source strings; no translation catalog is needed.
-    return { { "en", no_translation( "English" ) } };
+    std::vector<id_and_option> options = {
+        { "en", no_translation( "English" ) },
+    };
+#if defined(LOCALIZE)
+    if( get_langs_with_translation_files().count( "vi" ) ) {
+        options.emplace_back( "vi", no_translation( "Tiếng Việt" ) );
+    }
+#endif
+    return options;
 }
 
 #if defined(__ANDROID__)
@@ -1805,8 +1812,8 @@ void options_manager::add_options_interface()
     add_empty_line();
 
     add( "USE_LANG", "interface", to_translation( "Language" ),
-         to_translation( "This build uses English only." ),
-         options_manager::get_lang_options(), "en" );
+         to_translation( "Choose the language used by the game." ),
+         options_manager::get_lang_options(), "vi" );
 
     add_empty_line();
 
@@ -4337,6 +4344,8 @@ void options_manager::update_global_locale()
     try {
         if( lang == "en" ) {
             std::locale::global( std::locale( "en_US.UTF-8" ) );
+        } else if( lang == "vi" ) {
+            std::locale::global( std::locale( "vi_VN.UTF-8" ) );
         } else if( lang == "ar" ) {
             std::locale::global( std::locale( "ar_SA.UTF-8" ) );
         } else if( lang == "cs" ) {

@@ -1,0 +1,227 @@
+##############################################################################
+(<color_cyan>0.I</color>):</color>
+<color_white>Tác giả gốc:</color>    <color_white>Quản lý dự án:</color>
+<color_yellow>Whales</color> (<color_dark_gray>đã nghỉ</color>)    <color_yellow>KevinGranade</color>
+
+<color_white>Đặc biệt cảm ơn tới:</color>
+<color_yellow>Standing-Storm</color> - Người tạo và duy trì bản sửa đổi khổng lồ 'Mind over Matter' cùng vô số đóng góp cho các bản sửa đổi khác (tiên tộc, esper và pháp sư, ôi trời ơi!)
+<color_yellow>Maleclypse</color> - Người duy trì và hợp nhất Xedra Evolved, đạt kỷ lục hơn 2.000 (hai nghìn!!!) lượt hợp nhất trong chu kỳ phát hành này.
+<color_yellow>GuardianDll</color> - Hợp nhất, các thay đổi JSON và C++ đa dạng, ghi nhớ và trích dẫn tài liệu cho bất kỳ ai cần.  "Tôi không nhớ mình đã tạo nhiều yêu cầu gộp mã đến thế, quái quỷ gì vậy?" - GuardianDll
+<color_yellow>RenechCDDA</color> - Cải tiến phe phái NPC, căn cứ và xe cộ.
+<color_yellow>Procyonae</color> - Lượng yêu cầu gộp mã về hạ tầng khổng lồ đến khó tin, mã tạo bản đồ phát triển mạnh mẽ dưới sự giám sát của họ.
+<color_yellow>PatrikLundell</color> - Lượng sửa lỗi và thay đổi an toàn quan trọng vô cùng lớn cho tạo bản đồ, hạ tầng hệ tọa độ ba chiều và các hệ thống trọng yếu khác.
+<color_yellow>Holli</color> - Vì sự cống hiến cho mọi thứ liên quan đến súng đạn.
+<color_yellow>b3brodie</color> - Đóng góp nhiều hạ tầng cho hệ thống phép thuật, đồng thời cải thiện các bản sửa đổi và trò chơi gốc.
+<color_yellow>Milopetilo</color> - Công việc tuyệt vời về tạo bản đồ mới, các tham số cho tạo bản đồ hiện có, đại tu nhóm vật phẩm và nhiều hơn nữa.
+<color_yellow>ShnitzelX2</color> - Lưu trữ điện tử cho vật phẩm và dọn dẹp khoản nợ kỹ thuật 10 năm bằng cách chuyển các vật phẩm sang nạp với generic_factory. (Đừng ghen tị nhé, họ là người tôi thích nhất đấy.)
+<color_yellow>alef</color> - Giữ cho trò chơi luôn biên dịch được để chúng tôi có thể tiếp tục phát triển và chơi.
+<color_yellow>John Candlebury</color> - Aftershock. Bạn có biết giờ đây mình có thể sở hữu và lái một con tàu vũ trụ khổng lồ trong Aftershock không? Đúng vậy đấy.
+<color_yellow>katemonster33</color> - Khuấy đảo trò chơi với ImGuI và ImTui. Mang đến giao diện người dùng mà chúng ta hằng mong ước.
+<color_yellow>Daniel Brooks 'db48x'</color> - Vì công việc nền tảng cho các cửa sổ ImGui mới tuyệt đẹp.
+<color_yellow>moxian</color> - Công việc tối quan trọng về hạ tầng biên dịch và IWYU. Họ đã làm cuộc sống của mọi nhà phát triển dễ thở hơn.
+<color_yellow>akrieger</color> - Tiếp tục cải thiện tốc độ trò chơi, duy trì quy trình tích hợp liên tục hoạt động và cứu các ổ cứng khỏi các bản chơi Sky Islands bằng tính năng nén tệp lưu.
+<color_yellow>SariusSkelrets</color> - Mở rộng và trau chuốt nội dung ma cà rồng của Xedra Evolved.
+<color_yellow>ehughsbaird</color>, <color_yellow>Karol1223</color>, và <color_yellow>mqrause</color>.
+
+<color_white>Đặc biệt cảm ơn các đóng góp về hình ảnh:</color>
+<color_yellow>hoasd1</color> - Đóng góp nhiều nhất cho bộ hình ảnh trong chu kỳ này, anh ấy đã chọn rời đi trong vinh quang đầy phong cách. Chúng tôi chúc anh gặp nhiều may mắn trên đường đời, nhưng Ultica sẽ mãi mãi mang đậm dấu ấn công sức của anh!
+<color_yellow>gettingusedto</color> - Trụ cột của MSX+ và là một người vô cùng tốt bụng. Chúng tôi đã quen (heh) với việc thấy họ xuất hiện quanh đây!
+
+<color_white>Để xem danh sách đầy đủ những người đóng góp, vui lòng truy cập:</color>
+<color_cyan>https://github.com/CleverRaven/Cataclysm-DDA/contributors</color>
+<color_cyan>https://github.com/I-am-Erk/CDDA-Tilesets/graphs/contributors</color>
+<color_cyan>https://github.com/pixel-32/CDDA-tileset/graphs/contributors</color>
+
+<color_light_cyan>Cataclysm</color>: <color_light_blue>Dark Days Ahead</color> được phát hành theo giấy phép <color_white>CC-BY-SA 3.0</color>:
+<color_cyan>https://creativecommons.org/licenses/by-sa/3.0/</color>
+
+
+******************************************************************************
+
+(<color_cyan>0.H</color>):</color>
+<color_white>Tác giả gốc:</color>    <color_white>Quản lý dự án:</color>
+<color_yellow>Whales</color> (<color_dark_gray>đã nghỉ</color>)    <color_yellow>KevinGranade</color>
+
+<color_white>Các nhà phát triển chính hiện tại:</color>
+<color_yellow>anoobindisguise</color> - Sửa lỗi miệt mài và trau chuốt hầu hết các khía cạnh của trò chơi.
+<color_yellow>GuardianDll</color> - Những thay đổi ngẫu hứng trong trò chơi, những thay đổi ngẫu hứng trong các bản sửa đổi.
+<color_yellow>irwiss</color> - Sửa lỗi ồ ạt và tăng cường độ vững chắc của mã nguồn.
+<color_yellow>Maleclypse</color> - Trưởng nhóm hợp nhất cho chu kỳ phát hành này và mang lại nhiều nâng cấp cho Xedra Evolved.
+
+<color_white>Đặc biệt cảm ơn tới:</color>
+<color_yellow>anothersimulacrum</color> - Vì đã giải quyết những bài toán hóc búa.
+<color_yellow>akrieger</color> - Kẻ đập tan tình trạng giật lag.
+<color_yellow>Fris0uman</color> - Vì đã quản lý các bộ hình ảnh và hơn thế nữa.
+<color_yellow>John-Candlebury</color> - Vì các trận đánh trùm và Isolation Protocols.
+<color_yellow>Night-Pryanik</color> - Vì đã giúp cơ chế cảm lạnh và cúm cuối cùng cũng trở nên hợp lý.
+<color_yellow>PatrikLundell</color> - Đại tu quy mô lớn và vô cùng cần thiết cho nội dung cũng như hạ tầng trại phe phái.
+<color_yellow>Procyonae</color> - Vì rất nhiều cải tiến tạo bản đồ và toàn bộ công việc chuyển ngược bản sửa.
+<color_yellow>Qrox</color> - Vì các bản sửa lỗi, đánh giá mã và hạ tầng.
+<color_yellow>Ramza13</color> - Vì đã biến giấc mơ của biết bao người tạo bản sửa đổi thành hiện thực.
+<color_yellow>RenechCDDA</color> - Vì the Shadow, các cải tiến căn cứ và tính cách NPC.
+<color_yellow>Rivet-the-Zombie</color> - Vì đã cán mốc 10.000 lượt hợp nhất.
+<color_yellow>Standing-Storm</color> - Vì cú bứt phá từ 0 lên 100 nhanh nhất trong nhiều năm qua.
+<color_yellow>Venera3</color> - Vì tiến trình phát triển hệ thống chi thể.
+<color_yellow>ZhilkinSerg</color> - Vì đã hợp nhất tất cả mọi thứ.
+<color_yellow>alef</color>, <color_yellow>andrei8l</color>, <color_yellow>Karol1223</color>, <color_yellow>mqrause</color>, và <color_yellow>lispcoc</color>.
+
+<color_white>Đặc biệt cảm ơn các đóng góp về hình ảnh:</color>
+<color_yellow>Fris0uman</color>, <color_yellow>Golfavel</color>, <color_yellow>vetall812</color>, <color_yellow>Dandy-boy</color>,
+<color_yellow>gettingusedto</color>, và rất nhiều người khác.
+
+<color_white>Để xem danh sách đầy đủ những người đóng góp, vui lòng truy cập:</color>
+<color_cyan>https://github.com/CleverRaven/Cataclysm-DDA/contributors</color>
+<color_cyan>https://github.com/I-am-Erk/CDDA-Tilesets/graphs/contributors</color>
+<color_cyan>https://github.com/pixel-32/CDDA-tileset/graphs/contributors</color>
+
+<color_light_cyan>Cataclysm</color>: <color_light_blue>Dark Days Ahead</color> được phát hành theo giấy phép <color_white>CC-BY-SA 3.0</color>:
+<color_cyan>https://creativecommons.org/licenses/by-sa/3.0/</color>
+
+******************************************************************************
+
+(<color_cyan>0.G</color>):</color>
+<color_white>Tác giả gốc:</color>    <color_white>Quản lý dự án:</color>
+<color_yellow>Whales</color> (<color_dark_gray>đã nghỉ</color>)    <color_yellow>KevinGranade</color>
+
+<color_white>Các nhà phát triển chính hiện tại:</color>
+<color_yellow>I-am-Erk</color> - Ultica, viết cốt truyện, người mang lại ý tưởng.
+<color_yellow>KorGgenT</color> - Chuyên gia cạo lông bò Tây Tạng.
+
+<color_white>Đặc biệt cảm ơn tới:</color>
+<color_yellow>anothersimulacrum</color> - Vì đã dấn thân và gánh vác những việc khó khăn.
+<color_yellow>BombasticSlacks</color> - Vì đã hoàn thiện hệ thống giáp và khiến chúng tôi toát mồ hôi hột.
+<color_yellow>Fris0uman</color> - Vì đã làm cho tủ lạnh của chúng ta hoạt động được.
+<color_yellow>John-Candlebury</color> - Vì Hub01 và tất cả những bản đồ tuyệt đẹp.
+<color_yellow>jbytheway</color> - Vì tính năng tạo bản đồ tham số và các địa điểm biến đổi.
+<color_yellow>BrettDong</color> - Vì việc dịch thuật và phân tích các lỗi kỳ lạ.
+<color_yellow>wapcaplet</color> - Vì mọi thứ liên quan đến thanh bên.
+<color_yellow>ZhilkinSerg</color> - Vì đã hợp nhất tất cả mọi thứ.
+<color_yellow>Rivet-the-Zombie</color> - Vì đã duy trì kỷ lục mỗi ngày một lượt hợp nhất.
+<color_yellow>Night-Pryanik</color> - Vì vô số bản sửa lỗi và cải tiến.
+<color_yellow>Qrox</color> - Vì đã làm cho hạ tầng giao diện người dùng trở nên tốt hơn nữa.
+<color_yellow>Ramza13</color> - Vì đã biến JSON thành một ngôn ngữ Turing đầy đủ.
+<color_yellow>Drew4484</color> - Vì tất cả các loại thép.
+<color_yellow>LyleSY</color> - Vì có thêm nhiều khủng longgg hơn nữa.
+<color_yellow>irwiss</color>, <color_yellow>Maleclypse</color>, <color_yellow>Venera3</color>, <color_yellow>MylieDaniels</color>, <color_yellow>andrei8l</color>, <color_yellow>mqrause</color>, và <color_yellow>Eltank</color>.
+
+<color_white>Đặc biệt cảm ơn các đóng góp về hình ảnh:</color>
+<color_yellow>Fris0uman</color>, <color_yellow>Golfavel</color>, <color_yellow>vetall812</color>, <color_yellow>Dandy-boy</color>, và nhiều người khác.
+
+<color_white>Để xem danh sách đầy đủ những người đóng góp, vui lòng truy cập:</color>
+<color_cyan>https://github.com/CleverRaven/Cataclysm-DDA/contributors</color>
+
+<color_light_cyan>Cataclysm</color>: <color_light_blue>Dark Days Ahead</color> được phát hành theo giấy phép <color_white>CC-BY-SA 3.0</color>:
+<color_cyan>https://creativecommons.org/licenses/by-sa/3.0/</color>
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.F</color>):</color>
+<color_yellow>mlangsdorf</color> - Phương tiện, thuyền, căn cứ và hướng dẫn tạo bản sửa đổi.
+<color_yellow>I-am-Erk</color> - Di sản Ultica vẫn tiếp tục sống mãi.
+<color_yellow>KorGgenT</color> - Vì đã không cho tôi biết phải để những thanh gỗ hai-nhân-bốn ở đâu.
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.F</color>):</color>
+<color_yellow>Aivean</color> - Vì hiệu năng vượt trội.
+<color_yellow>anothersimulacrum</color> - Vì đã khiến tôi mỏi mệt.
+<color_yellow>jbytheway</color> - Vì đã thúc đẩy tôi đạt được các thành tựu.
+<color_yellow>BrettDong</color> - Vì các bản dịch và nhiều điều khác.
+<color_yellow>Qrox</color> - Vì đã hiển thị vị trí thông báo lỗi.
+<color_yellow>LyleSY</color> - Vì những chú khủng longggg.
+
+<color_white>Đặc biệt cảm ơn vì các đóng góp nghệ thuật (<color_cyan>0.F</color>):</color>
+<color_yellow>acepleiades</color>, <color_yellow>barsoosayque</color>, <color_yellow>Fris0uman</color>, <color_yellow>int-ua</color>, và nhiều người khác.
+
+<color_white>Để xem danh sách đầy đủ những người đóng góp, vui lòng truy cập:</color>
+<color_cyan>https://github.com/CleverRaven/Cataclysm-DDA/contributors</color>
+
+<color_light_cyan>Cataclysm</color>: <color_light_blue>Dark Days Ahead</color> được phát hành theo giấy phép <color_white>CC-BY-SA 3.0</color>:
+<color_cyan>https://creativecommons.org/licenses/by-sa/3.0/</color>
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.E</color>):</color>
+<color_yellow>mlangsdorf</color> - Phương tiện, thuyền, căn cứ và hướng dẫn tạo bản sửa đổi.
+<color_yellow>I-am-Erk</color> - Ultica, đối thoại, NPC và đồ đạc bừa bộn trong nhà bếp.
+<color_yellow>KorGgenT</color> - Magiclysm và những cơn đau dạ dày.
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.E</color>):</color>
+<color_yellow>Narc</color> - Vì đã duy trì bot tự động tạo bản dựng Jenkins.
+<color_yellow>Rivet-the-Zombie</color> - Vì mỗi ngày hợp nhất một yêu cầu gộp mã.
+<color_yellow>BevapDin</color> - Vì các nỗ lực rà soát mã nguồn và tái cấu trúc.
+<color_yellow>BrettDong</color> - Vì các bản dịch.
+<color_yellow>curstwist</color> - Vì mái nhà, bộ tạo bản đồ, NPC và nhật ký thay đổi.
+<color_yellow>davidpwbrown</color> - Vì tính năng tự động di chuyển và tự động lái xe. Cả việc cưỡi ngựa nữa.
+<color_yellow>jbytheway</color> - Vì công việc tích hợp liên tục và bảo vệ quan điểm về hệ tọa độ ba chiều của mình.
+<color_yellow>Hymore246</color> - Vì đại tu võ thuật.
+<color_yellow>Qrox</color> - Vì vết ngăn xếp (bản truy vết ngăn xếp) dễ đọc trong các bản dựng Windows.
+<color_yellow>ZhilkinSerg</color> - Vì kiểm thử hợp nhất nhánh.
+
+<color_white>Để xem danh sách đầy đủ những người đóng góp, vui lòng xem kho lưu trữ Git:</color>
+<color_cyan>https://github.com/CleverRaven/Cataclysm-DDA</color>
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.D</color>):</color>
+<color_yellow>KevinGranade</color>, <color_yellow>Rivet-the-Zombie</color>, <color_yellow>BevapDin</color>, <color_yellow>Coolthulu</color>, <color_yellow>i2amroy</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.D</color>):</color>
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>Acidia</color> - Vì những đóng góp tuyệt vời về NPC, nhiệm vụ và địa điểm.
+<color_yellow>Wuzzy</color> và <color_yellow>VlasovVitaly</color> - Vì những nỗ lực dịch thuật phi thường.
+<color_yellow>HuXTUS</color> - Vì khối lượng nội dung tuyệt vời khổng lồ.
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.C</color>):</color>
+<color_yellow>KevinGranade</color>, <color_yellow>Rivet-the-Zombie</color>, <color_yellow>KA101</color>, <color_yellow>BevapDin</color>, <color_yellow>Coolthulu</color>, <color_yellow>i2amroy</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.C</color>):</color>
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>Acidia</color> - Vì những đóng góp tuyệt vời về NPC, nhiệm vụ và địa điểm.
+<color_yellow>Wuzzy</color> và <color_yellow>VlasovVitaly</color> - Vì những nỗ lực dịch thuật phi thường.
+<color_yellow>HuXTUS</color> - Vì khối lượng nội dung tuyệt vời khổng lồ.
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.B</color>):</color>
+<color_yellow>KevinGranade</color>, <color_yellow>Rivet-the-Zombie</color>, <color_yellow>KA101</color>, <color_yellow>BevapDin</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.B</color>):</color>
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>Acidia</color> - Vì những đóng góp tuyệt vời về NPC, nhiệm vụ và địa điểm.
+<color_yellow>Wuzzy</color> và <color_yellow>VlasovVitaly</color> - Vì những nỗ lực dịch thuật phi thường.
+<color_yellow>i2amroy</color> - Vì nhiều đợt đại tu hạ tầng quy mô lớn.
+<color_yellow>HuXTUS</color> - Vì khối lượng nội dung tuyệt vời khổng lồ.
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.A</color>):</color>
+<color_yellow>KevinGranade</color>, <color_yellow>i2amroy</color>, <color_yellow>Rivet-the-Zombie</color>, <color_yellow>KA101</color>, <color_yellow>BevapDin</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.A</color>):</color>
+<color_yellow>TheDarklingWolf</color> - Vì đã tạo ra Cataclysm:DDA như chúng ta được biết.
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>BevapDin</color> - Vì những nỗ lực sửa lỗi không biết mệt mỏi.
+<color_yellow>dwarfkoala</color> - Vì vô số lần sàng lọc và phân loại lỗi.
+<color_yellow>Ill-kun</color> - Vì vô số lần tinh chỉnh và dọn dẹp giao diện người dùng.
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.9</color>):</color>
+<color_yellow>KevinGranade</color>, <color_yellow>GalenEvil</color>, <color_yellow>i2amroy</color>, <color_yellow>AtomicDryad</color>, <color_yellow>Ianestrachan</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.9</color>):</color>
+<color_yellow>TheDarklingWolf</color> - Vì đã tạo ra Cataclysm:DDA như chúng ta được biết.
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>yobbobanana</color> - Vì đã làm việc với tư cách là cầu nối giữa các dịch giả và GitHub.
+<color_yellow>Angela 'Rivet' Graves</color>, Người liên tục sáng tạo nội dung Cataclysm.
+
+******************************************************************************
+
+<color_white>Nhà phát triển chính (<color_cyan>0.8</color>):</color>
+<color_yellow>Kevingranade</color>, <color_yellow>GalenEvil</color>, <color_yellow>i2amroy</color>, <color_yellow>AtomicDryad</color>, <color_yellow>Ozone</color>
+
+<color_white>Đặc biệt cảm ơn (<color_cyan>0.8</color>):</color>
+<color_yellow>TheDarklingWolf</color> - Vì đã tạo ra Cataclysm:DDA như chúng ta được biết.
+<color_yellow>Narc</color> - Vì đã thiết lập bot tự động tạo bản dựng Jenkins.
+<color_yellow>yobbobanana</color> - Vì đã làm việc với tư cách là cầu nối giữa các dịch giả và GitHub.

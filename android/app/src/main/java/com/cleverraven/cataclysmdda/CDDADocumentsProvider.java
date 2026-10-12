@@ -105,7 +105,7 @@ public class CDDADocumentsProvider extends DocumentsProvider {
             if (DocumentsContract.Root.COLUMN_ROOT_ID.equals(col)) {
                 rowValues[i] = "external";
             } else if (DocumentsContract.Root.COLUMN_TITLE.equals(col)) {
-                rowValues[i] = "CDDA Game Data";
+                rowValues[i] = getContext().getString(R.string.gameDataFolder);
             } else if (DocumentsContract.Root.COLUMN_FLAGS.equals(col)) {
                 int flags = DocumentsContract.Root.FLAG_SUPPORTS_CREATE |
                             DocumentsContract.Root.FLAG_LOCAL_ONLY |

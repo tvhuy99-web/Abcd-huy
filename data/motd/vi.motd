@@ -1,0 +1,47 @@
+##############################################################################
+<color_white>Ghé thăm chúng tôi:</color>
+
+<color_light_gray>* Trang chủ:</color>    <color_cyan>https://cataclysmdda.org</color>
+
+<color_white>Báo lỗi, đề xuất ý kiến và theo dõi quá trình phát triển tại:</color>
+
+<color_light_gray>* GitHub: </color><color_light_cyan>https://github.com/CleverRaven/Cataclysm-DDA/issues</color>
+<color_light_gray>* Thư điện tử: </color><color_light_cyan>kevin.granade@gmail.com</color>
+
+<color_white>Tham gia thảo luận trên diễn đàn và kênh trò chuyện:</color>
+
+<color_light_gray>* Discourse:                 </color><color_cyan>https://discourse.cataclysmdda.org/</color>
+<color_light_gray>* Discord:                   </color><color_cyan>https://discord.gg/jFEc7Yp</color>
+<color_light_gray>* IRC:                       </color><color_cyan>#CataclysmDDA tại libera.chat</color>
+
+<color_light_gray>Các liên kết hữu ích khác cũng có tại Trang chủ của chúng tôi.</color>
+
+<color_light_gray>Trong trò chơi, bạn có thể truy cập các tùy chọn qua trình đơn chính (<color_yellow>Esc</color>).</color>
+
+<color_light_red>******************************************************************************</color>
+<color_light_red>    Tuyên bố từ chối trách nhiệm cho các bản dựng thử nghiệm:</color>
+<color_light_red>******************************************************************************</color>
+
+<color_white>H: </color><color_yellow>Bản dựng thử nghiệm là gì?</color>
+
+<color_white>Đ: </color><color_light_gray>Mục tiêu của các bản dựng thử nghiệm là đóng vai trò như một tầng kiểm soát chất lượng thứ hai. Đây là tuyến đầu nơi nội dung mới được phát hành để thử nghiệm và cân bằng sau quá trình kiểm tra chất lượng ban đầu. Xin lưu ý rằng việc chọn chơi các bản dựng thử nghiệm mới nhất đồng nghĩa với việc bạn đang tham gia vào quá trình phát triển bằng cách chơi thử trực tiếp nội dung mới, và nó rất dễ gặp lỗi cũng như có các tính năng chưa hoàn thiện.</color>
+
+<color_white>H: </color><color_yellow>Tại sao lại cần có các bản dựng thử nghiệm?</color>
+
+<color_white>Đ: </color><color_light_gray>Hãy hình dung như đang chơi một bản thử nghiệm giai đoạn đầu: lỗi và tính năng chưa hoàn thiện là điều khó tránh khỏi. Do yêu cầu nghiêm ngặt của quy trình tích hợp liên tục, các bản thử nghiệm luôn được cập nhật trong quá trình phát triển. Đây là môi trường để tìm lỗi và tinh chỉnh tính năng. Các tính năng lớn nhỏ liên tục được đưa vào để kiểm tra độ ổn định và sự cân bằng tổng thể. Vì vậy, bản thử nghiệm có thể chưa cân bằng hoặc ổn định; thực tế, không có gì được bảo đảm.</color>
+
+<color_white>H: </color><color_yellow>Vậy các bản dựng thử nghiệm có chơi được không?</color>
+
+<color_white>Đ: </color><color_light_gray>Có. Nhưng dù nhìn chung các bản dựng thử nghiệm khá ổn định, điều này cũng không được đảm bảo vì các tính năng có thể được đưa vào khi chưa hoàn thiện, theo từng phần; và có thể phát sinh lỗi, bao gồm cả những lỗi nghiêm trọng có thể làm sập trò chơi hoặc làm hỏng tệp lưu. Dù hiếm khi xảy ra, nhưng do độ phức tạp của trò chơi, quy trình kiểm soát chất lượng ban đầu trước khi hợp nhất vào bản thử nghiệm có thể chưa hoàn hảo, và luôn có khả năng xảy ra sai sót của con người. Đó là lý do tại sao các bản dựng thử nghiệm tồn tại ngay từ đầu.</color>
+
+<color_white>H: </color><color_yellow>Vậy tôi nên chơi các bản dựng thử nghiệm hay gắn bó với bản ổn định?</color>
+
+<color_white>Đ: </color><color_light_gray>Phần thưởng là bạn được tiếp cận ngay lập tức nội dung mới nhất, rủi ro là bạn có thể mất toàn bộ tiến trình chơi nếu gặp phải một lỗi tai hại. Quyết định chơi bản thử nghiệm hay không luôn thuộc về bạn khi đã có sẵn bản ổn định, vì vậy hãy tự cân nhắc và chịu trách nhiệm khi chơi. Bạn sẽ phải tự gánh chịu mọi phiền phức nếu có sự cố xảy ra, vì vậy hãy lưu ý. Hãy thực hiện các biện pháp phòng ngừa, sao lưu tệp lưu thường xuyên. Đôi khi tốt nhất là nên hoãn cập nhật vài ngày cho đến khi một tính năng lớn được ổn định hoặc một lỗi nghiêm trọng được khắc phục xong.</color>
+
+<color_white>H: </color><color_yellow>Tôi có cần lưu ý điều gì khác nữa không?</color>
+
+<color_white>Đ: </color><color_light_gray>Có. Hãy nhớ rằng mọi thứ bạn thấy và sắp thấy đều có thể thay đổi. Tất cả các tính năng, bao gồm cả những tính năng mới được triển khai, đều đang trong quá trình phát triển và có thể thay đổi theo tiến trình phát triển trò chơi. Và như đã nói trước đó, không có gì được đảm bảo, bao gồm cả tính cân bằng và độ ổn định.</color>
+
+<color_white>H: </color><color_yellow>Nếu tôi thấy rủi ro khi chơi bản dựng thử nghiệm là không thể chấp nhận được thì sao?</color>
+
+<color_white>Đ: </color><color_light_gray>Nếu rủi ro là không thể chấp nhận được - hãy chơi phiên bản ổn định. Nếu bạn sẵn sàng chấp nhận rủi ro - hãy tận hưởng nội dung mới được bổ sung của các bản dựng thử nghiệm và tham gia vào quá trình phát triển - báo cáo lỗi, gửi đề xuất, hoặc thậm chí đóng góp nội dung của chính bạn cho trò chơi. Chúc bạn may mắn.</color>

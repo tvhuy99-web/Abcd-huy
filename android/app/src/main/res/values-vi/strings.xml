@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="installationFailed">Cài đặt thất bại</string>
+    <string name="gameDataFolder">Dữ liệu trò chơi Cataclysm</string>
+    <string name="installTitle">Đang cài đặt dữ liệu trò chơi…</string>
+    <string name="upgradeTitle">Đang nâng cấp dữ liệu trò chơi…</string>
+    <string name="helpTitle">Trợ giúp và điều khiển</string>
+    <string name="helpMessage">"Vuốt" để di chuyển theo hướng (nhấn giữ để dùng cần điều khiển ảo). "Chạm" để xác nhận lựa chọn trong trình đơn hoặc tạm dừng một lượt trong trò chơi (nhấn giữ để tạm dừng nhiều lượt). "Chạm hai lần" để hủy hoặc quay lại trong trình đơn (tương tự phím Escape). "Chụm hai ngón" để phóng to hoặc thu nhỏ (trong trò chơi). Dùng nút "Quay lại" trên thiết bị để bật hoặc tắt bàn phím ảo (nhấn giữ để bật hoặc tắt các nút phím tắt).</string>
+    <string name="accessibilityServicesTitle">Cảnh báo về dịch vụ trợ năng</string>
+    <string name="accessibilityServicesMessage">Nếu thao tác vuốt và trình đơn phím tắt không hoạt động trong trò chơi, hãy thử tắt một trong các dịch vụ hoặc phần mềm trợ năng sau đây đang tương tác với màn hình cảm ứng (hỗ trợ vuốt, tự động chạm, chế độ dùng một tay, v.v.):\n%1$s</string>
+    <string name="ignoreFalsePostives">Đánh dấu là cảnh báo nhầm</string>
+    <string name="softwareRendering">Kết xuất bằng phần mềm</string>
+    <string name="forceFullscreen">Buộc hiển thị toàn màn hình</string>
+    <string name="androidSystemUiMode">Thanh hệ thống Android</string>
+    <string name="androidSystemUiModeSystemBars">Hiện thanh hệ thống</string>
+    <string name="androidSystemUiModeFullscreen">Toàn màn hình</string>
+    <string name="androidSystemUiModeEdgeToEdge">Toàn màn hình tràn viền</string>
+    <string name="androidScreenOrientation">Hướng màn hình</string>
+    <string name="androidScreenOrientationLandscape">Ngang</string>
+    <string name="androidScreenOrientationPortrait">Dọc</string>
+    <string name="androidScreenOrientationAuto">Tự động</string>
+    <string name="trapBackButton">Chặn nút Quay lại</string>
+    <string name="nativeAndroidUI">Trình đơn Android gốc</string>
+    <string name="settings">Cài đặt</string>
+    <string name="startGame">Bắt đầu trò chơi</string>
+    <string name="showHelp">Mở trợ giúp</string>
+    <string name="showAccessibilitySettings">Mở mục cài đặt trợ năng</string>
+    <string name="crashAlert">Trò chơi đã không thoát đúng cách trong lần trước</string>
+    <string name="crashMessage">Báo cáo lỗi tại ./config/crash.log có thể giúp nhà phát triển tìm nguyên nhân sự cố.</string>
+    <string name="yes">Có</string>
+    <string name="no">Không</string>
+    <string name="ok">Đồng ý</string>
+    <string name="cancel">Hủy</string>
+    <string name="unavailable">Không khả dụng</string>
+    <string name="unavailableOption">Tùy chọn bạn chọn hiện không khả dụng.</string>
+</resources>

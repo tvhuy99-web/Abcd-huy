@@ -1,5 +1,5 @@
-# English is supplied by source strings. Ignore requested translation catalogs.
-set(LANGUAGES "")
+# This fork ships the Vietnamese catalog and English source strings.
+set(LANGUAGES "vi")
 
 message(STATUS "Process LANGUAGES variable --")
 
@@ -9,6 +9,8 @@ if(NOT GETTEXT_MSGFMT_EXECUTABLE)
              localization with \"-DLOCALIZE=OFF\". \
              See doc/COMPILING/COMPILING-CMAKE.md for details and more info.")
 endif()
+
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
 
 foreach (LANG ${LANGUAGES})
     message(VERBOSE "Add translation for ${LANG}: ${LANG}.po")
@@ -32,14 +34,18 @@ add_custom_target(
 
 foreach (LANG ${LANGUAGES})
     set(_PO ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po)
+    if(NOT EXISTS ${_PO})
+        set(_PO ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po.gz)
+    endif()
     set(_MO ${CMAKE_SOURCE_DIR}/lang/mo/${LANG}/LC_MESSAGES/cataclysm-dda.mo)
     add_custom_command(
             OUTPUT ${_MO}
             COMMAND ${CMAKE_COMMAND} -E
                 make_directory ${CMAKE_SOURCE_DIR}/lang/mo/${LANG}/LC_MESSAGES
-            COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f ${_PO} -o ${_MO}
+            COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lang/compile_mo.py
+                ${_PO} ${_MO} ${GETTEXT_MSGFMT_EXECUTABLE}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            DEPENDS ${_PO}
+            DEPENDS ${_PO} ${CMAKE_SOURCE_DIR}/lang/compile_mo.py
     )
     list(APPEND _MO_FILES ${_MO})
     if (RELEASE)

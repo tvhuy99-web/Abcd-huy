@@ -1,4 +1,5 @@
 #!/bin/sh
+
 set -eu
 
 if [ ! -d lang/po ]; then
@@ -10,9 +11,32 @@ if [ ! -d lang/po ]; then
     fi
 fi
 
-# English is built into the source. Do not compile or ship translated catalogs.
-catalog_dir=${LOCALE_DIR:-lang/mo}
-if [ -d "$catalog_dir" ]; then
-    find "$catalog_dir" -type f -name '*.mo' -delete
+if [ -z "${LOCALE_DIR:-}" ]; then
+    LOCALE_DIR="lang/mo"
 fi
-echo "English-only build: no translation catalogs required."
+
+if [ "$#" -gt 0 ] && [ "$1" != "all" ]; then
+    languages="$*"
+else
+    languages=""
+    for file in lang/po/*.po lang/po/*.po.gz; do
+        [ -e "$file" ] || continue
+        language=$(basename "$file")
+        language=${language%.po.gz}
+        language=${language%.po}
+        languages="$languages $language"
+    done
+fi
+
+for language in $languages; do
+    po_file="lang/po/${language}.po"
+    if [ ! -f "$po_file" ]; then
+        po_file="lang/po/${language}.po.gz"
+    fi
+    if [ ! -f "$po_file" ]; then
+        echo "Missing translation catalog: $po_file" >&2
+        exit 1
+    fi
+    mkdir -p "$LOCALE_DIR/$language/LC_MESSAGES"
+    python3 lang/compile_mo.py "$po_file" "$LOCALE_DIR/$language/LC_MESSAGES/cataclysm-dda.mo"
+done

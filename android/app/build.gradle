@@ -188,14 +188,29 @@ task fetchSdl3Aars {
     }
 }
 
-task makeLocalization {
-    doLast {
-        // English lives in the source strings. Remove stale catalogs from earlier builds.
-        delete fileTree("$projectRoot/lang/mo") {
-            include '**/*.mo'
+task makeLocalization(type: Exec) {
+    def args = []
+    if (localize) {
+        println("Building with Vietnamese localization")
+        switch (OperatingSystem.current()) {
+            case OperatingSystem.LINUX:
+                args = ['make', 'localization', 'LANGUAGES=vi']
+                break
+            case OperatingSystem.WINDOWS:
+                args = ['sh.exe', 'lang/compile_mo.sh', 'vi']
+                break
+            default:
+                args = ['echo', 'Building without localization']
+                break
         }
-        println("English-only build: no translation catalogs are compiled")
+    } else {
+        args = ['echo', 'Building without localization']
+        if (OperatingSystem.current() == OperatingSystem.WINDOWS) {
+            args = ['cmd.exe', '/k'] + args
+        }
     }
+    workingDir projectRoot
+    commandLine args
 }
 
 task generateVersionHeader() {
@@ -273,7 +288,7 @@ task generateAssetFileList {
             def lower = name.toLowerCase()
             !( lower.startsWith('.') || ( isDir && lower.startsWith('_') ) ||
                lower in ['cvs', 'thumbs.db', 'picasa.ini'] || lower.endsWith('.scc') || lower.endsWith('~') ||
-               lower.endsWith('.mo') || lower.endsWith('.po') || lower.endsWith('.pot') )
+               lower.endsWith('.po') || lower.endsWith('.pot') )
         }
         def assetFiles = new TreeSet<String>()
         def walk
@@ -462,7 +477,7 @@ android {
         }
     }
     aaptOptions {
-        ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.mo:!*.po:!*.pot"
+        ignoreAssetsPattern "!.svn:!.git:!.ds_store:!*.scc:.*:<dir>_*:!CVS:!thumbs.db:!picasa.ini:!*~:!*.po:!*.pot"
     }
 
     lintOptions {
