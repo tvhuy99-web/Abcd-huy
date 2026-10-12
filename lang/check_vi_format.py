@@ -23,7 +23,7 @@ CURLY = re.compile(
     r"(?<!\{)\{(?P<field>[0-9]+|[a-zA-Z_][a-zA-Z_0-9]*)?"
     r"(?:![rsa])?(?::[^{}]*)?\}(?!\})"
 )
-TAG = re.compile(r"</?(?:[a-zA-Z][a-zA-Z_0-9-]*)(?:\s[^<>]*)?>")
+TAG = re.compile(r"</?[a-z_][a-zA-Z_0-9]*(?::[^<>]+)?>")
 VARIABLE = re.compile(r"<([a-zA-Z_][a-zA-Z_0-9]*)>")
 MUST_PRESERVE_VARIABLES = (
     "npcname", "playername", "itemname", "u_name", "npc_name",
@@ -40,6 +40,13 @@ def printf_tokens(text):
             break
         if i + 1 < len(text) and text[i + 1] == "%":
             pos = i + 2
+            continue
+        # Literal percentages such as "75% capacity" or "50% of trees"
+        # are not printf placeholders.
+        if (i > 0 and text[i - 1].isdigit()) or (
+            i + 1 < len(text) and text[i + 1].isspace()
+        ):
+            pos = i + 1
             continue
         m = PRINTF.match(text, i)
         if m:
@@ -90,7 +97,7 @@ def tag_tokens(text):
     tags = TAG.findall(text)
     counts = collections.Counter()
     for tag in tags:
-        label = re.match(r"</?([a-zA-Z][a-zA-Z_0-9-]*)", tag).group(1)
+        label = re.match(r"</?([a-z_][a-zA-Z_0-9]*)", tag).group(1)
         if label.startswith("color_"):
             counts["color_open"] += 1
         elif label == "color" and tag.startswith("</"):
