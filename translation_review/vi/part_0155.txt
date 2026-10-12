@@ -1,0 +1,5466 @@
+#. ~ Description of monster 'fungal caretaker'
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid ""
+"A young mycoid that has grown some time on the spore growth.  It is still a "
+"juvenile but it can already fend for itself to a degree."
+msgstr ""
+"Một sinh vật nấm trẻ tuổi đã phát triển một thời gian trên lớp sinh khối bào"
+" tử. Nó vẫn chưa trưởng thành nhưng đã có thể tự vệ ở một mức độ nào đó."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid "fungal perforator"
+msgid_plural "fungal perforators"
+msgstr[0] "những quái nấm đâm chọc"
+
+#. ~ Description of monster 'fungal perforator'
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid ""
+"A skittering fungal creature with a sharp needle-like appendage.  Its sting "
+"probably contains spores."
+msgstr ""
+"Một sinh vật nấm lướt thoăn thoắt với một phần phụ sắc nhọn như kim châm. "
+"Ngòi chích của nó có thể chứa đầy bào tử."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid "fungal quillbag"
+msgid_plural "fungal quillbags"
+msgstr[0] "những túi gai nấm"
+
+#. ~ Description of monster 'fungal quillbag'
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid ""
+"A strange fungal creature with a thorny covering.  The barbs on its body may"
+" contain spores."
+msgstr ""
+"Một sinh vật nấm kỳ lạ với lớp vỏ đầy gai. Các gai nhọn trên cơ thể nó có "
+"thể chứa bào tử."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid "fungal moldspring"
+msgid_plural "fungal moldsprings"
+msgstr[0] "những quái mốc trườn"
+
+#. ~ Description of monster 'fungal moldspring'
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid ""
+"A large and amorphous fungal creature.  It slithers around the ground "
+"leaving a trail of spores in its wake."
+msgstr ""
+"Một sinh vật nấm lớn và vô định hình. Nó trườn quanh mặt đất, để lại một vệt"
+" bào tử phía sau."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid "fungal dispersor"
+msgid_plural "fungal dispersors"
+msgstr[0] "những quái nấm phát tán"
+
+#. ~ Description of monster 'fungal dispersor'
+#: data/mods/TropiCataclysm/monsters/tropical_fungus.json
+msgid ""
+"A strange fungal creature similar to a moving balloon.  It releases a cloud "
+"of spores in all directions."
+msgstr ""
+"Một sinh vật nấm kỳ lạ tương tự như một quả bóng bay di động. Nó giải phóng "
+"một đám mây bào tử ra mọi hướng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "oversized scorpion"
+msgid_plural "oversized scorpions"
+msgstr[0] "những con bọ cạp ngoại cỡ"
+
+#. ~ Description of monster 'oversized scorpion'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "A mutated scorpion the size of a large dog."
+msgstr "Một con bọ cạp đột biến có kích thước bằng một con chó lớn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+#: data/mods/desert_region/desert_insect_spider.json
+msgid "giant scorpion"
+msgid_plural "giant scorpions"
+msgstr[0] "những con bọ cạp khổng lồ"
+
+#. ~ Description of monster 'giant scorpion'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+#: data/mods/desert_region/desert_insect_spider.json
+msgid ""
+"A menacing arachnid with a second set of pedipalps, clacking rabidly as an "
+"engorged stinger looms over its body."
+msgstr ""
+"Một loài hình nhện đầy đe dọa với cặp chân kìm thứ hai, khua lách cách dữ "
+"dội trong khi chiếc ngòi độc căng phồng lù lù phía trên cơ thể."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "scorpling"
+msgid_plural "scorplings"
+msgstr[0] "những con bọ cạp con"
+
+#. ~ Description of monster 'scorpling'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "A pale-colored juvenile scorpion, about the size of a beer bottle."
+msgstr "Một con bọ cạp non màu nhợt nhạt, chỉ to cỡ một chai bia."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "termite nymph"
+msgid_plural "termite nymphs"
+msgstr[0] "những con nhộng mối"
+
+#. ~ Description of monster 'termite nymph'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"Unlike ants, Termites produce nymphs instead of larvae.  Their nymphs grow "
+"first into workers before diverging into the higher castes."
+msgstr ""
+"Không giống như kiến, mối tạo ra nhộng thay vì ấu trùng. Nhộng của chúng "
+"phát triển trước tiên thành mối thợ trước khi phân hóa thành các đẳng cấp "
+"cao hơn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant termite worker"
+msgid_plural "giant termite workers"
+msgstr[0] "những con mối thợ khổng lồ"
+
+#. ~ Description of monster 'giant termite worker'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"An adult termite dedicated to tending the colony.  Termite workers, while "
+"developed, are still capable of growing into soldiers or alates given the "
+"time."
+msgstr ""
+"Một con mối trưởng thành chuyên chăm lo cho tổ. Mối thợ, tuy đã phát triển "
+"hoàn chỉnh, vẫn có thể biến thành mối lính hoặc mối cánh nếu có thời gian."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant termite soldier"
+msgid_plural "giant termite soldiers"
+msgstr[0] "những con mối lính khổng lồ"
+
+#. ~ Description of monster 'giant termite soldier'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"An enormous termite dedicated to the defense of the colony.  It has a pair "
+"of enormous mandibles capable of cutting bone and chitin."
+msgstr ""
+"Một con mối khổng lồ chuyên lo việc phòng thủ cho tổ. Nó có một cặp hàm đồ "
+"sộ có khả năng cắt đứt xương và kitin."
+
+#. ~ Description of monster 'giant termite soldier'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"An enormous termite dedicated to the defense of the colony.  It has a "
+"strange horn-like projection on its head."
+msgstr ""
+"Một con mối khổng lồ chuyên phòng thủ cho đàn. Nó có một mấu lồi kỳ lạ giống"
+" như sừng trên đầu."
+
+#. ~ Message of special attack of monster 'giant termite soldier'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+#, c-format
+msgid "The %s sprays some chemical out of its head!"
+msgstr "%s phun một loại hóa chất từ đầu ra!"
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant termite alate"
+msgid_plural "giant termite alates"
+msgstr[0] "những con mối cánh khổng lồ"
+
+#. ~ Description of monster 'giant termite alate'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"An enormous winged termite dedicated to spreading new colonies.  Does not "
+"appear violent, but perhaps you should not test its patience."
+msgstr ""
+"Một con mối có cánh khổng lồ có nhiệm vụ gầy dựng những đàn mới. Trông có vẻ"
+" không hung bạo, nhưng có lẽ bạn không nên thử thách sự kiên nhẫn của nó."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant termite king"
+msgid_plural "giant termite kings"
+msgstr[0] "những con mối chúa đực khổng lồ"
+
+#. ~ Description of monster 'giant termite king'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"A gigantic termite dedicated to protecting the queen and their offspring.  "
+"While his main role is breeding, the king is certainly well armed as well."
+msgstr ""
+"Một con mối khổng lồ chuyên bảo vệ mối chúa cái và bầy con non của chúng. "
+"Mặc dù vai trò chính là sinh sản, mối chúa đực cũng được trang bị vũ khí cực"
+" kỳ đầy đủ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant termite queen"
+msgid_plural "giant termite queens"
+msgstr[0] "những con mối chúa cái khổng lồ"
+
+#. ~ Description of monster 'giant termite queen'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"A colossal termite making up the basis of the colony along with her king.  "
+"Her enlarged abdomen limits her movements but she barely needs to move "
+"anyway."
+msgstr ""
+"Một con mối khổng lồ tạo nên nền tảng của cả bầy đàn cùng với mối vua của "
+"nó. Chiếc bụng to tướng làm hạn chế cử động nhưng đằng nào thì nó cũng chẳng"
+" cần phải di chuyển mấy."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "oversized velvet worm"
+msgid_plural "oversized velvet worms"
+msgstr[0] "những con sâu nhung ngoại cỡ"
+
+#. ~ Description of monster 'oversized velvet worm'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "A mutated velvet worm the size of a large dog."
+msgstr "Một con sâu nhung đột biến có kích thước bằng một con chó lớn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "giant velvet worm"
+msgid_plural "giant velvet worms"
+msgstr[0] "những con sâu nhung khổng lồ"
+
+#. ~ Description of monster 'giant velvet worm'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"A mutated velvet worm larger than a person.  These peculiar creatures hunt "
+"at night using silent feet and sticky attacks."
+msgstr ""
+"Một con sâu nhung đột biến lớn hơn một người. Những sinh vật kỳ dị này săn "
+"mồi vào ban đêm bằng những bước chân im lặng và các đòn tấn công dính nhớp "
+"nháp."
+
+#. ~ Message of special attack of monster 'giant velvet worm'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+#, c-format
+msgid "The %s shoots strings of goo from the appendages on its head!"
+msgstr "%s bắn ra các sợi chất nhầy từ các phần phụ trên đầu!"
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "colossal velvet worm"
+msgid_plural "colossal velvet worms"
+msgstr[0] "những con sâu nhung vĩ đại"
+
+#. ~ Description of monster 'colossal velvet worm'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid ""
+"An enormous velvet worm the size of a small car.  Its mouthparts and skin "
+"have reinforced to hunt down and defend against the new fauna of the "
+"Cataclysm."
+msgstr ""
+"Một con sâu nhung khổng lồ to bằng một chiếc ô tô nhỏ. Các bộ phận miệng và "
+"da của nó đã được củng cố gia cường để săn lùng và tự vệ trước các loài động"
+" vật mới của Thảm họa."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "velvet worm larva"
+msgid_plural "velvet worm larvae"
+msgstr[0] "những con ấu trùng sâu nhung"
+
+#. ~ Description of monster 'velvet worm larva'
+#: data/mods/TropiCataclysm/monsters/tropical_insect_spider.json
+msgid "A pale wriggling worm with a bunch of little legs."
+msgstr "Một con sâu ngoe nguẩy nhợt nhạt với vô số chiếc chân nhỏ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+#: data/mods/desert_region/desert_mammal.json
+msgid "bush elephant"
+msgid_plural "bush elephants"
+msgstr[0] "những con voi bụi rậm"
+
+#. ~ Description of monster 'bush elephant'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+#: data/mods/desert_region/desert_mammal.json
+msgid ""
+"The African Bush Elephant is a massive terrestrial animal with two long "
+"tusks protruding from its mouth.  Elephantry is on the rise since the "
+"Cataclysm."
+msgstr ""
+"Voi bụi rậm châu Phi là một loài động vật trên cạn to lớn với hai chiếc ngà "
+"dài nhô ra từ miệng. Việc sử dụng voi chiến đang gia tăng kể từ Thảm họa."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "jaguar"
+msgid_plural "jaguars"
+msgstr[0] "những con báo đốm"
+
+#. ~ Description of monster 'jaguar'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"The largest native feline in the Americas.  With the advent of the Cataclysm"
+" these spotted felines have recovered some territory."
+msgstr ""
+"Loài mèo lớn bản địa to nhất ở châu Mỹ. Với sự xuất hiện của Thảm họa, những"
+" con mèo đốm này đã giành lại một số lãnh thổ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "spectacled bear"
+msgid_plural "spectacled bears"
+msgstr[0] "những con gấu bốn mắt"
+
+#. ~ Description of monster 'spectacled bear'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"The Andean bear, sometimes called spectacled bear is the only bear species "
+"native to South America.  It lives in a very diverse array of ecosystems on "
+"low to high altitudes."
+msgstr ""
+"Gấu Andes, đôi khi được gọi là gấu bốn mắt, là loài gấu duy nhất có nguồn "
+"gốc từ Nam Mỹ. Nó sống trong một loạt các hệ sinh thái rất đa dạng từ độ cao"
+" thấp đến cao."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "spectacled bear cub"
+msgid_plural "spectacled bear cubs"
+msgstr[0] "những con gấu bốn mắt con"
+
+#. ~ Description of monster 'spectacled bear cub'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A juvenile spectacled bear.  Its mother could be nearby, better not to mess "
+"around it."
+msgstr ""
+"Một con gấu bốn mắt non. Mẹ của nó có thể đang ở gần đây, tốt hơn là đừng "
+"trêu chọc nó."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "ocelot"
+msgid_plural "ocelots"
+msgstr[0] "những con mèo gấm ocelot"
+
+#. ~ Description of monster 'ocelot'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A widespread medium sized feline known for its spotted and streaked fur.  It"
+" can be found as north as the southern US and even the Caribbean."
+msgstr ""
+"Một loài mèo cỡ trung bình phân bố rộng rãi, nổi tiếng với bộ lông đốm và "
+"sọc vằn. Nó có thể được tìm thấy ở tận phía bắc như miền nam Hoa Kỳ và thậm "
+"chí cả vùng Caribe."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "tapir calf"
+msgid_plural "tapir calfs"
+msgstr[0] "những con heo vòi con"
+
+#. ~ Description of monster 'tapir calf'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A baby tapir.  Unlike the adults, tapir calves are born with spots and "
+"streaks on their fur for camouflage."
+msgstr ""
+"Một con heo vòi con. Không giống như con trưởng thành, heo vòi con sinh ra "
+"với các đốm và sọc trên lông để ngụy trang."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "tapir"
+msgid_plural "tapirs"
+msgstr[0] "những con heo vòi"
+
+#. ~ Description of monster 'tapir'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A medium to large herbivore distantly related to the Rhinoceros.  It is both"
+" a capable runner and swimmer in order to evade predators."
+msgstr ""
+"Một loài động vật ăn cỏ cỡ trung bình đến lớn có họ hàng xa với loài Tê "
+"giác. Nó vừa là loài chạy nhanh vừa bơi giỏi để trốn tránh kẻ săn mồi."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "camel"
+msgid_plural "camels"
+msgstr[0] "những con lạc đà"
+
+#. ~ Description of monster 'camel'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A large herbivore introduced from the old world via zoos and private owners."
+"  Ironically, camels were once native to North America in distant times."
+msgstr ""
+"Một loài động vật ăn cỏ lớn được đưa vào từ Cựu Thế giới qua các vườn thú và"
+" chủ sở hữu tư nhân. Trớ trêu thay, lạc đà từng là loài bản địa của Bắc Mỹ "
+"trong thời cổ đại."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "coati"
+msgid_plural "coatis"
+msgstr[0] "những con gấu mèo coati"
+
+#. ~ Description of monster 'coati'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A relative of the raccoon, coatis can be easily distinguished by their long "
+"noses and sometimes ringed tails.  They live as north as Arizona, and form "
+"large family groups."
+msgstr ""
+"Họ hàng của loài gấu mèo, coati có thể dễ dàng phân biệt bởi chiếc mũi dài "
+"và chiếc đuôi đôi khi có khoang tròn. Chúng sống ở tận phía bắc như Arizona "
+"và hợp thành các nhóm gia đình lớn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "bush dog"
+msgid_plural "bush dogs"
+msgstr[0] "những con chó bụi rậm"
+
+#. ~ Description of monster 'bush dog'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A small and elusive canid native to South and Central America.  It is "
+"harmless to humans but their packs can take on prey several times their "
+"size."
+msgstr ""
+"Một loài thú họ chó nhỏ bé và thoắt ẩn thoắt hiện, bản địa của Nam và Trung "
+"Mỹ. Nó vô hại đối với con người nhưng các đàn của chúng có thể hạ gục con "
+"mồi lớn gấp nhiều lần kích thước của mình."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "coipo"
+msgid_plural "coipos"
+msgstr[0] "những con chuột đồng coipo"
+
+#. ~ Description of monster 'coipo'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A big rodent similar in shape to a beaver.  In the past it was hunted and "
+"raised for its fur."
+msgstr ""
+"Một loài gặm nhấm lớn có hình dáng tương tự như hải ly. Trước đây nó bị săn "
+"bắt và nuôi lấy lông."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "baby capybara"
+msgid_plural "baby capybaras"
+msgstr[0] "những con chuột lang nước con"
+
+#. ~ Description of monster 'baby capybara'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A baby capybara.  Like most rodents they are born by the numbers as they "
+"usually get eaten early in their lives by many predators."
+msgstr ""
+"Một con chuột lang nước con. Giống như hầu hết các loài gặm nhấm, chúng sinh"
+" ra với số lượng rất nhiều vì thường bị nhiều kẻ săn mồi ăn thịt từ sớm "
+"trong đời."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "capybara"
+msgid_plural "capybaras"
+msgstr[0] "những con chuột lang nước"
+
+#. ~ Description of monster 'capybara'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"The largest rodent in the world.  Capybaras are pretty chill aquatic "
+"herbivores that roam around wetlands and rivers in South America."
+msgstr ""
+"Loài gặm nhấm lớn nhất thế giới. Chuột lang nước là loài động vật ăn cỏ sống"
+" dưới nước khá thư thái, lang thang quanh các vùng đất ngập nước và sông "
+"ngòi ở Nam Mỹ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "hippopotamus"
+msgid_plural "hippopotamus"
+msgstr[0] "hà mã"
+
+#. ~ Description of monster 'hippopotamus'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A massive and aggressive aquatic mammal.  Hippos originate from Africa but "
+"were brought to the Americas by zoos and particularly eccentric criminals."
+msgstr ""
+"Một loài động vật có vú bán thủy sinh đồ sộ và hung dữ. Hà mã có nguồn gốc "
+"từ châu Phi nhưng được đưa đến châu Mỹ bởi các vườn thú và những tên tội "
+"phạm đặc biệt lập dị."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "peccary piglet"
+msgid_plural "peccary piglets"
+msgstr[0] "những con lợn peccary con"
+
+#. ~ Description of monster 'peccary piglet'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"The small offspring of a peccary.  Much like true boar piglets, this one has"
+" a mottled fur as camouflage."
+msgstr ""
+"Đứa con nhỏ của một con lợn peccary. Giống như lợn rừng con thực sự, con non"
+" này có bộ lông đốm để ngụy trang."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "peccary"
+msgid_plural "peccaries"
+msgstr[0] "những con lợn peccary"
+
+#. ~ Description of monster 'peccary'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A small furred omnivore native to the American continent.  Despite looking "
+"like a boar it is not directly related to them or their domestic brethren."
+msgstr ""
+"Một loài động vật ăn tạp có lông nhỏ bản địa của lục địa châu Mỹ. Mặc dù "
+"trông giống lợn rừng nhưng nó không có quan hệ họ hàng trực tiếp với chúng "
+"hay những người anh em thuần hóa của chúng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "guinea pig"
+msgid_plural "guinea pigs"
+msgstr[0] "những con chuột lang nhà"
+
+#. ~ Description of monster 'guinea pig'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"Also called cuy by the people of the Andes.  This small rodent was bred "
+"originally for food but it has gained the hearts of many as a pet."
+msgstr ""
+"Còn được người dân dãy Andes gọi là cuy. Loài gặm nhấm nhỏ bé này ban đầu "
+"được nuôi để lấy thịt nhưng nó đã chiếm được cảm tình của nhiều người như "
+"một con thú cưng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "wallaby joey"
+msgid_plural "wallaby joeys"
+msgstr[0] "những con chuột túi wallaby con"
+
+#. ~ Description of monster 'wallaby joey'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A baby wallaby.  Most of the time they hide inside their mother's pouch but "
+"eventually grow too big."
+msgstr ""
+"Một chú chuột túi wallaby con. Phần lớn thời gian chúng trốn trong túi của "
+"mẹ nhưng cuối cùng sẽ lớn quá cỡ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid "wallaby"
+msgid_plural "wallabies"
+msgstr[0] "những con chuột túi wallaby"
+
+#. ~ Description of monster 'wallaby'
+#: data/mods/TropiCataclysm/monsters/tropical_mammal.json
+msgid ""
+"A small to large hopping marsupial from Australia and New Guinea.  Even "
+"before the Cataclysm there were many feral populations of them around the "
+"world."
+msgstr ""
+"Một loài thú có túi nhảy nhót cỡ nhỏ đến lớn đến từ Úc và New Guinea. Ngay "
+"cả trước Thảm họa, đã có nhiều quần thể hoang dã của chúng trên khắp thế "
+"giới."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "aether krill"
+msgid_plural "aether krills"
+msgstr[0] "những con nhuyễn thể hư không"
+
+#. ~ Description of monster 'aether krill'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A tiny flying alien creature brought by the portal storms.  It vaguely "
+"resembles a marine crustacean like shrimp."
+msgstr ""
+"Một sinh vật ngoài hành tinh bay nhỏ bé do những cơn bão cổng không gian "
+"mang đến. Nó hơi giống một loài giáp xác biển như tôm."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "paddle crab"
+msgid_plural "paddle crabs"
+msgstr[0] "những con cua bơi"
+
+#. ~ Description of monster 'paddle crab'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It vaguely resembles a crab"
+" or lobster with paddles instead of legs."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó hơi"
+" giống một con cua hoặc tôm hùm với các mái chèo thay vì chân bò."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "emperor prawn"
+msgid_plural "emperor prawns"
+msgstr[0] "những con tôm hoàng đế"
+
+#. ~ Description of monster 'emperor prawn'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A large alien creature brought by the portal storms.  It vaguely resembles a"
+" prehistoric crustacean with flippers and a set of pincers."
+msgstr ""
+"Một sinh vật ngoài hành tinh lớn do các cơn bão cổng không gian mang đến. Nó"
+" hơi giống một loài giáp xác thời tiền sử với chân chèo và một cặp càng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "triglav star"
+msgid_plural "triglav stars"
+msgstr[0] "những con sao biển triglav"
+
+#. ~ Description of monster 'triglav star'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A tiny alien creature brought by the portal storms.  It vaguely resembles a "
+"sea star crawling on three spindly legs."
+msgstr ""
+"Một sinh vật ngoài hành tinh nhỏ bé do các cơn bão cổng không gian mang đến."
+" Nó hơi giống một con sao biển đang bò bằng ba cái chân khẳng khiu."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "scale urchin"
+msgid_plural "scale urchins"
+msgstr[0] "những con nhím biển bọc vảy"
+
+#. ~ Description of monster 'scale urchin'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A tiny alien creature brought by the portal storms.  It vaguely resembles a "
+"sea urchin with scales instead of spines."
+msgstr ""
+"Một sinh vật ngoài hành tinh nhỏ bé do các cơn bão cổng không gian mang đến."
+" Nó hơi giống một con nhím biển có vảy thay vì gai nhọn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "thornothurian"
+msgid_plural "thornothurians"
+msgstr[0] "những con hải sâm gai"
+
+#. ~ Description of monster 'thornothurian'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It vaguely resembles a sea "
+"cucumber with a set of thorns running on its body."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó hơi"
+" giống một con hải sâm với một hàng gai chạy dọc khắp cơ thể."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "aer jelly"
+msgid_plural "aer jellies"
+msgstr[0] "những con sứa khí"
+
+#. ~ Description of monster 'aer jelly'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A tiny flying alien creature brought by the portal storms.  It vaguely "
+"resembles a jellyfish with balloon-like body."
+msgstr ""
+"Một sinh vật ngoài hành tinh bay nhỏ bé do những cơn bão cổng không gian "
+"mang đến. Nó hơi giống một con sứa với cơ thể tựa như quả bóng bay."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "sea papalotl"
+msgid_plural "sea papalomeh"
+msgstr[0] "những con sứa bướm biển"
+
+#. ~ Description of monster 'sea papalotl'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It vaguely resembles a "
+"floating box jellyfish with a translucent body."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó hơi"
+" giống một con sứa hộp lơ lửng với cơ thể trong suốt."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "sky phantom"
+msgid_plural "sky phantoms"
+msgstr[0] "những bóng ma bầu trời"
+
+#. ~ Description of monster 'sky phantom'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A huge alien creature brought by the portal storms.  It resembles a "
+"Portuguese man-o'-war fused to a Zeppelin."
+msgstr ""
+"Một sinh vật ngoài hành tinh khổng lồ do các cơn bão cổng không gian mang "
+"đến. Nó giống như một con sứa chiến hạm Bồ Đào Nha hợp nhất với một chiếc "
+"khí cầu Zeppelin."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "wizard snail"
+msgid_plural "wizard snails"
+msgstr[0] "những con ốc phù thủy"
+
+#. ~ Description of monster 'wizard snail'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A tiny alien creature brought by the portal storms.  It vaguely resembles a "
+"gastropod with a hat-like shell."
+msgstr ""
+"Một sinh vật ngoài hành tinh nhỏ bé do các cơn bão cổng không gian mang đến."
+" Nó hơi giống một loài chân bụng với chiếc vỏ hình như chiếc mũ phù thủy."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "hyolith conch"
+msgid_plural "hyolith conchs"
+msgstr[0] "những con ốc nón hyolith"
+
+#. ~ Description of monster 'hyolith conch'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It vaguely resembles a "
+"large conch snail with a straight shell."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó hơi"
+" giống một con ốc xà cừ lớn với lớp vỏ thẳng tuột."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "nimbelemnite"
+msgid_plural "nimbelemnites"
+msgstr[0] "những con mực tiễn nimbelemnite"
+
+#. ~ Description of monster 'nimbelemnite'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien flying creature brought by the portal storms.  It vaguely resembles"
+" an ancient cephalopod and moves quite fast."
+msgstr ""
+"Một sinh vật bay ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó"
+" hơi giống một loài chân đầu cổ đại và di chuyển khá nhanh."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "atmmonoid"
+msgid_plural "atmmonoids"
+msgstr[0] "những con cúc đá khí quyến"
+
+#. ~ Description of monster 'atmmonoid'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien flying creature brought by the portal storms.  It vaguely resembles"
+" a prehistoric cephalopod with a helix shell."
+msgstr ""
+"Một sinh vật bay ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó"
+" hơi giống một loài chân đầu tiền sử với lớp vỏ xoắn ốc."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "ballistoceras"
+msgid_plural "ballistocerae"
+msgstr[0] "những quái sừng ballistoceras"
+
+#. ~ Description of monster 'ballistoceras'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"A large alien flying creature brought by the portal storms.  It vaguely "
+"resembles a prehistoric cephalopod with a long straight shell."
+msgstr ""
+"Một sinh vật bay lớn ngoài hành tinh do các cơn bão cổng không gian mang "
+"đến. Nó hơi giống một loài chân đầu thời tiền sử với lớp vỏ dài thẳng đuột."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "tiny flying fish"
+msgid_plural "tiny flying fish"
+msgstr[0] "những con cá chuồn tí hon"
+
+#. ~ Description of monster 'tiny flying fish'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "A tiny flying fish."
+msgstr "Một con cá chuồn tí hon."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "small flying fish"
+msgid_plural "small flying fish"
+msgstr[0] "những con cá chuồn nhỏ"
+
+#. ~ Description of monster 'small flying fish'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "A small flying fish."
+msgstr "Một con cá chuồn nhỏ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "medium flying fish"
+msgid_plural "medium flying fish"
+msgstr[0] "những con cá chuồn cỡ vừa"
+
+#. ~ Description of monster 'medium flying fish'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "A medium flying fish."
+msgstr "Một con cá chuồn cỡ vừa."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "large flying fish"
+msgid_plural "large flying fish"
+msgstr[0] "những con cá chuồn lớn"
+
+#. ~ Description of monster 'large flying fish'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "A large flying fish."
+msgstr "Một con cá chuồn lớn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "huge flying fish"
+msgid_plural "huge flying fish"
+msgstr[0] "những con cá chuồn khổng lồ"
+
+#. ~ Description of monster 'huge flying fish'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "A huge flying fish."
+msgstr "Một con cá chuồn khổng lồ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "paper kite"
+msgid_plural "paper kites"
+msgstr[0] "những con diều giấy"
+
+#. ~ Description of monster 'paper kite'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a miniature "
+"manta ray."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá đuối manta thu nhỏ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "fin wing"
+msgid_plural "fin wings"
+msgstr[0] "những con cánh vây"
+
+#. ~ Description of monster 'fin wing'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a mix between "
+"fish and bird."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như sự pha trộn giữa cá và chim."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "cloud scale"
+msgid_plural "cloud scales"
+msgstr[0] "những con vảy mây"
+
+#. ~ Description of monster 'cloud scale'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a tiny "
+"tropical fish, its scales shifting color with the sky."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống một con cá nhiệt đới bé xíu, vảy của nó đổi màu theo bầu trời."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "flag tail"
+msgid_plural "flag tails"
+msgstr[0] "những con đuôi cờ"
+
+#. ~ Description of monster 'flag tail'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a tropical "
+"fish with a long flowing tail."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá nhiệt đới với chiếc đuôi dài thướt tha."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "balloon drifter"
+msgid_plural "balloon drifters"
+msgstr[0] "những con bóng bay trôi dạt"
+
+#. ~ Description of monster 'balloon drifter'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a rotund fish "
+"filled with gas."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá tròn trịa chứa đầy khí."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "angel fin"
+msgid_plural "angel fins"
+msgstr[0] "những con vây thiên thần"
+
+#. ~ Description of monster 'angel fin'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a sleek fish "
+"with long angelic fins."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống một con cá bóng bẩy với những chiếc vây dài như thiên thần."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "wing mane"
+msgid_plural "wing manes"
+msgstr[0] "những con bờm cánh"
+
+#. ~ Description of monster 'wing mane'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a lionfish "
+"with several fin-like wings."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá sư tử với nhiều vây xòe ra như đôi cánh."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "mosaicus"
+msgid_plural "mosaicuses"
+msgstr[0] "những con cá mosaicus"
+
+#. ~ Description of monster 'mosaicus'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a round fish "
+"with bright multicolor scales."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá tròn với lớp vảy sặc sỡ nhiều màu."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "comet bass"
+msgid_plural "comet basses"
+msgstr[0] "những con cá vược sao chổi"
+
+#. ~ Description of monster 'comet bass'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a bulky fish "
+"with cloudy scales."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá cồng kềnh với lớp vảy mờ như mây khói."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "aeroctinus"
+msgid_plural "aeroctinae"
+msgstr[0] "những con cá aeroctinus"
+
+#. ~ Description of monster 'aeroctinus'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a sleek and "
+"lightweight predatory fish."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một loài cá săn mồi thon gọn và nhẹ nhàng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "boreas banner"
+msgid_plural "boreas banners"
+msgstr[0] "những con cờ gió bắc"
+
+#. ~ Description of monster 'boreas banner'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a fast ocean "
+"going fish with a large bluish dorsal fin."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá biển bơi nhanh với chiếc vây lưng lớn màu hơi xanh."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "macaw fin"
+msgid_plural "macaw fins"
+msgstr[0] "những con vây vẹt"
+
+#. ~ Description of monster 'macaw fin'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a bulky beaked"
+" fish with colored scales and fins like a parrot or macaw."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống một con cá có mỏ đồ sộ với lớp vảy và vây đầy màu sắc như chim vẹt hay"
+" vẹt macaw."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "astrolaspis"
+msgid_plural "astrolaspises"
+msgstr[0] "những con cá astrolaspis"
+
+#. ~ Description of monster 'astrolaspis'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a round ocean "
+"going fish with a sandy coloration like some ancient sun dial."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con cá biển hình tròn có màu cát giống như một chiếc đồng hồ "
+"mặt trời cổ đại."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "eolocanth"
+msgid_plural "eolocanths"
+msgstr[0] "những con cá vây tay eolocanth"
+
+#. ~ Description of monster 'eolocanth'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a prehistoric "
+"fish with pearl scales as if made of porcelain."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống một con cá tiền sử với lớp vảy xà cừ như thể được làm bằng sứ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid "cosmo serpent"
+msgid_plural "cosmo serpents"
+msgstr[0] "những con rắn vũ trụ"
+
+#. ~ Description of monster 'cosmo serpent'
+#: data/mods/TropiCataclysm/monsters/tropical_nether.json
+msgid ""
+"An alien creature brought by the portal storms.  It resembles a long eel or "
+"moray with dark skin and luminous spots."
+msgstr ""
+"Một sinh vật ngoài hành tinh do các cơn bão cổng không gian mang đến. Nó "
+"giống như một con lươn dài hoặc cá chình moray với lớp da sẫm màu cùng những"
+" đốm phát sáng."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "basiliscus"
+msgid_plural "basiliscuses"
+msgstr[0] "những con thằn lằn basilisk"
+
+#. ~ Description of monster 'basiliscus'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A genus of tropical lizards native to Central and South America.  It's know "
+"worldwide for its ability to run on the water."
+msgstr ""
+"Một chi thằn lằn nhiệt đới bản địa của Trung và Nam Mỹ. Nó được biết đến "
+"trên toàn thế giới với khả năng chạy trên mặt nước."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "anole"
+msgid_plural "anoles"
+msgstr[0] "những con thằn lằn anole"
+
+#. ~ Description of monster 'anole'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A member of the Anolis genus.  These tiny lizards are similar to chameleons,"
+" living mostly on trees and using a flap on their neck during mating season."
+msgstr ""
+"Một thành viên của chi Anolis. Những con thằn lằn nhỏ bé này tương tự như "
+"tắc kè hoa, sống chủ yếu trên cây và dùng cái yếm xòe ở cổ trong mùa giao "
+"phối."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "gecko"
+msgid_plural "geckos"
+msgstr[0] "những con tắc kè"
+
+#. ~ Description of monster 'gecko'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A member of Gekkota.  With over 1400 species this suborder of lizards is "
+"found in all the hot parts of the world, mostly known as tree dwellers."
+msgstr ""
+"Một thành viên thuộc phân bộ Gekkota. Với hơn 1400 loài, phân bộ thằn lằn "
+"này được tìm thấy ở tất cả các vùng nóng trên thế giới, chủ yếu được biết "
+"đến là loài sống trên cây."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "skink"
+msgid_plural "skinks"
+msgstr[0] "những con thằn lằn bóng"
+
+#. ~ Description of monster 'skink'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A member of Scincidae.  With over 1500 species these lizards are found all "
+"around the world, usually in burrowing niches."
+msgstr ""
+"Một thành viên của họ Scincidae. Với hơn 1500 loài, những con thằn lằn này "
+"được tìm thấy trên khắp thế giới, thường sống trong các hốc đào hang."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "iguana"
+msgid_plural "iguanas"
+msgstr[0] "những con cự đà"
+
+#. ~ Description of monster 'iguana'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"Iguanas compose a large family of very similar looking lizards found all "
+"around the Americas.  The green iguana is one of the most well known and "
+"widespread in the tropical parts of the continent."
+msgstr ""
+"Cự đà bao gồm một họ thằn lằn lớn có vẻ ngoài rất giống nhau được tìm thấy "
+"trên khắp châu Mỹ. Cự đà xanh là một trong những loài nổi tiếng và phổ biến "
+"nhất ở các vùng nhiệt đới của lục địa."
+
+#. ~ Description of monster 'crocodile'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"The American crocodile, found from the Orinoco up to southernmost Florida.  "
+"It's well adapted to thrive in both fresh and salty waters and can get very "
+"large."
+msgstr ""
+"Cá sấu Mỹ, được tìm thấy từ vùng Orinoco lên đến cực nam Florida. Nó thích "
+"nghi rất tốt để phát triển mạnh ở cả vùng nước ngọt và mặn và có thể phát "
+"triển rất lớn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "caiman"
+msgid_plural "caimans"
+msgstr[0] "những con cá sấu caiman"
+
+#. ~ Description of monster 'caiman'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A smaller relative of the alligator which can be found all around Central "
+"and South America.  They range on different sizes and live mostly in "
+"freshwater habitats."
+msgstr ""
+"Một họ hàng nhỏ hơn của cá sấu mõm ngắn (alligator) có thể tìm thấy ở khắp "
+"Trung và Nam Mỹ. Chúng có nhiều kích cỡ khác nhau và sống chủ yếu ở các môi "
+"trường sống nước ngọt."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "strange tadpole"
+msgid_plural "strange tadpoles"
+msgstr[0] "những con nòng nọc kỳ lạ"
+
+#. ~ Description of monster 'strange tadpole'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"An overgrown tadpole that swims around eating algae and other biological "
+"matter.  For some reason its legs have not yet started to form."
+msgstr ""
+"Một con nòng nọc phát triển quá khổ bơi xung quanh để ăn tảo và các chất "
+"sinh học khác. Vì lý do nào đó mà chân của nó vẫn chưa bắt đầu hình thành."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "tadfish"
+msgid_plural "tadfish"
+msgstr[0] "nòng nọc cá"
+
+#. ~ Description of monster 'tadfish'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A strange neotenic batrachian grown from a specific kind of tadpole.  "
+"Instead of growing legs it has become more fish-like."
+msgstr ""
+"Một loài ếch nhái kỳ lạ giữ nguyên dạng ấu trùng suốt đời, lớn lên từ một "
+"loại nòng nọc đặc biệt. Thay vì mọc chân, nó lại trở nên giống cá hơn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "caecilian larva"
+msgid_plural "caecilian larvas"
+msgstr[0] "những con ấu trùng ếch giun"
+
+#. ~ Description of monster 'caecilian larva'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"Caecilians are a viviparous.  Their larvae are born inside the female and "
+"fed with specials cells until they get out of her body."
+msgstr ""
+"Ếch giun là loài đẻ con. Ấu trùng của chúng sinh ra bên trong con cái và "
+"được nuôi dưỡng bằng các tế bào đặc biệt cho đến khi chúng rời khỏi cơ thể "
+"mẹ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "caecilian"
+msgid_plural "caecilians"
+msgstr[0] "những con ếch giun"
+
+#. ~ Description of monster 'caecilian'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"One of several species of amphibians with a worm like body.  Caecilians can "
+"be found in the tropics burrowed in the ground but are equally capable of "
+"swimming."
+msgstr ""
+"Một trong vài loài lưỡng cư có cơ thể giống sâu đất. Ếch giun có thể được "
+"tìm thấy ở các vùng nhiệt đới vùi mình dưới lòng đất nhưng cũng có khả năng "
+"bơi lội tốt."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "giant caecilian"
+msgid_plural "giant caecilians"
+msgstr[0] "những con ếch giun khổng lồ"
+
+#. ~ Description of monster 'giant caecilian'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A caecilian grown close to a snake in length.  It uses its strong head to "
+"dig on the soil looking for mutated worms to devour."
+msgstr ""
+"Một con ếch giun phát triển dài gần bằng một con rắn. Nó dùng cái đầu khỏe "
+"của mình để đào bới trong đất nhằm tìm kiếm những con giun đột biến để ngấu "
+"nghiến."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "minhocao"
+msgid_plural "minhocaos"
+msgstr[0] "những con sâu đất minhocao"
+
+#. ~ Description of monster 'minhocao'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A huge mutated caecilian as large and heavy as the largest constrictors.  It"
+" resembles something out of amazonian folklore, but may be passive unless "
+"provoked."
+msgstr ""
+"Một con ếch giun đột biến khổng lồ to lớn và nặng nề như những con trăn siết"
+" mồi lớn nhất. Nó giống như một sinh vật bước ra từ văn hóa dân gian Amazon,"
+" nhưng có thể sẽ thụ động trừ khi bị khiêu khích."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "anaconda"
+msgid_plural "anacondas"
+msgstr[0] "những con trăn anaconda"
+
+#. ~ Description of monster 'anaconda'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"The anaconda is one of the largest and heaviest snakes in the world.  It "
+"kills its prey by constriction and is a very good swimmer."
+msgstr ""
+"Trăn anaconda là một trong những loài rắn lớn nhất và nặng nhất trên thế "
+"giới. Nó giết chết con mồi bằng cách siết chặt và là một tay bơi cừ khôi."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "boa"
+msgid_plural "boas"
+msgstr[0] "những con trăn boa"
+
+#. ~ Description of monster 'boa'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"The boa constrictor is a large but modestly sized snake who shares habitat "
+"with the anaconda.  Instead of the water it prefers arboreal and terrestrial"
+" environments."
+msgstr ""
+"Trăn boa constrictor là một loài rắn lớn nhưng kích thước khiêm tốn hơn, "
+"cùng chia sẻ môi trường sống với trăn anaconda. Thay vì sống dưới nước, nó "
+"thích môi trường trên cây và trên cạn hơn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "pond turtle"
+msgid_plural "pond turtles"
+msgstr[0] "những con rùa ao"
+
+#. ~ Description of monster 'pond turtle'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"Distributed worldwide due to pet trade, pond turtles can be found on most "
+"temperate to warm climates living in different aquatic environments."
+msgstr ""
+"Phân bố trên toàn thế giới do việc buôn bán thú cưng, rùa ao có thể được tìm"
+" thấy ở hầu hết các vùng khí hậu ôn hòa đến ấm áp, sống trong các môi trường"
+" nước khác nhau."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "tortoise"
+msgid_plural "tortoises"
+msgstr[0] "những con rùa cạn"
+
+#. ~ Description of monster 'tortoise'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"Unlike turtles, tortoises are adapted mostly to dry environments.  Many "
+"species worldwide have grown to big sizes if the conditions are just right."
+msgstr ""
+"Không giống như rùa nước, rùa cạn thích nghi chủ yếu với môi trường khô ráo."
+" Nhiều loài trên toàn thế giới đã phát triển đến kích thước lớn nếu gặp điều"
+" kiện thích hợp."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "giant tortoise"
+msgid_plural "giant tortoises"
+msgstr[0] "những con rùa cạn khổng lồ"
+
+#. ~ Description of monster 'giant tortoise'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A large tortoise weighting half a ton.  Probably grown to this size by the "
+"Cataclysm instead of ecological isolation."
+msgstr ""
+"Một con rùa lớn nặng nửa tấn. Có lẽ nó phát triển đến kích thước này nhờ "
+"Thảm họa chứ không phải do sự cô lập sinh thái."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid "titanochelon"
+msgid_plural "titanochelons"
+msgstr[0] "những con rùa titanochelon"
+
+#. ~ Description of monster 'titanochelon'
+#: data/mods/TropiCataclysm/monsters/tropical_reptile_amphibian.json
+msgid ""
+"A truly massive tortoise similar in shape to a sauropod dinosaur.  Looks "
+"quite docile but will react if threatened."
+msgstr ""
+"Một con rùa khổng lồ thực sự có hình dáng tương tự như loài khủng long chân "
+"thằn lằn (sauropod). Trông khá ngoan ngoãn nhưng sẽ phản kháng nếu bị đe "
+"dọa."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "triffid lifegiver"
+msgid_plural "triffid lifegivers"
+msgstr[0] "những triffid tạo sinh"
+
+#. ~ Description of monster 'triffid lifegiver'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"An enormous triffid that crawls over the surrounding overgrowth.  It barely "
+"moves unlike the others and instead seems to act as a sort of progenitor "
+"figure."
+msgstr ""
+"Một con triffid khổng lồ bò qua vùng thực vật mọc um tùm xung quanh. Nó hầu "
+"như không di chuyển như những con khác mà dường như đóng vai trò như một "
+"dạng cá thể khởi tổ."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "triffid overqueen"
+msgid_plural "triffid overqueens"
+msgstr[0] "những triffid chúa tể"
+
+#. ~ Description of monster 'triffid overqueen'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"An enormous triffid rooted to the ground.  It absorbs nutrients and sunlight"
+" all day and night to release new podlings into the garden."
+msgstr ""
+"Một cây triffid khổng lồ bén rễ sâu trong lòng đất. Nó hấp thụ chất dinh "
+"dưỡng và ánh sáng mặt trời suốt ngày đêm để phóng ra những mầm hạt mới vào "
+"khu vườn."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "triffid podling"
+msgid_plural "triffid podlings"
+msgstr[0] "những mầm hạt triffid"
+
+#. ~ Description of monster 'triffid podling'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A very small triffid born out of a triffid pod.  Like all triffids its a "
+"very dangerous plant but for now its just a harmless colorful flower."
+msgstr ""
+"Một con triffid rất nhỏ sinh ra từ nang hạt triffid. Giống như mọi loài "
+"triffid, nó là một loài thực vật rất nguy hiểm nhưng hiện tại nó chỉ là một "
+"bông hoa rực rỡ vô hại."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "triffid gardenling"
+msgid_plural "triffid gardenlings"
+msgstr[0] "những chồi non triffid"
+
+#. ~ Description of monster 'triffid gardenling'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A young triffid that has grown some time on the garden grounds.  It is still"
+" a juvenile but it can already fend for itself to a degree."
+msgstr ""
+"Một con triffid non đã phát triển được một thời gian trên đất vườn. Nó vẫn "
+"còn non nhưng đã có thể tự bảo vệ mình ở một mức độ nào đó."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "dionaea"
+msgid_plural "dionaeas"
+msgstr[0] "những triffid bẫy kẹp dionaea"
+
+#. ~ Description of monster 'dionaea'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A strange triffid bearing something similar to a head.  Its false mouth is "
+"covered in razorsharp needles."
+msgstr ""
+"Một loài triffid kỳ lạ mang một bộ phận tương tự như cái đầu. Chiếc miệng "
+"giả của nó được bao phủ bởi những chiếc kim sắc như dao cạo."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "sarracenia"
+msgid_plural "sarracenias"
+msgstr[0] "những triffid bình sarracenia"
+
+#. ~ Description of monster 'sarracenia'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A strange triffid with a wide vase-like body.  It moves carefully while "
+"carrying what appears to be a half-digested prey."
+msgstr ""
+"Một cây triffid kỳ lạ với thân hình giống chiếc bình rộng. Nó di chuyển cẩn "
+"thận trong khi mang theo thứ dường như là một con mồi đã bị tiêu hóa một "
+"nửa."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "rafflesia"
+msgid_plural "rafflesias"
+msgstr[0] "những bông hoa xác thối rafflesia"
+
+#. ~ Description of monster 'rafflesia'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A large walking plant with an enormous flower-like upper body.  Its center "
+"has what appears to be a mouth and seems to emit a really bad aroma."
+msgstr ""
+"Một loài thực vật biết đi lớn với phần thân trên khổng lồ giống như một bông"
+" hoa. Trung tâm của nó có thứ trông giống như một cái miệng và dường như "
+"phát ra mùi hương cực kỳ kinh khủng."
+
+#. ~ Message of special attack of monster 'rafflesia'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "The rafflesia spews toxic gas!"
+msgstr "Cây rafflesia phun ra khí độc!"
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid "yateveo"
+msgid_plural "yateveos"
+msgstr[0] "những cây ăn thịt yateveo"
+
+#. ~ Description of monster 'yateveo'
+#: data/mods/TropiCataclysm/monsters/tropical_triffid.json
+msgid ""
+"A large walking plant shaped in the likes of a tree.  It has several long "
+"vines ending in sharp wooden spikes."
+msgstr ""
+"Một loài thực vật biết đi lớn có hình dáng giống như một cái cây. Nó có một "
+"vài dây leo dài kết thúc bằng những gai gỗ nhọn hoắt."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "garden zombie"
+msgid_plural "garden zombies"
+msgstr[0] "những xác sống làm vườn"
+
+#. ~ Description of monster 'garden zombie'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"A zombie wearing some kind of gardening or botanic attire and is smeared "
+"full of vines, thorns, pollen and sap.  The triffids have it controlled "
+"somehow but its purpose remains unclear."
+msgstr ""
+"Một xác sống mặc một bộ trang phục làm vườn hoặc nhà thực vật học và dính "
+"đầy dây leo, gai nhọn, phấn hoa và nhựa cây. Bằng cách nào đó, lũ triffid đã"
+" kiểm soát nó nhưng mục đích của nó vẫn chưa rõ ràng."
+
+#. ~ Message of special attack of monster 'garden zombie'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "The zombie spews a cloud of pollen!"
+msgstr "Xác sống phun ra một đám mây phấn hoa!"
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "garden child"
+msgid_plural "garden children"
+msgstr[0] "những đứa trẻ vườn ươm"
+
+#. ~ Description of monster 'garden child'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This child zombie seems to have been adopted by plants.  It has several "
+"thorny vines and sprouts covering its head and body."
+msgstr ""
+"Đứa trẻ xác sống này dường như đã được thực vật nhận nuôi. Nó có một vài "
+"nhánh dây gai và chồi non mọc bao phủ đầu và cơ thể."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "spriteling"
+msgid_plural "spritelings"
+msgstr[0] "những linh hồn hoa"
+
+#. ~ Description of monster 'spriteling'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"An undead child mutated by alien flora.  It has several colorful flowers on "
+"its scalp and an unsettling serene expression."
+msgstr ""
+"Một đứa trẻ xác sống bị đột biến bởi hệ thực vật ngoài hành tinh. Nó có một "
+"vài bông hoa rực rỡ sắc màu trên da đầu cùng một biểu cảm thanh thản đến rợn"
+" người."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "mossy boomer"
+msgid_plural "mossy boomers"
+msgstr[0] "những boomer phủ rêu"
+
+#. ~ Description of monster 'mossy boomer'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"A fat and slow zombie covered in plant growths of unknown origin.  Some "
+"vines seem to extend into its mouth and guts."
+msgstr ""
+"Một xác sống béo ục ịch và chậm chạp bị bao phủ bởi những khối thực vật phát"
+" triển không rõ nguồn gốc. Một vài dây leo dường như ăn sâu vào miệng và "
+"ruột của nó."
+
+#. ~ No ammo sound of special attack of monster 'mossy boomer'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "The boomer tries to vomit more, but only droplets are thrown."
+msgstr ""
+"Kẻ phát nổ boomer cố gắng nôn mửa thêm, nhưng chỉ có vài giọt văng ra."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "sap belcher"
+msgid_plural "sap belchers"
+msgstr[0] "những xác sống ợ nhựa cây"
+
+#. ~ Description of monster 'sap belcher'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This big and bloated zombie seems full of sap.  Its already overgrown body "
+"shows several flowering plants growing over it."
+msgstr ""
+"Xác sống to béo và căng phồng này dường như chứa đầy nhựa cây. Cơ thể vốn đã"
+" phình to của nó lộ rõ một vài loài thực vật có hoa đang mọc tràn lan trên "
+"người."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "pollinated eructor"
+msgid_plural "pollinated eructors"
+msgstr[0] "những xác sống ợ phấn hoa"
+
+#. ~ Description of monster 'pollinated eructor'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This engorged zombie has smears of strange pollen on its mouth and plants "
+"over its body.  It shambles around eructing the stuff all over the place."
+msgstr ""
+"Xác sống trương phềnh này có những vệt phấn hoa kỳ lạ trên miệng và thực vật"
+" bao phủ khắp cơ thể. Nó lê bước xung quanh, ợ thứ đó ra khắp nơi."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "bramble brute"
+msgid_plural "bramble brutes"
+msgstr[0] "những bạo chúa bụi gai"
+
+#. ~ Description of monster 'bramble brute'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "A large and muscular zombie covered in thick alien vegetation."
+msgstr ""
+"Một xác sống to lớn và đầy cơ bắp bị bao phủ bởi thảm thực vật ngoài hành "
+"tinh dày đặc."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "overgrown terror"
+msgid_plural "overgrown terrors"
+msgstr[0] "những nỗi kinh hoàng um tùm"
+
+#. ~ Description of monster 'overgrown terror'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This massive muscled zombie has the equivalent of a small garden growing all"
+" over its body."
+msgstr ""
+"Xác sống cơ bắp đồ sộ này có cả một khu vườn nhỏ mọc chằng chịt khắp cơ thể."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "forest screamer"
+msgid_plural "forest screamers"
+msgstr[0] "những kẻ thét gào rừng sâu"
+
+#. ~ Description of monster 'forest screamer'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"The plant growth on this slender zombie makes it look like some kind of "
+"forest apparition.  It looks like it could throw a curse at you at any "
+"moment."
+msgstr ""
+"Lớp thực vật phát triển trên người xác sống mảnh khảnh này khiến nó trông "
+"giống như một dạng ma quái nơi rừng rậm. Trông như thể nó có thể giáng một "
+"lời nguyền lên bạn bất cứ lúc nào."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "glade banshee"
+msgid_plural "glade banshees"
+msgstr[0] "những nữ quỷ đồng hoang"
+
+#. ~ Description of monster 'glade banshee'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"With its ragged looks and overgrown coverage this zombie looks like a hag "
+"from some cursed forest."
+msgstr ""
+"Với vẻ ngoài rách rưới và cây cối mọc um tùm bao phủ, xác sống này trông "
+"giống như một mụ phù thủy đến từ khu rừng bị nguyền rủa nào đó."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "mire walker"
+msgid_plural "mire walkers"
+msgstr[0] "những kẻ rảo bước đầm lầy"
+
+#. ~ Description of monster 'mire walker'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This zombie seems to have been roaming the surrounding swamps and rivers.  "
+"It has several water plants clinging to its body."
+msgstr ""
+"Xác sống này dường như đã lang thang khắp các đầm lầy và sông ngòi xung "
+"quanh. Nó có một vài loài thực vật thủy sinh bám chặt vào cơ thể."
+
+#. ~ Monster name
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid "mangrove lurker"
+msgid_plural "mangrove lurkers"
+msgstr[0] "những kẻ rình rập rừng ngập mặn"
+
+#. ~ Description of monster 'mangrove lurker'
+#: data/mods/TropiCataclysm/monsters/zed_plant.json
+msgid ""
+"This zombie seems to have adapted to hunt in the water.  It uses the aquatic"
+" plants on its body to hide before hitting with its teeth."
+msgstr ""
+"Xác sống này dường như đã thích nghi để săn mồi dưới nước. Nó sử dụng các "
+"loài thực vật thủy sinh trên cơ thể để ẩn nấp trước khi tấn công bằng hàm "
+"răng sắc nhọn."
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_nether.json
+msgid "alien reef"
+msgstr "rạn san hô ngoài hành tinh"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_residential.json
+msgid "overgrown lot"
+msgstr "khu đất mọc um tùm"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_residential.json
+msgid "overtaken lot"
+msgstr "khu đất bị chiếm ngập"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "termite mound"
+msgstr "gò mối"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "food storage"
+msgstr "kho chứa thức ăn"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "nymph nursery"
+msgstr "nhà ươm nhộng"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "royal chamber"
+msgstr "phòng hoàng gia"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "groundwater reservoir"
+msgstr "bể chứa nước ngầm"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_termites.json
+msgid "termite tunnel"
+msgstr "đường hầm mối"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_triffid.json
+msgid "triffid blossom"
+msgstr "hoa triffid"
+
+#. ~ Overmap terrain name
+#: data/mods/TropiCataclysm/overmap/overmap_terrain/overmap_terrain_triffid.json
+msgid "triffid garden"
+msgstr "vườn triffid"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ABINGTON"
+msgstr "ABINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ACTON"
+msgstr "ACTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ACUSHNET"
+msgstr "ACUSHNET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ADAMS"
+msgstr "ADAMS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AGAWAM"
+msgstr "AGAWAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ALFORD"
+msgstr "ALFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AMESBURY"
+msgstr "AMESBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AMHERST"
+msgstr "AMHERST"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ANDOVER"
+msgstr "ANDOVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ARLINGTON"
+msgstr "ARLINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ASHBURNHAM"
+msgstr "ASHBURNHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ASHBY"
+msgstr "ASHBY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ASHFIELD"
+msgstr "ASHFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ASHLAND"
+msgstr "ASHLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ATHOL"
+msgstr "ATHOL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ATTLEBORO"
+msgstr "ATTLEBORO"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AUBURN"
+msgstr "AUBURN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AVON"
+msgstr "AVON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AYER"
+msgstr "AYER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BARNSTABLE"
+msgstr "BARNSTABLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BARRE"
+msgstr "BARRE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BECKET"
+msgstr "BECKET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BEDFORD"
+msgstr "BEDFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BELCHERTOWN"
+msgstr "BELCHERTOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BELLINGHAM"
+msgstr "BELLINGHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BELMONT"
+msgstr "BELMONT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BERKLEY"
+msgstr "BERKLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BERLIN"
+msgstr "BERLIN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BERNARDSTON"
+msgstr "BERNARDSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BEVERLY"
+msgstr "BEVERLY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BILLERICA"
+msgstr "BILLERICA"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BLACKSTONE"
+msgstr "BLACKSTONE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BLANDFORD"
+msgstr "BLANDFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOLTON"
+msgstr "BOLTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOSTON"
+msgstr "BOSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOURNE"
+msgstr "BOURNE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOXBOROUGH"
+msgstr "BOXBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOXFORD"
+msgstr "BOXFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BOYLSTON"
+msgstr "BOYLSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BRAINTREE"
+msgstr "BRAINTREE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BREWSTER"
+msgstr "BREWSTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BRIDGEWATER"
+msgstr "BRIDGEWATER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BRIMFIELD"
+msgstr "BRIMFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BROCKTON"
+msgstr "BROCKTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BROOKFIELD"
+msgstr "BROOKFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BROOKLINE"
+msgstr "BROOKLINE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BUCKLAND"
+msgstr "BUCKLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "BURLINGTON"
+msgstr "BURLINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CAMBRIDGE"
+msgstr "CAMBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CANTON"
+msgstr "CANTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CARLISLE"
+msgstr "CARLISLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CARVER"
+msgstr "CARVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHARLEMONT"
+msgstr "CHARLEMONT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHARLTON"
+msgstr "CHARLTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHATHAM"
+msgstr "CHATHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHELMSFORD"
+msgstr "CHELMSFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHELSEA"
+msgstr "CHELSEA"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHESHIRE"
+msgstr "CHESHIRE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHESTER"
+msgstr "CHESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHESTERFIELD"
+msgstr "CHESTERFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHICOPEE"
+msgstr "CHICOPEE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CHILMARK"
+msgstr "CHILMARK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CLARKSBURG"
+msgstr "CLARKSBURG"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CLINTON"
+msgstr "CLINTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "COHASSET"
+msgstr "COHASSET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "COLRAIN"
+msgstr "COLRAIN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CONCORD"
+msgstr "CONCORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CONWAY"
+msgstr "CONWAY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "CUMMINGTON"
+msgstr "CUMMINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DALTON"
+msgstr "DALTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DANVERS"
+msgstr "DANVERS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DARTMOUTH"
+msgstr "DARTMOUTH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DEDHAM"
+msgstr "DEDHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DEERFIELD"
+msgstr "DEERFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DENNIS"
+msgstr "DENNIS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DIGHTON"
+msgstr "DIGHTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DOUGLAS"
+msgstr "DOUGLAS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DOVER"
+msgstr "DOVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DRACUT"
+msgstr "DRACUT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DUDLEY"
+msgstr "DUDLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DUNSTABLE"
+msgstr "DUNSTABLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "DUXBURY"
+msgstr "DUXBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EAST BRIDGEWATER"
+msgstr "EAST BRIDGEWATER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EAST BROOKFIELD"
+msgstr "EAST BROOKFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EAST LONGMEADOW"
+msgstr "EAST LONGMEADOW"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EASTHAM"
+msgstr "EASTHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EASTHAMPTON"
+msgstr "EASTHAMPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EASTON"
+msgstr "EASTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EDGARTOWN"
+msgstr "EDGARTOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EGREMONT"
+msgstr "EGREMONT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ERVING"
+msgstr "ERVING"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ESSEX"
+msgstr "ESSEX"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "EVERETT"
+msgstr "EVERETT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FAIRHAVEN"
+msgstr "FAIRHAVEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FALL RIVER"
+msgstr "FALL RIVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FALMOUTH"
+msgstr "FALMOUTH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FITCHBURG"
+msgstr "FITCHBURG"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FLORIDA"
+msgstr "FLORIDA"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FOXBOROUGH"
+msgstr "FOXBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FRAMINGHAM"
+msgstr "FRAMINGHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FRANKLIN"
+msgstr "FRANKLIN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "FREETOWN"
+msgstr "FREETOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GARDNER"
+msgstr "GARDNER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "AQUINNAH"
+msgstr "AQUINNAH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GEORGETOWN"
+msgstr "GEORGETOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GILL"
+msgstr "GILL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GLOUCESTER"
+msgstr "GLOUCESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GOSHEN"
+msgstr "GOSHEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GOSNOLD"
+msgstr "GOSNOLD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GRAFTON"
+msgstr "GRAFTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GRANBY"
+msgstr "GRANBY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GRANVILLE"
+msgstr "GRANVILLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GREAT BARRINGTON"
+msgstr "GREAT BARRINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GREENFIELD"
+msgstr "GREENFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GROTON"
+msgstr "GROTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "GROVELAND"
+msgstr "GROVELAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HADLEY"
+msgstr "HADLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HALIFAX"
+msgstr "HALIFAX"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HAMILTON"
+msgstr "HAMILTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HAMPDEN"
+msgstr "HAMPDEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HANCOCK"
+msgstr "HANCOCK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HANOVER"
+msgstr "HANOVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HANSON"
+msgstr "HANSON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HARDWICK"
+msgstr "HARDWICK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HARVARD"
+msgstr "HARVARD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HARWICH"
+msgstr "HARWICH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HATFIELD"
+msgstr "HATFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HAVERHILL"
+msgstr "HAVERHILL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HAWLEY"
+msgstr "HAWLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HEATH"
+msgstr "HEATH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HINGHAM"
+msgstr "HINGHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HINSDALE"
+msgstr "HINSDALE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOLBROOK"
+msgstr "HOLBROOK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOLDEN"
+msgstr "HOLDEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOLLAND"
+msgstr "HOLLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOLLISTON"
+msgstr "HOLLISTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOLYOKE"
+msgstr "HOLYOKE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOPEDALE"
+msgstr "HOPEDALE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HOPKINTON"
+msgstr "HOPKINTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HUBBARDSTON"
+msgstr "HUBBARDSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HUDSON"
+msgstr "HUDSON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HULL"
+msgstr "HULL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "HUNTINGTON"
+msgstr "HUNTINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "IPSWICH"
+msgstr "IPSWICH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "KINGSTON"
+msgstr "KINGSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LAKEVILLE"
+msgstr "LAKEVILLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LANCASTER"
+msgstr "LANCASTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LANESBOROUGH"
+msgstr "LANESBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LAWRENCE"
+msgstr "LAWRENCE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEE"
+msgstr "LEE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEICESTER"
+msgstr "LEICESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LENOX"
+msgstr "LENOX"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEOMINSTER"
+msgstr "LEOMINSTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEVERETT"
+msgstr "LEVERETT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEXINGTON"
+msgstr "LEXINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LEYDEN"
+msgstr "LEYDEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LINCOLN"
+msgstr "LINCOLN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LITTLETON"
+msgstr "LITTLETON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LONGMEADOW"
+msgstr "LONGMEADOW"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LOWELL"
+msgstr "LOWELL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LUDLOW"
+msgstr "LUDLOW"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LUNENBURG"
+msgstr "LUNENBURG"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LYNN"
+msgstr "LYNN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "LYNNFIELD"
+msgstr "LYNNFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MALDEN"
+msgstr "MALDEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MANCHESTER"
+msgstr "MANCHESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MANSFIELD"
+msgstr "MANSFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MARBLEHEAD"
+msgstr "MARBLEHEAD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MARION"
+msgstr "MARION"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MARLBOROUGH"
+msgstr "MARLBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MARSHFIELD"
+msgstr "MARSHFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MASHPEE"
+msgstr "MASHPEE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MATTAPOISETT"
+msgstr "MATTAPOISETT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MAYNARD"
+msgstr "MAYNARD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MEDFIELD"
+msgstr "MEDFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MEDFORD"
+msgstr "MEDFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MEDWAY"
+msgstr "MEDWAY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MELROSE"
+msgstr "MELROSE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MENDON"
+msgstr "MENDON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MERRIMAC"
+msgstr "MERRIMAC"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "METHUEN"
+msgstr "METHUEN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MIDDLEBOROUGH"
+msgstr "MIDDLEBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MIDDLEFIELD"
+msgstr "MIDDLEFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MIDDLETON"
+msgstr "MIDDLETON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MILFORD"
+msgstr "MILFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MILLBURY"
+msgstr "MILLBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MILLIS"
+msgstr "MILLIS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MILLVILLE"
+msgstr "MILLVILLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MILTON"
+msgstr "MILTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MONROE"
+msgstr "MONROE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MONSON"
+msgstr "MONSON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MONTAGUE"
+msgstr "MONTAGUE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MONTEREY"
+msgstr "MONTEREY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MONTGOMERY"
+msgstr "MONTGOMERY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "MOUNT WASHINGTON"
+msgstr "MOUNT WASHINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NAHANT"
+msgstr "NAHANT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NANTUCKET"
+msgstr "NANTUCKET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NATICK"
+msgstr "NATICK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEEDHAM"
+msgstr "NEEDHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEW ASHFORD"
+msgstr "NEW ASHFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEW BEDFORD"
+msgstr "NEW BEDFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEW BRAINTREE"
+msgstr "NEW BRAINTREE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEW MARLBOROUGH"
+msgstr "NEW MARLBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEW SALEM"
+msgstr "NEW SALEM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEWBURY"
+msgstr "NEWBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEWBURYPORT"
+msgstr "NEWBURYPORT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NEWTON"
+msgstr "NEWTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORFOLK"
+msgstr "NORFOLK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTH ADAMS"
+msgstr "NORTH ADAMS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTH ANDOVER"
+msgstr "NORTH ANDOVER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTH ATTLEBOROUGH"
+msgstr "NORTH ATTLEBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTH BROOKFIELD"
+msgstr "NORTH BROOKFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTH READING"
+msgstr "NORTH READING"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTHAMPTON"
+msgstr "NORTHAMPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTHBOROUGH"
+msgstr "NORTHBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTHBRIDGE"
+msgstr "NORTHBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTHFIELD"
+msgstr "NORTHFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORTON"
+msgstr "NORTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORWELL"
+msgstr "NORWELL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "NORWOOD"
+msgstr "NORWOOD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "OAK BLUFFS"
+msgstr "OAK BLUFFS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "OAKHAM"
+msgstr "OAKHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ORANGE"
+msgstr "ORANGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ORLEANS"
+msgstr "ORLEANS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "OTIS"
+msgstr "OTIS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "OXFORD"
+msgstr "OXFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PALMER"
+msgstr "PALMER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PAXTON"
+msgstr "PAXTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PEABODY"
+msgstr "PEABODY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PELHAM"
+msgstr "PELHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PEMBROKE"
+msgstr "PEMBROKE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PEPPERELL"
+msgstr "PEPPERELL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PERU"
+msgstr "PERU"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PETERSHAM"
+msgstr "PETERSHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PHILLIPSTON"
+msgstr "PHILLIPSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PITTSFIELD"
+msgstr "PITTSFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PLAINFIELD"
+msgstr "PLAINFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PLAINVILLE"
+msgstr "PLAINVILLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PLYMOUTH"
+msgstr "PLYMOUTH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PLYMPTON"
+msgstr "PLYMPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PRINCETON"
+msgstr "PRINCETON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "PROVINCETOWN"
+msgstr "PROVINCETOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "QUINCY"
+msgstr "QUINCY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "RANDOLPH"
+msgstr "RANDOLPH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "RAYNHAM"
+msgstr "RAYNHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "READING"
+msgstr "READING"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "REHOBOTH"
+msgstr "REHOBOTH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "REVERE"
+msgstr "REVERE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "RICHMOND"
+msgstr "RICHMOND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROCHESTER"
+msgstr "ROCHESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROCKLAND"
+msgstr "ROCKLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROCKPORT"
+msgstr "ROCKPORT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROWE"
+msgstr "ROWE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROWLEY"
+msgstr "ROWLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "ROYALSTON"
+msgstr "ROYALSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "RUSSELL"
+msgstr "RUSSELL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "RUTLAND"
+msgstr "RUTLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SALEM"
+msgstr "SALEM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SALISBURY"
+msgstr "SALISBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SANDISFIELD"
+msgstr "SANDISFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SANDWICH"
+msgstr "SANDWICH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SAUGUS"
+msgstr "SAUGUS"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SAVOY"
+msgstr "SAVOY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SCITUATE"
+msgstr "SCITUATE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SEEKONK"
+msgstr "SEEKONK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHARON"
+msgstr "SHARON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHEFFIELD"
+msgstr "SHEFFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHELBURNE"
+msgstr "SHELBURNE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHERBORN"
+msgstr "SHERBORN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHIRLEY"
+msgstr "SHIRLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHREWSBURY"
+msgstr "SHREWSBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SHUTESBURY"
+msgstr "SHUTESBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOMERSET"
+msgstr "SOMERSET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOMERVILLE"
+msgstr "SOMERVILLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOUTH HADLEY"
+msgstr "SOUTH HADLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOUTHAMPTON"
+msgstr "SOUTHAMPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOUTHBOROUGH"
+msgstr "SOUTHBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOUTHBRIDGE"
+msgstr "SOUTHBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SOUTHWICK"
+msgstr "SOUTHWICK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SPENCER"
+msgstr "SPENCER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SPRINGFIELD"
+msgstr "SPRINGFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STERLING"
+msgstr "STERLING"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STOCKBRIDGE"
+msgstr "STOCKBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STONEHAM"
+msgstr "STONEHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STOUGHTON"
+msgstr "STOUGHTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STOW"
+msgstr "STOW"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "STURBRIDGE"
+msgstr "STURBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SUDBURY"
+msgstr "SUDBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SUNDERLAND"
+msgstr "SUNDERLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SUTTON"
+msgstr "SUTTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SWAMPSCOTT"
+msgstr "SWAMPSCOTT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "SWANSEA"
+msgstr "SWANSEA"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TAUNTON"
+msgstr "TAUNTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TEMPLETON"
+msgstr "TEMPLETON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TEWKSBURY"
+msgstr "TEWKSBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TISBURY"
+msgstr "TISBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TOLLAND"
+msgstr "TOLLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TOPSFIELD"
+msgstr "TOPSFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TOWNSEND"
+msgstr "TOWNSEND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TRURO"
+msgstr "TRURO"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TYNGSBOROUGH"
+msgstr "TYNGSBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "TYRINGHAM"
+msgstr "TYRINGHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "UPTON"
+msgstr "UPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "UXBRIDGE"
+msgstr "UXBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WAKEFIELD"
+msgstr "WAKEFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WALES"
+msgstr "WALES"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WALPOLE"
+msgstr "WALPOLE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WALTHAM"
+msgstr "WALTHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WARE"
+msgstr "WARE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WAREHAM"
+msgstr "WAREHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WARREN"
+msgstr "WARREN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WARWICK"
+msgstr "WARWICK"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WASHINGTON"
+msgstr "WASHINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WATERTOWN"
+msgstr "WATERTOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WAYLAND"
+msgstr "WAYLAND"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEBSTER"
+msgstr "WEBSTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WELLESLEY"
+msgstr "WELLESLEY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WELLFLEET"
+msgstr "WELLFLEET"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WENDELL"
+msgstr "WENDELL"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WENHAM"
+msgstr "WENHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST BOYLSTON"
+msgstr "WEST BOYLSTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST BRIDGEWATER"
+msgstr "WEST BRIDGEWATER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST BROOKFIELD"
+msgstr "WEST BROOKFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST NEWBURY"
+msgstr "WEST NEWBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST SPRINGFIELD"
+msgstr "WEST SPRINGFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST STOCKBRIDGE"
+msgstr "WEST STOCKBRIDGE"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEST TISBURY"
+msgstr "WEST TISBURY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTBOROUGH"
+msgstr "WESTBOROUGH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTFIELD"
+msgstr "WESTFIELD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTFORD"
+msgstr "WESTFORD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTHAMPTON"
+msgstr "WESTHAMPTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTMINSTER"
+msgstr "WESTMINSTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTON"
+msgstr "WESTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTPORT"
+msgstr "WESTPORT"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WESTWOOD"
+msgstr "WESTWOOD"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WEYMOUTH"
+msgstr "WEYMOUTH"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WHATELY"
+msgstr "WHATELY"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WHITMAN"
+msgstr "WHITMAN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WILBRAHAM"
+msgstr "WILBRAHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WILLIAMSBURG"
+msgstr "WILLIAMSBURG"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WILLIAMSTOWN"
+msgstr "WILLIAMSTOWN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WILMINGTON"
+msgstr "WILMINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WINCHENDON"
+msgstr "WINCHENDON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WINCHESTER"
+msgstr "WINCHESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WINDSOR"
+msgstr "WINDSOR"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WINTHROP"
+msgstr "WINTHROP"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WOBURN"
+msgstr "WOBURN"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WORCESTER"
+msgstr "WORCESTER"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WORTHINGTON"
+msgstr "WORTHINGTON"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "WRENTHAM"
+msgstr "WRENTHAM"
+
+#. ~ City name
+#: data/mods/MA/cities.json
+msgid "YARMOUTH"
+msgstr "YARMOUTH"
+
+#. ~ MOD name
+#: data/mods/MA/modinfo.json
+msgid "Massachusetts"
+msgstr "Massachusetts"
+
+#. ~ Description of MOD 'Massachusetts'
+#: data/mods/MA/modinfo.json
+msgid "Cataclysm in one state."
+msgstr "Đại thảm họa trong một tiểu bang."
+
+#. ~ Scenario name for male
+#: data/mods/MA/scenarios.json
+msgctxt "scenario_male"
+msgid "Massachusetts"
+msgstr "Massachusetts"
+
+#. ~ Scenario name for female
+#: data/mods/MA/scenarios.json
+msgctxt "scenario_female"
+msgid "Massachusetts"
+msgstr "Massachusetts"
+
+#. ~ Description of scenario 'Massachusetts' for male
+#: data/mods/MA/scenarios.json
+msgctxt "scen_desc_male"
+msgid "Somewhere in New England."
+msgstr "Đâu đó ở New England."
+
+#. ~ Description of scenario 'Massachusetts' for female
+#: data/mods/MA/scenarios.json
+msgctxt "scen_desc_female"
+msgid "Somewhere in New England."
+msgstr "Đâu đó ở New England."
+
+#. ~ Starting location of scenario 'Massachusetts'
+#: data/mods/MA/scenarios.json
+msgctxt "start_name"
+msgid "Somewhere in New England"
+msgstr "Đâu đó ở New England"
+
+#. ~ Monster name
+#: data/mods/desert_region/desert_monsters.json
+msgid "hook kangaroo"
+msgid_plural "hook kangaroos"
+msgstr[0] "chuột túi tay móc"
+
+#. ~ Description of monster 'hook kangaroo'
+#: data/mods/desert_region/desert_monsters.json
+msgid ""
+"Grotesque and deformed kangaroo body that has black goo seeping from its "
+"orifices.  The most unnerving is its forearms have reformed into a raptorial"
+" shape, like that of a praying mantis."
+msgstr ""
+"Cơ thể chuột túi kỳ dị và biến dạng với chất nhầy màu đen rỉ ra từ các lỗ "
+"trên cơ thể. Đáng sợ nhất là hai chi trước đã biến thành hình dạng bắt mồi, "
+"giống như của bọ ngựa."
+
+#. ~ Monster name
+#: data/mods/desert_region/desert_reptile_amphibian.json
+msgid "Gila monster"
+msgid_plural "Gila monsters"
+msgstr[0] "thằn lằn Gila"
+
+#. ~ Description of monster 'Gila monster'
+#: data/mods/desert_region/desert_reptile_amphibian.json
+msgid ""
+"A reptile with aposematic coloration of black and orange that is renowned "
+"for an extremely painful venom when it bites."
+msgstr ""
+"Một loài bò sát có màu sắc cảnh báo đen và cam, nổi tiếng với vết cắn có nọc"
+" cực kỳ đau đớn."
+
+#. ~ MOD name
+#: data/mods/desert_region/modinfo.json
+msgid "Desert Region"
+msgstr "Vùng Sa Mạc"
+
+#. ~ Description of MOD 'Desert Region'
+#: data/mods/desert_region/modinfo.json
+msgid "A testbed/WIP mod to showcase regional_map_settings JSON changes."
+msgstr ""
+"Một bản mod thử nghiệm/đang phát triển để giới thiệu các thay đổi JSON của "
+"regional_map_settings."
+
+#. ~ Furniture name
+#: data/mods/desert_region/furniture-and-terrain/desert_furniture.json
+msgid "tumbleweed"
+msgstr "cỏ lăn"
+
+#. ~ Description of furniture 'tumbleweed'
+#: data/mods/desert_region/furniture-and-terrain/desert_furniture.json
+msgid "Tumbleweed."
+msgstr "Cỏ lăn."
+
+#. ~ Description of terrain 'outcrop'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"An assortment of various large, sharp rocks that jut out from the "
+"surrounding terrain.  Could be as a surface for a number of things or "
+"climbed on if worn with proper footwear."
+msgstr ""
+"Tập hợp nhiều tảng đá lớn, sắc nhọn nhô lên khỏi địa hình xung quanh. Có thể"
+" dùng làm bề mặt cho một số việc hoặc trèo lên nếu mang giày dép phù hợp."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "dune"
+msgstr "cồn cát"
+
+#. ~ Description of terrain 'dune'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"A huge sand dune that is continually reshaped by the wind.  Climbing it will"
+" be troublesome."
+msgstr ""
+"Một cồn cát khổng lồ liên tục bị gió định hình lại. Trèo lên nó sẽ khá phiền"
+" toái."
+
+#. ~ Terrain name
+#. ~ Overmap terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "desert pavement"
+msgstr "mặt đường sa mạc"
+
+#. ~ Description of terrain 'desert pavement'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"Not that kind of pavement!  Naturally occurring pockets of densely packed "
+"rock fragments that is easier to traverse than sand, with the right "
+"footwear."
+msgstr ""
+"Không phải loại mặt đường nhân tạo đâu! Những mảng đá vụn nén chặt tự nhiên "
+"dễ đi lại hơn cát, nếu mang đúng giày dép."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "mudcrack"
+msgstr "vết nứt bùn"
+
+#. ~ Description of terrain 'mudcrack'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"Large continuous cracks mark what once was a bottom of a body of water.  "
+"With the proper tools, you could extract clay from here."
+msgstr ""
+"Những vết nứt lớn kéo dài đánh dấu nơi từng là đáy của một vùng nước. Với "
+"công cụ thích hợp, bạn có thể khai thác đất sét từ đây."
+
+#. ~ Terrain name
+#. ~ Overmap terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "sandstone"
+msgstr "đá sa thạch"
+
+#. ~ Description of terrain 'sandstone'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "A wall of yellowish brown sandstone."
+msgstr "Một bức tường đá sa thạch màu nâu vàng."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "artificial grass"
+msgstr "cỏ nhân tạo"
+
+#. ~ Description of terrain 'artificial grass'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "A carpet of synthetic fibers made to resemble natural grass."
+msgstr "Một thảm sợi tổng hợp được làm giống như cỏ tự nhiên."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "white artificial grass"
+msgstr "cỏ nhân tạo màu trắng"
+
+#. ~ Description of terrain 'white artificial grass'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"A carpet of synthetic fibers made to resemble natural grass.  Covered in "
+"white latex-based paint, it is used to mark lines in recreational sports."
+msgstr ""
+"Một thảm sợi tổng hợp được làm giống cỏ tự nhiên. Phủ sơn latex trắng, nó "
+"được dùng để kẻ vạch trong các môn thể thao giải trí."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "withered shrub"
+msgstr "bụi cây khô héo"
+
+#. ~ Description of terrain 'withered shrub'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "A small shrub that has withered away."
+msgstr "Một bụi cây nhỏ đã héo úa hoàn toàn."
+
+#. ~ Terrain name
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid "buckhorn cholla"
+msgstr "xương rồng cholla sừng hươu"
+
+#. ~ Description of terrain 'buckhorn cholla'
+#: data/mods/desert_region/furniture-and-terrain/desert_terrain.json
+msgid ""
+"A shrub-like cactus belonging to the 'Cylindropuntia' genus, commonly found "
+"throughout the deserts of North America.  If you look closely, you can see "
+"some unharvested cholla buds hiding behind clusters of stiff spines."
+msgstr ""
+"Một loài xương rồng dạng cây bụi thuộc chi 'Cylindropuntia', thường thấy "
+"khắp các sa mạc Bắc Mỹ. Nếu nhìn kỹ, bạn có thể thấy một vài nụ cholla chưa "
+"thu hoạch ẩn sau những cụm gai cứng đờ."
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "drylands"
+msgstr "vùng đất khô hạn"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "shrubland"
+msgstr "vùng cây bụi"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "woodland"
+msgstr "rừng thưa"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "mesa"
+msgstr "núi đầu bằng"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "canyon"
+msgstr "hẻm núi"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "lake bed shore"
+msgstr "bờ lòng hồ"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "riverbed"
+msgstr "lòng sông"
+
+#. ~ Overmap terrain name
+#: data/mods/desert_region/overmap/desert_overmap_terrain.json
+msgid "riverbed shore"
+msgstr "bờ lòng sông"
+
+#. ~ Weather type name
+#: data/mods/desert_region/weather/desert_weather_type.json
+msgid "Early Dust Storm"
+msgstr "Giai đoạn đầu bão bụi"
+
+#. ~ Weather type name
+#: data/mods/desert_region/weather/desert_weather_type.json
+msgid "Dust Storm"
+msgstr "Bão bụi"
+
+#. ~ Snippet in category 'DUST_STORM_NIGHT_MESSAGES_1'
+#. ~ Snippet in category 'DUST_STORM_DAY_MESSAGES_1'
+#: data/mods/desert_region/weather/dust_storm_snippets.json
+msgid "You notice small patches of dust blown away by the wind."
+msgstr "Bạn nhận thấy những vệt bụi nhỏ bị gió cuốn đi."
+
+#. ~ Snippet in category 'DUST_STORM_NIGHT_MESSAGES_1'
+#: data/mods/desert_region/weather/dust_storm_snippets.json
+msgid "The stars are slowly being consumed by ominous-looking clouds."
+msgstr "Các vì sao đang dần bị nuốt chửng bởi những đám mây mang điềm gở."
+
+#. ~ Snippet in category 'DUST_STORM_NIGHT_MESSAGES_1'
+#. ~ Snippet in category 'DUST_STORM_DAY_MESSAGES_1'
+#: data/mods/desert_region/weather/dust_storm_snippets.json
+msgid "The Sun is slowly being consumed by ominous-looking clouds."
+msgstr "Mặt Trời đang dần bị nuốt chửng bởi những đám mây mang điềm gở."
+
+#. ~ Snippet in category 'DUST_STORM_NIGHT_MESSAGES_1'
+#. ~ Snippet in category 'DUST_STORM_DAY_MESSAGES_1'
+#: data/mods/desert_region/weather/dust_storm_snippets.json
+msgid "You have a feeling you should take shelter immediately."
+msgstr "Bạn có cảm giác mình nên tìm chỗ trú ẩn ngay lập tức."
+
+#. ~ Field intensity level
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "gust of dust"
+msgstr "cơn gió bụi"
+
+#. ~ Field intensity level
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "cloud of dust"
+msgstr "đám mây bụi"
+
+#. ~ Field intensity level
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "wall of dust"
+msgstr "bức tường bụi"
+
+#. ~ Name of effect 'dust_storm_blind'
+#. ~ Player message in EoC 'EOC_DUST_SMOKE'
+#: data/mods/desert_region/weather/fd_dust.json
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid "Dust"
+msgstr "Bụi"
+
+#. ~ Apply message of effect 'Dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "The dust blinds you!"
+msgstr "Bụi làm bạn mù mắt!"
+
+#. ~ Miss message of effect 'Dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "The dust irritates your eyes."
+msgstr "Bụi làm rát mắt bạn."
+
+#. ~ Name of effect 'dust_storm_dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgctxt "inhaled"
+msgid "Dust"
+msgstr "Bụi"
+
+#. ~ Description of effect 'Dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "You've inhaled a lungful of fine dust."
+msgstr "Bạn đã hít phải một phổi đầy bụi mịn."
+
+#. ~ Apply message of effect 'Dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "You inhale a lungful of fine dust."
+msgstr "Bạn hít vào một phổi đầy bụi mịn."
+
+#. ~ Miss message of effect 'Dust'
+#: data/mods/desert_region/weather/fd_dust.json
+msgid "Your lungs burn from the dust."
+msgstr "Phổi của bạn bỏng rát vì bụi."
+
+#. ~ Tool name
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid "test dust storm causer"
+msgid_plural "test dust storm causers"
+msgstr[0] "những vật thử nghiệm tạo bão bụi"
+
+#. ~ Description of tool 'test dust storm causer'
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid "Causes dust storms."
+msgstr "Gây ra các cơn bão bụi."
+
+#. ~ Player message in EoC 'EOC_DUST_STORM_POPUP_DAY_NIGHT'
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid ""
+"You suddenly notice a wall of dust and debris coming your way.  A dust storm"
+" is approaching."
+msgstr ""
+"Bạn đột nhiên nhận thấy một bức tường bụi và mảnh vụn đang lao về phía mình."
+" Một cơn bão bụi đang đến gần."
+
+#. ~ Player message in false effect in EoC 'EOC_DUST_STORM_POPUP_DAY_NIGHT'
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid ""
+"NIGHT You suddenly notice a wall of dust and debris coming your way.  A dust"
+" storm is approaching."
+msgstr ""
+"ĐÊM Bạn đột nhiên nhận thấy một bức tường bụi và mảnh vụn đang lao về phía "
+"mình. Một cơn bão bụi đang đến gần."
+
+#. ~ Player message in EoC 'EOC_DUST_STORM_MESSAGE'
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid "The dust storm has arrived!"
+msgstr "Cơn bão bụi đã ập đến!"
+
+#. ~ Player message in EoC 'EOC_END_DUST_STORM_MESSAGE'
+#: data/mods/desert_region/weather/weather_eoc.json
+msgid "As suddenly as it began, the dust storm fades."
+msgstr "Cũng đột ngột như lúc bắt đầu, cơn bão bụi dần tan biến."
+
+#. ~ MOD name
+#: data/mods/railroads/modinfo.json
+msgid "Railroads"
+msgstr "Đường sắt"
+
+#. ~ Description of MOD 'Railroads'
+#: data/mods/railroads/modinfo.json
+msgid ""
+"Enables basic railroad network generation in the world.  <color_red>Not "
+"intended for regular gameplay, more for development purposes.</color>"
+msgstr ""
+"Cho phép tạo mạng lưới đường sắt cơ bản trong thế giới. <color_red>Không "
+"nhằm mục đích chơi thông thường, chủ yếu phục vụ phát triển game.</color>"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad"
+msgstr "đường sắt"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad bridge"
+msgstr "cầu đường sắt"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad bridge (overpass)"
+msgstr "cầu vượt đường sắt"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad bridgehead (ground)"
+msgstr "đầu cầu đường sắt (mặt đất)"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad bridgehead (ramp)"
+msgstr "đầu cầu đường sắt (dốc)"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad level crossing"
+msgstr "đoạn giao cắt đường sắt cùng mức"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad station"
+msgstr "ga đường sắt"
+
+#. ~ Overmap terrain name
+#: data/mods/railroads/overmap/overmap_terrain/overmap_terrain_transportation.json
+msgid "railroad station parking lot"
+msgstr "bãi đỗ xe ga đường sắt"
+
+#. ~ Compact bionic module name
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Left Leg CBM"
+msgid_plural "Bionic Limb - Left Leg CBMs"
+msgstr[0] "CBM Chi sinh học - Chân trái"
+
+#. ~ Description of compact bionic module 'Bionic Limb - Left Leg CBM'
+#. ~ Description of compact bionic module 'Bionic Limb - Right Leg CBM'
+#. ~ Description of compact bionic module 'Bionic Limb - Left Arm CBM'
+#. ~ Description of compact bionic module 'Bionic Limb - Right Arm CBM'
+#. ~ Description of compact bionic module 'Bionic Limb - Tank Treads CBM'
+#: data/mods/Limb_WIP/bionics.json
+msgid "CBM which replaces the left leg with a bionic counterpart."
+msgstr "CBM thay thế chân trái bằng một chi sinh học."
+
+#. ~ Compact bionic module name
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Right Leg CBM"
+msgid_plural "Bionic Limb - Right Leg CBMs"
+msgstr[0] "CBM Chi sinh học - Chân phải"
+
+#. ~ Compact bionic module name
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Left Arm CBM"
+msgid_plural "Bionic Limb - Left Arm CBMs"
+msgstr[0] "CBM Chi sinh học - Tay trái"
+
+#. ~ Compact bionic module name
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Right Arm CBM"
+msgid_plural "Bionic Limb - Right Arm CBMs"
+msgstr[0] "CBM Chi sinh học - Tay phải"
+
+#. ~ Compact bionic module name
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Tank Treads CBM"
+msgid_plural "Bionic Limb - Tank Treads CBMs"
+msgstr[0] "CBM Chi sinh học - Bánh xích xe tăng"
+
+#. ~ Name of a bionic
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Left Leg"
+msgstr "Chi sinh học - Chân trái"
+
+#. ~ Description of bionic 'Bionic Limb - Left Leg'
+#. ~ Description of bionic 'Bionic Limb - Left Arm'
+#: data/mods/Limb_WIP/bionics.json
+msgid "CBM which replaces your left leg with a bionic counterpart."
+msgstr "CBM thay thế chân trái của bạn bằng một chi sinh học."
+
+#. ~ Name of a bionic
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Right Leg"
+msgstr "Chi sinh học - Chân phải"
+
+#. ~ Description of bionic 'Bionic Limb - Right Leg'
+#. ~ Description of bionic 'Bionic Limb - Right Arm'
+#: data/mods/Limb_WIP/bionics.json
+msgid "CBM which replaces your right leg with a bionic counterpart."
+msgstr "CBM thay thế chân phải của bạn bằng một chi sinh học."
+
+#. ~ Name of a bionic
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Tank Treads"
+msgstr "Chi sinh học - Bánh xích xe tăng"
+
+#. ~ Description of bionic 'Bionic Limb - Tank Treads'
+#: data/mods/Limb_WIP/bionics.json
+msgid "CBM which replaces your legs with tank treads."
+msgstr "CBM thay thế đôi chân của bạn bằng bánh xích xe tăng."
+
+#. ~ Name of a bionic
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Left Arm"
+msgstr "Chi sinh học - Tay trái"
+
+#. ~ Name of a bionic
+#: data/mods/Limb_WIP/bionics.json
+msgid "Bionic Limb - Right Arm"
+msgstr "Chi sinh học - Tay phải"
+
+#. ~ Name of effect 'no_power_tank_treads'
+#: data/mods/Limb_WIP/effects.json
+msgid "Low Power (Tank Treads)"
+msgstr "Năng lượng thấp (Bánh xích xe tăng)"
+
+#. ~ Description of effect 'Low Power (Tank Treads)'
+#: data/mods/Limb_WIP/effects.json
+msgid ""
+"You're low on power.  Your tank treads are operating in emergency mode and "
+"have limited function."
+msgstr ""
+"Bạn sắp cạn năng lượng. Bánh xích xe tăng của bạn đang hoạt động ở chế độ "
+"khẩn cấp và bị hạn chế chức năng."
+
+#. ~ MOD name
+#: data/mods/Limb_WIP/modinfo.json
+msgid "Work in Progress Limb Stuff"
+msgstr "Nội dung Chi thể Đang phát triển"
+
+#. ~ Description of MOD 'Work in Progress Limb Stuff'
+#: data/mods/Limb_WIP/modinfo.json
+msgid ""
+"A repository for the in-progress Limb Project, containing all JSON-defined "
+"limb content for dedicated testing (and limit breakage for players who don't"
+" want to be on the bleeding edge).  Things might not work properly, so "
+"please report any limb-related weirdness on GitHub!"
+msgstr ""
+"Kho lưu trữ cho Dự án Chi thể đang hoàn thiện, chứa tất cả nội dung chi thể "
+"định nghĩa bằng JSON để thử nghiệm chuyên biệt (và hạn chế lỗi cho người "
+"chơi không muốn trải nghiệm bản thử nghiệm mới nhất). Mọi thứ có thể chưa "
+"hoạt động trơn tru, vì vậy vui lòng báo cáo bất kỳ hiện tượng kỳ lạ nào liên"
+" quan đến chi thể trên GitHub!"
+
+#. ~ Snippet in category '<eyes_blind>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Something snaps behind your eyes, and the world turns black."
+msgstr "Có thứ gì đó đứt gãy sau mắt bạn, và thế giới chìm vào bóng tối."
+
+#. ~ Snippet in category '<eyes_blind>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "A sudden sharp pain in your eyes, then you are lost in the darkness."
+msgstr ""
+"Một cơn đau nhói đột ngột nơi khóe mắt, rồi bạn lạc vào bóng đêm mịt mù."
+
+#. ~ Snippet in category '<eyes_blind>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your eyes fail you, and everything turns dark."
+msgstr "Đôi mắt phản bội bạn, và mọi thứ trở nên tối đen."
+
+#. ~ Snippet in category '<eyes_glare>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "The lights grow uncomfortably bright."
+msgstr "Ánh sáng trở nên chói lòa đến khó chịu."
+
+#. ~ Snippet in category '<eyes_stun>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "The world starts turning wildly, and you stumble."
+msgstr "Thế giới bắt đầu quay cuồng dữ dội, và bạn loạng choạng."
+
+#. ~ Snippet in category '<arm_itch>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your arms start itching."
+msgstr "Cánh tay của bạn bắt đầu ngứa ngáy."
+
+#. ~ Snippet in category '<arm_itch>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Something is crawling under your skin."
+msgstr "Có thứ gì đó đang bò dưới da bạn."
+
+#. ~ Snippet in category '<arm_itch>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "You pause for a moment.  The movement under your skin doesn't."
+msgstr "Bạn khựng lại một lát. Nhưng sự ngọ nguậy dưới da thì không."
+
+#. ~ Snippet in category '<arm_pain>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your arms hurt!"
+msgstr "Cánh tay của bạn đau nhức!"
+
+#. ~ Snippet in category '<arm_pain>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your arms cramp!"
+msgstr "Cánh tay của bạn bị chuột rút!"
+
+#. ~ Snippet in category '<arm_pain>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Something shifts in your arm, painfully."
+msgstr "Có gì đó dịch chuyển trong cánh tay bạn, vô cùng đau đớn."
+
+#. ~ Snippet in category '<arm_drop>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your hands seize up for a moment, and you drop your weapon!"
+msgstr "Bàn tay bạn co giật trong giây lát, và bạn đánh rơi vũ khí!"
+
+#. ~ Snippet in category '<arm_drop>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Your arms fall down paralyzed, and your weapon tumbles to the ground!"
+msgstr "Hai cánh tay bạn rũ xuống tê liệt, và vũ khí rơi phịch xuống đất!"
+
+#. ~ Snippet in category '<bird_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You are but a child again, fighting over the dinner's remains with your "
+"brothers and sisters.  There were times for mirth and playfulness, but this "
+"is not one of those - the time nears when the smallest will be cast aside, "
+"and you're all terrified of being chosen."
+msgstr ""
+"Bạn lại biến thành một đứa trẻ, tranh giành những mẩu thức ăn thừa với anh "
+"chị em của mình. Đã từng có lúc vui tươi đùa nghịch, nhưng đây không phải là"
+" lúc - thời điểm đứa nhỏ nhất bị bỏ rơi đang cận kề, và tất cả các bạn đều "
+"kinh hãi sợ mình sẽ bị chọn."
+
+#. ~ Snippet in category '<bird_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You soar above the plains, but the pickings are slim today.  The shadows "
+"lengthen already, and you turn homewards with a flick of your wings, "
+"steeling yourself to the disappointed cries of your chicks and another "
+"hungry night.  You must do better tomorrow, lest this year's brood will be "
+"lost too."
+msgstr ""
+"Bạn bay lượn trên những đồng bằng, nhưng hôm nay kiếm ăn thật ít ỏi. Bóng "
+"tối đã bắt đầu kéo dài, và bạn vỗ cánh quay về tổ, gồng mình chuẩn bị đón "
+"những tiếng kêu thất vọng của đàn con nhỏ và thêm một đêm đói khát. Ngày mai"
+" bạn phải làm tốt hơn, kẻo lứa con năm nay cũng sẽ mất mạng."
+
+#. ~ Snippet in category '<bird_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You long for the skies, to watch the tiny problems of the ground disappear "
+"below you."
+msgstr ""
+"Bạn khao khát bầu trời, muốn ngắm nhìn những rắc rối vụn vặt dưới mặt đất "
+"dần biến mất dưới chân mình."
+
+#. ~ Snippet in category '<bird_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You remember feeling less attached to the ground.  What are you missing?"
+msgstr ""
+"Bạn nhớ lại cảm giác ít bị ràng buộc với mặt đất hơn. Bạn đang thiếu thứ gì?"
+
+#. ~ Snippet in category '<bird_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You need more if you are to fly South before the cold comes.  Much more."
+msgstr ""
+"Bạn cần nhiều hơn nữa nếu muốn bay về phương Nam trước khi cái lạnh ập tới. "
+"Nhiều hơn nữa."
+
+#. ~ Snippet in category '<bird_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Is your beak strong enough?  Your feathers long?  No, you need more."
+msgstr ""
+"Mỏ của bạn đã đủ khỏe chưa? Lông vũ đã đủ dài? Chưa, bạn cần nhiều hơn nữa."
+
+#. ~ Snippet in category '<bird_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You need enough bird primer and catalyst in your system while you are "
+"sleeping to complete your change."
+msgstr ""
+"Bạn cần có đủ chất mồi và chất xúc tác dạng chim trong cơ thể khi đang ngủ "
+"để hoàn thành sự biến đổi."
+
+#. ~ Snippet in category '<bird_failure>'
+#. ~ Snippet in category '<raptor_failure>'
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You won't be able to change without enough catalyst, the right primer and "
+"being asleep."
+msgstr ""
+"Bạn sẽ không thể biến đổi nếu thiếu đủ chất xúc tác, đúng chất mồi và không "
+"trong trạng thái ngủ."
+
+#. ~ Snippet in category '<raptor_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You prowl the forest with your nestmates in search of prey - you're a strong"
+" brood with bright feathers and sharp talons, but fortune seems to elude you"
+" lately.  You take them towards the edge of the forest, where the air always"
+" smells of smoke, and sneak up on a pack of monkeys with too-colorful fur "
+"sitting on a fallen tree and chattering amongst themselves.  The smallest "
+"notices you and waves excitedly, just before you pounce."
+msgstr ""
+"Bạn lùng sục khắp khu rừng cùng đồng loại để săn mồi - các bạn là một bầy "
+"mạnh mẽ với bộ lông sặc sỡ và móng vuốt sắc nhọn, nhưng dạo này vận may "
+"dường như lảng tránh. Bạn dẫn đàn về phía rìa rừng, nơi không khí luôn "
+"thoang thoảng mùi khói, rồi rình rập một bầy khỉ có bộ lông quá đỗi sặc sỡ "
+"đang ngồi trên cây đổ ríu rít với nhau. Con nhỏ nhất phát hiện ra bạn và vẫy"
+" tay đầy thích thú, ngay trước khi bạn vồ tới."
+
+#. ~ Snippet in category '<raptor_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You dream of blood on your talons, and the air catching your feathers as you"
+" try to balance on your struggling prey.  It feels almost like a game, "
+"something you'd have played in a previous life.  Lost in thought you almost "
+"miss the moment when the threshing grows still, until your brothers' screech"
+" brings you back to the present - time to eat."
+msgstr ""
+"Bạn mơ thấy máu dính trên móng vuốt, và không khí lướt qua lớp lông khi bạn "
+"cố giữ thăng bằng trên con mồi đang vùng vẫy. Cảm giác gần như một trò chơi,"
+" thứ gì đó bạn từng chơi ở kiếp trước. Mải mê suy nghĩ, bạn suýt bỏ lỡ "
+"khoảnh khắc con mồi ngừng giãy giụa, cho đến khi tiếng rít của bầy anh em "
+"kéo bạn về thực tại - đã đến giờ ăn."
+
+#. ~ Snippet in category '<raptor_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "Slow.  Too slow.  Slower than prey."
+msgstr "Chậm. Quá chậm. Chậm hơn cả con mồi."
+
+#. ~ Snippet in category '<raptor_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "You'll never wet your talons at this rate.  You need to become better."
+msgstr ""
+"Cứ thế này thì bạn sẽ chẳng bao giờ vấy máu được móng vuốt. Bạn cần phải trở"
+" nên hoàn thiện hơn."
+
+#. ~ Snippet in category '<raptor_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"Scenes of a chase, claws, blood on the leaves flash before your eyes.  You "
+"need more to truly understand it."
+msgstr ""
+"Những khung cảnh rượt đuổi, móng vuốt, máu rơi trên lá cây vụt qua trước mắt"
+" bạn. Bạn cần nhiều hơn để thực sự thấu hiểu nó."
+
+#. ~ Snippet in category '<raptor_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"Not a care in the world, only the hunt.  How you wish you were that far gone"
+" already."
+msgstr ""
+"Chẳng chút âu lo, chỉ có cuộc đi săn. Ước gì bạn đã chìm đắm sâu đến mức đó "
+"rồi."
+
+#. ~ Snippet in category '<raptor_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You need enough raptor primer and catalyst in your system while you are "
+"sleeping to complete your change."
+msgstr ""
+"Bạn cần có đủ chất mồi và chất xúc tác dạng chim ăn thịt trong cơ thể khi "
+"đang ngủ để hoàn thành sự biến đổi."
+
+#. ~ Snippet in category '<arm_feathers_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You are desperate to stop your disgusting ape hands from pulling out "
+"handfuls of your beautiful feathers, but they move on their own accord.  You"
+" manage to hold one of the useless things between your talons, and bring "
+"your beak down on it…Just a dream.  Still, food for thought."
+msgstr ""
+"Bạn tuyệt vọng muốn ngăn đôi bàn tay vượn người kinh tởm của mình nhổ từng "
+"nắm lông vũ tuyệt đẹp, nhưng chúng lại tự ý cử động. Bạn cố gắng giữ chặt "
+"một trong những thứ vô dụng đó giữa các móng vuốt, rồi bổ mỏ xuống… Chỉ là "
+"một giấc mơ. Dẫu vậy, cũng đáng để suy ngẫm."
+
+#. ~ Snippet in category '<arm_feathers_success>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You wake to a sudden itch in your arms, and you shake them vigorously.  To "
+"your painful surprise a new cover of long, strong feathers broke the "
+"surface, bloody dead skin and plumage falling on the ground."
+msgstr ""
+"Bạn thức giấc vì một cơn ngứa đột ngột ở cánh tay, và bạn lắc mạnh chúng. "
+"Thật bất ngờ và đau đớn, một lớp lông vũ mới dài và chắc khỏe đã phá vỡ bề "
+"mặt da, lớp da chết đẫm máu cùng lông rơi rụng xuống đất."
+
+#. ~ Snippet in category '<wings_bird_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"Clouds surround you as you soar through the sky.  You look down and see the "
+"wilderness stretching out as far as the eye can see, but you can't stay "
+"here.  You need to go somewhere else, to the land of warmth and plenty.  "
+"Your eyes wander over your beautiful wings propelling you along, and you're "
+"mesmerized by their rhythmic beating.  Much better than your…hands.  You "
+"have hands, not wings.  Not yet."
+msgstr ""
+"Mây bao bọc xung quanh khi bạn lướt qua bầu trời. Bạn nhìn xuống và thấy "
+"chốn hoang dã trải dài ngút tầm mắt, nhưng bạn không thể ở lại đây. Bạn cần "
+"đi nơi khác, đến vùng đất ấm áp và trù phú. Ánh mắt bạn lướt qua đôi cánh "
+"tuyệt đẹp đang đẩy mình tiến về phía trước, và bạn bị mê hoặc bởi nhịp đập "
+"nhịp nhàng của chúng. Tốt hơn nhiều so với đôi… bàn tay. Bạn có tay, không "
+"phải cánh. Chưa phải lúc này."
+
+#. ~ Snippet in category '<wings_bird_success>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You dream of jumping from a cliff for your first flight, but the feathers on"
+" your clumsy arms can't hold you.  You hit the ground, and your hands are "
+"mangled beyond recognition.  After waking, the pain persists, and you're "
+"startled to see your useless fingers snap and disappear in your rich "
+"plumage.  Good riddance, you think, before falling unconscious."
+msgstr ""
+"Bạn mơ thấy mình nhảy xuống từ một vách đá cho chuyến bay đầu tiên, nhưng "
+"lớp lông trên đôi tay vụng về không thể nâng đỡ được bạn. Bạn đập người "
+"xuống đất, đôi bàn tay dập nát biến dạng khôn cùng. Sau khi tỉnh giấc, cơn "
+"đau vẫn dai dẳng, và bạn giật mình thấy những ngón tay vô dụng gãy rắc rồi "
+"biến mất vào lớp lông vũ rậm rạp. Thoát nợ rồi, bạn nghĩ thầm, trước khi "
+"ngất đi."
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "You need the right nectar, otherwise you will never be queen."
+msgstr ""
+"Bạn cần đúng loại mật hoa, nếu không bạn sẽ không bao giờ trở thành ong "
+"chúa."
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "You long for a safe, dark place to complete your change."
+msgstr ""
+"Bạn khao khát một nơi an toàn, tối tăm để hoàn thành sự biến đổi của mình."
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You could build a hive, if only you were better.  What are you missing?"
+msgstr ""
+"Bạn có thể xây dựng một tổ ong, giá như bạn hoàn thiện hơn. Bạn đang thiếu "
+"thứ gì?"
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "More of the <color_yellow> good nectar</color>.  That's what you need."
+msgstr "Thêm <color_yellow>mật hoa tốt</color>. Đó chính là thứ bạn cần."
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid "You can't be expected to metamorphose with so little.  You need more."
+msgstr ""
+"Làm sao biến thái hoàn toàn với ngần ấy thứ ít ỏi được. Bạn cần nhiều hơn."
+
+#. ~ Snippet in category '<insect_failure>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You need enough insect primer and catalyst in your system while you are "
+"sleeping to complete your change."
+msgstr ""
+"Bạn cần có đủ chất mồi và chất xúc tác dạng côn trùng trong cơ thể khi đang "
+"ngủ để hoàn thành sự biến đổi."
+
+#. ~ Snippet in category '<insect_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You and your sisters have worked diligently, made your home safe and "
+"prosperous.  You felt so proud.  But lately Mother has been growing slower, "
+"and more cells are empty than with brood.  You see hesitation on your "
+"sisters as well…does the hive need you to step up?  Would they follow?  "
+"Could you defeat Her?"
+msgstr ""
+"Bạn và các chị em đã làm việc chăm chỉ, tạo nên một tổ ấm an toàn và phồn "
+"thịnh. Bạn từng rất đỗi tự hào. Nhưng dạo gần đây Mẹ ngày càng chậm chạp, và"
+" số ô rỗng còn nhiều hơn số ô có ấu trùng. Bạn cũng thấy sự do dự từ các chị"
+" em… liệu tổ có cần bạn đứng lên gánh vác? Họ có đi theo bạn không? Bạn có "
+"thể đánh bại Bà ấy không?"
+
+#. ~ Snippet in category '<insect_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You dream of a dark, damp place permeated by the smell of sawdust.  You feel"
+" like this is all you've ever known, each bend in the walls and scratch on "
+"the floor your handiwork.  It feels like home, but deep down you know that "
+"you'll have to change and emerge into the dangerous, light-battered outside."
+msgstr ""
+"Bạn mơ về một nơi tối tăm, ẩm ướt phảng phất mùi mùn cưa. Bạn cảm thấy như "
+"đây là tất cả những gì mình từng biết, từng khúc quanh trên tường và vết cào"
+" trên sàn đều là tác phẩm của bạn. Cảm giác như ở nhà, nhưng sâu thẳm bên "
+"trong bạn biết rằng mình sẽ phải biến đổi và bước ra ngoài thế giới nguy "
+"hiểm, ngập tràn ánh sáng chói chang."
+
+#. ~ Snippet in category '<insect_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You have stuffed yourself to bursting for the fourth time today, but your "
+"hunger doesn't abate.  You would need to escape your too-small skin to be "
+"able to eat enough, you're sure of it.  Take the knife to one of the stretch"
+" marks on your back, and part the skin - it springs to the side readily and "
+"with no pain.  You work your way down your sides, changing the knife between"
+" hands as needed and free your <color_light_green>new skin</color> from its "
+"fleshy prison."
+msgstr ""
+"Bạn đã nhồi nhét đến no căng bụng lần thứ tư trong ngày, nhưng cơn đói vẫn "
+"không hề thuyên giảm. Bạn cần phải thoát khỏi lớp da quá chật chội này mới "
+"có thể ăn đủ, bạn chắc chắn về điều đó. Đưa dao vào một vết rạn trên lưng và"
+" tách da ra - nó dễ dàng dạt sang hai bên mà không hề đau đớn. Bạn tiếp tục "
+"rạch dọc theo hai bên sườn, đổi dao qua lại giữa hai tay khi cần và giải "
+"phóng <color_light_green>lớp da mới</color> khỏi nhà tù bằng thịt xương."
+
+#. ~ Snippet in category '<insect_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"Getting the bodybag was harder than you would have thought, and ordinary garbage bags would just not do.  You eat your fill for the last time with this mouth, undress (you won't need clothes after the change), and climb in the bag.  Closing the zipper from the inside is a challenge, but you need complete darkness for what comes now.  You wait.\n"
+"And wait.\n"
+"And wait.\n"
+"\n"
+"Could you have been wrong?  You were so sure the time was right.\n"
+"You need to get out of here, but you can't move your…anything.  Do you even have anything to move?"
+msgstr ""
+"Kiếm được túi đựng xác khó hơn bạn tưởng, và túi rác thông thường thì không đời nào đáp ứng được. Bạn ăn bữa no nê cuối cùng bằng cái miệng này, cởi bỏ quần áo (bạn sẽ không cần đến chúng sau khi biến đổi), rồi chui vào trong túi. Kéo khóa từ bên trong là một thử thách, nhưng bạn cần bóng tối hoàn toàn cho những gì sắp diễn ra. Bạn chờ đợi.\n"
+"Và chờ đợi.\n"
+"Và chờ đợi.\n"
+"\n"
+"Liệu bạn có nhầm lẫn không? Bạn đã rất chắc chắn thời điểm đã tới.\n"
+"Bạn cần phải ra khỏi đây, nhưng bạn không thể cử động… bất cứ thứ gì. Bạn còn có cái gì để cử động không?"
+
+#. ~ Snippet in category '<insect_eye_dream>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"Your try going about your day as usual, but your vision seems to dim every "
+"few seconds for no reason.  You reach to your eyes in annoyance and feel a "
+"disgusting fleshy membrane periodically covering them with a squeaky, wet "
+"motion.  You grasp them tightly and pull hard despite the pain until they "
+"tear off with a shower of red ichor coating your eyes.  You lick it away, "
+"and finally you can see clearly."
+msgstr ""
+"Bạn cố gắng trải qua một ngày như thường lệ, nhưng tầm nhìn dường như cứ mờ "
+"đi sau mỗi vài giây không rõ lý do. Bạn bực bội sờ lên mắt và cảm nhận được "
+"một màng thịt kinh tởm định kỳ phủ kín mắt với một chuyển động ươn ướt, kin "
+"kít. Bạn nắm chặt lấy chúng và giật mạnh bất chấp đau đớn cho đến khi chúng "
+"rách toạc ra cùng một làn dịch đỏ phủ kín mắt. Bạn liếm sạch nó, và cuối "
+"cùng bạn có thể nhìn thấy rõ ràng."
+
+#. ~ Snippet in category '<insect_eye_success>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"After another day of dazed mundanity you make your way back home to your dingy cellar apartment, but miss a step and fall down the stairs, landing on your face with a wet thud.  Consciousness fades, but the pain stays.  The pain, and the feeling of myriad cockroach legs running on your skin, coating your wounds in a skittering, biting cloak.\n"
+"\n"
+"You wake, shedding the weird apey memories, and you are stunned by a dizzying cavalcade of colors you could never have imagined before.  This is a step in the right direction, you decide, regarding your newly-expanded perspective with appreciation before the vertigo takes you."
+msgstr ""
+"Sau một ngày mụ mị trôi qua buồn tẻ, bạn lê bước trở về căn hộ tầng hầm tồi tàn của mình, nhưng bước hụt chân và ngã nhào xuống cầu thang, đập mặt xuống đất nghe một tiếng bịch ươn ướt. Ý thức mờ dần, nhưng cơn đau vẫn còn đó. Cơn đau, và cảm giác muôn vàn chiếc chân gián bò lúc nhúc trên da thịt bạn, phủ lên vết thương như một lớp áo choàng ngọ nguậy, cắn xé.\n"
+"\n"
+"Bạn tỉnh dậy, trút bỏ những ký ức kỳ lạ của loài vượn, và bạn choáng ngợp trước vũ điệu màu sắc rực rỡ đến chóng mặt mà trước đây chưa từng tưởng tượng nổi. Đây là một bước đi đúng hướng, bạn thầm nghĩ, thích thú ngắm nhìn góc nhìn mới mở rộng trước khi cơn chóng mặt ập đến."
+
+#. ~ Snippet in category '<insect_eye_2_success>'
+#: data/mods/Limb_WIP/mutation_snippets.json
+msgid ""
+"You dream of a throbbing headache, and the feeling of an imminent molt.  You find a suitable recess, freeze in place and **push**, trying to rip your old exoskeleton up with you pressure of your new armor but nothing happens.  All the pressure seems to well up into your head, and finally you feel a wet snap and a shower of too-warm mammal ichor on your feelers.\n"
+"\n"
+"You wake up in a puddle of your own blood under your head, a puddle you can see despite looking straight up.  It will be some time before your eyes' crystals harden properly, but already the colors are even richer than they were before, and the world seems somehow sluggish."
+msgstr ""
+"Bạn mơ thấy một cơn đau đầu nhức nhối, cùng cảm giác sắp sửa lột xác. Bạn tìm thấy một hốc tường thích hợp, đứng bất động tại chỗ và **rặn hết sức**, cố xé toạc lớp vỏ cũ bằng áp lực từ lớp giáp mới nhưng chẳng có gì xảy ra. Mọi áp lực dường như dồn hết lên đầu bạn, và cuối cùng bạn nghe một tiếng cọt kẹt ươn ướt rồi một luồng dịch động vật quá ấm tuôn xối xả lên râu cảm giác của bạn.\n"
+"\n"
+"Bạn tỉnh dậy trong một vũng máu của chính mình dưới đầu, một vũng máu bạn có thể nhìn thấy dù đang ngước thẳng lên trên. Sẽ mất một thời gian trước khi các tinh thể mắt cứng lại hoàn toàn, nhưng màu sắc giờ đây đã phong phú hơn trước rất nhiều, và thế giới dường như đang chuyển động chậm chạp đi."
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Mutant Para-Amputee"
+msgstr "Người đột biến cụt hai chi dưới"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Mutant Para-Amputee"
+msgstr "Người đột biến cụt hai chi dưới"
+
+#. ~ Description of profession 'Mutant Para-Amputee' for male
+#. ~ Description of profession 'Mutant Bilateral Amputee' for male
+#. ~ Description of profession 'Mutant Quadruple Amputee' for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_male"
+msgid ""
+"Many of the scientists investigating the immense power of mutation wondered "
+"if it could cure limb loss and restore people.  You made the perfect subject"
+" with which to test this.  Even though your day to experiment never came, "
+"you might have some hope yet of seeing the potential cure to your problems."
+msgstr ""
+"Nhiều nhà khoa học nghiên cứu về sức mạnh to lớn của đột biến đã tự hỏi liệu"
+" nó có thể chữa lành việc mất chi và phục hồi cơ thể con người hay không. "
+"Bạn trở thành đối tượng thử nghiệm hoàn hảo cho việc này. Dù ngày thử nghiệm"
+" của bạn chưa bao giờ diễn ra, bạn vẫn có thể nuôi chút hy vọng tìm thấy "
+"phương thuốc tiềm năng cho các vấn đề của mình."
+
+#. ~ Description of profession 'Mutant Para-Amputee' for female
+#. ~ Description of profession 'Mutant Bilateral Amputee' for female
+#. ~ Description of profession 'Mutant Quadruple Amputee' for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_female"
+msgid ""
+"Many of the scientists investigating the immense power of mutation wondered "
+"if it could cure limb loss and restore people.  You made the perfect subject"
+" with which to test this.  Even though your day to experiment never came, "
+"you might have some hope yet of seeing the potential cure to your problems."
+msgstr ""
+"Nhiều nhà khoa học nghiên cứu về sức mạnh to lớn của đột biến đã tự hỏi liệu"
+" nó có thể chữa lành việc mất chi và phục hồi cơ thể con người hay không. "
+"Bạn trở thành đối tượng thử nghiệm hoàn hảo cho việc này. Dù ngày thử nghiệm"
+" của bạn chưa bao giờ diễn ra, bạn vẫn có thể nuôi chút hy vọng tìm thấy "
+"phương thuốc tiềm năng cho các vấn đề của mình."
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Mutant Bilateral Amputee"
+msgstr "Người đột biến cụt hai chi trên"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Mutant Bilateral Amputee"
+msgstr "Người đột biến cụt hai chi trên"
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Mutant Quadruple Amputee"
+msgstr "Người đột biến cụt bốn chi"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Mutant Quadruple Amputee"
+msgstr "Người đột biến cụt bốn chi"
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Para-Amputee"
+msgstr "Người cụt hai chi dưới"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Para-Amputee"
+msgstr "Người cụt hai chi dưới"
+
+#. ~ Description of profession 'Para-Amputee' for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_male"
+msgid ""
+"By some unfortunate means, you have lost both of your legs.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a normal life.  Even if society has collapsed, so long as "
+"you've got your trusty wheelchair, you'll be alright."
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất cả hai chân. Kể từ đó, bạn đã học cách "
+"sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc sống "
+"bình thường. Dù xã hội có sụp đổ, miễn là bạn có chiếc xe lăn đáng tin cậy "
+"bên cạnh, bạn vẫn sẽ ổn thôi."
+
+#. ~ Description of profession 'Para-Amputee' for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_female"
+msgid ""
+"By some unfortunate means, you have lost both of your legs.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a normal life.  Even if society has collapsed, so long as "
+"you've got your trusty wheelchair, you'll be alright."
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất cả hai chân. Kể từ đó, bạn đã học cách "
+"sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc sống "
+"bình thường. Dù xã hội có sụp đổ, miễn là bạn có chiếc xe lăn đáng tin cậy "
+"bên cạnh, bạn vẫn sẽ ổn thôi."
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Bilateral Amputee"
+msgstr "Người cụt hai chi trên"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Bilateral Amputee"
+msgstr "Người cụt hai chi trên"
+
+#. ~ Description of profession 'Bilateral Amputee' for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_male"
+msgid ""
+"By some unfortunate means, you have lost both of your arms.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a normal life.  You only need your legs to kick somebody's ass,"
+" if it comes down to it."
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất cả hai cánh tay. Kể từ đó, bạn đã học "
+"cách sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc "
+"sống bình thường. Bạn chỉ cần đôi chân là đủ đá đít bất cứ kẻ nào nếu tình "
+"thế bắt buộc."
+
+#. ~ Description of profession 'Bilateral Amputee' for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_female"
+msgid ""
+"By some unfortunate means, you have lost both of your arms.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a normal life.  You only need your legs to kick somebody's ass,"
+" if it comes down to it."
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất cả hai cánh tay. Kể từ đó, bạn đã học "
+"cách sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc "
+"sống bình thường. Bạn chỉ cần đôi chân là đủ đá đít bất cứ kẻ nào nếu tình "
+"thế bắt buộc."
+
+#. ~ Profession name for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_male"
+msgid "Quadruple Amputee"
+msgstr "Người cụt bốn chi"
+
+#. ~ Profession name for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "profession_female"
+msgid "Quadruple Amputee"
+msgstr "Người cụt bốn chi"
+
+#. ~ Description of profession 'Quadruple Amputee' for male
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_male"
+msgid ""
+"By some unfortunate means, you have lost all of your limbs.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a relatively normal life with a bit of help.  What are you "
+"going to do now that all the doctors are dead?"
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất toàn bộ tứ chi. Kể từ đó, bạn đã học "
+"cách sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc "
+"sống tương đối bình thường với một chút trợ giúp. Giờ đây khi tất cả các bác"
+" sĩ đều đã chết, bạn sẽ xoay xở thế nào?"
+
+#. ~ Description of profession 'Quadruple Amputee' for female
+#: data/mods/Limb_WIP/professions.json
+msgctxt "prof_desc_female"
+msgid ""
+"By some unfortunate means, you have lost all of your limbs.  Since then, you"
+" have learned to live with your disability and have adapted around it very "
+"well, living a relatively normal life with a bit of help.  What are you "
+"going to do now that all the doctors are dead?"
+msgstr ""
+"Vì một tai nạn không may, bạn đã mất toàn bộ tứ chi. Kể từ đó, bạn đã học "
+"cách sống chung với khuyết tật và thích nghi rất tốt với nó, sống một cuộc "
+"sống tương đối bình thường với một chút trợ giúp. Giờ đây khi tất cả các bác"
+" sĩ đều đã chết, bạn sẽ xoay xở thế nào?"
+
+#. ~ Description of the category 'prosthetic arms'
+#: data/mods/Limb_WIP/recipes.json
+msgid ""
+"Recipes related to constructing prosthetic arms of varying materials and "
+"designs."
+msgstr ""
+"Các công thức liên quan đến việc chế tạo cánh tay giả từ nhiều vật liệu và "
+"thiết kế khác nhau."
+
+#. ~ Name of the nested group
+#: data/mods/Limb_WIP/recipes.json
+msgid "prosthetic legs"
+msgstr "chân giả"
+
+#. ~ Description of the category 'prosthetic legs'
+#: data/mods/Limb_WIP/recipes.json
+msgid ""
+"Recipes related to constructing prosthetic legs of varying materials and "
+"designs."
+msgstr ""
+"Các công thức liên quan đến việc chế tạo chân giả từ nhiều vật liệu và thiết"
+" kế khác nhau."
+
+#. ~ Scenario name for male
+#: data/mods/Limb_WIP/scenarios.json
+msgctxt "scenario_male"
+msgid "Challenge - One Legged Man In An Ass Kicking Contest"
+msgstr "Thử thách - Kẻ cụt chân trong cuộc thi đá đít"
+
+#. ~ Scenario name for female
+#: data/mods/Limb_WIP/scenarios.json
+msgctxt "scenario_female"
+msgid "Challenge - One Legged Man In An Ass Kicking Contest"
+msgstr "Thử thách - Kẻ cụt chân trong cuộc thi đá đít"
+
+#. ~ Description of scenario 'Challenge - One Legged Man In An Ass Kicking
+#. Contest' for male
+#: data/mods/Limb_WIP/scenarios.json
+msgctxt "scen_desc_male"
+msgid ""
+"While trying to escape town, you had to dodge a horde into your holdout, "
+"becoming separated from your compatriots.  You've only got one leg to your "
+"name, no arms, and now you're surrounded by zombies.  Just how are you going"
+" to get out of this one?"
+msgstr ""
+"Trong lúc cố gắng trốn khỏi thị trấn, bạn phải lách qua một đàn xác sống để "
+"vào nơi ẩn náu của mình, rồi bị lạc mất đồng đội. Bạn chỉ còn độc một bên "
+"chân, chẳng còn hai cánh tay, và giờ đây bị xác sống bao vây tứ phía. Làm "
+"cách nào để bạn thoát khỏi tình cảnh này đây?"
+
+#. ~ Description of scenario 'Challenge - One Legged Man In An Ass Kicking
+#. Contest' for female
+#: data/mods/Limb_WIP/scenarios.json
+msgctxt "scen_desc_female"
+msgid ""
+"While trying to escape town, you had to dodge a horde into your holdout, "
+"becoming separated from your compatriots.  You've only got one leg to your "
+"name, no arms, and now you're surrounded by zombies.  Just how are you going"
+" to get out of this one?"
+msgstr ""
+"Trong lúc cố gắng trốn khỏi thị trấn, bạn phải lách qua một đàn xác sống để "
+"vào nơi ẩn náu của mình, rồi bị lạc mất đồng đội. Bạn chỉ còn độc một bên "
+"chân, chẳng còn hai cánh tay, và giờ đây bị xác sống bao vây tứ phía. Làm "
+"cách nào để bạn thoát khỏi tình cảnh này đây?"
+
+#. ~ Description of armor 'prosthetic right arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Its "
+"modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  With grips attached to the hands and inbuilt springs, this "
+"prosthetic also allows some use of function.  This one is for the right arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Thiết kế hiện đại cùng cấu "
+"thái công thái học đẹp mắt giúp mang lại cảm giác thoải mái và vô cùng phù "
+"hợp khi sử dụng, đường nét tiên tiến khiến nó trông giống hệt tay thật. Với "
+"các miếng đệm bám ở bàn tay và lò xo tích hợp, cánh tay giả này cũng hỗ trợ "
+"một vài chức năng cơ bản. Cái này dành cho tay phải."
+
+#. ~ Description of armor 'prosthetic left arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Its "
+"modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  With grips attached to the hands and inbuilt springs, this "
+"prosthetic also allows some use of function.  This one is for the left arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Thiết kế hiện đại cùng cấu "
+"thái công thái học đẹp mắt giúp mang lại cảm giác thoải mái và vô cùng phù "
+"hợp khi sử dụng, đường nét tiên tiến khiến nó trông giống hệt tay thật. Với "
+"các miếng đệm bám ở bàn tay và lò xo tích hợp, cánh tay giả này cũng hỗ trợ "
+"một vài chức năng cơ bản. Cái này dành cho tay trái."
+
+#. ~ Description of armor 'neuroprosthetic right arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A neuroprosthetic arm, used as a replacement limb for those missing one.  "
+"Its modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  As a bleeding edge design, this one relies on wires attached to "
+"the forehead to provide motor input, allowing the arm to be operated just "
+"like the original limb, a precious commodity in these times.  This one is "
+"for the right arm."
+msgstr ""
+"Một cánh tay giả thần kinh, dùng để thay thế chi bị mất. Thiết kế hiện đại "
+"và công thái học đẹp mắt giúp nó rất thoải mái và vô cùng tiện dụng, các "
+"đường nét tinh xảo khiến nó trông giống hệt tay thật. Là một thiết kế tối "
+"tân hàng đầu, bộ phận này dựa vào các dây dẫn gắn trên trán để truyền tín "
+"hiệu vận động, cho phép điều khiển cánh tay y như chi thật, một món đồ vô "
+"giá trong thời buổi này. Cái này dành cho tay phải."
+
+#. ~ Description of armor 'neuroprosthetic left arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A neuroprosthetic arm, used as a replacement limb for those missing one.  "
+"Its modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  As a bleeding edge design, this one relies on wires attached to "
+"the forehead to provide motor input, allowing the arm to be operated just "
+"like the original limb, a precious commodity in these times.  This one is "
+"for the left arm."
+msgstr ""
+"Một cánh tay giả thần kinh, dùng để thay thế chi bị mất. Thiết kế hiện đại "
+"và công thái học đẹp mắt giúp nó rất thoải mái và vô cùng tiện dụng, các "
+"đường nét tinh xảo khiến nó trông giống hệt tay thật. Là một thiết kế tối "
+"tân hàng đầu, bộ phận này dựa vào các dây dẫn gắn trên trán để truyền tín "
+"hiệu vận động, cho phép điều khiển cánh tay y như chi thật, một món đồ vô "
+"giá trong thời buổi này. Cái này dành cho tay trái."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid "wooden prosthetic right arm"
+msgid_plural "wooden prosthetic right arms"
+msgstr[0] "những tay giả bằng gỗ bên phải"
+
+#. ~ Description of armor 'wooden prosthetic right arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Dating "
+"back to antiquity, this wooden arm was often used by many individuals as a "
+"simple way to hide the loss of one of their limbs.  Outside of that, its "
+"rigidity and lack of flexibility make it nearly useless for practical "
+"purposes, though it can help with very basic tasks, like lifting objects.  "
+"This one is for the right arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Có từ thời cổ đại, cánh tay "
+"gỗ này thường được nhiều người sử dụng như một cách đơn giản để che giấu "
+"việc mất đi một cánh tay. Ngoài ra, độ cứng đờ và thiếu linh hoạt khiến nó "
+"gần như vô dụng cho các mục đích thực tế, dù có thể hỗ trợ các công việc rất"
+" cơ bản như nhấc đồ vật. Cái này dành cho tay phải."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid "wooden prosthetic left arm"
+msgid_plural "wooden prosthetic left arms"
+msgstr[0] "những tay giả bằng gỗ bên trái"
+
+#. ~ Description of armor 'wooden prosthetic left arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Dating "
+"back to antiquity, this wooden arm was often used by many individuals as a "
+"simple way to hide the loss of one of their limbs.  Outside of that, its "
+"rigidity and lack of flexibility make it nearly useless for practical "
+"purposes, though it can help with very basic tasks, like lifting objects.  "
+"This one is for the left arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Có từ thời cổ đại, cánh tay "
+"gỗ này thường được nhiều người sử dụng như một cách đơn giản để che giấu "
+"việc mất đi một cánh tay. Ngoài ra, độ cứng đờ và thiếu linh hoạt khiến nó "
+"gần như vô dụng cho các mục đích thực tế, dù có thể hỗ trợ các công việc rất"
+" cơ bản như nhấc đồ vật. Cái này dành cho tay trái."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid "steel prosthetic right arm"
+msgid_plural "steel prosthetic right arms"
+msgstr[0] "những tay giả bằng thép bên phải"
+
+#. ~ Description of armor 'steel prosthetic right arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Dating "
+"back to the Middle Ages and Renaissance, this metallic arm was the cutting "
+"edge replacement of its day.  Hinges within the fingers and a simple locking"
+" system allow basic function of this prosthetic, such as holding a sword.  "
+"Often given to knights and nobility, this arm is quite heavy, but extremely "
+"durable.  This one is for the right arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Có từ thời Trung Cổ và Phục "
+"Hưng, cánh tay kim loại này là thiết bị thay thế tân tiến nhất vào thời bấy "
+"giờ. Bản lề bên trong các ngón tay và cơ chế khóa đơn giản giúp chi giả này "
+"thực hiện các chức năng cơ bản, chẳng hạn như cầm kiếm. Thường được trao cho"
+" các hiệp sĩ và giới quý tộc, cánh tay này khá nặng nhưng cực kỳ bền chắc. "
+"Cái này dành cho tay phải."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid "steel prosthetic left arm"
+msgid_plural "steel prosthetic left arms"
+msgstr[0] "những tay giả bằng thép bên trái"
+
+#. ~ Description of armor 'steel prosthetic left arm'
+#: data/mods/Limb_WIP/armor/arm_prosthetics.json
+msgid ""
+"A prosthetic arm, used as a replacement limb for those missing one.  Dating "
+"back to the Middle Ages and Renaissance, this metallic arm was the cutting "
+"edge replacement of its day.  Hinges within the fingers and a simple locking"
+" system allow basic function of this prosthetic, such as holding a sword.  "
+"Often given to knights and nobility, this arm is quite heavy, but extremely "
+"durable.  This one is for the left arm."
+msgstr ""
+"Một cánh tay giả, dùng để thay thế chi bị mất. Có từ thời Trung Cổ và Phục "
+"Hưng, cánh tay kim loại này là thiết bị thay thế tân tiến nhất vào thời bấy "
+"giờ. Bản lề bên trong các ngón tay và cơ chế khóa đơn giản giúp chi giả này "
+"thực hiện các chức năng cơ bản, chẳng hạn như cầm kiếm. Thường được trao cho"
+" các hiệp sĩ và giới quý tộc, cánh tay này khá nặng nhưng cực kỳ bền chắc. "
+"Cái này dành cho tay trái."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid "prosthetic right leg"
+msgid_plural "prosthetic right legs"
+msgstr[0] "những chân giả bên phải"
+
+#. ~ Description of armor 'prosthetic right leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  Its "
+"modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  This one is for the right leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Thiết kế hiện đại và công "
+"thái học đẹp mắt giúp nó rất thoải mái và cực kỳ tiện dụng, các chi tiết "
+"tiên tiến làm nó trông giống hệt chân thật. Cái này dành cho chân phải."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid "prosthetic left leg"
+msgid_plural "prosthetic left legs"
+msgstr[0] "những chân giả bên trái"
+
+#. ~ Description of armor 'prosthetic left leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  Its "
+"modern design and sleek ergonomics make it very comfortable and highly "
+"suitable for use, and advanced designing makes it look exactly like the "
+"original.  This one is for the left leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Thiết kế hiện đại và công "
+"thái học đẹp mắt giúp nó rất thoải mái và cực kỳ tiện dụng, các chi tiết "
+"tiên tiến làm nó trông giống hệt chân thật. Cái này dành cho chân trái."
+
+#. ~ Description of armor 'right peg leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  A "
+"primitive peg leg, often remembered for pirate movies and such, this was a "
+"go-to replacement for decades for those who couldn't afford an iron or steel"
+" one.  This comes up above the knee and is fastened on with straps or rope, "
+"with the interior cushioned by stuffing.  This one is for the right leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Một chiếc chân gỗ thô sơ "
+"thường thấy trong phim cướp biển, đây từng là vật thay thế hàng đầu trong "
+"nhiều thập kỷ cho những người không đủ tiền mua chân bằng sắt hoặc thép. "
+"Loại này kéo dài lên trên đầu gối và được buộc chặt bằng dây đai hoặc dây "
+"thừng, bên trong có lớp đệm êm ái. Cái này dành cho chân phải."
+
+#. ~ Description of armor 'left peg leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  A "
+"primitive peg leg, often remembered for pirate movies and such, this was a "
+"go-to replacement for decades for those who couldn't afford an iron or steel"
+" one.  This comes up above the knee and is fastened on with straps or rope, "
+"with the interior cushioned by stuffing.  This one is for the left leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Một chiếc chân gỗ thô sơ "
+"thường thấy trong phim cướp biển, đây từng là vật thay thế hàng đầu trong "
+"nhiều thập kỷ cho những người không đủ tiền mua chân bằng sắt hoặc thép. "
+"Loại này kéo dài lên trên đầu gối và được buộc chặt bằng dây đai hoặc dây "
+"thừng, bên trong có lớp đệm êm ái. Cái này dành cho chân trái."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid "steel prosthetic right leg"
+msgid_plural "steel prosthetic right legs"
+msgstr[0] "những chân giả bằng thép bên phải"
+
+#. ~ Description of armor 'steel prosthetic right leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  Dating "
+"back to the Middle Ages and the Renaissance, this prosthetic is made of iron"
+" placed over a framework, and is attached with leather straps to the leg, "
+"padding placed inside for comfort.  Made in a better fashion than more "
+"common prosthetics at the time, this limb is incredibly durable, with many "
+"noble warriors wearing these into battle.  However, they were incredibly "
+"expensive, time-consuming to make, and quite heavy, leaving them out of the "
+"hands of poorer individuals.  This one is for the right leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Có từ thời Trung Cổ và Phục"
+" Hưng, chiếc chân giả này làm bằng sắt gắn trên khung đỡ, được buộc vào chân"
+" bằng dây da, bên trong có đệm lót để tạo cảm giác thoải mái. Được chế tác "
+"tinh xảo hơn nhiều so với các loại chân giả thông thường thời bấy giờ, bộ "
+"phận này vô cùng bền bỉ, được nhiều chiến binh quý tộc mang vào trận chiến. "
+"Tuy nhiên, chúng cực kỳ đắt đỏ, tốn nhiều thời gian chế tác và khá nặng, "
+"khiến người nghèo không thể tiếp cận được. Cái này dành cho chân phải."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid "steel prosthetic left leg"
+msgid_plural "steel prosthetic left legs"
+msgstr[0] "những chân giả bằng thép bên trái"
+
+#. ~ Description of armor 'steel prosthetic left leg'
+#: data/mods/Limb_WIP/armor/legs_prosthetics.json
+msgid ""
+"A prosthetic leg, used as a replacement limb for those missing one.  Dating "
+"back to the Middle Ages and the Renaissance, this prosthetic is made of iron"
+" placed over a framework, and is attached with leather straps to the leg, "
+"padding placed inside for comfort.  Made in a better fashion than more "
+"common prosthetics at the time, this limb is incredibly durable, with many "
+"noble warriors wearing these into battle.  However, they were incredibly "
+"expensive, time-consuming to make, and quite heavy, leaving them out of the "
+"hands of poorer individuals.  This one is for the left leg."
+msgstr ""
+"Một chiếc chân giả, dùng để thay thế chi bị mất. Có từ thời Trung Cổ và Phục"
+" Hưng, chiếc chân giả này làm bằng sắt gắn trên khung đỡ, được buộc vào chân"
+" bằng dây da, bên trong có đệm lót để tạo cảm giác thoải mái. Được chế tác "
+"tinh xảo hơn nhiều so với các loại chân giả thông thường thời bấy giờ, bộ "
+"phận này vô cùng bền bỉ, được nhiều chiến binh quý tộc mang vào trận chiến. "
+"Tuy nhiên, chúng cực kỳ đắt đỏ, tốn nhiều thời gian chế tác và khá nặng, "
+"khiến người nghèo không thể tiếp cận được. Cái này dành cho chân trái."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "debug tail belt"
+msgid_plural "debug tail belts"
+msgstr[0] "những đai đuôi gỡ lỗi"
+
+#. ~ Description of armor 'debug tail belt'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid ""
+"An example armor for testing custom limb/armor interactions.  100 coverage "
+"on the first sublimb of your debug tail with little encumbrance"
+msgstr ""
+"Một bộ giáp ví dụ để thử nghiệm tương tác giữa chi/giáp tùy chỉnh. Độ che "
+"phủ 100 trên chi phụ đầu tiên của đuôi gỡ lỗi của bạn với độ vướng víu thấp"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "first weighted debug tail belt"
+msgid_plural "first weighted debug tail belts"
+msgstr[0] "những đai đuôi gia trọng gỡ lỗi thứ nhất"
+
+#. ~ Description of armor 'first weighted debug tail belt'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid ""
+"An example armor for testing custom limb/armor interactions.  100 coverage "
+"on the first sublimb of your debug tail with extreme encumbrance"
+msgstr ""
+"Một bộ giáp ví dụ để thử nghiệm tương tác giữa chi/giáp tùy chỉnh. Độ che "
+"phủ 100 trên chi phụ đầu tiên của đuôi gỡ lỗi của bạn với độ vướng víu cực "
+"cao"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "debug dragonfly helmet"
+msgid_plural "debug dragonfly helmets"
+msgstr[0] "những mũ chuồn chuồn gỡ lỗi"
+
+#. ~ Description of armor 'debug dragonfly helmet'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "An example helmet to test on custom heads.  Should blind you."
+msgstr ""
+"Một chiếc mũ mẫu để thử nghiệm trên các phần đầu tùy chỉnh. Sẽ làm bạn bị "
+"mù."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - arms"
+msgid_plural "bionic plating - arms"
+msgstr[0] "những giáp bọc sinh học - tay"
+
+#. ~ Description of armor 'bionic plating - arms'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid ""
+"The durable alloy armor which protects the sensitive components that operate"
+" your bionic arms."
+msgstr ""
+"Lớp giáp hợp kim bền bỉ bảo vệ các linh kiện nhạy cảm vận hành cánh tay sinh"
+" học của bạn."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - left arm"
+msgid_plural "bionic plating - left arm"
+msgstr[0] "những giáp bọc sinh học - tay trái"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - right arm"
+msgid_plural "bionic plating - right arm"
+msgstr[0] "những giáp bọc sinh học - tay phải"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - legs"
+msgid_plural "bionic plating - legs"
+msgstr[0] "những giáp bọc sinh học - chân"
+
+#. ~ Description of armor 'bionic plating - legs'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid ""
+"The durable alloy armor which protects the sensitive components that operate"
+" your bionic legs."
+msgstr ""
+"Lớp giáp hợp kim bền bỉ bảo vệ các linh kiện nhạy cảm vận hành đôi chân sinh"
+" học của bạn."
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - left leg"
+msgid_plural "bionic plating - left leg"
+msgstr[0] "những giáp bọc sinh học - chân trái"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - right leg"
+msgid_plural "bionic plating - right leg"
+msgstr[0] "những giáp bọc sinh học - chân phải"
+
+#. ~ Armor name
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "bionic plating - tank treads"
+msgid_plural "bionic plating - tank treads"
+msgstr[0] "những giáp bọc sinh học - bánh xích xe tăng"
+
+#. ~ Description of armor 'bionic plating - tank treads'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid ""
+"The protective armor for the bionic tank treads which replace the legs."
+msgstr "Lớp giáp bảo vệ cho bánh xích xe tăng sinh học thay thế đôi chân."
+
+#. ~ Description of a pocket in 'bionic plating - tank treads'
+#: data/mods/Limb_WIP/armor/limb_armor.json
+msgid "Cargo storage compartment."
+msgstr "Ngăn chứa hàng hóa."
+
+#. ~ EOC option name
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Restore Right Leg"
+msgstr "Phục Hồi Chân Phải"
+
+#. ~ EOC option name
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Restore Left Leg"
+msgstr "Phục Hồi Chân Trái"
+
+#. ~ EOC option name
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Restore Right Arm"
+msgstr "Phục Hồi Tay Phải"
+
+#. ~ EOC option name
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Restore Left Arm"
+msgstr "Phục Hồi Tay Trái"
+
+#. ~ EOC option description for 'Nevermind'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Attempt to restore your right leg."
+msgstr "Cố gắng phục hồi chân phải của bạn."
+
+#. ~ EOC option description for 'Nevermind'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Attempt to restore your left leg."
+msgstr "Cố gắng phục hồi chân trái của bạn."
+
+#. ~ EOC option description for 'Nevermind'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Attempt to restore your right arm."
+msgstr "Cố gắng phục hồi tay phải của bạn."
+
+#. ~ EOC option description for 'Nevermind'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Attempt to restore your left arm."
+msgstr "Cố gắng phục hồi tay trái của bạn."
+
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_LEG'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid ""
+"You have a right leg or equivalent thereof.  If it's a prosthetic, please "
+"take it off before restoring your leg."
+msgstr ""
+"Bạn đã có chân phải hoặc bộ phận tương đương. Nếu là chân giả, vui lòng tháo"
+" ra trước khi phục hồi chân."
+
+#. ~ Player message in EoC 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_LEG_RESULT'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Your right leg has been restored."
+msgstr "Chân phải của bạn đã được phục hồi."
+
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_LEG_RESULT'
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_LEFT_LEG_RESULT'
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_ARM_RESULT'
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_LEFT_ARM_RESULT'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Your healing powers were not great enough, you'll have to try again."
+msgstr "Khả năng chữa lành của bạn chưa đủ mạnh, bạn sẽ phải thử lại."
+
+#. ~ Player message in false effect in EoC 'EOC_VITAKIN_RESTORE_LIMB_LEFT_LEG'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid ""
+"You have a left leg or equivalent thereof.  If it's a prosthetic, please "
+"take it off before restoring your leg."
+msgstr ""
+"Bạn đã có chân trái hoặc bộ phận tương đương. Nếu là chân giả, vui lòng tháo"
+" ra trước khi phục hồi chân."
+
+#. ~ Player message in EoC 'EOC_VITAKIN_RESTORE_LIMB_LEFT_LEG_RESULT'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Your left leg has been restored."
+msgstr "Chân trái của bạn đã được phục hồi."
+
+#. ~ Player message in false effect in EoC
+#. 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_ARM'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid ""
+"You have a right arm or equivalent thereof.  If it's a prosthetic, please "
+"take it off before restoring your arm."
+msgstr ""
+"Bạn đã có tay phải hoặc bộ phận tương đương. Nếu là tay giả, vui lòng tháo "
+"ra trước khi phục hồi tay."
+
+#. ~ Player message in EoC 'EOC_VITAKIN_RESTORE_LIMB_RIGHT_ARM_RESULT'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Your right arm had been restored."
+msgstr "Tay phải của bạn đã được phục hồi."
+
+#. ~ Player message in false effect in EoC 'EOC_VITAKIN_RESTORE_LIMB_LEFT_ARM'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid ""
+"You have a left arm or equivalent thereof.  If it's a prosthetic, please "
+"take it off before restoring your arm."
+msgstr ""
+"Bạn đã có tay trái hoặc bộ phận tương đương. Nếu là tay giả, vui lòng tháo "
+"ra trước khi phục hồi tay."
+
+#. ~ Player message in EoC 'EOC_VITAKIN_RESTORE_LIMB_LEFT_ARM_RESULT'
+#: data/mods/Limb_WIP/mod_interactions/mindovermatter/vitakinesis_eoc.json
+msgid "Your left arm had been restored."
+msgstr "Tay trái của bạn đã được phục hồi."
+
+#. ~ Name of body part
+#. ~ Heading of body part 'debug torso'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "debug torso"
+msgstr "thân mình gỡ lỗi"
+
+#. ~ Accusative name of body part
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgctxt "bodypart_accusative"
+msgid "debug torso"
+msgstr "thân mình gỡ lỗi"
+
+#. ~ Encumbrance text of body part 'debug torso'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "Weee macarena."
+msgstr "Weee macarena."
+
+#. ~ HP bar UI text of body part 'debug torso'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "DBG TORSO"
+msgstr "THÂN MÌNH GỠ LỖI"
+
+#. ~ Heading of body part 'bulging eyes'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "Blg Eyes"
+msgstr "Mắt lồi"
+
+#. ~ HP bar UI text of body part 'compound eyes'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "CMP EYES"
+msgstr "MẮT KÉP"
+
+#. ~ Name of body part
+#. ~ Heading of body part 'dragonfly eyes (front)'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "dragonfly eyes (front)"
+msgstr "mắt chuồn chuồn (trước)"
+
+#. ~ Accusative name of body part
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgctxt "bodypart_accusative"
+msgid "dragonfly eyes (front)"
+msgstr "mắt chuồn chuồn (trước)"
+
+#. ~ Accusative name of body part
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgctxt "bodypart_accusative"
+msgid "dragonfly eyes"
+msgstr "mắt chuồn chuồn"
+
+#. ~ HP bar UI text of body part 'gastropod foot'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "G. FOOT"
+msgstr "BÀN CHÂN K."
+
+#. ~ Name of body part
+#. ~ Heading of body part 'tank treads'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "tank treads"
+msgstr "bánh xích xe tăng"
+
+#. ~ Encumbrance text of body part 'tank treads'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+msgid "Servomotors are operating at abnormal load."
+msgstr "Các động cơ servo đang hoạt động dưới tải trọng bất thường."
+
+#. ~ Smash message of body part 'tank treads'
+#: data/mods/Limb_WIP/mutations/mutation_limbs.json
+#, c-format
+msgid "You ram the %s with the shell of your tank treads."
+msgstr "Bạn tông vào %s bằng lớp vỏ ngoài của bánh xích xe tăng."
+
+#. ~ Description of mutation 'Compound Eyes'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Your eyes are compound, like those of an insect.  This increases your "
+"Perception by 2 whenever you aren't wearing eyewear."
+msgstr ""
+"Mắt bạn là mắt kép, giống như của côn trùng. Điều này tăng Độ nhận biết của "
+"bạn thêm 2 mỗi khi không đeo kính hay đồ bảo hộ mắt."
+
+#. ~ Mutation name
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid "Changing Eyes"
+msgstr "Mắt Đang Biến Đổi"
+
+#. ~ Description of mutation 'Changing Eyes'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Something is shifting painfully behind your eyeballs.  <color_red>This "
+"change will be reversible.  The next one might not be, should you "
+"continue.</color>"
+msgstr ""
+"Có thứ gì đó đang biến đổi đau đớn phía sau nhãn cầu của bạn. <color_red>Sự "
+"thay đổi này có thể đảo ngược. Lần tiếp theo có thể không thể, nếu bạn tiếp "
+"tục.</color>"
+
+#. ~ Description of mutation 'Compound Eyes'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Your eyes have turned into iridescent spheres bulging out of their original "
+"sockets.  Your detail vision suffered terribly, and the expanded field of "
+"view is dizzying.  <color_red>You can still go back to how you used to be.  "
+"If you continue changing in this direction you will be permanently changed."
+"  Progress from this state will need the matching threshold.</color>"
+msgstr ""
+"Đôi mắt của bạn đã biến thành những khối cầu óng ánh lồi hẳn ra ngoài hốc "
+"mắt ban đầu. Khả năng nhìn chi tiết bị suy giảm nghiêm trọng, và tầm nhìn mở"
+" rộng khiến bạn chóng mặt. <color_red>Bạn vẫn có thể trở lại trạng thái cũ. "
+"Nếu tiếp tục biến đổi theo hướng này, bạn sẽ bị thay đổi vĩnh viễn. Tiến "
+"triển từ trạng thái này sẽ cần ngưỡng đột biến phù hợp.</color>"
+
+#. ~ Mutation name
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid "Dragonfly Eyes"
+msgstr "Mắt Chuồn Chuồn"
+
+#. ~ Description of mutation 'Dragonfly Eyes'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"You remember having tiny, unassuming eyes condemned into cramped slits in "
+"your face.  No more.  Since your last molt your eyes take up most of your "
+"head, giving you unparalelled reactions at the cost of fine vision.  You "
+"wouldn't want to cover up too much of the view, however.  <color_red>This "
+"change is permanent.</color>"
+msgstr ""
+"Bạn nhớ lại khi mình từng có đôi mắt nhỏ bé, bình thường bị giam cầm trong "
+"những khe hẹp trên khuôn mặt. Giờ thì không còn nữa. Kể từ lần lột xác gần "
+"nhất, đôi mắt chiếm phần lớn đầu bạn, mang lại phản xạ vô song với cái giá "
+"là khả năng nhìn chi tiết giảm đi. Tuy nhiên, bạn hẳn sẽ không muốn che "
+"khuất quá nhiều tầm nhìn. <color_red>Sự thay đổi này là vĩnh viễn.</color>"
+
+#. ~ Mutation name
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid "Changing Arms"
+msgstr "Tay Đang Biến Đổi"
+
+#. ~ Description of mutation 'Changing Arms'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Your arms feel…different.  Occasionally something shifts under the skin - "
+"sometimes it does so without pain.  Whatever is happening in there, it's far"
+" from done.  <color_red>This change will be reversible.  The next one might "
+"not be, should you continue.</color>"
+msgstr ""
+"Cánh tay của bạn cảm thấy… khang khác. Thỉnh thoảng có thứ gì đó dịch chuyển"
+" dưới da - đôi khi không hề gây đau đớn. Bất kể điều gì đang diễn ra bên "
+"trong, nó vẫn chưa hoàn tất. <color_red>Sự thay đổi này có thể đảo ngược. "
+"Lần tiếp theo có thể không thể, nếu bạn tiếp tục.</color>"
+
+#. ~ Description of mutation 'Feathered Arms'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Your forearms are covered by long, stiff feathers.  While they are "
+"impressive to look at and resistant to water and other contaminants, they "
+"always get in the way and you hate it when they get filthy.  <color_red>You "
+"can still go back to how you used to be.  If you continue changing in this "
+"direction you will be permanently changed.  Progress from this state will "
+"need the matching threshold.</color>"
+msgstr ""
+"Cẳng tay của bạn được bao phủ bởi những chiếc lông vũ dài và cứng. Dù trông "
+"rất ấn tượng và chống nước cũng như các chất bẩn khác tốt, chúng luôn gây "
+"vướng víu và bạn ghét cay ghét đắng khi chúng bị bẩn. <color_red>Bạn vẫn có "
+"thể trở lại trạng thái cũ. Nếu tiếp tục biến đổi theo hướng này, bạn sẽ bị "
+"thay đổi vĩnh viễn. Tiến triển từ trạng thái này sẽ cần ngưỡng đột biến phù "
+"hợp.</color>"
+
+#. ~ Description of mutation 'Bird Wings'
+#: data/mods/Limb_WIP/mutations/mutations.json
+msgid ""
+"Your arms have mostly transformed into a huge pair of feathered wings.  "
+"Though you retain a few fingers, your fine manipulation is greatly hampered."
+"  On the other hand, you can glide from ledges and will take less damage if "
+"you fall, provided you're healthy and unburdened."
+msgstr ""
+"Đôi tay của bạn gần như đã biến thành một cặp cánh lông vũ khổng lồ. Mặc dù "
+"bạn vẫn giữ lại được vài ngón tay, khả năng thao tác khéo léo đã bị cản trở "
+"rất nhiều. Bù lại, bạn có thể lượn từ các gờ cao và ít chịu sát thương hơn "
+"khi rơi, miễn là bạn khỏe mạnh và không bị đè nặng hành lý."
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "first debug sublimb for debug tail"
+msgstr "chi phụ thứ nhất gỡ lỗi cho đuôi gỡ lỗi"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "second debug sublimb for debug tail"
+msgstr "chi phụ thứ hai gỡ lỗi cho đuôi gỡ lỗi"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "left compound eye"
+msgstr "mắt kép trái"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "right compound eye"
+msgstr "mắt kép phải"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "gigantic compound eye (front left)"
+msgstr "mắt kép khổng lồ (trước trái)"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "gigantic compound eye (front)"
+msgstr "mắt kép khổng lồ (trước)"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "gigantic compound eye (front right)"
+msgstr "mắt kép khổng lồ (trước phải)"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "lower left feathered arms"
+msgstr "cánh tay có lông vũ dưới bên trái"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "lower feathered arms"
+msgstr "cánh tay có lông vũ dưới"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "lower right feathered arms"
+msgstr "cánh tay có lông vũ dưới bên phải"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "tank treads shell"
+msgstr "vỏ ngoài bánh xích xe tăng"
+
+#. ~ Name of sub body part
+#: data/mods/Limb_WIP/mutations/sub_limbs.json
+msgid "tank treads tracks"
+msgstr "dải xích xe tăng"
+
+#~ msgid "This build uses English only."
+#~ msgstr "Bản dựng này chỉ sử dụng tiếng Anh."
