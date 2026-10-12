@@ -1,0 +1,24 @@
+{
+  "diagnostics": {
+    "gzip_integrity": {
+      "ok": true,
+      "return_code": 0,
+      "message": ""
+    },
+    "gettext_format": {
+      "ok": true,
+      "return_code": 0,
+      "message": "116272 translated messages.\n"
+    },
+    "unicode_check": {
+      "ok": true,
+      "return_code": 0,
+      "message": ""
+    }
+  },
+  "counts": {
+    "strings_checked": 116272,
+    "markup_tag_mismatch": 35,
+    "issues": 35
+  }
+}
