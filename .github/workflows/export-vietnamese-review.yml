@@ -1,6 +1,11 @@
 name: Export Vietnamese translation for review
 
 on:
+  push:
+    branches:
+      - fix/vietnamese-on-every-launch
+    paths:
+      - .github/workflows/export-vietnamese-review.yml
   workflow_dispatch:
 
 permissions:
