@@ -1,0 +1,110 @@
+name: Export Vietnamese translation for review
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  export:
+    runs-on: ubuntu-22.04
+    steps:
+      - name: Check out Vietnamese source catalog
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          sparse-checkout: |
+            lang/po/vi.po.gz
+          sparse-checkout-cone-mode: false
+
+      - name: Verify and split compressed catalog for review
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import gzip
+          import hashlib
+          import json
+          from pathlib import Path
+
+          source = Path("lang/po/vi.po.gz")
+          output = Path("translation_review/vi")
+          output.mkdir(parents=True, exist_ok=True)
+          maximum_bytes = 240_000
+          digest = hashlib.sha256()
+          current = []
+          current_size = 0
+          total_bytes = 0
+          chunks = []
+          entries = 0
+
+          def write_chunk():
+              global current, current_size
+              if not current:
+                  return
+              name = f"part_{len(chunks) + 1:04d}.txt"
+              (output / name).write_text("".join(current), encoding="utf-8")
+              chunks.append(name)
+              current = []
+              current_size = 0
+
+          def save_block(block):
+              global current_size, total_bytes, entries
+              encoded = block.encode("utf-8")
+              byte_length = len(encoded)
+              if current and current_size + byte_length > maximum_bytes:
+                  write_chunk()
+              current.append(block)
+              current_size += byte_length
+              total_bytes += byte_length
+              digest.update(encoded)
+              if any(line.startswith("msgid ") for line in block.splitlines()):
+                  entries += 1
+
+          with gzip.open(source, "rt", encoding="utf-8") as source_text:
+              block_lines = []
+              for line in source_text:
+                  block_lines.append(line)
+                  if not line.strip():
+                      save_block("".join(block_lines))
+                      block_lines.clear()
+              if block_lines:
+                  save_block("".join(block_lines))
+          write_chunk()
+
+          manifest = {
+              "source": str(source),
+              "purpose": "Read-only copy of gettext entries for review; do not edit for building the game.",
+              "uncompressed_bytes": total_bytes,
+              "sha256_uncompressed": digest.hexdigest(),
+              "entries_approx": entries,
+              "chunk_count": len(chunks),
+              "chunks": chunks
+          }
+          (output / "manifest.json").write_text(
+              json.dumps(manifest, indent=2, ensure_ascii=False) + "\n",
+              encoding="utf-8"
+          )
+          print(json.dumps({
+              "uncompressed_bytes": total_bytes,
+              "chunks": len(chunks),
+              "entries_approx": entries
+          }))
+          PY
+
+      - name: Publish review text to a separate branch
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branch="translation-review-${RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add translation_review/vi/
+          git commit -m "Export Vietnamese PO to review chunks (run ${RUN_ID})"
+          git push origin "$branch"
+          echo "## Vietnamese translation ready for review" >> "$GITHUB_STEP_SUMMARY"
+          echo "Read the decompressed text at:" >> "$GITHUB_STEP_SUMMARY"
+          echo "https://github.com/${REPO}/tree/${branch}/translation_review/vi" >> "$GITHUB_STEP_SUMMARY"
