@@ -15,15 +15,15 @@ import polib
 
 # Accept C printf format placeholders including positional parameters.
 PRINTF = re.compile(
-    r"%(?:(?P<pos>[1-9][0-9]*)\\$)?"
-    r"[-+ #0']*(?:\\*|[0-9]+)?(?:\\.(?:\\*|[0-9]+))?"
+    r"%(?:(?P<pos>[1-9][0-9]*)\$)?"
+    r"[-+ #0']*(?:\*|[0-9]+)?(?:\.(?:\*|[0-9]+))?"
     r"(?:hh|ll|[hljztL])?(?P<type>[diuoxXfFeEgGaAcspn])"
 )
 CURLY = re.compile(
-    r"(?<!\\{)\\{(?P<field>[0-9]+|[a-zA-Z_][a-zA-Z_0-9]*)?"
-    r"(?:![rsa])?(?::[^{}]*)?\\}(?!\\})"
+    r"(?<!\{)\{(?P<field>[0-9]+|[a-zA-Z_][a-zA-Z_0-9]*)?"
+    r"(?:![rsa])?(?::[^{}]*)?\}(?!\})"
 )
-TAG = re.compile(r"</?(?:[a-zA-Z][a-zA-Z_0-9-]*)(?:\\s[^<>]*)?>")
+TAG = re.compile(r"</?(?:[a-zA-Z][a-zA-Z_0-9-]*)(?:\s[^<>]*)?>")
 VARIABLE = re.compile(r"<([a-zA-Z_][a-zA-Z_0-9]*)>")
 MUST_PRESERVE_VARIABLES = (
     "npcname", "playername", "itemname", "u_name", "npc_name",
@@ -167,9 +167,9 @@ def audit(english, vietnamese):
                         "vietnamese": translated.count(name)
                     }))
 
-            if source.msgid.startswith("\\n") and not translated.startswith("\\n"):
+            if source.msgid.startswith("\n") and not translated.startswith("\n"):
                 problems.append(("leading_newline_mismatch", {}))
-            if source.msgid.endswith("\\n") and not translated.endswith("\\n"):
+            if source.msgid.endswith("\n") and not translated.endswith("\n"):
                 problems.append(("trailing_newline_mismatch", {}))
 
             for problem, details in problems:
@@ -208,11 +208,11 @@ def main():
     counts, findings, examples = audit(en, vi)
     summary = {"diagnostics": diagnostics, "counts": counts}
     (out / "format_stats.json").write_text(
-        json.dumps(summary, ensure_ascii=False, indent=2) + "\\n", encoding="utf-8"
+        json.dumps(summary, ensure_ascii=False, indent=2) + "\n", encoding="utf-8"
     )
     with (out / "format_findings.jsonl").open("w", encoding="utf-8") as f:
         for entry in findings:
-            f.write(json.dumps(entry, ensure_ascii=False) + "\\n")
+            f.write(json.dumps(entry, ensure_ascii=False) + "\n")
 
     lines = [
         "# Vietnamese translation: technical-format audit",
@@ -244,7 +244,7 @@ def main():
             lines.append("  - **Tokens**: " + repr(finding["details"]))
     lines += ["", "Full findings in `format_findings.jsonl`.",
               "False positives are possible, especially for punctuation and colors.", ""]
-    (out / "format_report.md").write_text("\\n".join(lines), encoding="utf-8")
+    (out / "format_report.md").write_text("\n".join(lines), encoding="utf-8")
     print(json.dumps(summary, ensure_ascii=False, indent=2))
 
 
