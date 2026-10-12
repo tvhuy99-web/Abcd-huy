@@ -4270,6 +4270,15 @@ void options_manager::load()
         deserialize( jsin );
     } );
 
+#if defined(LOCALIZE)
+    // This fork starts in Vietnamese on every launch, including for users
+    // whose existing options.json was saved with English selected.
+    // Language changes made in the settings menu still work until restart.
+    if( get_langs_with_translation_files().count( "vi" ) != 0 ) {
+        get_option( "USE_LANG" ).setValue( "vi" );
+    }
+#endif
+
     update_global_locale();
     update_options_cache();
 
