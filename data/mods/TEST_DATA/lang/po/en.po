@@ -1,0 +1,38 @@
+# TEST_DATA: English fixture for translation parser tests.
+msgid ""
+msgstr ""
+"Project-Id-Version: TEST_DATA\n"
+"Report-Msgid-Bugs-To: \n"
+"POT-Creation-Date: 2026-10-12 00:00+0000\n"
+"PO-Revision-Date: 2026-10-12 00:00+0000\n"
+"Last-Translator: Test fixture\n"
+"Language-Team: English\n"
+"Language: en\n"
+"MIME-Version: 1.0\n"
+"Content-Type: text/plain; charset=UTF-8\n"
+"Content-Transfer-Encoding: 8bit\n"
+"Plural-Forms: nplurals=2; plural=(n != 1);\n"
+
+msgid "battery"
+msgid_plural "batteries"
+msgstr[0] "test battery"
+msgstr[1] "test batteries"
+
+msgctxt "weapon"
+msgid "pike"
+msgid_plural "pikes"
+msgstr[0] "polearm"
+msgstr[1] "polearms"
+
+msgctxt "fish"
+msgid "pike"
+msgid_plural "pikes"
+msgstr[0] "freshwater fish"
+msgstr[1] "freshwater fish"
+
+msgid "tname_segments_order"
+msgstr "FAULTS DIRT OVERHEAT FAVORITE_PRE DURABILITY WHEEL_DIAMETER WEAPON_MODS CUSTOM_ITEM_PREFIX TYPE BURN"
+
+msgctxt "burnt adjective"
+msgid "burnt "
+msgstr " (burnt)"

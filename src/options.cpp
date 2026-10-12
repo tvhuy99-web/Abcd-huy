@@ -1366,64 +1366,8 @@ std::unordered_set<std::string> options_manager::get_langs_with_translation_file
 
 std::vector<options_manager::id_and_option> options_manager::get_lang_options()
 {
-    std::vector<id_and_option> lang_options = {
-        { "", to_translation( "System language" ) },
-    };
-
-    constexpr std::array<std::pair<const char *, const char *>, 26> language_names = {{
-            // Note: language names are in their own language and are *not* translated at all.
-            // Note: Somewhere in Github PR was better link to msdn.microsoft.com with language names.
-            // http://en.wikipedia.org/wiki/List_of_language_names
-            { "en", R"(English)" },
-            { "ar", R"(العربية)" },
-            { "cs", R"(Český Jazyk)" },
-            { "da", R"(Dansk)" },
-            { "de", R"(Deutsch)" },
-            { "el", R"(Ελληνικά)" },
-            { "es_AR", R"(Español (Argentina))" },
-            { "es_ES", R"(Español (España))" },
-            { "fr", R"(Français)" },
-            { "hu", R"(Magyar)" },
-            { "id", R"(Bahasa Indonesia)" },
-            { "is", R"(Íslenska)" },
-            { "it_IT", R"(Italiano)" },
-            { "ja", R"(日本語)" },
-            { "ko", R"(한국어)" },
-            { "nb", R"(Norsk)" },
-            { "nl", R"(Nederlands)" },
-            { "pl", R"(Polski)" },
-            { "pt", R"(Português (Portugal))" },
-            { "pt_BR", R"(Português (Brasil))" },
-            { "ru", R"(Русский)" },
-            { "sr", R"(Српски)" },
-            { "tr", R"(Türkçe)" },
-            { "uk_UA", R"(Українська)" },
-            { "zh_CN", R"(中文 (中国))" },
-            { "zh_TW", R"(中文 (台灣))" },
-        }
-    };
-
-    for( const auto& [lang_id, lang_name] : language_names ) {
-        std::string name = lang_name;
-        if( const lang_stats *stats = lang_stats_for( lang_id ) ) {
-            name += string_format( _( " <color_dark_gray>(%.1f%%)</color>" ),
-                                   stats->percent_translated() );
-        }
-        lang_options.emplace_back( lang_id, no_translation( name ) );
-    }
-
-    std::unordered_set<std::string> lang_list = get_langs_with_translation_files();
-
-    std::vector<id_and_option> options;
-
-    lang_list.insert( "" ); // for System language option
-    lang_list.insert( "en" ); // for English option
-
-    std::copy_if( lang_options.begin(), lang_options.end(), std::back_inserter( options ),
-    [&lang_list]( const options_manager::id_and_option & pair ) {
-        return lang_list.count( pair.first );
-    } );
-    return options;
+    // English is supplied by the source strings; no translation catalog is needed.
+    return { { "en", no_translation( "English" ) } };
 }
 
 #if defined(__ANDROID__)
@@ -1861,9 +1805,8 @@ void options_manager::add_options_interface()
     add_empty_line();
 
     add( "USE_LANG", "interface", to_translation( "Language" ),
-         to_translation( "Switch language.  Each percentage is the fraction of strings translated "
-                         "for that language." ),
-         options_manager::get_lang_options(), "" );
+         to_translation( "This build uses English only." ),
+         options_manager::get_lang_options(), "en" );
 
     add_empty_line();
 

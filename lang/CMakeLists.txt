@@ -1,3 +1,6 @@
+# English is supplied by source strings. Ignore requested translation catalogs.
+set(LANGUAGES "")
+
 message(STATUS "Process LANGUAGES variable --")
 
 if(NOT GETTEXT_MSGFMT_EXECUTABLE)

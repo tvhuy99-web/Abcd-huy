@@ -974,11 +974,12 @@ TEST_CASE( "tname_i18n_order", "[item][tname][translations]" )
     backpack.set_flag( flag_FILTHY );
     REQUIRE( backpack.tname() == "<color_c_green>++</color> burnt backpack (filthy)" );
 
-    set_language( "ru" );
-    TranslationManager::GetInstance().LoadDocuments( { "./data/mods/TEST_DATA/lang/mo/ru/LC_MESSAGES/TEST_DATA.mo" } );
+    set_language( "en" );
+    TranslationManager::GetInstance().LoadDocuments( { "./data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo" } );
     CHECK( backpack.tname() ==
            "<color_c_green>++</color> backpack (burnt) (filthy)" );
 
     set_language( "en" );
 }
 #endif
+

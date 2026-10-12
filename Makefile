@@ -1264,9 +1264,9 @@ src/version.h: version
 
 src/version.cpp: src/version.h
 
-TEST_MO := data/mods/TEST_DATA/lang/mo/ru/LC_MESSAGES/TEST_DATA.mo
+TEST_MO := data/mods/TEST_DATA/lang/mo/en/LC_MESSAGES/TEST_DATA.mo
 
-$(TEST_MO): data/mods/TEST_DATA/lang/po/ru.po
+$(TEST_MO): data/mods/TEST_DATA/lang/po/en.po
 	mkdir -p $(dir $@)
 	msgfmt -f -o $@ $<
 

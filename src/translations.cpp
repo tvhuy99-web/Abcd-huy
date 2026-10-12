@@ -18,28 +18,9 @@ int detail::get_current_language_version()
 }
 
 #if defined(LOCALIZE)
-#include "options.h"
-#include "system_locale.h"
-#include "uilist.h"
-
 std::string select_language()
 {
-    auto languages = get_options().get_option( "USE_LANG" ).getItems();
-
-    languages.erase( std::remove_if( languages.begin(),
-    languages.end(), []( const options_manager::id_and_option & lang ) {
-        return lang.first.empty() || lang.second.empty();
-    } ), languages.end() );
-
-    uilist sm;
-    sm.allow_cancel = false;
-    sm.text = _( "Select your language" );
-    for( size_t i = 0; i < languages.size(); i++ ) {
-        sm.addentry( i, true, MENU_AUTOASSIGN, languages[i].second.translated() );
-    }
-    sm.query();
-
-    return languages[sm.ret].first;
+    return "en";
 }
 #endif // LOCALIZE
 
@@ -65,21 +46,18 @@ std::string locale_dir()
 
 void set_language_from_options()
 {
-#if defined(LOCALIZE)
-    const std::string system_lang = SystemLocale::Language().value_or( "en" );
-    std::string lang_opt = get_option<std::string>( "USE_LANG" ).empty() ? system_lang :
-                           get_option<std::string>( "USE_LANG" );
-    set_language( lang_opt );
-#else
+    // Keep existing saves and non-English device locales on the source language.
     set_language( "en" );
-#endif
 }
 
 void set_language( const std::string &lang )
 {
+    // Retain the translation API for future Vietnamese work, while this stage is English-only.
+    static_cast<void>( lang );
 #if defined(LOCALIZE)
-    DebugLog( D_INFO, D_MAIN ) << "Setting language to: '" << lang << '\'';
-    TranslationManager::GetInstance().SetLanguage( lang );
+    DebugLog( D_INFO, D_MAIN ) << "Setting language to: 'en'";
+    TranslationManager::GetInstance().SetLanguage( "en" );
+    TranslationManager::GetInstance().LoadDocuments( {} );
 #if defined(_WIN32)
     // Use the ANSI code page 1252 to work around some language output bugs. (#8665)
     if( setlocale( LC_ALL, ".1252" ) == nullptr ) {
@@ -94,9 +72,6 @@ void set_language( const std::string &lang )
         current_language_version++;
     } while( current_language_version == INVALID_LANGUAGE_VERSION );
 
-#else
-    // Silence unused var warning
-    ( void ) lang;
 #endif // LOCALIZE
 
     // Names depend on the language settings. They are loaded from different files

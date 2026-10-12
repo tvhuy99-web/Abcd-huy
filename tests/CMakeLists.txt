@@ -19,11 +19,11 @@ if (BUILD_TESTING)
         # Unfortunately we currently need to put this in the source dir, not the
         # build dir
         set(TEST_LANG ${CMAKE_SOURCE_DIR}/data/mods/TEST_DATA/lang)
-        set(TEST_MO ${TEST_LANG}/mo/ru/LC_MESSAGES/TEST_DATA.mo)
+        set(TEST_MO ${TEST_LANG}/mo/en/LC_MESSAGES/TEST_DATA.mo)
         add_custom_command(
             OUTPUT ${TEST_MO}
-            MAIN_DEPENDENCY ${TEST_LANG}/po/ru.po
-            COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f -o ${TEST_MO} ${TEST_LANG}/po/ru.po)
+            MAIN_DEPENDENCY ${TEST_LANG}/po/en.po
+            COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f -o ${TEST_MO} ${TEST_LANG}/po/en.po)
 
         add_custom_target(test_mo DEPENDS ${TEST_MO})
     endif()
