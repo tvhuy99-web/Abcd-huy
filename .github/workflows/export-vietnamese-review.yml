@@ -102,7 +102,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$branch"
-          git add translation_review/vi/
+          git add --sparse translation_review/vi/
           git commit -m "Export Vietnamese PO to review chunks (run ${RUN_ID})"
           git push origin "$branch"
           echo "## Vietnamese translation ready for review" >> "$GITHUB_STEP_SUMMARY"
