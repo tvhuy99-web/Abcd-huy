@@ -1,0 +1,82 @@
+name: Audit Vietnamese completeness
+
+on:
+  push:
+    branches:
+      - fix/vietnamese-on-every-launch
+    paths:
+      - lang/audit_vi.py
+      - lang/check_vi_format.py
+      - .github/workflows/audit-vietnamese.yml
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  audit:
+    runs-on: ubuntu-22.04
+    timeout-minutes: 45
+    steps:
+      - name: Checkout source and translation resources
+        uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          sparse-checkout: |
+            Makefile
+            src
+            lang
+            data
+          sparse-checkout-cone-mode: false
+
+      - name: Install gettext and Python PO parser
+        shell: bash
+        run: |
+          if ! command -v xgettext >/dev/null || ! command -v msgfmt >/dev/null; then
+            sudo apt-get update
+            sudo apt-get install -y gettext
+          fi
+          python3 -m pip install --user polib
+
+      - name: Rebuild English gettext template from game source
+        shell: bash
+        run: |
+          set -eo pipefail
+          sh lang/update_pot.sh > /tmp/translation-extraction.log 2>&1 || {
+            tail -100 /tmp/translation-extraction.log
+            exit 1
+          }
+          tail -15 /tmp/translation-extraction.log
+
+      - name: Decompress Vietnamese catalog and generate audit
+        shell: bash
+        run: |
+          set -eo pipefail
+          gzip -dc lang/po/vi.po.gz > /tmp/cataclysm-vi.po
+          python3 lang/audit_vi.py lang/po/cataclysm-dda.pot /tmp/cataclysm-vi.po
+
+      - name: Scan placeholders, markup, gzip and Unicode
+        shell: bash
+        run: |
+          python3 lang/check_vi_format.py lang/po/cataclysm-dda.pot /tmp/cataclysm-vi.po
+
+      - name: Commit audit results on independent branch
+        shell: bash
+        env:
+          RUN_ID: ${{ github.run_id }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          branch="translation-audit-${RUN_ID}"
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git switch -c "$branch"
+          git add --sparse audit_results/vietnamese
+          git commit -m "Audit Vietnamese translation against current English source"
+          git push origin "$branch"
+          {
+            echo "## Vietnamese translation audit"
+            echo "Read the detailed report:"
+            echo "https://github.com/${REPO}/blob/${branch}/audit_results/vietnamese/report.md"
+            echo ""
+            cat audit_results/vietnamese/report.md | head -30
+          } >> "$GITHUB_STEP_SUMMARY"
