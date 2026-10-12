@@ -1,0 +1,28 @@
+{
+  "english_current_total": 116272,
+  "vietnamese_catalog_entries": 116272,
+  "matched_current_keys": 116272,
+  "valid_translations": 116272,
+  "coverage_pct": 100.0,
+  "missing_from_catalog": 0,
+  "empty_translations": 0,
+  "fuzzy_translations": 0,
+  "not_ready_current": 0,
+  "stale_catalog_keys": 0,
+  "same_as_english": 2717,
+  "incomplete_plurals_including_fuzzy": 0,
+  "msgfmt_exit_code": 0,
+  "msgfmt_output": "116272 translated messages.\n",
+  "categories": {
+    "C++/UI": {
+      "english_keys": 12534,
+      "valid_translations": 12534,
+      "missing_keys": 0
+    },
+    "JSON/game content": {
+      "english_keys": 103738,
+      "valid_translations": 103738,
+      "missing_keys": 0
+    }
+  }
+}
