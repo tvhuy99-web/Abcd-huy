@@ -192,16 +192,11 @@ task makeLocalization(type: Exec) {
     def args = []
     if (localize) {
         println("Building with Vietnamese localization")
-        switch (OperatingSystem.current()) {
-            case OperatingSystem.LINUX:
-                args = ['make', 'localization', 'LANGUAGES=vi']
-                break
-            case OperatingSystem.WINDOWS:
-                args = ['sh.exe', 'lang/compile_mo.sh', 'vi']
-                break
-            default:
-                args = ['echo', 'Building without localization']
-                break
+        if (OperatingSystem.current() == OperatingSystem.WINDOWS) {
+            args = ['sh.exe', 'lang/compile_mo.sh', 'vi']
+        } else {
+            // Linux and macOS both need to compile the Vietnamese .mo file.
+            args = ['make', 'localization', 'LANGUAGES=vi']
         }
     } else {
         args = ['echo', 'Building without localization']
@@ -284,6 +279,12 @@ task generateAssetFileList {
     outputs.upToDateWhen { false }
     doLast {
         def assetRoot = file(OperatingSystem.current() == OperatingSystem.WINDOWS ? assetsDirWindows : assetsDir)
+        if (localize) {
+            def vietnameseMo = new File(assetRoot, 'lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo')
+            if (!vietnameseMo.isFile()) {
+                throw new GradleException("Vietnamese translation missing: ${vietnameseMo}. Check the gettext build.")
+            }
+        }
         def packaged = { String name, boolean isDir ->
             def lower = name.toLowerCase()
             !( lower.startsWith('.') || ( isDir && lower.startsWith('_') ) ||
