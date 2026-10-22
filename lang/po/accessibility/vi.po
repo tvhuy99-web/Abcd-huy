@@ -217,6 +217,47 @@ msgstr "Bạn cảm nhận được điều gì đó ở đây."
 msgid "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position."
 msgstr "Chỉ hiện dấu âm thanh mà game đã cho nghe. Dấu chỉ vị trí ước lượng, không tiết lộ vị trí thật của sinh vật."
 
+#, c-format
+msgid "Near this marker, you heard %s. The marker is approximate and may not be the sound source's position."
+msgstr "Gần dấu này, bạn đã nghe thấy %s. Dấu chỉ vị trí ước lượng và có thể không phải nơi phát ra âm thanh."
+
+#, c-format
+msgid "%1$s: %2$s"
+msgstr "%1$s: %2$s"
+
+msgid "Known trap"
+msgstr "Bẫy đã biết"
+
+msgid "Visible creature"
+msgstr "Sinh vật đang nhìn thấy"
+
+msgid "Special perception"
+msgstr "Cảm nhận đặc biệt"
+
+msgid "Visible field"
+msgstr "Trường đang nhìn thấy"
+
+msgid "Visible obstacle"
+msgstr "Chướng ngại vật đang nhìn thấy"
+
+msgid "Known route feature"
+msgstr "Lối đi đã biết"
+
+msgid "Approximate sound marker"
+msgstr "Dấu âm thanh ước lượng"
+
+msgid "Visible vehicle"
+msgstr "Phương tiện đang nhìn thấy"
+
+msgid "Visible items"
+msgstr "Vật phẩm đang nhìn thấy"
+
+msgid "Known furniture"
+msgstr "Đồ đạc đã biết"
+
+msgid "Noteworthy information"
+msgstr "Thông tin đáng chú ý"
+
 msgid "This scan reads only remembered terrain and furniture on other levels. Reading the map does not advance game time."
 msgstr "Lần quét này chỉ đọc địa hình và đồ đạc đã nhớ ở tầng khác. Đọc bản đồ không làm thời gian trong game trôi qua."
 

@@ -205,7 +205,9 @@ std::string describe_tile( const tile_observation &observation )
         for( const auto &perception : observation.special_perceptions ) { result += ". " + perception; }
     }
     if( !observation.heard_marker.empty() ) {
-        result += ". " + string_format( _( "From here you heard %s" ), observation.heard_marker );
+        result += ". " + string_format( _( "Near this marker, you heard %s. "
+                                            "The marker is approximate and may not be the sound source's position." ),
+                                         observation.heard_marker );
     }
     return remove_color_tags( result );
 }

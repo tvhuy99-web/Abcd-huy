@@ -166,6 +166,36 @@ bool has_noteworthy_information( const tile_observation &tile )
            ( tile.source == observation_source::unknown && !tile.special_perceptions.empty() );
 }
 
+int noteworthy_priority( const tile_observation &tile )
+{
+    if( !tile.known_traps.empty() ) { return 0; }
+    if( !tile.seen_creatures.empty() ) { return 1; }
+    if( !tile.special_perceptions.empty() ) { return 2; }
+    if( !tile.fields.empty() ) { return 3; }
+    if( tile.impassable ) { return 4; }
+    if( tile.route_feature ) { return 5; }
+    if( !tile.heard_marker.empty() ) { return 6; }
+    if( !tile.vehicle.empty() ) { return 7; }
+    if( !tile.seen_items.empty() ) { return 8; }
+    if( !tile.furniture.empty() ) { return 9; }
+    return 10;
+}
+
+std::string noteworthy_category( const tile_observation &tile )
+{
+    if( !tile.known_traps.empty() ) { return _( "Known trap" ); }
+    if( !tile.seen_creatures.empty() ) { return _( "Visible creature" ); }
+    if( !tile.special_perceptions.empty() ) { return _( "Special perception" ); }
+    if( !tile.fields.empty() ) { return _( "Visible field" ); }
+    if( tile.impassable ) { return _( "Visible obstacle" ); }
+    if( tile.route_feature ) { return _( "Known route feature" ); }
+    if( !tile.heard_marker.empty() ) { return _( "Approximate sound marker" ); }
+    if( !tile.vehicle.empty() ) { return _( "Visible vehicle" ); }
+    if( !tile.seen_items.empty() ) { return _( "Visible items" ); }
+    if( !tile.furniture.empty() ) { return _( "Known furniture" ); }
+    return _( "Noteworthy information" );
+}
+
 std::string player_status()
 {
     const avatar &viewer = get_avatar();
@@ -369,6 +399,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
     // Nearby observations are read-only. A tile selection never walks, attacks
     // or constructs a route. Direction commands below use the normal engine.
+    struct nearby_tile_node {
+        int priority = 0;
+        int distance = 0;
+        semantic_node node;
+    };
+    std::vector<nearby_tile_node> nearby_nodes;
     for( int distance = 1; distance <= scan_radius; ++distance ) {
         for( int dy = -distance; dy <= distance; ++dy ) {
             for( int dx = -distance; dx <= distance; ++dx ) {
@@ -384,13 +420,27 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 const std::string direction = relative_name( dx, dy );
                 semantic_node node = document( "tile:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                                direction, describe_tile( tile ) );
+                if( filter == world_scan_filter::noteworthy ) {
+                    node.label = string_format( _( "%1$s: %2$s" ), noteworthy_category( tile ), direction );
+                }
                 node.value = tile.source == observation_source::unknown ? _( "Unknown" ) : tile.terrain;
                 if( tile.source == observation_source::remembered ) {
                     node.value += ". " + std::string( _( "Remembered" ) );
                 }
-                result.nodes.push_back( std::move( node ) );
+                nearby_nodes.push_back( { filter == world_scan_filter::noteworthy ? noteworthy_priority( tile ) : 0,
+                                          distance, std::move( node ) } );
             }
         }
+    }
+    std::stable_sort( nearby_nodes.begin(), nearby_nodes.end(), []( const nearby_tile_node &lhs,
+    const nearby_tile_node &rhs ) {
+        if( lhs.priority != rhs.priority ) { return lhs.priority < rhs.priority; }
+        return lhs.distance < rhs.distance;
+    } );
+    for( std::size_t i = 0; i < nearby_nodes.size(); ++i ) {
+        nearby_nodes[i].node.position = i + 1;
+        nearby_nodes[i].node.total = nearby_nodes.size();
+        result.nodes.push_back( std::move( nearby_nodes[i].node ) );
     }
     auto commands = command_snapshot( context, result.title );
     for( auto &node : commands.nodes ) { result.nodes.push_back( std::move( node ) ); }

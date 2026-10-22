@@ -137,6 +137,12 @@ lưu cùng lúc người dùng xác nhận đã nghe. Thay đổi tốc độ/qu
 buộc thử lại trước khi xác nhận. Bổ sung assertion nguồn cho thanh tốc độ,
 nhưng chưa chạy instrumentation test.
 
+Quét ô đáng chú ý nay gắn nhãn loại thông tin và xếp các ô có bẫy đã biết,
+sinh vật đang nhìn thấy, cảm nhận đặc biệt hoặc trường lên trước các lối đi,
+dấu âm thanh, phương tiện, vật phẩm và đồ đạc; các nhóm không khẳng định sinh
+vật là thù địch. Dấu âm thanh được mô tả là gần vị trí đánh dấu, không nhất
+thiết là nơi phát nguồn. Thứ tự/diễn đạt và ranh giới nhận biết chưa kiểm thử.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026
