@@ -187,6 +187,30 @@ msgstr "Bán kính quét, từ 1 đến 16 ô"
 msgid "Vertical memory scan depth, from 0 to 10"
 msgstr "Độ sâu quét trí nhớ theo tầng, từ 0 đến 10"
 
+msgid "All nearby tiles"
+msgstr "Tất cả ô lân cận"
+
+msgid "Known tiles only"
+msgstr "Chỉ ô đã biết"
+
+msgid "Noteworthy tiles only"
+msgstr "Chỉ ô đáng chú ý"
+
+msgid "Heard sound markers only"
+msgstr "Chỉ dấu âm thanh đã nghe"
+
+msgid "Show all nearby tiles and label unexplored tiles as unknown."
+msgstr "Hiện mọi ô lân cận; ô chưa khám phá được ghi là chưa biết."
+
+msgid "Show visible or remembered tiles and tiles with a sound marker."
+msgstr "Hiện ô đang thấy, ô đã nhớ và ô có dấu âm thanh."
+
+msgid "Show visible fields, traps, creatures, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers."
+msgstr "Hiện ô có trường, bẫy, sinh vật, vật phẩm, phương tiện, chướng ngại vật, cửa và cầu thang đã biết, đồ đạc đã nhớ và dấu âm thanh đã nghe."
+
+msgid "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position."
+msgstr "Chỉ hiện dấu âm thanh mà game đã cho nghe. Dấu chỉ vị trí ước lượng, không tiết lộ vị trí thật của sinh vật."
+
 msgid "This scan reads only remembered terrain and furniture on other levels. Reading the map does not advance game time."
 msgstr "Lần quét này chỉ đọc địa hình và đồ đạc đã nhớ ở tầng khác. Đọc bản đồ không làm thời gian trong game trôi qua."
 

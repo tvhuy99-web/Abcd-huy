@@ -62,8 +62,15 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
             if( terrain.is_valid() ) {
                 result.source = observation_source::remembered;
                 result.terrain = terrain.obj().name();
+                result.route_feature = terrain.obj().has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+                                       terrain.obj().has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+                                       terrain.obj().has_flag( ter_furn_flag::TFLAG_DOOR );
                 if( furniture.is_valid() && !furniture.is_null() ) {
                     result.furniture = furniture.obj().name();
+                    result.route_feature = result.route_feature ||
+                                           furniture.obj().has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+                                           furniture.obj().has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+                                           furniture.obj().has_flag( ter_furn_flag::TFLAG_DOOR );
                 }
             }
         }
@@ -72,6 +79,9 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
     result.source = observation_source::visible;
     result.terrain = here.tername( position );
     if( here.has_furn( position ) ) { result.furniture = here.furnname( position ); }
+    result.route_feature = here.has_flag( ter_furn_flag::TFLAG_GOES_UP, position ) ||
+                           here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, position ) ||
+                           here.has_flag( ter_furn_flag::TFLAG_DOOR, position );
     result.impassable = here.impassable( position );
     for( const auto &entry : here.field_at( position ) ) {
         result.fields.push_back( entry.second.name() );
@@ -119,8 +129,15 @@ tile_observation observe_memory_tile( const tripoint_bub_ms &position )
     }
     result.source = observation_source::remembered;
     result.terrain = terrain.obj().name();
+    result.route_feature = terrain.obj().has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+                           terrain.obj().has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+                           terrain.obj().has_flag( ter_furn_flag::TFLAG_DOOR );
     if( furniture.is_valid() && !furniture.is_null() ) {
         result.furniture = furniture.obj().name();
+        result.route_feature = result.route_feature ||
+                               furniture.obj().has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+                               furniture.obj().has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+                               furniture.obj().has_flag( ter_furn_flag::TFLAG_DOOR );
     }
     return result;
 }

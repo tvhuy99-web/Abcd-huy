@@ -68,6 +68,11 @@ Bản đồ cục bộ cho phép chọn độ sâu 0–10 tầng để duyệt m
 dưới. Tầng không có dữ liệu nhớ chỉ báo chưa biết; adapter không tra địa hình
 sống ở tầng khác. Chưa biên dịch hoặc kiểm tra.
 
+Quét ngang có bộ lọc ô đã biết, ô có nội dung đáng chú ý (gồm cửa/cầu thang đã
+thấy hoặc nhớ) và marker âm thanh đã nghe. Bộ lọc âm thanh chỉ đọc marker ước
+lượng của game, không định vị sinh vật. Bộ lọc cho phép đổi ngay trong màn bản
+đồ, không tiêu lượt. Chưa biên dịch hoặc kiểm tra.
+
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
 kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.

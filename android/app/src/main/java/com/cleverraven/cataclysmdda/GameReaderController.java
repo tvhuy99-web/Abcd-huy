@@ -236,6 +236,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "mod-selection".equals(next.category)
                         || "active-world-mods".equals(next.category)
                         || "world-options".equals(next.category)
+                        || "DEFAULTMODE".equals(next.category)
                         || "overmap".equals(next.category)
                         || "OPTIONS".equals(next.category);
                 if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {

@@ -18,6 +18,7 @@ struct tile_observation {
     std::string vehicle;
     std::string heard_marker;
     bool impassable = false;
+    bool route_feature = false;
 };
 // All callers run on the game thread after updating the game's visibility
 // cache for this z-level. Unknown/memory branches never read live tile content.

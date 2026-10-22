@@ -153,6 +153,17 @@ std::string relative_name( const int dx, const int dy )
     return result;
 }
 
+bool has_noteworthy_information( const tile_observation &tile )
+{
+    return !tile.heard_marker.empty() ||
+           ( tile.source == observation_source::visible &&
+             ( tile.impassable || !tile.fields.empty() || !tile.known_traps.empty() ||
+               !tile.furniture.empty() || !tile.seen_creatures.empty() || !tile.seen_items.empty() ||
+               !tile.vehicle.empty() || tile.route_feature ) ) ||
+           ( tile.source == observation_source::remembered &&
+             ( !tile.furniture.empty() || tile.route_feature ) );
+}
+
 std::string player_status()
 {
     const avatar &viewer = get_avatar();
@@ -247,7 +258,7 @@ void announce_status_changes()
 }
 
 semantic_snapshot world_snapshot( const input_context &context, const int scan_radius,
-                                  const int scan_depth )
+                                  const int scan_depth, const world_scan_filter filter )
 {
     semantic_snapshot result;
     result.title = _( "World" );
@@ -297,6 +308,32 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     depth.role = "number";
     depth.actions = { "focus", "set_text" };
     result.nodes.push_back( std::move( depth ) );
+    const std::vector<std::pair<world_scan_filter, std::string>> filters = {
+        { world_scan_filter::all, "world:filter:all" },
+        { world_scan_filter::known, "world:filter:known" },
+        { world_scan_filter::noteworthy, "world:filter:noteworthy" },
+        { world_scan_filter::heard, "world:filter:heard" }
+    };
+    const std::vector<std::string> filter_labels = {
+        _( "All nearby tiles" ), _( "Known tiles only" ),
+        _( "Noteworthy tiles only" ), _( "Heard sound markers only" )
+    };
+    const std::vector<std::string> filter_details = {
+        _( "Show all nearby tiles and label unexplored tiles as unknown." ),
+        _( "Show visible or remembered tiles and tiles with a sound marker." ),
+        _( "Show visible fields, traps, creatures, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers." ),
+        _( "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position." )
+    };
+    for( std::size_t i = 0; i < filters.size(); ++i ) {
+        semantic_node node;
+        node.id = filters[i].second;
+        node.role = "radio";
+        node.label = filter_labels[i];
+        node.detail = filter_details[i];
+        node.selected = filter == filters[i].first;
+        node.actions = { "focus", "activate" };
+        result.nodes.push_back( std::move( node ) );
+    }
     std::string recent;
     for( const auto &message : Messages::recent_messages( 12 ) ) {
         recent += message.first + ": " + message.second + ". ";
@@ -309,6 +346,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             for( int dx = -distance; dx <= distance; ++dx ) {
                 if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
                 const auto tile = observe_tile( origin + tripoint_rel_ms( dx, dy, 0 ) );
+                const bool include = filter == world_scan_filter::all ||
+                                     ( filter == world_scan_filter::known &&
+                                       ( tile.source != observation_source::unknown || !tile.heard_marker.empty() ) ) ||
+                                     ( filter == world_scan_filter::noteworthy && has_noteworthy_information( tile ) ) ||
+                                     ( filter == world_scan_filter::heard && !tile.heard_marker.empty() );
+                if( !include ) { continue; }
                 const std::string direction = relative_name( dx, dy );
                 semantic_node node = document( "tile:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                                direction, describe_tile( tile ) );
