@@ -220,6 +220,21 @@ msgstr "Chỉ hiện dấu âm thanh mà game đã cho nghe. Dấu chỉ vị tr
 msgid "This scan reads only remembered terrain and furniture on other levels. Reading the map does not advance game time."
 msgstr "Lần quét này chỉ đọc địa hình và đồ đạc đã nhớ ở tầng khác. Đọc bản đồ không làm thời gian trong game trôi qua."
 
+msgid "Current activity"
+msgstr "Hoạt động hiện tại"
+
+msgid "Sleeping. The game will continue until you wake up."
+msgstr "Đang ngủ. Game sẽ tiếp tục cho đến khi bạn tỉnh dậy."
+
+msgid "Ongoing activity."
+msgstr "Hoạt động đang diễn ra."
+
+msgid "Pause can request interruption; the game will ask before canceling."
+msgstr "Lệnh Tạm dừng có thể yêu cầu ngắt hoạt động; game sẽ hỏi trước khi hủy."
+
+msgid "Pause cannot interrupt this activity right now."
+msgstr "Hiện không thể dùng lệnh Tạm dừng để ngắt hoạt động này."
+
 msgid "Recent messages"
 msgstr "Thông báo gần đây"
 

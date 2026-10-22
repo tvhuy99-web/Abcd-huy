@@ -77,8 +77,9 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   còn thiếu âm thanh bất định và phân loại mức độ nổi bật; quan sát theo hành
   động thực tế, nhặt/đồ chứa,
   cơ thể/y tế, ăn/uống,
-  mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Đã có
-  đường gửi các thông báo log mới, nhưng chưa chứng minh đủ mọi cảnh báo hoặc
+  mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Snapshot
+  bản đồ đọc hoạt động/tiến độ và khả năng ngắt; dialog hủy còn cần kiểm chứng.
+  Đường gửi thông báo log mới đã có, nhưng chưa chứng minh đủ mọi cảnh báo hoặc
   khả năng nghe ổn định.
 - G5: kho nâng cao/chuyển đồ hai phía, nhắm bắn và đường bắn, cận chiến,
   chế độ bắn, ném, hoạt động/tiến độ chế tạo và xây dựng. Đã có adapter ban đầu

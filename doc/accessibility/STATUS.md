@@ -75,6 +75,10 @@ mô tả tĩnh có sẵn được đọc nguyên văn, placeholder động dùng
 phân giải ngẫu nhiên. Ô địa hình chưa thấy vẫn không đọc dữ liệu sống. Bộ lọc
 cho phép đổi ngay trong màn bản đồ, không tiêu lượt. Chưa biên dịch hoặc kiểm tra.
 
+Snapshot bản đồ nêu hoạt động/tiến độ hiện tại hoặc đang ngủ. Nó chỉ báo lệnh
+Pause có thể yêu cầu ngắt hay không; câu hỏi hủy vẫn do game hiển thị. Chưa
+biên dịch hoặc kiểm tra.
+
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
 kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.

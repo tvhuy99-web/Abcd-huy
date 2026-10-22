@@ -31,6 +31,7 @@ namespace
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_infected( "infected" );
+static const efftype_id effect_sleep( "sleep" );
 
 struct bodypart_status {
     bodypart_id id;
@@ -293,6 +294,31 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
     }
     result.nodes.push_back( document( "world:status", _( "Character status" ), player_status() ) );
+    const avatar &viewer = get_avatar();
+    if( viewer.has_effect( effect_sleep ) ) {
+        semantic_node activity_node = document( "world:activity", _( "Current activity" ),
+                                               _( "Sleeping. The game will continue until you wake up." ) );
+        activity_node.role = "status";
+        result.nodes.push_back( std::move( activity_node ) );
+    } else if( viewer.activity ) {
+        const player_activity &current = viewer.activity;
+        const std::optional<std::string> progress = current.get_progress_message( viewer );
+        std::string summary = progress.value_or( current.get_verb().translated() );
+        if( summary.empty() ) { summary = _( "Ongoing activity." ); }
+        summary = remove_color_tags( summary );
+        std::string description = summary;
+        if( current.is_interruptible_with_kb() ) {
+            description += ". ";
+            description += _( "Pause can request interruption; the game will ask before canceling." );
+        } else {
+            description += ". ";
+            description += _( "Pause cannot interrupt this activity right now." );
+        }
+        semantic_node activity_node = document( "world:activity", _( "Current activity" ), description );
+        activity_node.role = "status";
+        activity_node.value = summary;
+        result.nodes.push_back( std::move( activity_node ) );
+    }
     semantic_node radius;
     radius.id = "world:radius";
     radius.label = _( "Scan radius, from 1 to 16" );
