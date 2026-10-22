@@ -7,6 +7,7 @@
 
 #include "a11y_android.h"
 #include "a11y_context.h"
+#include "a11y_world.h"
 
 namespace a11y
 {
@@ -47,6 +48,7 @@ bool suspended() { return !enabled() || android::suspended(); }
 
 void replace_game_session()
 {
+    reset_status_monitor();
     contexts.invalidate_session();
     android::clear();
     for( auto &screen : screens ) {
@@ -64,6 +66,7 @@ void synchronize_lifecycle()
     const std::uint64_t current = android::lifecycle_epoch();
     if( current != seen_epoch ) {
         seen_epoch = current;
+        reset_status_monitor();
         // Force a generation boundary even when two Activity callbacks report
         // the same state. Tokens from an old UI owner must never become valid.
         contexts.set_suspended( true );
@@ -81,17 +84,24 @@ bool bound_to( const void *input_owner )
 
 screen_scope::screen_scope( const void *input_owner, std::string category,
                             intent_handler handler )
+    : owner( input_owner ), screen_category( std::move( category ) ),
+      intent_callback( std::move( handler ) )
 {
     synchronize_lifecycle();
-    if( !enabled() ) {
+    activate();
+}
+
+void screen_scope::activate()
+{
+    if( frame != 0 || !enabled() ) {
         return;
     }
-    frame = contexts.enter( "semantic-screen", category );
+    frame = contexts.enter( "semantic-screen", screen_category );
     auto screen = std::make_unique<screen_data>();
     screen->frame = frame;
-    screen->input_owner = input_owner;
-    screen->category = std::move( category );
-    screen->handler = std::move( handler );
+    screen->input_owner = owner;
+    screen->category = screen_category;
+    screen->handler = std::move( intent_callback );
     screens.push_back( std::move( screen ) );
     android::clear();
 }
@@ -113,10 +123,11 @@ screen_scope::~screen_scope()
 
 void screen_scope::update( semantic_snapshot snapshot, const bool force_revision )
 {
+    synchronize_lifecycle();
+    activate();
     if( frame == 0 ) {
         return;
     }
-    synchronize_lifecycle();
     const auto found = std::find_if( screens.begin(), screens.end(),
     [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
     if( found == screens.end() ) {

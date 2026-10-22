@@ -37,7 +37,11 @@ class screen_scope
         void update( semantic_snapshot snapshot, bool force_revision = false );
 
     private:
+        void activate();
         std::uint64_t frame = 0;
+        const void *owner = nullptr;
+        std::string screen_category;
+        intent_handler intent_callback;
 };
 } // namespace a11y
 #endif // CATA_SRC_A11Y_RUNTIME_H

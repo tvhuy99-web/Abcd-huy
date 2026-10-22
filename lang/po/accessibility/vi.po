@@ -40,6 +40,23 @@ msgstr "Chỉ còn trong trí nhớ, hiện không nhìn thấy: "
 msgid "Current tile"
 msgstr "Ô hiện tại"
 
+msgid "No current warning"
+msgstr "Không có cảnh báo hiện tại"
+
+msgid "Critically low"
+msgstr "Rất thấp"
+
+msgid "Low"
+msgstr "Thấp"
+
+#, c-format
+msgid "%1$s is worsening: %2$s"
+msgstr "%1$s đang xấu đi: %2$s"
+
+#, c-format
+msgid "%1$s is improving: %2$s"
+msgstr "%1$s đang cải thiện: %2$s"
+
 #, c-format
 msgid "North %d"
 msgstr "Bắc %d ô"

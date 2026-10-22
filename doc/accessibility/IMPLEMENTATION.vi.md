@@ -25,7 +25,7 @@ ghi PASS mới.
 | Nhóm | Điểm triển khai | Trạng thái/giới hạn |
 | --- | --- | --- |
 | Ngữ nghĩa | `a11y_semantics`, `ReaderSnapshot` | Nút, vai trò, giá trị, trạng thái, vị trí, chi tiết, token và revision; chưa nghiệm thu schema/Unicode |
-| Sở hữu và luồng | `a11y_runtime`, `a11y_android` | Scope, mailbox hữu hạn, lọc token/revision/request; Java không giữ con trỏ gameplay; chưa kiểm thử race/vòng đời |
+| Sở hữu và luồng | `a11y_runtime`, `a11y_android` | Scope, mailbox hữu hạn, lọc token/revision/request; scope có thể kích hoạt muộn khi adapter làm mới snapshot sau lúc bật reader; Java không giữ con trỏ gameplay; chưa kiểm thử race/vòng đời |
 | Android | `GameReaderController`, `CataclysmDDA` | Lớp trình bày native và gửi ý định; phối hợp touch exploration; chưa xác nhận focus/insets/Back trên máy |
 | Lời đọc | `ReaderSpeechQueue` | Gộp focus, ưu tiên, hết hạn, đọc theo đoạn, dừng/đọc lại/watchdog; chưa kiểm thử TTS thật cho mã mới |
 | Cử chỉ | `ReaderGestureSurface` | Duyệt/chọn/chi tiết/dừng, chặn hủy/nhiều ngón; chưa có cấu hình chơi nhanh tám hướng hoặc hướng dẫn luyện tập |
@@ -45,6 +45,7 @@ ghi PASS mới.
 | Chọn ô lân cận | `action.cpp/.h` | Scope cho choose_direction/choose_adjacent, gọi phép đổi hướng gốc kể cả isometric; chỉ quan sát ô ngang qua perception; trạng thái hợp lệ công trình chỉ nói ở ô nhìn thấy; chưa có quan sát khác tầng |
 | Nhắm mục tiêu | `ranged.cpp`, `a11y_input.cpp`, `input_context.cpp`, `GameReaderController.java` | Danh sách sinh vật/phương tiện game cho phép ngắm dựa trên tri thức hiện tại, hướng/khoảng cách, điểm ngắm hiện tại và trạng thái; chọn hàng chỉ di chuyển điểm ngắm, lệnh FIRE/xác nhận gốc riêng; đọc lại mục tiêu vừa đổi; chưa kiểm chứng chiến đấu, phép, phương tiện hoặc mục tiêu đổi vị trí |
 | Thông báo log | `messages.cpp`, `a11y_runtime.*`, `a11y_android.*`, `GameReaderController.java`, `ReaderSpeechQueue` | Thông báo mới của player log được chuyển qua JNI từ game thread lên Java; bad/warning/critical ưu tiên khẩn; thông tin thường chờ sau lời focus; bỏ thông báo trùng/coalesce hoặc bị cooldown ẩn; chưa thử tải cao, ngắt quãng hay audio thật |
+| Cảnh báo sinh tồn | `a11y_world.*`, `handle_action.cpp`, `a11y_runtime.cpp`, catalog Việt | So chuyển mức đói/khát/buồn ngủ/đau/sức bền tại vòng chờ bản đồ; baseline/reset theo load/lifecycle; refresh snapshot khi bật lại; chưa xác nhận ngưỡng, chống trùng hoặc chạy thực |
 | Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
 | Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; chưa chạy gettext/build mới |
 
@@ -107,9 +108,12 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
 - Xây dựng giữ đường CONFIRM, cảnh báo phe phái, chọn vị trí, partial_con và
   tiêu hao gốc. Cần kiểm chứng vị trí hợp lệ/không hợp lệ, ô không nhìn thấy,
   filter mode, blueprint, ánh sáng, tài nguyên thay đổi và hướng isometric.
-- Khi bật trình đọc giữa một màn đã mở lúc reader tắt, scope hiện tại có thể
-  chưa có snapshot chuyên biệt. Cần hoàn thiện cơ chế đăng ký/refresh khi
-  đổi enabled trong G2/G7; không giả sử wake event đã giải quyết việc đó.
+- Scope giữ chủ sở hữu, category và handler nếu màn được tạo khi reader tắt;
+  lần adapter gọi `update` sau khi bật có thể mở scope chuyên biệt muộn. Đây
+  chỉ áp dụng cho adapter còn làm mới snapshot; adapter chỉ dựng một lần hoặc
+  không chạy lại builder vẫn có thể tạm dùng danh sách lệnh chung cho tới khi
+  đóng/mở màn. Cần rà mọi vòng UI và kiểm chứng bật/tắt giữa các màn ở G2/G7;
+  không giả sử wake event tự dựng được dữ liệu chuyên biệt.
 
 ## Đợt nhắm mục tiêu chiến đấu, đã viết mã, chưa kiểm thử
 
@@ -155,6 +159,23 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   bị loại khi hàng đợi đầy; trùng/coalesce/cooldown; log bị deactivate;
   debug; vào nền/đổi cửa sổ/tắt reader; chuyển màn, load save, death và voice
   chưa sẵn sàng; TalkBack bật; âm thanh trên thiết bị. Chưa biên dịch/chạy.
+
+## Đợt cảnh báo thay đổi trạng thái sinh tồn, đã viết mã, chưa kiểm thử
+
+- Trong vòng chờ bản đồ, xuất snapshot khi mở mới hoặc đổi lifecycle; so sánh
+  các mức đói, khát, buồn ngủ, đau và sức bền với lần trước; không đọc mọi giá
+  trị ở mỗi lượt. Mốc ban đầu tạo baseline im lặng; load nhân vật, tắt reader
+  hoặc suspend xóa baseline để không phát lại biến động cũ khi quay lại.
+- Chỉ phát khi vượt/giảm qua các mức có ý nghĩa. Các mức cực hạn của đói,
+  khát, buồn ngủ, đau và sức bền được gửi ưu tiên khẩn; hồi phục hoặc mức nhẹ
+  gửi thông tin thường. Tóm tắt các chuyển trạng thái cùng lần đọc để tránh
+  một câu cho từng chỉ số. Dùng nhãn trạng thái UI và mức đau nhân vật cảm
+  nhận, không gửi tọa độ hoặc dữ liệu sinh vật.
+- Phạm vi hiện tại chưa bao gồm từng bộ phận/chảy máu, nhiễm độc/bệnh, nhiệt,
+  encumbrance, thuốc, kỹ năng, morale, năng lượng bionic, mức pin hay nguy hiểm
+  môi trường nếu game không đưa chúng qua log. Cần đánh giá trùng với message,
+  ngưỡng và thời điểm phát trong realtime/hoạt động dài, đổi ngôn ngữ, mất
+  focus cửa sổ, và tải save. Chưa biên dịch/chạy.
 
 ## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
 

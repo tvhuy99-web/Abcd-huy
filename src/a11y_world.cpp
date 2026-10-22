@@ -2,13 +2,16 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <optional>
 #include <string>
 #include <utility>
+#include <vector>
 #include "a11y_input.h"
 #include "a11y_body.h"
 #include "a11y_perception.h"
 #include "avatar.h"
 #include "bodypart.h"
+#include "character.h"
 #include "coordinates.h"
 #include "display.h"
 #include "input_context.h"
@@ -23,6 +26,88 @@ namespace a11y
 {
 namespace
 {
+struct monitored_status {
+    int hunger = 0;
+    int thirst = 0;
+    int sleepiness = 0;
+    int pain = 0;
+    int stamina = 0;
+    std::string hunger_text;
+    std::string thirst_text;
+    std::string sleepiness_text;
+    std::string pain_text;
+    std::string stamina_text;
+};
+
+std::optional<monitored_status> previous_status;
+
+int hunger_severity( const std::string &text )
+{
+    if( text == _( "Hungry" ) ) { return 1; }
+    if( text == _( "Near starving" ) ) { return 2; }
+    if( text == _( "Starving!" ) ) { return 3; }
+    if( text == _( "Famished" ) ) { return 4; }
+    return 0;
+}
+
+int thirst_severity( const int thirst )
+{
+    if( thirst > 520 ) { return 4; }
+    if( thirst > 240 ) { return 3; }
+    if( thirst > 80 ) { return 2; }
+    if( thirst > 40 ) { return 1; }
+    return 0;
+}
+
+int sleepiness_severity( const int sleepiness )
+{
+    if( sleepiness >= static_cast<int>( sleepiness_levels::EXHAUSTED ) ) { return 3; }
+    if( sleepiness >= static_cast<int>( sleepiness_levels::DEAD_TIRED ) ) { return 2; }
+    if( sleepiness >= static_cast<int>( sleepiness_levels::TIRED ) ) { return 1; }
+    return 0;
+}
+
+monitored_status current_status()
+{
+    const avatar &viewer = get_avatar();
+    monitored_status result;
+    result.hunger_text = display::hunger_text_color( viewer ).first;
+    result.hunger = hunger_severity( result.hunger_text );
+    result.thirst_text = display::thirst_text_color( viewer ).first;
+    result.thirst = thirst_severity( viewer.get_instant_thirst() );
+    result.sleepiness_text = display::sleepiness_text_color( viewer ).first;
+    result.sleepiness = sleepiness_severity( viewer.get_sleepiness() );
+    result.pain_text = display::pain_text_color( viewer ).first;
+    const int perceived_pain = viewer.get_perceived_pain();
+    result.pain = perceived_pain > 70 ? 7 : perceived_pain > 60 ? 6 :
+                  perceived_pain > 50 ? 5 : perceived_pain > 40 ? 4 :
+                  perceived_pain > 30 ? 3 : perceived_pain > 20 ? 2 :
+                  perceived_pain > 10 ? 1 : 0;
+    if( viewer.get_stamina_max() > 0 ) {
+        const int stamina_percent = 100 * viewer.get_stamina() / viewer.get_stamina_max();
+        result.stamina = stamina_percent <= 10 ? 3 : stamina_percent <= 25 ? 2 :
+                         stamina_percent <= 50 ? 1 : 0;
+        result.stamina_text = result.stamina >= 3 ? _( "Critically low" ) :
+                              result.stamina >= 2 ? _( "Low" ) : _( "No current warning" );
+    } else {
+        result.stamina_text = _( "No current warning" );
+    }
+    return result;
+}
+
+void add_transition( std::vector<std::string> &changes, const std::string &label,
+                     const std::string &value, const int old_level, const int new_level,
+                     const int threshold, const int urgent_level, bool &urgent )
+{
+    if( new_level > old_level && new_level >= threshold ) {
+        changes.push_back( string_format( _( "%1$s is worsening: %2$s" ), label, value ) );
+        urgent = urgent || new_level >= urgent_level;
+    } else if( old_level > new_level && old_level >= threshold ) {
+        const std::string detail = value.empty() ? _( "No current warning" ) : value;
+        changes.push_back( string_format( _( "%1$s is improving: %2$s" ), label, detail ) );
+    }
+}
+
 semantic_node document( std::string id, std::string label, std::string detail )
 {
     semantic_node node;
@@ -68,6 +153,46 @@ std::string player_status()
     return remove_color_tags( result );
 }
 } // namespace
+
+void reset_status_monitor()
+{
+    previous_status.reset();
+}
+
+void announce_status_changes()
+{
+    if( !enabled() || suspended() ) {
+        reset_status_monitor();
+        return;
+    }
+    const monitored_status current = current_status();
+    if( !previous_status ) {
+        previous_status = current;
+        return;
+    }
+
+    std::vector<std::string> changes;
+    bool urgent = false;
+    add_transition( changes, _( "Hunger" ), current.hunger_text, previous_status->hunger,
+                    current.hunger, 1, 3, urgent );
+    add_transition( changes, _( "Thirst" ), current.thirst_text, previous_status->thirst,
+                    current.thirst, 1, 3, urgent );
+    add_transition( changes, _( "Sleepiness" ), current.sleepiness_text,
+                    previous_status->sleepiness, current.sleepiness, 1, 3, urgent );
+    add_transition( changes, _( "Pain" ), current.pain_text, previous_status->pain,
+                    current.pain, 2, 7, urgent );
+    add_transition( changes, _( "Stamina" ), current.stamina_text, previous_status->stamina,
+                    current.stamina, 2, 3, urgent );
+    previous_status = current;
+    if( !changes.empty() ) {
+        std::string message;
+        for( const std::string &change : changes ) {
+            if( !message.empty() ) { message += ". "; }
+            message += change;
+        }
+        announce_game_message( message, urgent );
+    }
+}
 
 semantic_snapshot world_snapshot( const input_context &context, const int scan_radius )
 {
