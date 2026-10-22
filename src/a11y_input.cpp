@@ -18,6 +18,7 @@ semantic_snapshot command_snapshot( const input_context &context, const std::str
         node.id = action;
         node.role = "command";
         node.label = context.get_action_name( action );
+        node.actions = { "focus", "activate" };
         snapshot.nodes.push_back( std::move( node ) );
     }
     for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {

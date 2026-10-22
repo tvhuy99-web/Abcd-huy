@@ -245,6 +245,7 @@ class user_turn
 
 input_context game::get_player_input( std::string &action )
 {
+    close_blocking_activity_reader();
     map &here = get_map();
 
     const tripoint_bub_ms pos = u.pos_bub( here );

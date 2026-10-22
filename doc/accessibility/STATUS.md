@@ -79,6 +79,12 @@ Snapshot bản đồ nêu hoạt động/tiến độ hiện tại hoặc đang 
 Pause có thể yêu cầu ngắt hay không; câu hỏi hủy vẫn do game hiển thị. Chưa
 biên dịch hoặc kiểm tra.
 
+Trong lúc game chờ một hoạt động dài hoặc di chuyển tự động, reader giữ một màn
+hình riêng có tiến độ, khả năng ngắt và các lệnh mà vòng chờ thực sự xử lý. Khi
+trở lại nhập lệnh bình thường, màn này được đóng để token cũ không còn hợp lệ.
+Các hàng lệnh chung cũng được khai báo action kích hoạt để runtime nhận lệnh.
+Chưa biên dịch hoặc kiểm tra.
+
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
 kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.

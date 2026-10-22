@@ -299,6 +299,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         semantic_node activity_node = document( "world:activity", _( "Current activity" ),
                                                _( "Sleeping. The game will continue until you wake up." ) );
         activity_node.role = "status";
+        activity_node.value = _( "Sleeping. The game will continue until you wake up." );
         result.nodes.push_back( std::move( activity_node ) );
     } else if( viewer.activity ) {
         const player_activity &current = viewer.activity;
@@ -393,6 +394,70 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     }
     auto commands = command_snapshot( context, result.title );
     for( auto &node : commands.nodes ) { result.nodes.push_back( std::move( node ) ); }
+    return result;
+}
+
+semantic_snapshot activity_snapshot( const input_context &context )
+{
+    const avatar &viewer = get_avatar();
+    semantic_snapshot result;
+    result.title = _( "Activity in progress" );
+    result.category = context.category_id();
+    result.focus = "activity:current";
+    semantic_node current;
+    current.id = "activity:current";
+    current.role = "document";
+    current.actions = { "focus" };
+    semantic_node interruption;
+    interruption.id = "activity:interruptibility";
+    interruption.label = _( "Interruptibility" );
+    interruption.role = "document";
+    interruption.actions = { "focus" };
+
+    if( viewer.activity ) {
+        const player_activity &activity = viewer.activity;
+        current.label = remove_color_tags( activity.get_verb().translated() );
+        if( current.label.empty() ) { current.label = _( "Current activity" ); }
+        const std::optional<std::string> progress = activity.get_progress_message( viewer );
+        current.value = remove_color_tags( progress.value_or( current.label ) );
+        if( activity.is_interruptible_with_kb() ) {
+            interruption.value = _( "Can request interruption with Pause" );
+            interruption.detail = _( "The game will ask before canceling." );
+        } else if( viewer.has_destination() ) {
+            interruption.value = _( "Can request cancellation with Pause" );
+            interruption.detail = _( "The game will ask before canceling." );
+        } else {
+            interruption.value = _( "Cannot interrupt with Pause right now" );
+        }
+    } else {
+        current.label = _( "Automatic travel" );
+        current.value = _( "Travel is in progress." );
+        interruption.value = _( "Can request cancellation with Pause" );
+        interruption.detail = _( "The game will ask before canceling." );
+    }
+    current.detail = interruption.value;
+    if( !interruption.detail.empty() ) { current.detail += ". " + interruption.detail; }
+    result.nodes.push_back( std::move( current ) );
+    result.nodes.push_back( std::move( interruption ) );
+
+    const std::vector<std::string> supported_actions = {
+        "pause", "zoom_in", "zoom_out", "player_data", "messages", "help"
+    };
+    auto commands = command_snapshot( context, result.title );
+    for( semantic_node &node : commands.nodes ) {
+        if( std::find( supported_actions.begin(), supported_actions.end(), node.id ) == supported_actions.end() ) {
+            continue;
+        }
+        if( node.id == "pause" && viewer.activity && !viewer.activity.is_interruptible_with_kb() &&
+            !viewer.has_destination() ) {
+            continue;
+        }
+        result.nodes.push_back( std::move( node ) );
+    }
+    for( std::size_t i = 0; i < result.nodes.size(); ++i ) {
+        result.nodes[i].position = i + 1;
+        result.nodes[i].total = result.nodes.size();
+    }
     return result;
 }
 } // namespace a11y

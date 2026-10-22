@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "action.h"
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -231,9 +233,31 @@ bool cleanup_at_end()
 
 } // namespace turn_handler
 
+namespace
+{
+struct blocking_activity_reader_state {
+    std::unique_ptr<input_context> context;
+    std::unique_ptr<a11y::screen_scope> reader;
+};
+
+blocking_activity_reader_state &blocking_activity_reader()
+{
+    static blocking_activity_reader_state state;
+    return state;
+}
+} // namespace
+
+void close_blocking_activity_reader()
+{
+    blocking_activity_reader_state &state = blocking_activity_reader();
+    state.reader.reset();
+    state.context.reset();
+}
+
 void handle_key_blocking_activity()
 {
     if( test_mode ) {
+        close_blocking_activity_reader();
         return;
     }
     avatar &u = get_avatar();
@@ -241,11 +265,34 @@ void handle_key_blocking_activity()
             u.activity.id()->based_on() == based_on_type::NEITHER
             || u.activity.moves_left > 0 );
     if( has_unfinished_activity || u.has_destination() ) {
-        input_context ctxt = get_default_mode_input_context();
+        blocking_activity_reader_state &state = blocking_activity_reader();
+        if( !state.context ) {
+            state.context = std::make_unique<input_context>( get_default_mode_input_context() );
+        }
+        input_context &ctxt = *state.context;
+        if( a11y::enabled() ) {
+            if( !state.reader ) {
+                state.reader = std::make_unique<a11y::screen_scope>( &ctxt, "activity",
+                []( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                    if( intent.action == "cancel" ) {
+                        const avatar &player = get_avatar();
+                        if( player.activity.is_interruptible_with_kb() || player.has_destination() ) {
+                            return "pause";
+                        }
+                    } else if( intent.action == "activate" ) {
+                        return intent.node;
+                    }
+                    return std::nullopt;
+                } );
+            }
+            state.reader->update( a11y::activity_snapshot( ctxt ) );
+        } else {
+            state.reader.reset();
+        }
         const std::string action = ctxt.handle_input( 0 );
         bool refresh = true;
         if( action == "pause" ) {
-            if( u.activity.is_interruptible_with_kb() ) {
+            if( u.activity.is_interruptible_with_kb() || u.has_destination() ) {
                 g->cancel_activity_query( _( "Confirm:" ) );
             }
         } else if( action == "zoom_in" ) {
@@ -258,7 +305,7 @@ void handle_key_blocking_activity()
             u.disp_info( true );
         } else if( action == "messages" ) {
             Messages::display_messages();
-        } else if( action == "DISPLAY_HELP" ) {
+        } else if( action == "help" || action == "DISPLAY_HELP" ) {
             help_window hw;
             hw.show();
         } else if( action != "HELP_KEYBINDINGS" ) {
@@ -269,6 +316,7 @@ void handle_key_blocking_activity()
             refresh_display();
         }
     } else {
+        close_blocking_activity_reader();
         refresh_display();
         inp_mngr.pump_events();
     }

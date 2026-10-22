@@ -237,6 +237,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "active-world-mods".equals(next.category)
                         || "world-options".equals(next.category)
                         || "DEFAULTMODE".equals(next.category)
+                        || "activity".equals(next.category)
                         || "overmap".equals(next.category)
                         || "OPTIONS".equals(next.category);
                 if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {
@@ -259,6 +260,24 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                     || !previousCursor.detail.equals(nextCursor.detail))) {
                             selectedItemFocus = "target:cursor";
                             selectionChanged = true;
+                        }
+                    }
+                    if (!selectionChanged && "activity".equals(next.category)) {
+                        ReaderSnapshot.Node previousActivity = snapshot.find("activity:current");
+                        ReaderSnapshot.Node nextActivity = next.find("activity:current");
+                        if (previousActivity != null && nextActivity != null
+                                && !previousActivity.label.equals(nextActivity.label)) {
+                            selectedItemFocus = "activity:current";
+                            selectionChanged = true;
+                        }
+                        if (!selectionChanged) {
+                            ReaderSnapshot.Node previousInterruptibility = snapshot.find("activity:interruptibility");
+                            ReaderSnapshot.Node nextInterruptibility = next.find("activity:interruptibility");
+                            if (previousInterruptibility != null && nextInterruptibility != null
+                                    && !previousInterruptibility.value.equals(nextInterruptibility.value)) {
+                                selectedItemFocus = "activity:interruptibility";
+                                selectionChanged = true;
+                            }
                         }
                     }
                     if (!selectionChanged && "overmap".equals(next.category)) {

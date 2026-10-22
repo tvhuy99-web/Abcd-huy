@@ -235,6 +235,30 @@ msgstr "Lệnh Tạm dừng có thể yêu cầu ngắt hoạt động; game s�
 msgid "Pause cannot interrupt this activity right now."
 msgstr "Hiện không thể dùng lệnh Tạm dừng để ngắt hoạt động này."
 
+msgid "Activity in progress"
+msgstr "Hoạt động đang diễn ra"
+
+msgid "Automatic travel"
+msgstr "Tự động di chuyển"
+
+msgid "Travel is in progress."
+msgstr "Đang di chuyển theo tuyến đã đặt."
+
+msgid "Interruptibility"
+msgstr "Khả năng ngắt"
+
+msgid "Can request interruption with Pause"
+msgstr "Có thể yêu cầu ngắt bằng lệnh Tạm dừng"
+
+msgid "Cannot interrupt with Pause right now"
+msgstr "Hiện không thể ngắt bằng lệnh Tạm dừng"
+
+msgid "Can request cancellation with Pause"
+msgstr "Có thể yêu cầu hủy bằng lệnh Tạm dừng"
+
+msgid "The game will ask before canceling."
+msgstr "Game sẽ hỏi trước khi hủy."
+
 msgid "Recent messages"
 msgstr "Thông báo gần đây"
 

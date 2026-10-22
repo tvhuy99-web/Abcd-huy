@@ -513,7 +513,9 @@ const std::string &input_context::handle_input( const int timeout )
             }
             a11y::semantic_node node;
             node.id = action;
+            node.role = "command";
             node.label = get_action_name( action );
+            node.actions = { "focus", "activate" };
             snapshot.nodes.push_back( std::move( node ) );
         }
         for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
