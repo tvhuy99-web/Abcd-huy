@@ -6,6 +6,10 @@ Mã ứng dụng: `com.cleverraven.cataclysmdda.accessibility`; tên trên launc
 “Cataclysm DDA - Thử trợ năng”. Nó có vùng dữ liệu/nhà cung cấp tài liệu riêng,
 không dùng chung bản lưu với stable/experimental.
 
+Bản CI bàn giao dùng một chứng thư thử cố định, để các lần cập nhật của app thử
+không buộc gỡ app. Đây là khóa phát triển công khai, không phải khóa phát hành.
+Chỉ dùng APK có nguồn/commit/checksum được ghi rõ trong báo cáo bàn giao.
+
 ## Phạm vi của bản hiện tại
 
 Hiện chỉ có màn thử giọng native và các thành phần nền. Chưa có bộ đọc bản đồ,

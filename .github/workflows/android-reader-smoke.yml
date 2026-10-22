@@ -46,7 +46,7 @@ jobs:
       - name: Build UI-only test APKs
         run: |
           bash android/gradlew -p android --no-daemon --console=plain \
-            -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true \
+            -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true -Paccessibility_test_signing=true \
             assembleAccessibilityDebug assembleAccessibilityDebugAndroidTest
       - uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d # v2
         with:

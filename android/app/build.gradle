@@ -415,6 +415,14 @@ android {
     }
 
     signingConfigs {
+        // Public development key only. Never used by release builds.
+        accessibilityTest {
+            storeFile file('accessibility-test.keystore')
+            storeType 'PKCS12'
+            storePassword 'android'
+            keyAlias 'androiddebugkey'
+            keyPassword 'android'
+        }
         if (keystoreProperties.getProperty('storeFile') != null) {
             if (file(keystoreProperties.getProperty('storeFile')).exists()) {
                 release {
@@ -462,7 +470,9 @@ android {
         debug {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (signingConfigs.hasProperty("debug")) {
+            if (project.findProperty('accessibility_test_signing') == 'true') {
+                signingConfig signingConfigs.accessibilityTest
+            } else if (signingConfigs.hasProperty("debug")) {
                 signingConfig signingConfigs.debug
             }
             externalNativeBuild {
