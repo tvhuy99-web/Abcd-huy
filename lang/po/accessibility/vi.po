@@ -62,6 +62,18 @@ msgstr "%s bị gãy."
 msgid "%s is no longer broken."
 msgstr "%s đã hết gãy."
 
+#, c-format
+msgid "A bite was detected on %s."
+msgstr "Phát hiện vết cắn ở %s."
+
+#, c-format
+msgid "An infection was detected in %s."
+msgstr "Phát hiện nhiễm trùng ở %s."
+
+#, c-format
+msgid "The infection cleared in %s."
+msgstr "Nhiễm trùng ở %s đã hết."
+
 msgid "No current warning"
 msgstr "Không có cảnh báo hiện tại"
 

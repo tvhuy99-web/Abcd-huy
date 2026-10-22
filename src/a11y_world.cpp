@@ -29,11 +29,15 @@ namespace a11y
 namespace
 {
 static const efftype_id effect_bleed( "bleed" );
+static const efftype_id effect_bite( "bite" );
+static const efftype_id effect_infected( "infected" );
 
 struct bodypart_status {
     bodypart_id id;
     int bleeding = 0;
     bool broken = false;
+    bool bitten = false;
+    bool infected = false;
 };
 
 struct monitored_status {
@@ -105,7 +109,9 @@ monitored_status current_status()
     }
     for( const bodypart_id &part : viewer.get_all_body_parts( get_body_part_flags::only_main ) ) {
         result.bodyparts.push_back( { part, viewer.get_effect_int( effect_bleed, part ),
-                                      viewer.is_limb_broken( part ) } );
+                                      viewer.is_limb_broken( part ),
+                                      viewer.has_effect( effect_bite, part.id() ),
+                                      viewer.has_effect( effect_infected, part.id() ) } );
     }
     return result;
 }
@@ -218,6 +224,15 @@ void announce_status_changes()
             urgent = true;
         } else if( old->broken && !part.broken ) {
             changes.push_back( string_format( _( "%s is no longer broken." ), name ) );
+        }
+        if( !old->bitten && part.bitten ) {
+            changes.push_back( string_format( _( "A bite was detected on %s." ), name ) );
+        }
+        if( !old->infected && part.infected ) {
+            changes.push_back( string_format( _( "An infection was detected in %s." ), name ) );
+            urgent = true;
+        } else if( old->infected && !part.infected ) {
+            changes.push_back( string_format( _( "The infection cleared in %s." ), name ) );
         }
     }
     previous_status = current;

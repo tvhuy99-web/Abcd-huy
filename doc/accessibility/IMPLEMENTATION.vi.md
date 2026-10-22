@@ -173,12 +173,13 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   trị ở mỗi lượt. Mốc ban đầu tạo baseline im lặng; load nhân vật, tắt reader
   hoặc suspend xóa baseline để không phát lại biến động cũ khi quay lại.
 - Chỉ phát khi vượt/giảm qua các mức có ý nghĩa. Các mức cực hạn của đói,
-  khát, buồn ngủ, đau và sức bền được gửi ưu tiên khẩn; xương gãy hoặc chảy
-  máu nặng cũng ưu tiên khẩn. Hồi phục hoặc mức nhẹ gửi thông tin thường.
+  khát, buồn ngủ, đau và sức bền được gửi ưu tiên khẩn; xương gãy, nhiễm trùng
+  hoặc chảy máu nặng cũng ưu tiên khẩn. Vết cắn, hồi phục hoặc mức nhẹ gửi
+  thông tin thường.
   Tóm tắt các chuyển trạng thái cùng lần đọc để tránh một câu cho từng chỉ số.
   Dùng nhãn trạng thái UI và mức đau nhân vật cảm nhận, không gửi tọa độ hoặc
   dữ liệu sinh vật.
-- Ngoài phạm vi hiện tại: HP chi tiết từng bộ phận, nhiễm độc/bệnh, nhiệt,
+- Ngoài phạm vi hiện tại: HP chi tiết từng bộ phận, các bệnh/độc khác, nhiệt,
   encumbrance, thuốc, kỹ năng, morale, năng lượng bionic, mức pin hay nguy hiểm
   môi trường nếu game không đưa chúng qua log. Cần đánh giá trùng với message,
   ngưỡng và thời điểm phát trong realtime/hoạt động dài, đổi ngôn ngữ, mất
