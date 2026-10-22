@@ -221,16 +221,56 @@ trade_ui::trade_result_t trade_ui::perform_trade()
 void trade_ui::recalc_values_cpane()
 {
     _trade_values[_cpane] = 0;
+    _trade_unit_counts[_cpane] = 0;
 
     for( entry_t const &it : _panes[_cpane]->to_trade() ) {
         // FIXME: cache trading_price
         _trade_values[_cpane] +=
             npc_trading::trading_price( *_parties[-_cpane + 1], *_parties[_cpane], it );
+        _trade_unit_counts[_cpane] += static_cast<std::size_t>( it.second );
     }
     if( !_parties[_trader]->as_npc()->will_exchange_items_freely() ) {
         _balance = _cost + _trade_values[_you] - _trade_values[_trader] + _delta_bank;
     }
     _header_ui.invalidate_ui();
+}
+
+std::string trade_ui::build_accessibility_summary( const pane_t &pane ) const
+{
+    const npc &trader = *_parties[_trader]->as_npc();
+    std::string balance = _( "Exchange" );
+    if( !trader.will_exchange_items_freely() ) {
+        balance = string_format( _balance >= 0 ? _( "Credit %s" ) : _( "Debt %s" ),
+                                 format_money( std::abs( _balance ) ) );
+    }
+
+    std::string summary = string_format(
+                              _( "Your offer: %1$s item units, estimated value %2$s. "
+                                 "NPC offer: %3$s item units, estimated value %4$s. "
+                                 "Current balance: %5$s." ),
+                              std::to_string( _trade_unit_counts[_you] ), format_money( _trade_values[_you] ),
+                              std::to_string( _trade_unit_counts[_trader] ), format_money( _trade_values[_trader] ),
+                              balance );
+    if( !trader.will_exchange_items_freely() ) {
+        summary += "\n";
+        summary += npc_trading::npc_will_accept_trade( trader, _balance ) ?
+                   _( "Balance is acceptable to the trader." ) :
+                   _( "Balance exceeds the trader's current limit." );
+    }
+    if( get_option<bool>( "CAPITALISM" ) ) {
+        summary += "\n";
+        summary += string_format( _( "Bank balance: %1$s. Trade adjustment: %2$s." ),
+                                  format_money( _bank ), format_money( _delta_bank ) );
+    }
+    summary += "\n";
+    summary += ( &pane == _panes[_you].get() ) ? _( "Current pane: your offer." ) :
+               _( "Current pane: items offered by the NPC." );
+    return summary;
+}
+
+std::string trade_selector::get_accessibility_summary() const
+{
+    return _parent->build_accessibility_summary( *this );
 }
 
 void trade_ui::autobalance()

@@ -3496,6 +3496,11 @@ inventory_selector::inventory_selector( Character &u, const inventory_selector_p
     }
 }
 
+std::string inventory_selector::get_accessibility_summary() const
+{
+    return hint;
+}
+
 inventory_selector::~inventory_selector()
 {
     item_name_cache_users--;
@@ -3570,7 +3575,7 @@ class inventory_selector::reader_session
                 return;
             }
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context, owner.title );
-            snapshot.summary = remove_color_tags( owner.hint );
+            snapshot.summary = remove_color_tags( owner.get_accessibility_summary() );
             for( const std::string &line : owner.get_stats() ) {
                 snapshot.summary += "\n" + remove_color_tags( line );
             }

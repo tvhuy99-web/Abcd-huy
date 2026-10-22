@@ -950,6 +950,7 @@ class inventory_selector
         };
 
     protected:
+        virtual std::string get_accessibility_summary() const;
         size_t get_columns_width( const std::vector<inventory_column *> &columns ) const;
         /** @return Percentage of the window occupied by columns. */
         double get_columns_occupancy_ratio( size_t client_width ) const;

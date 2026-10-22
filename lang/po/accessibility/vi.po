@@ -855,3 +855,21 @@ msgstr "Lịch sử hội thoại"
 
 msgid "This response is unavailable because its condition is not met."
 msgstr "Lựa chọn này hiện không khả dụng vì chưa đáp ứng điều kiện."
+
+msgid "Your offer: %1$s item units, estimated value %2$s. NPC offer: %3$s item units, estimated value %4$s. Current balance: %5$s."
+msgstr "Phần hàng bạn đưa: %1$s đơn vị, giá ước tính %2$s. Phần hàng NPC đưa: %3$s đơn vị, giá ước tính %4$s. Số dư hiện tại: %5$s."
+
+msgid "Balance is acceptable to the trader."
+msgstr "Số dư nằm trong giới hạn chấp nhận của NPC."
+
+msgid "Balance exceeds the trader's current limit."
+msgstr "Số dư vượt quá giới hạn hiện tại của NPC."
+
+msgid "Bank balance: %1$s. Trade adjustment: %2$s."
+msgstr "Số dư tài khoản: %1$s. Điều chỉnh giao dịch: %2$s."
+
+msgid "Current pane: your offer."
+msgstr "Ngăn hiện tại: hàng bạn đưa."
+
+msgid "Current pane: items offered by the NPC."
+msgstr "Ngăn hiện tại: hàng NPC đưa."
