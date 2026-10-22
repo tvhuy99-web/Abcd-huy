@@ -1,104 +1,121 @@
 # Tiến độ trình đọc nội bộ Android
 
 Mục tiêu: người khiếm thị tự thực hiện toàn bộ hành trình chơi trong phạm vi
-phát hành đã nghiệm thu. Mã tham chiếu trước triển khai:
-`8ef359c74cc25e256919558bf7b3340f9b56a80d`.
+phát hành đã nghiệm thu. Baseline: `8ef359c74cc25e256919558bf7b3340f9b56a80d`.
+Nhánh triển khai: `feature/android-internal-reader`;
+[PR dự thảo #2](https://github.com/tvhuy99-web/Abcd-huy/pull/2).
 
-## Trạng thái hiện tại
+## Trạng thái ngày 22/10/2026
 
-G0 đang triển khai; có mã nền chuẩn bị G1/G2. Chưa công nhận build nền, G1,
-  G2 hoặc bất kỳ khả năng chơi độc lập nào đã hoàn thành. Chưa có kiểm thử máy
-thật/người dùng. Các lớp mới chưa được nối vào điều khiển hoặc lời đọc gameplay.
+Đã có mã nền và màn thử giọng Việt native chạy được trong kiểm thử giao diện
+Android. **Chưa có bộ đọc hoặc điều khiển gameplay. Chưa nghiệm thu G0, G1,
+G2 hay khả năng chơi độc lập.** Chưa có kết quả nghe âm thanh trên điện thoại
+thật hoặc kiểm thử cùng người khiếm thị. Không suy ra các khả năng này từ CI.
 
-Ngày 22/10/2026:
+Giữ TalkBack để dùng màn thử. APK thử có mã ứng dụng và vùng dữ liệu riêng;
+không yêu cầu gỡ game đang có. Chưa merge vào `master`.
 
-- Tạo nhánh `feature/android-internal-reader` từ đúng baseline.
-- Thêm workflow chỉ đọc quyền repository, không dùng khóa ký phát hành:
-  build baseline và candidate ARM64 riêng, lưu log/định danh/SDK/checksum/APK.
-- Thêm công cụ kiểm kê tĩnh cùng kiểm thử. Kết quả ban đầu: 954 tệp;
-  1125 điểm đăng ký action, 87 điểm tạo context phát hiện được, 12 điểm đăng ký
-  phím thủ công, 15 đường input cũ, 299 lời gọi ImGui và 9 ứng viên dialog native.
-  Đây là các điểm nguồn cần rà, không phải số màn hình hoặc số tính năng tiếp cận.
-- Bốn kiểm thử công cụ kiểm kê chạy đạt tại môi trường làm việc.
-- Build Android tại môi trường làm việc bị chặn trước khi compile: không có
-  SDK/NDK và Gradle wrapper không tải được Gradle 8.9 do network unreachable.
-  Không quy lỗi này thành lỗi game. Kết quả CI phải được ghi sau khi thực chạy.
+## Đã triển khai
 
-## Mã nền và kiểm thử đã thực hiện
+- Công cụ kiểm kê C++/Java có kiểm thử, kèm kiểm kê thủ công ban đầu ở
+  [COVERAGE.md](COVERAGE.md). Scan ban đầu: 954 tệp, 1125 điểm đăng ký action,
+  87 ứng viên tạo context, 12 điểm phím thủ công, 15 đường input cũ, 299 lời gọi
+  ImGui và 9 ứng viên dialog native. Đây là điểm nguồn, không phải số màn hình
+  hay tỷ lệ tính năng tiếp cận. Công cụ heuristic không thay thế rà thủ công.
+- `a11y_context`: sở hữu ngữ cảnh trên game thread, token phiên/frame/generation,
+  scope RAII, overlay chặn tầng dưới, đóng cha hủy cây con, vô hiệu token sau
+  suspend/load. **Chưa gắn vào `input_context` hoặc hành động gameplay.**
+- `SpeechSession`: định danh từng utterance, lọc callback cũ/đúp sau cancel,
+  thay engine hoặc dùng lại nhãn từ caller.
+- `AndroidSpeech`: TTS bất đồng bộ, trạng thái/lỗi rõ ràng, timeout khởi tạo và
+  bắt đầu, kiểm tra ngôn ngữ thực tế, từ chối voice cần mạng khi chưa opt-in,
+  giới hạn đầu vào, dừng và shutdown. Không tích hàng lời khi chưa ready.
+  Chưa có JNI, hàng ưu tiên/gộp lời hoặc bộ đọc ngữ nghĩa gameplay.
+- `ReaderSetupActivity`: widget native cho phát thử tiếng Việt, dừng, opt-in
+  giọng cần mạng, mở cài đặt giọng/trợ năng và quay lại. Không tự phát khi
+  resume; hủy mẫu khi đi nền và giải phóng engine khi đóng. Opt-in mạng và
+  trạng thái đang phát không được khôi phục sau recreate.
+- Cảnh báo Splash Anh/Việt hướng tới màn thử và giữ trình đọc hiện có. Nút
+  “Thiết lập trợ năng và giọng đọc” mở Activity. Nếu cảnh báo bị bỏ qua hoặc
+  không xuất hiện, **chưa có lối vào thay thế từ gameplay**. Đây chưa phải
+  bootstrap hoàn chỉnh dùng không cần TalkBack.
+- Flavor `accessibility`, launcher “Cataclysm DDA - Thử trợ năng”, application ID
+  `com.cleverraven.cataclysmdda.accessibility`, DocumentsProvider riêng.
+  Giữ authority cũ của các flavor đang có.
+- Chứng thư thử cố định công khai để cập nhật APK thử mà không phải gỡ app.
+  Không dùng khóa phát hành; xem [TEST_SIGNING.md](TEST_SIGNING.md).
+- CI build ARM64 đầy đủ, host tests, compile Android API/resources và hai
+  instrumentation tests. Workflow chỉ có quyền đọc nội dung repository.
+  Bản UI-only x86_64 của emulator không được dùng làm APK bàn giao gameplay.
 
-- `a11y_context`: token phiên/ngữ cảnh/đời focus, overlay chặn tầng dưới,
-  scope RAII, hủy cây overlay khi đóng cha, vô hiệu callback sau suspend/load.
-  Chỉ truy cập trên game thread; chưa thay thế hay gắn hook vào `input_context`.
-- `AndroidSpeech`: driver Android TTS bất đồng bộ, state/lỗi thiếu ngôn ngữ,
-  timeout khởi tạo/bắt đầu, giới hạn đầu vào, hủy, shutdown và bỏ callback cũ.
-  Không giữ hàng đợi lời chờ khi chưa ready. Kiểm tra ngôn ngữ thực tế của voice
-  và cờ cần mạng; online cần lựa chọn tường minh. Chưa có JNI, bootstrap chọn
-  giọng, kiểm thử voice offline thật, chính sách ưu tiên/gộp hoặc adapter menu gameplay.
-- `SpeechSession`: định danh riêng từng utterance ngay cả khi caller dùng lại
-  nhãn; chống callback cũ/đúp sau cancel hoặc thay engine.
-- Kiểm tra local: 4 unittest kiểm kê; C++ 7 test cases/38 assertions đạt;
-  Java token 24 assertions đạt; driver với Android test doubles 31 assertions đạt.
-  Các con số Java không chứng minh TTS thật hoặc phát âm thanh trên Android.
-- Đã khai báo truy vấn TTS service; không thêm quyền microphone hoặc service
-  đọc màn hình toàn hệ thống. Driver chưa được tự bật khi mở game.
-- Thêm `ReaderSetupActivity` bằng widget native: phát thử tiếng Việt, dừng,
-  opt-in giọng cần mạng, mở cài đặt giọng/trợ năng và quay lại. Mở từ nút
-  “Thiết lập trợ năng và giọng đọc” trên cảnh báo trợ năng ở Splash. Giữ
-  TalkBack trong luồng thử này. Đây chưa phải bootstrap không cần TalkBack;
-  nếu cảnh báo không xuất hiện thì chưa có đường vào màn thử từ gameplay.
-- Cảnh báo khởi động Anh/Việt đã sửa để không hướng người dùng tắt trình đọc
-  trước khi có điều khiển thay thế. Đường đánh dấu cảnh báo nhầm vẫn giữ nguyên.
-- Màn thử không nạp engine game/JNI, hủy sample khi sang nền, đóng TTS theo
-  vòng đời Activity; cần kiểm chứng UI/lifecycle thật trên Android.
-- Thêm flavor thử `accessibility` với application ID và DocumentsProvider riêng
-  để APK thử không thay bản stable/experimental hoặc dùng chung bản lưu của chúng.
-  CI candidate mới dùng `assembleAccessibilityDebug`; baseline cũ vẫn dùng
-  `assembleExperimentalDebug`. Chưa yêu cầu người dùng gỡ bản game đang có.
-- Chuẩn bị 2 instrumentation tests cho nhãn/nút, opt-in mạng sau recreate,
-  dừng khi đang khởi tạo, đi nền/trở lại và thoát. Workflow emulator dùng APK
-  UI-only x86_64, không được coi là APK gameplay hay kiểm thử tiếng Việt nghe thật.
-- Kiểm kê thủ công đầu ở [COVERAGE.md](COVERAGE.md) bổ sung minigame,
-  màn y tế, điều khiển động cơ, study zones và nhật ký.
+## Bằng chứng đã kiểm tra
 
-## Lượt CI đang theo dõi
+| Lớp kiểm tra | Kết quả | Giới hạn |
+| --- | --- | --- |
+| Công cụ kiểm kê | 4 unittest PASS | Không chứng minh đủ mọi màn hình |
+| Context C++ | 7 test cases, 38 assertions PASS | Chưa điều khiển game thật |
+| Token lời đọc Java | 24 assertions PASS | Chưa có TTS Android thật |
+| Driver Java với test doubles | 31 assertions PASS | Không emulation Binder hoặc âm thanh |
+| API 35 và Gradle Java/resources | [PASS ở cb3c082](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39723157190) | Compile không phải nghiệm thu thiết bị |
+| UI emulator API 35 | [Đủ 2 tests PASS ở cb3c082](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39723157171) | Không âm thanh, không TalkBack, không engine game |
+| Baseline ARM64 đầy đủ | [Build và kiểm tra gói PASS](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717924057), đúng `8ef359c` | Chưa xác nhận khởi chạy trên máy thật |
+| Catalog tiếng Việt | gzip, UTF-8 và `msgfmt --check --check-format` PASS; 116272 mục dịch được công cụ ghi nhận | Chưa chứng minh chất lượng dịch hoặc phát âm |
 
-- [Lượt đầu](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717825397):
-  kiểm kê PASS; build dừng ở cấp công cụ vì `sdkmanager` không nằm trên PATH.
-- Đã sửa bằng bước setup Android được pin commit.
-- [Lượt cấp công cụ đã sửa](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717924057):
-  kiểm kê PASS; job candidate ở commit `5b1c9c2` build ARM64 debug thành công
-  trong 18 phút 54 giây; kiểm tra thư viện game/catalog Việt PASS, artifact
-  `android-arm64-candidate` đã được tải lên. Commit này mới thay tài liệu và CI,
-  chưa có các lớp C++/Java nền trợ năng. Không gán APK này cho mã nguồn mới hơn.
-  Job baseline tại đúng commit `8ef359c` cũng build và kiểm tra gói APK PASS.
-  Hai kết quả này chưa chứng minh app chạy trên thiết bị hoặc được người mù dùng được.
-- [Kiểm tra lõi/API ở commit 0733bb3](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39719385009):
-  PASS cả kiểm kê, C++, Java host tests và javac với Android API 35 thật.
-  Thay đổi kiểm tra voice cần mạng sau commit này phải chờ lượt CI mới.
+Hai bài emulator kiểm tra nhãn/nút, dừng khi khởi tạo, đi nền/trở lại, recreate,
+opt-in mạng trở về false và thoát Activity. Chạy trực tiếp bằng adb và yêu cầu
+JUnit báo `OK (2 tests)`; không chấp nhận 0 tests như kết quả thành công.
 
-Workflow tự động về sau chỉ build candidate; có thể yêu cầu build lại baseline
-bằng `workflow_dispatch` với `compare_baseline=true`. PR của chính nhánh này
-không lặp lại lượt build từ push. Chưa merge hoặc công bố APK tiếp cận được.
+### APK thử mới nhất
 
-Kiểm tra UI:
+[Build ARM64 tại cb3c082](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39723157038)
+đã PASS: compile đầy đủ trong 19 phút 15 giây, thư viện game/catalog Việt và
+chữ ký hợp lệ. Đã tải artifact và đối chiếu lại digest ZIP, commit, checksum
+APK, fingerprint chứng thư và hai tệp bắt buộc trong APK.
 
-- Java/resource của màn thử đã compile trên SDK thật; APK UI-only và APK
-  instrumentation đã build thành công tại commit `c91fb6c`.
-- [Lượt emulator đầu](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39721549333)
-  thất bại trước khi chạy test: UTP/ddmlib báo `device offline`, 0 tests ran.
-  Không tính là PASS hoặc là bằng chứng lỗi của gameplay.
-- Đổi đường chạy sang adb trực tiếp cùng bản adb của emulator, kiểm tra package
-  service sẵn sàng, cài hai APK và đòi JUnit báo đủ 2 tests PASS. Cần chờ lượt mới.
+- Nguồn chính xác: `cb3c082e76fa90c156b813a42eebd7f2ba230b45`.
+- [Artifact `android-arm64-candidate`](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39723157038/artifacts/12402693550),
+  lưu trên Actions tới 05/11/2026; chỉ một APK ARM64 đầy đủ, không phải UI-only.
+- Tên APK trong CI: `cataclysmdda-cb3c082-accessibility-arm64-v8a-debug.apk`.
+  Bản bàn giao đổi tên thành `CDDA-Thu-giong-Viet-cb3c082-arm64.apk`, giữ nguyên bytes.
+- Kích thước APK: 193408390 bytes. Android tối thiểu API 24 (Android 7), ARM64.
+- SHA-256 APK: `2a77571bbbdc4ed737d1c3558c4c6a3e1a60aa515d9554e1031e95d4854bce58`.
+- SHA-256 chứng thư thử: `4b2aa6143aee39bf179fecc853c803113ed8bb8c911b6251088ef945babf701f`.
+- APK có `lib/arm64-v8a/libmain.so` và catalog Việt đã biên dịch. Không gán
+  kết quả này cho commit có thay đổi mã chạy sau cb3c082; cập nhật báo cáo
+  bằng tài liệu không tạo ra một APK mới.
 
-## Cổng còn phải qua
+Cài/chạy game trên thiết bị, âm thanh nghe thật và TalkBack vẫn chưa được
+nghiệm thu. Hướng dẫn thử nằm ở [TESTING.vi.md](TESTING.vi.md).
 
-1. G0: build sạch baseline, cài/chạy trên Android, kiểm kê thủ công các luồng.
-2. G1: bootstrap, thử giọng, TTS/JNI và đường phục hồi.
-3. G2: ngữ cảnh/focus/token, input, menu, popup và nhập liệu.
-4. G3: mở game → tạo nhân vật → hành động cơ bản → lưu/tải độc lập.
-5. G4–G6: không gian/sinh tồn, chiến đấu/chế tạo, hệ thống nâng cao.
-6. G7–G8: vòng đời/kết thúc, dữ liệu, kiểm thử người dùng và phát hành.
+### Những lỗi kiểm thử đã xử lý
+
+- Môi trường làm việc không có SDK/NDK và không tải được Gradle; chuyển build
+  đầy đủ sang CI, không quy việc cấp công cụ thất bại thành lỗi game.
+- Lượt CI đầu thiếu `sdkmanager` trên PATH; đã thêm setup Android pin commit.
+  Sau đó cả baseline và candidate build được.
+- Emulator đầu thất bại trước test do UTP/ddmlib báo `device offline`:
+  [0 tests, không PASS](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39721549333).
+  Đổi sang adb trực tiếp, kiểm tra package service, cài đúng hai APK. Hai lượt
+  sau đã thực chạy đủ hai tests: [7dcf5f7](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39722154518)
+  và cb3c082 ở bảng trên.
+- Sửa đường dẫn version header khi Gradle chạy từ repository root.
+- Sửa dừng TTS lúc chưa có utterance để không ngắt việc khởi tạo engine;
+  bổ sung kiểm tra voice thực tế và giọng cần mạng.
+
+## Việc tiếp theo theo cổng nghiệm thu
+
+1. Hoàn tất G0: cài/chạy baseline và APK thử trên Android thật; tiếp tục kiểm kê
+   thủ công các luồng. Build nền đã đạt, kiểm thử runtime chưa đạt.
+2. Hoàn tất G1: nghe giọng thực tế, thiếu voice, dừng, cài đặt/quay lại, TalkBack,
+   offline và vòng đời; sau đó mở rộng bootstrap, cấu hình, JNI và phục hồi.
+   Dùng [hướng dẫn thử](TESTING.vi.md); không bắt người dùng tắt TalkBack.
+3. G2: nối ngữ cảnh/focus/token với input, menu, popup, nhập liệu và đầu vào
+   cảm ứng; kiểm thử đóng/mở menu lồng không gây di chuyển ngoài ý muốn.
+4. G3: hoàn thành chuỗi mở game → tạo nhân vật → hành động cơ bản → lưu/tải
+   mà người khiếm thị không cần chỉ dẫn vị trí nút.
+5. G4–G6: không gian/sinh tồn, chiến đấu/chế tạo và hệ thống nâng cao.
+6. G7–G8: vòng đời nhân vật, dữ liệu, kiểm thử người dùng và phát hành.
 
 Đọc [kế hoạch đầy đủ](PLAN.vi.md) cho định nghĩa nghiệm thu và 64 tình huống.
-Không đánh dấu một tính năng đã tiếp cận chỉ từ việc thêm TTS, compile thành
-công, kiểm tra tĩnh hoặc mở được menu.
+Mọi hàng chưa có bằng chứng vẫn để chưa đạt; thêm TTS hoặc mở được menu không
+đủ để đánh dấu một hệ thống đã tiếp cận.
