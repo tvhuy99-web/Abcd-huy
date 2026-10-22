@@ -16,6 +16,11 @@ on:
       - 'tools/accessibility/**'
       - '.github/workflows/android-accessibility.yml'
   workflow_dispatch:
+    inputs:
+      compare_baseline:
+        description: 'Also rebuild the pinned baseline (automatic runs build the candidate only)'
+        type: boolean
+        default: true
 
 permissions:
   contents: read
@@ -49,11 +54,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - name: baseline
-            ref: 8ef359c74cc25e256919558bf7b3340f9b56a80d
-          - name: candidate
-            ref: ''
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.compare_baseline && '[{"name":"baseline","ref":"8ef359c74cc25e256919558bf7b3340f9b56a80d"},{"name":"candidate","ref":""}]' || '[{"name":"candidate","ref":""}]') }}
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:

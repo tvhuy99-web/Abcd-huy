@@ -15,8 +15,9 @@ C++ parser: overloads, aliases, generated screens, variable-built contexts and
 compile-time branches need manual review. Counts are call sites, not unique
 commands, runtime screens or an accessibility coverage percentage.
 
-The Android accessibility workflow independently builds the pinned baseline and
-the candidate as ARM64 debug APKs. An APK artifact is build evidence, not device
+The Android accessibility workflow builds the candidate as an ARM64 debug APK.
+A manual run with `compare_baseline=true` independently builds the pinned
+baseline as well. The initial project run builds both. An APK is build evidence, not device
 or blind-user acceptance. Use the plan and status under `doc/accessibility/`.
 
 The core runner builds the production context primitive with the repository's

@@ -37,7 +37,7 @@ Ngày 22/10/2026:
 - `SpeechSession`: định danh riêng từng utterance ngay cả khi caller dùng lại
   nhãn; chống callback cũ/đúp sau cancel hoặc thay engine.
 - Kiểm tra local: 4 unittest kiểm kê; C++ 7 test cases/38 assertions đạt;
-  Java token 24 assertions đạt; driver với Android test doubles 29 assertions đạt.
+  Java token 24 assertions đạt; driver với Android test doubles 31 assertions đạt.
   Các con số Java không chứng minh TTS thật hoặc phát âm thanh trên Android.
 - Đã khai báo truy vấn TTS service; không thêm quyền microphone hoặc service
   đọc màn hình toàn hệ thống. Driver chưa được tự bật khi mở game.
@@ -50,11 +50,18 @@ Ngày 22/10/2026:
   kiểm kê PASS; build dừng ở cấp công cụ vì `sdkmanager` không nằm trên PATH.
 - Đã sửa bằng bước setup Android được pin commit.
 - [Lượt cấp công cụ đã sửa](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717924057):
-  kiểm kê PASS; hai job baseline/candidate đã qua cấp SDK và bắt đầu Gradle.
-  Chưa có kết luận build tại lần cập nhật này.
+  kiểm kê PASS; job candidate ở commit `5b1c9c2` build ARM64 debug thành công
+  trong 18 phút 54 giây; kiểm tra thư viện game/catalog Việt PASS, artifact
+  `android-arm64-candidate` đã được tải lên. Commit này mới thay tài liệu và CI,
+  chưa có các lớp C++/Java nền trợ năng. Không gán APK này cho mã nguồn mới hơn.
+  Job baseline vẫn đang được theo dõi tại lần cập nhật này.
 - [Kiểm tra lõi/API ở commit 0733bb3](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39719385009):
   PASS cả kiểm kê, C++, Java host tests và javac với Android API 35 thật.
   Thay đổi kiểm tra voice cần mạng sau commit này phải chờ lượt CI mới.
+
+Workflow tự động về sau chỉ build candidate; có thể yêu cầu build lại baseline
+bằng `workflow_dispatch` với `compare_baseline=true`. PR của chính nhánh này
+không lặp lại lượt build từ push. Chưa merge hoặc công bố APK tiếp cận được.
 
 ## Cổng còn phải qua
 

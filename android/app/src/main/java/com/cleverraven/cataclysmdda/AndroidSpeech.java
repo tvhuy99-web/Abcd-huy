@@ -172,7 +172,7 @@ public final class AndroidSpeech implements AutoCloseable {
         removeStartTimeout();
         String client = session.cancel();
         boolean stopped = true;
-        if (engine != null) {
+        if (engine != null && (client != null || state == State.READY)) {
             try {
                 stopped = engine.stop() != TextToSpeech.ERROR;
             } catch (RuntimeException ignored) {

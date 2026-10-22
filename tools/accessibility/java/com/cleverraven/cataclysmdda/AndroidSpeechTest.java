@@ -98,6 +98,16 @@ public final class AndroidSpeechTest {
 
         fresh();
         engine = initialize();
+        engine.stopThrows = true;
+        speech.cancel();
+        Looper.runReady();
+        check(speech.getState() == AndroidSpeech.State.INITIALIZING, "Stopping empty speech must not stop initialization");
+        engine.finishInit(TextToSpeech.SUCCESS);
+        Looper.runReady();
+        check(speech.getState() == AndroidSpeech.State.READY, "Initialization can finish after empty cancel");
+
+        fresh();
+        engine = initialize();
         Looper.advance(8000);
         check(speech.getState() == AndroidSpeech.State.FAILED && engine.closed, "Init timeout must release engine");
         engine.finishInit(TextToSpeech.SUCCESS);
