@@ -42,8 +42,8 @@ chưa chạy instrumentation test.
 | Hộp thoại | `popup.cpp` | Văn bản câu hỏi, chọn, hủy/tiếp tục qua action gốc; các dialog native khác vẫn cần tích hợp |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab/lệnh; kịch bản/nghề nêu lựa chọn hiện tại, nghề/nền tảng nêu chi phí điểm; tổng kết ngữ nghĩa có tên, giới tính, ngoại hình, kịch bản/nghề/nền tảng, điểm còn lại, thuộc tính, kỹ năng, đặc tính kèm điểm, xung đột và bionic cản, proficiency, bionic, phép, nhiệm vụ, ngày/địa điểm/xe bắt đầu và xếp hạng; các dòng chọn vẫn gọi action gốc; chưa kiểm chứng dữ liệu từng biến thể, lựa chọn thành phố hoặc luồng bắt đầu/lưu/tải |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
-| Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và quét nhiều tầng còn thiếu |
-| Thế giới | `worldfactory.cpp`, `options.cpp`, `overmap_ui.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; hàng chọn tách khỏi xác nhận vào; tạo thế giới đọc tên, mức tùy chọn, chỉnh tăng/giảm, mod đang bật và các nút hoàn tất/đặt lại/ngẫu nhiên/nâng cao; bộ chọn mod khi tạo/sao chép world đọc nhóm, mod khả dụng/đang bật, mô tả, xung đột và thứ tự nạp; tùy chọn nâng cao đọc tab, nhóm, giá trị, mô tả, điều kiện và lệnh chỉnh; màn xem mod của world hiện có đọc mô tả và thứ tự nạp ở chế độ chỉ xem; tại bản đồ có ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, quét và lệnh; bản đồ lớn đọc con trỏ, ô kế cận theo trí nhớ khám phá, ghi chú/vùng nguy hiểm, vị trí tương đối và điểm đến/tọa độ/độ dài tuyến hiện tại; focus hoặc kích hoạt ô/tuyến chỉ đổi con trỏ, không khởi hành; bộ đọc báo lại ô con trỏ và tuyến khi điểm đến đổi; vuốt tám hướng tùy chọn dùng action gốc; cài/thay dữ liệu mod, đổi tên/sao chép thế giới, thăm dò/đường đi nâng cao còn thiếu; chưa kiểm thử |
+| Thông tin hợp lệ | `a11y_perception`, `a11y_world` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; quét dọc tùy chọn chỉ dùng memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và bộ lọc/điểm đáng chú ý còn thiếu |
+| Thế giới | `worldfactory.cpp`, `options.cpp`, `overmap_ui.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; hàng chọn tách khỏi xác nhận vào; tạo thế giới đọc tên, mức tùy chọn, chỉnh tăng/giảm, mod đang bật và các nút hoàn tất/đặt lại/ngẫu nhiên/nâng cao; bộ chọn mod khi tạo/sao chép world đọc nhóm, mod khả dụng/đang bật, mô tả, xung đột và thứ tự nạp; tùy chọn nâng cao đọc tab, nhóm, giá trị, mô tả, điều kiện và lệnh chỉnh; màn xem mod của world hiện có đọc mô tả và thứ tự nạp ở chế độ chỉ xem; tại bản đồ có ô hiện tại, địa hình/đồ đạc chỉ trong map memory tại các tầng đã chọn, trạng thái, thông báo gần đây, quét và lệnh; bản đồ lớn đọc con trỏ, ô kế cận theo trí nhớ khám phá, ghi chú/vùng nguy hiểm, vị trí tương đối và điểm đến/tọa độ/độ dài tuyến hiện tại; focus hoặc kích hoạt ô/tuyến chỉ đổi con trỏ, không khởi hành; bộ đọc báo lại ô con trỏ và tuyến khi điểm đến đổi; vuốt tám hướng tùy chọn dùng action gốc; cài/thay dữ liệu mod, đổi tên/sao chép thế giới, thăm dò/đường đi nâng cao còn thiếu; chưa kiểm thử |
 | Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
@@ -53,7 +53,7 @@ chưa chạy instrumentation test.
 | Thông báo log | `messages.cpp`, `a11y_runtime.*`, `a11y_android.*`, `GameReaderController.java`, `ReaderSpeechQueue` | Thông báo mới của player log được chuyển qua JNI từ game thread lên Java; bad/warning/critical ưu tiên khẩn; thông tin thường chờ sau lời focus; bỏ thông báo trùng/coalesce hoặc bị cooldown ẩn; chưa thử tải cao, ngắt quãng hay audio thật |
 | Cảnh báo sinh tồn | `a11y_world.*`, `handle_action.cpp`, `a11y_runtime.cpp`, catalog Việt | So chuyển mức đói/khát/buồn ngủ/đau/sức bền tại vòng chờ bản đồ; baseline/reset theo load/lifecycle; refresh snapshot khi bật lại; chưa xác nhận ngưỡng, chống trùng hoặc chạy thực |
 | Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
-| Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; thêm chuỗi bộ chọn/tạo thế giới, bộ mod, tùy chọn và tổng kết tạo nhân vật; chưa chạy gettext/build mới |
+| Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; thêm chuỗi bộ chọn/tạo thế giới, bộ mod, tùy chọn, quét bộ nhớ tầng và tổng kết tạo nhân vật; chưa chạy gettext/build mới |
 
 ## Phần viết mã còn phải làm
 
@@ -72,8 +72,9 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   mức tùy chọn cùng lệnh điều chỉnh; màn tùy chọn nâng cao và danh sách mod của
   world hiện có đã có snapshot đọc; mod manager đọc nhóm, mô tả, xung đột và
   thứ tự. Các luồng trên chưa được kiểm thử.
-- G4: thăm dò nhiều tầng/bộ lọc/điểm đáng chú ý, cảm nhận đặc biệt và âm thanh
-  bất định; quan sát theo hành động thực tế, nhặt/đồ chứa, cơ thể/y tế, ăn/uống,
+- G4: hoàn thiện thăm dò nhiều tầng (đã có quét memory theo độ sâu), bộ lọc/
+  điểm đáng chú ý, cảm nhận đặc biệt và âm thanh bất định; quan sát theo hành
+  động thực tế, nhặt/đồ chứa, cơ thể/y tế, ăn/uống,
   mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Đã có
   đường gửi các thông báo log mới, nhưng chưa chứng minh đủ mọi cảnh báo hoặc
   khả năng nghe ổn định.
@@ -191,17 +192,17 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   ngưỡng và thời điểm phát trong realtime/hoạt động dài, đổi ngôn ngữ, mất
   focus cửa sổ, và tải save. Chưa biên dịch/chạy.
 
-## Đợt quan sát tầng lân cận, đã viết mã, chưa kiểm thử
+## Đợt quét trí nhớ ở các tầng lân cận, đã viết mã, chưa kiểm thử
 
-- Snapshot thế giới thêm hai hàng ở cùng vị trí ngang: một tầng phía trên và
-  một tầng phía dưới. Nguồn chỉ là bản ghi terrain/furniture đã nhớ của chính
-  avatar; nếu không có bản ghi thì đọc “chưa biết”. Không tra dữ liệu sống ở
+- Snapshot thế giới cho phép chọn độ sâu 0–10 và thêm một hàng ở cùng vị trí
+  ngang cho mỗi tầng phía trên/dưới. Nguồn chỉ là bản ghi terrain/furniture đã
+  nhớ của chính avatar; nếu không có bản ghi thì đọc “chưa biết”. Không tra dữ liệu sống ở
   tầng khác, không đọc item/bẫy/quái/field từ memory, và hàng chỉ đọc không
   gọi lệnh lên/xuống tầng.
 - Cần kiểm chứng tọa độ reality-bubble/z sau khi đổi tầng, vùng nhớ đã hết hạn,
   phòng nhớ nhưng cửa/đồ động đã thay đổi, lộ trường dữ liệu ẩn, điều khiển
   LEVEL_UP/LEVEL_DOWN vẫn riêng và TalkBack. Đường truy vấn nhìn hiện tại trên
-  tầng khác, cảm nhận đặc biệt và quét nhiều tầng vẫn chưa được viết; chưa build.
+  tầng khác, cảm nhận đặc biệt, bộ lọc và điểm đáng chú ý vẫn chưa được viết; chưa build.
 
 ## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
 

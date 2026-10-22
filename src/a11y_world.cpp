@@ -246,7 +246,8 @@ void announce_status_changes()
     }
 }
 
-semantic_snapshot world_snapshot( const input_context &context, const int scan_radius )
+semantic_snapshot world_snapshot( const input_context &context, const int scan_radius,
+                                  const int scan_depth )
 {
     semantic_snapshot result;
     result.title = _( "World" );
@@ -257,18 +258,27 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( observe_tile( origin ) ) );
     here.value = here.detail;
     result.nodes.push_back( std::move( here ) );
-    for( const int dz : { 1, -1 } ) {
-        const tile_observation vertical = observe_memory_tile( origin + tripoint_rel_ms( 0, 0, dz ) );
-        const std::string id = dz > 0 ? "world:above" : "world:below";
-        const std::string label = dz > 0 ? _( "One level above" ) : _( "One level below" );
-        semantic_node node = document( id, label, describe_tile( vertical ) );
-        node.value = vertical.source == observation_source::unknown ? _( "Unknown" ) :
-                     vertical.terrain;
-        if( vertical.source == observation_source::remembered ) {
-            if( !vertical.furniture.empty() ) { node.value += ". " + vertical.furniture; }
-            node.value += ". " + std::string( _( "Remembered" ) );
+    for( int distance = 1; distance <= scan_depth; ++distance ) {
+        for( const int dz : { distance, -distance } ) {
+            const tile_observation vertical = observe_memory_tile(
+                    origin + tripoint_rel_ms( 0, 0, dz ) );
+            std::string id;
+            if( distance == 1 ) {
+                id = dz > 0 ? "world:above" : "world:below";
+            } else {
+                id = "world:level:" + std::to_string( dz );
+            }
+            const std::string label = string_format(
+                                          dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ), distance );
+            semantic_node node = document( id, label, describe_tile( vertical ) );
+            node.value = vertical.source == observation_source::unknown ? _( "Unknown" ) :
+                         vertical.terrain;
+            if( vertical.source == observation_source::remembered ) {
+                if( !vertical.furniture.empty() ) { node.value += ". " + vertical.furniture; }
+                node.value += ". " + std::string( _( "Remembered" ) );
+            }
+            result.nodes.push_back( std::move( node ) );
         }
-        result.nodes.push_back( std::move( node ) );
     }
     result.nodes.push_back( document( "world:status", _( "Character status" ), player_status() ) );
     semantic_node radius;
@@ -278,6 +288,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     radius.role = "number";
     radius.actions = { "focus", "set_text" };
     result.nodes.push_back( std::move( radius ) );
+    semantic_node depth;
+    depth.id = "world:depth";
+    depth.label = _( "Vertical memory scan depth, from 0 to 10" );
+    depth.value = std::to_string( scan_depth );
+    depth.detail = _( "This scan reads only remembered terrain and furniture on other levels. "
+                      "Reading the map does not advance game time." );
+    depth.role = "number";
+    depth.actions = { "focus", "set_text" };
+    result.nodes.push_back( std::move( depth ) );
     std::string recent;
     for( const auto &message : Messages::recent_messages( 12 ) ) {
         recent += message.first + ": " + message.second + ". ";

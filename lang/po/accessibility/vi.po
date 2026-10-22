@@ -184,6 +184,12 @@ msgstr "Trạng thái nhân vật"
 msgid "Scan radius, from 1 to 16"
 msgstr "Bán kính quét, từ 1 đến 16 ô"
 
+msgid "Vertical memory scan depth, from 0 to 10"
+msgstr "Độ sâu quét trí nhớ theo tầng, từ 0 đến 10"
+
+msgid "This scan reads only remembered terrain and furniture on other levels. Reading the map does not advance game time."
+msgstr "Lần quét này chỉ đọc địa hình và đồ đạc đã nhớ ở tầng khác. Đọc bản đồ không làm thời gian trong game trôi qua."
+
 msgid "Recent messages"
 msgstr "Thông báo gần đây"
 

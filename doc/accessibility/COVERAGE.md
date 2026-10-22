@@ -12,7 +12,7 @@ không phải danh sách đầy đủ hoặc mẫu số để công bố “100%
 | Tạo nhân vật | `newcharacter.cpp` | Tất cả tab, mẫu, nhập tên, xác nhận |
 | Menu chung | `uilist.cpp` | Filter/category/retval và nhánh native trả về sớm |
 | Popup/nhập | `popup.cpp`, `input_popup.cpp`, `string_input_popup.cpp` | Hỏi, chọn nhiều, số, Unicode, IME, hủy |
-| Bản đồ cục bộ | `game_ui_tile_info.cpp`, `surroundings_menu.cpp` | Tri thức theo từng trường, âm, memory, tầng |
+| Bản đồ cục bộ | `game_ui_tile_info.cpp`, `surroundings_menu.cpp`, `a11y_world.cpp` | Tri thức theo từng trường, âm, memory, bán kính ngang và độ sâu tầng tùy chọn; tầng khác chỉ từ memory |
 | Di chuyển/hành động | `action.cpp`, `handle_action.cpp`, `avatar_action.cpp` | DEFAULTMODE, LOOK, realtime, kết quả thật |
 | Hành trang | `inventory_ui.cpp`, `item_contents.cpp`, `pickup.cpp` | Nhiều lựa chọn, pockets, container, số lượng |
 | Kho nâng cao | `advanced_inv.cpp`, `armor_layers.cpp` | Hai cột nguồn/đích, sức chứa, thứ tự mặc |

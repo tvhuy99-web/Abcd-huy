@@ -64,6 +64,10 @@ Các tab kịch bản/nghề nêu lựa chọn hiện tại, còn nghề/nền t
 Adapter danh sách giữ lý do mục bị khóa trong phần chi tiết ngay cả khi game cho
 phép kích hoạt để hiện hộp giải thích gốc. Tất cả thay đổi chưa được chạy.
 
+Bản đồ cục bộ cho phép chọn độ sâu 0–10 tầng để duyệt map memory phía trên và
+dưới. Tầng không có dữ liệu nhớ chỉ báo chưa biết; adapter không tra địa hình
+sống ở tầng khác. Chưa biên dịch hoặc kiểm tra.
+
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
 kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.
@@ -106,9 +110,10 @@ một màn, lần adapter cập nhật snapshot kế tiếp có thể xuất b�
 chuyên biệt thay vì giữ danh sách lệnh chung. Adapter chỉ dựng snapshot một lần
 vẫn cần xử lý thêm. Chưa biên dịch/chạy.
 
-Snapshot bản đồ đọc thêm địa hình và đồ đạc đã nhớ tại cùng vị trí ở một tầng
-trên/dưới, hoặc báo chưa biết. Adapter này cố ý không đọc dữ liệu sống hay đồ
-động của tầng khác. Chưa biên dịch và chưa kiểm tra rò thông tin.
+Snapshot bản đồ đọc địa hình và đồ đạc ở cùng vị trí theo độ sâu memory 0–10
+tầng người dùng chọn; vị trí không có bản ghi được báo chưa biết. Adapter cố ý
+không đọc dữ liệu sống hay đồ động của tầng khác. Chưa biên dịch và chưa kiểm
+tra rò thông tin.
 
 Màn thiết lập giọng cho phép chọn tốc độ 0,5–3 lần trước khi thử; tốc độ được
 lưu cùng lúc người dùng xác nhận đã nghe. Thay đổi tốc độ/quyền mạng sau mẫu

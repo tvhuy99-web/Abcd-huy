@@ -281,6 +281,7 @@ input_context game::get_player_input( std::string &action )
     const level_cache &map_cache = here.get_cache_ref( pos.z() );
     const auto &visibility_cache = map_cache.visibility_cache;
     int reader_scan_radius = 1;
+    int reader_scan_depth = 1;
     std::unique_ptr<a11y::screen_scope> reader;
     reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
@@ -293,7 +294,25 @@ input_context game::get_player_input( std::string &action )
                 } else {
                     reader_scan_radius = radius;
                     a11y::android::status( "text_applied", &intent );
-                    reader->update( a11y::world_snapshot( ctxt, reader_scan_radius ) );
+                    reader->update( a11y::world_snapshot( ctxt, reader_scan_radius,
+                                                          reader_scan_depth ) );
+                }
+            } catch( const std::exception & ) {
+                a11y::android::status( "invalid_value", &intent );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "world:depth" && intent.action == "set_text" ) {
+            try {
+                std::size_t consumed = 0;
+                const int depth = std::stoi( intent.value, &consumed );
+                if( consumed != intent.value.size() || depth < 0 || depth > 10 ) {
+                    a11y::android::status( "invalid_value", &intent );
+                } else {
+                    reader_scan_depth = depth;
+                    a11y::android::status( "text_applied", &intent );
+                    reader->update( a11y::world_snapshot( ctxt, reader_scan_radius,
+                                                          reader_scan_depth ) );
                 }
             } catch( const std::exception & ) {
                 a11y::android::status( "invalid_value", &intent );
@@ -308,7 +327,8 @@ input_context game::get_player_input( std::string &action )
         if( a11y::enabled() ) {
             const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
             if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
-                reader->update( a11y::world_snapshot( ctxt, reader_scan_radius ) );
+                reader->update( a11y::world_snapshot( ctxt, reader_scan_radius,
+                                                      reader_scan_depth ) );
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
             }
