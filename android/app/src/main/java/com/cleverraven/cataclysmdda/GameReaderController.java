@@ -48,6 +48,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean windowFocused;
     private boolean closed;
     private boolean controls;
+    private boolean movementPractice;
+    private int movementPracticeDirections;
     private int controlIndex;
     private boolean nativeConfigured;
     private boolean lastEnabled;
@@ -141,6 +143,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         foreground = false;
         presentationEpoch++;
         root.cancelGesture();
+        movementPractice = false;
+        movementPracticeDirections = 0;
         speech.stop();
         snapshot = null;
         editor = null;
@@ -260,6 +264,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 if (changedContext) {
                     controls = false;
+                    movementPractice = false;
+                    movementPracticeDirections = 0;
                     editor = null;
                     editorRequest = 0;
                     readScreenSummary = true;
@@ -432,7 +438,67 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public boolean movementPracticeEnabled() {
+        return movementPractice && !controls && editor == null
+                && snapshot != null && snapshot.find("world:here") != null;
+    }
+
+    @Override
+    public void practiceMovementDirection(int dx, int dy) {
+        if (!movementPracticeEnabled()) { return; }
+        ReaderSnapshot.Node node = snapshot.find(actionForDirection(dx, dy));
+        if (node == null) { return; }
+        movementPracticeDirections |= directionBit(dx, dy);
+        int practiced = Integer.bitCount(movementPracticeDirections);
+        if (practiced == 8) {
+            preferences.setMovementPracticeComplete();
+            movementPractice = false;
+            controls = true;
+            controlIndex = 11;
+            root.cancelGesture();
+            render();
+            feedback(activity.getString(R.string.a11yReaderMovementPracticeComplete));
+            return;
+        }
+        feedback(activity.getString(R.string.a11yReaderMovementPracticeProgress,
+                                    node.label, practiced));
+    }
+
+    static int directionBit(int dx, int dy) {
+        if (dy < 0) { return dx < 0 ? 1 << 7 : dx > 0 ? 1 << 1 : 1; }
+        if (dy > 0) { return dx < 0 ? 1 << 5 : dx > 0 ? 1 << 3 : 1 << 4; }
+        return dx < 0 ? 1 << 6 : 1 << 2;
+    }
+
+    private static String actionForDirection(int dx, int dy) {
+        if (dy < 0) { return dx < 0 ? "LEFTUP" : dx > 0 ? "RIGHTUP" : "UP"; }
+        if (dy > 0) { return dx < 0 ? "LEFTDOWN" : dx > 0 ? "RIGHTDOWN" : "DOWN"; }
+        return dx < 0 ? "LEFT" : "RIGHT";
+    }
+
+    @Override
+    public boolean worldMovementEnabled() {
+        return !controls && !movementPractice && editor == null
+                && preferences.isFastMovementEnabled()
+                && snapshot != null && snapshot.find("world:here") != null;
+    }
+
+    @Override
+    public void moveDirection(int dx, int dy) {
+        if (!worldMovementEnabled()) { return; }
+        String action = actionForDirection(dx, dy);
+        ReaderSnapshot.Node node = snapshot.find(action);
+        if (node == null || !node.enabled) {
+            feedback(activity.getString(R.string.a11yFastMovementUnavailable));
+            return;
+        }
+        focus = action;
+        send("activate", "");
+    }
+
+    @Override
     public void activate() {
+        if (movementPractice) { endMovementPractice(); return; }
         if (editor != null) { editor.activate(); return; }
         if (controls) { performControl(controlIndex); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
@@ -552,11 +618,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void stopSpeech() { speech.stop(); }
 
     private int[] controlLabels() {
-        return new int[] { R.string.a11yReaderReturn, R.string.a11yReaderWhere,
+        int[] labels = new int[] { R.string.a11yReaderReturn, R.string.a11yReaderWhere,
                 R.string.a11yReaderDetail, R.string.a11yReaderRepeat,
                 R.string.a11yStopSpeech, R.string.a11yReaderCancel,
                 R.string.a11yReaderSetup, R.string.a11yReaderGestureHelp,
-                R.string.a11yReaderSearch, R.string.a11yReaderAllCommands, R.string.a11yReaderAllItems };
+                R.string.a11yReaderSearch, R.string.a11yReaderAllCommands, R.string.a11yReaderAllItems,
+                preferences.isFastMovementEnabled() ? R.string.a11yReaderFastMovementOn
+                : preferences.hasCompletedMovementPractice() ? R.string.a11yReaderFastMovementOffReady
+                : R.string.a11yReaderFastMovementOffPractice,
+                R.string.a11yReaderMovementPractice };
+        if (!preferences.isFastMovementEnabled()
+                && !preferences.hasCompletedMovementPractice()) {
+            int[] expanded = new int[labels.length + 1];
+            System.arraycopy(labels, 0, expanded, 0, labels.length);
+            expanded[labels.length] = R.string.a11yReaderSkipMovementPracticeEnable;
+            return expanded;
+        }
+        return labels;
     }
 
     public void showControls() {
@@ -570,6 +648,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     public void onBackPressed() {
+        if (movementPractice) { endMovementPractice(); return; }
         if (editor != null) { editor.back(); return; }
         if (controls) {
             controls = false;
@@ -602,8 +681,58 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 render();
                 readCurrent();
                 break;
+            case 11: {
+                if (!preferences.isFastMovementEnabled()
+                        && !preferences.hasCompletedMovementPractice()) {
+                    beginMovementPractice();
+                    break;
+                }
+                boolean enabled = !preferences.isFastMovementEnabled();
+                preferences.setFastMovementEnabled(enabled);
+                root.cancelGesture();
+                render();
+                feedback(activity.getString(enabled ? R.string.a11yReaderFastMovementOn
+                                       : R.string.a11yReaderFastMovementOffReady));
+                break;
+            }
+            case 12: beginMovementPractice(); break;
+            case 13:
+                if (!preferences.isFastMovementEnabled()
+                        && !preferences.hasCompletedMovementPractice()) {
+                    preferences.setFastMovementEnabled(true);
+                    root.cancelGesture();
+                    render();
+                    feedback(activity.getString(R.string.a11yReaderFastMovementOn));
+                }
+                break;
             default: break;
         }
+    }
+
+    private void beginMovementPractice() {
+        if (usesTouchExploration()) {
+            feedback(activity.getString(R.string.a11yReaderMovementPracticeTalkBack));
+            return;
+        }
+        if (snapshot == null || snapshot.find("world:here") == null) {
+            feedback(activity.getString(R.string.a11yReaderMovementPracticeWorldRequired));
+            return;
+        }
+        movementPractice = true;
+        movementPracticeDirections = 0;
+        controls = false;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yReaderMovementPracticeInstructions));
+    }
+
+    private void endMovementPractice() {
+        movementPractice = false;
+        root.cancelGesture();
+        controls = true;
+        controlIndex = 11;
+        render();
+        feedback(activity.getString(R.string.a11yReaderMovementPracticeExited));
     }
 
     private void openSettings() {

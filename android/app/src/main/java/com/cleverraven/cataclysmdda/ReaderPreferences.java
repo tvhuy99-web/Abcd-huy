@@ -41,4 +41,12 @@ public final class ReaderPreferences {
     public void setFastMovementEnabled(boolean enabled) {
         values.edit().putBoolean("fast_movement", enabled).apply();
     }
+
+    public boolean hasCompletedMovementPractice() {
+        return values.getBoolean("movement_practice_complete", false);
+    }
+
+    public void setMovementPracticeComplete() {
+        values.edit().putBoolean("movement_practice_complete", true).apply();
+    }
 }

@@ -11,6 +11,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean usesTouchExploration();
         String gestureContext();
         void navigate(int delta);
+        boolean movementPracticeEnabled();
+        void practiceMovementDirection(int dx, int dy);
+        boolean worldMovementEnabled();
+        void moveDirection(int dx, int dy);
         void activate();
         void detail();
         void stopSpeech();
@@ -24,6 +28,8 @@ public final class ReaderGestureSurface extends LinearLayout {
     private boolean multiple;
     private boolean cancelled;
     private boolean activateOnUp;
+    private boolean swipeHandled;
+    private boolean longPressHandled;
     private long downTime;
     private float firstX;
     private float firstY;
@@ -49,13 +55,14 @@ public final class ReaderGestureSurface extends LinearLayout {
             @Override
             public void onLongPress(MotionEvent event) {
                 if (valid()) {
+                    longPressHandled = true;
                     listener.detail();
                 }
             }
 
             @Override
             public boolean onFling(MotionEvent start, MotionEvent end, float vx, float vy) {
-                if (start == null || !valid() || activateOnUp) {
+                if (start == null || !valid() || activateOnUp || longPressHandled) {
                     return true;
                 }
                 float dx = end.getX() - start.getX();
@@ -63,15 +70,19 @@ public final class ReaderGestureSurface extends LinearLayout {
                 if (Math.max(Math.abs(dx), Math.abs(dy)) < swipeDistance) {
                     return true;
                 }
-                // Menus never interpret a diagonal as world movement.
-                if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
-                    listener.navigate(dx > 0 ? 1 : -1);
-                } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
-                    listener.navigate(dy > 0 ? 1 : -1);
-                }
+                handleSwipe(dx, dy);
                 return true;
             }
         });
+    }
+
+    static int[] directionForSwipe(float dx, float dy) {
+        float absX = Math.abs(dx);
+        float absY = Math.abs(dy);
+        if (absX == 0 && absY == 0) { return null; }
+        if (absX < absY * 0.41421356f) { return new int[] { 0, dy > 0 ? 1 : -1 }; }
+        if (absY < absX * 0.41421356f) { return new int[] { dx > 0 ? 1 : -1, 0 }; }
+        return new int[] { dx > 0 ? 1 : -1, dy > 0 ? 1 : -1 };
     }
 
     private boolean valid() {
@@ -90,6 +101,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             multiple = false;
             cancelled = false;
             activateOnUp = false;
+            swipeHandled = false;
+            longPressHandled = false;
             downTime = event.getEventTime();
             firstX = event.getX();
             firstY = event.getY();
@@ -122,12 +135,38 @@ public final class ReaderGestureSurface extends LinearLayout {
             return true;
         }
         detector.onTouchEvent(event);
+        if (action == MotionEvent.ACTION_UP && !swipeHandled && !activateOnUp
+                && !longPressHandled && valid()) {
+            float dx = event.getX() - firstX;
+            float dy = event.getY() - firstY;
+            if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeDistance) {
+                handleSwipe(dx, dy);
+            }
+        }
         if (action == MotionEvent.ACTION_UP && activateOnUp && valid()) {
             listener.activate();
             activateOnUp = false;
         }
         if (action == MotionEvent.ACTION_UP) { previousTapOwner = valid() ? owner : null; }
         return true;
+    }
+
+    private void handleSwipe(float dx, float dy) {
+        swipeHandled = true;
+        int[] direction = directionForSwipe(dx, dy);
+        if (direction != null && listener.movementPracticeEnabled()) {
+            listener.practiceMovementDirection(direction[0], direction[1]);
+        } else if (listener.worldMovementEnabled()) {
+            if (direction != null) {
+                listener.moveDirection(direction[0], direction[1]);
+            }
+            // Without explicit world movement mode, menus never interpret a
+            // diagonal as movement.
+        } else if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
+            listener.navigate(dx > 0 ? 1 : -1);
+        } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
+            listener.navigate(dy > 0 ? 1 : -1);
+        }
     }
 
     public void cancelGesture() {

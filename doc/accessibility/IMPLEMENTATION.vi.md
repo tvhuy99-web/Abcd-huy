@@ -34,7 +34,7 @@ chưa chạy instrumentation test.
 | Sở hữu và luồng | `a11y_runtime`, `a11y_android` | Scope, mailbox hữu hạn, lọc token/revision/request; scope có thể kích hoạt muộn khi adapter làm mới snapshot sau lúc bật reader; Java không giữ con trỏ gameplay; chưa kiểm thử race/vòng đời |
 | Android | `GameReaderController`, `CataclysmDDA` | Lớp trình bày native và gửi ý định; phối hợp touch exploration; chưa xác nhận focus/insets/Back trên máy |
 | Lời đọc | `ReaderSpeechQueue` | Gộp focus, ưu tiên, hết hạn, đọc theo đoạn, dừng/đọc lại/watchdog; chưa kiểm thử TTS thật cho mã mới |
-| Cử chỉ | `ReaderGestureSurface` | Duyệt/chọn/chi tiết/dừng, chặn hủy/nhiều ngón; chưa có cấu hình chơi nhanh tám hướng hoặc hướng dẫn luyện tập |
+| Cử chỉ | `ReaderGestureSurface`, `GameReaderController`, `ReaderPreferences` | Duyệt/chọn/chi tiết/dừng; vùng luyện tám hướng đếm đủ từng hướng mà không gửi lệnh game; di chuyển nhanh mặc định tắt, có thể luyện trước hoặc chủ động bỏ qua, chỉ gửi action khi snapshot là thế giới và cảnh báo có thể tốn lượt; chưa có đổi ánh xạ/khôi phục; test nguồn đã viết nhưng chưa chạy |
 | Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận người dùng đã nghe; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; đường vào màn thiết lập của flavor thử; bootstrap không TalkBack chưa đầy đủ |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới, tài liệu; chưa xác nhận tạo/tải save |
@@ -43,7 +43,7 @@ chưa chạy instrumentation test.
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab và lệnh; mô tả scenario/profession/trait/skill, trạng thái đánh dấu, giá trị chỉ số và một phần summary; chưa phủ mọi chi tiết hiển thị |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
 | Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và quét nhiều tầng còn thiếu |
-| Thế giới | `a11y_world`, `get_player_input` | Ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, bán kính quét và lệnh; đọc không tự di chuyển; bộ thăm dò/bộ lọc/đường đi còn thiếu |
+| Thế giới | `a11y_world`, `get_player_input`, `GameReaderController` | Ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, bán kính quét và lệnh; đọc không tự di chuyển; chế độ vuốt tám hướng tùy chọn gửi action di chuyển gốc và có thể tốn lượt; bộ thăm dò/bộ lọc/đường đi còn thiếu |
 | Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
@@ -62,7 +62,8 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 
 - G0/G1: hoàn thiện bootstrap khi TalkBack tắt, chọn engine/voice/tốc độ,
   thông báo phục hồi có âm thu sẵn, cài/nâng dữ liệu, lỗi dung lượng và phục hồi.
-- G2: cử chỉ nhanh tám hướng, luyện tập, đổi ánh xạ/khôi phục, biểu mẫu/bảng/cây,
+- G2: đổi ánh xạ/khôi phục, cấu hình duyệt an toàn tám hướng,
+  biểu mẫu/bảng/cây,
   các callback chỉ đọc phím thô, toàn bộ dialog native và adapter ngữ cảnh lồng.
 - G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật, chọn thế giới/mod,
   tên nhân vật, tạo mới và tải lại, cấu hình lượt/realtime có lựa chọn rõ ràng.

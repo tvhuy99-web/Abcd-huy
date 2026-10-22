@@ -2,7 +2,7 @@
 
 Mục tiêu: người khiếm thị tự thực hiện toàn bộ hành trình chơi trong phạm vi
 phát hành đã nghiệm thu. Baseline: `8ef359c74cc25e256919558bf7b3340f9b56a80d`.
-Nhánh triển khai: `feature/android-internal-reader`;
+Nhánh triển khai: `feature/android-reader-code-phase`;
 [PR dự thảo #2](https://github.com/tvhuy99-web/Abcd-huy/pull/2).
 
 ## Cập nhật quy trình và phản hồi từ người dùng
@@ -24,6 +24,12 @@ thoại dùng chung, tích hợp đầu cho tạo nhân vật, ô nhìn thấy/g
 trạng thái nhân vật và quét lân cận. **Đây là mã đang triển khai, chưa chứng
 minh chạy được hoặc bao phủ toàn game.** Theo dõi phần chưa viết tại
 [IMPLEMENTATION.vi.md](IMPLEMENTATION.vi.md).
+
+Đợt này thêm bài luyện đủ tám hướng không gửi lệnh và không tốn lượt. Di chuyển
+nhanh mặc định tắt; người chơi hoàn tất bài luyện hoặc chủ động chọn mục bỏ qua
+có cảnh báo, sau đó vuốt trong màn thế giới gửi action hướng gốc của game. Có
+test nguồn cho phân vùng tám hướng và vuốt rỗng; chưa chạy test, build hoặc thử
+cử chỉ trên máy.
 
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và
