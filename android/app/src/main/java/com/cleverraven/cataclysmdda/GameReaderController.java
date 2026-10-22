@@ -263,6 +263,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 String selectedItemFocus = "";
                 boolean selectionChanged = false;
                 boolean announcesSelection = "targeting".equals(next.category)
+                        || "inventory".equals(next.category)
                         || "dialogue".equals(next.category)
                         || "world-selection".equals(next.category)
                         || "world-generation".equals(next.category)
@@ -282,6 +283,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 selectionChanged = true;
                                 break;
                             }
+                        }
+                    }
+                    if (!selectionChanged && "inventory".equals(next.category)) {
+                        ReaderSnapshot.Node previousFocus = snapshot.find(focus);
+                        ReaderSnapshot.Node nextFocus = next.find(focus);
+                        if (previousFocus != null && nextFocus != null
+                                && (!previousFocus.value.equals(nextFocus.value)
+                                    || previousFocus.checked != nextFocus.checked
+                                    || previousFocus.enabled != nextFocus.enabled
+                                    || !previousFocus.disabledReason.equals(nextFocus.disabledReason))) {
+                            selectedItemFocus = focus;
+                            selectionChanged = true;
                         }
                     }
                     if (!selectionChanged && "targeting".equals(next.category)
