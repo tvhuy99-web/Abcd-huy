@@ -58,6 +58,11 @@ giá trị và mô tả từng cài đặt, điều kiện tiên quyết, nút l
 tự nạp và mô tả mod đang chọn; đây là màn chỉ xem. Chưa biên dịch hoặc kiểm tra
 luồng lưu/hủy thay đổi tùy chọn. Các lựa chọn thế giới ở menu chính nay đọc thêm
 số bản lưu; bộ lọc tính đúng các nhân vật được phép tải trong chế độ chia sẻ.
+Danh sách đặc tính khi tạo nhân vật đọc thêm điểm, nguyên nhân bị khóa do xung
+đột/kịch bản/nghề và bionic nào cản lựa chọn. Chưa kiểm tra trên luồng tạo thật.
+Các tab kịch bản/nghề nêu lựa chọn hiện tại, còn nghề/nền tảng đọc chi phí điểm.
+Adapter danh sách giữ lý do mục bị khóa trong phần chi tiết ngay cả khi game cho
+phép kích hoạt để hiện hộp giải thích gốc. Tất cả thay đổi chưa được chạy.
 
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và

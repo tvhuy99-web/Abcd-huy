@@ -411,6 +411,17 @@ msgid "Character: %1$s. Scenario: %2$s. Profession: %3$s."
 msgstr "Nhân vật: %1$s. Kịch bản: %2$s. Nghề nghiệp: %3$s."
 
 #, c-format
+msgid "Trait point value: %d"
+msgstr "Điểm đặc tính: %d"
+
+msgid "Current choice"
+msgstr "Lựa chọn hiện tại"
+
+#, c-format
+msgid "Point cost: %d"
+msgstr "Chi phí điểm: %d"
+
+#, c-format
 msgid "Random location (%d variant)"
 msgid_plural "Random location (%d variants)"
 msgstr[0] "Vị trí ngẫu nhiên (%d biến thể)"

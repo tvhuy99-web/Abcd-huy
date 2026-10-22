@@ -943,6 +943,12 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.detail = remove_color_tags( entry.desc );
             node.enabled = allow_confirm && ( entry.enabled || allow_disabled );
             node.selected = selected == index;
+            if( !entry.enabled && allow_disabled && !entry.a11y_disabled_reason.empty() ) {
+                if( !node.detail.empty() ) {
+                    node.detail += "\n";
+                }
+                node.detail += remove_color_tags( entry.a11y_disabled_reason );
+            }
             node.position = i + 1;
             node.total = fentries.size();
             if( !node.enabled ) {

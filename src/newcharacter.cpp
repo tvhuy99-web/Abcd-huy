@@ -2617,6 +2617,9 @@ void character_creator_ui::update_uilist_entries()
             for( const scenario *scen : cc_uistate.sorted_scenarios ) {
                 uilist_entry entry = get_uilist_entry( scen->gender_appropriate_name( u.male ) );
                 entry.text_color = scen == cc_uistate.get_selected_scenario() ? COL_SELECTED : COL_NOT_SELECTED;
+                if( scen == get_scenario() ) {
+                    entry.a11y_value = _( "Current choice" );
+                }
                 entry.enabled = scen->can_pick().success();
                 entry.desc = scen->description( u.male );
                 if( !entry.enabled ) { entry.a11y_disabled_reason = scen->can_pick().str(); }
@@ -2632,6 +2635,10 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry entry = get_uilist_entry( prof_id->gender_appropriate_name( u.male ) );
                 entry.text_color = prof_id == cc_uistate.get_selected_profession() ? COL_SELECTED :
                                    COL_NOT_SELECTED;
+                entry.a11y_value = string_format( _( "Point cost: %d" ), prof_id->point_cost() );
+                if( prof_id == u.prof->ident() ) {
+                    entry.a11y_value += ". " + std::string( _( "Current choice" ) );
+                }
                 entry.enabled = prof_id->can_pick().success();
                 entry.desc = prof_id->description( u.male );
                 if( !entry.enabled ) { entry.a11y_disabled_reason = prof_id->can_pick().str(); }
@@ -2647,6 +2654,7 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry entry = get_uilist_entry( prof_id->gender_appropriate_name( u.male ) );
                 entry.text_color = u.hobbies.count( &*prof_id ) ? COL_SELECTED : COL_NOT_SELECTED;
                 entry.a11y_checked = u.hobbies.count( &*prof_id ) != 0;
+                entry.a11y_value = string_format( _( "Point cost: %d" ), prof_id->point_cost() );
                 entry.desc = prof_id->description( u.male );
                 menu->addentry( entry );
             }
@@ -2675,10 +2683,43 @@ void character_creator_ui::update_uilist_entries()
                 trait_entry.retval = i;
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
                 trait_entry.a11y_checked = u.has_trait( current_trait );
+                trait_entry.a11y_value = string_format( _( "Trait point value: %d" ), current_trait->points );
                 trait_entry.desc = u.mutation_desc( current_trait );
                 trait_entry.enabled = !( u.has_conflicting_trait( current_trait ) ||
                                          get_scenario()->is_forbidden_trait( current_trait ) ||
                                          u.prof->is_forbidden_trait( current_trait ) );
+                if( !trait_entry.enabled ) {
+                    const std::unordered_set<trait_id> conflicts = u.get_conflicting_traits( current_trait );
+                    if( !conflicts.empty() ) {
+                        std::vector<std::string> conflict_names;
+                        conflict_names.reserve( conflicts.size() );
+                        for( const trait_id &conflict : conflicts ) {
+                            conflict_names.emplace_back( u.mutation_name( conflict ) );
+                        }
+                        trait_entry.a11y_disabled_reason = string_format(
+                                _( "You already picked some conflicting traits: %s." ),
+                                enumerate_as_string( conflict_names ) );
+                    } else if( get_scenario()->is_forbidden_trait( current_trait ) ) {
+                        trait_entry.a11y_disabled_reason =
+                            _( "The scenario you picked prevents you from taking this trait!" );
+                    } else if( u.prof->is_forbidden_trait( current_trait ) ) {
+                        trait_entry.a11y_disabled_reason = string_format(
+                                _( "Your profession of %s prevents you from taking this trait." ),
+                                u.prof->gender_appropriate_name( u.male ) );
+                    }
+                }
+                const std::vector<bionic_id> blocking_bionics =
+                    bionics_cancelling_trait( u.prof->CBMs(), current_trait );
+                if( !blocking_bionics.empty() ) {
+                    std::vector<std::string> bionic_names;
+                    bionic_names.reserve( blocking_bionics.size() );
+                    for( const bionic_id &blocking_bionic : blocking_bionics ) {
+                        bionic_names.emplace_back( blocking_bionic->name.translated() );
+                    }
+                    trait_entry.desc += "\n" + string_format(
+                                            _( "The following bionics prevent you from taking this trait: %s." ),
+                                            enumerate_as_string( bionic_names ) );
+                }
                 menu->addentry( trait_entry );
             }
             break;
