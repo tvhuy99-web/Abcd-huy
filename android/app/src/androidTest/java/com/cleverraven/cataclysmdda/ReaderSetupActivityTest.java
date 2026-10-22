@@ -110,12 +110,20 @@ public class ReaderSetupActivityTest {
                 CheckBox leftHanded = activity.findViewById(R.id.a11y_left_handed_navigation);
                 SeekBar distance = activity.findViewById(R.id.a11y_swipe_distance);
                 SeekBar duration = activity.findViewById(R.id.a11y_swipe_duration);
+                Button horizontal = activity.findViewById(R.id.a11y_horizontal_swipe_action);
+                Button vertical = activity.findViewById(R.id.a11y_vertical_swipe_action);
 
                 assertNotNull(leftHanded);
                 assertNotNull(distance);
                 assertNotNull(duration);
+                assertNotNull(horizontal);
+                assertNotNull(vertical);
                 assertEquals(1, distance.getProgress());
                 assertEquals(1, duration.getProgress());
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getHorizontalSwipeAction());
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getVerticalSwipeAction());
 
                 leftHanded.performClick();
                 distance.setProgress(2);
@@ -124,12 +132,39 @@ public class ReaderSetupActivityTest {
                 assertEquals(72, preferences.getSwipeDistanceDp());
                 assertEquals(450, preferences.getSwipeDurationLimitMs());
 
+                // The setup edits a draft; the previous mapping remains active
+                // until the user explicitly starts the timed game trial.
+                horizontal.performClick();
+                assertTrue(horizontal.getText().toString().contains(
+                                   activity.getString(R.string.a11yGestureActionDetail)));
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getHorizontalSwipeAction());
+                vertical.performClick();
+                assertTrue(vertical.getText().toString().contains(
+                                   activity.getString(R.string.a11yGestureActionNavigate)));
+
                 activity.findViewById(R.id.a11y_restore_gesture_defaults).performClick();
                 assertFalse(preferences.isLeftHandedNavigation());
                 assertEquals(48, preferences.getSwipeDistanceDp());
                 assertEquals(750, preferences.getSwipeDurationLimitMs());
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getHorizontalSwipeAction());
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getVerticalSwipeAction());
             });
         }
+        appPreferences.beginGestureMapTrial(ReaderPreferences.GESTURE_ACTION_DETAIL,
+                                            ReaderPreferences.GESTURE_ACTION_NAVIGATE);
+        assertTrue(appPreferences.isGestureMapTrialActive());
+        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
+        assertTrue(appPreferences.confirmGestureMapTrial());
+        assertFalse(appPreferences.isGestureMapTrialPending());
+        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
+        appPreferences.beginGestureMapTrial(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                                            ReaderPreferences.GESTURE_ACTION_READ_CURRENT);
+        appPreferences.revertGestureMapTrial();
+        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
+        assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE, appPreferences.getVerticalSwipeAction());
         appPreferences.restoreGestureDefaults();
     }
 }

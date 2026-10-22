@@ -55,6 +55,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastEnabled;
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
+    private Runnable gestureMapTrialTimeout;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
@@ -91,9 +92,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         explorationListener = enabled -> {
             root.cancelGesture();
             speech.stop();
+            boolean revertedTrial = false;
+            if (enabled && preferences.isGestureMapTrialPending()) {
+                preferences.revertGestureMapTrial();
+                revertedTrial = true;
+                if (gestureMapTrialTimeout != null) {
+                    handler.removeCallbacks(gestureMapTrialTimeout);
+                    gestureMapTrialTimeout = null;
+                }
+            }
             presentationEpoch++;
             updateNativeState(true);
             render();
+            if (revertedTrial) {
+                feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+            }
         };
         if (accessibility != null) {
             accessibility.addTouchExplorationStateChangeListener(explorationListener);
@@ -136,12 +149,31 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (preferences.isEnabled() && !speech.isReady()) {
             speech.initialize(preferences);
         }
+        boolean trialWasPending = preferences.isGestureMapTrialPending();
+        boolean trialActive = preferences.startGestureMapTrialTimer();
+        if (trialActive && preferences.isEnabled() && !usesTouchExploration()) {
+            controls = true;
+            controlIndex = controlLabels().length - 2;
+            scheduleGestureMapTrialTimeout();
+            render();
+            readCurrent();
+        } else if (trialWasPending) {
+            preferences.revertGestureMapTrial();
+            controls = true;
+            controlIndex = 0;
+            render();
+            feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+        }
         updateNativeState(true);
     }
 
     public void onPause() {
         foreground = false;
         presentationEpoch++;
+        if (gestureMapTrialTimeout != null) {
+            handler.removeCallbacks(gestureMapTrialTimeout);
+            gestureMapTrialTimeout = null;
+        }
         root.cancelGesture();
         movementPractice = false;
         movementPracticeDirections = 0;
@@ -433,6 +465,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (controls) {
             int[] labels = controlLabels();
+            if (controlIndex >= labels.length) {
+                controlIndex = 0;
+            }
             for (int i = 0; i < labels.length; i++) {
                 final int selected = i;
                 Button button = button(rows, labels[i], () -> performControl(selected));
@@ -487,6 +522,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public boolean leftHandedNavigation() {
         return preferences.isLeftHandedNavigation();
+    }
+
+    @Override
+    public int horizontalSwipeAction() {
+        return preferences.getHorizontalSwipeAction();
+    }
+
+    @Override
+    public int verticalSwipeAction() {
+        return preferences.getVerticalSwipeAction();
     }
 
     @Override
@@ -662,9 +707,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return 0;
     }
 
+    @Override
     public void readCurrent() {
         if (editor != null) { editor.readCurrent(); return; }
-        if (controls) { feedback(activity.getString(controlLabels()[controlIndex])); return; }
+        if (controls) {
+            int[] labels = controlLabels();
+            controlIndex = Math.floorMod(controlIndex, labels.length);
+            feedback(activity.getString(labels[controlIndex]));
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
             if (usesTouchExploration()) {
@@ -712,6 +763,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             int[] expanded = new int[labels.length + 1];
             System.arraycopy(labels, 0, expanded, 0, labels.length);
             expanded[labels.length] = R.string.a11yReaderSkipMovementPracticeEnable;
+            labels = expanded;
+        }
+        if (preferences.isGestureMapTrialActive()) {
+            int[] expanded = new int[labels.length + 2];
+            System.arraycopy(labels, 0, expanded, 0, labels.length);
+            expanded[labels.length] = R.string.a11yReaderConfirmGestureMap;
+            expanded[labels.length + 1] = R.string.a11yReaderRevertGestureMap;
             return expanded;
         }
         return labels;
@@ -738,6 +796,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void performControl(int index) {
+        boolean trialWasPending = preferences.isGestureMapTrialPending();
+        boolean trialIsActive = preferences.isGestureMapTrialActive();
+        if (trialWasPending && !trialIsActive) {
+            controlIndex = 0;
+            render();
+            feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+            return;
+        }
+        int[] availableControls = controlLabels();
+        controlIndex = Math.floorMod(controlIndex, availableControls.length);
+        if (index < 0 || index >= availableControls.length) {
+            index = 0;
+        }
+        if (trialIsActive) {
+            int confirmIndex = availableControls.length - 2;
+            if (index == confirmIndex) {
+                confirmGestureMapTrial();
+                return;
+            }
+            if (index == confirmIndex + 1) {
+                revertGestureMapTrial();
+                return;
+            }
+        }
         switch (index) {
             case 0: controls = false; render(); readCurrent(); break;
             case 1:
@@ -789,6 +871,73 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    private void scheduleGestureMapTrialTimeout() {
+        if (gestureMapTrialTimeout != null) {
+            handler.removeCallbacks(gestureMapTrialTimeout);
+        }
+        final long remaining = preferences.gestureMapTrialRemainingMs();
+        gestureMapTrialTimeout = new Runnable() {
+            @Override
+            public void run() {
+                if (closed) {
+                    gestureMapTrialTimeout = null;
+                    return;
+                }
+                if (!preferences.isGestureMapTrialPending()) {
+                    gestureMapTrialTimeout = null;
+                    if (foreground) {
+                        controls = true;
+                        controlIndex = 0;
+                        root.cancelGesture();
+                        render();
+                        feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+                    }
+                    return;
+                }
+                long timeLeft = preferences.gestureMapTrialRemainingMs();
+                if (timeLeft > 0L) {
+                    handler.postDelayed(this, timeLeft);
+                    return;
+                }
+                preferences.revertGestureMapTrial();
+                gestureMapTrialTimeout = null;
+                root.cancelGesture();
+                if (foreground) {
+                    controls = true;
+                    controlIndex = 0;
+                    render();
+                    feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+                }
+            }
+        };
+        handler.postDelayed(gestureMapTrialTimeout, Math.max(1L, remaining));
+    }
+
+    private void confirmGestureMapTrial() {
+        if (gestureMapTrialTimeout != null) {
+            handler.removeCallbacks(gestureMapTrialTimeout);
+            gestureMapTrialTimeout = null;
+        }
+        if (preferences.confirmGestureMapTrial()) {
+            root.cancelGesture();
+            controlIndex = 0;
+            render();
+            feedback(activity.getString(R.string.a11yReaderGestureMapConfirmed));
+        }
+    }
+
+    private void revertGestureMapTrial() {
+        if (gestureMapTrialTimeout != null) {
+            handler.removeCallbacks(gestureMapTrialTimeout);
+            gestureMapTrialTimeout = null;
+        }
+        preferences.revertGestureMapTrial();
+        root.cancelGesture();
+        controlIndex = 0;
+        render();
+        feedback(activity.getString(R.string.a11yReaderGestureMapReverted));
+    }
+
     private void beginMovementPractice() {
         if (usesTouchExploration()) {
             feedback(activity.getString(R.string.a11yReaderMovementPracticeTalkBack));
@@ -829,6 +978,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         closed = true;
         foreground = false;
         presentationEpoch++;
+        if (gestureMapTrialTimeout != null) {
+            handler.removeCallbacks(gestureMapTrialTimeout);
+            gestureMapTrialTimeout = null;
+        }
         root.cancelGesture();
         speech.close();
         if (accessibility != null) {

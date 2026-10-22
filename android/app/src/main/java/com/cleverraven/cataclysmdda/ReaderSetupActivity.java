@@ -36,6 +36,10 @@ public final class ReaderSetupActivity extends Activity {
     private TextView swipeDistanceValue;
     private SeekBar swipeDuration;
     private TextView swipeDurationValue;
+    private Button horizontalSwipeAction;
+    private Button verticalSwipeAction;
+    private int horizontalSwipeActionDraft;
+    private int verticalSwipeActionDraft;
     private boolean foreground;
     private boolean sampleRequested;
     private boolean sampleAttempted;
@@ -149,6 +153,23 @@ public final class ReaderSetupActivity extends Activity {
         layout.addView(swipeDuration);
         selfVoiceControls.add(swipeDuration);
         updateGestureDescriptions();
+
+        TextView mappingHeading = new TextView(this);
+        mappingHeading.setText(R.string.a11yGestureMappingHeading);
+        layout.addView(mappingHeading);
+        selfVoiceControls.add(mappingHeading);
+        ReaderPreferences savedGesturePreferences = new ReaderPreferences(this);
+        horizontalSwipeActionDraft = savedGesturePreferences.getHorizontalSwipeAction();
+        verticalSwipeActionDraft = savedGesturePreferences.getVerticalSwipeAction();
+        horizontalSwipeAction = button(layout, R.string.a11yHorizontalSwipeAction,
+                                       view -> cycleSwipeAction(true));
+        horizontalSwipeAction.setId(R.id.a11y_horizontal_swipe_action);
+        verticalSwipeAction = button(layout, R.string.a11yVerticalSwipeAction,
+                                     view -> cycleSwipeAction(false));
+        verticalSwipeAction.setId(R.id.a11y_vertical_swipe_action);
+        updateGestureMappingDescriptions();
+        button(layout, R.string.a11yTryGestureMapping,
+               view -> tryGestureMapping()).setId(R.id.a11y_try_gesture_mapping);
 
         button(layout, R.string.a11yRestoreGestureDefaults, view -> restoreGestureDefaults())
                 .setId(R.id.a11y_restore_gesture_defaults);
@@ -337,11 +358,70 @@ public final class ReaderSetupActivity extends Activity {
         swipeDuration.setContentDescription(durationDescription);
     }
 
+    private void updateGestureMappingDescriptions() {
+        if (horizontalSwipeAction == null || verticalSwipeAction == null) { return; }
+        String horizontal = gestureActionName(horizontalSwipeActionDraft);
+        String vertical = gestureActionName(verticalSwipeActionDraft);
+        horizontalSwipeAction.setText(getString(R.string.a11yHorizontalSwipeAction, horizontal));
+        horizontalSwipeAction.setContentDescription(horizontalSwipeAction.getText());
+        verticalSwipeAction.setText(getString(R.string.a11yVerticalSwipeAction, vertical));
+        verticalSwipeAction.setContentDescription(verticalSwipeAction.getText());
+    }
+
+    private String gestureActionName(int action) {
+        int label;
+        switch (action) {
+            case ReaderPreferences.GESTURE_ACTION_DETAIL:
+                label = R.string.a11yGestureActionDetail;
+                break;
+            case ReaderPreferences.GESTURE_ACTION_READ_CURRENT:
+                label = R.string.a11yGestureActionReadCurrent;
+                break;
+            case ReaderPreferences.GESTURE_ACTION_NONE:
+                label = R.string.a11yGestureActionNone;
+                break;
+            default:
+                label = R.string.a11yGestureActionNavigate;
+                break;
+        }
+        return getString(label);
+    }
+
+    private void cycleSwipeAction(boolean horizontal) {
+        int current = horizontal ? horizontalSwipeActionDraft : verticalSwipeActionDraft;
+        int other = horizontal ? verticalSwipeActionDraft : horizontalSwipeActionDraft;
+        int next = ( current + 1 ) % 4;
+        if (next != ReaderPreferences.GESTURE_ACTION_NAVIGATE
+                && other != ReaderPreferences.GESTURE_ACTION_NAVIGATE) {
+            showStatus(R.string.a11yGestureMappingNeedsNavigation, true);
+            return;
+        }
+        if (horizontal) { horizontalSwipeActionDraft = next; }
+        else { verticalSwipeActionDraft = next; }
+        updateGestureMappingDescriptions();
+        String value = horizontal ? horizontalSwipeAction.getText().toString()
+                      : verticalSwipeAction.getText().toString();
+        showStatusText(value, true);
+    }
+
+    private void tryGestureMapping() {
+        if (isTouchExplorationActive()) {
+            showStatus(R.string.a11yGestureMappingTalkBack, true);
+            return;
+        }
+        new ReaderPreferences(this).beginGestureMapTrial(horizontalSwipeActionDraft,
+                verticalSwipeActionDraft);
+        finish();
+    }
+
     private void restoreGestureDefaults() {
         new ReaderPreferences(this).restoreGestureDefaults();
         leftHandedNavigation.setChecked(false);
         swipeDistance.setProgress(1);
         swipeDuration.setProgress(1);
+        horizontalSwipeActionDraft = ReaderPreferences.GESTURE_ACTION_NAVIGATE;
+        verticalSwipeActionDraft = ReaderPreferences.GESTURE_ACTION_NAVIGATE;
+        updateGestureMappingDescriptions();
         updateGestureDescriptions();
         showStatus(R.string.a11yGestureDefaultsRestored, true);
     }
@@ -350,6 +430,11 @@ public final class ReaderSetupActivity extends Activity {
         if (getIntent().getBooleanExtra(EXTRA_DISABLE_SELF_VOICE, false)) { return true; }
         AccessibilityManager manager = (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
         return manager != null && manager.isEnabled();
+    }
+
+    private boolean isTouchExplorationActive() {
+        AccessibilityManager manager = (AccessibilityManager) getSystemService(Context.ACCESSIBILITY_SERVICE);
+        return manager != null && manager.isEnabled() && manager.isTouchExplorationEnabled();
     }
 
     private void speakText(String id, String text) {
@@ -629,6 +714,19 @@ public final class ReaderSetupActivity extends Activity {
                 status.announceForAccessibility(getString(text));
             } else if (speech != null && speech.getState() == AndroidSpeech.State.READY) {
                 speakText("setup-status-" + text, getString(text));
+            } else {
+                status.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+            }
+        }
+    }
+
+    private void showStatusText(String text, boolean announce) {
+        status.setText(text);
+        if (foreground && announce) {
+            if (usesSystemAccessibility()) {
+                status.announceForAccessibility(text);
+            } else if (speech != null && speech.getState() == AndroidSpeech.State.READY) {
+                speakText("setup-status-custom-" + (++sampleSequence), text);
             } else {
                 status.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
             }

@@ -11,6 +11,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean usesTouchExploration();
         String gestureContext();
         boolean leftHandedNavigation();
+        int horizontalSwipeAction();
+        int verticalSwipeAction();
         float swipeDistancePx();
         long swipeDurationLimitMs();
         void navigate(int delta);
@@ -20,6 +22,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         void moveDirection(int dx, int dy);
         void activate();
         void detail();
+        void readCurrent();
         void stopSpeech();
     }
 
@@ -185,9 +188,28 @@ public final class ReaderGestureSurface extends LinearLayout {
             // Without explicit world movement mode, menus never interpret a
             // diagonal as movement.
         } else if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
-            listener.navigate(navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
+            performMappedSwipeAction(listener.horizontalSwipeAction(),
+                                     navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
         } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
-            listener.navigate(dy > 0 ? 1 : -1);
+            performMappedSwipeAction(listener.verticalSwipeAction(), dy > 0 ? 1 : -1);
+        }
+    }
+
+    private void performMappedSwipeAction(int action, int navigationDelta) {
+        switch (action) {
+            case ReaderPreferences.GESTURE_ACTION_NAVIGATE:
+                listener.navigate(navigationDelta);
+                break;
+            case ReaderPreferences.GESTURE_ACTION_DETAIL:
+                listener.detail();
+                break;
+            case ReaderPreferences.GESTURE_ACTION_READ_CURRENT:
+                listener.readCurrent();
+                break;
+            default:
+                // A disabled mapping is intentionally inert and never becomes
+                // an arbitrary game command.
+                break;
         }
     }
 

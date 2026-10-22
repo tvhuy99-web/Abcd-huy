@@ -7,6 +7,9 @@
     <item type="id" name="a11y_left_handed_navigation" />
     <item type="id" name="a11y_swipe_distance" />
     <item type="id" name="a11y_swipe_duration" />
+    <item type="id" name="a11y_horizontal_swipe_action" />
+    <item type="id" name="a11y_vertical_swipe_action" />
+    <item type="id" name="a11y_try_gesture_mapping" />
     <item type="id" name="a11y_restore_gesture_defaults" />
     <item type="id" name="a11y_test_voice" />
     <item type="id" name="a11y_stop_voice" />
