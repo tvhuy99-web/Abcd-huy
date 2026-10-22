@@ -142,6 +142,8 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
 - Dùng hàng lời nói đang có: bad/warning/critical đi mức URGENT; loại còn lại
   đi INFORMATION và không cắt ngang lời focus. Hàng đợi vẫn có giới hạn 8 mục
   và thời hạn; cảnh báo khẩn có thể ngắt lời thường theo chính sách hiện có.
+  Yêu cầu focus đang chờ bị bỏ khi cảnh báo khẩn cắt ngang để tránh đọc lại
+  lời focus đã cũ sau cảnh báo.
   Với TalkBack/touch exploration, đăng thông báo qua status view.
 - Chỉ đọc thông báo mới không rỗng mà player log thực sự nhận: debug bị bỏ,
   thông báo cooldown ẩn bị bỏ, thông báo coalesce không đọc lặp. Đây chưa phải

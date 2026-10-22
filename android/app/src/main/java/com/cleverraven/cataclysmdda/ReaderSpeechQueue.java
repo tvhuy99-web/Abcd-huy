@@ -143,7 +143,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         Request request = new Request(contextKey, key, text, priority);
         for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
             Request old = iterator.next();
-            if (old.key.equals(key) || (priority == FOCUS && old.priority == FOCUS)) {
+            if (old.key.equals(key) || (priority == FOCUS && old.priority == FOCUS)
+                    || (priority > FOCUS && old.priority == FOCUS)) {
                 iterator.remove();
             }
         }
