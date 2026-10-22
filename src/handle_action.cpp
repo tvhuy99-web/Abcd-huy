@@ -1,6 +1,3 @@
-Warning: truncated output (original token count: 34549)
-Total output lines: 3448
-
 #include "game.h" // IWYU pragma: associated
 
 #include <algorithm>
@@ -1504,7 +1501,440 @@ static void loot()
 
     flags |= g->check_near_zone( zone_type_LOOT_UNSORTED,
                                  player_character.pos_bub() ) ? SortLoot : 0;
-    flags |= g->check_near_zone( zone_type_UNLOAD_ALL, player_ch…4549 tokens truncated…ame_message_params{ m_bad, gmf_bypass_cooldown }, sp.failed_caster_condition_message() );
+    flags |= g->check_near_zone( zone_type_UNLOAD_ALL, player_character.pos_bub() ) ||
+             g->check_near_zone( zone_type_STRIP_CORPSES, player_character.pos_bub() ) ? UnloadLoot : 0;
+    if( g->check_near_zone( zone_type_FARM_PLOT, player_character.pos_bub() ) ) {
+        flags |= MultiFarmPlots;
+    }
+    flags |= g->check_near_zone( zone_type_CONSTRUCTION_BLUEPRINT,
+                                 player_character.pos_bub() ) ? ConstructPlots : 0;
+
+    flags |= g->check_near_zone( zone_type_CHOP_TREES,
+                                 player_character.pos_bub() ) ? Multichoptrees : 0;
+    flags |= g->check_near_zone( zone_type_LOOT_WOOD,
+                                 player_character.pos_bub() ) ? Multichopplanks : 0;
+    flags |= g->check_near_zone( zone_type_VEHICLE_DECONSTRUCT,
+                                 player_character.pos_bub() ) ? Multideconvehicle : 0;
+    flags |= g->check_near_zone( zone_type_VEHICLE_REPAIR,
+                                 player_character.pos_bub() ) ? Multirepairvehicle : 0;
+    flags |= g->check_near_zone( zone_type_LOOT_CORPSE,
+                                 player_character.pos_bub() ) ? MultiButchery : 0;
+    flags |= g->check_near_zone( zone_type_MINING, player_character.pos_bub() ) ? MultiMining : 0;
+    flags |= g->check_near_zone( zone_type_DISASSEMBLE,
+                                 player_character.pos_bub() ) ? MultiDis : 0;
+    flags |= g->check_near_zone( zone_type_MOPPING, player_character.pos_bub() ) ? MultiMopping : 0;
+    flags |= g->check_near_zone( zone_type_STUDY_ZONE, player_character.pos_bub() ) ? MultiStudy : 0;
+    if( flags == 0 ) {
+        add_msg( m_info, _( "There is no compatible zone nearby." ) );
+        add_msg( m_info, _( "Compatible zones are %s and %s" ),
+                 mgr.get_name_from_type( zone_type_LOOT_UNSORTED ),
+                 mgr.get_name_from_type( zone_type_FARM_PLOT ) );
+        return;
+    }
+
+    auto wrap60 = []( const std::string & text ) {
+        return string_join( foldstring( text, 60 ), "\n" );
+    };
+
+    uilist menu;
+    menu.title = _( "Pick action:" );
+    menu.desc_enabled = true;
+
+    if( flags & SortLoot ) {
+        menu.addentry_desc( SortLootStatic, true, 'o', _( "Sort out my loot (static zones only)" ),
+                            wrap60( _( "Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones ignoring personal zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one." ) ) );
+        menu.addentry_desc( SortLootPersonal, true, 'O', _( "Sort out my loot (personal zones only)" ),
+                            wrap60( _( "Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones ignoring static zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one." ) ) );
+        menu.addentry_desc( SortLoot, true, 'I', _( "Sort out my loot (all)" ),
+                            wrap60( _( "Sorts out the loot from Loot: Unsorted zone to nearby appropriate Loot zones.  Uses empty space in your inventory or utilizes a cart, if you are holding one." ) ) );
+    }
+
+    if( flags & UnloadLoot ) {
+        menu.addentry_desc( UnloadLoot, true, 'U', _( "Unload nearby containers" ),
+                            wrap60( _( "Unloads any corpses or containers that are in their respective zones." ) ) );
+    }
+    if( flags & ConstructPlots ) {
+        menu.addentry_desc( ConstructPlots, true, 'c', _( "Construct plots" ),
+                            wrap60( _( "Work on any nearby Blueprint: construction zones." ) ) );
+    }
+    if( flags & MultiFarmPlots ) {
+        menu.addentry_desc( MultiFarmPlots, true, 'm', _( "Farm plots" ),
+                            wrap60( _( "Till and plant on any nearby farm plots - auto-fetch seeds and tools." ) ) );
+    }
+    if( flags & Multichoptrees ) {
+        menu.addentry_desc( Multichoptrees, true, 'C', _( "Chop trees" ),
+                            wrap60( _( "Chop down any trees in the designated zone - auto-fetch tools." ) ) );
+    }
+    if( flags & Multichopplanks ) {
+        menu.addentry_desc( Multichopplanks, true, 'P', _( "Chop planks" ),
+                            wrap60( _( "Auto-chop logs in wood loot zones into planks - auto-fetch tools." ) ) );
+    }
+    if( flags & Multideconvehicle ) {
+        menu.addentry_desc( Multideconvehicle, true, 'v', _( "Deconstruct vehicle" ),
+                            wrap60( _( "Auto-deconstruct vehicle in designated zone - auto-fetch tools." ) ) );
+    }
+    if( flags & Multirepairvehicle ) {
+        menu.addentry_desc( Multirepairvehicle, true, 'V', _( "Repair vehicle" ),
+                            wrap60( _( "Auto-repair vehicle in designated zone - auto-fetch tools." ) ) );
+    }
+    if( flags & MultiButchery ) {
+        menu.addentry_desc( MultiButchery, true, 'B', _( "Butcher corpses" ),
+                            wrap60( _( "Auto-butcher anything in corpse loot zones - auto-fetch tools." ) ) );
+    }
+    if( flags & MultiMining ) {
+        menu.addentry_desc( MultiMining, true, 'M', _( "Mine Area" ),
+                            wrap60( _( "Auto-mine anything in mining zone - auto-fetch tools." ) ) );
+    }
+    if( flags & MultiDis ) {
+        menu.addentry_desc( MultiDis, true, 'D', _( "Disassemble items" ),
+                            wrap60( _( "Auto-disassemble anything in disassembly zone - auto-fetch tools." ) ) );
+
+    }
+    if( flags & MultiMopping ) {
+        menu.addentry_desc( MultiMopping, true, 'p', _( "Mop area" ), _( "Mop clean the area." ) );
+    }
+    if( flags & MultiStudy ) {
+        menu.addentry_desc( MultiStudy, true, 's', _( "Study from books in study zones" ),
+                            wrap60( _( "Find and read books from study zones." ) ) );
+    }
+
+    menu.query();
+    flags = ( menu.ret >= 0 ) ? menu.ret : None;
+    bool recache = false;
+
+    switch( flags ) {
+        case None:
+            add_msg( _( "Never mind." ) );
+            break;
+        case SortLoot:
+            player_character.assign_activity( zone_sort_activity_actor() );
+            break;
+        case SortLootStatic:
+            //temporarily disable personal zones
+            for( const auto &i : mgr.get_zones() ) {
+                zone_data &zone = i.get();
+                if( zone.get_is_personal() && zone.get_enabled() ) {
+                    zone.set_enabled( false );
+                    zone.set_temporary_disabled( true );
+                    recache = true;
+                }
+            }
+            if( recache ) {
+                mgr.cache_data();
+            }
+            player_character.assign_activity( zone_sort_activity_actor() );
+            break;
+        case SortLootPersonal:
+            //temporarily disable non personal zones
+            for( const auto &i : mgr.get_zones() ) {
+                zone_data &zone = i.get();
+                if( !zone.get_is_personal() && zone.get_enabled() ) {
+                    zone.set_enabled( false );
+                    zone.set_temporary_disabled( true );
+                    recache = true;
+                }
+            }
+            if( recache ) {
+                mgr.cache_data();
+            }
+            player_character.assign_activity( zone_sort_activity_actor() );
+            break;
+        case UnloadLoot:
+            player_character.assign_activity( unload_loot_activity_actor() );
+            break;
+        case ConstructPlots:
+            player_character.assign_activity( multi_build_construction_activity_actor() );
+            break;
+        case MultiFarmPlots:
+            player_character.assign_activity( multi_farm_activity_actor() );
+            break;
+        case Multichoptrees:
+            player_character.assign_activity( multi_chop_trees_activity_actor() );
+            break;
+        case Multichopplanks:
+            player_character.assign_activity( multi_chop_planks_activity_actor() );
+            break;
+        case Multideconvehicle:
+            player_character.assign_activity( multi_vehicle_deconstruct_activity_actor() );
+            break;
+        case Multirepairvehicle:
+            player_character.assign_activity( multi_vehicle_repair_activity_actor() );
+            break;
+        case MultiButchery:
+            player_character.assign_activity( multi_butchery_activity_actor() );
+            break;
+        case MultiMining:
+            player_character.assign_activity( multi_mine_activity_actor() );
+            break;
+        case MultiDis:
+            player_character.assign_activity( multi_disassemble_activity_actor() );
+            break;
+        case MultiMopping:
+            player_character.assign_activity( multi_mop_activity_actor() );
+            break;
+        case MultiStudy:
+            player_character.assign_activity( multi_study_activity_actor() );
+            break;
+        default:
+            debugmsg( "Unsupported flag" );
+            break;
+    }
+}
+
+static void wear()
+{
+    avatar &player_character = get_avatar();
+    item_location loc = game_menus::inv::wear( player_character );
+
+    if( loc ) {
+        player_character.wear( loc );
+    } else {
+        add_msg( _( "Never mind." ) );
+    }
+}
+
+static void takeoff()
+{
+    avatar &player_character = get_avatar();
+    item_location loc = game_menus::inv::take_off();
+
+    if( loc ) {
+        player_character.takeoff( loc.obtain( player_character ) );
+    } else {
+        add_msg( _( "Never mind." ) );
+    }
+}
+
+static void read()
+{
+    avatar &player_character = get_avatar();
+    // Can read items from inventory or within one tile (including in vehicles)
+    item_location loc = game_menus::inv::read( player_character );
+
+    if( loc ) {
+        item the_book = *loc.get_item();
+        if( avatar_action::check_stealing( get_player_character(), the_book ) ) {
+            item_location parent_loc = loc.parent_item();
+            if( loc->type->can_use( "learn_spell" ) ) {
+                the_book.get_use( "learn_spell" )->call( &player_character, the_book, player_character.pos_bub() );
+            } else if( loc.is_efile() ) {
+                // obtain e-storage device if not allowed to use remotely
+                if( !parent_loc->has_flag( json_flag_ALLOWS_REMOTE_USE ) ) {
+                    parent_loc = parent_loc.obtain( player_character );
+                    item *newit = parent_loc->get_item_with( [&]( const item & it ) {
+                        return it.typeId() == the_book.typeId();
+                    } );
+                    loc = item_location( parent_loc, &*newit );
+                }
+                player_character.read( loc, parent_loc );
+            } else {
+                if( ( parent_loc && parent_loc->has_flag( json_flag_NO_UNLOAD ) ) || loc.is_efile() ) {
+                    debugmsg( "tried to get an item you shouldn't obtain." );
+                }
+                loc = loc.obtain( player_character );
+                player_character.read( loc );
+            }
+        }
+    } else {
+        add_msg( _( "Never mind." ) );
+    }
+}
+
+// Perform a reach attack
+static void reach_attack( avatar &you )
+{
+    g->temp_exit_fullscreen();
+
+    target_handler::trajectory traj;
+    if( you.get_wielded_item() ) {
+        traj = target_handler::mode_reach( you, you.get_wielded_item() );
+    } else {
+        traj = target_handler::mode_unarmed_reach( you );
+    }
+
+    if( !traj.empty() ) {
+        you.reach_attack( traj.back() );
+    }
+    g->reenter_fullscreen();
+}
+
+static void fire()
+{
+    avatar &you = get_avatar();
+    map &here = get_map();
+
+    if( you.has_flag( json_flag_CANNOT_ATTACK ) ) {
+        add_msg( m_info, _( "You are incapable of attacking!" ) );
+        return;
+    }
+
+    if( !you.try_break_relax_gas( _( "Your willpower asserts itself, and so do you!" ),
+                                  _( "You're too pacified to strike anything…" ) ) ) {
+        return;
+    }
+
+    const item_location weapon = you.get_wielded_item();
+    // try reach weapon
+    // used_weapon() returns null location if force unarmed is selected
+    if( weapon && !you.used_weapon() && !weapon->is_gun() ) {
+        add_msg( m_info, _( "You can't use reach attacks while forcing yourself to fight unarmed." ) );
+        return;
+    }
+    if( weapon && !weapon->is_gun() && weapon->current_reach_range( you ).first > 1 ) {
+        reach_attack( you );
+        return;
+    }
+    if( !weapon &&
+        static_cast<int>( you.calculate_by_enchantment( 1,
+                          enchant_vals::mod::MELEE_RANGE_MODIFIER ) ) > 1 ) {
+        reach_attack( you );
+        return;
+    }
+    if( you.has_trait( trait_BRAWLER ) ) {
+        add_msg( m_bad, _( "You refuse to use ranged weapons." ) );
+        return;
+    }
+    if( you.has_trait( trait_GUNSHY ) && weapon && weapon->is_firearm() ) {
+        add_msg( m_bad, _( "You refuse to use firearms." ) );
+        return;
+    }
+    if( you.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ) {
+        add_msg( m_bad, _( "You have no hands and cannot use ranged weapons!" ) );
+        return;
+    }
+    if( you.has_flag( json_flag_HANDS_CANNOT_USE_FIREARMS ) && weapon && weapon->is_firearm() ) {
+        add_msg( m_bad, _( "Your hands aren't suited for using firearms!" ) );
+        return;
+    }
+    // try firing gun
+    if( weapon && weapon->is_gun() && !weapon->gun_current_mode().melee() ) {
+        avatar_action::fire_wielded_weapon( you );
+        return;
+    }
+    // try firing turrets
+    if( const optional_vpart_position ovp = here.veh_at( you.pos_abs() ) ) {
+        if( turret_data turret_here = ovp->vehicle().turret_query( you.pos_abs() ) ) {
+            if( avatar_action::fire_turret_manual( you, here, turret_here ) ) {
+                return;
+            }
+        } else if( ovp.part_with_feature( VPFLAG_CONTROLS, true ) ) {
+            if( ovp->vehicle().turrets_aim_and_fire_all_manual() ) {
+                return;
+            }
+        }
+    }
+    // offer to draw a gun from worn holster
+    std::vector<std::string> options;
+    std::vector<std::function<void()>> actions;
+    you.worn.fire_options( you, options, actions );
+    if( !options.empty() ) {
+        int sel = uilist( _( "Draw what?" ), options );
+        if( sel >= 0 ) {
+            actions[sel]();
+            return;
+        }
+    }
+}
+
+static void open_movement_mode_menu()
+{
+    avatar &player_character = get_avatar();
+    const std::vector<move_mode_id> &modes = move_modes_by_speed();
+    const int cycle = 1027;
+    uilist as_m;
+
+    as_m.text = _( "Change to which movement mode?" );
+
+    for( size_t i = 0; i < modes.size(); ++i ) {
+        const move_mode_id &curr = modes[i];
+        std::string label = curr->name();
+        const float required_moves = player_character.move_mode_switch_cost(
+                                         player_character.current_movement_mode(), curr );
+        const float required_seconds = required_moves / player_character.get_speed();
+
+        if( required_seconds > 0 ) {
+            label += string_format( _( " (%.2f s)" ), required_seconds );
+        }
+
+        as_m.entries.emplace_back( static_cast<int>( i ), player_character.can_switch_to( curr ),
+                                   curr->letter(),
+                                   label );
+    }
+    as_m.entries.emplace_back( cycle,
+                               true, // cycling movement is controlled in relevant functions, always allow
+                               hotkey_for_action( ACTION_OPEN_MOVEMENT, /*maximum_modifier_count=*/1 ),
+                               _( "Cycle move mode" ) );
+    // This should select the middle move mode
+    as_m.selected = std::floor( modes.size() / 2 );
+    as_m.query();
+
+    if( as_m.ret != UILIST_CANCEL ) {
+        if( as_m.ret == cycle ) {
+            player_character.cycle_desired_move_mode();
+        } else {
+            player_character.set_desired_movement_mode( modes[as_m.ret] );
+        }
+    }
+}
+
+static void cast_spell( bool recast_spell = false )
+{
+    Character &player_character = get_player_character();
+    player_character.magic->clear_opens_spellbook_data();
+    get_event_bus().send<event_type::opens_spellbook>( player_character.getID() ); // trigger EoC
+    player_character.magic->evaluate_opens_spellbook_data();
+    std::vector<spell_id> spells = player_character.magic->spells();
+
+    if( player_character.has_flag( json_flag_CANNOT_ATTACK ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You cannot cast spells at this moment." ) );
+        return;
+    }
+    if( spells.empty() ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You don't know any spells to cast." ) );
+        return;
+    }
+
+    std::map<magic_type_id, bool> success_tracker = {};
+    if( !player_character.magic->can_cast_any_spell( player_character, success_tracker ) ) {
+        for( auto const& [m_type, any_success] : success_tracker ) {
+            if( !any_success && m_type->cannot_cast_message.has_value() ) {
+                add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                         m_type->cannot_cast_message.value() );
+            }
+        }
+    }
+
+    if( recast_spell && player_character.magic->last_spell.is_null() ) {
+        popup( _( "Cast a spell first" ) );
+        return;
+    }
+
+    spell &sp = recast_spell
+                ? player_character.magic->get_spell( player_character.magic->last_spell )
+                : player_character.magic->select_spell( player_character );
+    // if no spell was selected
+    if( sp.id().is_null() ) {
+        return;
+    }
+    player_character.magic->last_spell = sp.id();
+    player_character.cast_spell( sp, false, std::nullopt );
+}
+
+// returns true if the spell was assigned
+bool Character::cast_spell( spell &sp, bool fake_spell,
+                            const std::optional<tripoint_bub_ms> &target = std::nullopt )
+{
+    if( is_armed() && !sp.no_hands() && !has_flag( json_flag_SUBTLE_SPELL ) &&
+        !get_wielded_item()->has_flag( flag_MAGIC_FOCUS ) && !sp.check_if_component_in_hand( *this ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown },
+                 _( "You need your hands free to cast this spell!" ) );
+        return false;
+    }
+
+    if( !sp.valid_caster_condition( *this ) ) {
+        add_msg( game_message_params{ m_bad, gmf_bypass_cooldown }, sp.failed_caster_condition_message() );
         return false;
     }
 
