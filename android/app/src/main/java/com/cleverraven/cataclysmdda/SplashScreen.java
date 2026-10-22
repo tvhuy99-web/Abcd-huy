@@ -19,6 +19,7 @@ import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.app.AlertDialog;
+import android.content.ActivityNotFoundException;
 import android.content.ContentResolver;
 import android.content.Context;
 import android.content.Intent;
@@ -30,8 +31,13 @@ import android.content.res.AssetManager;
 import android.net.Uri;
 import android.os.*;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.util.Log;
 import android.view.ViewGroup;
+import android.view.View;
+import android.view.accessibility.AccessibilityManager;
+import android.speech.tts.TextToSpeech;
+import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.RadioButton;
@@ -49,6 +55,16 @@ public class SplashScreen extends Activity {
 
     private AlertDialog accessibilityServicesAlert;
     private boolean readerSetupOpened;
+    private boolean installationRunning;
+    private AndroidSpeech bootstrapSpeech;
+    private BootstrapSelfVoiceSurface bootstrapSurface;
+    private TextView bootstrapProgressText;
+    private String pendingBootstrapSpeech;
+    private long bootstrapUtteranceSequence;
+    private int lastBootstrapProgressBucket = -1;
+    private boolean bootstrapSpeechSuppressed;
+    private boolean refreshBootstrapSpeechOnResume;
+    private boolean bootstrapSpeechInitializing;
 
     public boolean[] mSettingsValues = { false, true, true };
     private int mSystemUiModeIndex = 0;
@@ -62,6 +78,179 @@ public class SplashScreen extends Activity {
         } catch (Exception e) {
             e.printStackTrace();
             return "error";
+        }
+    }
+
+    private boolean shouldSelfVoiceBootstrap() {
+        if (!BuildConfig.FLAVOR.equals("accessibility")
+                || (!new ReaderPreferences(this).isEnabled() && bootstrapSurface == null)) {
+            return false;
+        }
+        AccessibilityManager manager = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
+        return manager == null || !manager.isEnabled();
+    }
+
+    private void ensureBootstrapSpeech() {
+        if (!shouldSelfVoiceBootstrap()) { return; }
+        if (bootstrapSpeech == null) {
+            bootstrapSpeech = new AndroidSpeech(this, new AndroidSpeech.Listener() {
+                @Override
+                public void onState(AndroidSpeech.State state) {
+                    if (isFinishing() || isDestroyed()) { return; }
+                    bootstrapSpeechInitializing = state == AndroidSpeech.State.INITIALIZING;
+                    if (state == AndroidSpeech.State.READY) {
+                        if (pendingBootstrapSpeech != null) {
+                            String message = pendingBootstrapSpeech;
+                            pendingBootstrapSpeech = null;
+                            speakBootstrap(message);
+                        } else if (bootstrapSurface != null && !bootstrapSpeechSuppressed) {
+                            bootstrapSurface.speakFocused();
+                        }
+                    } else if (state == AndroidSpeech.State.FAILED
+                            || state == AndroidSpeech.State.MISSING_LANGUAGE
+                            || state == AndroidSpeech.State.NETWORK_REQUIRED) {
+                        View feedback = bootstrapProgressText != null ? bootstrapProgressText : bootstrapSurface;
+                        if (feedback != null) {
+                            feedback.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                        }
+                    }
+                }
+
+                @Override
+                public void onUtterance(String id, AndroidSpeech.Event event) { }
+            });
+        }
+        AndroidSpeech.State state = bootstrapSpeech.getState();
+        if (refreshBootstrapSpeechOnResume || state == AndroidSpeech.State.NEW || state == AndroidSpeech.State.FAILED
+                || state == AndroidSpeech.State.MISSING_LANGUAGE
+                || state == AndroidSpeech.State.NETWORK_REQUIRED) {
+            ReaderPreferences preferences = new ReaderPreferences(this);
+            bootstrapSpeechInitializing = true;
+            bootstrapSpeech.initialize(null, new java.util.Locale("vi", "VN"), preferences.getRate(),
+                    !preferences.permitsNetworkVoice());
+            refreshBootstrapSpeechOnResume = false;
+        }
+    }
+
+    private void speakBootstrap(String message) {
+        if (!shouldSelfVoiceBootstrap() || bootstrapSpeech == null || message == null || message.isEmpty()) {
+            return;
+        }
+        bootstrapSpeechSuppressed = false;
+        if (message.length() > TextToSpeech.getMaxSpeechInputLength()) {
+            int end = TextToSpeech.getMaxSpeechInputLength() - 1;
+            if (end > 0 && Character.isHighSurrogate(message.charAt(end - 1))) { end--; }
+            message = message.substring(0, end);
+        }
+        if (!bootstrapSpeechInitializing && bootstrapSpeech.getState() == AndroidSpeech.State.READY) {
+            bootstrapSpeech.speak("bootstrap-" + (++bootstrapUtteranceSequence), message);
+        } else {
+            pendingBootstrapSpeech = message;
+        }
+    }
+
+    private void showBootstrapMessage(int title, String message, int[] labels, Runnable[] actions) {
+        if (!shouldSelfVoiceBootstrap()) { return; }
+        ensureBootstrapSpeech();
+        bootstrapProgressText = null;
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        TextView heading = new TextView(this);
+        heading.setText(title);
+        heading.setTextSize(22);
+        content.addView(heading);
+        if (message != null && !message.isEmpty()) {
+            final int chunkSize = 2400;
+            for (int start = 0; start < message.length();) {
+                TextView detail = new TextView(this);
+                int end = Math.min(message.length(), start + chunkSize);
+                if (end < message.length() && Character.isHighSurrogate(message.charAt(end - 1))) { end--; }
+                detail.setText(message.substring(start, end));
+                content.addView(detail);
+                start = end;
+            }
+        }
+        if (labels != null && actions != null) {
+            for (int i = 0; i < Math.min(labels.length, actions.length); i++) {
+                Button button = new Button(this);
+                button.setText(labels[i]);
+                final Runnable action = actions[i];
+                button.setOnClickListener(view -> action.run());
+                content.addView(button);
+            }
+        }
+        showBootstrapContent(content);
+    }
+
+    private void showBootstrapProgress(String title) {
+        if (!shouldSelfVoiceBootstrap()) { return; }
+        LinearLayout content = new LinearLayout(this);
+        content.setOrientation(LinearLayout.VERTICAL);
+        TextView heading = new TextView(this);
+        heading.setText(title);
+        heading.setTextSize(22);
+        content.addView(heading);
+        bootstrapProgressText = new TextView(this);
+        bootstrapProgressText.setText(R.string.a11yBootstrapPreparing);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) {
+            bootstrapProgressText.setAccessibilityLiveRegion(View.ACCESSIBILITY_LIVE_REGION_POLITE);
+        }
+        content.addView(bootstrapProgressText);
+        showBootstrapContent(content);
+        lastBootstrapProgressBucket = -1;
+        speakBootstrap(getString(R.string.a11yBootstrapPreparing));
+    }
+
+    private void showBootstrapContent(View content) {
+        if (!shouldSelfVoiceBootstrap()) { return; }
+        ensureBootstrapSpeech();
+        bootstrapSurface = new BootstrapSelfVoiceSurface(this, new BootstrapSelfVoiceSurface.Listener() {
+            @Override
+            public boolean isActive() { return shouldSelfVoiceBootstrap(); }
+
+            @Override
+            public void speak(String id, String text) { speakBootstrap(text); }
+
+            @Override
+            public void stopSpeech() {
+                pendingBootstrapSpeech = null;
+                bootstrapSpeechSuppressed = true;
+                if (bootstrapSpeech != null) { bootstrapSpeech.cancel(); }
+                if (bootstrapProgressText != null) {
+                    bootstrapProgressText.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                }
+            }
+
+            @Override
+            public boolean leftHandedNavigation() {
+                return new ReaderPreferences(SplashScreen.this).isLeftHandedNavigation();
+            }
+
+            @Override
+            public float swipeDistancePx() {
+                return new ReaderPreferences(SplashScreen.this).getSwipeDistanceDp()
+                        * getResources().getDisplayMetrics().density;
+            }
+
+            @Override
+            public long swipeDurationLimitMs() {
+                return new ReaderPreferences(SplashScreen.this).getSwipeDurationLimitMs();
+            }
+        });
+        bootstrapSurface.setBackgroundColor(0xff161616);
+        setContentView(bootstrapSurface);
+        bootstrapSurface.setContent(content);
+    }
+
+    private void reportBootstrapProgress(int copied, int total) {
+        if (bootstrapProgressText == null) { return; }
+        int percent = total <= 0 ? 0 : (int) Math.max(0L, Math.min(100L, (long) copied * 100L / total));
+        int bucket = percent / 10;
+        if (bucket > lastBootstrapProgressBucket) {
+            lastBootstrapProgressBucket = bucket;
+            String progress = getString(R.string.a11yBootstrapProgress, percent, copied, total);
+            bootstrapProgressText.setText(progress);
+            speakBootstrap(progress);
         }
     }
 
@@ -94,6 +283,12 @@ public class SplashScreen extends Activity {
         final String message = text.toString();
         this.runOnUiThread(new Runnable() {
            public void run() {
+                if (shouldSelfVoiceBootstrap()) {
+                    showBootstrapMessage(R.string.crashAlert, message,
+                            new int[] { R.string.ok },
+                            new Runnable[] { () -> SplashScreen.this.startGameActivity(false) });
+                    return;
+                }
                 AlertDialog errorAlert = new AlertDialog.Builder(SplashScreen.this)
                 .setTitle(getString(R.string.crashAlert))
                 .setCancelable(false)
@@ -117,6 +312,10 @@ public class SplashScreen extends Activity {
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause()");
+        if (bootstrapSpeech != null) {
+            bootstrapSpeech.cancel();
+            refreshBootstrapSpeechOnResume = true;
+        }
         super.onPause();
         accessibilityServicesAlert.dismiss();
     }
@@ -127,6 +326,11 @@ public class SplashScreen extends Activity {
         super.onResume();
 
         Context context = getApplicationContext();
+        if (shouldSelfVoiceBootstrap()) { ensureBootstrapSpeech(); }
+        if (bootstrapSurface != null) {
+            if (shouldSelfVoiceBootstrap()) { bootstrapSurface.speakFocused(); }
+            return;
+        }
         String service_names = CataclysmDDA_Helpers.getEnabledAccessibilityServiceNames(context);
         boolean readerEnabled = new ReaderPreferences(this).isEnabled();
         accessibilityServicesAlert.setMessage( String.format( getString(R.string.accessibilityServicesMessage), service_names ) );
@@ -145,9 +349,25 @@ public class SplashScreen extends Activity {
             SplashScreen.this.installOrRun();
         }
     }
+
+    @Override
+    protected void onDestroy() {
+        if (bootstrapSpeech != null) { bootstrapSpeech.close(); }
+        super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (shouldSelfVoiceBootstrap() && bootstrapSurface != null) {
+            speakBootstrap(getString(R.string.a11yBootstrapBackHint));
+            return;
+        }
+        super.onBackPressed();
+    }
     
     protected void installOrRun() {
         Log.e(TAG, "onCreate()");
+        if (installationRunning) { return; }
         accessibilityServicesAlert.dismiss();
         // Start the game if already installed, otherwise start installing...
         if (getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
@@ -161,6 +381,7 @@ public class SplashScreen extends Activity {
             }
         }
         else {
+            installationRunning = true;
             new InstallProgramTask().execute();
         }
         return;
@@ -270,6 +491,7 @@ public class SplashScreen extends Activity {
         private AlertDialog installationAlert;
         private AlertDialog settingsAlert;
         private AlertDialog helpAlert;
+        private String installationError;
 
         @Override
         protected void onPreExecute() {
@@ -282,7 +504,13 @@ public class SplashScreen extends Activity {
                         return;
                     }
                 }).create();
-            showDialog(INSTALL_DIALOG_ID);
+            boolean cleanInstall = PreferenceManager.getDefaultSharedPreferences(getApplicationContext())
+                    .getString("installed", "").isEmpty();
+            if (shouldSelfVoiceBootstrap()) {
+                showBootstrapProgress(getString(cleanInstall ? R.string.installTitle : R.string.upgradeTitle));
+            } else {
+                showDialog(INSTALL_DIALOG_ID);
+            }
 
             helpAlert = new AlertDialog.Builder(SplashScreen.this)
                 .setTitle(getString(R.string.helpTitle))
@@ -303,12 +531,7 @@ public class SplashScreen extends Activity {
                 .setCancelable(false)
                 .setPositiveButton(getString(R.string.startGame), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean("Software rendering", SplashScreen.this.mSettingsValues[0]).commit();
-                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString(CataclysmDDA.PREF_SYSTEM_UI_MODE, getSelectedSystemUiMode()).commit();
-                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString(CataclysmDDA.PREF_SCREEN_ORIENTATION, SplashScreen.this.mScreenOrientation).commit();
-                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean("Trap Back button", SplashScreen.this.mSettingsValues[1]).commit();
-                        PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putBoolean("Native Android UI", SplashScreen.this.mSettingsValues[2]).commit();
-                        SplashScreen.this.startGameActivity(false);
+                        saveStartupSettingsAndStart();
                         return;
                     }
                 })
@@ -318,6 +541,113 @@ public class SplashScreen extends Activity {
                         return;
                     }
                 }).create();
+        }
+
+        private void saveStartupSettingsAndStart() {
+            SharedPreferences.Editor editor = PreferenceManager.getDefaultSharedPreferences(
+                    getApplicationContext()).edit();
+            editor.putBoolean("Software rendering", SplashScreen.this.mSettingsValues[0]);
+            editor.putString(CataclysmDDA.PREF_SYSTEM_UI_MODE, getSelectedSystemUiMode());
+            editor.putString(CataclysmDDA.PREF_SCREEN_ORIENTATION, SplashScreen.this.mScreenOrientation);
+            editor.putBoolean("Trap Back button", SplashScreen.this.mSettingsValues[1]);
+            editor.putBoolean("Native Android UI", SplashScreen.this.mSettingsValues[2]);
+            editor.commit();
+            SplashScreen.this.startGameActivity(false);
+        }
+
+        private void showBootstrapSettings() {
+            if (!shouldSelfVoiceBootstrap()) {
+                settingsAlert.show();
+                return;
+            }
+            bootstrapProgressText = null;
+            LinearLayout content = new LinearLayout(SplashScreen.this);
+            content.setOrientation(LinearLayout.VERTICAL);
+            TextView heading = new TextView(SplashScreen.this);
+            heading.setText(R.string.settings);
+            heading.setTextSize(22);
+            content.addView(heading);
+            content.addView(createSettingsContent());
+
+            Button help = new Button(SplashScreen.this);
+            help.setText(R.string.showHelp);
+            help.setOnClickListener(view -> showBootstrapHelp());
+            content.addView(help);
+
+            Button voiceSettings = new Button(SplashScreen.this);
+            voiceSettings.setText(R.string.a11yAndroidVoiceSettings);
+            voiceSettings.setOnClickListener(view -> openBootstrapVoiceSettings());
+            content.addView(voiceSettings);
+
+            Button start = new Button(SplashScreen.this);
+            start.setText(R.string.startGame);
+            start.setOnClickListener(view -> saveStartupSettingsAndStart());
+            content.addView(start);
+
+            Button exit = new Button(SplashScreen.this);
+            exit.setText(R.string.a11yBootstrapExit);
+            exit.setOnClickListener(view -> SplashScreen.this.finish());
+            content.addView(exit);
+            showBootstrapContent(content);
+        }
+
+        private void showBootstrapHelp() {
+            if (!shouldSelfVoiceBootstrap()) {
+                helpAlert.show();
+                return;
+            }
+            showBootstrapMessage(R.string.helpTitle, getString(R.string.helpMessage),
+                    new int[] { R.string.a11yBootstrapBackToSettings, R.string.a11yBootstrapExit },
+                    new Runnable[] { this::showBootstrapSettings, () -> SplashScreen.this.finish() });
+        }
+
+        private void openBootstrapVoiceSettings() {
+            try {
+                SplashScreen.this.startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+            } catch (ActivityNotFoundException missing) {
+                try {
+                    SplashScreen.this.startActivity(new Intent(Settings.ACTION_SETTINGS));
+                } catch (ActivityNotFoundException unavailable) {
+                    showBootstrapMessage(R.string.a11ySettingsUnavailable,
+                            getString(R.string.a11ySpeechFailed),
+                            new int[] { R.string.a11yBootstrapBackToSettings },
+                            new Runnable[] { this::showBootstrapSettings });
+                }
+            }
+        }
+
+        private void showBootstrapInstallationError() {
+            showBootstrapMessage(R.string.installationFailed,
+                    installationFailureDescription(),
+                    new int[] { R.string.a11yBootstrapRetry, R.string.a11yBootstrapOpenSettings,
+                            R.string.a11yBootstrapExit },
+                    new Runnable[] { SplashScreen.this::installOrRun, this::openBootstrapDeviceSettings,
+                            () -> SplashScreen.this.finish() });
+        }
+
+        private String installationFailureDescription() {
+            String detail = installationError == null || installationError.isEmpty()
+                    ? getString(R.string.a11yBootstrapUnknownError) : installationError;
+            return getString(R.string.a11yBootstrapInstallFailure, detail);
+        }
+
+        private void openBootstrapDeviceSettings() {
+            try {
+                SplashScreen.this.startActivity(new Intent(Settings.ACTION_SETTINGS));
+            } catch (ActivityNotFoundException unavailable) {
+                if (!shouldSelfVoiceBootstrap()) {
+                    new AlertDialog.Builder(SplashScreen.this)
+                            .setTitle(R.string.a11ySettingsUnavailable)
+                            .setMessage(R.string.a11ySpeechFailed)
+                            .setPositiveButton(R.string.ok, null)
+                            .show();
+                    return;
+                }
+                showBootstrapMessage(R.string.a11ySettingsUnavailable,
+                        getString(R.string.a11yBootstrapBackHint),
+                        new int[] { R.string.a11yBootstrapRetry, R.string.a11yBootstrapExit },
+                        new Runnable[] { SplashScreen.this::installOrRun, () -> SplashScreen.this.finish() });
+            }
         }
 
         private void loadSettingsDefaults() {
@@ -343,6 +673,12 @@ public class SplashScreen extends Activity {
 
         private ScrollView createSettingsView() {
             ScrollView scrollView = new ScrollView(SplashScreen.this);
+            scrollView.addView(createSettingsContent(), new ScrollView.LayoutParams(
+                    ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
+            return scrollView;
+        }
+
+        private LinearLayout createSettingsContent() {
             LinearLayout layout = new LinearLayout(SplashScreen.this);
             layout.setOrientation(LinearLayout.VERTICAL);
             int padding = (int)(24 * getResources().getDisplayMetrics().density);
@@ -397,8 +733,6 @@ public class SplashScreen extends Activity {
                 @Override
                 public void onCheckedChanged(RadioGroup group, int checkedId) {
                     SplashScreen.this.mScreenOrientation = orientations[checkedId - ORIENTATION_BUTTON_ID_BASE];
-                    SplashScreen.this.setRequestedOrientation(
-                        CataclysmDDA.requestedOrientationFor(SplashScreen.this.mScreenOrientation));
                 }
             });
             layout.addView(orientationGroup);
@@ -406,10 +740,7 @@ public class SplashScreen extends Activity {
             addBooleanSetting(layout, 0, getString(R.string.softwareRendering));
             addBooleanSetting(layout, 1, getString(R.string.trapBackButton));
             addBooleanSetting(layout, 2, getString(R.string.nativeAndroidUI));
-            scrollView.addView(layout, new ScrollView.LayoutParams(
-                ViewGroup.LayoutParams.MATCH_PARENT,
-                ViewGroup.LayoutParams.WRAP_CONTENT));
-            return scrollView;
+            return layout;
         }
 
         private void addSystemUiModeButton(RadioGroup group, int id, String label) {
@@ -503,7 +834,7 @@ public class SplashScreen extends Activity {
                 }
                 copyMillis = SystemClock.elapsedRealtime() - phaseStart;
             } catch(Exception e) {
-                installationAlert.setMessage(e.getMessage());
+                installationError = e.getMessage();
                 return false;
             }
 
@@ -631,6 +962,10 @@ public class SplashScreen extends Activity {
 
         @Override
         protected void onProgressUpdate(Integer... values) {
+            if (bootstrapSurface != null && installDialog == null) {
+                if (values.length > 1) { reportBootstrapProgress(values[0], values[1]); }
+                return;
+            }
             if (installDialog == null) {
                 return;
             }
@@ -643,11 +978,17 @@ public class SplashScreen extends Activity {
 
         @Override
         protected void onPostExecute(Boolean result) {
+            installationRunning = false;
             removeDialog(INSTALL_DIALOG_ID);
             if(result) {
-                settingsAlert.show();
+                if (shouldSelfVoiceBootstrap()) { showBootstrapSettings(); }
+                else { settingsAlert.show(); }
             } else {
-                installationAlert.show();
+                if (shouldSelfVoiceBootstrap()) { showBootstrapInstallationError(); }
+                else {
+                    installationAlert.setMessage(installationFailureDescription());
+                    installationAlert.show();
+                }
             }
         }
     }

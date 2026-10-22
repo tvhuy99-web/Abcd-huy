@@ -53,6 +53,15 @@
     <string name="a11ySwipeDurationDeliberate">Deliberate, 1.2 seconds</string>
     <string name="a11yRestoreGestureDefaults">Restore default gesture settings</string>
     <string name="a11yGestureDefaultsRestored">Default gesture settings restored.</string>
+    <string name="a11yBootstrapPreparing">Preparing the game data installation.</string>
+    <string name="a11yBootstrapProgress">%1$d percent. Copied %2$d of %3$d files.</string>
+    <string name="a11yBootstrapRetry">Retry installation</string>
+    <string name="a11yBootstrapOpenSettings">Open Android settings</string>
+    <string name="a11yBootstrapExit">Exit to Android</string>
+    <string name="a11yBootstrapBackToSettings">Back to startup settings</string>
+    <string name="a11yBootstrapUnknownError">The game data could not be installed. Check available storage and try again.</string>
+    <string name="a11yBootstrapInstallFailure">Game data was not installed. Check free storage and device access, then retry. Technical details: %1$s</string>
+    <string name="a11yBootstrapBackHint">Use the labeled buttons on this screen to continue or exit safely.</string>
     <string name="a11yDisableInternalReader">Turn off the internal reader</string>
     <string name="a11yReaderEnabledNotice">Internal reader enabled. This development version does not yet support every game screen. Keep TalkBack available for recovery.</string>
     <string name="a11yReaderDisabledNotice">Internal reader disabled. Existing game controls remain selected.</string>

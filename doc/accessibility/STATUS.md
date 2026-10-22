@@ -147,8 +147,12 @@ Màn thiết lập trợ năng có đường tự đọc trước khi bật read
 nếu TalkBack không hoạt động và reader chưa bật, Splash tự mở setup; người dùng
 vuốt/chạm để chọn nút, điều chỉnh tốc độ, nghe hết câu Việt rồi xác nhận. Khi
 không có giọng Việt, TalkBack vẫn là đường phục hồi để mở cài đặt. Cử chỉ, vòng
-đời Splash/setup và TTS chưa kiểm thử; tiến độ/lỗi chép dữ liệu ban đầu trên
-Splash chưa được tự đọc. Không chạy build/test trong giai đoạn mã.
+đời Splash/setup và TTS chưa kiểm thử. Sau khi bật reader, Splash đã có mã tự
+đọc tiến độ chép dữ liệu theo mốc 10%, thông báo lỗi kèm thử lại/thoát, trang
+cài đặt khởi động và trợ giúp bằng cử chỉ; cảnh báo crash cũng có trang đọc.
+Nếu TTS lỗi, phải bật TalkBack để dùng nút mở cài giọng. Cài đặt dữ liệu hiện
+chưa có staging/rollback khi tiến trình bị kill hoặc dữ liệu ghi dở. Không chạy
+build/test trong giai đoạn mã.
 
 Đã mở rộng G2: có tùy chọn đảo hướng vuốt ngang khi duyệt menu (không đảo lệnh
 di chuyển thế giới), ba mức ngưỡng và ba mức thời gian vuốt, cùng lệnh khôi phục

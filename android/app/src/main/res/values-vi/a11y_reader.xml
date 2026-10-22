@@ -53,6 +53,15 @@
     <string name="a11ySwipeDurationDeliberate">Chậm rãi, 1,2 giây</string>
     <string name="a11yRestoreGestureDefaults">Khôi phục thiết lập cử chỉ mặc định</string>
     <string name="a11yGestureDefaultsRestored">Đã khôi phục thiết lập cử chỉ mặc định.</string>
+    <string name="a11yBootstrapPreparing">Đang chuẩn bị chép dữ liệu game.</string>
+    <string name="a11yBootstrapProgress">Đã hoàn tất %1$d phần trăm. Đã chép %2$d trên %3$d tệp.</string>
+    <string name="a11yBootstrapRetry">Thử cài dữ liệu lại</string>
+    <string name="a11yBootstrapOpenSettings">Mở cài đặt Android</string>
+    <string name="a11yBootstrapExit">Thoát về Android</string>
+    <string name="a11yBootstrapBackToSettings">Trở lại thiết lập khởi động</string>
+    <string name="a11yBootstrapUnknownError">Không chép được dữ liệu game. Hãy kiểm tra dung lượng trống rồi thử lại.</string>
+    <string name="a11yBootstrapInstallFailure">Chưa cài được dữ liệu game. Hãy kiểm tra dung lượng trống và quyền truy cập rồi thử lại. Chi tiết kỹ thuật: %1$s</string>
+    <string name="a11yBootstrapBackHint">Dùng các nút có nhãn trên màn hình để tiếp tục hoặc thoát an toàn.</string>
     <string name="a11yDisableInternalReader">Tắt trình đọc nội bộ</string>
     <string name="a11yReaderEnabledNotice">Đã bật trình đọc nội bộ. Bản đang phát triển này chưa hỗ trợ hết màn hình game. Giữ TalkBack sẵn sàng để phục hồi.</string>
     <string name="a11yReaderDisabledNotice">Đã tắt trình đọc nội bộ. Các điều khiển game hiện có vẫn được chọn.</string>
