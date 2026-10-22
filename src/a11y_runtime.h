@@ -19,6 +19,7 @@ void synchronize_lifecycle();
 void replace_game_session();
 bool bound_to( const void *input_owner );
 std::optional<std::string> poll_input( const void *input_owner );
+void announce_game_message( const std::string &text, bool urgent );
 
 // Game-thread scope beside the actual input_context. The pointer is only a
 // local binding identity; it is never serialized, retained by Java or used

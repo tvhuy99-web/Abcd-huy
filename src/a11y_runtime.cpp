@@ -186,4 +186,15 @@ std::optional<std::string> poll_input( const void *input_owner )
     }
     return std::nullopt;
 }
+
+void announce_game_message( const std::string &text, const bool urgent )
+{
+    synchronize_lifecycle();
+    if( text.empty() || suspended() ) {
+        return;
+    }
+    // ReaderSpeechQueue uses the same priority levels: information does not
+    // interrupt focus speech, while urgent warnings do.
+    android::announce( text, urgent ? 3 : 1 );
+}
 } // namespace a11y

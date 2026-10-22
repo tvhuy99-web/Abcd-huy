@@ -23,6 +23,7 @@ import java.util.concurrent.atomic.AtomicLong;
 /** Main-looper presentation/input owner. Native callbacks only enqueue intents. */
 public final class GameReaderController implements AutoCloseable, ReaderGestureSurface.Listener {
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
+    private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
     private static final int PAGE_SIZE = 30;
     private final CataclysmDDA activity;
     private final ReaderPreferences preferences;
@@ -276,6 +277,24 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 rows.removeAllViews();
                 status.setText(R.string.a11yReaderMalformed);
                 feedback(activity.getString(R.string.a11yReaderMalformed));
+            }
+        });
+    }
+
+    public void announceGameMessage(String text, int priority) {
+        if (text == null || text.trim().isEmpty() || text.length() > 16000) { return; }
+        final String message = text;
+        final int level = priority >= ReaderSpeechQueue.URGENT
+                ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
+        handler.post(() -> {
+            if (closed || !foreground || !windowFocused || !preferences.isEnabled() || snapshot == null) {
+                return;
+            }
+            if (usesTouchExploration()) {
+                status.setText(message);
+                status.announceForAccessibility(message);
+            } else {
+                speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message, level);
             }
         });
     }

@@ -19,6 +19,7 @@ bool enqueue( semantic_intent intent );
 std::optional<semantic_intent> take();
 void clear();
 void publish( const std::string &json );
+void announce( const std::string &text, int priority );
 void status( const std::string &code, const semantic_intent *intent = nullptr );
 } // namespace a11y::android
 #endif // CATA_SRC_A11Y_ANDROID_H

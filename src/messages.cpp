@@ -6,10 +6,12 @@
 #include <deque>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_set>
 
+#include "a11y_runtime.h"
 #include "cached_options.h"
 #include "calendar.h"
 #include "catacharset.h"
@@ -171,22 +173,23 @@ class messages_impl
             return true;
         }
 
-        void add_msg_string( std::string &&msg ) {
-            add_msg_string( std::move( msg ), m_neutral, gmf_none );
+        std::optional<game_message> add_msg_string( std::string &&msg ) {
+            return add_msg_string( std::move( msg ), m_neutral, gmf_none );
         }
 
-        void add_msg_string( std::string &&msg, const game_message_params &params ) {
-            add_msg_string( std::move( msg ), params.type, params.flags );
+        std::optional<game_message> add_msg_string( std::string &&msg,
+                const game_message_params &params ) {
+            return add_msg_string( std::move( msg ), params.type, params.flags );
         }
 
-        void add_msg_string( std::string &&msg, game_message_type const type,
-                             const game_message_flags flags ) {
+        std::optional<game_message> add_msg_string( std::string &&msg,
+                game_message_type const type, const game_message_flags flags ) {
             if( msg.empty() || !active ) {
-                return;
+                return std::nullopt;
             }
 
             if( type == m_debug && !debug_mode ) {
-                return;
+                return std::nullopt;
             }
 
             modify_msg_with_exclamations( msg, type );
@@ -197,7 +200,7 @@ class messages_impl
             hide_message_in_cooldown( m );
 
             if( coalesce_messages( m ) ) {
-                return;
+                return std::nullopt;
             }
 
             unsigned int message_limit = get_option<int>( "MESSAGE_LIMIT" );
@@ -206,6 +209,10 @@ class messages_impl
             }
 
             messages.emplace_back( m );
+            if( m.cooldown_hidden ) {
+                return std::nullopt;
+            }
+            return m;
         }
 
         /** Check if the current message needs to be prevented (hidden) or not from being displayed in the side bar.
@@ -423,6 +430,16 @@ class messages_impl
 // Messages object.
 messages_impl player_messages;
 
+void announce_message( const std::optional<game_message> &message )
+{
+    if( !message || message->type == m_debug ) {
+        return;
+    }
+    const bool urgent = message->type == m_bad || message->type == m_warning ||
+                        message->type == m_critical;
+    a11y::announce_game_message( remove_color_tags( message->get_with_count() ), urgent );
+}
+
 bool message_exceeds_ttl( const game_message &message )
 {
     return message_ttl > 0 &&
@@ -463,12 +480,12 @@ void Messages::deserialize( const JsonObject &json )
 
 void Messages::add_msg( std::string msg )
 {
-    player_messages.add_msg_string( std::move( msg ) );
+    announce_message( player_messages.add_msg_string( std::move( msg ) ) );
 }
 
 void Messages::add_msg( const game_message_params &params, std::string msg )
 {
-    player_messages.add_msg_string( std::move( msg ), params );
+    announce_message( player_messages.add_msg_string( std::move( msg ), params ) );
 }
 
 void Messages::clear_messages()

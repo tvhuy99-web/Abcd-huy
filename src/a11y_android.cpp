@@ -114,6 +114,61 @@ void publish( const std::string &json )
 #endif
 }
 
+void announce( const std::string &text, const int priority )
+{
+#if defined(__ANDROID__)
+    if( text.empty() || text.size() > 16384 || ( priority != 1 && priority != 3 ) ) {
+        return;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr ) {
+        return;
+    }
+    if( env->PushLocalFrame( 8 ) < 0 ) {
+        if( env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        if( cls != nullptr ) {
+            jmethodID method = env->GetMethodID( cls, "onAccessibilityAnnouncement",
+                                                "(Ljava/lang/String;I)V" );
+            if( method != nullptr ) {
+                // Use UTF-16 instead of JNI modified UTF-8 for Vietnamese and
+                // codepoints outside the Basic Multilingual Plane.
+                std::u16string utf16;
+                for( const char32_t cp : utf8_to_utf32( text ) ) {
+                    if( cp > 0x10ffff || ( cp >= 0xd800 && cp <= 0xdfff ) ) {
+                        utf16.push_back( 0xfffd );
+                    } else if( cp <= 0xffff ) {
+                        utf16.push_back( static_cast<char16_t>( cp ) );
+                    } else {
+                        utf16.push_back( static_cast<char16_t>( 0xd800 + ( ( cp - 0x10000 ) >> 10 ) ) );
+                        utf16.push_back( static_cast<char16_t>( 0xdc00 + ( ( cp - 0x10000 ) & 0x3ff ) ) );
+                    }
+                }
+                jstring value = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
+                                               static_cast<jsize>( utf16.size() ) );
+                if( value != nullptr ) {
+                    env->CallVoidMethod( activity, method, value, static_cast<jint>( priority ) );
+                }
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        // Speech delivery must never unwind through the game loop.
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#else
+    ( void )text;
+    ( void )priority;
+#endif
+}
+
 void status( const std::string &code, const semantic_intent *intent )
 {
     // Codes are internal literals; translated user-facing text belongs to Java.

@@ -42,6 +42,12 @@ tiêu được đổi. Chưa biên dịch, chạy test hoặc thử chiến đ�
 tin ẩn, NPC không thù địch, tầm bắn, xe/phép/ném/reach/turret và mục tiêu đổi
 trạng thái. Chi tiết ở [IMPLEMENTATION.vi.md](IMPLEMENTATION.vi.md).
 
+Đã viết đường đọc tự động cho thông báo mới mà player log nhận: warning/bad/
+critical ưu tiên khẩn; các thông báo khác vào hàng thông tin; log trùng và bị
+cooldown ẩn không phát lại. Java chỉ phát khi reader đang ở foreground và có
+snapshot, còn TalkBack nhận accessibility announcement. Chưa biên dịch, chạy
+test, đo tải hàng đợi hoặc nghe trên thiết bị.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026

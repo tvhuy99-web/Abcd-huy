@@ -110,6 +110,13 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.receive(json); }
     }
 
+    // Called from the SDL game thread. The controller moves presentation to
+    // the main looper and drops messages without a live reader context.
+    public void onAccessibilityAnnouncement(String text, int priority) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.announceGameMessage(text, priority); }
+    }
+
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native boolean nativeReaderIntent(long session, long frame, long generation,
             long revision, long request, String node, String action, String value);

@@ -44,6 +44,7 @@ ghi PASS mới.
 | Xây dựng | `construction.cpp` | Nhóm, biến thể/công đoạn, mô tả, yêu cầu và trạng thái vị trí; CONFIRM/đặt công trình dùng logic gốc; blueprint và các điều kiện đặc biệt chưa thử |
 | Chọn ô lân cận | `action.cpp/.h` | Scope cho choose_direction/choose_adjacent, gọi phép đổi hướng gốc kể cả isometric; chỉ quan sát ô ngang qua perception; trạng thái hợp lệ công trình chỉ nói ở ô nhìn thấy; chưa có quan sát khác tầng |
 | Nhắm mục tiêu | `ranged.cpp`, `a11y_input.cpp`, `input_context.cpp`, `GameReaderController.java` | Danh sách sinh vật/phương tiện game cho phép ngắm dựa trên tri thức hiện tại, hướng/khoảng cách, điểm ngắm hiện tại và trạng thái; chọn hàng chỉ di chuyển điểm ngắm, lệnh FIRE/xác nhận gốc riêng; đọc lại mục tiêu vừa đổi; chưa kiểm chứng chiến đấu, phép, phương tiện hoặc mục tiêu đổi vị trí |
+| Thông báo log | `messages.cpp`, `a11y_runtime.*`, `a11y_android.*`, `GameReaderController.java`, `ReaderSpeechQueue` | Thông báo mới của player log được chuyển qua JNI từ game thread lên Java; bad/warning/critical ưu tiên khẩn; thông tin thường chờ sau lời focus; bỏ thông báo trùng/coalesce hoặc bị cooldown ẩn; chưa thử tải cao, ngắt quãng hay audio thật |
 | Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
 | Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; chưa chạy gettext/build mới |
 
@@ -60,7 +61,9 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   tên nhân vật, tạo mới và tải lại, cấu hình lượt/realtime có lựa chọn rõ ràng.
 - G4: thăm dò nhiều tầng/bộ lọc/điểm đáng chú ý, cảm nhận đặc biệt và âm thanh
   bất định; quan sát theo hành động thực tế, nhặt/đồ chứa, cơ thể/y tế, ăn/uống,
-  mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động.
+  mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Đã có
+  đường gửi các thông báo log mới, nhưng chưa chứng minh đủ mọi cảnh báo hoặc
+  khả năng nghe ổn định.
 - G5: kho nâng cao/chuyển đồ hai phía, nhắm bắn và đường bắn, cận chiến,
   chế độ bắn, ném, hoạt động/tiến độ chế tạo và xây dựng. Đã có adapter ban đầu
   cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
@@ -129,6 +132,25 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   turret; đổi loại đạn/chế độ; hướng/độ cao/isometric; TalkBack và TTS nội bộ;
   bật/tắt trình đọc trong khi màn ngắm đang mở. Không có kết quả biên dịch,
   test hoặc chạy trên thiết bị cho đợt này.
+
+## Đợt đọc thông báo log mới, đã viết mã, chưa kiểm thử
+
+- Sau khi game thêm một thông báo mới, gửi bản văn đã bỏ color tag và loại
+  thông báo qua JNI. Java chuyển phát sang main looper, chỉ nhận khi reader đang
+  bật, foreground, có snapshot sống và chưa đóng. Lời không được giữ để đọc lại
+  sau khi resume nếu callback đến khi không có phiên trình bày.
+- Dùng hàng lời nói đang có: bad/warning/critical đi mức URGENT; loại còn lại
+  đi INFORMATION và không cắt ngang lời focus. Hàng đợi vẫn có giới hạn 8 mục
+  và thời hạn; cảnh báo khẩn có thể ngắt lời thường theo chính sách hiện có.
+  Với TalkBack/touch exploration, đăng thông báo qua status view.
+- Chỉ đọc thông báo mới không rỗng mà player log thực sự nhận: debug bị bỏ,
+  thông báo cooldown ẩn bị bỏ, thông báo coalesce không đọc lặp. Đây chưa phải
+  bộ phát hiện mọi thay đổi trạng thái: nguy hiểm không phát `add_msg` vẫn cần
+  adapter/cảnh báo riêng.
+- Cần kiểm tra: thông điệp Việt có dấu; ưu tiên khẩn khi đang đọc văn bản dài;
+  dồn trên 8 thông báo/hết hạn; trùng/coalesce/cooldown; log bị deactivate;
+  debug; vào nền/đổi cửa sổ/tắt reader; chuyển màn, load save, death và voice
+  chưa sẵn sàng; TalkBack bật; âm thanh trên thiết bị. Chưa biên dịch/chạy.
 
 ## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
 
