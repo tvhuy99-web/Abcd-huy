@@ -391,3 +391,101 @@ msgid ""
 msgstr ""
 "Kích hoạt mục tiêu trong danh sách để chuyển điểm ngắm. Thao tác này không "
 "bắn và không tiêu lượt. Dùng riêng lệnh bắn để xác nhận tấn công."
+
+msgid "World selection"
+msgstr "Chọn thế giới"
+
+msgid "Activate a world to select it. Confirm enters the selected world."
+msgstr "Kích hoạt một thế giới để chọn. Xác nhận riêng để vào thế giới đã chọn."
+
+#, c-format
+msgid "%lu save"
+msgid_plural "%lu saves"
+msgstr[0] "%lu bản lưu"
+
+msgid "Not set"
+msgstr "Chưa đặt"
+
+#, c-format
+msgid "Character: %1$s. Scenario: %2$s. Profession: %3$s."
+msgstr "Nhân vật: %1$s. Kịch bản: %2$s. Nghề nghiệp: %3$s."
+
+#, c-format
+msgid "Random location (%d variant)"
+msgid_plural "Random location (%d variants)"
+msgstr[0] "Vị trí ngẫu nhiên (%d biến thể)"
+
+#, c-format
+msgid "%s (%d variant)"
+msgid_plural "%s (%d variants)"
+msgstr[0] "%s (%d biến thể)"
+
+msgid "Character overview"
+msgstr "Tổng quan nhân vật"
+
+#, c-format
+msgid "Name: %1$s. Gender: %2$s. Outfit: %3$s. Scenario: %4$s. Profession: %5$s. Age: %6$s. Height: %7$s. Blood type: %8$s%9$s."
+msgstr "Tên: %1$s. Giới tính: %2$s. Trang phục: %3$s. Kịch bản: %4$s. Nghề nghiệp: %5$s. Tuổi: %6$s. Chiều cao: %7$s. Nhóm máu: %8$s%9$s."
+
+#, c-format
+msgid "Backgrounds: %s."
+msgstr "Nền tảng: %s."
+
+msgid "Starting attributes"
+msgstr "Thuộc tính ban đầu"
+
+#, c-format
+msgid "%1$s: %2$d. %3$s: %4$d. %5$s: %6$d. %7$s: %8$d."
+msgstr "%1$s: %2$d. %3$s: %4$d. %5$s: %6$d. %7$s: %8$d."
+
+msgid "Creation points remaining"
+msgstr "Điểm tạo nhân vật còn lại"
+
+#, c-format
+msgid "Stats: %1$d. Traits: %2$d. Skills: %3$d."
+msgstr "Thuộc tính: %1$d. Đặc tính: %2$d. Kỹ năng: %3$d."
+
+msgid "Starting traits"
+msgstr "Đặc tính ban đầu"
+
+msgid "Starting proficiencies"
+msgstr "Năng lực thành thạo ban đầu"
+
+msgid "Starting bionics"
+msgstr "Bionic ban đầu"
+
+msgid "Starting spells"
+msgstr "Phép ban đầu"
+
+msgid "Starting missions"
+msgstr "Nhiệm vụ ban đầu"
+
+msgid "Starting skills"
+msgstr "Kỹ năng ban đầu"
+
+#, c-format
+msgid "%1$s level %2$d"
+msgstr "%1$s cấp %2$d"
+
+#, c-format
+msgid "%1$s: %2$d"
+msgstr "%1$s: %2$d"
+
+msgid "Starting location and date"
+msgstr "Địa điểm và thời điểm bắt đầu"
+
+#, c-format
+msgid "Location: %1$s. City: %2$s. Start of cataclysm: %3$s. Start of game: %4$s. Starting vehicle: %5$s."
+msgstr "Địa điểm: %1$s. Thành phố: %2$s. Thời điểm thảm họa bắt đầu: %3$s. Thời điểm bắt đầu cuộc chơi: %4$s. Phương tiện khởi đầu: %5$s."
+
+msgid "Scenario description"
+msgstr "Mô tả kịch bản"
+
+msgid "Profession description"
+msgstr "Mô tả nghề nghiệp"
+
+msgid "Character rating"
+msgstr "Đánh giá nhân vật"
+
+msgid "None"
+msgstr "Không có"

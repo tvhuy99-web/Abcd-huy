@@ -228,36 +228,38 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 boolean changedContext = snapshot == null || !snapshot.contextKey().equals(next.contextKey());
-                String selectedTargetFocus = "";
-                boolean targetSelectionChanged = false;
-                if (!changedContext && "targeting".equals(next.category)
-                        && "targeting".equals(snapshot.category)) {
+                String selectedItemFocus = "";
+                boolean selectionChanged = false;
+                boolean announcesSelection = "targeting".equals(next.category)
+                        || "world-selection".equals(next.category);
+                if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {
                     for (ReaderSnapshot.Node node : next.nodes) {
                         if (node.selected) {
                             ReaderSnapshot.Node previousNode = snapshot.find(node.id);
                             if (previousNode == null || !previousNode.selected) {
-                                selectedTargetFocus = node.id;
-                                targetSelectionChanged = true;
+                                selectedItemFocus = node.id;
+                                selectionChanged = true;
                                 break;
                             }
                         }
                     }
-                    if (!targetSelectionChanged && "target:cursor".equals(focus)) {
+                    if (!selectionChanged && "targeting".equals(next.category)
+                            && "target:cursor".equals(focus)) {
                         ReaderSnapshot.Node previousCursor = snapshot.find("target:cursor");
                         ReaderSnapshot.Node nextCursor = next.find("target:cursor");
                         if (previousCursor != null && nextCursor != null
                                 && (!previousCursor.value.equals(nextCursor.value)
                                     || !previousCursor.detail.equals(nextCursor.detail))) {
-                            selectedTargetFocus = "target:cursor";
-                            targetSelectionChanged = true;
+                            selectedItemFocus = "target:cursor";
+                            selectionChanged = true;
                         }
                     }
                 }
                 String previous = focus;
                 snapshot = next;
                 speech.setContext(next.contextKey());
-                if (targetSelectionChanged) {
-                    focus = selectedTargetFocus;
+                if (selectionChanged) {
+                    focus = selectedItemFocus;
                 } else if (changedContext || next.find(focus) == null) {
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
@@ -273,7 +275,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     onlyCommands = false;
                 }
                 render();
-                if (targetSelectionChanged) {
+                if (selectionChanged) {
                     readCurrent();
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();

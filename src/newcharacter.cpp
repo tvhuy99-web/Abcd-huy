@@ -2879,6 +2879,226 @@ void character_creator_ui_impl::draw_top_bar( const avatar &u ) const
                                       ui_parent->get_current_tab_input().get_desc( "HELP_KEYBINDINGS" ) ) );
 }
 
+static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, const avatar &you )
+{
+    const scenario *scenario_data = get_scenario();
+    const profession &profession_data = *you.prof;
+    const std::string name = you.name.empty() ? std::string( _( "Not set" ) ) : you.name;
+    const std::string scenario_name = scenario_data->gender_appropriate_name( you.male );
+    const std::string profession_name = profession_data.gender_appropriate_name( you.male );
+    snapshot.summary = remove_color_tags( string_format( _( "Character: %1$s. Scenario: %2$s. Profession: %3$s." ),
+                                     name, scenario_name, profession_name ) );
+
+    for( a11y::semantic_node &node : snapshot.nodes ) {
+        if( node.id == "CHANGE_NAME" ) { node.value = name; }
+        if( node.id == "CHANGE_GENDER" ) {
+            node.value = remove_color_tags( char_creation::get_gender_string( you.male ) );
+        }
+        if( node.id == "CHANGE_OUTFIT" ) {
+            node.value = remove_color_tags( char_creation::get_gender_string( outfit ) );
+        }
+        if( node.id == "CHANGE_HEIGHT" ) { node.value = you.height_string(); }
+        if( node.id == "CHANGE_AGE" ) { node.value = you.age_string( scenario_data->start_of_game() ); }
+        if( node.id == "CHANGE_BLOOD_TYPE" ) {
+            node.value = io::enum_to_string( you.my_blood_type ) + ( you.blood_rh_factor ? "+" : "-" );
+        }
+        if( node.id == "CHANGE_START_OF_CATACLYSM" ) {
+            node.value = to_string( scenario_data->start_of_cataclysm() );
+        }
+        if( node.id == "CHANGE_START_OF_GAME" ) {
+            node.value = to_string( scenario_data->start_of_game() );
+        }
+        if( node.id == "CHOOSE_CITY" ) {
+            node.value = you.starting_city.has_value() ? you.starting_city->name : _( "Random" );
+        }
+        if( node.id == "CHOOSE_LOCATION" ) {
+            if( you.random_start_location ) {
+                node.value = string_format( n_gettext( "Random location (%d variant)",
+                                                       "Random location (%d variants)",
+                                                       scenario_data->start_location_targets_count() ),
+                                            scenario_data->start_location_targets_count() );
+            } else {
+                const int variants = you.start_location.obj().targets_count();
+                node.value = string_format( n_gettext( "%s (%d variant)", "%s (%d variants)", variants ),
+                                            you.start_location.obj().name(), variants );
+            }
+        }
+    }
+
+    auto add_document = [&snapshot]( const std::string &id, const std::string &label,
+    const std::string &detail ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "document";
+        node.label = label;
+        node.detail = remove_color_tags( detail );
+        snapshot.nodes.push_back( std::move( node ) );
+    };
+
+    std::string overview = string_format( _( "Name: %1$s. Gender: %2$s. Outfit: %3$s. "
+                                  "Scenario: %4$s. Profession: %5$s. Age: %6$s. Height: %7$s. Blood type: %8$s%9$s." ),
+                                          name, remove_color_tags( char_creation::get_gender_string( you.male ) ),
+                                          remove_color_tags( char_creation::get_gender_string( outfit ) ),
+                                          scenario_name, profession_name,
+                                          you.age_string( scenario_data->start_of_game() ), you.height_string(),
+                                          io::enum_to_string( you.my_blood_type ), you.blood_rh_factor ? "+" : "-" );
+    std::string hobbies;
+    for( const profession *hobby : you.hobbies ) {
+        if( !hobbies.empty() ) { hobbies += ", "; }
+        hobbies += hobby->gender_appropriate_name( you.male );
+    }
+    if( hobbies.empty() ) { hobbies = _( "None" ); }
+    overview += " " + string_format( _( "Backgrounds: %s." ), hobbies );
+    add_document( "character:overview", _( "Character overview" ), overview );
+
+    std::string stats = string_format( _( "%1$s: %2$d. %3$s: %4$d. %5$s: %6$d. %7$s: %8$d." ),
+                                       get_character_stat_name( static_cast<int>( character_stat::STRENGTH ) ),
+                                       you.get_str_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::DEXTERITY ) ),
+                                       you.get_dex_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::INTELLIGENCE ) ),
+                                       you.get_int_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::PERCEPTION ) ),
+                                       you.get_per_base() );
+    add_document( "character:stats", _( "Starting attributes" ), stats );
+
+    const multi_pool points( you );
+    add_document( "character:points", _( "Creation points remaining" ),
+                  string_format( _( "Stats: %1$d. Traits: %2$d. Skills: %3$d." ),
+                                 points.stat_points_left, points.trait_points_left,
+                                 points.skill_points_left ) );
+
+    std::string traits;
+    for( const trait_and_var &trait : you.get_mutations_variants( false ) ) {
+        if( !traits.empty() ) { traits += ". "; }
+        traits += trait.name();
+    }
+    if( traits.empty() ) { traits = _( "None" ); }
+    add_document( "character:traits", _( "Starting traits" ), traits );
+
+    std::vector<proficiency_id> proficiencies = profession_data.proficiencies();
+    for( const profession *hobby : you.hobbies ) {
+        for( const proficiency_id &proficiency : hobby->proficiencies() ) {
+            if( std::find( proficiencies.begin(), proficiencies.end(), proficiency ) == proficiencies.end() ) {
+                proficiencies.push_back( proficiency );
+            }
+        }
+    }
+    std::string proficiency_details;
+    for( const proficiency_id &proficiency : proficiencies ) {
+        if( !proficiency_details.empty() ) { proficiency_details += ". "; }
+        proficiency_details += proficiency->name();
+    }
+    if( proficiency_details.empty() ) { proficiency_details = _( "None" ); }
+    add_document( "character:proficiencies", _( "Starting proficiencies" ), proficiency_details );
+
+    std::vector<bionic_id> bionics = profession_data.CBMs();
+    for( const profession *hobby : you.hobbies ) {
+        const std::vector<bionic_id> hobby_bionics = hobby->CBMs();
+        for( const bionic_id &bionic : hobby_bionics ) {
+            if( std::find( bionics.begin(), bionics.end(), bionic ) == bionics.end() ) {
+                bionics.push_back( bionic );
+            }
+        }
+    }
+    std::string bionic_details;
+    for( const bionic_id &bionic : bionics ) {
+        if( !bionic_details.empty() ) { bionic_details += ". "; }
+        const bionic_data &data = bionic.obj();
+        bionic_details += data.name.translated();
+        if( data.activated && data.has_flag( json_flag_BIONIC_TOGGLED ) ) {
+            bionic_details += " (" + std::string( _( "toggled" ) ) + ")";
+        } else if( data.activated ) {
+            bionic_details += " (" + std::string( _( "activated" ) ) + ")";
+        }
+    }
+    if( bionic_details.empty() ) { bionic_details = _( "None" ); }
+    add_document( "character:bionics", _( "Starting bionics" ), bionic_details );
+
+    std::string spell_details;
+    std::string mission_details;
+    auto append_profession_content = [&spell_details, &mission_details]( const profession &source ) {
+        for( const auto &spell : source.spells() ) {
+            if( !spell_details.empty() ) { spell_details += ". "; }
+            spell_details += string_format( _( "%1$s level %2$d" ), spell.first->name, spell.second );
+        }
+        for( const mission_type_id &mission : source.missions() ) {
+            if( !mission_details.empty() ) { mission_details += ". "; }
+            mission_details += mission_type::get( mission )->tname();
+        }
+    };
+    append_profession_content( profession_data );
+    for( const profession *hobby : you.hobbies ) { append_profession_content( *hobby ); }
+    for( const mission_type_id &mission : scenario_data->missions() ) {
+        if( !mission_details.empty() ) { mission_details += ". "; }
+        mission_details += mission_type::get( mission )->tname();
+    }
+    if( spell_details.empty() ) { spell_details = _( "None" ); }
+    if( mission_details.empty() ) { mission_details = _( "None" ); }
+    add_document( "character:spells", _( "Starting spells" ), spell_details );
+    add_document( "character:missions", _( "Starting missions" ), mission_details );
+
+    std::vector<std::string> skill_details;
+    const std::vector<const Skill *> skills = Skill::get_skills_sorted_by(
+    []( const Skill &lhs, const Skill &rhs ) {
+        return localized_compare( std::make_pair( 0, lhs.name() ),
+                                  std::make_pair( 0, rhs.name() ) );
+    } );
+    for( const Skill *skill : skills ) {
+        const skill_id id = skill->ident();
+        int level = you.get_skill_level( id );
+        for( const auto &entry : profession_data.skills() ) {
+            if( entry.first == id ) { level += entry.second; break; }
+        }
+        for( const profession *hobby : you.hobbies ) {
+            for( const auto &entry : hobby->skills() ) {
+                if( entry.first == id ) { level = std::max( level, entry.second ); break; }
+            }
+        }
+        level = std::clamp( level, MIN_SKILL, MAX_SKILL );
+        if( level > 0 ) {
+            skill_details.push_back( string_format( _( "%1$s: %2$d" ), skill->name(), level ) );
+        }
+    }
+    std::string skills_detail;
+    for( const std::string &skill : skill_details ) {
+        if( !skills_detail.empty() ) { skills_detail += ". "; }
+        skills_detail += skill;
+    }
+    if( skills_detail.empty() ) { skills_detail = _( "None" ); }
+    add_document( "character:skills", _( "Starting skills" ), skills_detail );
+
+    std::string start_location;
+    if( you.random_start_location ) {
+        start_location = string_format( n_gettext( "Random location (%d variant)",
+                                      "Random location (%d variants)",
+                                      scenario_data->start_location_targets_count() ),
+                                        scenario_data->start_location_targets_count() );
+    } else {
+        const int variants = you.start_location.obj().targets_count();
+        start_location = string_format( n_gettext( "%s (%d variant)", "%s (%d variants)", variants ),
+                                        you.start_location.obj().name(), variants );
+    }
+    std::string vehicle = _( "None" );
+    const vproto_id scenario_vehicle = scenario_data->vehicle();
+    const vproto_id profession_vehicle = profession_data.vehicle();
+    if( scenario_vehicle ) {
+        vehicle = scenario_vehicle->name.translated();
+    } else if( profession_vehicle ) {
+        vehicle = profession_vehicle->name.translated();
+    }
+    std::string starting = string_format( _( "Location: %1$s. City: %2$s. Start of cataclysm: %3$s. "
+                                   "Start of game: %4$s. Starting vehicle: %5$s." ),
+                                          start_location,
+                                          you.starting_city.has_value() ? you.starting_city->name : _( "Random" ),
+                                          to_string( scenario_data->start_of_cataclysm() ),
+                                          to_string( scenario_data->start_of_game() ), vehicle );
+    add_document( "character:starting", _( "Starting location and date" ), starting );
+    add_document( "character:scenario", _( "Scenario description" ), scenario_data->description( you.male ) );
+    add_document( "character:profession", _( "Profession description" ), profession_data.description( you.male ) );
+    add_document( "character:rating", _( "Character rating" ), cc_uistate.rating_string );
+}
+
 bool character_creator_ui::display()
 {
     cc_uistate.reset();
@@ -2939,22 +3159,11 @@ bool character_creator_ui::display()
             if( a11y::enabled() ) {
                 a11y::semantic_snapshot snapshot = a11y::command_snapshot( current_tab_input, _( "Character creation" ) );
                 const avatar &you = get_avatar();
-                snapshot.summary = remove_color_tags( string_format( _( "Scenario: %s  Profession: %s" ),
-                                   get_scenario()->gender_appropriate_name( you.male ), you.prof->gender_appropriate_name( you.male ) ) );
-                for( auto &node : snapshot.nodes ) {
-                    if( node.id == "CHANGE_NAME" ) { node.value = you.name; }
-                    if( node.id == "CHANGE_GENDER" ) { node.value = remove_color_tags( char_creation::get_gender_string( you.male ) ); }
-                    if( node.id == "CHANGE_OUTFIT" ) { node.value = remove_color_tags( char_creation::get_gender_string( outfit ) ); }
-                    if( node.id == "CHANGE_HEIGHT" ) { node.value = you.height_string(); }
-                    if( node.id == "CHANGE_AGE" ) { node.value = you.age_string( get_scenario()->start_of_game() ); }
-                    if( node.id == "CHANGE_BLOOD_TYPE" ) { node.value = io::enum_to_string( you.my_blood_type ) + ( you.blood_rh_factor ? "+" : "-" ); }
+                append_character_reader_summary( snapshot, you );
+                for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+                    snapshot.nodes[i].position = static_cast<int>( i + 1 );
+                    snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
                 }
-                a11y::semantic_node rating;
-                rating.id = "character:rating";
-                rating.role = "document";
-                rating.label = _( "Character rating" );
-                rating.detail = remove_color_tags( cc_uistate.rating_string );
-                snapshot.nodes.push_back( std::move( rating ) );
                 reader->update( std::move( snapshot ) );
             }
             handle_action( current_tab_input.handle_input( 33 ) );

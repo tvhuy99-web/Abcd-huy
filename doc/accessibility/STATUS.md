@@ -31,6 +31,18 @@ có cảnh báo, sau đó vuốt trong màn thế giới gửi action hướng g
 test nguồn cho phân vùng tám hướng và vuốt rỗng; chưa chạy test, build hoặc thử
 cử chỉ trên máy.
 
+Tiếp tục G3 bằng cách mở rộng snapshot trang tổng kết tạo nhân vật: tên, giới
+tính/ngoại hình, kịch bản/nghề/nền tảng, chỉ số, điểm còn, kỹ năng, đặc tính,
+proficiency, bionic, phép, nhiệm vụ, ngày và nơi bắt đầu, xe khởi đầu cùng xếp
+hạng. Nội dung lấy từ dữ liệu mà màn tổng kết hiện có; các action đổi lựa chọn
+vẫn đi theo đường gốc. Chưa biên dịch hoặc kiểm thử.
+
+Bổ sung snapshot cho bộ chọn thế giới đã tồn tại: đọc tên và số save của mọi
+trang; kích hoạt một hàng chỉ đổi lựa chọn, còn xác nhận riêng mới đi tiếp.
+Danh sách snapshot giữ đúng trang/vị trí và đọc lại lựa chọn mới. Tạo/đổi tên
+world và chọn mod vẫn là phần G3 còn thiếu. Các nhãn và hướng dẫn mới đã được
+bổ sung vào overlay tiếng Việt của gettext. Chưa biên dịch hoặc kiểm thử.
+
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và
 mẻ chế tạo, yêu cầu từng nhóm/công đoạn; xây dựng và chọn hướng/ô lân cận.

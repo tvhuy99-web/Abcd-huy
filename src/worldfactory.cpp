@@ -7,10 +7,13 @@
 #include <exception>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <unordered_map>
 #include <utility>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "char_validity_check.h"
@@ -633,6 +636,51 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
     // for mouse selection
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
+    ctxt.register_action( "A11Y_INTERNAL_SELECT_WORLD" );
+    std::optional<std::string> accessible_world_selection;
+
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "world-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const std::string world_prefix = "world:item:";
+        if( intent.action == "activate" && intent.node.rfind( world_prefix, 0 ) == 0 ) {
+            const std::string selected_world = intent.node.substr( world_prefix.size() );
+            accessible_world_selection = selected_world;
+            return "A11Y_INTERNAL_SELECT_WORLD";
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) { return; }
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "World selection" );
+        snapshot.summary = _( "Activate a world to select it. Confirm enters the selected world." );
+        std::string selected_id;
+        for( size_t page = 0; page < world_pages.size(); ++page ) {
+            for( size_t row = 0; row < world_pages[page].size(); ++row ) {
+                const std::string &world_name = world_pages[page][row];
+                a11y::semantic_node node;
+                node.id = "world:item:" + world_name;
+                node.role = "button";
+                node.label = world_name;
+                const size_t saves = get_world( world_name )->world_saves.size();
+                node.value = string_format( n_gettext( "%lu save", "%lu saves", saves ), saves );
+                node.selected = page == selpage && static_cast<int>( row ) == sel;
+                if( node.selected ) { selected_id = node.id; }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+        }
+        snapshot.focus = selected_id;
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
+    update_reader();
 
     while( true ) {
         ui_manager::redraw();
@@ -686,9 +734,24 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
                     selpage = world_pages.size() - 1;
                 }
             } while( world_pages[selpage].empty() );
+        } else if( action == "A11Y_INTERNAL_SELECT_WORLD" ) {
+            if( accessible_world_selection ) {
+                for( size_t page = 0; page < world_pages.size(); ++page ) {
+                    const auto &page_worlds = world_pages[page];
+                    const auto found = std::find( page_worlds.begin(), page_worlds.end(),
+                                                  *accessible_world_selection );
+                    if( found != page_worlds.end() ) {
+                        selpage = page;
+                        sel = static_cast<int>( std::distance( page_worlds.begin(), found ) );
+                        break;
+                    }
+                }
+                accessible_world_selection.reset();
+            }
         } else if( action == "CONFIRM" ) {
             return get_world( world_pages[selpage][sel] );
         }
+        update_reader();
     }
 
     return nullptr;
