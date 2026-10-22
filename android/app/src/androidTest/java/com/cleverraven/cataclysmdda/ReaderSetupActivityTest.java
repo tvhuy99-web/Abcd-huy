@@ -76,6 +76,11 @@ public class ReaderSetupActivityTest {
                 activity.findViewById(R.id.a11y_return).performClick();
             });
             InstrumentationRegistry.getInstrumentation().waitForIdleSync();
+            long finishDeadline = SystemClock.uptimeMillis() + 5000;
+            while (scenario.getState() != Lifecycle.State.DESTROYED
+                    && SystemClock.uptimeMillis() < finishDeadline) {
+                SystemClock.sleep(50);
+            }
             assertEquals(Lifecycle.State.DESTROYED, scenario.getState());
         }
     }

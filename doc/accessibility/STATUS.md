@@ -80,6 +80,16 @@ Workflow tự động về sau chỉ build candidate; có thể yêu cầu build
 bằng `workflow_dispatch` với `compare_baseline=true`. PR của chính nhánh này
 không lặp lại lượt build từ push. Chưa merge hoặc công bố APK tiếp cận được.
 
+Kiểm tra UI:
+
+- Java/resource của màn thử đã compile trên SDK thật; APK UI-only và APK
+  instrumentation đã build thành công tại commit `c91fb6c`.
+- [Lượt emulator đầu](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39721549333)
+  thất bại trước khi chạy test: UTP/ddmlib báo `device offline`, 0 tests ran.
+  Không tính là PASS hoặc là bằng chứng lỗi của gameplay.
+- Đổi đường chạy sang adb trực tiếp cùng bản adb của emulator, kiểm tra package
+  service sẵn sàng, cài hai APK và đòi JUnit báo đủ 2 tests PASS. Cần chờ lượt mới.
+
 ## Cổng còn phải qua
 
 1. G0: build sạch baseline, cài/chạy trên Android, kiểm kê thủ công các luồng.

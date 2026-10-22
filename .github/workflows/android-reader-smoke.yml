@@ -6,10 +6,12 @@ on:
     paths:
       - 'android/**'
       - '.github/workflows/android-reader-smoke.yml'
+      - 'tools/accessibility/run_android_smoke.sh'
   pull_request:
     paths:
       - 'android/**'
       - '.github/workflows/android-reader-smoke.yml'
+      - 'tools/accessibility/run_android_smoke.sh'
   workflow_dispatch:
 
 permissions:
@@ -53,7 +55,7 @@ jobs:
           target: google_apis
           disable-animations: true
           emulator-options: -no-window -no-audio -no-snapshot -gpu swiftshader_indirect -no-boot-anim
-          script: bash android/gradlew -p android --no-daemon --console=plain -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true connectedAccessibilityDebugAndroidTest
+          script: bash tools/accessibility/run_android_smoke.sh
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
@@ -61,3 +63,4 @@ jobs:
           path: |
             android/app/build/reports/androidTests/
             android/app/build/outputs/androidTest-results/
+            build-evidence/android-reader-ui/
