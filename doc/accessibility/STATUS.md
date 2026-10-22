@@ -6,8 +6,9 @@ phát hành đã nghiệm thu. Mã tham chiếu trước triển khai:
 
 ## Trạng thái hiện tại
 
-G0 đang triển khai. Chưa công nhận build nền, G1, G2 hoặc bất kỳ khả năng chơi
-độc lập nào đã hoàn thành. Chưa có kiểm thử máy thật/người dùng.
+G0 đang triển khai; có mã nền chuẩn bị G1/G2. Chưa công nhận build nền, G1,
+G2 hoặc bất kỳ khả năng chơi độc lập nào đã hoàn thành. Chưa có kiểm thử máy
+thật/người dùng. Các lớp mới chưa được nối vào điều khiển hoặc lời đọc gameplay.
 
 Ngày 22/10/2026:
 
@@ -22,6 +23,34 @@ Ngày 22/10/2026:
 - Build Android tại môi trường làm việc bị chặn trước khi compile: không có
   SDK/NDK và Gradle wrapper không tải được Gradle 8.9 do network unreachable.
   Không quy lỗi này thành lỗi game. Kết quả CI phải được ghi sau khi thực chạy.
+
+## Mã nền và kiểm thử đã thực hiện
+
+- `a11y_context`: token phiên/ngữ cảnh/đời focus, overlay chặn tầng dưới,
+  scope RAII, hủy cây overlay khi đóng cha, vô hiệu callback sau suspend/load.
+  Chỉ truy cập trên game thread; chưa thay thế hay gắn hook vào `input_context`.
+- `AndroidSpeech`: driver Android TTS bất đồng bộ, state/lỗi thiếu ngôn ngữ,
+  timeout khởi tạo/bắt đầu, giới hạn đầu vào, hủy, shutdown và bỏ callback cũ.
+  Không giữ hàng đợi lời chờ khi chưa ready. Chưa có JNI, bootstrap chọn giọng,
+  bảo đảm voice offline, chính sách ưu tiên/gộp hoặc adapter menu gameplay.
+- `SpeechSession`: định danh riêng từng utterance ngay cả khi caller dùng lại
+  nhãn; chống callback cũ/đúp sau cancel hoặc thay engine.
+- Kiểm tra local: 4 unittest kiểm kê; C++ 7 test cases/38 assertions đạt;
+  Java token 24 assertions đạt; driver với Android test doubles 26 assertions đạt.
+  Các con số Java không chứng minh TTS thật hoặc phát âm thanh trên Android.
+- Đã khai báo truy vấn TTS service; không thêm quyền microphone hoặc service
+  đọc màn hình toàn hệ thống. Driver chưa được tự bật khi mở game.
+- Kiểm kê thủ công đầu ở [COVERAGE.md](COVERAGE.md) bổ sung minigame,
+  màn y tế, điều khiển động cơ, study zones và nhật ký.
+
+## Lượt CI đang theo dõi
+
+- [Lượt đầu](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717825397):
+  kiểm kê PASS; build dừng ở cấp công cụ vì `sdkmanager` không nằm trên PATH.
+- Đã sửa bằng bước setup Android được pin commit.
+- [Lượt cấp công cụ đã sửa](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39717924057):
+  kiểm kê PASS; hai job baseline/candidate đã qua cấp SDK và bắt đầu Gradle.
+  Chưa có kết luận build tại lần cập nhật này.
 
 ## Cổng còn phải qua
 

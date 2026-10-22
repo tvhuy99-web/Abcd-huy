@@ -1,0 +1,49 @@
+name: Accessibility core and Android speech API
+
+on:
+  push:
+    branches: [feature/android-internal-reader]
+    paths:
+      - 'src/a11y*'
+      - 'tests/a11y*'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/AndroidSpeech.java'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/SpeechSession.java'
+      - 'tools/accessibility/**'
+      - '.github/workflows/accessibility-core.yml'
+  pull_request:
+    paths:
+      - 'src/a11y*'
+      - 'tests/a11y*'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/AndroidSpeech.java'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/SpeechSession.java'
+      - 'tools/accessibility/**'
+      - '.github/workflows/accessibility-core.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  core:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
+      - run: bash tools/accessibility/run_core_tests.sh
+      - run: bash tools/accessibility/run_speech_tests.sh
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platforms;android-35'
+          log-accepted-android-sdk-licenses: false
+      - name: Compile real speech driver against Android API 35
+        run: |
+          mkdir -p "$RUNNER_TEMP/speech-classes"
+          javac -Xlint:all -Werror -cp "$ANDROID_HOME/platforms/android-35/android.jar" \
+            -d "$RUNNER_TEMP/speech-classes" \
+            android/app/src/main/java/com/cleverraven/cataclysmdda/{SpeechSession,AndroidSpeech}.java

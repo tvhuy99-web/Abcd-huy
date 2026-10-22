@@ -3,6 +3,11 @@ name: Android accessibility baseline and candidate
 on:
   push:
     branches: [feature/android-internal-reader]
+    paths:
+      - 'android/**'
+      - 'src/**'
+      - 'tools/accessibility/**'
+      - '.github/workflows/android-accessibility.yml'
   pull_request:
     branches: [master]
     paths:
@@ -17,7 +22,7 @@ permissions:
 
 concurrency:
   group: android-accessibility-${{ github.ref }}
-  cancel-in-progress: true
+  cancel-in-progress: false
 
 jobs:
   inventory:
@@ -27,6 +32,8 @@ jobs:
         with:
           persist-credentials: false
       - run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
+      - run: bash tools/accessibility/run_core_tests.sh
+      - run: bash tools/accessibility/run_speech_tests.sh
       - run: python3 tools/accessibility/inventory.py --output "$RUNNER_TEMP/a11y-inventory.json"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
