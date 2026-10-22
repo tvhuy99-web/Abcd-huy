@@ -1273,6 +1273,7 @@ $(TEST_MO): data/mods/TEST_DATA/lang/po/en.po
 MO_DEPS := \
   $(wildcard lang/*.sh lang/*.py src/*.cpp src/*.h) \
   $(wildcard lang/po/*.po lang/po/*.po.gz) \
+  $(wildcard lang/po/accessibility/*.po) \
   $(shell find data/raw data/json data/mods data/core -type f -name '*.json')
 
 lang/mo_built.stamp: $(MO_DEPS)

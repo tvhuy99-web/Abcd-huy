@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11yReaderSearch">Tìm lệnh hoặc mục</string>
+    <string name="a11yReaderSearchCount">Có %1$d mục phù hợp</string>
+    <string name="a11yReaderAllCommands">Tất cả lệnh đã đăng ký</string>
+    <string name="a11yReaderAllItems">Hiện lại tất cả mục</string>
+    <string name="a11yReaderWaiting">Đang chờ màn hình trợ năng. Nút Quay lại mở bảng điều khiển trình đọc.</string>
+    <string name="a11yReaderVoiceRecovery">Giọng đọc chưa dùng được. Giữ TalkBack và mở thiết lập trình đọc để thử lại.</string>
+    <string name="a11yReaderNativeUnavailable">Trình đọc chưa kết nối được với game. Bạn có thể mở thiết lập hoặc trở về điện thoại.</string>
+    <string name="a11yReaderDisabledEntry">Không khả dụng. Chưa thực hiện hành động trong game.</string>
+    <string name="a11yReaderUnsupported">Màn hình này cần phần tích hợp trợ năng riêng.</string>
+    <string name="a11yReaderStale">Màn hình đã thay đổi. Hãy chọn lại mục.</string>
+    <string name="a11yReaderMalformed">Trình đọc chưa nạp được màn hình này. Bạn vẫn có thể mở thiết lập trình đọc.</string>
+    <string name="a11yReaderControls">Điều khiển trình đọc</string>
+    <string name="a11yReaderReturn">Trở về màn hình hiện tại</string>
+    <string name="a11yReaderWhere">Tôi đang ở đâu?</string>
+    <string name="a11yReaderDetail">Đọc chi tiết mục</string>
+    <string name="a11yReaderRepeat">Đọc lại lời vừa nghe</string>
+    <string name="a11yReaderCancel">Hủy một tầng menu game</string>
+    <string name="a11yReaderGestureHelp">Hướng dẫn cử chỉ</string>
+    <string name="a11yReaderGestureInstructions">Khi dùng trình đọc nội bộ và tắt khám phá bằng chạm: vuốt trái hoặc lên để tới mục trước, vuốt phải hoặc xuống để tới mục sau. Chạm hai lần để chọn mục. Nhấn giữ để nghe chi tiết. Chạm hai ngón để dừng lời đọc. Nút Quay lại mở bảng điều khiển trình đọc. Khi dùng TalkBack, dùng cử chỉ quen thuộc và các nút đã có nhãn.</string>
+    <string name="a11yPreviousPage">Trang trước</string>
+    <string name="a11yNextPage">Trang sau</string>
+    <string name="a11yChecked">Đã đánh dấu</string>
+    <string name="a11yUnchecked">Chưa đánh dấu</string>
+    <string name="a11ySelected">Đang chọn</string>
+    <string name="a11yPosition">Mục %1$d trên %2$d</string>
+    <string name="a11yConfirmHeardEnable">Tôi đã nghe được câu thử. Bật trình đọc nội bộ đang phát triển.</string>
+    <string name="a11yDisableInternalReader">Tắt trình đọc nội bộ</string>
+    <string name="a11yReaderEnabledNotice">Đã bật trình đọc nội bộ. Bản đang phát triển này chưa hỗ trợ hết màn hình game. Giữ TalkBack sẵn sàng để phục hồi.</string>
+    <string name="a11yReaderDisabledNotice">Đã tắt trình đọc nội bộ. Các điều khiển game hiện có vẫn được chọn.</string>
+</resources>

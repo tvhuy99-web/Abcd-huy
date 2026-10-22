@@ -46,9 +46,14 @@ bool context_stack::leave( const std::uint64_t frame_id )
 void context_stack::reset_session()
 {
     frames.clear();
+    invalidate_session();
+    // Keep suspension across a load while the app remains in the background.
+}
+
+void context_stack::invalidate_session()
+{
     session = session_sequence.fetch_add( 1, std::memory_order_relaxed );
     ++generation;
-    // Keep suspension across a load while the app remains in the background.
 }
 
 void context_stack::set_suspended( const bool value )

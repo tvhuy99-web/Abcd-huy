@@ -520,6 +520,20 @@ Mỗi hàng dưới đây phải được tách tiếp thành các màn hình/th
 
 ## 13. Lộ trình triển khai và cổng nghiệm thu
 
+### Quy trình thực hiện được người dùng cập nhật ngày 22/10/2026
+
+Người dùng xác nhận bản thử `cb3c082` đã mở và đọc được, đồng thời yêu cầu:
+(1) viết mã cho toàn bộ phạm vi kế hoạch; (2) sau khi phần viết mã hoàn tất,
+chạy toàn bộ bộ kiểm thử; (3) tổng hợp vấn đề rồi sửa và kiểm thử lại.
+
+Áp dụng yêu cầu này cho công việc tiếp theo. G0–G8 dưới đây vẫn là các nhóm
+chức năng và tiêu chí nghiệm thu; không dùng cổng nghiệm thu sớm để ngừng viết
+mã nhóm phụ thuộc trong giai đoạn 1. Viết mã, đọc nguồn và soát thiết kế được
+thực hiện trong giai đoạn 1; biên dịch, chạy test, giả lập và tạo APK mới được
+để lại cho giai đoạn 2. Workflow trợ năng chuyển sang chạy thủ công. Mã chưa
+được kiểm thử phải được ghi đúng trạng thái, không gán kết quả PASS cũ cho nó.
+Xem [bảng triển khai](IMPLEMENTATION.vi.md) và [tiến độ](STATUS.md).
+
 Mỗi giai đoạn phải có mã chạy, tình huống tái hiện, bản build xác định được và bản ghi người dùng đã tự làm được gì. Có thể chuẩn bị nội dung/ngữ nghĩa song song trong cùng nhóm, nhưng không bỏ qua phụ thuộc giữa các cổng.
 
 ### G0. Chốt nền và kiểm kê

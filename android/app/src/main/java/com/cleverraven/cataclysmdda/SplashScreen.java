@@ -127,7 +127,9 @@ public class SplashScreen extends Activity {
         Context context = getApplicationContext();
         String service_names = CataclysmDDA_Helpers.getEnabledAccessibilityServiceNames(context);
         accessibilityServicesAlert.setMessage( String.format( getString(R.string.accessibilityServicesMessage), service_names ) );
-        if (!service_names.isEmpty()) {
+        // The trial build keeps a permanent native entry to setup even when a
+        // previous accessibility-service warning was suppressed.
+        if (!service_names.isEmpty() || BuildConfig.FLAVOR.equals("accessibility")) {
             accessibilityServicesAlert.show();
         } else {
             SplashScreen.this.installOrRun();

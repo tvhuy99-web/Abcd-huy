@@ -60,6 +60,8 @@ class input_popup : public cataimgui::window
         cataimgui::bounds get_bounds() override;
 
         bool handle_custom_callbacks( const std::string &action );
+        const std::string &reader_description() const { return description; }
+        std::string reader_title;
 
         input_context ctxt;
         std::string label;

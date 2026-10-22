@@ -4,6 +4,7 @@
 */
 
 #include "game.h"
+#include "a11y_runtime.h"
 
 #include <algorithm>
 #include <chrono>
@@ -321,6 +322,7 @@ bool game::load( const std::string &world )
 
 bool game::load( const save_t &name )
 {
+    a11y::replace_game_session();
     map &here = get_map();
 
     const cata_path worldpath = PATH_INFO::world_base_save_path();

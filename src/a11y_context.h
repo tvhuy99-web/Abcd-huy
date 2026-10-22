@@ -39,6 +39,8 @@ class context_stack
         // for an already removed overlay cannot remove an unrelated new one.
         bool leave( std::uint64_t frame_id );
         void reset_session();
+        // New world/character identity while live RAII owners unwind normally.
+        void invalidate_session();
         void set_suspended( bool suspended );
         bool is_suspended() const;
         std::optional<context_token> active_token() const;

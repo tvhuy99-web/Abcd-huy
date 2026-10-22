@@ -1,17 +1,7 @@
 name: Android reader native UI smoke
 
 on:
-  push:
-    branches: [feature/android-internal-reader]
-    paths:
-      - 'android/**'
-      - '.github/workflows/android-reader-smoke.yml'
-      - 'tools/accessibility/run_android_smoke.sh'
-  pull_request:
-    paths:
-      - 'android/**'
-      - '.github/workflows/android-reader-smoke.yml'
-      - 'tools/accessibility/run_android_smoke.sh'
+  # Coding phase: tests/builds run only after the full implementation is ready.
   workflow_dispatch:
 
 permissions:

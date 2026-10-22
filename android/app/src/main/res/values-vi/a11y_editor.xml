@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11yEditorTitle">Sửa giá trị</string>
+    <string name="a11yEditorInstructions">Khi dùng TalkBack, sửa ô văn bản hoặc dùng các mục bàn phím. Khi không dùng TalkBack, vuốt qua các mục và chạm hai lần để dùng mục đó. Áp dụng chỉ đưa giá trị vào ô; bạn xác nhận hộp thoại game ở bước riêng. Nút Quay lại hủy lần sửa này.</string>
+    <string name="a11yEditorValue">Giá trị hiện tại</string>
+    <string name="a11yEditorReadValue">Đọc toàn bộ giá trị</string>
+    <string name="a11yEditorLetters">Chọn chữ cái</string>
+    <string name="a11yEditorTone">Đổi dấu thanh của nguyên âm trước con trỏ</string>
+    <string name="a11yEditorCase">Đổi chữ hoa và chữ thường</string>
+    <string name="a11yEditorUppercase">Chữ hoa</string>
+    <string name="a11yEditorLowercase">Chữ thường</string>
+    <string name="a11yEditorDigits">Chọn chữ số</string>
+    <string name="a11yEditorPunctuation">Chọn dấu câu</string>
+    <string name="a11yEditorSpace">Thêm dấu cách</string>
+    <string name="a11yEditorLeft">Sang trái một ký tự</string>
+    <string name="a11yEditorRight">Sang phải một ký tự</string>
+    <string name="a11yEditorDelete">Xóa ký tự trước con trỏ</string>
+    <string name="a11yEditorClear">Xóa toàn bộ giá trị</string>
+    <string name="a11yEditorConfirmClear">Xác nhận xóa toàn bộ giá trị</string>
+    <string name="a11yEditorApply">Áp dụng giá trị vào ô</string>
+    <string name="a11yEditorCancel">Hủy sửa</string>
+    <string name="a11yEditorKeyboardReturn">Trở về các lệnh soạn thảo</string>
+    <string name="a11yEditorEmpty">Giá trị trống</string>
+    <string name="a11yEditorEnd">Cuối giá trị</string>
+    <string name="a11yEditorStart">Đầu giá trị</string>
+    <string name="a11yEditorDeleted">Đã xóa: %1$s</string>
+    <string name="a11yEditorNoVowel">Trước hết hãy đặt con trỏ ngay sau một nguyên âm.</string>
+    <string name="a11yEditorApplied">Đã áp dụng giá trị. Bạn xác nhận hộp thoại game ở bước riêng.</string>
+    <string name="a11yEditorInvalid">Giá trị này không hợp lệ với ô nhập. Bản nháp vẫn còn trong trình soạn thảo.</string>
+    <string name="a11yToneNone">Thanh ngang</string>
+    <string name="a11yToneGrave">Dấu huyền</string>
+    <string name="a11yToneAcute">Dấu sắc</string>
+    <string name="a11yToneHook">Dấu hỏi</string>
+    <string name="a11yToneTilde">Dấu ngã</string>
+    <string name="a11yToneDot">Dấu nặng</string>
+</resources>

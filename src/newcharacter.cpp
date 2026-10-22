@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "achievement.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "addiction.h"
 #include "bionics.h"
 #include "calendar_ui.h"
@@ -2616,6 +2618,8 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry entry = get_uilist_entry( scen->gender_appropriate_name( u.male ) );
                 entry.text_color = scen == cc_uistate.get_selected_scenario() ? COL_SELECTED : COL_NOT_SELECTED;
                 entry.enabled = scen->can_pick().success();
+                entry.desc = scen->description( u.male );
+                if( !entry.enabled ) { entry.a11y_disabled_reason = scen->can_pick().str(); }
                 menu->addentry( entry );
             }
             set_uilist_selected( menu, cc_uistate.selected_scenario_index );
@@ -2629,6 +2633,8 @@ void character_creator_ui::update_uilist_entries()
                 entry.text_color = prof_id == cc_uistate.get_selected_profession() ? COL_SELECTED :
                                    COL_NOT_SELECTED;
                 entry.enabled = prof_id->can_pick().success();
+                entry.desc = prof_id->description( u.male );
+                if( !entry.enabled ) { entry.a11y_disabled_reason = prof_id->can_pick().str(); }
                 menu->addentry( entry );
             }
             set_uilist_selected( menu, cc_uistate.selected_profession_index );
@@ -2640,6 +2646,8 @@ void character_creator_ui::update_uilist_entries()
             for( const profession_id prof_id : cc_uistate.sorted_hobbies ) {
                 uilist_entry entry = get_uilist_entry( prof_id->gender_appropriate_name( u.male ) );
                 entry.text_color = u.hobbies.count( &*prof_id ) ? COL_SELECTED : COL_NOT_SELECTED;
+                entry.a11y_checked = u.hobbies.count( &*prof_id ) != 0;
+                entry.desc = prof_id->description( u.male );
                 menu->addentry( entry );
             }
             break;
@@ -2653,7 +2661,8 @@ void character_creator_ui::update_uilist_entries()
             const int stat_count = static_cast<int>( character_stat::DUMMY_STAT );
             for( int i = 0; i < stat_count; i++ ) {
                 uilist_entry entry = get_uilist_entry( char_creation::get_character_stat_header( i ) );
-                menu->addentry( get_uilist_entry( char_creation::get_character_stat_header( i ) ) );
+                entry.a11y_value = std::to_string( cc_uistate.stats[i] );
+                menu->addentry( entry );
             }
             break;
         }
@@ -2665,6 +2674,8 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry trait_entry = get_uilist_entry( current_trait->name() );
                 trait_entry.retval = i;
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
+                trait_entry.a11y_checked = u.has_trait( current_trait );
+                trait_entry.desc = u.mutation_desc( current_trait );
                 trait_entry.enabled = !( u.has_conflicting_trait( current_trait ) ||
                                          get_scenario()->is_forbidden_trait( current_trait ) ||
                                          u.prof->is_forbidden_trait( current_trait ) );
@@ -2679,6 +2690,7 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry skill_entry = get_uilist_entry( get_skill_entry_text(
                                                cc_uistate.sorted_skills[i]->ident(), u ) );
                 skill_entry.retval = i;
+                skill_entry.desc = cc_uistate.sorted_skills[i]->description();
                 menu->addentry( skill_entry );
             }
             break;
@@ -2892,6 +2904,10 @@ bool character_creator_ui::display()
     cc_uistate.quit_to_main_menu = false;
     cc_uistate.finished_character_creator = false;
 
+    std::unique_ptr<a11y::screen_scope> reader;
+    input_context *reader_input = nullptr;
+    std::shared_ptr<uilist> reader_list;
+
     while( !cc_uistate.finished_character_creator ) {
 
         input_context &current_tab_input = get_current_tab_input();
@@ -2899,13 +2915,48 @@ bool character_creator_ui::display()
 
         ui_manager::redraw();
         std::shared_ptr<uilist> current_tab_uilist = get_current_tab_uilist();
+        if( reader_input != &current_tab_input || reader_list != current_tab_uilist ) {
+            reader.reset();
+            reader_input = &current_tab_input;
+            reader_list = current_tab_uilist;
+            if( current_tab_uilist ) {
+                reader = current_tab_uilist->create_reader_scope( current_tab_input );
+            } else {
+                reader = std::make_unique<a11y::screen_scope>( &current_tab_input, "CHARACTER_CREATION",
+                [&]( const a11y::semantic_intent & intent ) {
+                    return a11y::registered_intent( get_current_tab_input(), intent );
+                } );
+            }
+        }
         if( current_tab_uilist ) {
             cc_uilist_current = current_tab_uilist->create_or_get_ui();
             if( current_tab_uilist->query_setup() ) {
+                current_tab_uilist->update_reader( *reader, current_tab_input );
                 current_tab_uilist->query_once( current_tab_input, 33 );
             }
         } else {
             cc_uilist_current.reset();
+            if( a11y::enabled() ) {
+                a11y::semantic_snapshot snapshot = a11y::command_snapshot( current_tab_input, _( "Character creation" ) );
+                const avatar &you = get_avatar();
+                snapshot.summary = remove_color_tags( string_format( _( "Scenario: %s  Profession: %s" ),
+                                   get_scenario()->gender_appropriate_name( you.male ), you.prof->gender_appropriate_name( you.male ) ) );
+                for( auto &node : snapshot.nodes ) {
+                    if( node.id == "CHANGE_NAME" ) { node.value = you.name; }
+                    if( node.id == "CHANGE_GENDER" ) { node.value = remove_color_tags( char_creation::get_gender_string( you.male ) ); }
+                    if( node.id == "CHANGE_OUTFIT" ) { node.value = remove_color_tags( char_creation::get_gender_string( outfit ) ); }
+                    if( node.id == "CHANGE_HEIGHT" ) { node.value = you.height_string(); }
+                    if( node.id == "CHANGE_AGE" ) { node.value = you.age_string( get_scenario()->start_of_game() ); }
+                    if( node.id == "CHANGE_BLOOD_TYPE" ) { node.value = io::enum_to_string( you.my_blood_type ) + ( you.blood_rh_factor ? "+" : "-" ); }
+                }
+                a11y::semantic_node rating;
+                rating.id = "character:rating";
+                rating.role = "document";
+                rating.label = _( "Character rating" );
+                rating.detail = remove_color_tags( cc_uistate.rating_string );
+                snapshot.nodes.push_back( std::move( rating ) );
+                reader->update( std::move( snapshot ) );
+            }
             handle_action( current_tab_input.handle_input( 33 ) );
         }
         if( !cc_uistate.top_bar_button_action.empty() ) {

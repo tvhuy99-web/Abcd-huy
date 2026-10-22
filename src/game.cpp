@@ -1,4 +1,5 @@
 #include "game.h"
+#include "a11y_runtime.h"
 #include "map_memory.h"
 
 #include <algorithm>
@@ -684,6 +685,7 @@ void game::reenter_fullscreen()
  */
 void game::setup()
 {
+    a11y::replace_game_session();
     new_game = true;
     {
         static_popup popup;

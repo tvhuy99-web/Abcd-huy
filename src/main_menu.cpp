@@ -1,4 +1,5 @@
 #include "main_menu.h"
+#include "a11y_runtime.h"
 
 #include <algorithm>
 #include <array>
@@ -676,8 +677,92 @@ bool main_menu::opening_screen()
     EM_ASM( window.dispatchEvent( new Event( 'menuready' ) ); );
 #endif
 
+    a11y::screen_scope reader( &ctxt, "MAIN_MENU",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            return "QUIT";
+        }
+        for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
+            if( intent.node == "tab:" + std::to_string( i ) ) {
+                if( sel1 != static_cast<int>( i ) ) {
+                    sel1 = i;
+                    sel2 = i == static_cast<std::size_t>( getopt( main_menu_opts::LOADCHAR ) ) ? last_world_pos : 0;
+                    sel_line = 0;
+                }
+                if( intent.action == "activate" ) {
+                    if( sel1 == getopt( main_menu_opts::QUIT ) ) {
+                        return "QUIT";
+                    }
+                    if( sel1 == getopt( main_menu_opts::HELP ) || sel1 == getopt( main_menu_opts::TUTORIAL ) ) {
+                        return "CONFIRM";
+                    }
+                }
+                return "TIMEOUT";
+            }
+        }
+        const std::string prefix = "item:" + std::to_string( sel1 ) + ':';
+        int count = 0;
+        if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) { count = vNewGameSubItems.size(); }
+        if( sel1 == getopt( main_menu_opts::SETTINGS ) ) { count = vSettingsSubItems.size(); }
+        if( sel1 == getopt( main_menu_opts::LOADCHAR ) ) { count = world_generator->get_all_worlds().size(); }
+        if( sel1 == getopt( main_menu_opts::WORLD ) ) { count = world_generator->get_all_worlds().size() + 1; }
+        for( int i = 0; i < count; ++i ) {
+            if( intent.node == prefix + std::to_string( i ) ) {
+                sel2 = i;
+                sel_line = 0;
+                return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+            }
+        }
+        return std::nullopt;
+    } );
     while( !start ) {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot;
+            snapshot.title = _( "Cataclysm: Dark Days Ahead - Main menu" );
+            snapshot.focus = "tab:" + std::to_string( sel1 );
+            for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
+                a11y::semantic_node node;
+                node.id = "tab:" + std::to_string( i );
+                node.role = "tab";
+                node.label = remove_color_tags( shortcut_text( c_white, vMenuItems[i] ) );
+                node.selected = sel1 == static_cast<int>( i );
+                node.position = i + 1;
+                node.total = vMenuItems.size();
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            std::vector<std::string> items;
+            if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
+            if( sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
+            if( sel1 == getopt( main_menu_opts::WORLD ) ) { items.push_back( _( "Create New World" ) ); }
+            if( sel1 == getopt( main_menu_opts::WORLD ) || sel1 == getopt( main_menu_opts::LOADCHAR ) ) {
+                for( std::size_t i = 0; i < world_generator->get_all_worlds().size(); ++i ) {
+                    items.push_back( world_generator->get_world_name( i ) );
+                }
+            }
+            for( std::size_t i = 0; i < items.size(); ++i ) {
+                a11y::semantic_node node;
+                node.id = "item:" + std::to_string( sel1 ) + ':' + std::to_string( i );
+                node.role = "listitem";
+                node.label = remove_color_tags( shortcut_text( c_white, items[i] ) );
+                node.selected = sel2 == static_cast<int>( i );
+                node.position = i + 1;
+                node.total = items.size();
+                if( sel1 == getopt( main_menu_opts::NEWCHAR ) && i < vNewGameHints.size() ) {
+                    node.detail = remove_color_tags( vNewGameHints[i] );
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            if( sel1 == getopt( main_menu_opts::MOTD ) || sel1 == getopt( main_menu_opts::CREDITS ) ) {
+                a11y::semantic_node body;
+                body.id = "document:" + std::to_string( sel1 );
+                body.role = "document";
+                body.label = _( "Read this text" );
+                body.detail = remove_color_tags( sel1 == getopt( main_menu_opts::MOTD ) ? mmenu_motd : mmenu_credits );
+                snapshot.nodes.push_back( std::move( body ) );
+            }
+            reader.update( std::move( snapshot ), true );
+        }
         std::string action = ctxt.handle_input();
         input_event sInput = ctxt.get_raw_input();
 

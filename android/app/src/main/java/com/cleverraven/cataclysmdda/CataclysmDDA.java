@@ -34,6 +34,7 @@ public class CataclysmDDA extends SDLActivity {
     public static final String SCREEN_ORIENTATION_AUTO = "auto";
 
     private NativeUI nativeUI = new NativeUI(CataclysmDDA.this);
+    private volatile GameReaderController readerController;
     private int lastImeLeft = -1;
     private int lastImeTop = -1;
     private int lastImeRight = -1;
@@ -67,6 +68,9 @@ public class CataclysmDDA extends SDLActivity {
         applyStoredScreenOrientation(this);
         setImeInsetListener();
         applySystemUiMode();
+        if (mLayout != null) {
+            readerController = new GameReaderController(this, mLayout);
+        }
     }
 
     @Override
@@ -74,11 +78,47 @@ public class CataclysmDDA extends SDLActivity {
         super.onResume();
         applyStoredScreenOrientation(this);
         applySystemUiMode();
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onResume(); }
     }
+
+    @Override
+    protected void onPause() {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onPause(); }
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        GameReaderController reader = readerController;
+        readerController = null;
+        if (reader != null) { reader.close(); }
+        super.onDestroy();
+    }
+
+    @Override
+    public void onBackPressed() {
+        GameReaderController reader = readerController;
+        if (reader != null && reader.isEnabled()) { reader.onBackPressed(); }
+        else { super.onBackPressed(); }
+    }
+
+    // Called on the SDL game thread. Presentation is posted to the main looper.
+    public void onAccessibilitySnapshot(String json) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.receive(json); }
+    }
+
+    static native void nativeConfigureReader(boolean enabled, boolean suspended);
+    static native boolean nativeReaderIntent(long session, long frame, long generation,
+            long revision, long request, String node, String action, String value);
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onWindowFocusChanged(hasFocus); }
         if (hasFocus) {
             applySystemUiMode();
         }

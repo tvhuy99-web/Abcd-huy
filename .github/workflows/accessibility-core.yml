@@ -1,23 +1,8 @@
 name: Accessibility core and Android speech API
 
 on:
-  push:
-    branches: [feature/android-internal-reader]
-    paths:
-      - 'src/a11y*'
-      - 'tests/a11y*'
-      - 'android/app/src/main/**'
-      - 'android/app/build.gradle'
-      - 'tools/accessibility/**'
-      - '.github/workflows/accessibility-core.yml'
-  pull_request:
-    paths:
-      - 'src/a11y*'
-      - 'tests/a11y*'
-      - 'android/app/src/main/**'
-      - 'android/app/build.gradle'
-      - 'tools/accessibility/**'
-      - '.github/workflows/accessibility-core.yml'
+  # Coding phase: tests/builds run only after the full implementation is ready.
+  workflow_dispatch:
 
 permissions:
   contents: read

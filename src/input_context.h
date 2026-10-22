@@ -63,8 +63,12 @@ class input_context
         // destructor for input_context will safely destruct the handle, input_context_stack will
         // lazily reap dead weak_ptrs on the next access.
         std::shared_ptr<input_context_handle> handle{ new input_context_handle{this} };
+        // Stable result storage for direct semantic dispatch, without fake keys.
+        std::string a11y_action_result;
 
     public:
+        const std::vector<std::string> &registered_action_ids() const { return registered_actions; }
+        const std::string &category_id() const { return category; }
 #if defined(__ANDROID__) || defined(TILES)
         // Whatever's on top is our current input context.
         static input_context_stack_impl input_context_stack;
@@ -141,6 +145,7 @@ class input_context
 
         template<typename Rhs>
         void reassign( Rhs &&other ) {
+            a11y_action_result.clear();
             // Distinct member moves from the same source object are intentional;
             // suppress the conservative use-after-move alert on the per-member chain.
             // NOLINTBEGIN(bugprone-use-after-move)

@@ -9,6 +9,7 @@
 #include <set>
 
 #include "avatar.h"
+#include "a11y_runtime.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_assert.h"
 #include "cata_utility.h"
@@ -885,6 +886,91 @@ shared_ptr_fast<uilist_impl> uilist::create_or_get_ui()
     return current_ui;
 }
 
+std::unique_ptr<a11y::screen_scope> uilist::create_reader_scope( input_context &ctxt )
+{
+    return std::make_unique<a11y::screen_scope>( &ctxt, input_category,
+    [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            return allow_cancel ? std::optional<std::string>( "UILIST.QUIT" ) : std::nullopt;
+        }
+        if( intent.node.compare( 0, 7, "action:" ) == 0 && intent.action == "activate" ) {
+            return intent.node.substr( 7 );
+        }
+        for( std::size_t i = 0; i < fentries.size(); ++i ) {
+            const int index = fentries[i];
+            if( index < 0 || index >= static_cast<int>( entries.size() ) ||
+                intent.node != "entry:" + std::to_string( index ) ) {
+                continue;
+            }
+            selected = previewing = index;
+            fselected = i;
+            need_to_scroll = true;
+            if( intent.action == "focus" ) {
+                if( callback != nullptr ) {
+                    callback->select( this );
+                }
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" && allow_confirm &&
+                ( entries[index].enabled || allow_disabled ) ) {
+                return "CONFIRM";
+            }
+            break;
+        }
+        return std::nullopt;
+    } );
+}
+
+void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctxt )
+{
+    if( a11y::enabled() ) {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = remove_color_tags( title.empty() ? _( "Menu" ) : title );
+        snapshot.summary = remove_color_tags( text );
+        snapshot.focus = "entry:" + std::to_string( selected );
+        for( std::size_t i = 0; i < fentries.size(); ++i ) {
+            const int index = fentries[i];
+            if( index < 0 || index >= static_cast<int>( entries.size() ) ) {
+                continue;
+            }
+            const uilist_entry &entry = entries[index];
+            a11y::semantic_node node;
+            node.id = "entry:" + std::to_string( index );
+            node.role = entry.a11y_checked.has_value() ? "checkbox" : "listitem";
+            node.label = remove_color_tags( entry.txt );
+            node.value = remove_color_tags( entry.a11y_value.empty() ? entry.ctxt : entry.a11y_value );
+            node.checked = entry.a11y_checked.value_or( false );
+            node.detail = remove_color_tags( entry.desc );
+            node.enabled = allow_confirm && ( entry.enabled || allow_disabled );
+            node.selected = selected == index;
+            node.position = i + 1;
+            node.total = fentries.size();
+            if( !node.enabled ) {
+                node.disabled_reason = entry.a11y_disabled_reason.empty() ?
+                                       _( "This entry cannot be selected." ) : entry.a11y_disabled_reason;
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        std::vector<std::string> reader_actions;
+        for( const std::string &action : ctxt.registered_action_ids() ) {
+            if( action != "ANY_INPUT" && action != "COORDINATE" && action != "MOUSE_MOVE" &&
+                action != "SELECT" && action != "CONFIRM" && action != "TIMEOUT" ) {
+                reader_actions.push_back( action );
+            }
+        }
+        for( const std::string &action : reader_actions ) {
+            a11y::semantic_node node;
+            node.id = "action:" + action;
+            node.role = "command";
+            node.label = ctxt.get_action_name( action );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        // A callback can rebuild entries with identical display text but a
+        // different logical object. Every query iteration is a new revision.
+        reader.update( std::move( snapshot ), ret_act != "TIMEOUT" );
+    }
+}
+
 shared_ptr_fast<uilist_impl> uilist::query( bool loop, int timeout, bool allow_unfiltered_hotkeys )
 {
     input_context ctxt = create_main_input_context();
@@ -901,8 +987,10 @@ shared_ptr_fast<uilist_impl> uilist::query( bool loop, int timeout, bool allow_u
         return nullptr;
     }
     shared_ptr_fast<uilist_impl> ui = create_or_get_ui();
+    auto reader = create_reader_scope( ctxt );
     do {
         ui_manager::redraw();
+        update_reader( *reader, ctxt );
         query_once( ctxt, timeout, allow_unfiltered_hotkeys );
     } while( loop && ret == UILIST_WAIT_INPUT );
     return ui;
@@ -915,7 +1003,7 @@ shared_ptr_fast<uilist_impl> uilist::query( bool loop, int timeout, bool allow_u
 bool uilist::query_setup()
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && !entries.empty() && !desired_bounds ) {
+    if( !a11y::enabled() && get_option<bool>( "ANDROID_NATIVE_UI" ) && !entries.empty() && !desired_bounds ) {
         if( !started ) {
             calc_data();
             started = true;

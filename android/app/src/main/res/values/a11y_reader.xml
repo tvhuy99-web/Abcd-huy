@@ -1,0 +1,32 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11yReaderSearch">Find a command or item</string>
+    <string name="a11yReaderSearchCount">%1$d matching items</string>
+    <string name="a11yReaderAllCommands">All registered commands</string>
+    <string name="a11yReaderAllItems">Show all items again</string>
+    <string name="a11yReaderWaiting">Waiting for an accessible screen. Back opens reader controls.</string>
+    <string name="a11yReaderVoiceRecovery">Speech is unavailable. Keep TalkBack enabled and open reader settings to retry.</string>
+    <string name="a11yReaderNativeUnavailable">The reader cannot connect to the game. Open settings or return to the phone.</string>
+    <string name="a11yReaderDisabledEntry">Unavailable. No game action was performed.</string>
+    <string name="a11yReaderUnsupported">This screen needs a dedicated accessibility adapter.</string>
+    <string name="a11yReaderStale">The screen changed. Select the item again.</string>
+    <string name="a11yReaderMalformed">The reader could not load this screen. Reader settings remain available.</string>
+    <string name="a11yReaderControls">Reader controls</string>
+    <string name="a11yReaderReturn">Return to the current screen</string>
+    <string name="a11yReaderWhere">Where am I?</string>
+    <string name="a11yReaderDetail">Read item details</string>
+    <string name="a11yReaderRepeat">Repeat speech</string>
+    <string name="a11yReaderCancel">Cancel one game menu</string>
+    <string name="a11yReaderGestureHelp">Gesture help</string>
+    <string name="a11yReaderGestureInstructions">With the internal reader and touch exploration off: swipe left or up for the previous item, right or down for the next item. Double tap to select the item. Hold to hear details. Tap with two fingers to stop speech. Back opens reader controls. With TalkBack, use its usual gestures and the labeled buttons.</string>
+    <string name="a11yPreviousPage">Previous page</string>
+    <string name="a11yNextPage">Next page</string>
+    <string name="a11yChecked">Checked</string>
+    <string name="a11yUnchecked">Not checked</string>
+    <string name="a11ySelected">Selected</string>
+    <string name="a11yPosition">%1$d of %2$d</string>
+    <string name="a11yConfirmHeardEnable">I heard the sample. Enable the experimental internal reader.</string>
+    <string name="a11yDisableInternalReader">Turn off the internal reader</string>
+    <string name="a11yReaderEnabledNotice">Internal reader enabled. This development version does not yet support every game screen. Keep TalkBack available for recovery.</string>
+    <string name="a11yReaderDisabledNotice">Internal reader disabled. Existing game controls remain selected.</string>
+</resources>

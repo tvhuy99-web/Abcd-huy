@@ -11,6 +11,10 @@
 #include <utility>
 
 #include "action.h"
+#include "a11y_android.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_actor_definitions.h"
 #include "advanced_inv.h"
 #include "auto_note.h"
@@ -276,6 +280,31 @@ input_context game::get_player_input( std::string &action )
     const visibility_variables &cache = here.get_visibility_variables_cache();
     const level_cache &map_cache = here.get_cache_ref( pos.z() );
     const auto &visibility_cache = map_cache.visibility_cache;
+    int reader_scan_radius = 1;
+    std::unique_ptr<a11y::screen_scope> reader;
+    reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "world:radius" && intent.action == "set_text" ) {
+            try {
+                std::size_t consumed = 0;
+                const int radius = std::stoi( intent.value, &consumed );
+                if( consumed != intent.value.size() || radius < 1 || radius > 16 ) {
+                    a11y::android::status( "invalid_value", &intent );
+                } else {
+                    reader_scan_radius = radius;
+                    a11y::android::status( "text_applied", &intent );
+                    reader->update( a11y::world_snapshot( ctxt, reader_scan_radius ) );
+                }
+            } catch( const std::exception & ) {
+                a11y::android::status( "invalid_value", &intent );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    if( a11y::enabled() ) {
+        reader->update( a11y::world_snapshot( ctxt, reader_scan_radius ) );
+    }
 #if defined(TILES)
     // Mark cata_tiles draw caches as dirty
     tilecontext->set_draw_cache_dirty();

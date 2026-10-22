@@ -5,6 +5,28 @@ phát hành đã nghiệm thu. Baseline: `8ef359c74cc25e256919558bf7b3340f9b56a8
 Nhánh triển khai: `feature/android-internal-reader`;
 [PR dự thảo #2](https://github.com/tvhuy99-web/Abcd-huy/pull/2).
 
+## Cập nhật quy trình và phản hồi từ người dùng
+
+Ngày 22/10/2026 (giờ Việt Nam), người dùng xác nhận APK `cb3c082` đã mở và đọc
+được. Đây là xác nhận về bản thử giọng đã bàn giao; chưa có thông tin mẫu máy,
+engine, offline, cử chỉ hoặc khả năng chơi độc lập. Không tự suy ra các mục đó
+đã đạt.
+
+Theo yêu cầu mới, công việc chuyển sang ba giai đoạn: **viết toàn bộ mã → chạy
+toàn bộ kiểm thử → tổng hợp lỗi, sửa và kiểm thử lại**. Nhánh viết mã:
+`feature/android-reader-code-phase`. Mã mới chưa biên dịch/chạy test/tạo APK.
+Các workflow trợ năng trên nhánh mới chỉ chạy thủ công. Không cập nhật nhánh
+PR #2 bằng mã chưa thử trong đợt này, để tránh kích hoạt workflow PR cũ.
+
+Đã viết thêm hợp đồng snapshot/intent, runtime và JNI mailbox, lớp trình bày
+Android, chính sách lời đọc/cử chỉ, nhập Unicode, menu chính, danh sách và hộp
+thoại dùng chung, tích hợp đầu cho tạo nhân vật, ô nhìn thấy/ghi nhớ/chưa biết,
+trạng thái nhân vật và quét lân cận. **Đây là mã đang triển khai, chưa chứng
+minh chạy được hoặc bao phủ toàn game.** Theo dõi phần chưa viết tại
+[IMPLEMENTATION.vi.md](IMPLEMENTATION.vi.md).
+
+Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
+
 ## Trạng thái ngày 22/10/2026
 
 Đã có mã nền và màn thử giọng Việt native chạy được trong kiểm thử giao diện

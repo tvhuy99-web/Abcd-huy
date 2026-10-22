@@ -5,6 +5,7 @@
 #include <cctype>
 #include <cstddef>
 #include <cstdint>
+#include <chrono>
 #include <exception>
 #include <iterator>
 #include <list>
@@ -15,6 +16,7 @@
 #include <utility>
 
 #include "action.h"
+#include "a11y_runtime.h"
 #include "cata_imgui.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -146,6 +148,9 @@ static const std::string TIMEOUT = "TIMEOUT";
 
 const std::string &input_context::input_to_action( const input_event &inp ) const
 {
+    if( inp.type == input_event_t::error && !a11y_action_result.empty() ) {
+        return a11y_action_result;
+    }
     for( const std::string &elem : registered_actions ) {
         const std::string &action = elem;
         const std::vector<input_event> &check_inp = inp_mngr.get_input_for_action( action, category );
@@ -475,16 +480,90 @@ const std::string &input_context::handle_input()
 
 const std::string &input_context::handle_input( const int timeout )
 {
+    a11y_action_result.clear();
     const int old_timeout = inp_mngr.get_timeout();
+    const int requested_timeout = timeout >= 0 ? timeout : old_timeout;
+    const auto input_started = std::chrono::steady_clock::now();
+    std::unique_ptr<a11y::screen_scope> reader_scope;
+    const auto install_reader_scope = [&]() {
+    if( a11y::enabled() && !reader_scope && !a11y::bound_to( this ) ) {
+        reader_scope = std::make_unique<a11y::screen_scope>( this, category,
+        [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+            if( intent.action == "cancel" ) {
+                for( const std::string &candidate : { "QUIT", "UILIST.QUIT", "CANCEL" } ) {
+                    if( std::find( registered_actions.begin(), registered_actions.end(), candidate ) !=
+                        registered_actions.end() ) {
+                        return candidate;
+                    }
+                }
+            } else if( intent.action == "activate" &&
+                       std::find( registered_actions.begin(), registered_actions.end(), intent.node ) !=
+                       registered_actions.end() ) {
+                return intent.node;
+            }
+            return std::nullopt;
+        } );
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Commands for the current screen" );
+        snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader." );
+        for( const std::string &action : registered_actions ) {
+            if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ) {
+                continue;
+            }
+            a11y::semantic_node node;
+            node.id = action;
+            node.label = get_action_name( action );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = i + 1;
+            snapshot.nodes[i].total = snapshot.nodes.size();
+        }
+        reader_scope->update( std::move( snapshot ) );
+    }
+    };
+    install_reader_scope();
     if( timeout >= 0 ) {
         inp_mngr.set_timeout( timeout );
     }
     next_action.type = input_event_t::error;
     const std::string *result = &CATA_ERROR;
     while( true ) {
-
+        if( !a11y::enabled() ) { reader_scope.reset(); }
+        install_reader_scope();
+        if( a11y::enabled() ) {
+            if( auto action = a11y::poll_input( this ) ) {
+                // Raw-key screens need their own adapter; never enqueue fake keys.
+                const auto found = std::find( registered_actions.begin(), registered_actions.end(), *action );
+                if( found != registered_actions.end() || *action == "TIMEOUT" ) {
+                    next_action = input_event();
+                    a11y_action_result = std::move( *action );
+                    result = &a11y_action_result;
+                    break;
+                }
+            }
+            // Internal polling must not become a gameplay TIMEOUT or wait for TTS.
+            int wait = 50;
+            if( requested_timeout >= 0 ) {
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                         std::chrono::steady_clock::now() - input_started ).count();
+                wait = static_cast<int>( std::max<std::int64_t>( 0,
+                                         std::min<std::int64_t>( wait, requested_timeout - elapsed ) ) );
+            }
+            inp_mngr.set_timeout( wait );
+        } else {
+            inp_mngr.set_timeout( requested_timeout );
+        }
         next_action = inp_mngr.get_input_event( preferred_keyboard_mode );
+        if( a11y::enabled() && a11y::suspended() ) {
+            continue;
+        }
         if( next_action.type == input_event_t::timeout ) {
+            if( a11y::enabled() && ( requested_timeout < 0 ||
+                                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::steady_clock::now() - input_started ).count() < requested_timeout ) ) {
+                continue;
+            }
             result = &TIMEOUT;
             break;
         }

@@ -23,6 +23,8 @@ public final class ReaderSetupActivity extends Activity {
     private boolean foreground;
     private boolean sampleRequested;
     private long sampleSequence;
+    private Button heard;
+    private boolean testedNetworkConsent;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,6 +56,8 @@ public final class ReaderSetupActivity extends Activity {
 
         sample = button(layout, R.string.a11yTestVietnamese, view -> {
             sampleRequested = true;
+            heard.setEnabled(false);
+            testedNetworkConsent = online.isChecked();
             sample.setEnabled(false);
             speech.initialize(null, new Locale("vi", "VN"), 1.0f, !online.isChecked());
         });
@@ -68,6 +72,15 @@ public final class ReaderSetupActivity extends Activity {
                 view -> openSettings("com.android.settings.TTS_SETTINGS"));
         button(layout, R.string.showAccessibilitySettings,
                 view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        heard = button(layout, R.string.a11yConfirmHeardEnable, view -> {
+            new ReaderPreferences(this).confirmHeardAndEnable(testedNetworkConsent, 1.0f);
+            showStatus(R.string.a11yReaderEnabledNotice, true);
+        });
+        heard.setEnabled(false);
+        button(layout, R.string.a11yDisableInternalReader, view -> {
+            new ReaderPreferences(this).disable();
+            showStatus(R.string.a11yReaderDisabledNotice, true);
+        });
         button(layout, R.string.a11yReturnToStartup, view -> finish()).setId(R.id.a11y_return);
         setContentView(scroll);
 
@@ -114,6 +127,7 @@ public final class ReaderSetupActivity extends Activity {
                 }
                 switch (event) {
                     case STARTED:
+                        heard.setEnabled(true);
                         showStatus(R.string.a11ySpeechPlaying, false);
                         break;
                     case DONE:
@@ -169,6 +183,7 @@ public final class ReaderSetupActivity extends Activity {
     protected void onPause() {
         foreground = false;
         sampleRequested = false;
+        heard.setEnabled(false);
         if (speech != null) {
             speech.cancel();
         }

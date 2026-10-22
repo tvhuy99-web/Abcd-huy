@@ -1,4 +1,5 @@
 #include "popup.h"
+#include "a11y_runtime.h"
 
 #include <algorithm>
 #include <array>
@@ -318,6 +319,43 @@ query_popup::result query_popup::query_once()
         ctxt.register_action( "QUIT" );
     }
 
+    a11y::screen_scope reader( &ctxt, category,
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            return cancel ? std::optional<std::string>( "QUIT" ) : std::nullopt;
+        }
+        if( anykey && intent.node == "continue" && intent.action == "activate" ) {
+            return "ANY_INPUT";
+        }
+        for( std::size_t i = 0; i < options.size(); ++i ) {
+            if( intent.node == "option:" + std::to_string( i ) ) {
+                cur = i;
+                impl->keyboard_selected_option = i;
+                return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+            }
+        }
+        return std::nullopt;
+    } );
+    a11y::semantic_snapshot reader_snapshot;
+    reader_snapshot.title = _( "Dialog" );
+    reader_snapshot.summary = remove_color_tags( text );
+    reader_snapshot.focus = "option:" + std::to_string( cur );
+    for( std::size_t i = 0; i < options.size(); ++i ) {
+        a11y::semantic_node node;
+        node.id = "option:" + std::to_string( i );
+        node.label = ctxt.get_action_name( options[i].action );
+        node.selected = cur == i;
+        node.position = i + 1;
+        node.total = options.size();
+        reader_snapshot.nodes.push_back( std::move( node ) );
+    }
+    if( anykey ) {
+        a11y::semantic_node node;
+        node.id = "continue";
+        node.label = _( "Continue" );
+        reader_snapshot.nodes.push_back( std::move( node ) );
+    }
+    reader.update( std::move( reader_snapshot ) );
     result res;
     // Assign outside construction of `res` to ensure execution order
     res.wait_input = !anykey;
@@ -340,7 +378,7 @@ query_popup::result query_popup::query_once()
           res.evt.get_first_input() == static_cast<int>( MouseInput::Move ) ) ||
         // Ignore window losing focus in SDL
         ( res.evt.type == input_event_t::keyboard_char && res.evt.sequence.empty() ) ||
-        res.evt.type == input_event_t::timeout
+        res.evt.type == input_event_t::timeout || res.action == "TIMEOUT"
     );
 
     if( cancel && res.action == "QUIT" ) {

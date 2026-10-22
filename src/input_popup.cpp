@@ -1,8 +1,16 @@
 #include "input_popup.h"
+#include "a11y_runtime.h"
+#include "a11y_android.h"
+#include "a11y_text.h"
 
 #include <cstddef>
+#include <cmath>
+#include <locale>
+#include <sstream>
 
 #include "coordinates.h"
+#include "catacharset.h"
+#include "output.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_stdlib.h"
 #include "input_enums.h"
@@ -18,6 +26,7 @@ input_popup::input_popup( int width, const std::string &title, const point &pos,
                           ImGuiWindowFlags flags ) :
     cataimgui::window( title, ImGuiWindowFlags_NoNavInputs | flags | ( title.empty() ?
                        ImGuiWindowFlags_NoTitleBar : 0 ) | ImGuiWindowFlags_AlwaysAutoResize ),
+    reader_title( title ),
     pos( pos ),
     width( width )
 {
@@ -335,9 +344,28 @@ void string_input_popup_imgui::add_to_history( const std::string &value ) const
 std::string string_input_popup_imgui::query()
 {
     is_cancelled = false;
+    a11y::screen_scope reader( &ctxt, "STRING_INPUT",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+            return "TEXT.QUIT";
+        }
+        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
+        if( intent.node == "text" && intent.action == "set_text" ) {
+            if( max_input_length > 0 && intent.value.size() > static_cast<std::size_t>( max_input_length ) ) {
+                a11y::android::status( "invalid_value", &intent );
+                return std::nullopt;
+            }
+            set_text( intent.value );
+            a11y::android::status( "text_applied", &intent );
+            return "TIMEOUT";
+        }
+        return std::nullopt;
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
+        reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
+                       remove_color_tags( reader_description() ), text, false ) );
 
         std::string action = ctxt.handle_input();
         if( handle_custom_callbacks( action ) ) {
@@ -418,9 +446,37 @@ void number_input_popup<float>::draw_input_control()
 template<typename T>
 T number_input_popup<T>::query()
 {
+    a11y::screen_scope reader( &ctxt, "NUMBER_INPUT",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+            return "TEXT.QUIT";
+        }
+        if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
+        if( intent.node == "text" && intent.action == "set_text" ) {
+            std::istringstream parser( intent.value );
+            parser.imbue( std::locale::classic() );
+            T parsed{};
+            parser >> parsed;
+            const bool parsed_number = !parser.fail();
+            parser >> std::ws;
+            if( !parsed_number || !parser.eof() || !std::isfinite( static_cast<double>( parsed ) ) ) {
+                a11y::android::status( "invalid_value", &intent );
+                return std::nullopt;
+            }
+            value = parsed;
+            a11y::android::status( "text_applied", &intent );
+            return "TIMEOUT";
+        }
+        return std::nullopt;
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
+        std::ostringstream reader_value;
+        reader_value.imbue( std::locale::classic() );
+        reader_value << value;
+        reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
+                       remove_color_tags( reader_description() ), reader_value.str(), true ) );
         std::string action = ctxt.handle_input();
 
         if( handle_custom_callbacks( action ) ) {
