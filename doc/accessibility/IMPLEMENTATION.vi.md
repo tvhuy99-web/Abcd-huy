@@ -43,6 +43,7 @@ ghi PASS mới.
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
 | Xây dựng | `construction.cpp` | Nhóm, biến thể/công đoạn, mô tả, yêu cầu và trạng thái vị trí; CONFIRM/đặt công trình dùng logic gốc; blueprint và các điều kiện đặc biệt chưa thử |
 | Chọn ô lân cận | `action.cpp/.h` | Scope cho choose_direction/choose_adjacent, gọi phép đổi hướng gốc kể cả isometric; chỉ quan sát ô ngang qua perception; trạng thái hợp lệ công trình chỉ nói ở ô nhìn thấy; chưa có quan sát khác tầng |
+| Nhắm mục tiêu | `ranged.cpp`, `a11y_input.cpp`, `input_context.cpp`, `GameReaderController.java` | Danh sách sinh vật/phương tiện game cho phép ngắm dựa trên tri thức hiện tại, hướng/khoảng cách, điểm ngắm hiện tại và trạng thái; chọn hàng chỉ di chuyển điểm ngắm, lệnh FIRE/xác nhận gốc riêng; đọc lại mục tiêu vừa đổi; chưa kiểm chứng chiến đấu, phép, phương tiện hoặc mục tiêu đổi vị trí |
 | Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
 | Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; chưa chạy gettext/build mới |
 
@@ -63,7 +64,8 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 - G5: kho nâng cao/chuyển đồ hai phía, nhắm bắn và đường bắn, cận chiến,
   chế độ bắn, ném, hoạt động/tiến độ chế tạo và xây dựng. Đã có adapter ban đầu
   cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
-  nhưng còn phải đối chiếu mọi biến thể/pocket và hoàn thiện chi tiết thiếu.
+  cùng danh sách mục tiêu có thể ngắm theo tri thức hiện tại; còn phải đối chiếu mọi
+  biến thể/pocket, hướng ngắm, xác nhận tấn công và hoàn thiện chi tiết thiếu.
 - G6: overmap/travel/note/mission; NPC/đối thoại/giao dịch/cộng đồng; phương tiện
   và sơ đồ bộ phận/lái/remote; vùng/tự động hóa; bionics/đột biến/phép thuật;
   các minigame, tài liệu, trợ giúp và những màn riêng trong `COVERAGE.md`.
@@ -105,6 +107,28 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
 - Khi bật trình đọc giữa một màn đã mở lúc reader tắt, scope hiện tại có thể
   chưa có snapshot chuyên biệt. Cần hoàn thiện cơ chế đăng ký/refresh khi
   đổi enabled trong G2/G7; không giả sử wake event đã giải quyết việc đó.
+
+## Đợt nhắm mục tiêu chiến đấu, đã viết mã, chưa kiểm thử
+
+- Khi màn ngắm đang mở, scope riêng xuất bản hàng cho mục tiêu mà danh sách
+  gốc của game cho phép ngắm theo tri thức hiện tại của nhân vật. Dữ liệu không
+  chứa tọa độ thô, đối tượng
+  game hoặc thái độ phe phái nội bộ. Có tên hiển thị, hướng, khoảng cách,
+  loại mục tiêu, hàng đang chọn, điểm ngắm và trạng thái đạn/tầm.
+- Kích hoạt hàng lưu vị trí đang có trong danh sách rồi đi qua input_context
+  trên game thread. Nó chỉ gọi `set_cursor_pos`; không gọi FIRE, không tiêu
+  lượt và không chấp nhận tấn công/phép. Bắn/xác nhận trung lập vẫn dùng nguyên
+  luồng game. Lệnh nội bộ bị ẩn khỏi danh mục lệnh thông thường.
+- Danh sách được dựng lại trước mỗi lần chờ input, giới hạn đọc trực tiếp ở
+  256 hàng và giữ NEXT_TARGET/PREV_TARGET của engine cho cả danh sách. Khi
+  lựa chọn mục tiêu đổi, Android đọc hàng vừa chọn; thay đổi này chỉ áp dụng
+  cho category targeting để không giành focus của các màn khác.
+- Cần kiểm tra: FIRE không kích hoạt khi chỉ chọn hàng; không tốn lượt khi đổi
+  mục tiêu; xác nhận NPC trung lập/bạn bè; mục tiêu mất tầm/di chuyển/ẩn giữa
+  các lượt ngắm; danh sách rỗng và hơn 256 mục tiêu; xe, phép, ném, reach,
+  turret; đổi loại đạn/chế độ; hướng/độ cao/isometric; TalkBack và TTS nội bộ;
+  bật/tắt trình đọc trong khi màn ngắm đang mở. Không có kết quả biên dịch,
+  test hoặc chạy trên thiết bị cho đợt này.
 
 ## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
 

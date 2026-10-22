@@ -15,6 +15,8 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "ballistics.h"
 #include "bionics.h"
@@ -214,6 +216,34 @@ static void make_gun_sound_effect( const Character &p, bool burst, item *weapon 
 
 namespace
 {
+std::string target_direction_description( const tripoint_bub_ms &origin,
+        const tripoint_bub_ms &target )
+{
+    if( origin == target ) {
+        return _( "At your position" );
+    }
+    std::string result;
+    const int dx = target.x() - origin.x();
+    const int dy = target.y() - origin.y();
+    const int dz = target.z() - origin.z();
+    if( dy != 0 ) {
+        result = string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    }
+    if( dx != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+    }
+    if( dz != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( dz > 0 ? _( "Above %d" ) : _( "Below %d" ), std::abs( dz ) );
+    }
+    return result;
+}
+
 class target_ui
 {
     public:
@@ -371,6 +401,9 @@ class target_ui
 
         // Updates 'targets' for current range
         void update_target_list();
+
+        // Semantic view of targets the game currently permits and knows how to aim at.
+        a11y::semantic_snapshot reader_snapshot();
 
         // Choose where to position the cursor when opening the ui
         tripoint_bub_ms choose_initial_target();
@@ -2970,7 +3003,42 @@ target_handler::trajectory target_ui::run()
     ExitCode loop_exit_code;
     std::string timed_out_action;
     bool skip_redraw = false;
+    std::optional<tripoint_bub_ms> accessible_target_selection;
+    std::unique_ptr<a11y::screen_scope> reader;
+    const auto refresh_reader = [this, &reader, &accessible_target_selection]() {
+        if( !a11y::enabled() ) {
+            reader.reset();
+            return;
+        }
+        const std::vector<std::string> &actions = ctxt.registered_action_ids();
+        if( std::find( actions.begin(), actions.end(), "A11Y_INTERNAL_SELECT_TARGET" ) == actions.end() ) {
+            // Screen resize rebuilds input_context while the targeting scope
+            // can remain live; restore its non-keyboard dispatch action then.
+            ctxt.register_action( "A11Y_INTERNAL_SELECT_TARGET", _( "Select the focused visible target" ) );
+        }
+        if( !reader ) {
+            reader = std::make_unique<a11y::screen_scope>( &ctxt, "targeting",
+            [this, &accessible_target_selection]( const a11y::semantic_intent &intent )
+            -> std::optional<std::string> {
+                if( intent.action == "activate" && status != Status::OutOfAmmo ) {
+                    for( std::size_t i = 0; i < targets.size(); ++i ) {
+                        if( intent.node == "target:" + std::to_string( i ) ) {
+                            accessible_target_selection = targets[i];
+                            return "A11Y_INTERNAL_SELECT_TARGET";
+                        }
+                    }
+                }
+                return a11y::registered_intent( ctxt, intent );
+            } );
+        }
+        // Creatures can move while an aim action advances time. Rebuild from
+        // the engine's current targetable/visible set before publishing nodes.
+        targets.clear();
+        update_target_list();
+        reader->update( reader_snapshot() );
+    };
     for( ;; action.clear() ) {
+        refresh_reader();
         if( !skip_redraw ) {
             g->invalidate_main_ui_adaptor();
             ui_manager::redraw();
@@ -2991,6 +3059,14 @@ target_handler::trajectory target_ui::run()
         // Handle received input
         if( handle_cursor_movement( action, skip_redraw ) ) {
             continue;
+        } else if( action == "A11Y_INTERNAL_SELECT_TARGET" ) {
+            if( accessible_target_selection &&
+                std::find( targets.begin(), targets.end(), *accessible_target_selection ) != targets.end() ) {
+                // Choosing an accessible target only moves the aim cursor. It
+                // does not fire, consume a turn, or accept a spell/attack.
+                set_cursor_pos( *accessible_target_selection );
+            }
+            accessible_target_selection.reset();
         } else if( action == "TOGGLE_UNLOAD_RAS_WEAPON" ) {
             unload_RAS_weapon = !unload_RAS_weapon;
             activity->should_unload_RAS = unload_RAS_weapon;
@@ -3120,6 +3196,119 @@ target_handler::trajectory target_ui::run()
     }
 
     return traj;
+}
+
+a11y::semantic_snapshot target_ui::reader_snapshot()
+{
+    constexpr std::size_t max_accessible_targets = 256;
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Targeting" ) );
+    snapshot.title = _( "Target selection" );
+    snapshot.summary = string_format( _( "Range: %1$d. Targets in range: %2$d. " ), range,
+                                     static_cast<int>( targets.size() ) );
+    switch( status ) {
+        case Status::Good:
+            snapshot.summary += _( "Ready to aim or confirm." );
+            break;
+        case Status::BadTarget:
+            snapshot.summary += _( "No valid target is selected." );
+            break;
+        case Status::OutOfAmmo:
+            snapshot.summary += _( "No ammunition or this weapon cannot fire." );
+            break;
+        case Status::OutOfRange:
+            snapshot.summary += _( "The current aim point is out of range." );
+            break;
+    }
+
+    a11y::semantic_node cursor;
+    cursor.id = "target:cursor";
+    cursor.role = "document";
+    cursor.label = _( "Current aim point" );
+    cursor.selected = std::find( targets.begin(), targets.end(), dst ) == targets.end();
+    cursor.value = string_format( _( "%1$s, distance %2$d" ),
+                                  target_direction_description( src, dst ),
+                                  dist_fn( dst ) );
+    Creature *cursor_creature = get_creature_tracker().creature_at( dst, true );
+    if( cursor_creature != nullptr && pl_sees( *cursor_creature ) ) {
+        cursor.detail = string_format( _( "Visible creature: %s" ), cursor_creature->disp_name() );
+    } else {
+        const optional_vpart_position cursor_vehicle = get_map().veh_at( dst );
+        if( cursor_vehicle.has_value() && pl_sees( cursor_vehicle ) ) {
+            cursor.detail = string_format( _( "Visible vehicle: %s" ),
+                                           cursor_vehicle->vehicle().disp_name() );
+        } else {
+            cursor.detail = _( "No visible creature or vehicle is under the aim point." );
+        }
+    }
+    snapshot.nodes.push_back( std::move( cursor ) );
+
+    const std::size_t count = std::min( targets.size(), max_accessible_targets );
+    for( std::size_t i = 0; i < count; ++i ) {
+        const tripoint_bub_ms &position = targets[i];
+        a11y::semantic_node node;
+        node.id = "target:" + std::to_string( i );
+        node.role = "button";
+        node.enabled = status != Status::OutOfAmmo;
+        if( !node.enabled ) {
+            node.disabled_reason = _( "Cannot change target while the weapon has no ammunition." );
+        }
+        node.position = static_cast<int>( i + 1 );
+        node.total = static_cast<int>( targets.size() );
+        node.selected = position == dst;
+        const std::string location = string_format( _( "%1$s, distance %2$d" ),
+                                         target_direction_description( src, position ),
+                                         dist_fn( position ) );
+        Creature *creature = get_creature_tracker().creature_at( position, true );
+        if( creature != nullptr && pl_sees( *creature ) ) {
+            node.label = creature->disp_name();
+            node.value = _( "Creature" );
+            node.detail = location;
+        } else {
+            const optional_vpart_position vehicle_position = get_map().veh_at( position );
+            if( vehicle_position.has_value() && pl_sees( vehicle_position ) ) {
+                node.label = vehicle_position->vehicle().disp_name();
+                node.value = _( "Vehicle" );
+                node.detail = location;
+            } else {
+                // Avoid naming an entity if it stopped being identifiable
+                // between building the target list and this snapshot.
+                node.label = string_format( _( "Targetable entity %d" ), static_cast<int>( i + 1 ) );
+                node.detail = location;
+            }
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+
+    if( targets.size() > max_accessible_targets ) {
+        a11y::semantic_node limit;
+        limit.id = "target:list-limit";
+        limit.role = "document";
+        limit.label = _( "Target list note" );
+        limit.detail = _( "The list shows the first 256 targets. Use the next and previous "
+                          "target commands to move through the full target list." );
+        snapshot.nodes.push_back( std::move( limit ) );
+    }
+    a11y::semantic_node help;
+    help.id = "target:help";
+    help.role = "document";
+    help.label = _( "How target selection works" );
+    help.detail = _( "Activate a listed target to move the aim point. This does not fire or spend "
+                     "a turn. Use the fire command separately to confirm an attack." );
+    snapshot.nodes.push_back( std::move( help ) );
+
+    // This engine-only dispatch result is never a player command.
+    snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+    []( const a11y::semantic_node &node ) {
+        return node.id == "A11Y_INTERNAL_SELECT_TARGET";
+    } ), snapshot.nodes.end() );
+    snapshot.focus = "target:cursor";
+    for( std::size_t i = 0; i < count; ++i ) {
+        if( targets[i] == dst ) {
+            snapshot.focus = "target:" + std::to_string( i );
+            break;
+        }
+    }
+    return snapshot;
 }
 
 void target_ui::init_window_and_input()

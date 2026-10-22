@@ -507,7 +507,8 @@ const std::string &input_context::handle_input( const int timeout )
         snapshot.title = _( "Commands for the current screen" );
         snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader." );
         for( const std::string &action : registered_actions ) {
-            if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ) {
+            if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ||
+                action.rfind( "A11Y_INTERNAL_", 0 ) == 0 ) {
                 continue;
             }
             a11y::semantic_node node;

@@ -253,3 +253,90 @@ msgstr "Các bộ phận cơ thể"
 
 msgid "Summary"
 msgstr "Tổng quan"
+
+msgid "Select the focused visible target"
+msgstr "Chọn mục tiêu đang được đọc"
+
+msgid "At your position"
+msgstr "Ngay vị trí của bạn"
+
+#, c-format
+msgid "Above %d"
+msgstr "Phía trên %d tầng"
+
+#, c-format
+msgid "Below %d"
+msgstr "Phía dưới %d tầng"
+
+msgid "Targeting"
+msgstr "Đang ngắm"
+
+msgid "Target selection"
+msgstr "Chọn mục tiêu"
+
+#, c-format
+msgid "Range: %1$d. Targets in range: %2$d. "
+msgstr "Tầm ngắm: %1$d ô. Mục tiêu trong tầm: %2$d. "
+
+msgid "Ready to aim or confirm."
+msgstr "Có thể ngắm hoặc xác nhận."
+
+msgid "No valid target is selected."
+msgstr "Chưa chọn được mục tiêu hợp lệ."
+
+msgid "No ammunition or this weapon cannot fire."
+msgstr "Hết đạn hoặc vũ khí không thể bắn."
+
+msgid "The current aim point is out of range."
+msgstr "Điểm ngắm hiện tại nằm ngoài tầm."
+
+msgid "Current aim point"
+msgstr "Điểm ngắm hiện tại"
+
+#, c-format
+msgid "%1$s, distance %2$d"
+msgstr "%1$s, cách %2$d ô"
+
+#, c-format
+msgid "Visible creature: %s"
+msgstr "Sinh vật đang nhìn thấy: %s"
+
+#, c-format
+msgid "Visible vehicle: %s"
+msgstr "Phương tiện đang nhìn thấy: %s"
+
+msgid "No visible creature or vehicle is under the aim point."
+msgstr "Không có sinh vật hoặc phương tiện đang nhìn thấy tại điểm ngắm."
+
+msgid "Creature"
+msgstr "Sinh vật"
+
+msgid "Vehicle"
+msgstr "Phương tiện"
+
+msgid "Cannot change target while the weapon has no ammunition."
+msgstr "Không thể đổi mục tiêu khi vũ khí đã hết đạn."
+
+#, c-format
+msgid "Targetable entity %d"
+msgstr "Đối tượng có thể ngắm số %d"
+
+msgid "Target list note"
+msgstr "Ghi chú danh sách mục tiêu"
+
+msgid ""
+"The list shows the first 256 targets. Use the next and previous "
+"target commands to move through the full target list."
+msgstr ""
+"Danh sách đọc trực tiếp 256 mục tiêu đầu tiên. Dùng lệnh "
+"mục tiêu tiếp theo và trước đó để duyệt toàn bộ danh sách."
+
+msgid "How target selection works"
+msgstr "Cách chọn mục tiêu"
+
+msgid ""
+"Activate a listed target to move the aim point. This does not fire or spend "
+"a turn. Use the fire command separately to confirm an attack."
+msgstr ""
+"Kích hoạt mục tiêu trong danh sách để chuyển điểm ngắm. Thao tác này không "
+"bắn và không tiêu lượt. Dùng riêng lệnh bắn để xác nhận tấn công."

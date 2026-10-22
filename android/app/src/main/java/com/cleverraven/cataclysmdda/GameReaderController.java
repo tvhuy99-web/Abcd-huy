@@ -223,10 +223,37 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 boolean changedContext = snapshot == null || !snapshot.contextKey().equals(next.contextKey());
+                String selectedTargetFocus = "";
+                boolean targetSelectionChanged = false;
+                if (!changedContext && "targeting".equals(next.category)
+                        && "targeting".equals(snapshot.category)) {
+                    for (ReaderSnapshot.Node node : next.nodes) {
+                        if (node.selected) {
+                            ReaderSnapshot.Node previousNode = snapshot.find(node.id);
+                            if (previousNode == null || !previousNode.selected) {
+                                selectedTargetFocus = node.id;
+                                targetSelectionChanged = true;
+                                break;
+                            }
+                        }
+                    }
+                    if (!targetSelectionChanged && "target:cursor".equals(focus)) {
+                        ReaderSnapshot.Node previousCursor = snapshot.find("target:cursor");
+                        ReaderSnapshot.Node nextCursor = next.find("target:cursor");
+                        if (previousCursor != null && nextCursor != null
+                                && (!previousCursor.value.equals(nextCursor.value)
+                                    || !previousCursor.detail.equals(nextCursor.detail))) {
+                            selectedTargetFocus = "target:cursor";
+                            targetSelectionChanged = true;
+                        }
+                    }
+                }
                 String previous = focus;
                 snapshot = next;
                 speech.setContext(next.contextKey());
-                if (changedContext || next.find(focus) == null) {
+                if (targetSelectionChanged) {
+                    focus = selectedTargetFocus;
+                } else if (changedContext || next.find(focus) == null) {
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 }
@@ -239,7 +266,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     onlyCommands = false;
                 }
                 render();
-                if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
+                if (targetSelectionChanged) {
+                    readCurrent();
+                } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();
                 }
             } catch (JSONException malformed) {

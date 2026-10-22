@@ -10,7 +10,8 @@ semantic_snapshot command_snapshot( const input_context &context, const std::str
     snapshot.title = title;
     for( const std::string &action : context.registered_action_ids() ) {
         if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ||
-            action == "MOUSE_MOVE" || action == "SELECT" ) {
+            action == "MOUSE_MOVE" || action == "SELECT" ||
+            action.rfind( "A11Y_INTERNAL_", 0 ) == 0 ) {
             continue;
         }
         semantic_node node;

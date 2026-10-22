@@ -35,6 +35,13 @@ mới và chưa đủ điều kiện công bố người khiếm thị chơi đ�
 đường chọn điều trị và điều kiện bằng chữ; dùng chung mô tả sức khỏe theo
 mức thông tin mà game cho biết. Phần này cũng chưa biên dịch hoặc chạy thử.
 
+Đã viết thêm adapter màn nhắm mục tiêu chiến đấu: đọc tên/hướng/khoảng cách của
+mục tiêu game cho phép ngắm theo tri thức hiện tại; kích hoạt hàng chỉ
+chuyển điểm ngắm, còn bắn/xác nhận đi qua hành động gốc. Focus đọc lại khi mục
+tiêu được đổi. Chưa biên dịch, chạy test hoặc thử chiến đấu; cần kiểm tra thông
+tin ẩn, NPC không thù địch, tầm bắn, xe/phép/ném/reach/turret và mục tiêu đổi
+trạng thái. Chi tiết ở [IMPLEMENTATION.vi.md](IMPLEMENTATION.vi.md).
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026
