@@ -31,6 +31,10 @@ mẻ chế tạo, yêu cầu từng nhóm/công đoạn; xây dựng và chọn 
 Tất cả vẫn ở giai đoạn viết mã, **chưa biên dịch/chạy kiểm thử**, chưa có APK
 mới và chưa đủ điều kiện công bố người khiếm thị chơi độc lập.
 
+Đã viết tiếp adapter y tế: duyệt bộ phận, hiệu ứng/vết thương, tổng quan,
+đường chọn điều trị và điều kiện bằng chữ; dùng chung mô tả sức khỏe theo
+mức thông tin mà game cho biết. Phần này cũng chưa biên dịch hoặc chạy thử.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026

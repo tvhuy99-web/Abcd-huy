@@ -43,6 +43,7 @@ ghi PASS mới.
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
 | Xây dựng | `construction.cpp` | Nhóm, biến thể/công đoạn, mô tả, yêu cầu và trạng thái vị trí; CONFIRM/đặt công trình dùng logic gốc; blueprint và các điều kiện đặc biệt chưa thử |
 | Chọn ô lân cận | `action.cpp/.h` | Scope cho choose_direction/choose_adjacent, gọi phép đổi hướng gốc kể cả isometric; chỉ quan sát ô ngang qua perception; trạng thái hợp lệ công trình chỉ nói ở ô nhìn thấy; chưa có quan sát khác tầng |
+| Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
 | Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; chưa chạy gettext/build mới |
 
 ## Phần viết mã còn phải làm
@@ -104,3 +105,29 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
 - Khi bật trình đọc giữa một màn đã mở lúc reader tắt, scope hiện tại có thể
   chưa có snapshot chuyên biệt. Cần hoàn thiện cơ chế đăng ký/refresh khi
   đổi enabled trong G2/G7; không giả sử wake event đã giải quyết việc đó.
+
+## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
+
+- Adapter đọc bộ phận/hiệu ứng/vết thương và chức năng từ dữ liệu của màn y tế.
+  Chỉ kích hoạt bộ phận mới mở menu điều trị; focus và đọc chi tiết không
+  dùng thuốc, tiêu hao vật liệu hoặc gán hoạt động.
+- Tổng quan đọc tốc độ/chỉ số và lần cân nặng đã ghi nhớ giống UI, không thay
+  bằng cân nặng sống chưa đo. Menu điều trị nói rõ điều kiện đạt/chưa đạt,
+  kiến thức thực hành bắt buộc/bổ trợ và các nhóm dụng cụ/nguyên liệu.
+- Hàm mô tả sức khỏe dùng chung với world: không đọc số HP chính xác, giữ
+  cảm nhận của nhân vật không cảm nhận đau; bó nẹp giữ mức chỉ báo liền xương.
+  Phân biệt vạch đầy, nửa vạch, dưới nửa vạch và vạch rỗng; không lấy độ dài
+  chuỗi “-----” làm năm vạch sức khỏe. Đây là sửa khi đọc nguồn trong giai
+  đoạn viết mã, chưa phải lỗi được chứng minh bằng chạy kiểm thử.
+- Sửa helper hiệu ứng sử dụng đối số bộ phận thay vì bộ phận đang được
+  chọn, để mô tả các hàng khác không gọi nhầm tên chi. Có nhánh không có
+  bộ phận để tránh truy cập phần tử đầu khi danh sách rỗng.
+- Còn phải kiểm chứng miễn đau/gãy/bó nẹp/mất chi/NPC, chảy máu/nhiễm trùng,
+  hủy menu, điều kiện thiếu, chọn thuốc trong inventory, thời gian/gián đoạn
+  điều trị và cập nhật sau hoàn thành. Player info/morale và cảnh báo tự động
+  vẫn còn trong G4/G7; không xem adapter y tế là đã hoàn tất toàn nhóm.
+
+Đã viết thêm `tests/a11y_body_test.cpp` để giai đoạn 2 kiểm chứng bằng avatar
+và dữ liệu vật phẩm thật: không lộ HP trong cùng mức thanh, chi bị gãy không
+được đọc thành thanh đầy, và bó nẹp khi miễn đau không lộ tiến độ. Các test
+này **chưa được biên dịch hoặc thực thi**, không có kết quả PASS/FAIL mới.

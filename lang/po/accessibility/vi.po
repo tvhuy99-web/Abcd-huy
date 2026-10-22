@@ -207,3 +207,49 @@ msgstr "Yêu thích"
 
 msgid "Description"
 msgstr "Mô tả"
+
+msgid "Splinted. Mending progress is unknown."
+msgstr "Đang bó nẹp. Chưa biết tiến độ liền xương."
+
+#, c-format
+msgid "Splinted. Mending indicator %d of 5."
+msgstr "Đang bó nẹp. Chỉ báo liền xương: %d trên 5 mức."
+
+msgid "Broken."
+msgstr "Bị gãy."
+
+#, c-format
+msgid "Health indicator: %d full segments of 5."
+msgstr "Chỉ báo sức khỏe: %d vạch đầy trên 5 vạch."
+
+msgid "One additional half segment."
+msgstr "Có thêm nửa vạch."
+
+msgid "Less than half a segment remains."
+msgstr "Còn ít hơn nửa vạch."
+
+#, c-format
+msgid "Missing required proficiency: %s"
+msgstr "Thiếu kiến thức thực hành bắt buộc: %s"
+
+#, c-format
+msgid "Missing optional proficiency: %s"
+msgstr "Thiếu kiến thức thực hành bổ trợ: %s"
+
+msgid "Treatment requirements are met."
+msgstr "Đã đủ điều kiện điều trị."
+
+msgid "Treatment requirements are not met."
+msgstr "Chưa đủ điều kiện điều trị."
+
+msgid "No body part is selected."
+msgstr "Chưa chọn bộ phận cơ thể."
+
+msgid "Medical"
+msgstr "Y tế"
+
+msgid "Limbs"
+msgstr "Các bộ phận cơ thể"
+
+msgid "Summary"
+msgstr "Tổng quan"

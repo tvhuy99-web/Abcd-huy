@@ -5,10 +5,10 @@
 #include <string>
 #include <utility>
 #include "a11y_input.h"
+#include "a11y_body.h"
 #include "a11y_perception.h"
 #include "avatar.h"
 #include "bodypart.h"
-#include "catacharset.h"
 #include "coordinates.h"
 #include "display.h"
 #include "input_context.h"
@@ -58,9 +58,7 @@ std::string player_status()
     const int stamina = viewer.get_stamina_max() > 0 ? 100 * viewer.get_stamina() / viewer.get_stamina_max() : 0;
     result += ". " + string_format( _( "Stamina: %d%%" ), stamina );
     for( const bodypart_id &part : viewer.get_all_body_parts( get_body_part_flags::only_main ) ) {
-        const auto indicator = get_hp_bar( viewer.get_part_hp_cur( part ), viewer.get_part_hp_max( part ), false );
-        const int bars = std::max( 0, std::min( 5, utf8_width( indicator.first ) ) );
-        result += ". " + string_format( _( "%s: health indicator %d of 5" ), body_part_name( part ), bars );
+        result += ". " + body_part_name( part ) + ": " + limb_health_description( viewer, part );
     }
     if( display::vehicle_driven( viewer ) != nullptr ) {
         result += ". " + std::string( _( "Vehicle controls" ) ) + ". " +
