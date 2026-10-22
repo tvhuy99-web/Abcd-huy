@@ -67,6 +67,9 @@
                   android:configChanges="keyboardHidden|keyboard|orientation|screenSize|smallestScreenSize|screenLayout|navigation"
                   >
         </activity>
+        <activity android:name="ReaderSetupActivity"
+                  android:exported="false"
+                  android:label="@string/a11yReaderSetup" />
         <!-- Expose app's private data directory for backup without root -->
         <provider
             android:name=".CDDADocumentsProvider"

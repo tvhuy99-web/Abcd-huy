@@ -6,16 +6,16 @@ on:
     paths:
       - 'src/a11y*'
       - 'tests/a11y*'
-      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/AndroidSpeech.java'
-      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/SpeechSession.java'
+      - 'android/app/src/main/**'
+      - 'android/app/build.gradle'
       - 'tools/accessibility/**'
       - '.github/workflows/accessibility-core.yml'
   pull_request:
     paths:
       - 'src/a11y*'
       - 'tests/a11y*'
-      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/AndroidSpeech.java'
-      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/SpeechSession.java'
+      - 'android/app/src/main/**'
+      - 'android/app/build.gradle'
       - 'tools/accessibility/**'
       - '.github/workflows/accessibility-core.yml'
 
@@ -47,3 +47,9 @@ jobs:
           javac -Xlint:all -Werror -cp "$ANDROID_HOME/platforms/android-35/android.jar" \
             -d "$RUNNER_TEMP/speech-classes" \
             android/app/src/main/java/com/cleverraven/cataclysmdda/{SpeechSession,AndroidSpeech}.java
+      - name: Compile Android UI and resources without native rebuild
+        working-directory: android
+        run: |
+          bash ./gradlew --no-daemon --console=plain \
+            -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false \
+            compileExperimentalDebugJavaWithJavac

@@ -7,7 +7,7 @@ phát hành đã nghiệm thu. Mã tham chiếu trước triển khai:
 ## Trạng thái hiện tại
 
 G0 đang triển khai; có mã nền chuẩn bị G1/G2. Chưa công nhận build nền, G1,
-G2 hoặc bất kỳ khả năng chơi độc lập nào đã hoàn thành. Chưa có kiểm thử máy
+  G2 hoặc bất kỳ khả năng chơi độc lập nào đã hoàn thành. Chưa có kiểm thử máy
 thật/người dùng. Các lớp mới chưa được nối vào điều khiển hoặc lời đọc gameplay.
 
 Ngày 22/10/2026:
@@ -41,6 +41,15 @@ Ngày 22/10/2026:
   Các con số Java không chứng minh TTS thật hoặc phát âm thanh trên Android.
 - Đã khai báo truy vấn TTS service; không thêm quyền microphone hoặc service
   đọc màn hình toàn hệ thống. Driver chưa được tự bật khi mở game.
+- Thêm `ReaderSetupActivity` bằng widget native: phát thử tiếng Việt, dừng,
+  opt-in giọng cần mạng, mở cài đặt giọng/trợ năng và quay lại. Mở từ nút
+  “Thiết lập trợ năng và giọng đọc” trên cảnh báo trợ năng ở Splash. Giữ
+  TalkBack trong luồng thử này. Đây chưa phải bootstrap không cần TalkBack;
+  nếu cảnh báo không xuất hiện thì chưa có đường vào màn thử từ gameplay.
+- Cảnh báo khởi động Anh/Việt đã sửa để không hướng người dùng tắt trình đọc
+  trước khi có điều khiển thay thế. Đường đánh dấu cảnh báo nhầm vẫn giữ nguyên.
+- Màn thử không nạp engine game/JNI, hủy sample khi sang nền, đóng TTS theo
+  vòng đời Activity; cần kiểm chứng UI/lifecycle thật trên Android.
 - Kiểm kê thủ công đầu ở [COVERAGE.md](COVERAGE.md) bổ sung minigame,
   màn y tế, điều khiển động cơ, study zones và nhật ký.
 
@@ -54,7 +63,8 @@ Ngày 22/10/2026:
   trong 18 phút 54 giây; kiểm tra thư viện game/catalog Việt PASS, artifact
   `android-arm64-candidate` đã được tải lên. Commit này mới thay tài liệu và CI,
   chưa có các lớp C++/Java nền trợ năng. Không gán APK này cho mã nguồn mới hơn.
-  Job baseline vẫn đang được theo dõi tại lần cập nhật này.
+  Job baseline tại đúng commit `8ef359c` cũng build và kiểm tra gói APK PASS.
+  Hai kết quả này chưa chứng minh app chạy trên thiết bị hoặc được người mù dùng được.
 - [Kiểm tra lõi/API ở commit 0733bb3](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39719385009):
   PASS cả kiểm kê, C++, Java host tests và javac với Android API 35 thật.
   Thay đổi kiểm tra voice cần mạng sau commit này phải chờ lượt CI mới.
