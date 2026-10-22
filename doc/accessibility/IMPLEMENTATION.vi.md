@@ -106,7 +106,18 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
   cùng danh sách mục tiêu có thể ngắm theo tri thức hiện tại; còn phải đối chiếu mọi
   biến thể/pocket, hướng ngắm, xác nhận tấn công và hoàn thiện chi tiết thiếu.
-- G6: overmap/travel/note; màn nhiệm vụ có snapshot bốn tab, hàng đang chọn,
+- G6: bản đồ lớn công bố tọa độ và tầng của con trỏ, địa hình theo mức khám phá,
+  ghi chú/vùng nguy hiểm, vị trí tương đối, tuyến hiện hành và chiều dài tuyến;
+  lệnh chọn điểm, đặt tuyến thường/trực tiếp, căn giữa, bắt đầu travel, tạo/xóa
+  ghi chú, đánh dấu nguy hiểm và danh sách ghi chú đều có mô tả tác động/trạng
+  thái khả dụng. Danh sách ghi chú đọc tọa độ, địa hình, khoảng cách và vùng nguy
+  hiểm; xác nhận đưa con trỏ về ghi chú nhưng không tự bắt đầu travel. Tìm kiếm
+  overmap xuất kết quả hiện hành, thứ tự, tọa độ, khoảng cách/hướng và cho chuyển
+  kết quả, chọn hoặc hủy bằng reader. Màn chỉnh thời gian đọc giá trị lịch, mô tả
+  nút tăng/giảm/đặt lại và lý do trường độ chính xác cao hơn bị khóa. Các ô chỉ
+  mô tả dữ liệu được phép hiện theo mức khám phá; toàn bộ travel/notes/search,
+  tầng lịch và ranh giới thông tin vẫn cần QA trên thiết bị.
+  Màn nhiệm vụ có snapshot bốn tab, hàng đang chọn,
   mô tả/chi tiết nhiệm vụ và điểm quan tâm, vị trí/khoảng cách, thời hạn/kết quả,
   mục tiêu hiện hành; giao việc/trả đồng đội và tab giao nhiệm vụ trại đọc danh sách,
   chi tiết, trạng thái được phép và đổi tab/hàng; xác nhận/xóa vẫn đi qua action gốc.

@@ -6,6 +6,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_semantics.h"
 #include "color.h"
 #include "input_context.h"
 #include "input_popup.h"
@@ -13,6 +14,68 @@
 #include "translation.h"
 #include "translations.h"
 #include "uilist.h"
+
+namespace
+{
+static std::string calendar_granularity_name( const calendar_ui::granularity granularity )
+{
+    switch( granularity ) {
+        case calendar_ui::granularity::year: return _( "year" );
+        case calendar_ui::granularity::season: return _( "season" );
+        case calendar_ui::granularity::day: return _( "day" );
+        case calendar_ui::granularity::hour: return _( "hour" );
+        case calendar_ui::granularity::minute: return _( "minute" );
+        case calendar_ui::granularity::turn: return _( "turn" );
+        case calendar_ui::granularity::last: break;
+    }
+    return _( "turn" );
+}
+
+class calendar_accessibility_callback : public uilist_callback
+{
+    public:
+        explicit calendar_accessibility_callback( const calendar_ui::granularity max_granularity ) :
+            max_granularity( max_granularity ) {}
+
+        void describe_accessibility_action( const std::string &action, const int selected,
+                                            a11y::semantic_node &node ) const override {
+            if( action == "RESET" ) {
+                node.detail = _( "Restore the original date and time." );
+                return;
+            }
+            if( action != "LEFT" && action != "RIGHT" ) {
+                return;
+            }
+
+            if( selected < 0 || selected > static_cast<int>( max_granularity ) ) {
+                node.enabled = false;
+                node.disabled_reason = string_format(
+                                          _( "This field is more precise than the allowed limit of %s." ),
+                                          calendar_granularity_name( max_granularity ) );
+                return;
+            }
+
+            std::string unit;
+            switch( static_cast<calendar_ui::granularity>( selected ) ) {
+                case calendar_ui::granularity::year: unit = _( "year" ); break;
+                case calendar_ui::granularity::season: unit = _( "season" ); break;
+                case calendar_ui::granularity::day: unit = _( "day" ); break;
+                case calendar_ui::granularity::hour: unit = _( "hour" ); break;
+                case calendar_ui::granularity::minute: unit = _( "minute" ); break;
+                case calendar_ui::granularity::turn: unit = _( "turn" ); break;
+                default:
+                    node.enabled = false;
+                    node.disabled_reason = _( "Select a date or time field first." );
+                    return;
+            }
+            node.detail = string_format( action == "LEFT" ? _( "Decrease the selected %s by one." ) :
+                                        _( "Increase the selected %s by one." ), unit );
+        }
+
+    private:
+        calendar_ui::granularity max_granularity;
+};
+} // namespace
 
 time_point calendar_ui::select_time_point( time_point initial_value, std::string_view title,
         calendar_ui::granularity granularity_level )
@@ -37,6 +100,7 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
     };
 
     uilist smenu;
+    calendar_accessibility_callback accessibility_callback( granularity_level );
     static const auto years = []( const time_point & p ) {
         return static_cast<int>( ( p - calendar::turn_zero ) / calendar::year_length() );
     };
@@ -55,6 +119,7 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
             { "RIGHT", to_translation( "Increase value" ) },
             { "RESET", to_translation( "Reset value" ) }
         };
+        smenu.callback = &accessibility_callback;
         smenu.footer_text += string_format( _( "Press <color_light_green>%s</color> to decrease value.\n" ),
                                             input_context( smenu.input_category ).get_desc( "LEFT" ) );
         smenu.footer_text += string_format( _( "Press <color_light_green>%s</color> to increase value.\n" ),
@@ -81,6 +146,9 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
         for( uilist_entry &entry : smenu.entries ) {
             if( entry.retval > static_cast<int>( granularity_level ) ) {
                 entry.enabled = false;
+                entry.a11y_disabled_reason = string_format(
+                                                _( "This field is more precise than the allowed limit of %s." ),
+                                                calendar_granularity_name( granularity_level ) );
             }
         }
         smenu.selected = iSel;

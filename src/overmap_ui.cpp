@@ -705,6 +705,9 @@ static void draw_city_labels( const catacurses::window &w, const tripoint_abs_om
     }
 }
 
+static std::string overmap_relative_location( const tripoint_abs_omt &position,
+        const tripoint_abs_omt &origin );
+
 static void draw_camp_labels( const catacurses::window &w, const tripoint_abs_omt &center )
 {
     const int win_x_max = getmaxx( w );
@@ -837,6 +840,45 @@ class map_notes_callback : public uilist_callback
             }
             return false;
         }
+        void describe_accessibility_action( const std::string &action, const int entnum,
+                                            a11y::semantic_node &node ) const override {
+            if( entnum < 0 || entnum >= static_cast<int>( _notes.size() ) ) {
+                if( action == "DELETE_NOTE" || action == "EDIT_NOTE" || action == "MARK_DANGER" ||
+                    action == "CONFIRM" ) {
+                    node.enabled = false;
+                    node.disabled_reason = _( "Select a map note first." );
+                    node.detail = node.disabled_reason;
+                }
+                return;
+            }
+
+            const point_abs_omt point = _notes[entnum].first;
+            const tripoint_abs_omt position( point, _z );
+            const std::string note = overmap_buffer.note( position );
+            const std::tuple<char, nc_color, std::size_t> display_info = get_note_display_info( note );
+            const std::string note_text = remove_color_tags( note.substr( std::get<2>( display_info ) ) );
+            const int danger_radius = overmap_buffer.note_danger_radius( position );
+            const std::string danger = danger_radius >= 0 ? string_format(
+                                           _( "Danger area radius: %d map tiles." ), danger_radius ) :
+                                       std::string( _( "No danger radius is set for this note." ) );
+            const std::string location = string_format(
+                                            _( "Map note: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d. "
+                                               "Relative location: %5$s. %6$s" ),
+                                            note_text, point.x(), point.y(), _z,
+                                            overmap_relative_location( position, get_avatar().pos_abs_omt() ),
+                                            danger );
+            node.detail = location;
+
+            if( action == "CONFIRM" ) {
+                node.detail += " " + std::string( _( "Selecting this note returns to the map at its location; it does not start travel." ) );
+            } else if( action == "DELETE_NOTE" ) {
+                node.detail += " " + std::string( _( "Deletes this note after confirmation." ) );
+            } else if( action == "EDIT_NOTE" ) {
+                node.detail += " " + std::string( _( "Opens the note editor for this map location." ) );
+            } else if( action == "MARK_DANGER" ) {
+                node.detail += " " + std::string( _( "Opens the danger-area radius controls for this note." ) );
+            }
+        }
         void select( uilist *menu ) override {
             _selected = menu->selected;
             ui.invalidate_ui();
@@ -910,6 +952,11 @@ static point_abs_omt draw_notes( const tripoint_abs_omt &origin )
             nmenu.entries[row].ctxt =
                 string_format( _( "<color_light_gray>Distance: </color><color_white>%d</color>" ),
                                distance_player );
+            nmenu.entries[row].a11y_value = string_format(
+                                                _( "Overmap coordinates: X %1$d, Y %2$d, level %3$d. "
+                                                   "Distance from player: %4$d map tiles. %5$s %6$s" ),
+                                                p.x(), p.y(), origin.z(), distance_player, location_desc,
+                                                danger_desc_text );
             row++;
         }
         map_notes_callback cb( notes, origin.z() );
@@ -1578,6 +1625,17 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "ANY_INPUT" );
 
+    a11y::screen_scope reader( &ctxt, "overmap_search",
+    [&ctxt]( const a11y::semantic_intent &intent ) {
+        if( intent.node == "overmap:search_result" && intent.action == "activate" ) {
+            return std::optional<std::string>( "CONFIRM" );
+        }
+        if( intent.node == "overmap:search_result" && intent.action == "focus" ) {
+            return std::optional<std::string>( "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         //Draw search box
 
@@ -1625,6 +1683,47 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
     do {
         curs.x() = locations[i].x();
         curs.y() = locations[i].y();
+        const tripoint_abs_omt result_position( locations[i], curs.z() );
+        const int result_distance = trig_dist( orig, result_position );
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Overmap search results" ) );
+        snapshot.focus = "overmap:search_result";
+        snapshot.summary = string_format( _( "Search for %1$s. Result %2$d of %3$d. %4$s. "
+                                             "Coordinates: X %5$d, Y %6$d, level %7$d. "
+                                             "Distance from the player: %8$d map tiles, %9$s." ),
+                                          term, i + 1, locations.size(),
+                                          overmap_tile_description( result_position ),
+                                          result_position.x(), result_position.y(), result_position.z(),
+                                          result_distance,
+                                          direction_name( direction_from( orig, result_position ) ) );
+        a11y::semantic_node result_node;
+        result_node.id = "overmap:search_result";
+        result_node.role = "listitem";
+        result_node.label = string_format( _( "Search result %1$d of %2$d" ), i + 1, locations.size() );
+        result_node.value = overmap_tile_description( result_position );
+        result_node.detail = string_format( _( "Coordinates: X %1$d, Y %2$d, level %3$d. "
+                                               "Distance from the player: %4$d map tiles, %5$s. "
+                                               "Activating this result returns to the map at this location; it does not start travel." ),
+                                            result_position.x(), result_position.y(), result_position.z(),
+                                            result_distance,
+                                            direction_name( direction_from( orig, result_position ) ) );
+        result_node.selected = true;
+        result_node.position = i + 1;
+        result_node.total = locations.size();
+        snapshot.nodes.insert( snapshot.nodes.begin(), std::move( result_node ) );
+        for( std::size_t node_index = 0; node_index < snapshot.nodes.size(); ++node_index ) {
+            snapshot.nodes[node_index].position = node_index + 1;
+            snapshot.nodes[node_index].total = snapshot.nodes.size();
+            if( snapshot.nodes[node_index].id == "CONFIRM" ) {
+                snapshot.nodes[node_index].detail = _( "Choose the displayed search result and return to the map at that location. This does not start travel." );
+            } else if( snapshot.nodes[node_index].id == "NEXT_TAB" ) {
+                snapshot.nodes[node_index].detail = _( "Move to the next matching map tile." );
+            } else if( snapshot.nodes[node_index].id == "PREV_TAB" ) {
+                snapshot.nodes[node_index].detail = _( "Move to the previous matching map tile." );
+            } else if( snapshot.nodes[node_index].id == "QUIT" ) {
+                snapshot.nodes[node_index].detail = _( "Close the search results and return to the previous map cursor." );
+            }
+        }
+        reader.update( std::move( snapshot ) );
         om_ui.invalidate_ui();
         ui_manager::redraw();
         action = ctxt.handle_input( get_option<int>( "BLINK_SPEED" ) );
@@ -2134,7 +2233,9 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     auto snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
     std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
     snapshot.nodes.clear();
-    snapshot.summary = string_format( _( "Map offset from player: %s" ),
+    snapshot.summary = string_format( _( "Map coordinates: X %1$d, Y %2$d, level %3$d. "
+                                         "Relative location from player: %4$s." ),
+                                      cursor.x(), cursor.y(), cursor.z(),
                                       overmap_relative_location( cursor, origin ) );
     snapshot.summary += ". " + std::string( _( "Selecting a map tile only moves the cursor; "
                                   "travel is a separate command." ) );
@@ -2174,6 +2275,91 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         focus_targets.emplace( route_node.id, destination );
     }
     snapshot.nodes.push_back( std::move( route_node ) );
+
+    const bool has_route = !route.empty();
+    const bool cursor_has_note = overmap_buffer.has_note( cursor );
+    const int cursor_danger_radius = overmap_buffer.note_danger_radius( cursor );
+    for( a11y::semantic_node &command : commands ) {
+        if( command.id == "CONFIRM" ) {
+            command.detail = _( "Select the current map coordinates and close the map. This action does not start travel." );
+        } else if( command.id == "CHOOSE_DESTINATION" ) {
+            command.detail = _( "Set the current map tile as the route destination. Choosing the existing route again may open the travel confirmation." );
+        } else if( command.id == "CHOOSE_DESTINATION_DIRECT" ) {
+            command.detail = _( "Set a direct route to the current map tile. Choosing the existing route again may open the travel confirmation." );
+        } else if( command.id == "GO_TO_DESTINATION" || command.id == "CENTER_ON_DESTINATION" ) {
+            if( !has_route ) {
+                command.enabled = false;
+                command.disabled_reason = _( "No route is set." );
+                command.detail = command.disabled_reason;
+            } else {
+                command.detail = string_format( _( "Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. "
+                                                   "Route length: %5$d map tiles. Relative location: %6$s." ),
+                                                overmap_tile_description( route.front() ), route.front().x(),
+                                                route.front().y(), route.front().z(),
+                                                static_cast<int>( route.size() ),
+                                                overmap_relative_location( route.front(), origin ) );
+                if( command.id == "GO_TO_DESTINATION" ) {
+                    command.detail += " " + std::string( _( "Starts travel to this destination after the game's confirmation prompt." ) );
+                } else {
+                    command.detail += " " + std::string( _( "Moves the map cursor to the destination and does not start travel." ) );
+                }
+            }
+        } else if( command.id == "CENTER" ) {
+            command.detail = _( "Move the map cursor to the player's current location." );
+        } else if( command.id == "CREATE_NOTE" ) {
+            command.detail = string_format( _( "Create or edit a map note at X %1$d, Y %2$d, level %3$d." ),
+                                            cursor.x(), cursor.y(), cursor.z() );
+        } else if( command.id == "DELETE_NOTE" ) {
+            if( !cursor_has_note ) {
+                command.enabled = false;
+                command.disabled_reason = _( "There is no map note at the current cursor." );
+                command.detail = command.disabled_reason;
+            } else {
+                command.detail = _( "Delete the note at the current cursor after confirmation." );
+            }
+        } else if( command.id == "MARK_DANGER" ) {
+            if( cursor_danger_radius >= 0 ) {
+                command.detail = string_format(
+                                     _( "A danger radius of %d map tiles is set at the cursor. "
+                                        "Open the prompt to remove it or choose another radius." ),
+                                     cursor_danger_radius );
+            } else if( cursor_has_note ) {
+                command.detail = _( "Open the prompt to set a danger radius for the note at the cursor." );
+            } else {
+                command.detail = _( "Create a danger note at the cursor, then choose its danger radius." );
+            }
+        } else if( command.id == "LIST_NOTES" ) {
+            command.detail = string_format( _( "Open the map notes list for level %d. Selecting a note moves the map cursor there; it does not start travel." ),
+                                            cursor.z() );
+        } else if( command.id == "CREATE_POINT_OF_INTEREST" ) {
+            command.detail = string_format( _( "Create a point of interest for the mission screen at X %1$d, Y %2$d, level %3$d." ),
+                                            cursor.x(), cursor.y(), cursor.z() );
+        } else if( command.id == "LEVEL_UP" ) {
+            command.detail = _( "Move the map cursor one overmap level higher without moving the player." );
+            if( cursor.z() >= OVERMAP_HEIGHT ) {
+                command.enabled = false;
+                command.disabled_reason = _( "The cursor is already at the highest overmap level." );
+            }
+        } else if( command.id == "LEVEL_DOWN" ) {
+            command.detail = _( "Move the map cursor one overmap level lower without moving the player." );
+            if( cursor.z() <= -OVERMAP_DEPTH ) {
+                command.enabled = false;
+                command.disabled_reason = _( "The cursor is already at the lowest overmap level." );
+            }
+        } else if( command.id == "TOGGLE_FAST_TRAVEL" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_only_auto_travel;
+            command.detail = _( "When enabled, keep the overmap open and follow the player during automatic travel." );
+        } else if( command.id == "TOGGLE_FAST_SCROLL" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_fast_scroll;
+            command.detail = _( "Toggle whether direction input moves the cursor several map tiles at once." );
+        } else if( command.id == "TOGGLE_MAP_NOTES" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_map_notes;
+            command.detail = _( "Show or hide map notes visually. The reader still describes a note at the cursor." );
+        }
+    }
     for( int dy = -1; dy <= 1; ++dy ) {
         for( int dx = -1; dx <= 1; ++dx ) {
             if( dx == 0 && dy == 0 ) {
