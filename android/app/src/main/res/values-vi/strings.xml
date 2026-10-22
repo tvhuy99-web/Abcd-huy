@@ -7,7 +7,7 @@
     <string name="helpTitle">Trợ giúp và điều khiển</string>
     <string name="helpMessage">"Vuốt" để di chuyển theo hướng (nhấn giữ để dùng cần điều khiển ảo). "Chạm" để xác nhận lựa chọn trong trình đơn hoặc tạm dừng một lượt trong trò chơi (nhấn giữ để tạm dừng nhiều lượt). "Chạm hai lần" để hủy hoặc quay lại trong trình đơn (tương tự phím Escape). "Chụm hai ngón" để phóng to hoặc thu nhỏ (trong trò chơi). Dùng nút "Quay lại" trên thiết bị để bật hoặc tắt bàn phím ảo (nhấn giữ để bật hoặc tắt các nút phím tắt).</string>
     <string name="accessibilityServicesTitle">Cảnh báo về dịch vụ trợ năng</string>
-    <string name="accessibilityServicesMessage">Nếu thao tác vuốt và trình đơn phím tắt không hoạt động trong trò chơi, hãy thử tắt một trong các dịch vụ hoặc phần mềm trợ năng sau đây đang tương tác với màn hình cảm ứng (hỗ trợ vuốt, tự động chạm, chế độ dùng một tay, v.v.):\n%1$s</string>
+    <string name="accessibilityServicesMessage">Một số dịch vụ trợ năng cảm ứng có thể ảnh hưởng cử chỉ trong game. Hãy giữ trình đọc màn hình khi thử phần thiết lập giọng. Bộ đọc gameplay vẫn đang được phát triển. Bạn có thể tiếp tục với điều khiển hiện có, hoặc mở thiết lập trợ năng và giọng đọc:\n%1$s</string>
     <string name="ignoreFalsePostives">Đánh dấu là cảnh báo nhầm</string>
     <string name="softwareRendering">Kết xuất bằng phần mềm</string>
     <string name="forceFullscreen">Buộc hiển thị toàn màn hình</string>
@@ -33,4 +33,22 @@
     <string name="cancel">Hủy</string>
     <string name="unavailable">Không khả dụng</string>
     <string name="unavailableOption">Tùy chọn bạn chọn hiện không khả dụng.</string>
+    <string name="a11yReaderSetup">Thiết lập trợ năng và giọng đọc</string>
+    <string name="a11yReaderSetupExplanation">Màn hình này dùng để thử giọng tiếng Việt. Bộ đọc và điều khiển trợ năng trong game chưa hoàn thiện. Hãy giữ TalkBack để sử dụng các nút này và cài đặt Android.</string>
+    <string name="a11yTestVietnamese">Phát thử giọng tiếng Việt</string>
+    <string name="a11yStopSpeech">Dừng lời đọc</string>
+    <string name="a11yAndroidVoiceSettings">Mở cài đặt giọng đọc Android</string>
+    <string name="a11yAllowNetworkVoice">Cho phép giọng cần internet. Công cụ giọng đọc được chọn có thể gửi câu thử qua mạng.</string>
+    <string name="a11yReturnToStartup">Quay lại màn hình khởi động</string>
+    <string name="a11ySpeechNew">Chọn Phát thử giọng tiếng Việt để kiểm tra công cụ giọng đọc Android hiện tại.</string>
+    <string name="a11ySpeechInitializing">Đang chuẩn bị giọng tiếng Việt. Có thể mất vài giây.</string>
+    <string name="a11ySpeechReady">Công cụ giọng đọc đã sẵn sàng. Chọn Phát thử giọng tiếng Việt để nghe câu mẫu.</string>
+    <string name="a11ySpeechSample">Xin chào. Đây là câu thử giọng tiếng Việt của Cataclysm. Bạn có thể dừng lời đọc và quay lại bất cứ lúc nào.</string>
+    <string name="a11ySpeechPlaying">Đang phát câu thử.</string>
+    <string name="a11ySpeechFinished">Đã kết thúc câu thử. Nếu bạn không nghe thấy, hãy kiểm tra âm lượng và cài đặt giọng đọc Android.</string>
+    <string name="a11ySpeechStopped">Đã dừng lời đọc. Không thực hiện hành động trong game.</string>
+    <string name="a11ySpeechMissingVietnamese">Công cụ hiện chọn chưa có giọng tiếng Việt dùng được. Hãy cài hoặc chọn giọng Việt trong cài đặt Android rồi thử lại.</string>
+    <string name="a11ySpeechNetworkRequired">Giọng hiện chọn cần internet. Hãy chọn giọng ngoại tuyến trong cài đặt Android, hoặc chủ động cho phép giọng qua mạng trong lần thử này.</string>
+    <string name="a11ySpeechFailed">Không thể bắt đầu hoặc đã gặp lỗi giọng đọc. Hãy thử lại hoặc chọn giọng khác trong cài đặt Android. Giữ TalkBack để tiếp tục thao tác.</string>
+    <string name="a11ySettingsUnavailable">Android không mở được cài đặt. Bạn có thể quay lại màn hình khởi động hoặc mở cài đặt từ điện thoại.</string>
 </resources>

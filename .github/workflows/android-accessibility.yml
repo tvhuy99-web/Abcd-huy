@@ -1,0 +1,149 @@
+name: Android accessibility baseline and candidate
+
+on:
+  push:
+    branches: [feature/android-internal-reader]
+    paths:
+      - 'android/**'
+      - 'src/**'
+      - 'tools/accessibility/**'
+      - '.github/workflows/android-accessibility.yml'
+  pull_request:
+    branches: [master]
+    paths:
+      - 'android/**'
+      - 'src/a11y*'
+      - 'tools/accessibility/**'
+      - '.github/workflows/android-accessibility.yml'
+  workflow_dispatch:
+    inputs:
+      compare_baseline:
+        description: 'Also rebuild the pinned baseline (automatic runs build the candidate only)'
+        type: boolean
+        default: true
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-accessibility-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  inventory:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/android-internal-reader'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
+      - run: bash tools/accessibility/run_core_tests.sh
+      - run: bash tools/accessibility/run_speech_tests.sh
+      - run: python3 tools/accessibility/inventory.py --output "$RUNNER_TEMP/a11y-inventory.json"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: accessibility-inventory
+          path: ${{ runner.temp }}/a11y-inventory.json
+
+  android:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/android-internal-reader'
+    name: Android ARM64 (${{ matrix.name }})
+    runs-on: ubuntu-24.04
+    timeout-minutes: 90
+    strategy:
+      fail-fast: false
+      matrix:
+        include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.compare_baseline && '[{"name":"baseline","ref":"8ef359c74cc25e256919558bf7b3340f9b56a80d"},{"name":"candidate","ref":""}]' || '[{"name":"candidate","ref":""}]') }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          ref: ${{ matrix.ref }}
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
+          log-accepted-android-sdk-licenses: false
+      - name: Install build dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext ccache
+      - name: Record build identity
+        env:
+          BUILD_KIND: ${{ matrix.name }}
+        run: |
+          mkdir -p build-evidence
+          git rev-parse HEAD > build-evidence/commit.txt
+          git status --short > build-evidence/worktree.txt
+          java -version 2> build-evidence/java.txt
+          sdkmanager --list_installed > build-evidence/sdk.txt
+          cp android/gradle.properties build-evidence/gradle.properties
+          echo "Build: $BUILD_KIND" >> "$GITHUB_STEP_SUMMARY"
+          cat build-evidence/commit.txt >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ccache
+          key: a11y-android-arm64-ndk28-${{ matrix.name }}-${{ github.sha }}
+          restore-keys: |
+            a11y-android-arm64-ndk28-${{ matrix.name }}-
+            a11y-android-arm64-ndk28-
+      - name: Build installable debug APK
+        working-directory: android
+        env:
+          BUILD_KIND: ${{ matrix.name }}
+          CCACHE_DIR: /home/runner/.cache/ccache
+          CCACHE_MAXSIZE: 2G
+        run: |
+          set -o pipefail
+          if [[ "$BUILD_KIND" == baseline ]]; then
+            task_build_command=assembleExperimentalDebug
+            task_signing_args=()
+          else
+            task_build_command=assembleAccessibilityDebug
+            task_signing_args=(-Paccessibility_test_signing=true)
+          fi
+          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
+      - name: Verify APK contents and checksums
+        env:
+          BUILD_KIND: ${{ matrix.name }}
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          import pathlib
+          import re
+          import subprocess
+          import zipfile
+          apks = sorted(pathlib.Path('android/app/build/outputs/apk').rglob('*.apk'))
+          if not apks:
+              raise SystemExit('No APK produced')
+          with pathlib.Path('build-evidence/SHA256SUMS').open('w') as out:
+              for apk in apks:
+                  with zipfile.ZipFile(apk) as archive:
+                      names = archive.namelist()
+                      for required in ('lib/arm64-v8a/libmain.so', 'assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo'):
+                          if required not in names:
+                              raise SystemExit(f'{apk}: missing {required}')
+                  signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
+                  signature = subprocess.check_output([str(signer), 'verify', '--verbose', '--print-certs', str(apk)], text=True)
+                  pathlib.Path('build-evidence/signer.txt').write_text(signature)
+                  if os.environ['BUILD_KIND'] == 'candidate':
+                      expected = pathlib.Path('android/app/accessibility-test-cert.sha256').read_text().strip()
+                      found = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)', signature)
+                      if not found or found.group(1).lower() != expected:
+                          raise SystemExit('Candidate is not signed with the stable public accessibility test key')
+                  out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: android-arm64-${{ matrix.name }}
+          retention-days: 14
+          path: |
+            build-evidence/
+            android/app/build/outputs/apk/**/*.apk
+            android/app/build/reports/

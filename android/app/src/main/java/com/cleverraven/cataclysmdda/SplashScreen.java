@@ -169,9 +169,9 @@ public class SplashScreen extends Activity {
                     return;
                 }
             })
-            .setNeutralButton(getString(R.string.showAccessibilitySettings), new DialogInterface.OnClickListener() {
+            .setNeutralButton(getString(R.string.a11yReaderSetup), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
-                        startActivityForResult(new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS), 0);
+                        startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
                         dialog.dismiss();
                         return;
                     }
