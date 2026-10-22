@@ -141,16 +141,18 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   sau khi resume nếu callback đến khi không có phiên trình bày.
 - Dùng hàng lời nói đang có: bad/warning/critical đi mức URGENT; loại còn lại
   đi INFORMATION và không cắt ngang lời focus. Hàng đợi vẫn có giới hạn 8 mục
-  và thời hạn; cảnh báo khẩn có thể ngắt lời thường theo chính sách hiện có.
-  Yêu cầu focus đang chờ bị bỏ khi cảnh báo khẩn cắt ngang để tránh đọc lại
-  lời focus đã cũ sau cảnh báo.
+  và thời hạn; cảnh báo khẩn ngắt nội dung đang đọc, xóa lời ưu tiên thấp còn
+  chờ và không bị loại khi hàng đợi đầy lời thường. Khi đầy, hàng đợi bỏ mục
+  ưu tiên thấp nhất; nếu bằng mức thì bỏ mục cũ nhất để trạng thái mới được đọc.
+  Yêu cầu focus cũ cũng bị bỏ khi lời ưu tiên cao hơn đến.
   Với TalkBack/touch exploration, đăng thông báo qua status view.
 - Chỉ đọc thông báo mới không rỗng mà player log thực sự nhận: debug bị bỏ,
   thông báo cooldown ẩn bị bỏ, thông báo coalesce không đọc lặp. Đây chưa phải
   bộ phát hiện mọi thay đổi trạng thái: nguy hiểm không phát `add_msg` vẫn cần
   adapter/cảnh báo riêng.
 - Cần kiểm tra: thông điệp Việt có dấu; ưu tiên khẩn khi đang đọc văn bản dài;
-  dồn trên 8 thông báo/hết hạn; trùng/coalesce/cooldown; log bị deactivate;
+  cảnh báo khẩn xóa tồn lời nền; dồn trên 8 thông báo/hết hạn; cảnh báo không
+  bị loại khi hàng đợi đầy; trùng/coalesce/cooldown; log bị deactivate;
   debug; vào nền/đổi cửa sổ/tắt reader; chuyển màn, load save, death và voice
   chưa sẵn sàng; TalkBack bật; âm thanh trên thiết bị. Chưa biên dịch/chạy.
 

@@ -143,8 +143,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         Request request = new Request(contextKey, key, text, priority);
         for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
             Request old = iterator.next();
-            if (old.key.equals(key) || (priority == FOCUS && old.priority == FOCUS)
-                    || (priority > FOCUS && old.priority == FOCUS)) {
+            if ((old.key.equals(key) && old.priority <= priority)
+                    || (priority == FOCUS && old.priority == FOCUS)
+                    || (priority > FOCUS && old.priority == FOCUS)
+                    || (priority >= URGENT && old.priority < URGENT)) {
                 iterator.remove();
             }
         }
@@ -155,8 +157,29 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             removeCompletionTimeout();
             speech.cancel();
         }
-        if (pending.size() == MAX_PENDING) {
-            pending.removeFirst();
+        // Drop expired work before applying the limit.  When full, preserve
+        // higher-priority requests; if the new request ties the lowest
+        // priority, replace its oldest item so recent state wins.
+        long now = SystemClock.elapsedRealtime();
+        for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
+            Request queued = iterator.next();
+            if (!queued.context.equals(contextKey) || queued.expires < now) {
+                iterator.remove();
+            }
+        }
+        if (pending.size() >= MAX_PENDING) {
+            Request lowest = null;
+            for (Request queued : pending) {
+                if (lowest == null || queued.priority < lowest.priority) {
+                    lowest = queued;
+                }
+            }
+            if (lowest != null && lowest.priority > priority) {
+                return;
+            }
+            if (lowest != null) {
+                pending.remove(lowest);
+            }
         }
         pending.addLast(request);
         advance();
