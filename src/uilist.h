@@ -31,6 +31,7 @@ class translation;
 namespace a11y
 {
 class screen_scope;
+struct semantic_node;
 }
 
 ////////////////////////////////////////////////////////////////////////////////////
@@ -237,6 +238,10 @@ class uilist_callback
                           uilist * ) {
             return false;
         }
+        // Customize the reader node for a registered action. Keep this state
+        // derived from the same menu selection and game data used by key().
+        virtual void describe_accessibility_action( const std::string &, int,
+                a11y::semantic_node & ) const {}
         virtual void refresh( uilist * ) {}
         virtual float desired_extra_space_left( ) {
             return 0.0;

@@ -34,6 +34,7 @@
 #include "game_constants.h"
 #include "generic_factory.h"
 #include "imgui/imgui.h"
+#include "input.h"
 #include "input_context.h"
 #include "input_enums.h"
 #include "inventory.h"
@@ -2851,8 +2852,16 @@ class spellcasting_callback : public uilist_callback
                 casting_ignore = !casting_ignore;
                 return true;
             } else if( action == "CHOOSE_INVLET" ) {
-                int invlet = 0;
-                invlet = popup_getkey( _( "Choose a new hotkey for this spell." ) );
+                const int invlet = choose_key_from_user( _( "Choose a new hotkey for this spell." ),
+                                  inv_chars.get_allowed_chars(), ' ' );
+                if( invlet == KEY_ESCAPE ) {
+                    return true;
+                }
+                if( invlet == ' ' ) {
+                    popup( _( "Hotkey removed." ) );
+                    get_player_character().magic->rem_invlet( known_spells[entnum]->id() );
+                    return true;
+                }
                 if( inv_chars.valid( invlet ) ) {
                     if( spellcasting_callback::reserved_invlets.count( invlet ) ) {
                         popup( _( "Can't use a reserved hotkey." ) );
@@ -2871,8 +2880,7 @@ class spellcasting_callback : public uilist_callback
                         }
                     }
                 } else {
-                    popup( _( "Hotkey removed." ) );
-                    get_player_character().magic->rem_invlet( known_spells[entnum]->id() );
+                    popup( _( "Invalid spell hotkey." ) );
                 }
                 return true;
             } else if( action == "SCROLL_FAVORITE" ) {

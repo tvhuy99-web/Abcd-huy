@@ -960,7 +960,8 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
         std::vector<std::string> reader_actions;
         for( const std::string &action : ctxt.registered_action_ids() ) {
             if( action != "ANY_INPUT" && action != "COORDINATE" && action != "MOUSE_MOVE" &&
-                action != "SELECT" && action != "CONFIRM" && action != "TIMEOUT" ) {
+                action != "SELECT" && action != "CONFIRM" && action != "TIMEOUT" &&
+                action.rfind( "A11Y_INTERNAL_", 0 ) != 0 ) {
                 reader_actions.push_back( action );
             }
         }
@@ -969,6 +970,9 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.id = "action:" + action;
             node.role = "command";
             node.label = ctxt.get_action_name( action );
+            if( callback != nullptr ) {
+                callback->describe_accessibility_action( action, selected, node );
+            }
             snapshot.nodes.push_back( std::move( node ) );
         }
         // A callback can rebuild entries with identical display text but a

@@ -2781,8 +2781,9 @@ void game_menus::inv::reassign_letter( item &it )
 {
     avatar &you = get_avatar();
     while( true ) {
-        const int invlet = popup_getkey(
-                               _( "Enter new letter.  Press SPACE to clear a manually-assigned letter, ESCAPE to cancel." ) );
+        const int invlet = choose_key_from_user(
+                               _( "Enter new letter.  Press SPACE to clear a manually-assigned letter, ESCAPE to cancel." ),
+                               inv_chars.get_allowed_chars(), ' ' );
 
         if( invlet == KEY_ESCAPE ) {
             break;
@@ -2798,6 +2799,8 @@ void game_menus::inv::reassign_letter( item &it )
         } else if( inv_chars.valid( invlet ) ) {
             you.reassign_item( it, invlet );
             break;
+        } else {
+            popup( _( "Invalid inventory letter." ) );
         }
     }
 }

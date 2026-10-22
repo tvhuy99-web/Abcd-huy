@@ -10,6 +10,7 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "enums.h"
+#include "input.h"
 #include "input_context.h"
 #include "inventory.h"
 #include "magic.h"
@@ -405,38 +406,22 @@ void avatar::power_mutations()
                 const mutation_branch &mut_data = mut_id.obj();
                 switch( menu_mode ) {
                     case mutation_menu_mode::reassigning: {
-                        query_popup pop;
-                        pop.message( _( "%s; enter new letter." ), mutation_name( mut_id ) )
-                        .preferred_keyboard_mode( keyboard_mode::keychar )
-                        .context( "POPUP_WAIT" )
-                        .allow_cancel( true )
-                        .allow_anykey( true );
-
-                        bool pop_exit = false;
-                        while( !pop_exit ) {
-                            const query_popup::result ret = pop.query();
-                            bool pop_handled = false;
-                            if( ret.evt.type == input_event_t::keyboard_char && !ret.evt.sequence.empty() ) {
-                                const int newch = ret.evt.get_first_input();
-                                if( mutation_chars.valid( newch ) ) {
-                                    const trait_id other_mut_id = trait_by_invlet( newch );
-                                    if( !other_mut_id.is_null() ) {
-                                        std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
-                                    } else {
-                                        cached_mutations[mut_id].key = newch;
-                                    }
-                                    pop_exit = true;
-                                    pop_handled = true;
-                                }
+                        int newch = KEY_ESCAPE;
+                        do {
+                            newch = choose_key_from_user(
+                                        string_format( _( "%s; enter new letter." ), mutation_name( mut_id ) ),
+                                        mutation_chars.get_allowed_chars() );
+                            if( newch != KEY_ESCAPE && !mutation_chars.valid( newch ) ) {
+                                popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
+                                       mutation_chars.get_allowed_chars() );
                             }
-                            if( !pop_handled ) {
-                                if( ret.action == "QUIT" ) {
-                                    pop_exit = true;
-                                } else if( ret.action != "HELP_KEYBINDINGS" &&
-                                           ret.evt.type == input_event_t::keyboard_char ) {
-                                    popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
-                                           mutation_chars.get_allowed_chars() );
-                                }
+                        } while( newch != KEY_ESCAPE && !mutation_chars.valid( newch ) );
+                        if( newch != KEY_ESCAPE ) {
+                            const trait_id other_mut_id = trait_by_invlet( newch );
+                            if( !other_mut_id.is_null() ) {
+                                std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
+                            } else {
+                                cached_mutations[mut_id].key = newch;
                             }
                         }
 
@@ -577,42 +562,24 @@ void avatar::power_mutations()
                     const mutation_branch &mut_data = mut_id.obj();
                     switch( menu_mode ) {
                         case mutation_menu_mode::reassigning: {
-                            query_popup pop;
-                            pop.message( _( "%s; enter new letter." ), mutation_name( mut_id ) )
-                            .preferred_keyboard_mode( keyboard_mode::keychar )
-                            .context( "POPUP_WAIT" )
-                            .allow_cancel( true )
-                            .allow_anykey( true );
-
-                            bool pop_exit = false;
-                            while( !pop_exit ) {
-                                const query_popup::result ret = pop.query();
-                                bool pop_handled = false;
-                                if( ret.evt.type == input_event_t::keyboard_char && !ret.evt.sequence.empty() ) {
-                                    const int newch = ret.evt.get_first_input();
-                                    if( mutation_chars.valid( newch ) ) {
-                                        const trait_id other_mut_id = trait_by_invlet( newch );
-                                        if( !other_mut_id.is_null() ) {
-                                            std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
-                                        } else {
-                                            cached_mutations[mut_id].key = newch;
-                                        }
-                                        pop_exit = true;
-                                        pop_handled = true;
-                                    } else if( newch == ' ' ) {
-                                        cached_mutations[mut_id].key = newch;
-                                        pop_exit = true;
-                                        pop_handled = true;
-                                    }
+                            int newch = KEY_ESCAPE;
+                            do {
+                                newch = choose_key_from_user(
+                                            string_format( _( "%s; enter new letter." ), mutation_name( mut_id ) ),
+                                            mutation_chars.get_allowed_chars(), ' ' );
+                                if( newch != KEY_ESCAPE && newch != ' ' && !mutation_chars.valid( newch ) ) {
+                                    popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
+                                           mutation_chars.get_allowed_chars() );
                                 }
-                                if( !pop_handled ) {
-                                    if( ret.action == "QUIT" ) {
-                                        pop_exit = true;
-                                    } else if( ret.action != "HELP_KEYBINDINGS" &&
-                                               ret.evt.type == input_event_t::keyboard_char ) {
-                                        popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
-                                               mutation_chars.get_allowed_chars() );
-                                    }
+                            } while( newch != KEY_ESCAPE && newch != ' ' && !mutation_chars.valid( newch ) );
+                            if( newch == ' ' ) {
+                                cached_mutations[mut_id].key = newch;
+                            } else if( newch != KEY_ESCAPE && mutation_chars.valid( newch ) ) {
+                                const trait_id other_mut_id = trait_by_invlet( newch );
+                                if( !other_mut_id.is_null() ) {
+                                    std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
+                                } else {
+                                    cached_mutations[mut_id].key = newch;
                                 }
                             }
 

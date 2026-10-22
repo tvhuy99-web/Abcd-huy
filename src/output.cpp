@@ -17,6 +17,7 @@
 #include <string>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_imgui.h"
 #include "cata_utility.h"
@@ -836,7 +837,7 @@ int border_helper::border_connection::as_curses_line() const
 bool query_yn( const std::string &text )
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "ANDROID_NATIVE_UI" ) ) {
+    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && !a11y::enabled() ) {
         JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
         jobject activity = ( jobject )GetAndroidActivity();
         jclass clazz( env->GetObjectClass( activity ) );
@@ -949,7 +950,7 @@ PopupFlags popup_flag_from_string( const std::string &str )
 int popup( const std::string &text, PopupFlags flags )
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && flags == PF_NONE ) {
+    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && flags == PF_NONE && !a11y::enabled() ) {
         JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
         jobject activity = ( jobject )GetAndroidActivity();
         jclass clazz( env->GetObjectClass( activity ) );
@@ -990,6 +991,28 @@ int popup( const std::string &text, PopupFlags flags )
     } else {
         return UNKNOWN_UNICODE;
     }
+}
+
+int choose_key_from_user( const std::string &message, const std::string &allowed_keys,
+                          const int clear_key )
+{
+    if( !a11y::enabled() ) {
+        return popup( message, PF_GET_KEY );
+    }
+
+    uilist keys;
+    keys.title = _( "Choose a key" );
+    keys.text = message;
+    for( const char character : allowed_keys ) {
+        const int key = static_cast<unsigned char>( character );
+        const input_event event( key, input_event_t::keyboard_char );
+        keys.addentry( key, true, -1, event.long_description() );
+    }
+    if( clear_key >= 0 ) {
+        keys.addentry( clear_key, true, -1, _( "Clear current key" ) );
+    }
+    keys.query();
+    return keys.ret == UILIST_CANCEL ? KEY_ESCAPE : keys.ret;
 }
 
 //note that passing in iteminfo instances with sType == "DESCRIPTION" does special things

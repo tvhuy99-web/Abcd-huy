@@ -832,8 +832,9 @@ void avatar::power_bionics()
                 // Selected an non-existing bionic (or Escape, or ...)
                 continue;
             }
-            const int newch = popup_getkey( _( "%s; enter new letter.  Space to clear.  Esc to cancel." ),
-                                            tmp->id->name );
+            const int newch = choose_key_from_user(
+                                  string_format( _( "%s; enter new letter.  Space to clear.  Esc to cancel." ),
+                                          tmp->id->name ), bionic_chars.get_allowed_chars(), ' ' );
             if( newch == ch || newch == KEY_ESCAPE ) {
                 continue;
             }

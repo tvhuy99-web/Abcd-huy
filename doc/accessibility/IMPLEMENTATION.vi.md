@@ -38,8 +38,9 @@ chưa chạy instrumentation test.
 | Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận sau khi nghe hết mẫu; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; flavor trợ năng tự mở setup trước engine khi không có TalkBack và reader đang tắt; setup có vuốt trái/phải, chạm đơn đọc, chạm đôi kích hoạt, vuốt dọc chỉnh mục dạng thanh, hai ngón dừng; tùy chọn thuận tay trái chỉ đảo duyệt menu; chỉnh khoảng cách/thời gian vuốt và khôi phục mặc định; Splash tự đọc tiến độ chép dữ liệu theo mốc 10%, lỗi có thử lại, màn cài đặt ban đầu/trợ giúp và thông báo crash có đường đọc; giọng Việt không có vẫn cần TalkBack để phục hồi; chưa kiểm thử |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới kèm số bản lưu có thể tải, tài liệu; tạo/tải save vẫn cần nghiệm thu |
-| Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; lý do cũng nằm trong chi tiết khi game cho phép kích hoạt mục bị khóa để xem giải thích; có helper cho vòng `query_once` ngoài |
-| Hộp thoại | `popup.cpp` | Văn bản câu hỏi, chọn, hủy/tiếp tục qua action gốc; các dialog native khác vẫn cần tích hợp |
+| Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; callback có thể công bố action kèm trạng thái checked/disabled; callback legacy cần action ID ngữ nghĩa, không chỉ phím ký tự |
+| Hộp thoại | `popup.cpp`, `output.cpp`, `NativeUI.java` | Khi reader bật, `query_yn` và popup thông báo không chặn ở AlertDialog Java mà dùng popup ngữ nghĩa trong game; native list đã nhường cho `uilist`; TalkBack tiếp tục đọc native UI khi reader tắt; chưa kiểm chứng trên máy |
+| Gán phím | `output.cpp`, `input_context.cpp`, `game_inventory.cpp`, `magic.cpp`, `bionics_ui.cpp`, `mutation_ui.cpp` | Khi reader bật, chọn phím từ danh sách ký tự hợp lệ; hủy giữ giá trị cũ, xóa phím là một lựa chọn riêng; thêm phím cho lệnh dùng danh sách chữ/số; đổi va chạm và mọi mode chưa kiểm chứng |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab/lệnh; kịch bản/nghề nêu lựa chọn hiện tại, nghề/nền tảng nêu chi phí điểm; tổng kết ngữ nghĩa có tên, giới tính, ngoại hình, kịch bản/nghề/nền tảng, điểm còn lại, thuộc tính, kỹ năng, đặc tính kèm điểm, xung đột và bionic cản, proficiency, bionic, phép, nhiệm vụ, ngày/địa điểm/xe bắt đầu và xếp hạng; các dòng chọn vẫn gọi action gốc; chưa kiểm chứng dữ liệu từng biến thể, lựa chọn thành phố hoặc luồng bắt đầu/lưu/tải |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
 | Thông tin hợp lệ | `a11y_perception`, `a11y_world` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; quét dọc tùy chọn chỉ dùng memory; có bộ lọc ô đã biết/đáng chú ý/dấu âm thanh, gồm cửa và lối lên/xuống đã thấy hoặc nhớ; cảm nhận đặc biệt dùng mô tả game cho phép, chưa đọc địa hình ẩn; bẫy/item/creature theo kiểm tra gốc; ô đáng chú ý được gắn nhóm thông tin rồi xếp thứ tự bẫy đã biết, sinh vật nhìn thấy, cảm nhận, trường, vật cản, lối đi, âm thanh, phương tiện, vật phẩm và đồ đạc; dấu âm thanh được nói rõ là gần đúng; chưa kiểm thử ranh giới hoặc mức ưu tiên |
@@ -66,10 +67,12 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   có nút thử lại/thoát, màn tùy chọn khởi động và trợ giúp dùng được bằng cử chỉ.
   Chưa có cài đặt theo kiểu stage/rollback nếu tiến trình bị kill hoặc ghi dữ liệu
   hỏng. Nếu thiếu giọng Việt, vẫn cần TalkBack để chọn/cài giọng. Chưa kiểm thử.
-- G2: đổi ánh xạ hành động tùy biến (chưa viết); đã thêm cấu hình tay thuận,
-  ngưỡng và thời gian vuốt có khôi phục mặc định; còn cấu hình duyệt an toàn
-  tám hướng, biểu mẫu/bảng/cây,
-  các callback chỉ đọc phím thô, toàn bộ dialog native và adapter ngữ cảnh lồng.
+- G2: đã nối action ngữ nghĩa cho các callback phím thô trong menu wish/debug,
+  có trạng thái checked/disabled cho các lệnh callback, chọn ký tự cho luồng
+  đổi phím vật phẩm/phép/bionics/mutation và bàn phím lệnh; khi reader bật,
+  popup/Yes-No không còn nhảy sang Java modal. Vẫn còn ánh xạ cử chỉ tùy biến,
+  quy tắc duyệt an toàn tám hướng, biểu mẫu/bảng/cây, audit các đường raw-input
+  còn lại và adapter ngữ cảnh lồng. Chưa build hoặc kiểm thử các thay đổi này.
 - G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; sao chép/đổi tên thế
   giới; cài đặt dữ liệu mod; tên nhân vật, template, tạo mới,
   tải và vào lại save; cấu hình lượt/realtime có lựa chọn rõ ràng. Bộ chọn

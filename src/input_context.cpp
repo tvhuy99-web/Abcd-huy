@@ -40,6 +40,7 @@
 #include "translations.h"
 #include "ui_manager.h"
 #include "sdl_gamepad.h"
+#include "uilist.h"
 
 enum class kb_menu_status {
     remove, reset, add, add_global, execute, show, filter
@@ -1049,12 +1050,38 @@ bool input_context::action_remove( const std::string &name, const std::string &a
 bool input_context::action_add( const std::string &name, const std::string &action_id,
                                 bool is_local, kb_menu_status status )
 {
-    const input_event new_event = query_popup()
-                                  .preferred_keyboard_mode( preferred_keyboard_mode )
-                                  .message( _( "New key for %s" ), name )
-                                  .allow_anykey( true )
-                                  .query()
-                                  .evt;
+    input_event new_event;
+    if( a11y::enabled() ) {
+        uilist key_menu;
+        key_menu.title = _( "Choose a key" );
+        key_menu.text = string_format( _( "Choose a letter or number for %s." ), name );
+        std::vector<input_event> key_options;
+        const hotkey_queue &queue = hotkey_queue::alpha_digits();
+        input_event candidate = queue.first( *this );
+        while( candidate.type != input_event_t::error ) {
+            uilist_entry entry( static_cast<int>( key_options.size() ), true, -1,
+                                candidate.long_description() );
+            key_menu.addentry( entry );
+            key_options.push_back( candidate );
+            candidate = queue.next( candidate );
+        }
+        if( key_options.empty() ) {
+            popup( _( "No single-character keys are available." ) );
+            return false;
+        }
+        key_menu.query();
+        if( key_menu.ret < 0 || key_menu.ret >= static_cast<int>( key_options.size() ) ) {
+            return false;
+        }
+        new_event = key_options[key_menu.ret];
+    } else {
+        new_event = query_popup()
+                    .preferred_keyboard_mode( preferred_keyboard_mode )
+                    .message( _( "New key for %s" ), name )
+                    .allow_anykey( true )
+                    .query()
+                    .evt;
+    }
 
     if( action_uses_input( action_id, new_event )
         // Allow adding keys already used globally to local bindings
