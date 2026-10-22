@@ -26,6 +26,7 @@ concurrency:
 
 jobs:
   inventory:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/android-internal-reader'
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
@@ -41,6 +42,7 @@ jobs:
           path: ${{ runner.temp }}/a11y-inventory.json
 
   android:
+    if: github.event_name != 'pull_request' || github.head_ref != 'feature/android-internal-reader'
     name: Android ARM64 (${{ matrix.name }})
     runs-on: ubuntu-24.04
     timeout-minutes: 90

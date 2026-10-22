@@ -5,6 +5,7 @@ import android.os.Handler;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
+import android.speech.tts.Voice;
 
 import java.util.Locale;
 
@@ -14,7 +15,7 @@ import java.util.Locale;
  *  The owner must close this instance when its lifecycle ends.
  */
 public final class AndroidSpeech implements AutoCloseable {
-    public enum State { NEW, INITIALIZING, READY, MISSING_LANGUAGE, FAILED, CLOSED }
+    public enum State { NEW, INITIALIZING, READY, MISSING_LANGUAGE, NETWORK_REQUIRED, FAILED, CLOSED }
     public enum Event { STARTED, DONE, CANCELLED, REJECTED, ERROR }
 
     public interface Listener {
@@ -48,10 +49,15 @@ public final class AndroidSpeech implements AutoCloseable {
      *  A null engineName asks Android for the user's default engine.
      */
     public void initialize(String engineName, Locale language, float rate) {
-        handler.post(() -> initializeOnMain(engineName, language, rate));
+        initialize(engineName, language, rate, true);
     }
 
-    private void initializeOnMain(String engineName, Locale language, float rate) {
+    /** Online voices require an explicit caller choice, never silent fallback. */
+    public void initialize(String engineName, Locale language, float rate, boolean offlineOnly) {
+        handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly));
+    }
+
+    private void initializeOnMain(String engineName, Locale language, float rate, boolean offlineOnly) {
         if (state == State.CLOSED) {
             return;
         }
@@ -82,6 +88,15 @@ public final class AndroidSpeech implements AutoCloseable {
                     if (result < 0 || engine.setSpeechRate(rate) == TextToSpeech.ERROR
                             || engine.setOnUtteranceProgressListener(progress) == TextToSpeech.ERROR) {
                         fail(State.FAILED);
+                        return;
+                    }
+                    Voice voice = engine.getVoice();
+                    if (voice == null || !language.getLanguage().equals(voice.getLocale().getLanguage())) {
+                        fail(State.MISSING_LANGUAGE);
+                        return;
+                    }
+                    if (offlineOnly && voice.isNetworkConnectionRequired()) {
+                        fail(State.NETWORK_REQUIRED);
                         return;
                     }
                     if (session.markReady(epoch)) {

@@ -24,6 +24,8 @@ public final class TextToSpeech {
     public boolean stopThrows;
     public boolean closed;
     public String token;
+    public boolean networkVoice;
+    private Locale locale;
 
     public TextToSpeech(Context context, OnInitListener listener) {
         initialized = listener;
@@ -39,7 +41,12 @@ public final class TextToSpeech {
     }
 
     public int setLanguage(Locale locale) {
+        this.locale = locale;
         return languageResult;
+    }
+
+    public Voice getVoice() {
+        return new Voice(locale, networkVoice);
     }
 
     public int setSpeechRate(float rate) {

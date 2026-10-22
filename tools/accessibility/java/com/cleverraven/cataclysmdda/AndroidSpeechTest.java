@@ -121,6 +121,21 @@ public final class AndroidSpeechTest {
         check(engine.closed, "Missing-language engine must be released");
 
         fresh();
+        engine = initialize();
+        engine.networkVoice = true;
+        engine.finishInit(TextToSpeech.SUCCESS);
+        Looper.runReady();
+        check(speech.getState() == AndroidSpeech.State.NETWORK_REQUIRED, "Online voice must require an explicit choice");
+        check(engine.closed, "Rejected online voice must release the engine");
+        speech.initialize(null, new Locale("vi", "VN"), 1.0f, false);
+        Looper.runReady();
+        engine = TextToSpeech.latest;
+        engine.networkVoice = true;
+        engine.finishInit(TextToSpeech.SUCCESS);
+        Looper.runReady();
+        check(speech.getState() == AndroidSpeech.State.READY, "Explicit online choice may use an online voice");
+
+        fresh();
         engine = ready();
         engine.speakResult = TextToSpeech.ERROR;
         speech.speak("error", "Lỗi xếp hàng");
