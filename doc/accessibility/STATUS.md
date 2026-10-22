@@ -50,6 +50,13 @@ Ngày 22/10/2026:
   trước khi có điều khiển thay thế. Đường đánh dấu cảnh báo nhầm vẫn giữ nguyên.
 - Màn thử không nạp engine game/JNI, hủy sample khi sang nền, đóng TTS theo
   vòng đời Activity; cần kiểm chứng UI/lifecycle thật trên Android.
+- Thêm flavor thử `accessibility` với application ID và DocumentsProvider riêng
+  để APK thử không thay bản stable/experimental hoặc dùng chung bản lưu của chúng.
+  CI candidate mới dùng `assembleAccessibilityDebug`; baseline cũ vẫn dùng
+  `assembleExperimentalDebug`. Chưa yêu cầu người dùng gỡ bản game đang có.
+- Chuẩn bị 2 instrumentation tests cho nhãn/nút, opt-in mạng sau recreate,
+  dừng khi đang khởi tạo, đi nền/trở lại và thoát. Workflow emulator dùng APK
+  UI-only x86_64, không được coi là APK gameplay hay kiểm thử tiếng Việt nghe thật.
 - Kiểm kê thủ công đầu ở [COVERAGE.md](COVERAGE.md) bổ sung minigame,
   màn y tế, điều khiển động cơ, study zones và nhật ký.
 

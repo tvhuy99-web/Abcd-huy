@@ -331,6 +331,9 @@ android {
     }
 
     defaultConfig {
+        // Preserve the existing providers for stable/experimental. The reader
+        // test flavor below uses its own authority so it can be installed beside them.
+        manifestPlaceholders = [documentsAuthority: 'com.cleverraven.cataclysmdda.documents']
         minSdkVersion override_minSdkVersion
         targetSdkVersion override_targetSdkVersion
         versionCode Integer.valueOf(override_versionCode)
@@ -388,7 +391,7 @@ android {
                 arguments(*cmakeArgs as String[])
             }
         }
-        testInstrumentationRunner "android.support.test.runner.AndroidJUnitRunner"
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
     }
 
     flavorDimensions "version"
@@ -402,6 +405,12 @@ android {
             dimension "version"
             applicationIdSuffix ".experimental"
             resValue "string", "app_name", "Cataclysm DDA (experimental)"
+        }
+        accessibility {
+            dimension "version"
+            applicationIdSuffix ".accessibility"
+            manifestPlaceholders = [documentsAuthority: 'com.cleverraven.cataclysmdda.accessibility.documents']
+            resValue "string", "app_name", "Cataclysm DDA - Thử trợ năng"
         }
     }
 
@@ -521,6 +530,8 @@ sourceSets {
 }
 
 dependencies {
+    androidTestImplementation 'androidx.test:runner:1.6.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.2.1'
     api fileTree(include: ['*.jar'], dir: 'libs')
     sdl3Aars.each { entry ->
         implementation files("libs/${entry.name}-${entry.version}.aar")

@@ -39,10 +39,14 @@ public final class ReaderSetupActivity extends Activity {
         explanation.setText(R.string.a11yReaderSetupExplanation);
         layout.addView(explanation);
         status = new TextView(this);
+        status.setId(R.id.a11y_speech_status);
+        status.setSaveEnabled(false);
         status.setText(R.string.a11ySpeechNew);
         layout.addView(status);
 
         online = new CheckBox(this);
+        online.setId(R.id.a11y_network_voice);
+        online.setSaveEnabled(false);
         online.setText(R.string.a11yAllowNetworkVoice);
         // Online speech is opt-in for this test; never restore it silently.
         online.setChecked(false);
@@ -53,16 +57,18 @@ public final class ReaderSetupActivity extends Activity {
             sample.setEnabled(false);
             speech.initialize(null, new Locale("vi", "VN"), 1.0f, !online.isChecked());
         });
+        sample.setId(R.id.a11y_test_voice);
+        sample.setSaveEnabled(false);
         button(layout, R.string.a11yStopSpeech, view -> {
             sampleRequested = false;
             speech.cancel();
             showStatus(R.string.a11ySpeechStopped, true);
-        });
+        }).setId(R.id.a11y_stop_voice);
         button(layout, R.string.a11yAndroidVoiceSettings,
                 view -> openSettings("com.android.settings.TTS_SETTINGS"));
         button(layout, R.string.showAccessibilitySettings,
                 view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
-        button(layout, R.string.a11yReturnToStartup, view -> finish());
+        button(layout, R.string.a11yReturnToStartup, view -> finish()).setId(R.id.a11y_return);
         setContentView(scroll);
 
         speech = new AndroidSpeech(this, new AndroidSpeech.Listener() {

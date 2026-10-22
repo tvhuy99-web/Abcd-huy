@@ -94,11 +94,17 @@ jobs:
       - name: Build installable debug APK
         working-directory: android
         env:
+          BUILD_KIND: ${{ matrix.name }}
           CCACHE_DIR: /home/runner/.cache/ccache
           CCACHE_MAXSIZE: 2G
         run: |
           set -o pipefail
-          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false assembleExperimentalDebug 2>&1 | tee ../build-evidence/gradle.log
+          if [[ "$BUILD_KIND" == baseline ]]; then
+            task_build_command=assembleExperimentalDebug
+          else
+            task_build_command=assembleAccessibilityDebug
+          fi
+          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
       - name: Verify APK contents and checksums
         run: |
           python3 - <<'PY'

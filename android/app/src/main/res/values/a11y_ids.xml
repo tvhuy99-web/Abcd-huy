@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <item type="id" name="a11y_speech_status" />
+    <item type="id" name="a11y_network_voice" />
+    <item type="id" name="a11y_test_voice" />
+    <item type="id" name="a11y_stop_voice" />
+    <item type="id" name="a11y_return" />
+</resources>

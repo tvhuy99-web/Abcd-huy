@@ -52,4 +52,4 @@ jobs:
         run: |
           bash ./gradlew --no-daemon --console=plain \
             -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false \
-            compileExperimentalDebugJavaWithJavac
+            compileAccessibilityDebugJavaWithJavac
