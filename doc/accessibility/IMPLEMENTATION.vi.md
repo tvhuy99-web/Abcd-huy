@@ -47,6 +47,8 @@ chưa chạy instrumentation test.
 | Thế giới | `worldfactory.cpp`, `options.cpp`, `overmap_ui.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; hàng chọn tách khỏi xác nhận vào; tạo thế giới đọc tên, mức tùy chọn, chỉnh tăng/giảm, mod đang bật và các nút hoàn tất/đặt lại/ngẫu nhiên/nâng cao; bộ chọn mod khi tạo/sao chép world đọc nhóm, mod khả dụng/đang bật, mô tả, xung đột và thứ tự nạp; tùy chọn nâng cao đọc tab, nhóm, giá trị, mô tả, điều kiện và lệnh chỉnh; màn xem mod của world hiện có đọc mô tả và thứ tự nạp ở chế độ chỉ xem; tại bản đồ có ô hiện tại, địa hình/đồ đạc chỉ trong map memory tại các tầng đã chọn, bộ lọc ô đã biết/đáng chú ý/dấu âm thanh, trạng thái, thông báo gần đây, quét và lệnh; bản đồ lớn đọc con trỏ, ô kế cận theo trí nhớ khám phá, ghi chú/vùng nguy hiểm, vị trí tương đối và điểm đến/tọa độ/độ dài tuyến hiện tại; focus hoặc kích hoạt ô/tuyến chỉ đổi con trỏ, không khởi hành; bộ đọc báo lại ô con trỏ và tuyến khi điểm đến đổi; vuốt tám hướng tùy chọn dùng action gốc; cài/thay dữ liệu mod, đổi tên/sao chép thế giới, thăm dò/đường đi nâng cao còn thiếu; chưa kiểm thử |
 | Hành trang | `inventory_ui.cpp/.h`, `GameReaderController.java` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; reader tự đọc lại hàng đang focus khi số lượng/chọn/vô hiệu đổi; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Giao dịch NPC | `trade_ui.cpp`, `inventory_ui.cpp/.h` | Snapshot của pane giao dịch nêu số đơn vị và giá trị ước tính hai phía, số dư/tín dụng/nợ, số dư ngân hàng, giới hạn chấp nhận và pane đang hoạt động; giao dịch vẫn chốt bằng lệnh gốc; chưa kiểm tra chia stack, đổi tiền và tác động sau trao đổi |
+| Nhiệm vụ và điểm quan tâm | `mission_ui.cpp`, `mission_companion.cpp` | Reader đọc bốn tab, mục đang chọn/vị trí trong danh sách, nhiệm vụ/điểm quan tâm, mô tả, người giao, phe, tọa độ/khoảng cách, hạn còn lại/kết quả và mục tiêu hiện hành; giao diện giao việc/trả đồng đội và tab trại đọc lựa chọn, chi tiết, trạng thái khả dụng; đổi tab/hàng đồng bộ với UI, xác nhận/xóa điểm đi qua action gốc; chưa kiểm thử kết quả/điều kiện từng nhiệm vụ và toàn luồng trại |
+| Phe và đồng đội | `faction_ui.cpp` | Reader đọc tab trại/người theo/nhóm khác/sinh vật, danh sách và chi tiết đang chọn; người theo gồm nhiệm vụ/ETA, vị trí, khả năng liên hệ, trạng thái, sức khỏe, nhu cầu, trang bị và kỹ năng; xác nhận chỉ hiện khi có hành động phù hợp; chưa kiểm thử hoặc đối chiếu mọi tình huống dữ liệu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
 | Xây dựng | `construction.cpp` | Nhóm, biến thể/công đoạn, mô tả, yêu cầu và trạng thái vị trí; CONFIRM/đặt công trình dùng logic gốc; blueprint và các điều kiện đặc biệt chưa thử |
@@ -104,7 +106,13 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
   cùng danh sách mục tiêu có thể ngắm theo tri thức hiện tại; còn phải đối chiếu mọi
   biến thể/pocket, hướng ngắm, xác nhận tấn công và hoàn thiện chi tiết thiếu.
-- G6: overmap/travel/note/mission; NPC/giao dịch/cộng đồng (hội thoại có danh sách
+- G6: overmap/travel/note; màn nhiệm vụ có snapshot bốn tab, hàng đang chọn,
+  mô tả/chi tiết nhiệm vụ và điểm quan tâm, vị trí/khoảng cách, thời hạn/kết quả,
+  mục tiêu hiện hành; giao việc/trả đồng đội và tab giao nhiệm vụ trại đọc danh sách,
+  chi tiết, trạng thái được phép và đổi tab/hàng; xác nhận/xóa vẫn đi qua action gốc.
+  Bảng phe/trại/người theo đọc danh sách, thông tin trại, tình trạng nhiệm vụ,
+  liên hệ và sức khỏe người theo cùng dữ liệu bách khoa sinh vật; chưa kiểm thử.
+  Chưa kiểm thử điều kiện/kết quả từng nhiệm vụ hoặc toàn hành trình trại. NPC/giao dịch/cộng đồng (hội thoại có danh sách
   phản hồi, trạng thái điều kiện và lịch sử đọc dài; trade đọc tổng giá trị hai phía,
   số dư và giới hạn nhận hàng; tất cả chưa nghiệm thu); phương tiện
   và sơ đồ bộ phận/lái/remote; vùng/tự động hóa; bionics/đột biến/phép thuật;

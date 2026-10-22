@@ -2,9 +2,14 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_imgui.h"
@@ -91,9 +96,18 @@ class mission_ui_impl : public cataimgui::window
                                         const int &selected_mission ) const;
         void draw_label_with_value( const std::string &label, const std::string &value ) const;
         void draw_location( const std::string &label, const tripoint_abs_omt &loc ) const;
+        a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
+                const input_context &ctxt );
+        const std::string &parsed_description_for( const mission &selected, npc *mission_giver );
 
         mission_ui_tab_enum selected_tab = mission_ui_tab_enum::ACTIVE;
         mission_ui_tab_enum switch_tab = mission_ui_tab_enum::num_tabs;
+        int selected_mission = 0;
+        bool reader_selection_changed = false;
+        const mission *cached_description_mission = nullptr;
+        std::string cached_raw_description;
+        std::string cached_parsed_description;
 
         float window_width = std::clamp( float( str_width_to_pixels( EVEN_MINIMUM_TERM_WIDTH ) ),
                                          ImGui::GetMainViewport()->Size.x / 2,
@@ -130,9 +144,15 @@ void mission_ui::draw_mission_ui()
     // Smooths out our handling, makes tabs load immediately after input instead of waiting for next.
     ctxt.set_timeout( 10 );
 
+    a11y::screen_scope reader( &ctxt, "missions",
+    [&]( const a11y::semantic_intent &intent ) { return p_impl.reader_intent( intent, ctxt ); } );
+
     while( true ) {
         ui_manager::redraw_invalidated();
 
+        if( a11y::enabled() ) {
+            reader.update( p_impl.reader_snapshot( ctxt ) );
+        }
 
         p_impl.last_action = ctxt.handle_input();
 
@@ -148,8 +168,8 @@ void mission_ui_impl::draw_controls()
     std::vector<mission *> umissions;
     std::vector<point_of_interest> upoints_of_interest;
 
-    static int selected_mission = 0;
-    bool adjust_selected = false;
+    bool adjust_selected = reader_selection_changed;
+    reader_selection_changed = false;
 
     if( last_action == "QUIT" ) {
         return;
@@ -264,7 +284,8 @@ void mission_ui_impl::draw_controls()
             { mission_ui_tab_enum::ACTIVE, to_translation( "You have no active missions!" ) },
             { mission_ui_tab_enum::COMPLETED, to_translation( "You haven't completed any missions!" ) },
             { mission_ui_tab_enum::FAILED, to_translation( "You haven't failed any missions!" ) },
-            { mission_ui_tab_enum::POINTS_OF_INTEREST, to_translation( "You don't have any points of interest.  Add those from the overmap." ) }
+            { mission_ui_tab_enum::POINTS_OF_INTEREST, to_translation(
+                    "You don't have any points of interest.  Add those from the overmap." ) }
         };
         ImGui::TextWrapped( "%s", nope.at( selected_tab ).translated().c_str() );
         return;
@@ -307,6 +328,305 @@ void mission_ui_impl::draw_controls()
     }
 
     cataimgui::set_scroll( s );
+}
+
+a11y::semantic_snapshot mission_ui_impl::reader_snapshot( const input_context &ctxt )
+{
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Your missions" ) );
+    const auto append_tab = [&]( const char *id, const std::string &label,
+                                 const mission_ui_tab_enum tab, const int position ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "tab";
+        node.label = label;
+        node.selected = selected_tab == tab;
+        node.position = position;
+        node.total = static_cast<int>( mission_ui_tab_enum::num_tabs );
+        snapshot.nodes.push_back( std::move( node ) );
+        if( selected_tab == tab ) {
+            snapshot.focus = id;
+        }
+    };
+    append_tab( "missions:tab:active", _( "ACTIVE" ), mission_ui_tab_enum::ACTIVE, 1 );
+    append_tab( "missions:tab:completed", _( "COMPLETED" ), mission_ui_tab_enum::COMPLETED, 2 );
+    append_tab( "missions:tab:failed", _( "FAILED" ), mission_ui_tab_enum::FAILED, 3 );
+    append_tab( "missions:tab:points_of_interest", _( "POINTS OF INTEREST" ),
+                mission_ui_tab_enum::POINTS_OF_INTEREST, 4 );
+
+    std::vector<mission *> missions;
+    std::vector<point_of_interest> points;
+    switch( selected_tab ) {
+        case mission_ui_tab_enum::ACTIVE:
+            missions = get_avatar().get_active_missions();
+            break;
+        case mission_ui_tab_enum::COMPLETED:
+            missions = get_avatar().get_completed_missions();
+            break;
+        case mission_ui_tab_enum::FAILED:
+            missions = get_avatar().get_failed_missions();
+            break;
+        case mission_ui_tab_enum::POINTS_OF_INTEREST:
+            points = get_avatar().get_points_of_interest();
+            break;
+        case mission_ui_tab_enum::num_tabs:
+            break;
+    }
+    const int entry_count = static_cast<int>( selected_tab == mission_ui_tab_enum::POINTS_OF_INTEREST ?
+                          points.size() : missions.size() );
+    const int current_selection = entry_count == 0 ? 0 : std::clamp( selected_mission, 0, entry_count - 1 );
+
+    if( get_avatar().get_active_mission() ) {
+        snapshot.summary = string_format( _( "Current objective: %s" ),
+                                          get_avatar().get_active_mission()->name() );
+    } else if( get_avatar().get_active_point_of_interest().pos != tripoint_abs_omt::invalid ) {
+        snapshot.summary = string_format( _( "Current point of interest: %s" ),
+                                          get_avatar().get_active_point_of_interest().text );
+    }
+
+    const auto location_text = [&]( const tripoint_abs_omt &loc ) {
+        std::string result = display::overmap_position_text( loc );
+        if( !you_know_where_you_are() ) {
+            return result;
+        }
+        const tripoint_abs_omt pos = get_player_character().pos_abs_omt();
+        const int omt_distance = rl_dist( pos, loc );
+        if( omt_distance > 0 ) {
+            const units::length actual_distance = omt_distance * 24_meter;
+            const std::string distance = string_format( _( "%1$d tiles (%2$s) %3$s" ),
+                                           omt_distance, length_to_string_approx( actual_distance ),
+                                           direction_arrow( direction_from( pos.xy(), loc.xy() ) ) );
+            result += ". " + std::string( _( "Distance:" ) ) + " " + distance;
+        }
+        return result;
+    };
+    const auto append_field = []( std::string &text, const std::string &line ) {
+        if( line.empty() ) {
+            return;
+        }
+        if( !text.empty() ) {
+            text += "\n";
+        }
+        text += line;
+    };
+    const auto append_labeled_value = [&]( std::string &text, const std::string &label,
+                                           const std::string &value ) {
+        append_field( text, label + " " + value );
+    };
+
+    if( entry_count == 0 ) {
+        static const std::map<mission_ui_tab_enum, translation> empty_messages = {
+            { mission_ui_tab_enum::ACTIVE, to_translation( "You have no active missions!" ) },
+            { mission_ui_tab_enum::COMPLETED, to_translation( "You haven't completed any missions!" ) },
+            { mission_ui_tab_enum::FAILED, to_translation( "You haven't failed any missions!" ) },
+            { mission_ui_tab_enum::POINTS_OF_INTEREST, to_translation(
+                    "You don't have any points of interest.  Add those from the overmap." ) }
+        };
+        snapshot.summary = empty_messages.at( selected_tab ).translated();
+        a11y::append_document( snapshot, "missions:empty", _( "Your missions" ), snapshot.summary );
+        switch( selected_tab ) {
+            case mission_ui_tab_enum::ACTIVE:
+                snapshot.focus = "missions:tab:active";
+                break;
+            case mission_ui_tab_enum::COMPLETED:
+                snapshot.focus = "missions:tab:completed";
+                break;
+            case mission_ui_tab_enum::FAILED:
+                snapshot.focus = "missions:tab:failed";
+                break;
+            case mission_ui_tab_enum::POINTS_OF_INTEREST:
+                snapshot.focus = "missions:tab:points_of_interest";
+                break;
+            case mission_ui_tab_enum::num_tabs:
+                break;
+        }
+    } else if( selected_tab == mission_ui_tab_enum::POINTS_OF_INTEREST ) {
+        const point_of_interest &poi = points[current_selection];
+        for( std::size_t i = 0; i < points.size(); ++i ) {
+            a11y::semantic_node node;
+            node.id = "missions:poi:" + std::to_string( i );
+            node.role = "listitem";
+            node.label = points[i].text;
+            node.selected = static_cast<int>( i ) == current_selection;
+            node.checked = points[i].pos == get_avatar().get_active_point_of_interest().pos &&
+                           points[i].text == get_avatar().get_active_point_of_interest().text;
+            if( node.checked ) {
+                node.value = string_format( _( "Current point of interest: %s" ), points[i].text );
+            }
+            node.position = static_cast<int>( i + 1 );
+            node.total = static_cast<int>( points.size() );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        std::string details = string_format( _( "Point of Interest: %s" ), poi.text );
+        append_labeled_value( details, _( "Target:" ), location_text( poi.pos ) );
+        a11y::append_document( snapshot, "missions:poi:details", poi.text, details );
+        snapshot.focus = "missions:poi:" + std::to_string( current_selection );
+    } else {
+        const mission *selected = missions[current_selection];
+        for( std::size_t i = 0; i < missions.size(); ++i ) {
+            a11y::semantic_node node;
+            node.id = "missions:mission:" + std::to_string( i );
+            node.role = "listitem";
+            node.label = missions[i]->name();
+            node.selected = static_cast<int>( i ) == current_selection;
+            node.checked = missions[i] == get_avatar().get_active_mission();
+            if( node.checked ) {
+                node.value = string_format( _( "Current objective: %s" ), node.label );
+            }
+            node.position = static_cast<int>( i + 1 );
+            node.total = static_cast<int>( missions.size() );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        npc *mission_giver = nullptr;
+        if( selected->get_npc_id().is_valid() ) {
+            mission_giver = g->find_npc( selected->get_npc_id() );
+        }
+        std::string details = string_format( _( "Mission: %s" ), selected->name() );
+        if( mission_giver ) {
+            append_labeled_value( details, _( "Given by:" ), mission_giver->disp_name() );
+            if( mission_giver->get_faction() && mission_giver->get_fac_id() != faction_no_faction ) {
+                append_labeled_value( details, _( "Faction:" ), mission_giver->get_faction()->get_name() );
+            }
+            append_labeled_value( details, _( "Map location:" ),
+                                  location_text( mission_giver->pos_abs_omt() ) );
+        }
+
+        append_field( details, parsed_description_for( *selected, mission_giver ) );
+
+        if( selected->has_deadline() ) {
+            const time_point deadline = selected->get_deadline();
+            if( selected_tab == mission_ui_tab_enum::ACTIVE ) {
+                append_field( details, string_format( _( "Deadline: %s" ), to_string( deadline ) ) );
+                const time_duration remaining = deadline - calendar::turn;
+                std::string remaining_text;
+                if( remaining <= 0_turns ) {
+                    remaining_text = _( "None!" );
+                } else if( get_player_character().has_watch() ) {
+                    remaining_text = to_string( remaining );
+                } else {
+                    remaining_text = to_string_approx( remaining );
+                }
+                append_field( details, string_format( _( "Time remaining: %s" ), remaining_text ) );
+            } else {
+                const time_duration time_in_past = calendar::turn - deadline;
+                const std::string time_in_past_text = get_player_character().has_watch() ?
+                                                      to_string( time_in_past ) :
+                                                      to_string_approx( time_in_past );
+                if( deadline != calendar::turn_zero ) {
+                    if( selected_tab == mission_ui_tab_enum::COMPLETED ) {
+                        append_field( details, string_format( _( "Completed: %s" ), to_string( deadline ) ) );
+                    } else if( selected_tab == mission_ui_tab_enum::FAILED ) {
+                        append_field( details, string_format( _( "Failed at: %s" ), to_string( deadline ) ) );
+                    }
+                    append_field( details, string_format( _( "%s ago" ), time_in_past_text ) );
+                }
+            }
+        }
+        if( selected->has_target() ) {
+            append_labeled_value( details, _( "Target:" ), location_text( selected->get_target() ) );
+        }
+        const dimension_id mission_dimension = selected->get_dimension();
+        if( mission_dimension != dimension_world_default ) {
+            append_labeled_value( details, _( "Dimension:" ), mission_dimension.str() );
+        }
+        a11y::append_document( snapshot, "missions:mission:details", selected->name(), details );
+        snapshot.focus = "missions:mission:" + std::to_string( current_selection );
+    }
+
+    const bool can_set_objective = entry_count > 0 && ( selected_tab == mission_ui_tab_enum::ACTIVE ||
+                                  selected_tab == mission_ui_tab_enum::POINTS_OF_INTEREST );
+    const bool can_delete_point = entry_count > 0 &&
+                                  selected_tab == mission_ui_tab_enum::POINTS_OF_INTEREST;
+    snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+    [&]( const a11y::semantic_node &node ) {
+        return ( node.id == "CONFIRM" && !can_set_objective ) ||
+               ( node.id == "DELETE_POINT_OF_INTEREST" && !can_delete_point );
+    } ), snapshot.nodes.end() );
+    return snapshot;
+}
+
+const std::string &mission_ui_impl::parsed_description_for( const mission &selected,
+        npc *mission_giver )
+{
+    const std::string raw_description = selected.get_description();
+    if( cached_description_mission == &selected && cached_raw_description == raw_description ) {
+        return cached_parsed_description;
+    }
+    cached_description_mission = &selected;
+    cached_raw_description = raw_description;
+    cached_parsed_description = raw_description;
+    dialogue description_dialogue( get_talker_for( get_avatar() ), nullptr, {} );
+    for( const auto &reward : selected.get_likely_rewards() ) {
+        const std::string token = "<reward_count:" +
+                                  itype_id( reward.second.evaluate( description_dialogue ) ).str() + ">";
+        cached_parsed_description = string_replace( cached_parsed_description, token,
+                                  string_format( "%g", reward.first.evaluate( description_dialogue ) ) );
+    }
+    const Character &other_talker = mission_giver ? *mission_giver : get_player_character();
+    parse_tags( cached_parsed_description, get_player_character(), other_talker );
+    return cached_parsed_description;
+}
+
+std::optional<std::string> mission_ui_impl::reader_intent( const a11y::semantic_intent &intent,
+        const input_context &ctxt )
+{
+    if( intent.action == "activate" ) {
+        static const std::map<std::string, mission_ui_tab_enum> tabs = {
+            { "missions:tab:active", mission_ui_tab_enum::ACTIVE },
+            { "missions:tab:completed", mission_ui_tab_enum::COMPLETED },
+            { "missions:tab:failed", mission_ui_tab_enum::FAILED },
+            { "missions:tab:points_of_interest", mission_ui_tab_enum::POINTS_OF_INTEREST }
+        };
+        const auto tab = tabs.find( intent.node );
+        if( tab != tabs.end() ) {
+            switch_tab = tab->second;
+            selected_mission = 0;
+            reader_selection_changed = true;
+            s = cataimgui::scroll::begin;
+            return "TIMEOUT";
+        }
+    }
+    if( intent.action == "focus" || intent.action == "activate" ) {
+        const std::string mission_prefix = "missions:mission:";
+        if( selected_tab != mission_ui_tab_enum::POINTS_OF_INTEREST &&
+            intent.node.rfind( mission_prefix, 0 ) == 0 ) {
+            std::vector<mission *> missions;
+            switch( selected_tab ) {
+                case mission_ui_tab_enum::ACTIVE:
+                    missions = get_avatar().get_active_missions();
+                    break;
+                case mission_ui_tab_enum::COMPLETED:
+                    missions = get_avatar().get_completed_missions();
+                    break;
+                case mission_ui_tab_enum::FAILED:
+                    missions = get_avatar().get_failed_missions();
+                    break;
+                case mission_ui_tab_enum::POINTS_OF_INTEREST:
+                case mission_ui_tab_enum::num_tabs:
+                    break;
+            }
+            for( std::size_t i = 0; i < missions.size(); ++i ) {
+                if( intent.node == mission_prefix + std::to_string( i ) ) {
+                    selected_mission = static_cast<int>( i );
+                    reader_selection_changed = true;
+                    return "TIMEOUT";
+                }
+            }
+        }
+        const std::string poi_prefix = "missions:poi:";
+        if( selected_tab == mission_ui_tab_enum::POINTS_OF_INTEREST &&
+            intent.node.rfind( poi_prefix, 0 ) == 0 && intent.node != "missions:poi:details" ) {
+            const std::vector<point_of_interest> points = get_avatar().get_points_of_interest();
+            for( std::size_t i = 0; i < points.size(); ++i ) {
+                if( intent.node == poi_prefix + std::to_string( i ) ) {
+                    selected_mission = static_cast<int>( i );
+                    reader_selection_changed = true;
+                    return "TIMEOUT";
+                }
+            }
+        }
+    }
+    return a11y::registered_intent( ctxt, intent );
 }
 
 void mission_ui_impl::draw_mission_names( std::vector<mission *> missions, int &selected_mission,

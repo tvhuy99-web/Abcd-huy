@@ -3,10 +3,12 @@
 #define CATA_SRC_FACTION_UI_H
 
 #include <algorithm>
+#include <optional>
 #include <string>
 
 #include <imgui/imgui.h>
 
+#include "a11y_semantics.h"
 #include "cata_imgui.h"
 #include "game_constants.h"
 #include "input_context.h"
@@ -63,6 +65,8 @@ class faction_ui : public cataimgui::window
         void creature_display() const;
 
         void radio_the_faction();
+        a11y::semantic_snapshot reader_snapshot() const;
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent );
 
         std::string last_action;
     protected:

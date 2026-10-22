@@ -22,7 +22,8 @@ không phải danh sách đầy đủ hoặc mẫu số để công bố “100%
 | Chế tạo/xây | `crafting_gui.cpp`, `construction.cpp` | Công thức, thay thế, batch, vị trí, thiếu điều kiện |
 | Bản đồ lớn | `overmap_ui.cpp`, `calendar_ui.cpp` | Snapshot con trỏ/ô kế cận theo mức đã khám phá, ghi chú/vùng nguy hiểm, điểm đến/tọa độ/độ dài tuyến và vị trí tương đối; focus không khởi hành; vẫn phải phủ hành trình travel/notes/tầng/lịch và kiểm tra thông tin ẩn |
 | NPC/thương mại | `dialogue_imgui.cpp`, `npctalk.cpp`, `trade_ui.cpp` | Lịch sử người nói, câu trả lời, giá trị giao dịch |
-| Nhiệm vụ/trại | `mission_ui.cpp`, `mission_companion.cpp`, `faction_camp.cpp`, `faction_ui.cpp` | Mục tiêu, thời hạn, giao việc và kết quả |
+| Nhiệm vụ/trại | `mission_ui.cpp`, `mission_companion.cpp`, `faction_camp.cpp` | Màn nhiệm vụ có tab active/completed/failed/points of interest, hàng và chi tiết ngữ nghĩa, mục tiêu hiện hành, deadline/kết quả, vị trí/khoảng cách; menu giao việc/trả đồng đội đọc lựa chọn, mô tả, trạng thái cho phép và tab trại. Xác nhận/xóa theo action gốc; chưa kiểm thử điều kiện/kết quả từng loại hoặc toàn luồng |
+| Phe/người theo | `faction_ui.cpp` | Bốn tab, danh sách trại/người theo/nhóm/sinh vật đã biết, thông tin trại, nhiệm vụ/ETA/trạng thái/sức khỏe/kỹ năng người theo, khả năng liên hệ và chi tiết phe/sinh vật; lệnh chỉ hiện khi phù hợp; chưa kiểm thử |
 | Phương tiện | `veh_interact.cpp`, `vehicle_use.cpp`, `vehicle_display.cpp` | Bộ phận/vị trí, sửa/lắp, lái, cargo |
 | Điều khiển động cơ | `smart_controller_ui.cpp` | SMART_ENGINE_CONTROLLER, điều chỉnh và hủy |
 | Vùng/tự động hóa | `zone_manager_ui.cpp`, `study_zone_ui.cpp` | Hai góc/tầng, kích thước, STUDY_ZONE_UI |
