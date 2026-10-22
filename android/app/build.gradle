@@ -230,7 +230,7 @@ task generateVersionHeader() {
     }
 
     def define = "// NOLINT(cata-header-guard)\n#define VERSION \"$override_version\"\n"
-    def versionHeader = new File("$version_header_path")
+    def versionHeader = rootProject.file(version_header_path)
     if (!versionHeader.exists() || versionHeader.text != define) {
         versionHeader.text = define
     }
@@ -327,7 +327,7 @@ android {
     }
 
     base {
-        archivesName = "cataclysmdda-" + new File("$version_header_path").text.split('\"')[1]
+        archivesName = "cataclysmdda-" + rootProject.file(version_header_path).text.split('\"')[1]
     }
 
     defaultConfig {
@@ -337,7 +337,7 @@ android {
         minSdkVersion override_minSdkVersion
         targetSdkVersion override_targetSdkVersion
         versionCode Integer.valueOf(override_versionCode)
-        versionName new File("$version_header_path").text.split('\"')[1]
+        versionName rootProject.file(version_header_path).text.split('\"')[1]
         if (buildAsApplication) {
             applicationId "com.cleverraven.cataclysmdda"
         }
