@@ -15,7 +15,12 @@ fi
     "$task_root/tools/accessibility/java/com/cleverraven/cataclysmdda/SpeechSessionTest.java"
 java -cp "$task_build" com.cleverraven.cataclysmdda.SpeechSessionTest
 
-mapfile -t task_fakes < <(rg --files "$task_root/tools/accessibility/fakes" -g '*.java' | sort)
+shopt -s globstar nullglob
+task_fakes=( "$task_root"/tools/accessibility/fakes/**/*.java )
+if (( ${#task_fakes[@]} == 0 )); then
+    echo 'No Android test doubles found' >&2
+    exit 1
+fi
 "${task_compiler[@]}" -Xlint:all -Werror -d "$task_build" \
     "${task_fakes[@]}" \
     "$task_root/android/app/src/main/java/com/cleverraven/cataclysmdda/AndroidSpeech.java" \
