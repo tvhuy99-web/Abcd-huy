@@ -3,7 +3,9 @@
 #include <algorithm>
 #include <array>
 #include <chrono>
+#include <cstdlib>
 #include <functional>
+#include <iterator>
 #include <map>
 #include <memory>
 #include <optional>
@@ -18,6 +20,8 @@
 
 #include "activity_actor_definitions.h"
 #include "all_enum_values.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "basecamp.h"
 #include "calendar.h"
@@ -2076,6 +2080,103 @@ bool map_redraw_needed( const std::string &action, const map_view_state &drawn,
            drawn.show_overlays != now.show_overlays;
 }
 
+static std::string overmap_tile_description( const tripoint_abs_omt &position )
+{
+    const om_vision_level vision = overmap_buffer.seen( position );
+    std::string result = vision == om_vision_level::unseen ?
+                         std::string( _( "Unexplored map tile" ) ) :
+                         overmap_buffer.ter( position )->get_name( vision );
+    if( overmap_buffer.has_note( position ) ) {
+        const std::string note = overmap_buffer.note( position );
+        const std::size_t note_start = std::get<2>( get_note_display_info( note ) );
+        result += ". " + string_format( _( "Map note: %s" ), note.substr( note_start ) );
+    }
+    const int danger_radius = overmap_buffer.note_danger_radius( position );
+    if( danger_radius >= 0 ) {
+        result += ". " + string_format( _( "Danger area radius: %d" ), danger_radius );
+    }
+    return remove_color_tags( result );
+}
+
+static std::string overmap_relative_location( const tripoint_abs_omt &position,
+        const tripoint_abs_omt &origin )
+{
+    const tripoint_rel_omt offset = position - origin;
+    if( offset == tripoint_rel_omt::zero ) {
+        return _( "Current location" );
+    }
+    std::string result;
+    if( offset.y() != 0 ) {
+        result = string_format( offset.y() < 0 ? _( "North %d" ) : _( "South %d" ),
+                                std::abs( offset.y() ) );
+    }
+    if( offset.x() != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( offset.x() < 0 ? _( "West %d" ) : _( "East %d" ),
+                                 std::abs( offset.x() ) );
+    }
+    if( offset.z() != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( offset.z() < 0 ? _( "Level below %d" ) : _( "Level above %d" ),
+                                 std::abs( offset.z() ) );
+    }
+    return result;
+}
+
+static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
+        const tripoint_abs_omt &cursor, const tripoint_abs_omt &origin,
+        std::map<std::string, tripoint_abs_omt> &focus_targets )
+{
+    auto snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
+    std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+    snapshot.nodes.clear();
+    snapshot.summary = string_format( _( "Map offset from player: %s" ),
+                                      overmap_relative_location( cursor, origin ) );
+    snapshot.focus = "overmap:cursor";
+
+    a11y::semantic_node current;
+    current.id = "overmap:cursor";
+    current.role = "document";
+    current.label = _( "Map cursor" );
+    current.value = overmap_tile_description( cursor );
+    current.detail = snapshot.summary;
+    current.selected = true;
+    current.actions = { "focus" };
+    snapshot.nodes.push_back( std::move( current ) );
+
+    focus_targets.clear();
+    for( int dy = -1; dy <= 1; ++dy ) {
+        for( int dx = -1; dx <= 1; ++dx ) {
+            if( dx == 0 && dy == 0 ) {
+                continue;
+            }
+            const tripoint_abs_omt target = cursor + tripoint_rel_omt( dx, dy, 0 );
+            const std::string id = "overmap:adjacent:" + std::to_string( dx ) + ':' +
+                                   std::to_string( dy );
+            a11y::semantic_node adjacent;
+            adjacent.id = id;
+            adjacent.role = "listitem";
+            adjacent.label = string_format( _( "Adjacent map tile: %s" ),
+                                            overmap_relative_location( target, cursor ) );
+            adjacent.value = overmap_tile_description( target );
+            adjacent.actions = { "focus", "activate" };
+            focus_targets.emplace( id, target );
+            snapshot.nodes.push_back( std::move( adjacent ) );
+        }
+    }
+    snapshot.nodes.insert( snapshot.nodes.end(), std::make_move_iterator( commands.begin() ),
+                           std::make_move_iterator( commands.end() ) );
+    for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        snapshot.nodes[i].position = i + 1;
+        snapshot.nodes[i].total = snapshot.nodes.size();
+    }
+    return snapshot;
+}
+
 // animated overmap tiles cycle frames by wall clock, so every pass draws
 static bool overmap_tiles_animated()
 {
@@ -2135,6 +2236,20 @@ static tripoint_abs_omt display()
     if( select != tripoint_abs_omt( -1, -1, -1 ) ) {
         curs = select;
     }
+    std::map<std::string, tripoint_abs_omt> reader_focus_targets;
+    a11y::screen_scope reader( &ictxt, "overmap",
+    [&ictxt, &curs, &reader_focus_targets]( const a11y::semantic_intent &intent ) {
+        if( intent.action == "focus" || intent.action == "activate" ) {
+            const auto target = reader_focus_targets.find( intent.node );
+            if( target != reader_focus_targets.end() ) {
+                // Focusing a map tile moves only the overmap cursor. It never
+                // sets a destination or starts travel.
+                curs = target->second;
+                return std::optional<std::string>( "TIMEOUT" );
+            }
+        }
+        return a11y::registered_intent( ictxt, intent );
+    } );
     // Configure input context for navigating the map.
     ictxt.register_action( "ANY_INPUT" );
     ictxt.register_directions();
@@ -2204,6 +2319,7 @@ static tripoint_abs_omt display()
 
     bool map_dirty = true;
     do {
+        reader.update( reader_snapshot( ictxt, curs, orig, reader_focus_targets ) );
         if( map_dirty ) {
             ui->invalidate_ui();
         }

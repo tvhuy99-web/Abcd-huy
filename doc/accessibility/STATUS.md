@@ -64,6 +64,12 @@ Các tab kịch bản/nghề nêu lựa chọn hiện tại, còn nghề/nền t
 Adapter danh sách giữ lý do mục bị khóa trong phần chi tiết ngay cả khi game cho
 phép kích hoạt để hiện hộp giải thích gốc. Tất cả thay đổi chưa được chạy.
 
+Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
+chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
+kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.
+Thông tin ô chưa khám phá chỉ báo chưa biết. Bộ đọc báo lại nội dung con trỏ
+khi vị trí hoặc chi tiết thay đổi. Chưa biên dịch hoặc kiểm tra trên luồng bản đồ.
+
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và
 mẻ chế tạo, yêu cầu từng nhóm/công đoạn; xây dựng và chọn hướng/ô lân cận.

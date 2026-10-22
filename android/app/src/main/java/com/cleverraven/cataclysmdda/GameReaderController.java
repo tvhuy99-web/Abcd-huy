@@ -236,6 +236,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "mod-selection".equals(next.category)
                         || "active-world-mods".equals(next.category)
                         || "world-options".equals(next.category)
+                        || "overmap".equals(next.category)
                         || "OPTIONS".equals(next.category);
                 if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {
                     for (ReaderSnapshot.Node node : next.nodes) {
@@ -256,6 +257,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 && (!previousCursor.value.equals(nextCursor.value)
                                     || !previousCursor.detail.equals(nextCursor.detail))) {
                             selectedItemFocus = "target:cursor";
+                            selectionChanged = true;
+                        }
+                    }
+                    if (!selectionChanged && "overmap".equals(next.category)) {
+                        ReaderSnapshot.Node previousCursor = snapshot.find("overmap:cursor");
+                        ReaderSnapshot.Node nextCursor = next.find("overmap:cursor");
+                        if (previousCursor != null && nextCursor != null
+                                && (!previousCursor.value.equals(nextCursor.value)
+                                    || !previousCursor.detail.equals(nextCursor.detail))) {
+                            selectedItemFocus = "overmap:cursor";
                             selectionChanged = true;
                         }
                     }

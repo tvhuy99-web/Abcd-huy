@@ -20,7 +20,7 @@ không phải danh sách đầy đủ hoặc mẫu số để công bố “100%
 | Thông báo | `messages.cpp`, `output.cpp` | Cooldown/coalescing, lịch sử, văn bản dài |
 | Chiến đấu | `ranged.cpp`, hệ thống hành động/võ thuật | Nhắm/chọn ô/tầng/vùng, bắn, hủy, nạp |
 | Chế tạo/xây | `crafting_gui.cpp`, `construction.cpp` | Công thức, thay thế, batch, vị trí, thiếu điều kiện |
-| Bản đồ lớn | `overmap_ui.cpp`, `calendar_ui.cpp` | Travel, notes, tầng, lịch và tọa độ |
+| Bản đồ lớn | `overmap_ui.cpp`, `calendar_ui.cpp` | Snapshot con trỏ/ô kế cận theo mức đã khám phá, ghi chú/vùng nguy hiểm và vị trí tương đối; điều hướng focus không khởi hành; vẫn phải phủ hành trình travel/notes/tầng/lịch và kiểm tra thông tin ẩn |
 | NPC/thương mại | `dialogue_imgui.cpp`, `npctalk.cpp`, `trade_ui.cpp` | Lịch sử người nói, câu trả lời, giá trị giao dịch |
 | Nhiệm vụ/trại | `mission_ui.cpp`, `mission_companion.cpp`, `faction_camp.cpp`, `faction_ui.cpp` | Mục tiêu, thời hạn, giao việc và kết quả |
 | Phương tiện | `veh_interact.cpp`, `vehicle_use.cpp`, `vehicle_display.cpp` | Bộ phận/vị trí, sửa/lắp, lái, cargo |

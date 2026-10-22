@@ -107,6 +107,42 @@ msgstr "Tây %d ô"
 msgid "East %d"
 msgstr "Đông %d ô"
 
+msgid "Overmap"
+msgstr "Bản đồ lớn"
+
+msgid "Map cursor"
+msgstr "Con trỏ bản đồ"
+
+msgid "Unexplored map tile"
+msgstr "Ô bản đồ chưa khám phá"
+
+msgid "Current location"
+msgstr "Vị trí hiện tại"
+
+#, c-format
+msgid "Level below %d"
+msgstr "Thấp hơn %d tầng"
+
+#, c-format
+msgid "Level above %d"
+msgstr "Cao hơn %d tầng"
+
+#, c-format
+msgid "Map offset from player: %s"
+msgstr "Vị trí so với nhân vật: %s"
+
+#, c-format
+msgid "Map note: %s"
+msgstr "Ghi chú bản đồ: %s"
+
+#, c-format
+msgid "Danger area radius: %d"
+msgstr "Bán kính vùng nguy hiểm: %d ô"
+
+#, c-format
+msgid "Adjacent map tile: %s"
+msgstr "Ô bản đồ kế cận: %s"
+
 #, c-format
 msgid "Sleepiness: %s"
 msgstr "Buồn ngủ: %s"
