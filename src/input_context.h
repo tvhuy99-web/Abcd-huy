@@ -69,6 +69,8 @@ class input_context
     public:
         const std::vector<std::string> &registered_action_ids() const { return registered_actions; }
         const std::string &category_id() const { return category; }
+        // The most recent handle_input result came from semantic reader input.
+        bool was_accessibility_action() const { return !a11y_action_result.empty(); }
 #if defined(__ANDROID__) || defined(TILES)
         // Whatever's on top is our current input context.
         static input_context_stack_impl input_context_stack;

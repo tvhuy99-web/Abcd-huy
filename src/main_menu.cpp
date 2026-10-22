@@ -80,6 +80,35 @@ enum class main_menu_opts : int {
     QUIT,
     NUM_MENU_OPTS,
 };
+
+bool confirm_realtime_progression_for_accessibility()
+{
+    if( !a11y::enabled() || get_option<float>( "TURN_DURATION" ) <= 0.005f ) {
+        return true;
+    }
+
+    const std::string action = query_popup()
+                               .context( "YESNOQUIT" )
+                               .message( _( "Real-time turns are enabled. Monsters may act periodically while you listen, "
+                                            "read menus, or prepare an action. Yes keeps them enabled, No turns them "
+                                            "off and saves the setting, and Quit returns to the main menu." ) )
+                               .option( "YES" ).option( "NO" ).option( "QUIT" )
+                               .cursor( 2 )
+                               .query().action;
+    if( action == "YES" ) {
+        return true;
+    }
+    if( action != "NO" ) {
+        return false;
+    }
+
+    get_options().get_option( "TURN_DURATION" ).setValue( 0.0f );
+    if( !get_options().save() ) {
+        popup( _( "Real-time turns are off for this session, but the setting could not be saved. "
+                  "They may be enabled again next time." ) );
+    }
+    return true;
+}
 } // namespace
 
 std::string main_menu::queued_world_to_load;
@@ -949,6 +978,8 @@ bool main_menu::opening_screen()
                     if( MAP_SHARING::isSharing() ) {
                         on_error();
                         popup( _( "Tutorial doesn't work with shared maps." ) );
+                    } else if( !confirm_realtime_progression_for_accessibility() ) {
+                        break;
                     } else {
                         on_out_of_scope cleanup( [&player_character]() {
                             g->gamemode.reset();
@@ -1042,6 +1073,10 @@ bool main_menu::opening_screen()
 
 bool main_menu::new_character_tab()
 {
+    if( !confirm_realtime_progression_for_accessibility() ) {
+        return false;
+    }
+
     avatar &pc = get_avatar();
     // Preset character templates
     if( sel2 == 1 ) {
@@ -1178,6 +1213,10 @@ bool main_menu::new_character_tab()
 
 bool main_menu::load_game( std::string const &worldname, save_t const &savegame )
 {
+    if( !confirm_realtime_progression_for_accessibility() ) {
+        return false;
+    }
+
     avatar &pc = get_avatar();
     on_out_of_scope cleanup( [&pc]() {
         pc = avatar();

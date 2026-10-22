@@ -263,6 +263,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 String selectedItemFocus = "";
                 boolean selectionChanged = false;
                 boolean announcesSelection = "targeting".equals(next.category)
+                        || "dialogue".equals(next.category)
                         || "world-selection".equals(next.category)
                         || "world-generation".equals(next.category)
                         || "mod-selection".equals(next.category)

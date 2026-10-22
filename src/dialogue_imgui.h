@@ -66,6 +66,7 @@ class dialogue_imgui_impl : public cataimgui::window
         void add_to_history( const std::string &text, const std::string &speaker_name,
                              nc_color speaker_color );
         void add_to_history( const std::string &text, nc_color color );
+        std::string get_accessibility_history() const;
 
         std::string debug_topic_name;
 

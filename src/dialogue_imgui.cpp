@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "cata_imgui.h"
+#include "catacharset.h"
 #include "debug.h"
 #include "dialogue.h"
 #include "imgui/imgui.h"
@@ -257,6 +258,7 @@ void dialogue_imgui::draw_dialogue_imgui( bool is_computer, bool is_not_conversa
     ctxt.register_action( "DEBUG_DIALOGUE_SHOW_ALL_RESPONSE" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.register_action( "QUIT" );
+    ctxt.register_action( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
 
     ctxt.set_timeout( 10 );
 
@@ -387,6 +389,22 @@ void dialogue_imgui_impl::add_to_history( const std::string &text )
 void dialogue_imgui_impl::add_to_history( const std::string &text, nc_color color )
 {
     history.emplace_back( color, text );
+}
+
+std::string dialogue_imgui_impl::get_accessibility_history() const
+{
+    std::string result;
+    for( const history_message &msg : history ) {
+        const std::string text = remove_color_tags( msg.text );
+        if( text.empty() ) {
+            continue;
+        }
+        if( !result.empty() ) {
+            result += "\n";
+        }
+        result += text;
+    }
+    return result;
 }
 
 void dialogue_imgui_impl::draw_history() const

@@ -840,3 +840,18 @@ msgstr "Bộ lọc mod hiện tại"
 
 msgid "No filter is active."
 msgstr "Hiện không bật bộ lọc nào."
+
+msgid "Real-time turns are enabled. Monsters may act periodically while you listen, read menus, or prepare an action. Yes keeps them enabled, No turns them off and saves the setting, and Quit returns to the main menu."
+msgstr "Đang bật lượt thời gian thực. Quái vật có thể hành động định kỳ trong lúc bạn nghe, đọc menu hoặc chuẩn bị hành động. Có để giữ bật, Không để tắt và lưu thiết lập, Thoát để quay lại menu chính."
+
+msgid "Real-time turns are off for this session, but the setting could not be saved. They may be enabled again next time."
+msgstr "Lượt thời gian thực đã tắt trong phiên này nhưng không lưu được thiết lập. Chế độ này có thể bật lại vào lần sau."
+
+msgid "Dialogue"
+msgstr "Hội thoại"
+
+msgid "Conversation history"
+msgstr "Lịch sử hội thoại"
+
+msgid "This response is unavailable because its condition is not met."
+msgstr "Lựa chọn này hiện không khả dụng vì chưa đáp ứng điều kiện."

@@ -39,7 +39,7 @@ chưa chạy instrumentation test.
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới kèm số bản lưu có thể tải, tài liệu; tạo/tải save vẫn cần nghiệm thu |
 | Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; callback có thể công bố action kèm trạng thái checked/disabled; callback legacy cần action ID ngữ nghĩa, không chỉ phím ký tự |
-| Hộp thoại | `popup.cpp`, `output.cpp`, `NativeUI.java` | Khi reader bật, `query_yn` và popup thông báo không chặn ở AlertDialog Java mà dùng popup ngữ nghĩa trong game; native list đã nhường cho `uilist`; TalkBack tiếp tục đọc native UI khi reader tắt; chưa kiểm chứng trên máy |
+| Hộp thoại | `popup.cpp`, `output.cpp`, `dialogue_imgui.cpp`, `npctalk.cpp`, `NativeUI.java` | Khi reader bật, `query_yn` và popup thông báo không chặn ở AlertDialog Java mà dùng popup ngữ nghĩa trong game; hội thoại có danh sách phản hồi, trạng thái điều kiện, focus đồng bộ và lịch sử đọc dài; xác nhận bằng reader không cần phím vật lý; native list đã nhường cho `uilist`; TalkBack tiếp tục đọc native UI khi reader tắt; chưa kiểm chứng trên máy |
 | Gán phím | `output.cpp`, `input_context.cpp`, `game_inventory.cpp`, `magic.cpp`, `bionics_ui.cpp`, `mutation_ui.cpp` | Khi reader bật, chọn phím từ danh sách ký tự hợp lệ; hủy giữ giá trị cũ, xóa phím là một lựa chọn riêng; thêm phím cho lệnh dùng danh sách chữ/số; đổi va chạm và mọi mode chưa kiểm chứng |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab/lệnh; kịch bản/nghề nêu lựa chọn hiện tại, nghề/nền tảng nêu chi phí điểm; tổng kết ngữ nghĩa có tên, giới tính, ngoại hình, kịch bản/nghề/nền tảng, điểm còn lại, thuộc tính, kỹ năng, đặc tính kèm điểm, xung đột và bionic cản, proficiency, bionic, phép, nhiệm vụ, ngày/địa điểm/xe bắt đầu và xếp hạng; các dòng chọn vẫn gọi action gốc; chưa kiểm chứng dữ liệu từng biến thể, lựa chọn thành phố hoặc luồng bắt đầu/lưu/tải |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
@@ -70,14 +70,18 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 - G2: đã nối action ngữ nghĩa cho các callback phím thô trong menu wish/debug,
   có trạng thái checked/disabled cho các lệnh callback, chọn ký tự cho luồng
   đổi phím vật phẩm/phép/bionics/mutation và bàn phím lệnh; khi reader bật,
-  popup/Yes-No không còn nhảy sang Java modal. Có thử/khôi phục ánh xạ vuốt ngang
+  popup/Yes-No không còn nhảy sang Java modal; luồng xác nhận phản hồi hội thoại
+  cũng chấp nhận semantic action không có raw key. Có thử/khôi phục ánh xạ vuốt ngang
   và dọc, bắt buộc giữ trục duyệt, thời hạn 45 giây, xác nhận trong game và tự
   trả cấu hình nếu hết hạn hoặc bật Touch Exploration. Vẫn còn biểu mẫu/bảng/cây,
   audit các đường raw-input còn lại và adapter ngữ cảnh lồng. Chưa build hoặc
   kiểm thử các thay đổi này.
 - G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; sao chép/đổi tên thế
   giới; cài đặt dữ liệu mod; tên nhân vật, template, tạo mới,
-  tải và vào lại save; cấu hình lượt/realtime có lựa chọn rõ ràng. Bộ chọn
+  tải và vào lại save; cấu hình lượt/realtime có lựa chọn rõ ràng. Khi reader
+  bật, nếu realtime đang bật thì luồng tạo nhân vật, tải save và tutorial hỏi
+  giữ/tắt và lưu/thoát; mặc định focus thoát, lỗi lưu được thông báo nhưng vẫn
+  tắt trong phiên hiện tại. Bộ chọn
   thế giới đã có tên/số save và tách chọn khỏi xác nhận; màn tạo cơ bản đọc tên,
   mức tùy chọn cùng lệnh điều chỉnh; màn tùy chọn nâng cao và danh sách mod của
   world hiện có đã có snapshot đọc; mod manager đọc nhóm, mô tả, xung đột và
@@ -97,7 +101,8 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
   cùng danh sách mục tiêu có thể ngắm theo tri thức hiện tại; còn phải đối chiếu mọi
   biến thể/pocket, hướng ngắm, xác nhận tấn công và hoàn thiện chi tiết thiếu.
-- G6: overmap/travel/note/mission; NPC/đối thoại/giao dịch/cộng đồng; phương tiện
+- G6: overmap/travel/note/mission; NPC/giao dịch/cộng đồng (hội thoại có danh sách
+  phản hồi, trạng thái điều kiện và lịch sử đọc dài nhưng chưa nghiệm thu); phương tiện
   và sơ đồ bộ phận/lái/remote; vùng/tự động hóa; bionics/đột biến/phép thuật;
   các minigame, tài liệu, trợ giúp và những màn riêng trong `COVERAGE.md`.
 - G7: ngủ/hoạt động dài, nguy hiểm và kết quả thật, chết/death-cam/điểm số,

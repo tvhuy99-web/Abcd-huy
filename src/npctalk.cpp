@@ -22,6 +22,8 @@
 #include <vector>
 
 #include "achievement.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "auto_pickup.h"
@@ -2932,6 +2934,80 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
 
     // Re-init everytime we get here (new topic, new selections, don't try to preserve old selection)
     d_img.sel_response = 0;
+    const auto response_enabled = [this]( const size_t index ) {
+        return debug_mode || index >= response_condition_exists.size() ||
+               !response_condition_exists[index] ||
+               ( index < response_condition_eval.size() && response_condition_eval[index] );
+    };
+    const std::string history_text = d_img.get_accessibility_history();
+    a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent &intent ) ->
+    std::optional<std::string> {
+        if( intent.node == "dialogue:history" && intent.action == "focus" ) {
+            return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
+        }
+        const std::string response_prefix = "dialogue:response:";
+        if( intent.node.rfind( response_prefix, 0 ) == 0 &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            for( size_t index = 0; index < response_lines.size(); ++index ) {
+                if( intent.node != response_prefix + std::to_string( index ) ) {
+                    continue;
+                }
+                d_img.sel_response = static_cast<int>( index );
+                if( intent.action == "focus" ) {
+                    return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
+                }
+                if( response_enabled( index ) ) {
+                    return std::string( "CONFIRM" );
+                }
+                return std::nullopt;
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) {
+            return;
+        }
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Dialogue" );
+        snapshot.summary = remove_color_tags( challenge );
+        snapshot.focus = "dialogue:response:" + std::to_string( d_img.sel_response );
+
+        if( !history_text.empty() ) {
+            a11y::semantic_node history;
+            history.id = "dialogue:history";
+            history.role = "document";
+            history.label = _( "Conversation history" );
+            history.detail = history_text;
+            history.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( history ) );
+        }
+
+        for( size_t index = 0; index < response_lines.size(); ++index ) {
+            const talk_data &response = response_lines[index];
+            a11y::semantic_node node;
+            node.id = "dialogue:response:" + std::to_string( index );
+            node.role = "button";
+            node.label = remove_color_tags( response.text );
+            node.enabled = response_enabled( index );
+            if( !node.enabled ) {
+                node.disabled_reason = _( "This response is unavailable because its condition is not met." );
+            }
+            node.selected = d_img.sel_response == static_cast<int>( index );
+            node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( size_t index = 0; index < snapshot.nodes.size(); ++index ) {
+            snapshot.nodes[index].position = static_cast<int>( index + 1 );
+            snapshot.nodes[index].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader.update( std::move( snapshot ) );
+    };
     size_t response_ind = response_hotkeys.size();
     bool okay;
     do {
@@ -2943,6 +3019,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             }
             // For reasons unclear to me, we must manually invalidate and redraw the windows here, or else they will stack up.
             ui_manager::invalidate_all_ui_adaptors();
+            update_reader();
             ui_manager::redraw();
             action = ctxt.handle_input();
 
@@ -2959,7 +3036,8 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             }
 
             input_event evt = ctxt.get_raw_input();
-            if( evt.type == input_event_t::error || evt.type == input_event_t::timeout ) {
+            if( ( evt.type == input_event_t::error || evt.type == input_event_t::timeout ) &&
+                !ctxt.was_accessibility_action() ) {
                 continue;
             }
             if( action == "HELP_KEYBINDINGS" ) {
