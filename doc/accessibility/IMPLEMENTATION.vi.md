@@ -94,7 +94,9 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   cơ thể/y tế, ăn/uống,
   mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Snapshot
   bản đồ và màn chờ hoạt động đọc tiến độ/khả năng ngắt; vòng chờ giữ scope
-  riêng, dialog hủy còn cần kiểm chứng.
+  riêng; xác nhận ngủ/chờ cảnh báo thời gian tiếp tục trôi; activity reader
+  cảnh báo lượt thời gian thực có thể tiếp tục cập nhật thế giới. Dialog hủy
+  còn cần kiểm chứng.
   Đường gửi thông báo log mới đã có, nhưng chưa chứng minh đủ mọi cảnh báo hoặc
   khả năng nghe ổn định.
 - G5: kho nâng cao/chuyển đồ hai phía, nhắm bắn và đường bắn, cận chiến,

@@ -1055,3 +1055,12 @@ msgstr "Tổng kết: %1$d mục"
 #, c-format
 msgid "Entry: %1$d/%2$d, %3$s"
 msgstr "Mục: %1$d/%2$d, %3$s"
+
+msgid "Sleeping advances game time. You cannot issue ordinary commands until you wake; scheduled events and world changes may occur."
+msgstr "Ngủ làm thời gian trong game tiếp tục trôi. Bạn không thể dùng lệnh thông thường cho đến khi tỉnh; sự kiện theo lịch và thay đổi trong thế giới vẫn có thể diễn ra."
+
+msgid "Real-time turns are enabled. The world may continue to update while you listen to this activity screen."
+msgstr "Đang bật lượt thời gian thực. Thế giới vẫn có thể tiếp tục thay đổi trong lúc bạn nghe màn hình hoạt động này."
+
+msgid "Waiting advances game time. The world may change while you wait."
+msgstr "Chờ làm thời gian trong game tiếp tục trôi. Thế giới có thể thay đổi trong lúc bạn chờ."

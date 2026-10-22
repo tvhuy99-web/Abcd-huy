@@ -19,6 +19,7 @@
 #include "map.h"
 #include "messages.h"
 #include "output.h"
+#include "options.h"
 #include "string_formatter.h"
 #include "translations.h"
 #include "type_id.h"
@@ -495,6 +496,12 @@ semantic_snapshot activity_snapshot( const input_context &context )
     }
     current.detail = interruption.value;
     if( !interruption.detail.empty() ) { current.detail += ". " + interruption.detail; }
+    if( get_option<float>( "TURN_DURATION" ) > 0.005f ) {
+        const std::string realtime_warning = _( "Real-time turns are enabled. The world may continue to update while you "
+                                                "listen to this activity screen." );
+        result.summary = realtime_warning;
+        current.detail += ". " + result.summary;
+    }
     result.nodes.push_back( std::move( current ) );
     result.nodes.push_back( std::move( interruption ) );
 

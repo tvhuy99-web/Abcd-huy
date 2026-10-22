@@ -1,3 +1,6 @@
+Warning: truncated output (original token count: 30153)
+Total output lines: 3011
+
 Warning: truncated output (original token count: 35047)
 Total output lines: 3490
 
@@ -1324,6 +1327,9 @@ static void wait()
     as_m.text = has_watch ? string_format( _( "It's %s now.  " ),
                                            to_string_time_of_day( calendar::turn ) ) : "";
     as_m.text += setting_alarm ? _( "Set alarm for when?" ) : _( "Wait for how long?" );
+    if( !setting_alarm && a11y::enabled() ) {
+        as_m.text += "\n\n" + std::string( _( "Waiting advances game time. The world may change while you wait." ) );
+    }
     as_m.query(); /* calculate key and window variables, generate window, and loop until we get a valid answer */
 
     const auto dur_iter = durations.find( as_m.ret );
@@ -1450,6 +1456,15 @@ static void sleep()
         for( auto &a : active ) {
             data << "<color_red>" << a << "</color>" << std::endl;
         }
+    }
+    if( a11y::enabled() ) {
+        if( !active.empty() ) {
+            data << std::endl;
+        }
+        data << _( "Sleeping advances game time. You cannot issue ordinary commands until you wake; "
+                   "scheduled events and world changes may occur." );
+    }
+    if( !active.empty() || a11y::enabled() ) {
         as_m.text = data.str();
     }
 
@@ -1473,19 +1488,7 @@ static void sleep()
         deaf_text = _( "<color_c_red> (DEAF!)</color>" );
     }
     if( player_character.has_alarm_clock() ) {
-        /* Reuse menu to ask player whether they want to set an alarm. */
-        bool can_hibernate = player_character.get_hunger() < -60 &&
-                             player_character.has_active_mutation( trait_HIBERNATE );
-
-        as_m.reset();
-        as_m.text = can_hibernate ?
-                    _( "You're engorged to hibernate.  The alarm would only attract attention.  "
-                       "Set an alarm anyway?" ) :
-                    _( "You have an alarm clock.  Set an alarm?" );
-        as_m.text += deaf_text;
-
-        as_m.entries.emplace_back( 0, true,
-                                   g…5047 tokens truncated…ame_message_params{ m_bad, gmf_bypass_cooldown }, sp.failed_caster_condition_message() );
+        /* Reuse menu to ask pla…153 tokens truncated…ame_message_params{ m_bad, gmf_bypass_cooldown }, sp.failed_caster_condition_message() );
         return false;
     }
 

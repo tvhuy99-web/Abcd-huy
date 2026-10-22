@@ -13,7 +13,7 @@ không phải danh sách đầy đủ hoặc mẫu số để công bố “100%
 | Menu chung | `uilist.cpp` | Filter/category/retval và nhánh native trả về sớm |
 | Popup/nhập | `popup.cpp`, `input_popup.cpp`, `string_input_popup.cpp` | Hỏi, chọn nhiều, số, Unicode, IME, hủy |
 | Bản đồ cục bộ | `game_ui_tile_info.cpp`, `surroundings_menu.cpp`, `a11y_world.cpp` | Tri thức theo từng trường, âm, memory, bộ lọc đã biết/đáng chú ý/dấu nghe, bán kính ngang và độ sâu tầng tùy chọn; tầng khác chỉ từ memory |
-| Di chuyển/hành động | `action.cpp`, `handle_action.cpp`, `avatar_action.cpp` | DEFAULTMODE, LOOK, realtime, kết quả thật |
+| Di chuyển/hành động | `action.cpp`, `handle_action.cpp`, `avatar_action.cpp`, `do_turn.cpp`, `a11y_world.cpp` | DEFAULTMODE, LOOK, realtime, kết quả thật; xác nhận ngủ/chờ nêu rõ thời gian tiếp tục trôi và activity reader cảnh báo realtime; luồng/hủy còn chưa nghiệm thu |
 | Hành trang | `inventory_ui.cpp`, `item_contents.cpp`, `pickup.cpp` | Nhiều lựa chọn, pockets, container, số lượng |
 | Kho nâng cao | `advanced_inv.cpp`, `armor_layers.cpp` | Hai cột nguồn/đích, sức chứa, thứ tự mặc |
 | Y tế/trạng thái | `medical_ui.cpp`, `player_display.cpp`, `morale.cpp` | Chi tiết bộ phận/hiệu ứng, giá trị không chỉ qua màu |
