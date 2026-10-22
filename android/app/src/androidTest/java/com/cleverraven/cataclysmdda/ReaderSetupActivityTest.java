@@ -3,6 +3,7 @@ package com.cleverraven.cataclysmdda;
 import android.os.SystemClock;
 import android.widget.Button;
 import android.widget.CheckBox;
+import android.widget.SeekBar;
 import android.widget.TextView;
 
 import androidx.lifecycle.Lifecycle;
@@ -33,11 +34,16 @@ public class ReaderSetupActivityTest {
                 Button stop = activity.findViewById(R.id.a11y_stop_voice);
                 Button back = activity.findViewById(R.id.a11y_return);
                 CheckBox online = activity.findViewById(R.id.a11y_network_voice);
+                SeekBar rate = activity.findViewById(R.id.a11y_speech_rate);
                 assertNotNull(play);
                 assertTrue(play.getText().length() > 0);
                 assertTrue(stop.getText().length() > 0);
                 assertTrue(back.getText().length() > 0);
                 assertFalse(online.isChecked());
+                assertNotNull(rate);
+                String originalRate = rate.getContentDescription().toString();
+                rate.setProgress(rate.getProgress() == rate.getMax() ? 0 : rate.getProgress() + 1);
+                assertFalse(originalRate.equals(rate.getContentDescription().toString()));
                 online.setChecked(true);
             });
             scenario.recreate();

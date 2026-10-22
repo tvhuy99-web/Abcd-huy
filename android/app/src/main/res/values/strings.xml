@@ -39,6 +39,9 @@
     <string name="a11yStopSpeech">Stop speech</string>
     <string name="a11yAndroidVoiceSettings">Open Android voice settings</string>
     <string name="a11yAllowNetworkVoice">Allow a voice that needs internet. The sample text may be sent online by the selected speech engine.</string>
+    <string name="a11ySpeechRateLabel">Speech rate</string>
+    <string name="a11ySpeechRateValue">Speech rate: %1$s times normal</string>
+    <string name="a11yRetestAfterSettingsChange">The voice settings changed. Test the voice again before enabling narration.</string>
     <string name="a11yReturnToStartup">Return to startup</string>
     <string name="a11ySpeechNew">Choose Test Vietnamese voice to check the selected Android speech engine.</string>
     <string name="a11ySpeechInitializing">Preparing Vietnamese speech. This can take a few seconds.</string>

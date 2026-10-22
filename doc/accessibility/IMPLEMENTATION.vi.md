@@ -20,6 +20,12 @@ Workflow trợ năng của nhánh mới chuyển sang `workflow_dispatch`; khôn
 build/test tự động trong đợt viết mã này. Không merge vào `master` và không
 ghi PASS mới.
 
+Màn thiết lập giọng có thanh tốc độ 0,5–3 lần: mẫu thử dùng giá trị đang chọn,
+TalkBack nghe nhãn cập nhật, và xác nhận đã nghe lưu tốc độ cùng opt-in giọng
+mạng. Đổi tốc độ/quyền mạng hoặc dừng/mở cài đặt sẽ hủy xác nhận cũ và yêu cầu
+thử lại; nút xác nhận vẫn cần người dùng nhấn. Có assertion nguồn cho nhãn động;
+chưa chạy instrumentation test.
+
 ## Mã đã bổ sung trong đợt hiện tại, chưa kiểm thử
 
 | Nhóm | Điểm triển khai | Trạng thái/giới hạn |
@@ -29,7 +35,7 @@ ghi PASS mới.
 | Android | `GameReaderController`, `CataclysmDDA` | Lớp trình bày native và gửi ý định; phối hợp touch exploration; chưa xác nhận focus/insets/Back trên máy |
 | Lời đọc | `ReaderSpeechQueue` | Gộp focus, ưu tiên, hết hạn, đọc theo đoạn, dừng/đọc lại/watchdog; chưa kiểm thử TTS thật cho mã mới |
 | Cử chỉ | `ReaderGestureSurface` | Duyệt/chọn/chi tiết/dừng, chặn hủy/nhiều ngón; chưa có cấu hình chơi nhanh tám hướng hoặc hướng dẫn luyện tập |
-| Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận người dùng đã nghe; tắt; đường vào màn thiết lập của flavor thử; bootstrap không TalkBack chưa đầy đủ |
+| Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận người dùng đã nghe; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; đường vào màn thiết lập của flavor thử; bootstrap không TalkBack chưa đầy đủ |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới, tài liệu; chưa xác nhận tạo/tải save |
 | Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; có helper cho vòng `query_once` ngoài |

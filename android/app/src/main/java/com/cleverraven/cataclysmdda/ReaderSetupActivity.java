@@ -9,6 +9,7 @@ import android.view.View;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
@@ -20,11 +21,15 @@ public final class ReaderSetupActivity extends Activity {
     private TextView status;
     private Button sample;
     private CheckBox online;
+    private SeekBar rate;
+    private TextView rateValue;
     private boolean foreground;
     private boolean sampleRequested;
+    private boolean sampleAttempted;
     private long sampleSequence;
     private Button heard;
     private boolean testedNetworkConsent;
+    private float testedRate = 1.0f;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -54,17 +59,50 @@ public final class ReaderSetupActivity extends Activity {
         online.setChecked(false);
         layout.addView(online);
 
+        TextView rateLabel = new TextView(this);
+        rateLabel.setText(R.string.a11ySpeechRateLabel);
+        rateLabel.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        layout.addView(rateLabel);
+        rateValue = new TextView(this);
+        rateValue.setId(R.id.a11y_speech_rate_value);
+        rateValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        layout.addView(rateValue);
+        rate = new SeekBar(this);
+        rate.setId(R.id.a11y_speech_rate);
+        rate.setMax(25); // 0.5x through 3.0x, in 0.1x steps.
+        float savedRate = new ReaderPreferences(this).getRate();
+        rate.setProgress(Math.max(0, Math.min(rate.getMax(), Math.round((savedRate - 0.5f) * 10.0f))));
+        rate.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
+            @Override
+            public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
+                if (fromUser) { invalidateSampleForChangedSettings(); }
+                updateRateDescription();
+            }
+
+            @Override
+            public void onStartTrackingTouch(SeekBar seekBar) { }
+
+            @Override
+            public void onStopTrackingTouch(SeekBar seekBar) { }
+        });
+        layout.addView(rate);
+        updateRateDescription();
+
         sample = button(layout, R.string.a11yTestVietnamese, view -> {
+            sampleAttempted = true;
             sampleRequested = true;
             heard.setEnabled(false);
             testedNetworkConsent = online.isChecked();
+            testedRate = selectedRate();
             sample.setEnabled(false);
-            speech.initialize(null, new Locale("vi", "VN"), 1.0f, !online.isChecked());
+            speech.initialize(null, new Locale("vi", "VN"), testedRate, !online.isChecked());
         });
         sample.setId(R.id.a11y_test_voice);
         sample.setSaveEnabled(false);
         button(layout, R.string.a11yStopSpeech, view -> {
+            sampleAttempted = false;
             sampleRequested = false;
+            heard.setEnabled(false);
             speech.cancel();
             showStatus(R.string.a11ySpeechStopped, true);
         }).setId(R.id.a11y_stop_voice);
@@ -73,10 +111,11 @@ public final class ReaderSetupActivity extends Activity {
         button(layout, R.string.showAccessibilitySettings,
                 view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
         heard = button(layout, R.string.a11yConfirmHeardEnable, view -> {
-            new ReaderPreferences(this).confirmHeardAndEnable(testedNetworkConsent, 1.0f);
+            new ReaderPreferences(this).confirmHeardAndEnable(testedNetworkConsent, testedRate);
             showStatus(R.string.a11yReaderEnabledNotice, true);
         });
         heard.setEnabled(false);
+        online.setOnCheckedChangeListener((button, checked) -> invalidateSampleForChangedSettings());
         button(layout, R.string.a11yDisableInternalReader, view -> {
             new ReaderPreferences(this).disable();
             showStatus(R.string.a11yReaderDisabledNotice, true);
@@ -104,15 +143,21 @@ public final class ReaderSetupActivity extends Activity {
                         }
                         break;
                     case MISSING_LANGUAGE:
+                        sampleAttempted = false;
                         sampleRequested = false;
+                        heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechMissingVietnamese, true);
                         break;
                     case NETWORK_REQUIRED:
+                        sampleAttempted = false;
                         sampleRequested = false;
+                        heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechNetworkRequired, true);
                         break;
                     case FAILED:
+                        sampleAttempted = false;
                         sampleRequested = false;
+                        heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechFailed, true);
                         break;
                     default:
@@ -135,6 +180,8 @@ public final class ReaderSetupActivity extends Activity {
                         break;
                     case ERROR:
                     case REJECTED:
+                        sampleAttempted = false;
+                        heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechFailed, true);
                         break;
                     default:
@@ -152,6 +199,27 @@ public final class ReaderSetupActivity extends Activity {
         return result;
     }
 
+    private float selectedRate() {
+        return ( 5 + rate.getProgress() ) / 10.0f;
+    }
+
+    private void updateRateDescription() {
+        if (rate == null || rateValue == null) { return; }
+        String value = String.format(Locale.getDefault(), "%.1f", selectedRate());
+        String description = getString(R.string.a11ySpeechRateValue, value);
+        rateValue.setText(description);
+        rate.setContentDescription(description);
+    }
+
+    private void invalidateSampleForChangedSettings() {
+        if (!sampleAttempted) { return; }
+        sampleAttempted = false;
+        sampleRequested = false;
+        if (heard != null) { heard.setEnabled(false); }
+        if (speech != null) { speech.cancel(); }
+        showStatus(R.string.a11yRetestAfterSettingsChange, true);
+    }
+
     private void showStatus(int text, boolean announce) {
         status.setText(text);
         if (foreground && announce) {
@@ -160,7 +228,9 @@ public final class ReaderSetupActivity extends Activity {
     }
 
     private void openSettings(String action) {
+        sampleAttempted = false;
         sampleRequested = false;
+        heard.setEnabled(false);
         speech.cancel();
         try {
             startActivity(new Intent(action));
@@ -183,6 +253,7 @@ public final class ReaderSetupActivity extends Activity {
     protected void onPause() {
         foreground = false;
         sampleRequested = false;
+        sampleAttempted = false;
         heard.setEnabled(false);
         if (speech != null) {
             speech.cancel();

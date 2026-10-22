@@ -64,6 +64,11 @@ Snapshot bản đồ đọc thêm địa hình và đồ đạc đã nhớ tại
 trên/dưới, hoặc báo chưa biết. Adapter này cố ý không đọc dữ liệu sống hay đồ
 động của tầng khác. Chưa biên dịch và chưa kiểm tra rò thông tin.
 
+Màn thiết lập giọng cho phép chọn tốc độ 0,5–3 lần trước khi thử; tốc độ được
+lưu cùng lúc người dùng xác nhận đã nghe. Thay đổi tốc độ/quyền mạng sau mẫu
+buộc thử lại trước khi xác nhận. Bổ sung assertion nguồn cho thanh tốc độ,
+nhưng chưa chạy instrumentation test.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026

@@ -39,6 +39,9 @@
     <string name="a11yStopSpeech">Dừng lời đọc</string>
     <string name="a11yAndroidVoiceSettings">Mở cài đặt giọng đọc Android</string>
     <string name="a11yAllowNetworkVoice">Cho phép giọng cần internet. Công cụ giọng đọc được chọn có thể gửi câu thử qua mạng.</string>
+    <string name="a11ySpeechRateLabel">Tốc độ đọc</string>
+    <string name="a11ySpeechRateValue">Tốc độ đọc: %1$s lần tốc độ thường</string>
+    <string name="a11yRetestAfterSettingsChange">Thiết lập giọng đã đổi. Hãy thử lại giọng trước khi bật đọc lời gameplay.</string>
     <string name="a11yReturnToStartup">Quay lại màn hình khởi động</string>
     <string name="a11ySpeechNew">Chọn Phát thử giọng tiếng Việt để kiểm tra công cụ giọng đọc Android hiện tại.</string>
     <string name="a11ySpeechInitializing">Đang chuẩn bị giọng tiếng Việt. Có thể mất vài giây.</string>
