@@ -131,6 +131,9 @@ msgstr "Cao hơn %d tầng"
 msgid "Map offset from player: %s"
 msgstr "Vị trí so với nhân vật: %s"
 
+msgid "Selecting a map tile only moves the cursor; travel is a separate command."
+msgstr "Chọn ô bản đồ chỉ di chuyển con trỏ; muốn đi phải dùng lệnh du lịch riêng."
+
 #, c-format
 msgid "Map note: %s"
 msgstr "Ghi chú bản đồ: %s"
@@ -142,6 +145,20 @@ msgstr "Bán kính vùng nguy hiểm: %d ô"
 #, c-format
 msgid "Adjacent map tile: %s"
 msgstr "Ô bản đồ kế cận: %s"
+
+msgid "Current route"
+msgstr "Tuyến hiện tại"
+
+msgid "No route is set."
+msgstr "Chưa đặt tuyến đường."
+
+#, c-format
+msgid "Planned destination: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d."
+msgstr "Điểm đến đã đặt: %1$s. Tọa độ bản đồ lớn: X %2$d, Y %3$d, tầng %4$d."
+
+#, c-format
+msgid "Route map tiles: %1$d. Relative location: %2$s."
+msgstr "Số ô bản đồ trên tuyến: %1$d. Vị trí tương đối: %2$s."
 
 #, c-format
 msgid "Sleepiness: %s"

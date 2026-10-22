@@ -67,8 +67,9 @@ phép kích hoạt để hiện hộp giải thích gốc. Tất cả thay đổ
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô
 kế cận chỉ di chuyển con trỏ trên bản đồ; không chọn điểm đến hay khởi hành.
-Thông tin ô chưa khám phá chỉ báo chưa biết. Bộ đọc báo lại nội dung con trỏ
-khi vị trí hoặc chi tiết thay đổi. Chưa biên dịch hoặc kiểm tra trên luồng bản đồ.
+Thông tin ô chưa khám phá chỉ báo chưa biết. Snapshot cũng nêu điểm đến, tọa độ
+và số ô của tuyến đang đặt; đổi điểm đến được đọc lại. Focus/kích hoạt ô hoặc tuyến chỉ
+đưa con trỏ tới đó, không khởi hành. Chưa biên dịch hoặc kiểm tra trên luồng bản đồ.
 
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và

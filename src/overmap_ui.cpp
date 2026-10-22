@@ -2136,6 +2136,8 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     snapshot.nodes.clear();
     snapshot.summary = string_format( _( "Map offset from player: %s" ),
                                       overmap_relative_location( cursor, origin ) );
+    snapshot.summary += ". " + std::string( _( "Selecting a map tile only moves the cursor; "
+                                  "travel is a separate command." ) );
     snapshot.focus = "overmap:cursor";
 
     a11y::semantic_node current;
@@ -2149,6 +2151,29 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     snapshot.nodes.push_back( std::move( current ) );
 
     focus_targets.clear();
+    const std::vector<tripoint_abs_omt> &route = get_avatar().omt_path;
+    a11y::semantic_node route_node;
+    route_node.id = "overmap:route";
+    route_node.role = "listitem";
+    route_node.label = _( "Current route" );
+    if( route.empty() ) {
+        route_node.value = _( "No route is set." );
+        route_node.enabled = false;
+        route_node.disabled_reason = route_node.value;
+        route_node.actions = { "focus" };
+    } else {
+        const tripoint_abs_omt destination = route.front();
+        route_node.value = string_format( _( "Planned destination: %1$s. Overmap coordinates: "
+                                             "X %2$d, Y %3$d, level %4$d." ),
+                                          overmap_tile_description( destination ), destination.x(),
+                                          destination.y(), destination.z() );
+        route_node.detail = string_format( _( "Route map tiles: %1$d. Relative location: %2$s." ),
+                                           static_cast<int>( route.size() ),
+                                           overmap_relative_location( destination, origin ) );
+        route_node.actions = { "focus", "activate" };
+        focus_targets.emplace( route_node.id, destination );
+    }
+    snapshot.nodes.push_back( std::move( route_node ) );
     for( int dy = -1; dy <= 1; ++dy ) {
         for( int dx = -1; dx <= 1; ++dx ) {
             if( dx == 0 && dy == 0 ) {
@@ -2319,7 +2344,8 @@ static tripoint_abs_omt display()
 
     bool map_dirty = true;
     do {
-        reader.update( reader_snapshot( ictxt, curs, orig, reader_focus_targets ) );
+        reader.update( reader_snapshot( ictxt, curs, get_avatar().pos_abs_omt(),
+                                        reader_focus_targets ) );
         if( map_dirty ) {
             ui->invalidate_ui();
         }

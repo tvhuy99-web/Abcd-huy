@@ -269,6 +269,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             selectedItemFocus = "overmap:cursor";
                             selectionChanged = true;
                         }
+                        if (!selectionChanged) {
+                            ReaderSnapshot.Node previousRoute = snapshot.find("overmap:route");
+                            ReaderSnapshot.Node nextRoute = next.find("overmap:route");
+                            if (previousRoute != null && nextRoute != null
+                                    && (!previousRoute.value.equals(nextRoute.value)
+                                        || previousRoute.enabled != nextRoute.enabled)) {
+                                selectedItemFocus = "overmap:route";
+                                selectionChanged = true;
+                            }
+                        }
                     }
                     if (!selectionChanged && ("world-generation".equals(next.category)
                             || "mod-selection".equals(next.category)
