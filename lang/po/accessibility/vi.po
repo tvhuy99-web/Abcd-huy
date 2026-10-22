@@ -94,3 +94,116 @@ msgstr "Tạo nhân vật"
 
 msgid "Character rating"
 msgstr "Đánh giá nhân vật"
+
+#, c-format
+msgid "Selected: %1$s. Available: %2$s."
+msgstr "Đã chọn: %1$s. Hiện có: %2$s."
+
+msgid "Each requirement group must be met. Within this group, choose one alternative:"
+msgstr "Cần đáp ứng từng nhóm yêu cầu. Trong nhóm này, chọn một phương án:"
+
+msgid "Available."
+msgstr "Đã có đủ."
+
+msgid "Missing."
+msgstr "Còn thiếu."
+
+#, c-format
+msgid "%1$s. Group %2$d"
+msgstr "%1$s. Nhóm %2$d"
+
+msgid "Qualities"
+msgstr "Chức năng dụng cụ"
+
+msgid "Tools"
+msgstr "Dụng cụ"
+
+msgid "Components"
+msgstr "Nguyên liệu"
+
+#, c-format
+msgid "Batch size: %d"
+msgstr "Số lượng mỗi mẻ: %d"
+
+msgid "Batch size"
+msgstr "Số lượng mỗi mẻ"
+
+msgid "Choose 1 to 50. Applying a quantity does not start crafting."
+msgstr "Chọn từ 1 đến 50. Áp dụng số lượng chưa bắt đầu chế tạo."
+
+msgid "Can craft"
+msgstr "Có thể chế tạo"
+
+msgid "Cannot craft"
+msgstr "Chưa thể chế tạo"
+
+msgid "Recipe details"
+msgstr "Chi tiết công thức"
+
+msgid "Character requirements:"
+msgstr "Yêu cầu về nhân vật:"
+
+msgid "Character resources:"
+msgstr "Tài nguyên của nhân vật:"
+
+#, c-format
+msgid "%1$s: need %2$d; available %3$d."
+msgstr "%1$s: cần %2$d; hiện có %3$d."
+
+msgid "Construction details"
+msgstr "Chi tiết xây dựng"
+
+msgid "Requirements or location are missing."
+msgstr "Chưa đủ điều kiện hoặc chưa có vị trí phù hợp."
+
+msgid "Skills and materials are sufficient."
+msgstr "Đã đủ kỹ năng và vật liệu."
+
+msgid "Skills or materials are missing."
+msgstr "Còn thiếu kỹ năng hoặc vật liệu."
+
+msgid "A nearby location meets the construction conditions."
+msgstr "Có vị trí lân cận đáp ứng điều kiện xây dựng."
+
+msgid "No nearby location meets the construction conditions."
+msgstr "Chưa có vị trí lân cận đáp ứng điều kiện xây dựng."
+
+msgid "Read a direction, then activate it to choose. Reading does not act."
+msgstr "Đọc một hướng, sau đó kích hoạt để chọn hướng đó. Chỉ đọc chưa thực hiện hành động."
+
+msgid "This location is valid for the selected construction."
+msgstr "Vị trí này phù hợp với công trình đã chọn."
+
+msgid "This location is not valid for the selected construction."
+msgstr "Vị trí này không phù hợp với công trình đã chọn."
+
+msgid "Buildable here"
+msgstr "Xây được tại đây"
+
+msgid "Ready (missing location)"
+msgstr "Đủ yêu cầu, còn thiếu vị trí"
+
+msgid "Item info"
+msgstr "Thông tin vật phẩm"
+
+#, c-format
+msgid "Filter: %s"
+msgstr "Bộ lọc: %s"
+
+msgid "Crafting"
+msgstr "Chế tạo"
+
+msgid "Construction"
+msgstr "Xây dựng"
+
+msgid "Blueprint"
+msgstr "Bản thiết kế"
+
+msgid "Batch"
+msgstr "Theo mẻ"
+
+msgid "Favorite"
+msgstr "Yêu thích"
+
+msgid "Description"
+msgstr "Mô tả"

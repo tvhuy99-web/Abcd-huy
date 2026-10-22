@@ -7,6 +7,8 @@
 #include <unordered_set>
 
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "basecamp.h"
@@ -3546,9 +3548,146 @@ drop_location inventory_selector::get_only_choice() const
     return drop_location();
 }
 
+class inventory_selector::reader_session
+{
+    public:
+        reader_session( inventory_selector &owner, input_context &context,
+                        const std::string &activation ) :
+            owner( owner ), context( context ), activation( activation ),
+            previous( owner.active_reader ),
+            screen( &context, "inventory", [this]( const a11y::semantic_intent &intent ) {
+                return handle( intent );
+            } ) {
+            owner.active_reader = this;
+        }
+
+        ~reader_session() {
+            owner.active_reader = previous;
+        }
+
+        void update() {
+            if( !a11y::enabled() ) {
+                return;
+            }
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( context, owner.title );
+            snapshot.summary = remove_color_tags( owner.hint );
+            for( const std::string &line : owner.get_stats() ) {
+                snapshot.summary += "\n" + remove_color_tags( line );
+            }
+            if( !owner.filter.empty() ) {
+                snapshot.summary += "\n" + string_format( _( "Filter: %s" ), owner.filter );
+            }
+            std::vector<a11y::semantic_node> rows;
+            for( inventory_column *column : owner.columns ) {
+                if( !column->visible() ) {
+                    continue;
+                }
+                // get_entries excludes filtered/collapsed entries and cosmetic
+                // selection columns. Do not walk item contents independently.
+                for( inventory_entry *entry : column->get_entries( return_item ) ) {
+                    const item_location &location = entry->any_item();
+                    if( !location ) {
+                        continue;
+                    }
+                    auto binding = std::find_if( bindings.begin(), bindings.end(),
+                    [&]( const row_binding &b ) {
+                        return b.column == column && b.location == location;
+                    } );
+                    if( binding == bindings.end() ) {
+                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ) } );
+                        binding = std::prev( bindings.end() );
+                    }
+                    entry->cache_denial( owner.preset );
+                    const auto &cells = entry->get_entry_cell_cache( owner.preset ).text;
+                    a11y::semantic_node node;
+                    node.id = binding->id;
+                    node.role = activation == "TOGGLE_ENTRY" ? "checkbox" : "button";
+                    node.label = remove_color_tags( cells.empty() ? location->display_name() : cells.front() );
+                    node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
+                                               std::to_string( entry->chosen_count ),
+                                               std::to_string( entry->get_available_count() ) );
+                    node.detail = location.describe( &owner.u );
+                    for( std::size_t i = 1; i < cells.size(); ++i ) {
+                        node.detail += "\n" + remove_color_tags( cells[i] );
+                    }
+                    node.enabled = entry->is_selectable();
+                    node.disabled_reason = remove_color_tags( entry->denial.value_or( "" ) );
+                    node.checked = entry->chosen_count > 0;
+                    node.selected = owner.is_active_column( *column ) && column->is_highlighted( *entry );
+                    if( node.selected ) {
+                        snapshot.focus = node.id;
+                    }
+                    rows.push_back( std::move( node ) );
+                }
+            }
+            for( std::size_t i = 0; i < rows.size(); ++i ) {
+                rows[i].position = i + 1;
+                rows[i].total = rows.size();
+            }
+            rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
+                         std::make_move_iterator( snapshot.nodes.end() ) );
+            snapshot.nodes = std::move( rows );
+            screen.update( std::move( snapshot ) );
+        }
+
+    private:
+        struct row_binding {
+            inventory_column *column;
+            item_location location;
+            std::string id;
+        };
+        inventory_selector &owner;
+        input_context &context;
+        std::string activation;
+        reader_session *previous;
+        std::vector<row_binding> bindings;
+        std::size_t serial = 0;
+        a11y::screen_scope screen;
+
+        std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
+            const auto binding = std::find_if( bindings.begin(), bindings.end(),
+            [&]( const row_binding &b ) { return b.id == intent.node; } );
+            if( binding == bindings.end() ) {
+                return a11y::registered_intent( context, intent );
+            }
+            // Resolve the handle again against this screen's current visible
+            // rows. No vector-entry pointer survives a sort, filter or redraw.
+            const auto entries = binding->column->get_entries( return_item );
+            const auto found = std::find_if( entries.begin(), entries.end(),
+            [&]( const inventory_entry *entry ) { return entry->any_item() == binding->location; } );
+            if( found == entries.end() ) {
+                return std::nullopt;
+            }
+            inventory_entry &entry = **found;
+            if( intent.action == "focus" ) {
+                owner.highlight( binding->location );
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" && entry.is_selectable() &&
+                owner.highlight( binding->location ) ) {
+                // A row activation acts on one item even if keyboard category
+                // selection was previously active. Bulk actions remain commands.
+                owner.mode = navigation_mode::ITEM;
+                for( inventory_column *column : owner.columns ) {
+                    column->on_mode_change( owner.mode );
+                }
+                return activation;
+            }
+            return std::nullopt;
+        }
+};
+
 inventory_input inventory_selector::get_input()
 {
+    if( active_reader ) {
+        active_reader->update();
+    }
     std::string const &action = ctxt.handle_input();
+    if( ctxt.get_raw_input().type == input_event_t::error ) {
+        // Semantic actions have no hotkey. In particular, zero must not match
+        // an item's unassigned invlet and turn focus into an item activation.
+        return { action, 0, nullptr };
+    }
     int const ch = ctxt.get_raw_input().get_first_input();
     return process_input( action, ch );
 }
@@ -3931,6 +4070,7 @@ std::string inventory_selector::action_bound_to_key( char key ) const
 
 item_location inventory_pick_selector::execute()
 {
+    reader_session reader( *this, ctxt, "CONFIRM" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
     item_location startDragItem;
@@ -4270,6 +4410,7 @@ void ammo_inventory_selector::mod_chosen_count( inventory_entry &entry, int valu
 
 drop_location ammo_inventory_selector::execute()
 {
+    reader_session reader( *this, ctxt, "CONFIRM" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
     while( true ) {
@@ -4568,6 +4709,7 @@ void inventory_multiselector::toggle_entries( int &count, const toggle_mode mode
 
 drop_locations inventory_multiselector::execute( bool allow_empty )
 {
+    reader_session reader( *this, ctxt, "TOGGLE_ENTRY" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
     while( true ) {
@@ -4603,6 +4745,7 @@ inventory_compare_selector::inventory_compare_selector( Character &p ) :
 
 std::pair<const item *, const item *> inventory_compare_selector::execute()
 {
+    reader_session reader( *this, ctxt, "TOGGLE_ENTRY" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
     while( true ) {
@@ -4861,6 +5004,7 @@ std::string haul_selector_preset::get_denial( const item_location &item ) const
 
 drop_locations inventory_drop_selector::execute()
 {
+    reader_session reader( *this, ctxt, "TOGGLE_ENTRY" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
     while( true ) {
@@ -5032,6 +5176,7 @@ void pickup_selector::apply_selection( std::vector<drop_location> selection )
 
 drop_locations pickup_selector::execute()
 {
+    reader_session reader( *this, ctxt, "TOGGLE_ENTRY" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     debug_print_timer( tp_start );
 
@@ -5228,6 +5373,7 @@ void inventory_examiner::force_max_window_size()
 
 int inventory_examiner::execute()
 {
+    reader_session reader( *this, ctxt, "CONFIRM" );
     if( !check_parent_item() ) {
         return NO_CONTENTS_TO_EXAMINE;
     }
@@ -5321,6 +5467,7 @@ std::string unload_selector::hint_string()
 
 std::pair<item_location, bool> unload_selector::execute()
 {
+    reader_session reader( *this, ctxt, "CONFIRM" );
     shared_ptr_fast<ui_adaptor> ui = create_or_get_ui_adaptor();
     item_location startDragItem;
     bool dragActive = false;
@@ -5394,6 +5541,10 @@ trade_selector::trade_selector( trade_ui *parent, Character &u,
     _ctxt_trade.register_action( ACTION_AUTOBALANCE );
     _ctxt_trade.register_action( ACTION_BANKBALANCE );
     _ctxt_trade.register_action( "ANY_INPUT" );
+    // Semantic commands must be accepted by the context actually being polled.
+    for( const std::string &action : ctxt.registered_action_ids() ) {
+        _ctxt_trade.register_action( action );
+    }
     // duplicate this action in the parent ctxt so it shows up in the keybindings menu
     // CANCEL and OK are already set in inventory_selector
     ctxt.register_action( ACTION_SWITCH_PANES );
@@ -5410,6 +5561,7 @@ trade_selector::select_t trade_selector::to_trade() const
 
 void trade_selector::execute()
 {
+    reader_session reader( *this, _ctxt_trade, "TOGGLE_ENTRY" );
     debug_print_timer( tp_start );
     bool exit = false;
 
@@ -5418,6 +5570,7 @@ void trade_selector::execute()
     while( !exit ) {
         _ui->invalidate_ui();
         ui_manager::redraw_invalidated();
+        reader.update();
         std::string const &action = _ctxt_trade.handle_input();
         if( action == ACTION_SWITCH_PANES ) {
             _parent->pushevent( trade_ui::event::SWITCH );
@@ -5435,8 +5588,9 @@ void trade_selector::execute()
             _parent->bank_balance();
         } else {
             input_event const iev = _ctxt_trade.get_raw_input();
-            inventory_input const input =
-                process_input( ctxt.input_to_action( iev ), iev.get_first_input() );
+            inventory_input const input = iev.type == input_event_t::error ?
+                                          inventory_input{ action, 0, nullptr } :
+                                          process_input( ctxt.input_to_action( iev ), iev.get_first_input() );
             inventory_drop_selector::on_input( input );
             if( input.action == "HELP_KEYBINDINGS" ) {
                 ctxt.display_menu();

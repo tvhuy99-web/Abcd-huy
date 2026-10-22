@@ -733,6 +733,11 @@ class inventory_selector
          */
         input_context ctxt;
 
+        // Lives only for an execute() call, never for the selector's entire
+        // lifetime: nested item dialogs must restore the previous reader frame.
+        class reader_session;
+        reader_session *active_reader = nullptr;
+
         const item_category *naturalize_category( const item_category &category,
                 const tripoint_bub_ms &pos );
 

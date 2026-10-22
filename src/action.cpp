@@ -10,6 +10,9 @@
 #include <utility>
 
 #include "avatar.h"
+#include "a11y_input.h"
+#include "a11y_perception.h"
+#include "a11y_runtime.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_utility.h"
 #include "character.h"
@@ -24,6 +27,7 @@
 #include "input_enums.h"
 #include "item.h"
 #include "item_location.h"
+#include "line.h"
 #include "map.h"
 #include "map_iterator.h"
 #include "map_scale_constants.h"
@@ -1146,7 +1150,9 @@ action_id handle_main_menu()
 std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         const bool allow_vertical, const bool allow_mouse, const int timeout,
         const std::function<std::pair<bool, std::optional<tripoint_rel_ms>>(
-            const input_context &ctxt, const std::string &action )> &action_cb )
+            const input_context &ctxt, const std::string &action )> &action_cb,
+        const tripoint_bub_ms *reader_origin,
+        const std::function<std::string( const tripoint_bub_ms & )> &reader_target_hint )
 {
     input_context ctxt( "DEFAULTMODE", keyboard_mode::keycode );
     if( timeout >= 0 ) {
@@ -1175,10 +1181,40 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
                    : _( "%s (Direction button)" ), message ).on_top( true );
 
     temp_hide_advanced_inv();
+    a11y::screen_scope reader( &ctxt, "adjacent-direction",
+    [&]( const a11y::semantic_intent &intent ) {
+        return a11y::registered_intent( ctxt, intent );
+    } );
     std::string action;
     bool done = false;
     do {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            auto snapshot = a11y::command_snapshot( ctxt, remove_color_tags( message ) );
+            snapshot.summary = _( "Read a direction, then activate it to choose. Reading does not act." );
+            const tripoint_bub_ms origin = reader_origin ? *reader_origin : get_player_character().pos_bub();
+            get_map().update_visibility_cache( origin.z() );
+            for( a11y::semantic_node &node : snapshot.nodes ) {
+                auto offset = ctxt.get_direction_rel_ms( node.id );
+                if( node.id == "pause" ) {
+                    offset = tripoint_rel_ms::zero;
+                }
+                if( offset ) {
+                    // Use the engine's transformed direction, including an
+                    // isometric tileset, so spoken compass names stay truthful.
+                    node.label = direction_name( direction_from( offset->raw() ) );
+                    const auto observation = a11y::observe_tile( origin + *offset );
+                    node.detail = a11y::describe_tile( observation );
+                    // Match the visible target highlights without publishing
+                    // validity tests against hidden live terrain or furniture.
+                    if( reader_target_hint && observation.source == a11y::observation_source::visible ) {
+                        node.detail += "\n" + remove_color_tags( reader_target_hint( origin + *offset ) );
+                    }
+                    node.value = node.detail;
+                }
+            }
+            reader.update( std::move( snapshot ) );
+        }
         action = ctxt.handle_input();
         if( std::optional<tripoint_rel_ms> vec = ctxt.get_direction_rel_ms( action ) ) {
             FacingDirection &facing = get_player_character().facing;
@@ -1223,7 +1259,8 @@ std::optional<tripoint_bub_ms> choose_adjacent( const std::string &message,
 std::optional<tripoint_bub_ms> choose_adjacent( const tripoint_bub_ms &pos,
         const std::string &message, bool allow_vertical, int timeout,
         const std::function<std::pair<bool, std::optional<tripoint_bub_ms>>(
-            const input_context &ctxt, const std::string &action )> &action_cb )
+            const input_context &ctxt, const std::string &action )> &action_cb,
+        const std::function<std::string( const tripoint_bub_ms & )> &reader_target_hint )
 {
     const std::optional<tripoint_rel_ms> dir = choose_direction(
                 message, allow_vertical, /*allow_mouse=*/true, timeout,
@@ -1249,7 +1286,7 @@ std::optional<tripoint_bub_ms> choose_adjacent( const tripoint_bub_ms &pos,
             }
         }
         return std::pair<bool, std::optional<tripoint_rel_ms>>( false, std::nullopt );
-    } );
+    }, &pos, reader_target_hint );
     if( dir ) {
         return pos + *dir;
     } else {

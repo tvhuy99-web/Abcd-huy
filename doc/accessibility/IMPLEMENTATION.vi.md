@@ -38,6 +38,11 @@ ghi PASS mới.
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
 | Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và nhiều tầng còn thiếu |
 | Thế giới | `a11y_world`, `get_player_input` | Ô hiện tại, trạng thái, thông báo gần đây, bán kính quét và lệnh đã đăng ký; đọc ô không tự di chuyển; chưa có toàn bộ bộ thăm dò/bộ lọc/đường đi |
+| Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
+| Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
+| Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
+| Xây dựng | `construction.cpp` | Nhóm, biến thể/công đoạn, mô tả, yêu cầu và trạng thái vị trí; CONFIRM/đặt công trình dùng logic gốc; blueprint và các điều kiện đặc biệt chưa thử |
+| Chọn ô lân cận | `action.cpp/.h` | Scope cho choose_direction/choose_adjacent, gọi phép đổi hướng gốc kể cả isometric; chỉ quan sát ô ngang qua perception; trạng thái hợp lệ công trình chỉ nói ở ô nhìn thấy; chưa có quan sát khác tầng |
 | Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; chưa chạy gettext/build mới |
 
 ## Phần viết mã còn phải làm
@@ -54,8 +59,10 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 - G4: thăm dò nhiều tầng/bộ lọc/điểm đáng chú ý, cảm nhận đặc biệt và âm thanh
   bất định; quan sát theo hành động thực tế, nhặt/đồ chứa, cơ thể/y tế, ăn/uống,
   mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động.
-- G5: hành trang chọn nhiều/chuyển đồ, nhắm bắn và đường bắn, cận chiến,
-  đạn/chế độ bắn, ném, chế tạo/công thức/tiến độ và xây dựng/chọn vị trí.
+- G5: kho nâng cao/chuyển đồ hai phía, nhắm bắn và đường bắn, cận chiến,
+  chế độ bắn, ném, hoạt động/tiến độ chế tạo và xây dựng. Đã có adapter ban đầu
+  cho hành trang chọn nhiều, nạp/tháo đạn, công thức và chọn vị trí lân cận,
+  nhưng còn phải đối chiếu mọi biến thể/pocket và hoàn thiện chi tiết thiếu.
 - G6: overmap/travel/note/mission; NPC/đối thoại/giao dịch/cộng đồng; phương tiện
   và sơ đồ bộ phận/lái/remote; vùng/tự động hóa; bionics/đột biến/phép thuật;
   các minigame, tài liệu, trợ giúp và những màn riêng trong `COVERAGE.md`.
@@ -66,3 +73,34 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 
 Giai đoạn 1 chỉ hoàn tất khi từng hàng còn thiếu được triển khai cụ thể và
 đối chiếu lại với toàn bộ ma trận tính năng của kế hoạch. Hiện chưa đạt mốc đó.
+
+## Điểm cần giữ cho đợt hành trang/chế tạo/xây dựng
+
+Đã viết mã, chưa biên dịch hoặc chạy bất kỳ bài kiểm thử nào cho đợt này.
+Không cộng các đường vào menu vào số hành trình đã đạt.
+
+- Hàng hành trang giữ `item_location` để tra lại danh sách hiện thời; không
+  truyền con trỏ entry hoặc invlet/phím giả sang Java. Scope kết thúc cùng
+  `execute()`, kể cả nhánh return/hủy. Hàng chọn nhiều dùng TOGGLE_ENTRY;
+  CONFIRM riêng mới chốt danh sách. Kích hoạt một hàng đặt chế độ chọn một
+  vật phẩm; lệnh chọn hàng loạt của bàn phím vẫn còn riêng trong danh mục.
+- Phải kiểm chứng chọn số lượng qua MARK_WITH_COUNT, INCREASE/DECREASE,
+  bộ lọc và chuyển nhóm; nhặt/chứa/lồng, đồ ẩn, stack trùng tên, bản ghi bị
+  sắp xếp hoặc mất hiệu lực, hủy rồi mở lại và không gộp hai vật phẩm cùng tên.
+- Phải kiểm chứng focus/đọc chi tiết không kích hoạt vật phẩm, không khớp
+  invlet chưa gán (0), không chọn cả category ngoài ý định; giữ kiểm tra
+  trộm cắp/chất lỏng và xác nhận của engine. So sánh chỉ chốt khi đủ hai món.
+- Mẻ chế tạo dùng đường xử lý số lượng hiện hữu, nhận kết quả sau áp dụng;
+  cần kiểm chứng 1/50/0/51, chuỗi hỏng, đổi crafter/batch/filter, công thức
+  lồng, lựa chọn nguyên liệu thay thế và cùng vật phẩm cho nhiều yêu cầu.
+  Lời đọc dùng mẫu byproduct/mô tả UI đang giữ; không tạo thêm preview ngẫu nhiên.
+- Nhóm yêu cầu đọc bằng chữ “đã có đủ/còn thiếu” thay cho màu, liệt kê toàn
+  bộ phương án của nhóm. Từng nhóm vẫn bắt buộc; một phương án trong nhóm
+  là lựa chọn. Không coi đủ từng nhóm độc lập là bằng chứng có thể chế tạo:
+  engine vẫn kiểm tra trùng nguyên liệu, bóng tối, dụng cụ và đồ chứa.
+- Xây dựng giữ đường CONFIRM, cảnh báo phe phái, chọn vị trí, partial_con và
+  tiêu hao gốc. Cần kiểm chứng vị trí hợp lệ/không hợp lệ, ô không nhìn thấy,
+  filter mode, blueprint, ánh sáng, tài nguyên thay đổi và hướng isometric.
+- Khi bật trình đọc giữa một màn đã mở lúc reader tắt, scope hiện tại có thể
+  chưa có snapshot chuyên biệt. Cần hoàn thiện cơ chế đăng ký/refresh khi
+  đổi enabled trong G2/G7; không giả sử wake event đã giải quyết việc đó.

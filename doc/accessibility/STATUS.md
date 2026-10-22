@@ -25,6 +25,12 @@ trạng thái nhân vật và quét lân cận. **Đây là mã đang triển kh
 minh chạy được hoặc bao phủ toàn game.** Theo dõi phần chưa viết tại
 [IMPLEMENTATION.vi.md](IMPLEMENTATION.vi.md).
 
+Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
+nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và
+mẻ chế tạo, yêu cầu từng nhóm/công đoạn; xây dựng và chọn hướng/ô lân cận.
+Tất cả vẫn ở giai đoạn viết mã, **chưa biên dịch/chạy kiểm thử**, chưa có APK
+mới và chưa đủ điều kiện công bố người khiếm thị chơi độc lập.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026

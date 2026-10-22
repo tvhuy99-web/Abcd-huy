@@ -381,7 +381,8 @@ std::vector<std::string> recipe_info(
     const int batch_size,
     const int fold_width,
     const nc_color &color,
-    const std::vector<Character *> &crafting_group )
+    const std::vector<Character *> &crafting_group,
+    const std::map<itype_id, int> *display_byproducts )
 {
     std::ostringstream oss;
     oss << string_format( _( "Crafter: %s\n" ), guy.name_and_maybe_activity() );
@@ -508,7 +509,11 @@ std::vector<std::string> recipe_info(
 
     if( recp.has_byproducts() ) {
         oss << _( "Byproducts:\n" );
-        for( const std::pair<const itype_id, int> &bp : recp.get_byproducts() ) {
+        // A reader can reuse the UI's already sampled preview. Reading must not
+        // sample a randomized byproduct group again or change the game's RNG.
+        const std::map<itype_id, int> byproducts = display_byproducts ?
+                *display_byproducts : recp.get_byproducts();
+        for( const std::pair<const itype_id, int> &bp : byproducts ) {
             const itype *t = item::find_type( bp.first );
             int amount = bp.second * batch_size;
             if( t->count_by_charges() ) {
