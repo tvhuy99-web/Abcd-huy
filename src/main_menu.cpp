@@ -751,6 +751,27 @@ bool main_menu::opening_screen()
                 if( sel1 == getopt( main_menu_opts::NEWCHAR ) && i < vNewGameHints.size() ) {
                     node.detail = remove_color_tags( vNewGameHints[i] );
                 }
+                if( sel1 == getopt( main_menu_opts::WORLD ) && i == 0 ) {
+                    node.detail = _( "Activate to choose a name and configure a new world." );
+                } else if( sel1 == getopt( main_menu_opts::LOADCHAR ) ||
+                           ( sel1 == getopt( main_menu_opts::WORLD ) && i > 0 ) ) {
+                    const size_t world_index = i - ( sel1 == getopt( main_menu_opts::WORLD ) ? 1 : 0 );
+                    const std::string world_name = world_generator->get_world_name( world_index );
+                    const WORLD *world = world_generator->get_world( world_name );
+                    size_t save_count = world->world_saves.size();
+                    if( sel1 == getopt( main_menu_opts::LOADCHAR ) && MAP_SHARING::isSharing() ) {
+                        save_count = std::count_if( world->world_saves.begin(), world->world_saves.end(),
+                        []( const save_t &save ) {
+                            return save.decoded_name() == MAP_SHARING::getUsername();
+                        } );
+                    }
+                    node.value = string_format( n_gettext( "%lu save", "%lu saves", save_count ), save_count );
+                    if( sel1 == getopt( main_menu_opts::WORLD ) ) {
+                        node.detail = _( "Activate to manage this world's settings." );
+                    } else if( save_count == 0 ) {
+                        node.detail = _( "This world has no character available to load." );
+                    }
+                }
                 snapshot.nodes.push_back( std::move( node ) );
             }
             if( sel1 == getopt( main_menu_opts::MOTD ) || sel1 == getopt( main_menu_opts::CREDITS ) ) {

@@ -39,9 +39,25 @@ vẫn đi theo đường gốc. Chưa biên dịch hoặc kiểm thử.
 
 Bổ sung snapshot cho bộ chọn thế giới đã tồn tại: đọc tên và số save của mọi
 trang; kích hoạt một hàng chỉ đổi lựa chọn, còn xác nhận riêng mới đi tiếp.
-Danh sách snapshot giữ đúng trang/vị trí và đọc lại lựa chọn mới. Tạo/đổi tên
-world và chọn mod vẫn là phần G3 còn thiếu. Các nhãn và hướng dẫn mới đã được
-bổ sung vào overlay tiếng Việt của gettext. Chưa biên dịch hoặc kiểm thử.
+Danh sách snapshot giữ đúng trang/vị trí và đọc lại lựa chọn mới. Các nhãn và
+hướng dẫn của bộ chọn đã được bổ sung vào overlay tiếng Việt; phần tạo world
+cơ bản và mod manager được mở rộng ở mục tiếp theo. Chưa biên dịch hoặc kiểm thử.
+
+Mở rộng tiếp G3 vào luồng tạo world và mod manager. Màn tạo world xuất bản tên,
+mức của từng tùy chọn, nút tăng/giảm riêng, số mod đang bật và lệnh hoàn tất,
+đặt lại, ngẫu nhiên hóa, mở tùy chọn nâng cao hoặc chọn mod; đổi tên dùng popup
+gốc. Mod manager đọc nhóm, mod khả dụng/đang bật, mô tả, trạng thái xung đột và
+vị trí thứ tự nạp; kích hoạt mod đi qua CONFIRM gốc, còn lệnh di chuyển gốc đổi
+thứ tự. Nhãn mới có trong catalog tiếng Việt. Tùy chọn nâng cao, popup đổi tên,
+lọc mod và luồng tạo world thực tế vẫn cần kiểm thử. Chưa biên dịch hoặc chạy
+test.
+
+Đã nối thêm reader cho trang tùy chọn nâng cao: có các tab, nhóm đang mở/đóng,
+giá trị và mô tả từng cài đặt, điều kiện tiên quyết, nút lùi/tiến giá trị và
+đường mở trình chỉnh sửa gốc. Danh sách mod của world đã tạo cũng đọc được thứ
+tự nạp và mô tả mod đang chọn; đây là màn chỉ xem. Chưa biên dịch hoặc kiểm tra
+luồng lưu/hủy thay đổi tùy chọn. Các lựa chọn thế giới ở menu chính nay đọc thêm
+số bản lưu; bộ lọc tính đúng các nhân vật được phép tải trong chế độ chia sẻ.
 
 Đợt tiếp theo đã bổ sung mã cho hành trang chọn đơn/chọn nhiều, nhặt/bỏ,
 nạp/tháo đạn, so sánh và cửa sổ thông tin vật phẩm; danh sách công thức và

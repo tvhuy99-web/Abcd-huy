@@ -489,3 +489,174 @@ msgstr "Đánh giá nhân vật"
 
 msgid "None"
 msgstr "Không có"
+
+msgid "Create world"
+msgstr "Tạo thế giới"
+
+msgid "Set a world name and options. Adjust each option, choose mods, then finish to create the world."
+msgstr "Đặt tên và chọn tùy chọn thế giới. Điều chỉnh từng mục, chọn mod rồi hoàn tất để tạo thế giới."
+
+msgid "World name"
+msgstr "Tên thế giới"
+
+msgid "Activate to edit the world name."
+msgstr "Kích hoạt để sửa tên thế giới."
+
+#, c-format
+msgid "Increase %s"
+msgstr "Tăng %s"
+
+#, c-format
+msgid "Decrease %s"
+msgstr "Giảm %s"
+
+msgid "This option is already at its highest value."
+msgstr "Tùy chọn này đã ở mức cao nhất."
+
+msgid "This option is already at its lowest value."
+msgstr "Tùy chọn này đã ở mức thấp nhất."
+
+msgid "Finish world setup"
+msgstr "Hoàn tất thiết lập thế giới"
+
+msgid "Review the name and settings, then confirm to create this world."
+msgstr "Kiểm tra tên và thiết lập, sau đó xác nhận để tạo thế giới này."
+
+msgid "Reset world settings"
+msgstr "Đặt lại thiết lập thế giới"
+
+msgid "Restore world options and the default mod list."
+msgstr "Khôi phục tùy chọn thế giới và danh sách mod mặc định."
+
+msgid "Randomize world options"
+msgstr "Ngẫu nhiên hóa tùy chọn thế giới"
+
+msgid "Choose random values for all world options."
+msgstr "Chọn ngẫu nhiên giá trị cho mọi tùy chọn thế giới."
+
+msgid "Advanced world options"
+msgstr "Tùy chọn thế giới nâng cao"
+
+msgid "Open the detailed world options."
+msgstr "Mở các tùy chọn thế giới chi tiết."
+
+msgid "Choose world mods"
+msgstr "Chọn mod cho thế giới"
+
+#, c-format
+msgid "%lu active mod"
+msgid_plural "%lu active mods"
+msgstr[0] "%lu mod đang bật"
+
+msgid "Choose which mods this world uses before creating it."
+msgstr "Chọn các mod thế giới sẽ dùng trước khi tạo."
+
+msgid "World mod selection"
+msgstr "Chọn mod thế giới"
+
+msgid "Options"
+msgstr "Tùy chọn"
+
+msgid "World options"
+msgstr "Tùy chọn thế giới"
+
+msgid "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable."
+msgstr "Đặt tiêu điểm vào một tùy chọn để nghe giá trị và mô tả hiện tại. Dùng giá trị trước hoặc tiếp theo để đổi, hoặc kích hoạt để mở trình chỉnh sửa. Trò chơi xử lý lưu theo luồng tùy chọn thông thường khi phù hợp."
+
+msgid "Activate to return to world mod selection."
+msgstr "Kích hoạt để quay lại phần chọn mod thế giới."
+
+msgid "Expanded"
+msgstr "Đã mở rộng"
+
+msgid "Collapsed"
+msgstr "Đã thu gọn"
+
+msgid "The prerequisite for this option is not met."
+msgstr "Chưa đáp ứng điều kiện tiên quyết của tùy chọn này."
+
+#, c-format
+msgid "Previous value for %s"
+msgstr "Giá trị trước của %s"
+
+#, c-format
+msgid "Next value for %s"
+msgstr "Giá trị tiếp theo của %s"
+
+msgid "Activate to select the previous value."
+msgstr "Kích hoạt để chọn giá trị trước."
+
+msgid "Activate to select the next value."
+msgstr "Kích hoạt để chọn giá trị tiếp theo."
+
+msgid "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order."
+msgstr "Duyệt các nhóm mod. Kích hoạt mod khả dụng để thêm hoặc mod đang bật để gỡ. Dùng lệnh di chuyển để đổi thứ tự nạp."
+
+msgid "Activate to show the mods in this category."
+msgstr "Kích hoạt để xem mod trong nhóm này."
+
+#, c-format
+msgid "This mod is missing: %s."
+msgstr "Không tìm thấy mod này: %s."
+
+msgid "This mod is obsolete."
+msgstr "Mod này đã lỗi thời."
+
+#, c-format
+msgid "Conflicts with %s."
+msgstr "Xung đột với %s."
+
+msgid "Available mod list is empty"
+msgstr "Danh sách mod khả dụng trống"
+
+msgid "No mods are available in this category."
+msgstr "Không có mod khả dụng trong nhóm này."
+
+msgid "No mods match the current filter."
+msgstr "Không có mod nào khớp bộ lọc hiện tại."
+
+msgid "Missing mod"
+msgstr "Thiếu mod"
+
+msgid "This mod is missing and cannot be added."
+msgstr "Không tìm thấy mod này nên không thể thêm."
+
+msgid "Already in load order"
+msgstr "Đã có trong thứ tự nạp"
+
+msgid "Available to add"
+msgstr "Có thể thêm vào"
+
+msgid "Active mod load order is empty"
+msgstr "Thứ tự nạp mod đang bật trống"
+
+msgid "Activate a mod from the available list to add it."
+msgstr "Kích hoạt mod trong danh sách khả dụng để thêm."
+
+#, c-format
+msgid "Load order position %1$lu of %2$lu"
+msgstr "Vị trí nạp %1$lu trên tổng %2$lu"
+
+msgid "Read the mods enabled for this world and their load order. This list does not change the world."
+msgstr "Đọc các mod đang bật cho thế giới này và thứ tự nạp. Danh sách này không làm thay đổi thế giới."
+
+msgid "No active mods"
+msgstr "Không có mod đang bật"
+
+msgid "This world has no active mods."
+msgstr "Thế giới này không bật mod nào."
+
+msgid "Activate to choose a name and configure a new world."
+msgstr "Kích hoạt để đặt tên và cấu hình thế giới mới."
+
+msgid "Activate to manage this world's settings."
+msgstr "Kích hoạt để quản lý thiết lập của thế giới này."
+
+msgid "This world has no character available to load."
+msgstr "Thế giới này không có nhân vật nào để tải."
+
+msgid "Current mod filter"
+msgstr "Bộ lọc mod hiện tại"
+
+msgid "No filter is active."
+msgstr "Hiện không bật bộ lọc nào."

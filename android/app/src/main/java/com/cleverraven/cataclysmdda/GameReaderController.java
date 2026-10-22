@@ -231,7 +231,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 String selectedItemFocus = "";
                 boolean selectionChanged = false;
                 boolean announcesSelection = "targeting".equals(next.category)
-                        || "world-selection".equals(next.category);
+                        || "world-selection".equals(next.category)
+                        || "world-generation".equals(next.category)
+                        || "mod-selection".equals(next.category)
+                        || "active-world-mods".equals(next.category)
+                        || "world-options".equals(next.category)
+                        || "OPTIONS".equals(next.category);
                 if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {
                     for (ReaderSnapshot.Node node : next.nodes) {
                         if (node.selected) {
@@ -251,6 +256,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 && (!previousCursor.value.equals(nextCursor.value)
                                     || !previousCursor.detail.equals(nextCursor.detail))) {
                             selectedItemFocus = "target:cursor";
+                            selectionChanged = true;
+                        }
+                    }
+                    if (!selectionChanged && ("world-generation".equals(next.category)
+                            || "mod-selection".equals(next.category)
+                            || "active-world-mods".equals(next.category)
+                            || "world-options".equals(next.category)
+                            || "OPTIONS".equals(next.category))) {
+                        ReaderSnapshot.Node previousFocus = snapshot.find(focus);
+                        ReaderSnapshot.Node nextFocus = next.find(focus);
+                        if (previousFocus != null && nextFocus != null
+                                && (!previousFocus.value.equals(nextFocus.value)
+                                    || !previousFocus.detail.equals(nextFocus.detail)
+                                    || previousFocus.enabled != nextFocus.enabled
+                                    || !previousFocus.disabledReason.equals(nextFocus.disabledReason))) {
+                            selectedItemFocus = focus;
                             selectionChanged = true;
                         }
                     }

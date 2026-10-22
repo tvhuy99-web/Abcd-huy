@@ -37,13 +37,13 @@ chưa chạy instrumentation test.
 | Cử chỉ | `ReaderGestureSurface`, `GameReaderController`, `ReaderPreferences` | Duyệt/chọn/chi tiết/dừng; vùng luyện tám hướng đếm đủ từng hướng mà không gửi lệnh game; di chuyển nhanh mặc định tắt, có thể luyện trước hoặc chủ động bỏ qua, chỉ gửi action khi snapshot là thế giới và cảnh báo có thể tốn lượt; chưa có đổi ánh xạ/khôi phục; test nguồn đã viết nhưng chưa chạy |
 | Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận người dùng đã nghe; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; đường vào màn thiết lập của flavor thử; bootstrap không TalkBack chưa đầy đủ |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
-| Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới, tài liệu; chưa xác nhận tạo/tải save |
+| Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới kèm số bản lưu có thể tải, tài liệu; tạo/tải save vẫn cần nghiệm thu |
 | Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; có helper cho vòng `query_once` ngoài |
 | Hộp thoại | `popup.cpp` | Văn bản câu hỏi, chọn, hủy/tiếp tục qua action gốc; các dialog native khác vẫn cần tích hợp |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab/lệnh; tổng kết ngữ nghĩa có tên, giới tính, ngoại hình, kịch bản/nghề/nền tảng, điểm còn lại, thuộc tính, kỹ năng, đặc tính, proficiency, bionic, phép, nhiệm vụ, ngày/địa điểm/xe bắt đầu và xếp hạng; các dòng chọn vẫn gọi action gốc; chưa kiểm chứng dữ liệu từng biến thể, lựa chọn thành phố hoặc luồng bắt đầu/lưu/tải |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
 | Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và quét nhiều tầng còn thiếu |
-| Thế giới | `worldfactory.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; kích hoạt hàng chỉ chọn, xác nhận riêng mới vào; tại bản đồ có ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, bán kính quét và lệnh; đọc không tự di chuyển; chế độ vuốt tám hướng tùy chọn gửi action di chuyển gốc và có thể tốn lượt; tạo/đổi tên/mod chưa tích hợp trợ năng, bộ thăm dò/bộ lọc/đường đi còn thiếu |
+| Thế giới | `worldfactory.cpp`, `options.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; hàng chọn tách khỏi xác nhận vào; tạo thế giới đọc tên, mức tùy chọn, chỉnh tăng/giảm, mod đang bật và các nút hoàn tất/đặt lại/ngẫu nhiên/nâng cao; bộ chọn mod khi tạo/sao chép world đọc nhóm, mod khả dụng/đang bật, mô tả, xung đột và thứ tự nạp; tùy chọn nâng cao đọc tab, nhóm, giá trị, mô tả, điều kiện và lệnh chỉnh; màn xem mod của world hiện có đọc mô tả và thứ tự nạp ở chế độ chỉ xem; tại bản đồ có ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, quét và lệnh; vuốt tám hướng tùy chọn dùng action gốc; cài/thay dữ liệu mod, đổi tên/sao chép thế giới, thăm dò/đường đi còn thiếu; chưa kiểm thử |
 | Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
@@ -53,7 +53,7 @@ chưa chạy instrumentation test.
 | Thông báo log | `messages.cpp`, `a11y_runtime.*`, `a11y_android.*`, `GameReaderController.java`, `ReaderSpeechQueue` | Thông báo mới của player log được chuyển qua JNI từ game thread lên Java; bad/warning/critical ưu tiên khẩn; thông tin thường chờ sau lời focus; bỏ thông báo trùng/coalesce hoặc bị cooldown ẩn; chưa thử tải cao, ngắt quãng hay audio thật |
 | Cảnh báo sinh tồn | `a11y_world.*`, `handle_action.cpp`, `a11y_runtime.cpp`, catalog Việt | So chuyển mức đói/khát/buồn ngủ/đau/sức bền tại vòng chờ bản đồ; baseline/reset theo load/lifecycle; refresh snapshot khi bật lại; chưa xác nhận ngưỡng, chống trùng hoặc chạy thực |
 | Y tế/cơ thể | `medical_ui.cpp`, `a11y_body.h`, `a11y_world.cpp` | Tab/bộ phận có định danh, sức khỏe theo vạch/cảm nhận, hiệu ứng/vết thương/chức năng; giữ đường chọn điều trị và use item gốc; thêm trạng thái điều kiện điều trị bằng chữ; chưa thử điều trị/hoạt động trên save thật |
-| Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; thêm chuỗi bộ chọn thế giới và tổng kết tạo nhân vật; chưa chạy gettext/build mới |
+| Bản địa hóa | `lang/po/accessibility/vi.po`, helper compile | Bổ sung câu qua gettext, không thay từ tiếng Anh tại runtime; thêm chuỗi bộ chọn/tạo thế giới, bộ mod, tùy chọn và tổng kết tạo nhân vật; chưa chạy gettext/build mới |
 
 ## Phần viết mã còn phải làm
 
@@ -65,10 +65,13 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 - G2: đổi ánh xạ/khôi phục, cấu hình duyệt an toàn tám hướng,
   biểu mẫu/bảng/cây,
   các callback chỉ đọc phím thô, toàn bộ dialog native và adapter ngữ cảnh lồng.
-- G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; tạo/đổi tên thế giới,
-  chọn mod; tên nhân vật, tạo mới và tải lại; cấu hình lượt/realtime có lựa
-  chọn rõ ràng. Bộ chọn các thế giới đã tồn tại hiện có snapshot tên/số save
-  và tách riêng chọn với xác nhận vào; chưa tích hợp trải nghiệm tạo world/mod.
+- G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; sao chép/đổi tên thế
+  giới; cài đặt dữ liệu mod; tên nhân vật, template, tạo mới,
+  tải và vào lại save; cấu hình lượt/realtime có lựa chọn rõ ràng. Bộ chọn
+  thế giới đã có tên/số save và tách chọn khỏi xác nhận; màn tạo cơ bản đọc tên,
+  mức tùy chọn cùng lệnh điều chỉnh; màn tùy chọn nâng cao và danh sách mod của
+  world hiện có đã có snapshot đọc; mod manager đọc nhóm, mô tả, xung đột và
+  thứ tự. Các luồng trên chưa được kiểm thử.
 - G4: thăm dò nhiều tầng/bộ lọc/điểm đáng chú ý, cảm nhận đặc biệt và âm thanh
   bất định; quan sát theo hành động thực tế, nhặt/đồ chứa, cơ thể/y tế, ăn/uống,
   mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Đã có
