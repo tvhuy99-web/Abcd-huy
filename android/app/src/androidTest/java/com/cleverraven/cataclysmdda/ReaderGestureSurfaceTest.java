@@ -30,6 +30,16 @@ public class ReaderGestureSurfaceTest {
     }
 
     @Test
+    public void leftHandedPreferenceMirrorsMenuBrowsingWithoutChangingWorldDirection() {
+        assertEquals(1, ReaderGestureSurface.navigationDeltaForHorizontalSwipe(100, false));
+        assertEquals(-1, ReaderGestureSurface.navigationDeltaForHorizontalSwipe(-100, false));
+        assertEquals(-1, ReaderGestureSurface.navigationDeltaForHorizontalSwipe(100, true));
+        assertEquals(1, ReaderGestureSurface.navigationDeltaForHorizontalSwipe(-100, true));
+        assertArrayEquals(new int[] { 1, 0 }, ReaderGestureSurface.directionForSwipe(100, 0));
+        assertArrayEquals(new int[] { -1, 0 }, ReaderGestureSurface.directionForSwipe(-100, 0));
+    }
+
+    @Test
     public void practiceRequiresEightDistinctDirectionBits() {
         int[][] directions = new int[][] {
             { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },

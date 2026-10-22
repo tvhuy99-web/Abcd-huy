@@ -34,7 +34,7 @@
     <string name="unavailable">Unavailable</string>
     <string name="unavailableOption">The option you chose is not available.</string>
     <string name="a11yReaderSetup">Accessibility and voice setup</string>
-    <string name="a11yReaderSetupExplanation">This screen tests Vietnamese speech. Gameplay narration and accessible touch controls are not ready yet. Keep TalkBack enabled to use these controls and Android settings.</string>
+    <string name="a11yReaderSetupExplanation">Test the Vietnamese voice and enable the experimental internal reader. Keep TalkBack available as a recovery option while the reader is being developed.</string>
     <string name="a11yTestVietnamese">Test Vietnamese voice</string>
     <string name="a11yStopSpeech">Stop speech</string>
     <string name="a11yAndroidVoiceSettings">Open Android voice settings</string>
@@ -52,6 +52,6 @@
     <string name="a11ySpeechStopped">Speech stopped. No game action was performed.</string>
     <string name="a11ySpeechMissingVietnamese">The selected engine has no usable Vietnamese voice. Install or choose a Vietnamese voice in Android settings, then test again.</string>
     <string name="a11ySpeechNetworkRequired">The selected voice needs internet. Choose an offline voice in Android settings, or explicitly allow a network voice for this test.</string>
-    <string name="a11ySpeechFailed">Speech could not start or failed. Try again or choose another voice in Android settings. Keep TalkBack enabled.</string>
+    <string name="a11ySpeechFailed">Speech could not start or failed. Turn on TalkBack or choose another voice in Android settings, then try again.</string>
     <string name="a11ySettingsUnavailable">Android could not open settings. You can return to startup or open settings from your device.</string>
 </resources>

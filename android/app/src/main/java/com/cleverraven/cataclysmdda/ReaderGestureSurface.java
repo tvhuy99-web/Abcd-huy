@@ -10,6 +10,9 @@ public final class ReaderGestureSurface extends LinearLayout {
     public interface Listener {
         boolean usesTouchExploration();
         String gestureContext();
+        boolean leftHandedNavigation();
+        float swipeDistancePx();
+        long swipeDurationLimitMs();
         void navigate(int delta);
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
@@ -22,7 +25,6 @@ public final class ReaderGestureSurface extends LinearLayout {
 
     private final Listener listener;
     private final GestureDetector detector;
-    private final float swipeDistance;
     private String owner;
     private String previousTapOwner;
     private boolean multiple;
@@ -37,7 +39,6 @@ public final class ReaderGestureSurface extends LinearLayout {
     public ReaderGestureSurface(Context context, Listener listener) {
         super(context);
         this.listener = listener;
-        swipeDistance = 48 * getResources().getDisplayMetrics().density;
         detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDown(MotionEvent event) { return true; }
@@ -65,9 +66,13 @@ public final class ReaderGestureSurface extends LinearLayout {
                 if (start == null || !valid() || activateOnUp || longPressHandled) {
                     return true;
                 }
+                if (end.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
+                    swipeHandled = true;
+                    return true;
+                }
                 float dx = end.getX() - start.getX();
                 float dy = end.getY() - start.getY();
-                if (Math.max(Math.abs(dx), Math.abs(dy)) < swipeDistance) {
+                if (Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()) {
                     return true;
                 }
                 handleSwipe(dx, dy);
@@ -83,6 +88,11 @@ public final class ReaderGestureSurface extends LinearLayout {
         if (absX < absY * 0.41421356f) { return new int[] { 0, dy > 0 ? 1 : -1 }; }
         if (absY < absX * 0.41421356f) { return new int[] { dx > 0 ? 1 : -1, 0 }; }
         return new int[] { dx > 0 ? 1 : -1, dy > 0 ? 1 : -1 };
+    }
+
+    static int navigationDeltaForHorizontalSwipe(float dx, boolean leftHanded) {
+        int delta = dx > 0 ? 1 : -1;
+        return leftHanded ? -delta : delta;
     }
 
     private boolean valid() {
@@ -122,11 +132,11 @@ public final class ReaderGestureSurface extends LinearLayout {
             }
         }
         if (multiple) {
-            if (Math.hypot(event.getX() - firstX, event.getY() - firstY) > swipeDistance) {
+            if (Math.hypot(event.getX() - firstX, event.getY() - firstY) > listener.swipeDistancePx()) {
                 cancelled = true;
             }
             if (action == MotionEvent.ACTION_UP) {
-                if (!cancelled && event.getEventTime() - downTime <= 700
+                if (!cancelled && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
                         && owner != null && owner.equals(listener.gestureContext())) {
                     listener.stopSpeech();
                 }
@@ -135,19 +145,31 @@ public final class ReaderGestureSurface extends LinearLayout {
             return true;
         }
         detector.onTouchEvent(event);
+        boolean activatedByDoubleTap = false;
         if (action == MotionEvent.ACTION_UP && !swipeHandled && !activateOnUp
                 && !longPressHandled && valid()) {
             float dx = event.getX() - firstX;
             float dy = event.getY() - firstY;
-            if (Math.max(Math.abs(dx), Math.abs(dy)) >= swipeDistance) {
+            if (event.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
+                cancelGesture();
+            } else if (Math.max(Math.abs(dx), Math.abs(dy)) >= listener.swipeDistancePx()) {
                 handleSwipe(dx, dy);
             }
         }
         if (action == MotionEvent.ACTION_UP && activateOnUp && valid()) {
+            activatedByDoubleTap = true;
             listener.activate();
             activateOnUp = false;
         }
-        if (action == MotionEvent.ACTION_UP) { previousTapOwner = valid() ? owner : null; }
+        if (action == MotionEvent.ACTION_UP) {
+            float dx = event.getX() - firstX;
+            float dy = event.getY() - firstY;
+            boolean tap = valid() && !multiple && !cancelled && !swipeHandled && !longPressHandled
+                    && !activatedByDoubleTap
+                    && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
+                    && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
+            previousTapOwner = tap ? owner : null;
+        }
         return true;
     }
 
@@ -163,7 +185,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             // Without explicit world movement mode, menus never interpret a
             // diagonal as movement.
         } else if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
-            listener.navigate(dx > 0 ? 1 : -1);
+            listener.navigate(navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
         } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
             listener.navigate(dy > 0 ? 1 : -1);
         }

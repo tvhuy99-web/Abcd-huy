@@ -4,6 +4,10 @@
     <item type="id" name="a11y_network_voice" />
     <item type="id" name="a11y_speech_rate" />
     <item type="id" name="a11y_speech_rate_value" />
+    <item type="id" name="a11y_left_handed_navigation" />
+    <item type="id" name="a11y_swipe_distance" />
+    <item type="id" name="a11y_swipe_duration" />
+    <item type="id" name="a11y_restore_gesture_defaults" />
     <item type="id" name="a11y_test_voice" />
     <item type="id" name="a11y_stop_voice" />
     <item type="id" name="a11y_return" />

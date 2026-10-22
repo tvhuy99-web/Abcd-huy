@@ -485,6 +485,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public boolean leftHandedNavigation() {
+        return preferences.isLeftHandedNavigation();
+    }
+
+    @Override
+    public float swipeDistancePx() {
+        return preferences.getSwipeDistanceDp()
+                * activity.getResources().getDisplayMetrics().density;
+    }
+
+    @Override
+    public long swipeDurationLimitMs() {
+        return preferences.getSwipeDurationLimitMs();
+    }
+
+    @Override
     public void navigate(int delta) {
         if (editor != null) { editor.navigate(delta); return; }
         if (controls) {

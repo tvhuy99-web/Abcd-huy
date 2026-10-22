@@ -35,7 +35,7 @@ chưa chạy instrumentation test.
 | Android | `GameReaderController`, `CataclysmDDA` | Lớp trình bày native và gửi ý định; phối hợp touch exploration; chưa xác nhận focus/insets/Back trên máy |
 | Lời đọc | `ReaderSpeechQueue` | Gộp focus, ưu tiên, hết hạn, đọc theo đoạn, dừng/đọc lại/watchdog; chưa kiểm thử TTS thật cho mã mới |
 | Cử chỉ | `ReaderGestureSurface`, `GameReaderController`, `ReaderPreferences` | Duyệt/chọn/chi tiết/dừng; vùng luyện tám hướng đếm đủ từng hướng mà không gửi lệnh game; di chuyển nhanh mặc định tắt, có thể luyện trước hoặc chủ động bỏ qua, chỉ gửi action khi snapshot là thế giới và cảnh báo có thể tốn lượt; chưa có đổi ánh xạ/khôi phục; test nguồn đã viết nhưng chưa chạy |
-| Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận người dùng đã nghe; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; đường vào màn thiết lập của flavor thử; bootstrap không TalkBack chưa đầy đủ |
+| Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận sau khi nghe hết mẫu; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; flavor trợ năng tự mở setup trước engine khi không có TalkBack và reader đang tắt; setup có vuốt trái/phải, chạm đơn đọc, chạm đôi kích hoạt, vuốt dọc chỉnh mục dạng thanh, hai ngón dừng; tùy chọn thuận tay trái chỉ đảo duyệt menu; chỉnh khoảng cách/thời gian vuốt và khôi phục mặc định; giọng Việt không có vẫn cần TalkBack để phục hồi; chưa kiểm thử |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới kèm số bản lưu có thể tải, tài liệu; tạo/tải save vẫn cần nghiệm thu |
 | Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; lý do cũng nằm trong chi tiết khi game cho phép kích hoạt mục bị khóa để xem giải thích; có helper cho vòng `query_once` ngoài |
@@ -62,8 +62,12 @@ hoàn tất nhờ menu chung hoặc danh mục action:
 
 - G0/G1: hoàn thiện bootstrap khi TalkBack tắt, chọn engine/voice/tốc độ,
   thông báo phục hồi có âm thu sẵn, cài/nâng dữ liệu, lỗi dung lượng và phục hồi.
-- G2: đổi ánh xạ/khôi phục, cấu hình duyệt an toàn tám hướng,
-  biểu mẫu/bảng/cây,
+  Setup đã có đường tự nói trước engine trên flavor trợ năng và giọng ngoại tuyến
+  mặc định; nếu thiếu giọng Việt, vẫn cần TalkBack để chọn/cài giọng. Tiến độ/
+  lỗi cài dữ liệu trên Splash vẫn chưa có TTS nội bộ. Chưa kiểm thử.
+- G2: đổi ánh xạ hành động tùy biến (chưa viết); đã thêm cấu hình tay thuận,
+  ngưỡng và thời gian vuốt có khôi phục mặc định; còn cấu hình duyệt an toàn
+  tám hướng, biểu mẫu/bảng/cây,
   các callback chỉ đọc phím thô, toàn bộ dialog native và adapter ngữ cảnh lồng.
 - G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; sao chép/đổi tên thế
   giới; cài đặt dữ liệu mod; tên nhân vật, template, tạo mới,

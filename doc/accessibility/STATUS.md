@@ -143,6 +143,20 @@ dấu âm thanh, phương tiện, vật phẩm và đồ đạc; các nhóm khô
 vật là thù địch. Dấu âm thanh được mô tả là gần vị trí đánh dấu, không nhất
 thiết là nơi phát nguồn. Thứ tự/diễn đạt và ranh giới nhận biết chưa kiểm thử.
 
+Màn thiết lập trợ năng có đường tự đọc trước khi bật reader: trên flavor thử,
+nếu TalkBack không hoạt động và reader chưa bật, Splash tự mở setup; người dùng
+vuốt/chạm để chọn nút, điều chỉnh tốc độ, nghe hết câu Việt rồi xác nhận. Khi
+không có giọng Việt, TalkBack vẫn là đường phục hồi để mở cài đặt. Cử chỉ, vòng
+đời Splash/setup và TTS chưa kiểm thử; tiến độ/lỗi chép dữ liệu ban đầu trên
+Splash chưa được tự đọc. Không chạy build/test trong giai đoạn mã.
+
+Đã mở rộng G2: có tùy chọn đảo hướng vuốt ngang khi duyệt menu (không đảo lệnh
+di chuyển thế giới), ba mức ngưỡng và ba mức thời gian vuốt, cùng lệnh khôi phục
+mặc định trong setup native. Hai cách duyệt setup và gameplay dùng các giá trị
+đã lưu. Assertion nguồn cho hướng tay thuận, điều khiển và khôi phục đã được
+thêm nhưng chưa chạy. Ánh xạ tùy biến từng chức năng và quy tắc an toàn tám
+hướng vẫn chưa hoàn tất.
+
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 
 ## Trạng thái ngày 22/10/2026

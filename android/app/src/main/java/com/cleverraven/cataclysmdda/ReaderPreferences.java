@@ -49,4 +49,51 @@ public final class ReaderPreferences {
     public void setMovementPracticeComplete() {
         values.edit().putBoolean("movement_practice_complete", true).apply();
     }
+
+    public boolean isLeftHandedNavigation() {
+        return values.getBoolean("left_handed_navigation", false);
+    }
+
+    public void setLeftHandedNavigation(boolean enabled) {
+        values.edit().putBoolean("left_handed_navigation", enabled).apply();
+    }
+
+    /** Minimum swipe distance in dp: short, standard, long. */
+    public int getSwipeDistanceDp() {
+        switch (values.getInt("swipe_distance_level", 1)) {
+            case 0: return 32;
+            case 2: return 72;
+            default: return 48;
+        }
+    }
+
+    public int getSwipeDistanceLevel() {
+        return Math.max(0, Math.min(2, values.getInt("swipe_distance_level", 1)));
+    }
+
+    public void setSwipeDistanceLevel(int level) {
+        values.edit().putInt("swipe_distance_level", Math.max(0, Math.min(2, level))).apply();
+    }
+
+    /** Maximum swipe duration in ms: quick, standard, deliberate. */
+    public int getSwipeDurationLimitMs() {
+        switch (values.getInt("swipe_duration_level", 1)) {
+            case 0: return 450;
+            case 2: return 1200;
+            default: return 750;
+        }
+    }
+
+    public int getSwipeDurationLevel() {
+        return Math.max(0, Math.min(2, values.getInt("swipe_duration_level", 1)));
+    }
+
+    public void setSwipeDurationLevel(int level) {
+        values.edit().putInt("swipe_duration_level", Math.max(0, Math.min(2, level))).apply();
+    }
+
+    public void restoreGestureDefaults() {
+        values.edit().remove("left_handed_navigation").remove("swipe_distance_level")
+                .remove("swipe_duration_level").apply();
+    }
 }

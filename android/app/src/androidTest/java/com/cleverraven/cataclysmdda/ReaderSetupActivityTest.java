@@ -1,5 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
+import android.content.Intent;
 import android.os.SystemClock;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -26,9 +27,16 @@ import static org.junit.Assert.assertTrue;
  */
 @RunWith(AndroidJUnit4.class)
 public class ReaderSetupActivityTest {
+    private ActivityScenario<ReaderSetupActivity> launchForUiTest() {
+        Intent intent = new Intent(InstrumentationRegistry.getInstrumentation().getTargetContext(),
+                                   ReaderSetupActivity.class);
+        intent.putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true);
+        return ActivityScenario.launch(intent);
+    }
+
     @Test
     public void controlsHaveLabelsAndOnlineVoiceIsOptIn() {
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(ReaderSetupActivity.class)) {
+        try (ActivityScenario<ReaderSetupActivity> scenario = launchForUiTest()) {
             scenario.onActivity(activity -> {
                 Button play = activity.findViewById(R.id.a11y_test_voice);
                 Button stop = activity.findViewById(R.id.a11y_stop_voice);
@@ -58,7 +66,7 @@ public class ReaderSetupActivityTest {
 
     @Test
     public void stopAndRecreateDuringInitializationLeaveAUsableScreen() {
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(ReaderSetupActivity.class)) {
+        try (ActivityScenario<ReaderSetupActivity> scenario = launchForUiTest()) {
             scenario.onActivity(activity -> {
                 activity.findViewById(R.id.a11y_test_voice).performClick();
                 activity.findViewById(R.id.a11y_stop_voice).performClick();
@@ -89,5 +97,39 @@ public class ReaderSetupActivityTest {
             }
             assertEquals(Lifecycle.State.DESTROYED, scenario.getState());
         }
+    }
+
+    @Test
+    public void gestureSettingsAreAdjustableAndCanBeRestored() {
+        ReaderPreferences appPreferences = new ReaderPreferences(
+                InstrumentationRegistry.getInstrumentation().getTargetContext());
+        appPreferences.restoreGestureDefaults();
+        try (ActivityScenario<ReaderSetupActivity> scenario = launchForUiTest()) {
+            scenario.onActivity(activity -> {
+                ReaderPreferences preferences = new ReaderPreferences(activity);
+                CheckBox leftHanded = activity.findViewById(R.id.a11y_left_handed_navigation);
+                SeekBar distance = activity.findViewById(R.id.a11y_swipe_distance);
+                SeekBar duration = activity.findViewById(R.id.a11y_swipe_duration);
+
+                assertNotNull(leftHanded);
+                assertNotNull(distance);
+                assertNotNull(duration);
+                assertEquals(1, distance.getProgress());
+                assertEquals(1, duration.getProgress());
+
+                leftHanded.performClick();
+                distance.setProgress(2);
+                duration.setProgress(0);
+                assertTrue(preferences.isLeftHandedNavigation());
+                assertEquals(72, preferences.getSwipeDistanceDp());
+                assertEquals(450, preferences.getSwipeDurationLimitMs());
+
+                activity.findViewById(R.id.a11y_restore_gesture_defaults).performClick();
+                assertFalse(preferences.isLeftHandedNavigation());
+                assertEquals(48, preferences.getSwipeDistanceDp());
+                assertEquals(750, preferences.getSwipeDurationLimitMs());
+            });
+        }
+        appPreferences.restoreGestureDefaults();
     }
 }
