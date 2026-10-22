@@ -22,6 +22,8 @@ struct tile_observation {
 // All callers run on the game thread after updating the game's visibility
 // cache for this z-level. Unknown/memory branches never read live tile content.
 tile_observation observe_tile( const tripoint_bub_ms &position );
+// Read only the map memory at this coordinate; do not inspect live terrain.
+tile_observation observe_memory_tile( const tripoint_bub_ms &position );
 std::string describe_tile( const tile_observation &observation );
 } // namespace a11y
 #endif // CATA_SRC_A11Y_PERCEPTION_H

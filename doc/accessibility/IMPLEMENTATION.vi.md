@@ -36,8 +36,8 @@ ghi PASS mới.
 | Hộp thoại | `popup.cpp` | Văn bản câu hỏi, chọn, hủy/tiếp tục qua action gốc; các dialog native khác vẫn cần tích hợp |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab và lệnh; mô tả scenario/profession/trait/skill, trạng thái đánh dấu, giá trị chỉ số và một phần summary; chưa phủ mọi chi tiết hiển thị |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
-| Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và nhiều tầng còn thiếu |
-| Thế giới | `a11y_world`, `get_player_input` | Ô hiện tại, trạng thái, thông báo gần đây, bán kính quét và lệnh đã đăng ký; đọc ô không tự di chuyển; chưa có toàn bộ bộ thăm dò/bộ lọc/đường đi |
+| Thông tin hợp lệ | `a11y_perception` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và quét nhiều tầng còn thiếu |
+| Thế giới | `a11y_world`, `get_player_input` | Ô hiện tại, địa hình/đồ đạc từng nhớ ở một tầng trên/dưới, trạng thái, thông báo gần đây, bán kính quét và lệnh; đọc không tự di chuyển; bộ thăm dò/bộ lọc/đường đi còn thiếu |
 | Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
 | Chế tạo | `crafting_gui.cpp`, `a11y_requirements.h` | Danh sách công thức/nhóm, craftability, favorite, mẻ 1–50, kỹ năng/đặc tính, các nhóm lựa chọn dụng cụ/nguyên liệu, công đoạn và chi phí nhân vật; giữ mẫu byproduct của UI; chưa kiểm chứng tiêu hao/thay thế và tiến độ hoạt động |
@@ -167,15 +167,28 @@ Không cộng các đường vào menu vào số hành trình đã đạt.
   trị ở mỗi lượt. Mốc ban đầu tạo baseline im lặng; load nhân vật, tắt reader
   hoặc suspend xóa baseline để không phát lại biến động cũ khi quay lại.
 - Chỉ phát khi vượt/giảm qua các mức có ý nghĩa. Các mức cực hạn của đói,
-  khát, buồn ngủ, đau và sức bền được gửi ưu tiên khẩn; hồi phục hoặc mức nhẹ
-  gửi thông tin thường. Tóm tắt các chuyển trạng thái cùng lần đọc để tránh
-  một câu cho từng chỉ số. Dùng nhãn trạng thái UI và mức đau nhân vật cảm
-  nhận, không gửi tọa độ hoặc dữ liệu sinh vật.
-- Phạm vi hiện tại chưa bao gồm từng bộ phận/chảy máu, nhiễm độc/bệnh, nhiệt,
+  khát, buồn ngủ, đau và sức bền được gửi ưu tiên khẩn; xương gãy hoặc chảy
+  máu nặng cũng ưu tiên khẩn. Hồi phục hoặc mức nhẹ gửi thông tin thường.
+  Tóm tắt các chuyển trạng thái cùng lần đọc để tránh một câu cho từng chỉ số.
+  Dùng nhãn trạng thái UI và mức đau nhân vật cảm nhận, không gửi tọa độ hoặc
+  dữ liệu sinh vật.
+- Ngoài phạm vi hiện tại: HP chi tiết từng bộ phận, nhiễm độc/bệnh, nhiệt,
   encumbrance, thuốc, kỹ năng, morale, năng lượng bionic, mức pin hay nguy hiểm
   môi trường nếu game không đưa chúng qua log. Cần đánh giá trùng với message,
   ngưỡng và thời điểm phát trong realtime/hoạt động dài, đổi ngôn ngữ, mất
   focus cửa sổ, và tải save. Chưa biên dịch/chạy.
+
+## Đợt quan sát tầng lân cận, đã viết mã, chưa kiểm thử
+
+- Snapshot thế giới thêm hai hàng ở cùng vị trí ngang: một tầng phía trên và
+  một tầng phía dưới. Nguồn chỉ là bản ghi terrain/furniture đã nhớ của chính
+  avatar; nếu không có bản ghi thì đọc “chưa biết”. Không tra dữ liệu sống ở
+  tầng khác, không đọc item/bẫy/quái/field từ memory, và hàng chỉ đọc không
+  gọi lệnh lên/xuống tầng.
+- Cần kiểm chứng tọa độ reality-bubble/z sau khi đổi tầng, vùng nhớ đã hết hạn,
+  phòng nhớ nhưng cửa/đồ động đã thay đổi, lộ trường dữ liệu ẩn, điều khiển
+  LEVEL_UP/LEVEL_DOWN vẫn riêng và TalkBack. Đường truy vấn nhìn hiện tại trên
+  tầng khác, cảm nhận đặc biệt và quét nhiều tầng vẫn chưa được viết; chưa build.
 
 ## Đợt y tế và tri thức sức khỏe, chưa chạy kiểm thử
 

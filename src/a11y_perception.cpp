@@ -99,6 +99,32 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
     return result;
 }
 
+tile_observation observe_memory_tile( const tripoint_bub_ms &position )
+{
+    tile_observation result;
+    map &here = get_map();
+    avatar &viewer = get_avatar();
+    if( !here.inbounds( position ) ) {
+        return result;
+    }
+    const auto absolute = here.get_abs( position );
+    if( !viewer.has_memory_at( absolute ) ) {
+        return result;
+    }
+    const memorized_tile &memory = viewer.get_memorized_tile( absolute );
+    const ter_str_id terrain( memory.get_ter_id() );
+    const furn_str_id furniture( memory.get_dec_id() );
+    if( !terrain.is_valid() ) {
+        return result;
+    }
+    result.source = observation_source::remembered;
+    result.terrain = terrain.obj().name();
+    if( furniture.is_valid() && !furniture.is_null() ) {
+        result.furniture = furniture.obj().name();
+    }
+    return result;
+}
+
 std::string describe_tile( const tile_observation &observation )
 {
     std::string result;

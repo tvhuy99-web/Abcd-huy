@@ -48,16 +48,21 @@ cooldown ẩn không phát lại. Java chỉ phát khi reader đang ở foregrou
 snapshot, còn TalkBack nhận accessibility announcement. Chưa biên dịch, chạy
 test, đo tải hàng đợi hoặc nghe trên thiết bị.
 
-Đã viết tiếp bộ theo dõi mức đói, khát, buồn ngủ, đau và sức bền để đọc những
-chuyển trạng thái đáng kể khi quay lại bản đồ. Mốc ban đầu im lặng; cực hạn dùng
-ưu tiên khẩn; trạng thái cũ bị xóa qua load, tắt reader hoặc suspend. Đây mới là
-một tập con của cảnh báo sinh tồn, chưa kiểm tra trùng với log/realtime, chưa
-biên dịch và chưa thử trên máy.
+Đã viết tiếp bộ theo dõi mức đói, khát, buồn ngủ, đau, sức bền, chảy máu và
+xương gãy để đọc những chuyển trạng thái đáng kể khi quay lại bản đồ. Mốc ban
+đầu im lặng; cực hạn, gãy xương và chảy máu nặng dùng ưu tiên khẩn; trạng thái
+cũ bị xóa qua load, tắt reader hoặc suspend. Đây mới là một tập con của cảnh
+báo sinh tồn, chưa kiểm tra trùng với log/realtime, chưa biên dịch và chưa thử
+trên máy.
 
 `screen_scope` được bổ sung khả năng kích hoạt muộn: nếu reader được bật giữa
 một màn, lần adapter cập nhật snapshot kế tiếp có thể xuất bản đúng nội dung
 chuyên biệt thay vì giữ danh sách lệnh chung. Adapter chỉ dựng snapshot một lần
 vẫn cần xử lý thêm. Chưa biên dịch/chạy.
+
+Snapshot bản đồ đọc thêm địa hình và đồ đạc đã nhớ tại cùng vị trí ở một tầng
+trên/dưới, hoặc báo chưa biết. Adapter này cố ý không đọc dữ liệu sống hay đồ
+động của tầng khác. Chưa biên dịch và chưa kiểm tra rò thông tin.
 
 Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có định danh tương ứng.
 

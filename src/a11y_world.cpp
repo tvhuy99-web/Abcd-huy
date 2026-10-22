@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <cstdlib>
+#include <initializer_list>
 #include <optional>
 #include <string>
 #include <utility>
@@ -20,12 +21,21 @@
 #include "output.h"
 #include "string_formatter.h"
 #include "translations.h"
+#include "type_id.h"
 #include "vehicle.h"
 
 namespace a11y
 {
 namespace
 {
+static const efftype_id effect_bleed( "bleed" );
+
+struct bodypart_status {
+    bodypart_id id;
+    int bleeding = 0;
+    bool broken = false;
+};
+
 struct monitored_status {
     int hunger = 0;
     int thirst = 0;
@@ -37,6 +47,7 @@ struct monitored_status {
     std::string sleepiness_text;
     std::string pain_text;
     std::string stamina_text;
+    std::vector<bodypart_status> bodyparts;
 };
 
 std::optional<monitored_status> previous_status;
@@ -91,6 +102,10 @@ monitored_status current_status()
                               result.stamina >= 2 ? _( "Low" ) : _( "No current warning" );
     } else {
         result.stamina_text = _( "No current warning" );
+    }
+    for( const bodypart_id &part : viewer.get_all_body_parts( get_body_part_flags::only_main ) ) {
+        result.bodyparts.push_back( { part, viewer.get_effect_int( effect_bleed, part ),
+                                      viewer.is_limb_broken( part ) } );
     }
     return result;
 }
@@ -183,6 +198,28 @@ void announce_status_changes()
                     current.pain, 2, 7, urgent );
     add_transition( changes, _( "Stamina" ), current.stamina_text, previous_status->stamina,
                     current.stamina, 2, 3, urgent );
+    for( const bodypart_status &part : current.bodyparts ) {
+        const auto old = std::find_if( previous_status->bodyparts.begin(), previous_status->bodyparts.end(),
+        [&part]( const bodypart_status &entry ) {
+            return entry.id == part.id;
+        } );
+        if( old == previous_status->bodyparts.end() ) {
+            continue;
+        }
+        const std::string name = body_part_name( part.id );
+        if( part.bleeding > old->bleeding ) {
+            changes.push_back( string_format( _( "Bleeding is worsening at %s." ), name ) );
+            urgent = urgent || part.bleeding >= 2;
+        } else if( old->bleeding > 0 && part.bleeding == 0 ) {
+            changes.push_back( string_format( _( "Bleeding stopped at %s." ), name ) );
+        }
+        if( !old->broken && part.broken ) {
+            changes.push_back( string_format( _( "%s is broken." ), name ) );
+            urgent = true;
+        } else if( old->broken && !part.broken ) {
+            changes.push_back( string_format( _( "%s is no longer broken." ), name ) );
+        }
+    }
     previous_status = current;
     if( !changes.empty() ) {
         std::string message;
@@ -205,6 +242,19 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( observe_tile( origin ) ) );
     here.value = here.detail;
     result.nodes.push_back( std::move( here ) );
+    for( const int dz : { 1, -1 } ) {
+        const tile_observation vertical = observe_memory_tile( origin + tripoint_rel_ms( 0, 0, dz ) );
+        const std::string id = dz > 0 ? "world:above" : "world:below";
+        const std::string label = dz > 0 ? _( "One level above" ) : _( "One level below" );
+        semantic_node node = document( id, label, describe_tile( vertical ) );
+        node.value = vertical.source == observation_source::unknown ? _( "Unknown" ) :
+                     vertical.terrain;
+        if( vertical.source == observation_source::remembered ) {
+            if( !vertical.furniture.empty() ) { node.value += ". " + vertical.furniture; }
+            node.value += ". " + std::string( _( "Remembered" ) );
+        }
+        result.nodes.push_back( std::move( node ) );
+    }
     result.nodes.push_back( document( "world:status", _( "Character status" ), player_status() ) );
     semantic_node radius;
     radius.id = "world:radius";

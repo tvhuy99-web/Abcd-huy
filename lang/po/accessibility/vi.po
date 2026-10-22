@@ -40,6 +40,28 @@ msgstr "Chỉ còn trong trí nhớ, hiện không nhìn thấy: "
 msgid "Current tile"
 msgstr "Ô hiện tại"
 
+msgid "One level above"
+msgstr "Tầng phía trên"
+
+msgid "One level below"
+msgstr "Tầng phía dưới"
+
+#, c-format
+msgid "Bleeding is worsening at %s."
+msgstr "Chảy máu ở %s đang nặng hơn."
+
+#, c-format
+msgid "Bleeding stopped at %s."
+msgstr "Đã cầm máu ở %s."
+
+#, c-format
+msgid "%s is broken."
+msgstr "%s bị gãy."
+
+#, c-format
+msgid "%s is no longer broken."
+msgstr "%s đã hết gãy."
+
 msgid "No current warning"
 msgstr "Không có cảnh báo hiện tại"
 
