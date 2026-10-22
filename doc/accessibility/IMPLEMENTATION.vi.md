@@ -42,7 +42,7 @@ chưa chạy instrumentation test.
 | Hộp thoại | `popup.cpp` | Văn bản câu hỏi, chọn, hủy/tiếp tục qua action gốc; các dialog native khác vẫn cần tích hợp |
 | Tạo nhân vật | `newcharacter.cpp` | Nối danh sách tab/lệnh; kịch bản/nghề nêu lựa chọn hiện tại, nghề/nền tảng nêu chi phí điểm; tổng kết ngữ nghĩa có tên, giới tính, ngoại hình, kịch bản/nghề/nền tảng, điểm còn lại, thuộc tính, kỹ năng, đặc tính kèm điểm, xung đột và bionic cản, proficiency, bionic, phép, nhiệm vụ, ngày/địa điểm/xe bắt đầu và xếp hạng; các dòng chọn vẫn gọi action gốc; chưa kiểm chứng dữ liệu từng biến thể, lựa chọn thành phố hoặc luồng bắt đầu/lưu/tải |
 | Phiên chơi | `game.cpp`, `game_io.cpp` | Đổi định danh khi setup/load, bỏ snapshot/đầu vào cũ; chưa kiểm thử lỗi tải/quay về/Activity mới |
-| Thông tin hợp lệ | `a11y_perception`, `a11y_world` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; quét dọc tùy chọn chỉ dùng memory; có bộ lọc ô đã biết/đáng chú ý/dấu âm thanh, gồm cửa và lối lên/xuống đã thấy hoặc nhớ; bẫy/item/creature theo kiểm tra gốc; cảm nhận đặc biệt và bộ phân loại điểm đáng chú ý đầy đủ còn thiếu |
+| Thông tin hợp lệ | `a11y_perception`, `a11y_world` | Nhánh CLEAR mới đọc dữ liệu sống; nhánh trí nhớ chỉ lấy terrain/furniture từ memory; quét dọc tùy chọn chỉ dùng memory; có bộ lọc ô đã biết/đáng chú ý/dấu âm thanh, gồm cửa và lối lên/xuống đã thấy hoặc nhớ; cảm nhận đặc biệt dùng mô tả game cho phép, chưa đọc địa hình ẩn; bẫy/item/creature theo kiểm tra gốc; phân loại điểm đáng chú ý đầy đủ còn thiếu |
 | Thế giới | `worldfactory.cpp`, `options.cpp`, `overmap_ui.cpp`, `a11y_world`, `get_player_input`, `GameReaderController` | Bộ chọn thế giới đọc tên/số save trên mọi trang; hàng chọn tách khỏi xác nhận vào; tạo thế giới đọc tên, mức tùy chọn, chỉnh tăng/giảm, mod đang bật và các nút hoàn tất/đặt lại/ngẫu nhiên/nâng cao; bộ chọn mod khi tạo/sao chép world đọc nhóm, mod khả dụng/đang bật, mô tả, xung đột và thứ tự nạp; tùy chọn nâng cao đọc tab, nhóm, giá trị, mô tả, điều kiện và lệnh chỉnh; màn xem mod của world hiện có đọc mô tả và thứ tự nạp ở chế độ chỉ xem; tại bản đồ có ô hiện tại, địa hình/đồ đạc chỉ trong map memory tại các tầng đã chọn, bộ lọc ô đã biết/đáng chú ý/dấu âm thanh, trạng thái, thông báo gần đây, quét và lệnh; bản đồ lớn đọc con trỏ, ô kế cận theo trí nhớ khám phá, ghi chú/vùng nguy hiểm, vị trí tương đối và điểm đến/tọa độ/độ dài tuyến hiện tại; focus hoặc kích hoạt ô/tuyến chỉ đổi con trỏ, không khởi hành; bộ đọc báo lại ô con trỏ và tuyến khi điểm đến đổi; vuốt tám hướng tùy chọn dùng action gốc; cài/thay dữ liệu mod, đổi tên/sao chép thế giới, thăm dò/đường đi nâng cao còn thiếu; chưa kiểm thử |
 | Hành trang | `inventory_ui.cpp/.h` | Scope theo từng lần execute; hàng vật phẩm có số lượng chọn/hiện có, trạng thái, lý do từ chối và vị trí; nối chọn đơn/chọn nhiều/nhặt/bỏ/so sánh/nạp/tháo đạn/examine/giao dịch qua action gốc; kho nâng cao và kiểm chứng nested contents còn thiếu |
 | Thông tin vật phẩm | `ui_iteminfo.cpp`, `a11y_document.h` | Đọc tài liệu từ `item_info_data`/`format_item_info`, gồm dữ liệu so sánh mà UI nhận; chưa nghiệm thu cấu trúc bảng và dấu/đơn vị |
@@ -73,8 +73,9 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   world hiện có đã có snapshot đọc; mod manager đọc nhóm, mô tả, xung đột và
   thứ tự. Các luồng trên chưa được kiểm thử.
 - G4: hoàn thiện thăm dò nhiều tầng (đã có quét memory theo độ sâu) và điểm
-  đáng chú ý (đã có bộ lọc nền); còn thiếu cảm nhận đặc biệt, âm thanh bất định
-  và phân loại mức độ nổi bật; quan sát theo hành động thực tế, nhặt/đồ chứa,
+  đáng chú ý (đã có bộ lọc nền); cảm nhận đặc biệt đã được nối theo mô tả game,
+  còn thiếu âm thanh bất định và phân loại mức độ nổi bật; quan sát theo hành
+  động thực tế, nhặt/đồ chứa,
   cơ thể/y tế, ăn/uống,
   mặc/cởi, nghỉ/đợi/đọc, hủy hoạt động, trạng thái và cảnh báo tự động. Đã có
   đường gửi các thông báo log mới, nhưng chưa chứng minh đủ mọi cảnh báo hoặc

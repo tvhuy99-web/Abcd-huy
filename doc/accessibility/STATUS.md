@@ -70,8 +70,10 @@ sống ở tầng khác. Chưa biên dịch hoặc kiểm tra.
 
 Quét ngang có bộ lọc ô đã biết, ô có nội dung đáng chú ý (gồm cửa/cầu thang đã
 thấy hoặc nhớ) và marker âm thanh đã nghe. Bộ lọc âm thanh chỉ đọc marker ước
-lượng của game, không định vị sinh vật. Bộ lọc cho phép đổi ngay trong màn bản
-đồ, không tiêu lượt. Chưa biên dịch hoặc kiểm tra.
+lượng của game, không định vị sinh vật. Cảm nhận đặc biệt dùng điều kiện game;
+mô tả tĩnh có sẵn được đọc nguyên văn, placeholder động dùng câu chung để tránh
+phân giải ngẫu nhiên. Ô địa hình chưa thấy vẫn không đọc dữ liệu sống. Bộ lọc
+cho phép đổi ngay trong màn bản đồ, không tiêu lượt. Chưa biên dịch hoặc kiểm tra.
 
 Bản đồ lớn đã có snapshot cho con trỏ, địa hình chỉ khi nhân vật đã biết, ghi
 chú do người chơi tạo, vùng nguy hiểm và tám ô kế cận. Focus hoặc kích hoạt ô

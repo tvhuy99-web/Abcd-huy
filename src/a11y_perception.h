@@ -14,6 +14,7 @@ struct tile_observation {
     std::vector<std::string> fields;
     std::vector<std::string> known_traps;
     std::vector<std::string> seen_creatures;
+    std::vector<std::string> special_perceptions;
     std::vector<std::string> seen_items;
     std::string vehicle;
     std::string heard_marker;

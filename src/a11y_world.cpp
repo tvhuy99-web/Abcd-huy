@@ -159,9 +159,10 @@ bool has_noteworthy_information( const tile_observation &tile )
            ( tile.source == observation_source::visible &&
              ( tile.impassable || !tile.fields.empty() || !tile.known_traps.empty() ||
                !tile.furniture.empty() || !tile.seen_creatures.empty() || !tile.seen_items.empty() ||
-               !tile.vehicle.empty() || tile.route_feature ) ) ||
+               !tile.special_perceptions.empty() || !tile.vehicle.empty() || tile.route_feature ) ) ||
            ( tile.source == observation_source::remembered &&
-             ( !tile.furniture.empty() || tile.route_feature ) );
+             ( !tile.furniture.empty() || !tile.special_perceptions.empty() || tile.route_feature ) ) ||
+           ( tile.source == observation_source::unknown && !tile.special_perceptions.empty() );
 }
 
 std::string player_status()
@@ -321,7 +322,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     const std::vector<std::string> filter_details = {
         _( "Show all nearby tiles and label unexplored tiles as unknown." ),
         _( "Show visible or remembered tiles and tiles with a sound marker." ),
-        _( "Show visible fields, traps, creatures, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers." ),
+        _( "Show visible fields, traps, creatures, special perceptions, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers." ),
         _( "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position." )
     };
     for( std::size_t i = 0; i < filters.size(); ++i ) {
@@ -348,7 +349,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 const auto tile = observe_tile( origin + tripoint_rel_ms( dx, dy, 0 ) );
                 const bool include = filter == world_scan_filter::all ||
                                      ( filter == world_scan_filter::known &&
-                                       ( tile.source != observation_source::unknown || !tile.heard_marker.empty() ) ) ||
+                                       ( tile.source != observation_source::unknown ||
+                                         !tile.special_perceptions.empty() || !tile.heard_marker.empty() ) ) ||
                                      ( filter == world_scan_filter::noteworthy && has_noteworthy_information( tile ) ) ||
                                      ( filter == world_scan_filter::heard && !tile.heard_marker.empty() );
                 if( !include ) { continue; }
