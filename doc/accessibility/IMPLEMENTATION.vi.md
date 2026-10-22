@@ -107,8 +107,16 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   số dư và giới hạn nhận hàng; tất cả chưa nghiệm thu); phương tiện
   và sơ đồ bộ phận/lái/remote; vùng/tự động hóa; bionics/đột biến/phép thuật;
   các minigame, tài liệu, trợ giúp và những màn riêng trong `COVERAGE.md`.
-- G7: ngủ/hoạt động dài, nguy hiểm và kết quả thật, chết/death-cam/điểm số,
-  lỗi TTS/vòng đời/tiến trình, lưu/tải/xóa và sao lưu/khôi phục dữ liệu.
+- G7: màn kết thúc xuất bản nội dung bổ sung đang hiển thị và cho nhập lời cuối
+  bằng trình sửa của reader; màn điểm sau khi chết xuất bản tab,
+  thành tích/quy tắc/điểm, tổng hạ gục và nhật ký tưởng niệm thành nội dung
+  reader có thể duyệt và đọc dài; đổi tab dùng cùng trạng thái của UI gốc.
+  Nhật ký có pane trang/thay đổi/nội dung, đọc mô tả và sửa trang bằng trình
+  nhập của reader; lệnh tạo/xóa/xuất cũng được đưa vào danh sách lệnh. Death-cam
+  báo chế độ và quét theo tâm camera thay vì luôn đọc quanh nhân vật. Các đường
+  này chưa kiểm chứng và mới hoàn thành một phần G7; vẫn còn ngủ/hoạt động dài,
+  nguy hiểm và kết quả thật, xác nhận/xử lý nhật ký cần rà, nghỉ hưu, lỗi
+  TTS/vòng đời/tiến trình, lưu/tải/xóa và sao lưu/khôi phục dữ liệu.
 - G8: chẩn đoán/độ trễ/âm hiệu/rung, tài liệu người chơi và bảo trì nội dung;
   bộ kiểm thử/fixture, hoàn tất ma trận 64 bài, build/ký/bằng chứng phát hành.
 

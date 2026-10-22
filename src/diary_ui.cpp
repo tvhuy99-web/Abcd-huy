@@ -2,10 +2,15 @@
 
 #include <algorithm>
 #include <map>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "a11y_android.h"
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "catacharset.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -193,13 +198,165 @@ void diary::show_diary_ui( diary *c_diary )
     ctxt.register_leftright();
     ctxt.register_action( "PREV_TAB" );
     ctxt.register_action( "NEXT_TAB" );
-    ctxt.register_action( "CONFIRM" );
+    ctxt.register_action( "CONFIRM", to_translation( "Read or edit the selected diary text" ) );
     ctxt.register_action( "QUIT" );
-    ctxt.register_action( "NEW_PAGE" );
-    ctxt.register_action( "DELETE PAGE" );
-    ctxt.register_action( "EXPORT_DIARY" );
-    ctxt.register_action( "VIEW_SCORES" );
+    ctxt.register_action( "NEW_PAGE", to_translation( "Create a new diary page" ) );
+    ctxt.register_action( "DELETE PAGE", to_translation( "Delete the current diary page" ) );
+    ctxt.register_action( "EXPORT_DIARY", to_translation( "Export the diary" ) );
+    ctxt.register_action( "VIEW_SCORES", to_translation( "View achievements, scores, and kills" ) );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                                string_format( _( "%s's Diary" ), c_diary->owner ) );
+        const auto append_tab = [&]( const char *id, const std::string &label,
+                                     const window_mode mode ) {
+            a11y::semantic_node node;
+            node.id = id;
+            node.role = "tab";
+            node.label = label;
+            node.selected = currwin == mode;
+            snapshot.nodes.push_back( std::move( node ) );
+            if( currwin == mode ) {
+                snapshot.focus = id;
+            }
+        };
+        append_tab( "diary:tab:pages", _( "Pages" ), window_mode::PAGE_WIN );
+        append_tab( "diary:tab:changes", _( "Changes" ), window_mode::CHANGE_WIN );
+        append_tab( "diary:tab:text", _( "Entry text" ), window_mode::TEXT_WIN );
+
+        const std::vector<std::string> page_names = c_diary->get_pages_list();
+        const int page_count = static_cast<int>( page_names.size() );
+        for( std::size_t i = 0; i < page_names.size(); ++i ) {
+            a11y::semantic_node page;
+            page.id = "diary:page:" + std::to_string( i );
+            page.role = "button";
+            page.label = page_names[i];
+            page.selected = selected[window_mode::PAGE_WIN] == static_cast<int>( i );
+            page.position = static_cast<int>( i + 1 );
+            page.total = page_count;
+            snapshot.nodes.push_back( std::move( page ) );
+            if( currwin == window_mode::PAGE_WIN && selected[window_mode::PAGE_WIN] == static_cast<int>( i ) ) {
+                snapshot.focus = "diary:page:" + std::to_string( i );
+            }
+        }
+
+        const std::vector<std::string> &changes = c_diary->get_change_list();
+        std::map<int, std::string> &descriptions = c_diary->get_desc_map();
+        const int change_count = static_cast<int>( changes.size() );
+        for( std::size_t i = 0; i < changes.size(); ++i ) {
+            const std::string label = remove_color_tags( changes[i] );
+            if( label.empty() ) {
+                continue;
+            }
+            a11y::semantic_node change;
+            change.id = "diary:change:" + std::to_string( i );
+            change.role = "document";
+            change.label = label;
+            const auto description = descriptions.find( static_cast<int>( i ) );
+            change.detail = description == descriptions.end() || description->second.empty() ? label :
+                            remove_color_tags( description->second );
+            change.selected = selected[window_mode::CHANGE_WIN] == static_cast<int>( i );
+            change.position = static_cast<int>( i + 1 );
+            change.total = change_count;
+            snapshot.nodes.push_back( std::move( change ) );
+            if( currwin == window_mode::CHANGE_WIN && selected[window_mode::CHANGE_WIN] == static_cast<int>( i ) ) {
+                snapshot.focus = "diary:change:" + std::to_string( i );
+            }
+        }
+
+        diary_page *page = c_diary->get_page_ptr();
+        const bool summary_page = page == nullptr || page->is_summary();
+        snapshot.summary = c_diary->get_head_text( summary_page );
+        if( page != nullptr && !summary_page ) {
+            a11y::append_document( snapshot, "diary:entry", _( "Diary entry" ), page->m_text );
+            a11y::semantic_node edit_text;
+            edit_text.id = "diary:page_text";
+            edit_text.role = "text";
+            edit_text.label = _( "Edit entry text" );
+            edit_text.value = page->m_text;
+            edit_text.actions = { "focus", "set_text" };
+            edit_text.selected = currwin == window_mode::TEXT_WIN;
+            snapshot.nodes.push_back( std::move( edit_text ) );
+            if( currwin == window_mode::TEXT_WIN ) {
+                snapshot.focus = "diary:page_text";
+            }
+        } else if( page != nullptr && !changes.empty() ) {
+            const std::string details = c_diary->get_desc_or_page_text( selected[window_mode::CHANGE_WIN] );
+            a11y::append_document( snapshot, "diary:change_detail", _( "Change details" ), details );
+            if( currwin == window_mode::TEXT_WIN ) {
+                snapshot.focus = "diary:change_detail";
+            }
+        }
+        if( snapshot.focus.empty() ) {
+            snapshot.focus = "diary:tab:pages";
+        }
+        return snapshot;
+    };
+
+    a11y::screen_scope reader( &ctxt, "diary",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" ) {
+            if( intent.node == "diary:tab:pages" ) {
+                currwin = window_mode::PAGE_WIN;
+                return "TIMEOUT";
+            }
+            if( intent.node == "diary:tab:changes" ) {
+                currwin = window_mode::CHANGE_WIN;
+                return "TIMEOUT";
+            }
+            if( intent.node == "diary:tab:text" ) {
+                currwin = window_mode::TEXT_WIN;
+                return "TIMEOUT";
+            }
+            if( intent.node == "CONFIRM" ) {
+                currwin = window_mode::TEXT_WIN;
+                return "TIMEOUT";
+            }
+        }
+        if( intent.action == "set_text" && intent.node == "diary:page_text" ) {
+            diary_page *page = c_diary->get_page_ptr();
+            if( page == nullptr || page->is_summary() ) {
+                a11y::android::status( "unsupported", &intent );
+                return "TIMEOUT";
+            }
+            c_diary->set_page_text( intent.value );
+            currwin = window_mode::TEXT_WIN;
+            selected[window_mode::TEXT_WIN] = 0;
+            a11y::android::status( "text_applied", &intent );
+            return "TIMEOUT";
+        }
+        if( intent.action == "focus" && ( intent.node == "diary:entry" ||
+                                            intent.node == "diary:page_text" ||
+                                            intent.node == "diary:change_detail" ) ) {
+            currwin = window_mode::TEXT_WIN;
+            return "TIMEOUT";
+        }
+
+        for( std::size_t i = 0; i < c_diary->pages.size(); ++i ) {
+            if( intent.node != "diary:page:" + std::to_string( i ) ||
+                ( intent.action != "focus" && intent.action != "activate" ) ) {
+                continue;
+            }
+            currwin = window_mode::PAGE_WIN;
+            selected[window_mode::PAGE_WIN] = static_cast<int>( i );
+            selected[window_mode::CHANGE_WIN] = 0;
+            selected[window_mode::TEXT_WIN] = 0;
+            return "TIMEOUT";
+        }
+        const std::vector<std::string> &changes = c_diary->get_change_list();
+        for( std::size_t i = 0; i < changes.size(); ++i ) {
+            if( intent.node != "diary:change:" + std::to_string( i ) ||
+                ( intent.action != "focus" && intent.action != "activate" ) ) {
+                continue;
+            }
+            currwin = window_mode::CHANGE_WIN;
+            selected[window_mode::CHANGE_WIN] = static_cast<int>( i );
+            selected[window_mode::TEXT_WIN] = 0;
+            return "TIMEOUT";
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
 
     ui_adaptor ui_diary;
     ui_diary.on_screen_resize( [&]( ui_adaptor & ui ) {
@@ -334,6 +491,9 @@ void diary::show_diary_ui( diary *c_diary )
         ui_desc.invalidate_ui();
         ui_info.invalidate_ui();
         ui_manager::redraw_invalidated();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         const std::string action = ctxt.handle_input();
         if( action == "LEFT" || action == "PREV_TAB" || action == "RIGHT" || action == "NEXT_TAB" ) {
             // necessary to use inc_clamp_wrap()
@@ -355,9 +515,13 @@ void diary::show_diary_ui( diary *c_diary )
             }
         } else if( action == "CONFIRM" ) {
             if( !c_diary->pages.empty() ) {
-                c_diary->edit_page_ui( [&]() {
-                    return w_text;
-                } );
+                if( a11y::enabled() ) {
+                    currwin = window_mode::TEXT_WIN;
+                } else {
+                    c_diary->edit_page_ui( [&]() {
+                        return w_text;
+                    } );
+                }
             }
         } else if( action == "NEW_PAGE" ) {
             c_diary->new_page();

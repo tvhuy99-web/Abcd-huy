@@ -29,7 +29,7 @@ không phải danh sách đầy đủ hoặc mẫu số để công bố “100%
 | Bionics/đột biến/phép | `bionics_ui.cpp`, `mutation_ui.cpp`, `magic.cpp` | Chủ động/bị động, chi phí, xác nhận; bổ sung `bionics_ui.cpp` so với kế hoạch đầu |
 | Kỹ năng/kiến thức | `skill_ui.cpp`, `proficiency_ui.cpp` | Biểu đồ, điều kiện, PROFICIENCY_WINDOW theo mã thật |
 | Máy tính trong game | `computer_session.cpp` | YESNOQUIT và các nhánh chuyên biệt, không tự tiết lộ dữ liệu |
-| Nhật ký/điểm/kết thúc | `diary_ui.cpp`, `scores_ui.cpp`, luồng kết thúc game | Chỉnh/xuất nhật ký, deathcam, nghỉ hưu, trở về menu |
+| Nhật ký/điểm/kết thúc | `diary_ui.cpp`, `scores_ui.cpp`, `end_screen.cpp`, luồng kết thúc game | Nhật ký có pane trang/thay đổi/nội dung và sửa text; màn kết thúc đọc nội dung bổ sung/nhập lời cuối; điểm/thành tích/quy tắc/hạ gục và nhật ký tưởng niệm có cây reader; deathcam quét theo tâm camera. Xác nhận/xuất/xóa, nghỉ hưu/trở về menu và toàn hàng vẫn chưa nghiệm thu |
 | Cấu hình | `options.cpp`, `safemode_ui.cpp`, `auto_pickup.cpp`, `panels.cpp`, `color.cpp` | Kiểu giá trị, vùng kiểm thử quy tắc, reset/hủy, tất cả tùy chọn Android |
 | Minigame thiết bị | `iuse_software_kitten.cpp`, `iuse_software_lightson.cpp`, `iuse_software_minesweeper.cpp`, `iuse_software_snake.cpp`, `iuse_software_sokoban.cpp` | Bàn chơi, thời gian/input riêng, luật và đường thoát; không mặc định bộ đọc bản đồ thế giới phủ được |
 | Trợ giúp/phím | `help.cpp`, `input_context.cpp`, `output.cpp` | Tìm mọi lệnh, thay phím, phần không dùng input_context |

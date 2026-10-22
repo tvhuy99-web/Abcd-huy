@@ -290,15 +290,23 @@ void announce_status_changes()
 }
 
 semantic_snapshot world_snapshot( const input_context &context, const int scan_radius,
-                                  const int scan_depth, const world_scan_filter filter )
+                                  const int scan_depth, const world_scan_filter filter,
+                                  const std::optional<point> camera_offset )
 {
     semantic_snapshot result;
     result.title = _( "World" );
     result.category = context.category_id();
     result.summary = remove_color_tags( display::move_mode_letter_color( get_avatar() ).first );
     result.focus = "world:here";
-    const auto origin = get_avatar().pos_bub( get_map() );
+    const tripoint_rel_ms offset = camera_offset ? tripoint_rel_ms( camera_offset->x,
+                                   camera_offset->y, 0 ) : tripoint_rel_ms( 0, 0, 0 );
+    const tripoint_bub_ms origin = get_avatar().pos_bub( get_map() ) + offset;
     semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( observe_tile( origin ) ) );
+    if( camera_offset ) {
+        here.label = _( "Death camera center" );
+        result.summary = _( "Death camera is active. Use Look to inspect the view, move or center the camera, "
+                            "or accept your fate to finish watching." );
+    }
     here.value = here.detail;
     result.nodes.push_back( std::move( here ) );
     for( int distance = 1; distance <= scan_depth; ++distance ) {

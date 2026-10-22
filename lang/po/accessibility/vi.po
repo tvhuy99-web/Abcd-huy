@@ -664,9 +664,6 @@ msgstr "Mô tả kịch bản"
 msgid "Profession description"
 msgstr "Mô tả nghề nghiệp"
 
-msgid "Character rating"
-msgstr "Đánh giá nhân vật"
-
 msgid "None"
 msgstr "Không có"
 
@@ -873,3 +870,188 @@ msgstr "Ngăn hiện tại: hàng bạn đưa."
 
 msgid "Current pane: items offered by the NPC."
 msgstr "Ngăn hiện tại: hàng NPC đưa."
+
+msgid "Your scores"
+msgstr "Thành tích của bạn"
+
+msgid "ACHIEVEMENTS"
+msgstr "THÀNH TỰU"
+
+msgid "CONDUCTS"
+msgstr "QUY TẮC"
+
+msgid "SCORES"
+msgstr "ĐIỂM SỐ"
+
+msgid "KILLS"
+msgstr "HẠ GỤC"
+
+msgid "MEMORIAL"
+msgstr "TƯỞNG NIỆM"
+
+msgid "Achievements"
+msgstr "Thành tựu"
+
+msgid "Conducts"
+msgstr "Quy tắc"
+
+msgid "Scores"
+msgstr "Điểm số"
+
+msgid "Memorial"
+msgstr "Tưởng niệm"
+
+msgid "Show or hide monster kills"
+msgstr "Hiện hoặc ẩn danh sách quái đã hạ"
+
+msgid "Show or hide NPC kills"
+msgstr "Hiện hoặc ẩn danh sách NPC đã hạ"
+
+msgid "Achievements and conducts are disabled"
+msgstr "Thành tựu và quy tắc đã bị tắt"
+
+msgid "Achievements and conducts are disabled for debug characters."
+msgstr "Thành tựu và quy tắc bị tắt đối với nhân vật debug."
+
+msgid "No conducts"
+msgstr "Không có quy tắc nào"
+
+msgid "No achievements"
+msgstr "Không có thành tựu nào"
+
+msgid "This game has no valid conducts."
+msgstr "Trò chơi này không có quy tắc hợp lệ nào."
+
+msgid "This game has no valid achievements."
+msgstr "Trò chơi này không có thành tựu hợp lệ nào."
+
+#, c-format
+msgid "Achievement %d"
+msgstr "Thành tựu %d"
+
+#, c-format
+msgid "Conduct %d"
+msgstr "Quy tắc %d"
+
+msgid "About this list"
+msgstr "Thông tin về danh sách này"
+
+msgid "Note that only conducts that existed when you started this game and still exist now will appear here."
+msgstr "Chỉ những quy tắc đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+
+msgid "Note that only achievements that existed when you started this game and still exist now will appear here."
+msgstr "Chỉ những thành tựu đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+
+msgid "No scores"
+msgstr "Không có điểm số"
+
+msgid "This game has no valid scores."
+msgstr "Trò chơi này không có điểm số hợp lệ nào."
+
+#, c-format
+msgid "Score %d"
+msgstr "Điểm số %d"
+
+msgid "Note that only scores that existed when you started this game and still exist now will appear here."
+msgstr "Chỉ những loại điểm đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+
+#, c-format
+msgid "%1$d total kills: %2$d monsters and %3$d NPCs."
+msgstr "Tổng cộng hạ gục %1$d mục tiêu: %2$d quái và %3$d NPC."
+
+#, c-format
+msgid "Monster kills: %d"
+msgstr "Số quái đã hạ: %d"
+
+#, c-format
+msgid "NPC kills: %d"
+msgstr "Số NPC đã hạ: %d"
+
+msgid "Monster kills"
+msgstr "Quái đã hạ"
+
+msgid "NPC kills"
+msgstr "NPC đã hạ"
+
+msgid "You haven't killed any monsters yet!"
+msgstr "Bạn chưa hạ quái nào!"
+
+msgid "You haven't killed any NPCs yet!"
+msgstr "Bạn chưa hạ NPC nào!"
+
+#, c-format
+msgid "Monster: %1$s. Kills: %2$d."
+msgstr "Quái: %1$s. Số lần hạ: %2$d."
+
+#, c-format
+msgid "NPC: %s."
+msgstr "NPC: %s."
+
+msgid "Memorial log"
+msgstr "Nhật ký tưởng niệm"
+
+msgid "No memorial entries have been recorded."
+msgstr "Chưa có mục nào được ghi vào nhật ký tưởng niệm."
+
+msgid "The End"
+msgstr "Kết thúc"
+
+msgid "Continue"
+msgstr "Tiếp tục"
+
+msgid "End-screen details"
+msgstr "Chi tiết màn hình kết thúc"
+
+msgid "This character's run has ended."
+msgstr "Lượt chơi của nhân vật này đã kết thúc."
+
+msgid "Death camera center"
+msgstr "Tâm camera tử vong"
+
+msgid "Death camera is active. Use Look to inspect the view, move or center the camera, or accept your fate to finish watching."
+msgstr "Đang xem những khoảnh khắc cuối. Dùng lệnh Quan sát để xem khu vực, di chuyển hoặc căn giữa camera, hoặc chấp nhận số phận để kết thúc."
+
+msgid "Pages"
+msgstr "Trang"
+
+msgid "Changes"
+msgstr "Thay đổi"
+
+msgid "Entry text"
+msgstr "Nội dung mục nhật ký"
+
+msgid "Diary entry"
+msgstr "Mục nhật ký"
+
+msgid "Edit entry text"
+msgstr "Sửa nội dung mục nhật ký"
+
+msgid "Change details"
+msgstr "Chi tiết thay đổi"
+
+msgid "Read or edit the selected diary text"
+msgstr "Đọc hoặc sửa nội dung nhật ký đang chọn"
+
+msgid "Create a new diary page"
+msgstr "Tạo trang nhật ký mới"
+
+msgid "Delete the current diary page"
+msgstr "Xóa trang nhật ký hiện tại"
+
+msgid "Export the diary"
+msgstr "Xuất nhật ký"
+
+msgid "View achievements, scores, and kills"
+msgstr "Xem thành tựu, điểm số và số lần hạ gục"
+
+#, c-format
+msgid "%s's Diary"
+msgstr "Nhật ký của %s"
+
+#, c-format
+msgid "Summary: %1$d entries"
+msgstr "Tổng kết: %1$d mục"
+
+#, c-format
+msgid "Entry: %1$d/%2$d, %3$s"
+msgstr "Mục: %1$d/%2$d, %3$s"
