@@ -12,7 +12,7 @@ collect_log() {
 trap collect_log EXIT
 
 # Use the same adb as the emulator action, avoiding a second ddmlib/UTP device
-# connection during first boot. Failure to run either test is a hard failure.
+# connection during first boot. Every reader instrumentation class must run.
 timeout 120 adb -s "$task_serial" wait-for-device
 task_ready=false
 for task_attempt in {1..30}; do
@@ -38,18 +38,30 @@ fi
 adb -s "$task_serial" install -r "${task_apps[0]}"
 adb -s "$task_serial" install -r "${task_tests[0]}"
 adb -s "$task_serial" shell am instrument -w -r \
-    -e class com.cleverraven.cataclysmdda.ReaderSetupActivityTest \
+    -e package com.cleverraven.cataclysmdda \
     com.cleverraven.cataclysmdda.accessibility.test/androidx.test.runner.AndroidJUnitRunner \
     | tee "$task_evidence/instrumentation.txt"
 
-python3 - "$task_evidence/instrumentation.txt" <<'PY'
+python3 - "$task_evidence/instrumentation.txt" "$task_root" <<'PY'
 import pathlib
 import re
 import sys
 result = pathlib.Path(sys.argv[1]).read_text()
-if not re.search(r'(?m)^OK \(2 tests\)', result):
-    raise SystemExit('Both reader UI tests must actually run and pass')
+test_root = pathlib.Path(sys.argv[2]) / 'android/app/src/androidTest/java'
+required = set()
+minimum = 0
+for path in test_root.rglob('*Test.java'):
+    text = path.read_text()
+    count = len(re.findall(r'@Test\b', text))
+    if count:
+        package = re.search(r'package\s+([\w.]+)\s*;', text).group(1)
+        required.add(package + '.' + path.stem)
+        minimum += count
+summary = re.search(r'(?m)^OK \((\d+) tests?\)', result)
+ran = set(re.findall(r'INSTRUMENTATION_STATUS: class=(\S+)', result))
+if not minimum or not summary or int(summary.group(1)) < minimum or not required.issubset(ran):
+    raise SystemExit('Not all reader instrumentation classes/tests ran and passed')
 if any(marker in result for marker in ('FAILURES!!!', 'INSTRUMENTATION_FAILED', 'Process crashed')):
     raise SystemExit('Instrumentation reported a failure')
-print('Reader UI smoke: 2 tests ran and passed on the emulator')
+print(f'Reader UI smoke: {summary.group(1)} tests in {len(required)} classes ran and passed')
 PY

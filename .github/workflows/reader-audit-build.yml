@@ -44,6 +44,9 @@ jobs:
       - run: msgfmt --check -o /tmp/a11y-vi.mo lang/po/accessibility/vi.po
 
   android:
+    # A validation-only follow-up does not cancel an APK build of identical
+    # application code. It still reruns host-Java checks and emulator tests.
+    if: ${{ github.event_name == 'workflow_dispatch' || !contains(github.event.head_commit.message, '[validation-only]') }}
     concurrency:
       group: reader-android-${{ github.ref }}
       cancel-in-progress: true
@@ -111,7 +114,7 @@ jobs:
 
   host:
     needs: changes
-    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.host == 'true' }}
+    if: ${{ github.event_name == 'workflow_dispatch' || (needs.changes.outputs.host == 'true' && !contains(github.event.head_commit.message, '[validation-only]')) }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
