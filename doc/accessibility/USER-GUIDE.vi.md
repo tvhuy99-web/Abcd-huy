@@ -24,11 +24,9 @@ Bạn không cần gỡ bản game đang dùng.
 
 Bạn giữ nguyên bản lưu của bản thường.
 
-Trạng thái tại thời điểm viết hướng dẫn này như sau.
+Kết quả kiểm thử tự động và bản APK ngày 24 tháng 10 năm 2026 được ghi trong BUILD-AND-TEST-2026-10-24.vi.md.
 
-Mã đã viết ở giai đoạn một.
-
-Mã chưa qua kiểm thử ở giai đoạn hai.
+Các kết quả tự động không thay cho việc nghe thử trên điện thoại và nghiệm thu với người khiếm thị.
 
 Mục Giới hạn hiện tại ở cuối tài liệu nói rõ phần này.
 

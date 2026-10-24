@@ -1,5 +1,11 @@
 # Kết quả giai đoạn 2 — build, kiểm thử, sửa lỗi (bản đang cập nhật)
 
+> Đây là hồ sơ lịch sử của lượt triển khai trước. Kết quả kiểm tra lại cây
+> Git hiện hành ngày 24/10/2026 ở [BUILD-AND-TEST-2026-10-24.vi.md](BUILD-AND-TEST-2026-10-24.vi.md).
+> Việc một ca đạt khi chạy riêng chưa đủ chứng minh căn nguyên của lỗi khi
+> chạy chung, cũng chưa đủ loại trừ tác động của fixture trợ năng. Các nhận
+> định phân loại ở mục 3.2 bên dưới phải được đọc với giới hạn này.
+
 Nhánh: `recovery/android-reader-ad5ecf0`. Điểm bắt đầu: HEAD `9a651c63`
 (ứng viên mã giai đoạn 1 ghim ở `bc4f807c`). Người dùng duyệt toàn quyền
 chạy kiểm thử và sửa mọi vấn đề phát sinh (2026-10-23).

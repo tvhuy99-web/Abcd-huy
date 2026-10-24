@@ -3,6 +3,9 @@
 Ngày 24/10/2026. Nền: 3c556a7f40b8f1249eff10241fd5b60102121f7b.
 Nhánh: fix/reader-audit-apk-20261024.
 
+Kết quả build, kiểm thử mở rộng và checksum APK mới ở
+[BUILD-AND-TEST-2026-10-24.vi.md](BUILD-AND-TEST-2026-10-24.vi.md).
+
 ## Các thay đổi
 
 - Bổ sung đủ 6 MP3 cứu hộ và 4 WAV âm hiệu từ gói người dùng gửi; mã kiểm tra,
