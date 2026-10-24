@@ -364,6 +364,16 @@ class study_zone_window : public cataimgui::window
         }
 
         std::optional<std::string> reader_intent( const a11y::semantic_intent &intent ) {
+            if( intent.node == "study:npc_prev" || intent.node == "study:npc_next" ||
+                intent.node == "study:skill_prev" || intent.node == "study:skill_next" ) {
+                if( intent.action == "activate" ) {
+                    if( intent.node == "study:npc_prev" && reader_npc_page > 0 ) { --reader_npc_page; }
+                    if( intent.node == "study:npc_next" ) { ++reader_npc_page; }
+                    if( intent.node == "study:skill_prev" && reader_skill_page > 0 ) { --reader_skill_page; }
+                    if( intent.node == "study:skill_next" ) { ++reader_skill_page; }
+                }
+                return std::string( "TIMEOUT" );
+            }
             if( intent.node == "study:check_all" || intent.node == "study:clear_all" ) {
                 if( intent.action == "focus" ) {
                     return std::string( "TIMEOUT" );
@@ -433,6 +443,16 @@ class study_zone_window : public cataimgui::window
         }
 
         a11y::semantic_snapshot build_snapshot() {
+            constexpr std::size_t npc_page_size = 8;
+            constexpr std::size_t skill_page_size = 32;
+            reader_npc_page = std::min( reader_npc_page,
+                                       npc_names.empty() ? std::size_t( 0 ) : ( npc_names.size() - 1 ) / npc_page_size );
+            reader_skill_page = std::min( reader_skill_page,
+                                         all_skills.empty() ? std::size_t( 0 ) : ( all_skills.size() - 1 ) / skill_page_size );
+            const std::size_t npc_begin = reader_npc_page * npc_page_size;
+            const std::size_t npc_end = std::min( npc_names.size(), npc_begin + npc_page_size );
+            const std::size_t skill_begin = reader_skill_page * skill_page_size;
+            const std::size_t skill_end = std::min( all_skills.size(), skill_begin + skill_page_size );
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
                                                _( "Study Zone Skill Preferences" ) );
             std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
@@ -462,12 +482,12 @@ class study_zone_window : public cataimgui::window
                 a11y::semantic_table skills_table;
                 skills_table.id = "study:skills";
                 skills_table.columns.push_back( { "skill", _( "Skill" ), "" } );
-                for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                for( std::size_t i = npc_begin; i < npc_end; ++i ) {
                     skills_table.columns.push_back( { "npc:" + std::to_string( i ), npc_names[i],
                                                       "" } );
                 }
                 snapshot.tables.push_back( skills_table );
-                for( std::size_t row = 0; row < all_skills.size(); ++row ) {
+                for( std::size_t row = skill_begin; row < skill_end; ++row ) {
                     const skill_id &skill = all_skills[row];
                     const std::string row_id = "study:skill:" + skill.str();
                     int allowed_count = 0;
@@ -494,14 +514,14 @@ class study_zone_window : public cataimgui::window
                     node.table_id = "study:skills";
                     node.row_index = static_cast<int>( row );
                     node.cells.push_back( { "skill", skill->name(), "", "" } );
-                    for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                    for( std::size_t i = npc_begin; i < npc_end; ++i ) {
                         const bool allowed = skill_allowed( npc_names[i], skill );
                         node.cells.push_back( { "npc:" + std::to_string( i ),
                                                 allowed ? _( "Allowed" ) : _( "Not allowed" ), "",
                                                 allowed ? "1" : "0" } );
                     }
                     snapshot.nodes.push_back( node );
-                    for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                    for( std::size_t i = npc_begin; i < npc_end; ++i ) {
                         const std::string &npc_name = npc_names[i];
                         const bool allowed = skill_allowed( npc_name, skill );
                         a11y::semantic_node child;
@@ -547,11 +567,28 @@ class study_zone_window : public cataimgui::window
             done.label = _( "Done" );
             done.detail = _( "Finish editing the study zone skill preferences." );
             snapshot.nodes.push_back( std::move( done ) );
+            const auto page_button = [&]( const std::string &id, const std::string &label,
+                                          const bool available ) {
+                a11y::semantic_node node;
+                node.id = id;
+                node.label = label;
+                node.enabled = available;
+                if( !available ) { node.disabled_reason = _( "No more entries in this direction." ); }
+                snapshot.nodes.push_back( std::move( node ) );
+            };
+            if( npc_names.size() > npc_page_size ) {
+                page_button( "study:npc_prev", _( "Previous companions" ), reader_npc_page > 0 );
+                page_button( "study:npc_next", _( "Next companions" ), npc_end < npc_names.size() );
+            }
+            if( all_skills.size() > skill_page_size ) {
+                page_button( "study:skill_prev", _( "Previous skills" ), reader_skill_page > 0 );
+                page_button( "study:skill_next", _( "Next skills" ), skill_end < all_skills.size() );
+            }
             snapshot.nodes.insert( snapshot.nodes.end(),
                                    std::make_move_iterator( commands.begin() ),
                                    std::make_move_iterator( commands.end() ) );
             snapshot.focus = !npc_names.empty() && !all_skills.empty()
-                             ? "study:skill:" + all_skills.front().str()
+                             ? "study:skill:" + all_skills[skill_begin].str()
                              : "study:done";
             // Flat positions for ordinary nodes; tree nodes count their
             // sibling set under the same parent (R02.1).
@@ -580,6 +617,8 @@ class study_zone_window : public cataimgui::window
         // A draft changes nothing until apply writes it through
         // set_skill_allowed into npc_skill_preferences above.
         std::map<std::pair<std::string, std::string>, bool> reader_drafts;
+        std::size_t reader_npc_page = 0;
+        std::size_t reader_skill_page = 0;
         std::vector<skill_id> all_skills;
         std::vector<std::string> npc_names;
         std::string skill_filter;

@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="a11yBackupRequiresRestart">Player data cannot be restored after the game engine has started. Close the app completely, reopen reader setup before entering the game, and restore there.</string>
+    <string name="a11yBackupRecoveryFailed">Data recovery could not finish. The original backup has been retained. Do not start the game; resolve the storage error and restart the app to retry.</string>
     <string name="a11yReaderSearch">Find a command or item</string>
     <string name="a11yReaderSearchCount">%1$d matching items</string>
     <string name="a11yReaderAllCommands">All registered commands</string>
@@ -149,7 +151,7 @@
     <string name="a11yBackupInvalid">That file is not a readable backup with the expected structure. Nothing was changed; your current saves and settings are unchanged.</string>
     <string name="a11yBackupVerifyFailed">The backup did not pass its completeness check. Nothing was changed; your current saves and settings are unchanged.</string>
     <string name="a11yBackupEmpty">There are no saves or settings to export yet. Nothing was exported.</string>
-    <string name="a11yBackupSwapFailed">The restore could not be completed. Your previous saves and settings were kept; if the app stopped during the restore, they come back the next time the app starts.</string>
+    <string name="a11yBackupSwapFailed">Restore completion could not be confirmed. Recovery data is retained while an error remains. Do not continue playing; resolve the storage error and reopen the app for safe recovery.</string>
     <string name="a11yBackupStorageUnavailable">The game data folder is not available, so backup is unavailable. Nothing was changed.</string>
     <string name="a11yBackupFailed">The backup operation failed. Nothing was changed; your current saves and settings are unchanged. Technical code: %1$s</string>
     <string name="a11yReaderSpell">Spell the current item</string>

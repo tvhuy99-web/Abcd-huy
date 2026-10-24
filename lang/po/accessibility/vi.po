@@ -3258,3 +3258,23 @@ msgstr "%d thông báo."
 #, c-format
 msgid "Showing the newest %1$d of %2$d messages. Older messages are not included; use the filter to narrow the list."
 msgstr "Đang hiển thị %1$d thông báo mới nhất trong %2$d thông báo. Các thông báo cũ hơn không được đưa vào; dùng bộ lọc để thu hẹp danh sách."
+
+#: src/study_zone_ui.cpp
+msgid "No more entries in this direction."
+msgstr "Không còn mục theo hướng này."
+
+#: src/study_zone_ui.cpp
+msgid "Previous companions"
+msgstr "Nhóm đồng đội trước"
+
+#: src/study_zone_ui.cpp
+msgid "Next companions"
+msgstr "Nhóm đồng đội tiếp"
+
+#: src/study_zone_ui.cpp
+msgid "Previous skills"
+msgstr "Nhóm kỹ năng trước"
+
+#: src/study_zone_ui.cpp
+msgid "Next skills"
+msgstr "Nhóm kỹ năng tiếp"

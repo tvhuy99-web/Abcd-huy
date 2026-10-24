@@ -55,6 +55,7 @@ public final class ReaderBackupArchive {
     public static final String ERR_INVALID = "invalid";
     public static final String ERR_EMPTY = "empty";
     public static final String ERR_SWAP = "swap";
+    public static final String ERR_GAME_ACTIVE = "game_active";
 
     private static final String MANIFEST_NAME = "cdda-reader-backup.txt";
     private static final String MANIFEST_MARKER = "cdda-reader-backup";
@@ -63,8 +64,6 @@ public final class ReaderBackupArchive {
     private static final String STAGED_ROOT = "extracted";
     private static final String STAGED_ARCHIVE = "backup.zip";
     private static final String STAGED_SUMMARY = "staging_summary.txt";
-    private static final String JOURNAL_SWAPPING = "BACKUP_SWAPPING";
-    private static final String JOURNAL_COMMITTED = "BACKUP_COMMITTED";
     private static final long RESTORE_RESERVE_BYTES = 32L * 1024L * 1024L;
     private static final String[] BACKUP_TREES = {
             "save", "config", "memorial", "achievements", "templates" };
@@ -256,6 +255,17 @@ public final class ReaderBackupArchive {
      * defaults to overwriting.
      */
     public Summary restoreStagedImport() throws BackupException {
+        if (!ReaderGameSession.beginRestore()) {
+            throw new BackupException(ERR_GAME_ACTIVE, "Restart the app before restoring player data");
+        }
+        try {
+            return restoreWhileEngineStopped();
+        } finally {
+            ReaderGameSession.endRestore();
+        }
+    }
+
+    private Summary restoreWhileEngineStopped() throws BackupException {
         Summary expected = readStagedSummary();
         if (expected == null) {
             throw new BackupException(ERR_INVALID, "no staged import");
@@ -296,35 +306,13 @@ public final class ReaderBackupArchive {
                             + " bytes=" + stagedBytes + "/" + expected.bytes);
         }
 
-        File rollback = rollbackDir();
-        writeJournal(JOURNAL_SWAPPING);
-        deletePlain(rollback);
-        if (!rollback.mkdirs() && !rollback.isDirectory()) {
-            writeJournal(null);
-            throw new BackupException(ERR_SWAP, "cannot create rollback directory");
-        }
         try {
-            for (String tree : expected.trees) {
-                moveDirectory(new File(liveRoot, tree), new File(rollback, tree));
-            }
-            for (String tree : expected.trees) {
-                moveDirectory(new File(extracted, tree), new File(liveRoot, tree));
-            }
+            transaction().replace(extracted, expected.trees, null);
         } catch (IOException e) {
-            // Best-effort immediate rollback; if it cannot complete, the
-            // journal stays at SWAPPING and the next launch finishes the
-            // restore of the parked trees in recoverInterruptedSwap().
-            if (rollbackSwap(expected.trees)) {
-                writeJournal(null);
-                deletePlain(rollback);
-            }
-            deletePlain(stagingDir());
+            // Keep both staging and the durable journal when recovery failed.
             throw new BackupException(ERR_SWAP, String.valueOf(e.getMessage()));
         }
-        writeJournal(JOURNAL_COMMITTED);
-        deletePlain(rollback);
         deletePlain(stagingDir());
-        writeJournal(null);
         return expected;
     }
 
@@ -337,20 +325,28 @@ public final class ReaderBackupArchive {
      * staging is the caller's decision (a fresh owner discards it, which
      * is what makes a staged import die with its screen instance).
      */
-    public void recoverInterruptedSwap() {
+    public void recoverInterruptedSwap() throws BackupException {
         if (liveRoot == null) {
             return;
         }
-        String state = readJournal();
-        File rollback = rollbackDir();
-        if (JOURNAL_SWAPPING.equals(state) && rollback.isDirectory()) {
-            rollbackSwap(allTreeNames());
+        if (!ReaderGameSession.beginRestore()) {
+            // Never repair on-disk player trees under an engine still holding a save.
+            if ((journalFile != null && journalFile.exists()) || rollbackDir().exists()) {
+                throw new BackupException(ERR_GAME_ACTIVE, "Recovery requires a fresh process");
+            }
+            return;
         }
-        if (state != null) {
-            deletePlain(stagingDir());
-            writeJournal(null);
+        try {
+            transaction().recover();
+        } catch (IOException e) {
+            throw new BackupException(ERR_SWAP, String.valueOf(e.getMessage()));
+        } finally {
+            ReaderGameSession.endRestore();
         }
-        deletePlain(rollback);
+    }
+
+    private ReaderFileTransaction transaction() {
+        return new ReaderFileTransaction(liveRoot, rollbackDir(), journalFile, "BACKUP_", BACKUP_TREES);
     }
 
     // ------------------------------------------------------------------
@@ -611,71 +607,6 @@ public final class ReaderBackupArchive {
             return new Summary((int) files, bytes, trees);
         } catch (IOException | NumberFormatException e) {
             return null;
-        }
-    }
-
-    private void writeJournal(String state) {
-        if (journalFile == null) {
-            return;
-        }
-        if (state == null) {
-            journalFile.delete();
-            return;
-        }
-        try (FileOutputStream out = new FileOutputStream(journalFile)) {
-            out.write((state + "\n").getBytes("UTF-8"));
-            out.getFD().sync();
-        } catch (IOException ignored) {
-            // Same contract as the install journal: an unwritable journal
-            // leaves leftovers untrusted, never treated as restored data.
-        }
-    }
-
-    private String readJournal() {
-        if (journalFile == null || !journalFile.isFile()) {
-            return null;
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(journalFile))) {
-            String line = reader.readLine();
-            return line == null ? null : line.trim();
-        } catch (IOException e) {
-            return null;
-        }
-    }
-
-    // ------------------------------------------------------------------
-    // File helpers (mirroring the SplashScreen install helpers)
-    // ------------------------------------------------------------------
-
-    /** Parked rollback trees go back over whatever the swap left live. */
-    private boolean rollbackSwap(List<String> trees) {
-        boolean complete = true;
-        File rollback = rollbackDir();
-        for (String tree : trees) {
-            File parked = new File(rollback, tree);
-            if (parked.exists()) {
-                deletePlain(new File(liveRoot, tree));
-                if (!parked.renameTo(new File(liveRoot, tree))) {
-                    complete = false;
-                }
-            }
-        }
-        return complete;
-    }
-
-    private void moveDirectory(File from, File to) throws IOException {
-        if (!from.exists()) {
-            return;
-        }
-        if (to.exists()) {
-            throw new IOException("swap target already exists: " + to.getPath());
-        }
-        File parent = to.getParentFile();
-        if (parent != null) {
-            parent.mkdirs();
-        }
-        if (!from.renameTo(to)) {
-            throw new IOException("cannot move " + from.getPath() + " to " + to.getPath());
         }
     }
 

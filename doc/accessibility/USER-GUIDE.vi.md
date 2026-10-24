@@ -875,3 +875,17 @@ Bị ngắt giữa đoạn thì bạn nghe lại cả đoạn đó, tối đa b�
 Bản dịch tiếng Việt đã bổ sung ở mức chuỗi trong mã.
 
 Chất lượng dịch và phát âm chưa được nghiệm thu bằng tai người trên máy thật.
+
+
+## Cập nhật điều khiển biểu mẫu và khôi phục sao lưu
+
+Sau khi nhập một giá trị, bộ đọc nói rõ giá trị nháp. Nhấn Quay lại để mở
+menu điều khiển, vuốt tới Áp dụng hoặc Hủy nháp, rồi chạm đôi để chọn. Chỉ
+Áp dụng mới ghi giá trị; duyệt hoặc nghe lại không xác nhận thay bạn.
+
+Để khôi phục dữ liệu, hãy lưu và thoát game, đóng hẳn tiến trình ứng dụng,
+rồi mở Thiết lập bộ đọc trước khi vào game. Nếu Android vẫn giữ tiến trình
+cũ, dùng Dừng bắt buộc trong thông tin ứng dụng rồi mở lại. Ứng dụng từ chối
+khôi phục sau khi engine đã chạy, dù bạn đang ở màn thiết lập, để bản lưu
+cũ trong bộ nhớ không ghi đè dữ liệu vừa khôi phục. Nếu báo lỗi phục hồi,
+không xóa bản dự phòng; xử lý lỗi dung lượng/quyền ghi và mở lại ứng dụng.

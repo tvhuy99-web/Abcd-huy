@@ -494,7 +494,8 @@ public class SplashScreen extends Activity {
         // A mid-swap death (journal left at SWAPPING) forces the install
         // task even when the version matches: the task restores the
         // rollback copy before staging anything new (R06.4).
-        boolean swapInterrupted = "SWAPPING".equals(readInstallJournalState());
+        boolean swapInterrupted = new File(getFilesDir(), INSTALL_JOURNAL_FILE).exists()
+                || new File(getExternalFilesDir(null), InstallProgramTask.ROLLBACK_DIR).exists();
         if (!swapInterrupted && getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
             // Show an alert box if the game crashed last time
             String externalFilesDir = getExternalFilesDir(null).getPath();
@@ -592,6 +593,34 @@ public class SplashScreen extends Activity {
             // A start queued before this Activity went away (or a second
             // trigger racing the first launch) must not fire late (R03.2).
             if (gameStartLaunched || isFinishing() || isDestroyed()) { return; }
+            File playerRoot = getExternalFilesDir(null);
+            if (playerRoot == null) { return; }
+            try {
+                new ReaderBackupArchive(playerRoot,
+                        new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE))
+                        .recoverInterruptedSwap();
+            } catch (ReaderBackupArchive.BackupException failure) {
+                if (shouldSelfVoiceBootstrap()) {
+                    showBootstrapMessage(R.string.a11yBackupHeading,
+                            getString(R.string.a11yBackupRecoveryFailed),
+                            new int[] { R.string.a11yReaderSetup, R.string.a11yRescueBack },
+                            new Runnable[] {
+                                () -> startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class)),
+                                () -> finish() });
+                } else {
+                    new AlertDialog.Builder(SplashScreen.this)
+                            .setTitle(R.string.a11yBackupHeading)
+                            .setMessage(R.string.a11yBackupRecoveryFailed)
+                            .setPositiveButton(R.string.a11yReaderSetup, (dialog, which) ->
+                                    startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class)))
+                            .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish()).show();
+                }
+                return;
+            }
+            if (!ReaderGameSession.reserveGameStart()) {
+                speakBootstrap(getString(R.string.a11yBackupWorking));
+                return;
+            }
             gameStartLaunched = true;
             Intent intent = new Intent(SplashScreen.this, CataclysmDDA.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
@@ -1034,21 +1063,11 @@ public class SplashScreen extends Activity {
                 // write until COMMITTED, a process death is recovered by
                 // restoring the rollback copy on the next launch.
                 installationErrorCode = ERR_SWAP;
-                writeInstallJournal("SWAPPING");
-                deletePlain(rollback);
-                if (!rollback.mkdirs() && !rollback.isDirectory()) {
-                    installationErrorCode = ERR_SWAP;
-                    installationError = "cannot create rollback directory";
-                    return false;
-                }
-                for (String top : DATA_TOPS) {
-                    moveDirectory(new File(root, top), new File(rollback, top));
-                }
-                for (String top : DATA_TOPS) {
-                    moveDirectory(new File(staging, top), new File(root, top));
-                }
-                restorePreservedCustom(rollback, root, assetFiles);
-                writeInstallJournal("COMMITTED");
+                final List<String> preservedAssets = assetFiles;
+                new ReaderFileTransaction(root, rollback,
+                        new File(getFilesDir(), INSTALL_JOURNAL_FILE), "", DATA_TOPS)
+                        .replace(staging, Arrays.asList(DATA_TOPS),
+                                () -> restorePreservedCustom(rollback, root, preservedAssets));
             } catch (Exception e) {
                 if (installationErrorCode == null) {
                     installationErrorCode = ERR_COPY;
@@ -1064,26 +1083,23 @@ public class SplashScreen extends Activity {
 
             deletePlain(rollback);
             deletePlain(staging);
-            writeInstallJournal(null);
             publishProgress(installedFiles, totalFiles);
             Log.i(TAG, "Installed " + installedFiles + " files, " + copiedBytes + " bytes: count "
                   + countMillis + " ms, staged copy " + copyMillis + " ms");
             return true;
         }
 
-        private void writeInstallJournal(String state) {
+        private void writeInstallJournal(String state) throws IOException {
             File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
             if (state == null) {
-                journal.delete();
+                if (journal.exists() && !journal.delete()) {
+                    throw new IOException("Cannot clear install journal");
+                }
                 return;
             }
             try (FileOutputStream out = new FileOutputStream(journal)) {
                 out.write((state + "\n" + getVersionName() + "\n").getBytes("UTF-8"));
                 out.getFD().sync();
-            } catch (IOException ignored) {
-                // A journal that cannot be written leaves the state
-                // unknown; the next launch then treats leftover staging
-                // as disposable and never trusts it as installed data.
             }
         }
 
@@ -1107,27 +1123,10 @@ public class SplashScreen extends Activity {
          * parked rollback copy over the half-swapped live tree, and a
          * COMMITTED leftover only needs its rollback copy cleaned up.
          */
-        private void recoverInterruptedInstall(File root, File staging, File rollback) {
-            String state = readJournalState();
-            if (state == null) {
-                // No journal: staging/rollback leftovers cannot be
-                // trusted as part of any committed install.
-                deletePlain(staging);
-                deletePlain(rollback);
-                return;
-            }
-            if ("SWAPPING".equals(state) && rollback.isDirectory()) {
-                for (String top : DATA_TOPS) {
-                    File parked = new File(rollback, top);
-                    if (parked.exists()) {
-                        deletePlain(new File(root, top));
-                        parked.renameTo(new File(root, top));
-                    }
-                }
-            }
+        private void recoverInterruptedInstall(File root, File staging, File rollback) throws IOException {
+            new ReaderFileTransaction(root, rollback,
+                    new File(getFilesDir(), INSTALL_JOURNAL_FILE), "", DATA_TOPS).recover();
             deletePlain(staging);
-            deletePlain(rollback);
-            writeInstallJournal(null);
         }
 
         /** Uncompressed length of one asset, measured by streaming it. */
@@ -1205,7 +1204,7 @@ public class SplashScreen extends Activity {
          * tree from staging and are left in the rollback copy to be
          * discarded with it.
          */
-        private void restorePreservedCustom(File rollback, File root, List<String> assetFiles) {
+        private void restorePreservedCustom(File rollback, File root, List<String> assetFiles) throws IOException {
             java.util.Set<String> shippedDirs = new java.util.HashSet<>();
             for (String assetFile : assetFiles) {
                 String path = assetFile;
@@ -1219,7 +1218,7 @@ public class SplashScreen extends Activity {
         }
 
         private void restorePreservedCustomWalk(File base, File current, File root,
-                                                java.util.Set<String> shippedDirs) {
+                                                java.util.Set<String> shippedDirs) throws IOException {
             File[] children = current.listFiles();
             if (children == null) {
                 return;
@@ -1239,7 +1238,7 @@ public class SplashScreen extends Activity {
                         File target = new File(root, relative);
                         if (!target.exists()) {
                             target.getParentFile().mkdirs();
-                            child.renameTo(target);
+                            copyPreserved(child, target);
                         }
                         continue;
                     }
@@ -1248,8 +1247,31 @@ public class SplashScreen extends Activity {
                     File target = new File(root, relative);
                     if (!target.exists()) {
                         target.getParentFile().mkdirs();
-                        child.renameTo(target);
+                        copyPreserved(child, target);
                     }
+                }
+            }
+        }
+
+        private void copyPreserved(File source, File target) throws IOException {
+            // Keep the complete original in rollback until COMMITTED.
+            if (!source.getCanonicalFile().equals(source.getAbsoluteFile())) {
+                throw new IOException("Cannot preserve a symbolic link: " + source);
+            }
+            if (source.isDirectory()) {
+                if (!target.mkdirs() && !target.isDirectory()) {
+                    throw new IOException("Cannot create custom directory: " + target);
+                }
+                File[] children = source.listFiles();
+                if (children == null) { throw new IOException("Cannot read custom directory"); }
+                for (File child : children) { copyPreserved(child, new File(target, child.getName())); }
+            } else {
+                try (InputStream in = new java.io.FileInputStream(source);
+                        FileOutputStream out = new FileOutputStream(target)) {
+                    byte[] buffer = new byte[262144];
+                    int count;
+                    while ((count = in.read(buffer)) != -1) { out.write(buffer, 0, count); }
+                    out.getFD().sync();
                 }
             }
         }

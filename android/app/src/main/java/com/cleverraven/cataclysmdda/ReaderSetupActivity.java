@@ -39,7 +39,7 @@ public final class ReaderSetupActivity extends Activity {
     // preferences, so an Activity recreate or a process death abandons
     // them instead of completing a restore the user confirmed in a
     // previous instance (R20.3).
-    private static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
+    static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
     private static final int REQUEST_BACKUP_EXPORT = 4201;
     private static final int REQUEST_BACKUP_IMPORT = 4202;
     private static final int BACKUP_ACTION_NONE = 0;
@@ -357,9 +357,15 @@ public final class ReaderSetupActivity extends Activity {
             // then discard any staged backup the dead instance left
             // unconfirmed, so it can never be restored from here without
             // a new file choice and a new explicit confirmation.
-            backupArchive.recoverInterruptedSwap();
-            backupArchive.cancelStagedImport();
+            try {
+                backupArchive.recoverInterruptedSwap();
+                if (ReaderGameSession.canRestore()) { backupArchive.cancelStagedImport(); }
+            } catch (ReaderBackupArchive.BackupException failure) {
+                backupArchive = null;
+                status.setText(R.string.a11yBackupRecoveryFailed);
+            }
         }
+        updateBackupButtons();
         button(layout, R.string.a11yReturnToStartup, view -> finish()).setId(R.id.a11y_return);
         setContentView(selfVoicingSurface);
 
@@ -568,6 +574,10 @@ public final class ReaderSetupActivity extends Activity {
      * before the picker ever opens.
      */
     private void chooseBackupPicker(boolean export) {
+        if (!export && !ReaderGameSession.canRestore()) {
+            showStatus(R.string.a11yBackupRequiresRestart, true);
+            return;
+        }
         if (backupBusy) {
             return;
         }
@@ -677,6 +687,10 @@ public final class ReaderSetupActivity extends Activity {
      * particular nothing in onResume/onActivityResult restores on its own.
      */
     private void confirmBackupRestore() {
+        if (!ReaderGameSession.canRestore()) {
+            showStatus(R.string.a11yBackupRequiresRestart, true);
+            return;
+        }
         if (backupBusy || !stagedBackupReady || backupArchive == null) {
             return;
         }
@@ -702,10 +716,10 @@ public final class ReaderSetupActivity extends Activity {
                 || backupConfirmRestore == null || backupCancelRestore == null) {
             return;
         }
-        backupExport.setEnabled(!backupBusy);
-        backupImport.setEnabled(!backupBusy);
+        backupExport.setEnabled(!backupBusy && backupArchive != null);
+        backupImport.setEnabled(!backupBusy && backupArchive != null);
         backupOpenPicker.setEnabled(!backupBusy && pendingBackupAction != BACKUP_ACTION_NONE);
-        backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady);
+        backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady && ReaderGameSession.canRestore());
         backupCancelRestore.setEnabled(!backupBusy && stagedBackupReady);
     }
 
@@ -781,6 +795,9 @@ public final class ReaderSetupActivity extends Activity {
                 break;
             case ReaderBackupArchive.ERR_SWAP:
                 showStatus(R.string.a11yBackupSwapFailed, true);
+                break;
+            case ReaderBackupArchive.ERR_GAME_ACTIVE:
+                showStatus(R.string.a11yBackupRequiresRestart, true);
                 break;
             default:
                 showStatusText(getString(R.string.a11yBackupFailed, failure.code), true);

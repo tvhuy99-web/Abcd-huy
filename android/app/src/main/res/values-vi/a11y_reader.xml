@@ -1,5 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="a11yBackupRequiresRestart">Không thể khôi phục dữ liệu sau khi đã mở game. Hãy đóng hẳn ứng dụng, mở lại thiết lập bộ đọc trước khi vào game, rồi khôi phục tại đó.</string>
+    <string name="a11yBackupRecoveryFailed">Chưa thể hoàn tất phục hồi dữ liệu. Bản dự phòng gốc vẫn được giữ. Chưa mở game; hãy xử lý lỗi bộ nhớ rồi khởi động lại ứng dụng để thử lại.</string>
     <string name="a11yReaderSearch">Tìm lệnh hoặc mục</string>
     <string name="a11yReaderSearchCount">Có %1$d mục phù hợp</string>
     <string name="a11yReaderAllCommands">Tất cả lệnh đã đăng ký</string>
@@ -149,7 +151,7 @@
     <string name="a11yBackupInvalid">Tệp đó không phải là bản sao lưu đọc được với cấu trúc mong đợi. Chưa có gì thay đổi; các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn.</string>
     <string name="a11yBackupVerifyFailed">Bản sao lưu không qua được kiểm tra tính đầy đủ. Chưa có gì thay đổi; các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn.</string>
     <string name="a11yBackupEmpty">Chưa có bản lưu hay thiết lập nào để xuất. Chưa xuất gì cả.</string>
-    <string name="a11yBackupSwapFailed">Không hoàn tất được việc khôi phục. Các bản lưu và thiết lập trước đây của bạn đã được giữ lại; nếu ứng dụng dừng giữa lúc khôi phục, chúng sẽ trở lại vào lần ứng dụng khởi động tiếp theo.</string>
+    <string name="a11yBackupSwapFailed">Chưa xác nhận được việc khôi phục đã hoàn tất. Bản dự phòng và thông tin phục hồi được giữ lại khi còn lỗi. Đừng tiếp tục chơi; hãy xử lý lỗi bộ nhớ rồi mở lại ứng dụng để phục hồi an toàn.</string>
     <string name="a11yBackupStorageUnavailable">Thư mục dữ liệu game không khả dụng nên không sao lưu được. Chưa có gì thay đổi.</string>
     <string name="a11yBackupFailed">Thao tác sao lưu thất bại. Chưa có gì thay đổi; các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn. Mã kỹ thuật: %1$s</string>
     <string name="a11yReaderSpell">Đánh vần mục hiện tại</string>

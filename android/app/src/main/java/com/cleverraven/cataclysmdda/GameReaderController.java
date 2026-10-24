@@ -442,6 +442,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         }
                     }
                 }
+                if (!changedContext && !selectionChanged) {
+                    ReaderSnapshot.Node previousField = snapshot.find(focus);
+                    ReaderSnapshot.Node nextField = next.find(focus);
+                    if (previousField != null && nextField != null && !nextField.fieldType.isEmpty()
+                            && (previousField.hasDraft != nextField.hasDraft
+                                || !previousField.draftValue.equals(nextField.draftValue)
+                                || !previousField.appliedValue.equals(nextField.appliedValue)
+                                || !previousField.fieldError.equals(nextField.fieldError))) {
+                        selectedItemFocus = focus;
+                        selectionChanged = true;
+                    }
+                }
                 String previous = focus;
                 ReaderSnapshot previousSnapshot = snapshot;
                 snapshot = next;
@@ -1257,6 +1269,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             System.arraycopy(DOC_CONTROLS, 0, expanded, labels.length, DOC_CONTROLS.length);
             labels = expanded;
         }
+        // These controls are part of the same one-finger menu as Help/Back,
+        // not only native buttons that require TalkBack or visual targeting.
+        ReaderSnapshot.Node field = snapshot == null ? null : snapshot.find(focus);
+        if (field != null && field.hasDraft) {
+            if (field.actions.contains("apply")) {
+                int[] expanded = java.util.Arrays.copyOf(labels, labels.length + 1);
+                expanded[labels.length] = R.string.a11yReaderApplyValue;
+                labels = expanded;
+            }
+            if (field.actions.contains("cancel_draft")) {
+                int[] expanded = java.util.Arrays.copyOf(labels, labels.length + 1);
+                expanded[labels.length] = R.string.a11yReaderCancelDraft;
+                labels = expanded;
+            }
+        }
         if (preferences.isGestureMapTrialActive()) {
             int[] expanded = new int[labels.length + 2];
             System.arraycopy(labels, 0, expanded, 0, labels.length);
@@ -1302,6 +1329,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         controlIndex = Math.floorMod(controlIndex, availableControls.length);
         if (index < 0 || index >= availableControls.length) {
             index = 0;
+        }
+        int chosenLabel = availableControls[index];
+        if (chosenLabel == R.string.a11yReaderApplyValue
+                || chosenLabel == R.string.a11yReaderCancelDraft) {
+            ReaderSnapshot.Node field = snapshot == null ? null : snapshot.find(focus);
+            String action = chosenLabel == R.string.a11yReaderApplyValue ? "apply" : "cancel_draft";
+            if (field != null && field.hasDraft && field.actions.contains(action)) {
+                controls = false;
+                root.cancelGesture();
+                send(action, "");
+                render();
+            }
+            return;
         }
         if (trialIsActive) {
             int confirmIndex = availableControls.length - 2;

@@ -1,0 +1,126 @@
+name: Reader audit, full tests and installable APK
+
+on:
+  push:
+    branches: [fix/reader-audit-apk-20261024]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: reader-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: '17'
+      - run: sudo apt-get update && sudo apt-get install -y gettext
+      - run: python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
+      - run: bash tools/accessibility/run_core_tests.sh
+      - run: bash tools/accessibility/run_speech_tests.sh
+      - run: bash tools/accessibility/run_storage_tests.sh
+      - run: msgfmt --check -o /tmp/a11y-vi.mo lang/po/accessibility/vi.po
+
+  android:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
+          log-accepted-android-sdk-licenses: false
+      - run: sudo apt-get update && sudo apt-get install -y gettext ccache
+      - name: Compile resources and real Android Java API
+        working-directory: android
+        run: |
+          mkdir -p ../build-evidence
+          set -o pipefail
+          bash ./gradlew --no-daemon --console=plain -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false compileAccessibilityDebugJavaWithJavac 2>&1 | tee ../build-evidence/android-java.log
+      - name: Build full ARM64 APK with stable test signing key
+        working-directory: android
+        run: |
+          set -o pipefail
+          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false -Paccessibility_test_signing=true assembleAccessibilityDebug 2>&1 | tee ../build-evidence/android-full.log
+      - name: Verify native engine, assets, Vietnamese catalog and signing
+        run: |
+          python3 - <<'PY'
+          import hashlib, os, pathlib, re, subprocess, zipfile
+          evidence = pathlib.Path('build-evidence')
+          evidence.mkdir(exist_ok=True)
+          evidence.joinpath('commit.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
+          apks = list(pathlib.Path('android/app/build/outputs/apk/accessibility/debug').glob('*.apk'))
+          if len(apks) != 1:
+              raise SystemExit('Expected exactly one full accessibility APK')
+          apk = apks[0]
+          with zipfile.ZipFile(apk) as z:
+              names = z.namelist()
+              for path in ['lib/arm64-v8a/libmain.so','assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo']:
+                  if path not in names: raise SystemExit('Missing '+path)
+              for path in pathlib.Path('android/app/src/main/res/raw').iterdir():
+                  if 'res/raw/'+path.name not in names: raise SystemExit('Missing packaged audio '+path.name)
+              if not any(n.startswith('assets/data/json/') for n in names): raise SystemExit('Missing game data')
+          signer = pathlib.Path(os.environ['ANDROID_HOME'])/'build-tools/35.0.0/apksigner'
+          signature = subprocess.check_output([str(signer),'verify','--verbose','--print-certs',str(apk)],text=True)
+          expected = pathlib.Path('android/app/accessibility-test-cert.sha256').read_text().strip()
+          actual = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)',signature)
+          if not actual or actual.group(1).lower()!=expected: raise SystemExit('Unexpected signing certificate')
+          evidence.joinpath('signer.txt').write_text(signature)
+          evidence.joinpath('SHA256SUMS').write_text(hashlib.sha256(apk.read_bytes()).hexdigest()+'  '+apk.name+'\n')
+          PY
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reader-audit-arm64-apk
+          retention-days: 30
+          path: |
+            build-evidence/
+            android/app/build/outputs/apk/accessibility/debug/*.apk
+            android/app/build/reports/
+
+  host:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - run: sudo apt-get update && sudo apt-get install -y cmake ninja-build libncurses-dev gettext ccache
+      - name: Build full host test executable
+        id: build
+        run: |
+          mkdir -p build-evidence
+          cmake -S . -B ../build-host -G Ninja -DTILES=OFF -DCURSES=ON -DSOUND=OFF -DTESTS=ON -DCMAKE_BUILD_TYPE=Debug
+          set -o pipefail
+          cmake --build ../build-host --target cata_test -j2 2>&1 | tee build-evidence/host-build.log
+      - name: Run accessibility integration tests
+        run: |
+          set -o pipefail
+          ./cata_test '[a11y]' --rng-seed 2401024 2>&1 | tee build-evidence/host-a11y.log
+      - name: Run full host suite with fixed order and seed
+        if: ${{ !cancelled() && steps.build.outcome == 'success' }}
+        run: |
+          set -o pipefail
+          ./cata_test --order lex --rng-seed 2401024 2>&1 | tee build-evidence/host-full.log
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reader-audit-host-results
+          retention-days: 30
+          path: build-evidence/
