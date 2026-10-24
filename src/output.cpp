@@ -17,6 +17,8 @@
 #include <string>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_imgui.h"
@@ -482,9 +484,29 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
+    // R20.4: this generic text screen had no reader adapter at all, yet
+    // it is how the post-game NPC and faction epilogues are shown (and
+    // several help texts). Publish the full text as a document plus the
+    // screen's own registered commands, so the reader can read it and
+    // leave with CONFIRM/QUIT instead of being stuck on a visual-only
+    // screen. Focus observation never scrolls the visual page; the
+    // registered commands drive the original loop below.
+    a11y::screen_scope reader( &ctxt, "SCROLLABLE_TEXT",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     std::string action;
     do {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+            a11y::append_document( snapshot, "scrollable:body", title, text );
+            if( !text.empty() ) {
+                snapshot.focus = "scrollable:body";
+            }
+            reader.update( std::move( snapshot ) );
+        }
 
         action = ctxt.handle_input();
         if( action == "UP" || action == "SCROLL_UP" || action == "DOWN" || action == "SCROLL_DOWN" ) {

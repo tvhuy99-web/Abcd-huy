@@ -70,15 +70,15 @@ class scores_ui_impl : public cataimgui::window
         explicit scores_ui_impl() : cataimgui::window( _( "Your scores" ),
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav ) {}
         void init_data();
+        a11y::semantic_snapshot reader_snapshot( const input_context &ctxt ) const;
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
+                const input_context &ctxt );
 
     private:
         void draw_achievements_text( bool use_conducts = false ) const;
         void draw_scores_text() const;
         void draw_kills_text() const;
         void draw_memorial_text() const;
-        a11y::semantic_snapshot reader_snapshot( const input_context &ctxt ) const;
-        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
-                const input_context &ctxt );
 
         scores_ui_tab selected_tab = enum_traits<scores_ui_tab>::first;
         scores_ui_tab switch_tab = enum_traits<scores_ui_tab>::last;
@@ -207,7 +207,7 @@ void scores_ui_impl::init_data()
     }
     std::sort( npc_kills_data.begin(), npc_kills_data.end(), localized_compare );
 
-    memorial_text = g->memorial().dump();
+    memorial_text = get_memorial().dump();
 }
 
 void scores_ui_impl::draw_achievements_text( bool use_conducts ) const

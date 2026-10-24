@@ -9,9 +9,12 @@
 #include <string>
 #include <string_view>
 #include <tuple>
+#include <unordered_map>
 #include <utility>
 
 #include "avatar.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cached_options.h"
 #include "cata_imgui.h"  // IWYU pragma: keep
 #include "cata_utility.h"
@@ -725,6 +728,7 @@ void panel_manager::show_adm()
     ctxt.register_action( "RIGHT" );
     ctxt.register_action( "MOVE_PANEL" );
     ctxt.register_action( "TOGGLE_PANEL" );
+    ctxt.register_action( "A11Y_INTERNAL_PANEL_FOCUS" );
 
     const std::vector<int> column_widths = { 25, 37, 17 };
 
@@ -740,6 +744,174 @@ void panel_manager::show_adm()
     // map of row the panel is on vs index
     // panels not renderable due to game configuration will not be in this map
     std::map<size_t, size_t> row_indices;
+
+    // Reader adapter (R19.4). The visual screen conveys a panel's toggle
+    // state only through text color (white vs dark gray) and the layout
+    // order only through vertical position; the snapshot below publishes
+    // the same facts from the same panel_layout data as words. Every
+    // mutation intent returns one of this screen's own actions (or, for a
+    // complete reorder step, performs exactly the swap chain the
+    // original two-step MOVE_PANEL flow performs on the same panels
+    // vector), so saving still happens only through the original QUIT
+    // path and no parallel panel state exists.
+    enum class reader_target_kind {
+        panel,
+        layout,
+    };
+    struct reader_target {
+        reader_target_kind kind;
+        size_t row = 0;
+    };
+    std::unordered_map<std::string, reader_target> reader_targets;
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "PANEL_MGMT",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const auto target = reader_targets.find( intent.node );
+        if( target == reader_targets.end() ) {
+            return a11y::registered_intent( ctxt, intent );
+        }
+        const reader_target &selected = target->second;
+        if( selected.kind == reader_target_kind::layout ) {
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            current_col = 2;
+            current_row = selected.row;
+            if( intent.action == "focus" ) {
+                return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
+            }
+            // The original layout selection is MOVE_PANEL pressed in the
+            // right-hand column; let the screen's own loop perform it.
+            return std::string( "MOVE_PANEL" );
+        }
+        const auto row_it = row_indices.find( selected.row );
+        if( row_it == row_indices.end() ) {
+            return std::nullopt;
+        }
+        if( intent.action == "focus" ) {
+            current_col = 0;
+            current_row = selected.row;
+            return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
+        }
+        if( intent.action == "activate" ) {
+            current_col = 0;
+            current_row = selected.row;
+            return std::string( "TOGGLE_PANEL" );
+        }
+        if( intent.action == "move_up" || intent.action == "move_down" ) {
+            if( swapping ||
+                ( intent.action == "move_up" && selected.row == 0 ) ||
+                ( intent.action == "move_down" &&
+                  selected.row + 1 >= row_indices.size() ) ) {
+                return std::nullopt;
+            }
+            const size_t target_row = intent.action == "move_up" ?
+                                      selected.row - 1 : selected.row + 1;
+            const auto target_it = row_indices.find( target_row );
+            if( target_it == row_indices.end() ) {
+                return std::nullopt;
+            }
+            // One complete reorder step: the same swap chain the loop's
+            // MOVE_PANEL commit runs between the source and destination
+            // panel indices, including any non-renderable panels between
+            // them in the layout's panel vector.
+            auto &panel_list = get_current_layout().panels();
+            const size_t source_index = row_it->second;
+            const size_t target_index = target_it->second;
+            const int step = target_index > source_index ? 1 : -1;
+            for( size_t i = source_index; i != target_index; ) {
+                const size_t next =
+                    static_cast<size_t>( static_cast<int>( i ) + step );
+                std::swap( panel_list[i], panel_list[next] );
+                i = next;
+            }
+            current_col = 0;
+            current_row = target_row;
+            g->invalidate_main_ui_adaptor();
+            recalc = true;
+            return std::string( "A11Y_INTERNAL_PANEL_FOCUS" );
+        }
+        return std::nullopt;
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) {
+            return;
+        }
+        reader_targets.clear();
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Sidebar options" );
+        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order. Activate a layout name to switch the sidebar layout. Changes are saved when you exit, as on the original screen." );
+        const auto &panel_list = get_current_layout().panels();
+        for( const auto &entry : row_indices ) {
+            const size_t row = entry.first;
+            const window_panel &panel = panel_list[entry.second];
+            a11y::semantic_node node;
+            node.id = "panels:panel:" + std::to_string( row );
+            node.role = "checkbox";
+            node.label = panel.get_name();
+            node.checked = panel.toggle;
+            node.value = panel.toggle ? _( "On" ) : _( "Off" );
+            node.selected = current_col == 0 && current_row == row;
+            node.detail = string_format(
+                              _( "Panel %d of %d in the display order. Width: %d. Height: %d." ),
+                              static_cast<int>( row + 1 ),
+                              static_cast<int>( row_indices.size() ),
+                              panel.get_width(), panel.get_height() );
+            // The same widget description the center column shows for
+            // the focused panel on the visual screen.
+            const widget_id panel_widget = panel.get_widget();
+            for( const widget &wgt : widget::get_all() ) {
+                if( wgt.getId() == panel_widget ) {
+                    if( !wgt._description.empty() ) {
+                        node.detail += " " + std::string( _( wgt._description ) );
+                    }
+                    break;
+                }
+            }
+            node.actions = { "focus", "activate", "move_up", "move_down" };
+            reader_targets.emplace( node.id,
+                                    reader_target{ reader_target_kind::panel, row } );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        size_t layout_row = 0;
+        for( const auto &layout : layouts ) {
+            a11y::semantic_node node;
+            node.id = "panels:layout:" + std::to_string( layout_row );
+            node.role = "tab";
+            node.label = layout.second.name();
+            node.selected = current_col == 2 && current_row == layout_row;
+            if( layout.first == current_layout_id ) {
+                node.value = _( "Current layout" );
+                node.detail = _( "This is the current sidebar layout." );
+            } else {
+                node.detail = _( "Activate to switch to this sidebar layout." );
+            }
+            node.actions = { "focus", "activate" };
+            reader_targets.emplace( node.id,
+                                    reader_target{ reader_target_kind::layout, layout_row } );
+            snapshot.nodes.push_back( std::move( node ) );
+            layout_row++;
+        }
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.focus = current_col == 0 ?
+                         "panels:panel:" + std::to_string( current_row ) :
+                         "panels:layout:" + std::to_string( current_row );
+        if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
+        [&]( const a11y::semantic_node & node ) {
+        return node.id == snapshot.focus;
+        } ) ) {
+            snapshot.focus = snapshot.nodes.empty() ? std::string() :
+                             snapshot.nodes.front().id;
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
 
     g->show_panel_adm = true;
     g->invalidate_main_ui_adaptor();
@@ -809,10 +981,14 @@ void panel_manager::show_adm()
             start = current_row > popup_height - 3 ? current_row - ( popup_height - 3 ) : 0;
         }
 
+        update_reader();
         ui_manager::redraw();
 
         const std::string action = ctxt.handle_input();
-        if( action == "UP" ) {
+        if( action == "A11Y_INTERNAL_PANEL_FOCUS" ) {
+            // Reader focus/reorder bookkeeping only; no panel state
+            // changes beyond what the intent handler already applied.
+        } else if( action == "UP" ) {
             if( current_row > 0 ) {
                 current_row -= 1;
                 if( current_row < start ) {

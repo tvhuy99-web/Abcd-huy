@@ -3560,8 +3560,15 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         reader_target_kind kind;
         int page = 0;
         int line = 0;
+        // Option name for form targets, group id for group targets (R02.3).
+        std::string data{};
     };
     std::unordered_map<std::string, reader_target> reader_targets;
+    // Unapplied form drafts, keyed by the option row's node ID (R02.3). A
+    // draft lives only in this screen's state: leaving the options screen
+    // drops it, and the applied option value changes solely through the
+    // "apply" intent below (or the screen's original editing flow).
+    std::unordered_map<std::string, std::string> reader_drafts;
     bool recalc_startpos = false;
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
             &ctxt, world_options_only ? "world-options" : "OPTIONS",
@@ -3571,6 +3578,73 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             return a11y::registered_intent( ctxt, intent );
         }
         const reader_target &selected = target->second;
+        // Tree and form intents (R02.1/R02.3) are structural: they never
+        // fall through to the focus/activate handling below, and a draft
+        // intent never changes the applied option value by itself.
+        if( selected.kind == reader_target_kind::group ) {
+            const bool expand = intent.action == "expand" || intent.action == "open_tree";
+            if( expand || intent.action == "collapse" ) {
+                if( groups_state[selected.data] == expand ) {
+                    return std::nullopt;
+                }
+                groups_state[selected.data] = expand;
+                iCurrentPage = selected.page;
+                iCurrentLine = selected.line;
+                iStartPos = 0;
+                recalc_startpos = true;
+                return "A11Y_INTERNAL_OPTIONS_FOCUS";
+            }
+        }
+        if( selected.kind == reader_target_kind::option ) {
+            if( intent.action == "set_value" || intent.action == "select_choice" ) {
+                reader_drafts[intent.node] = intent.value;
+                return "A11Y_INTERNAL_OPTIONS_FOCUS";
+            }
+            if( intent.action == "cancel_draft" ) {
+                reader_drafts.erase( intent.node );
+                return "A11Y_INTERNAL_OPTIONS_FOCUS";
+            }
+            if( intent.action == "apply" ) {
+                const auto draft = reader_drafts.find( intent.node );
+                if( draft == reader_drafts.end() ) {
+                    return std::nullopt;
+                }
+                options_container &container = ( ingame || world_options_only ) &&
+                                               selected.page == iWorldOptPage ?
+                                               ACTIVE_WORLD_OPTIONS : OPTIONS;
+                const auto found = container.find( selected.data );
+                if( found == container.end() ) {
+                    reader_drafts.erase( draft );
+                    return std::nullopt;
+                }
+                // The runtime already validated this draft against the
+                // published field domain before the intent reached here.
+                if( found->second.getType() == "string_input" ) {
+                    // The original editor (string_input_popup, reached via
+                    // cOpt::setNext) enforces the option's maximum length
+                    // itself and stores the edited text verbatim, while
+                    // cOpt::setValue( std::string ) would silently truncate
+                    // by bytes. Mirror the editor: refuse an over-long
+                    // draft (the builder flags it as a field error and it
+                    // stays unapplied) and store an in-domain draft
+                    // exactly as entered.
+                    const int max_length = found->second.getMaxLength();
+                    if( max_length > 0 &&
+                        utf8_width( draft->second ) > max_length ) {
+                        return std::nullopt;
+                    }
+                    found->second.sSet = draft->second;
+                } else {
+                    found->second.setValue( draft->second );
+                }
+                reader_drafts.erase( draft );
+                iCurrentPage = selected.page;
+                iCurrentLine = selected.line;
+                iStartPos = 0;
+                recalc_startpos = true;
+                return "A11Y_INTERNAL_OPTIONS_FOCUS";
+            }
+        }
         if( selected.kind == reader_target_kind::world_mods_tab ) {
             return intent.action == "activate" ? std::optional<std::string>( "PREV_TAB" ) :
                    std::nullopt;
@@ -3633,6 +3707,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             mods_tab.role = "tab";
             mods_tab.label = _( "World mod selection" );
             mods_tab.detail = _( "Activate to return to world mod selection." );
+            mods_tab.depth = 0;
+            mods_tab.expanded = true;
             reader_targets.emplace( mods_tab.id, reader_target{ reader_target_kind::world_mods_tab } );
             snapshot.nodes.push_back( std::move( mods_tab ) );
             a11y::semantic_node options_tab;
@@ -3640,6 +3716,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             options_tab.role = "tab";
             options_tab.label = _( "World options" );
             options_tab.selected = true;
+            options_tab.depth = 0;
+            options_tab.expanded = true;
             snapshot.nodes.push_back( std::move( options_tab ) );
         }
 
@@ -3650,6 +3728,8 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 page_node.role = "tab";
                 page_node.label = pages_[i].name_.translated();
                 page_node.selected = static_cast<int>( i ) == iCurrentPage;
+                page_node.depth = 0;
+                page_node.expanded = true;
                 reader_targets.emplace( page_node.id,
                                         reader_target{ reader_target_kind::page, static_cast<int>( i ), 0 } );
                 snapshot.nodes.push_back( std::move( page_node ) );
@@ -3659,6 +3739,25 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
         const Page &current_page = pages_[iCurrentPage];
         const options_container &current_options = ( ingame || world_options_only ) &&
                 iCurrentPage == iWorldOptPage ? ACTIVE_WORLD_OPTIONS : OPTIONS;
+        // Tree root for this page's rows (R02.1): pages and the worldgen
+        // options tab are depth 0, group headers depth 1, options depth 2
+        // (or 1 when ungrouped) and value adjustments hang under their row.
+        // Without tabs no root node is published, so rows root at depth 0.
+        const bool tree_root_published = !world_options_only || with_tabs;
+        const std::string tree_root_id = world_options_only ? "options:worldgen:options" :
+                                         "options:page:" + std::to_string( iCurrentPage );
+        const int group_depth = tree_root_published ? 1 : 0;
+        std::unordered_map<std::string, std::string> group_header_ids;
+        std::unordered_map<std::string, int> group_option_counts;
+        for( size_t i = 0; i < current_page.items_.size(); ++i ) {
+            const PageItem &item = current_page.items_[i];
+            if( item.type == ItemType::GroupHeader ) {
+                group_header_ids[item.data] = "options:line:" + std::to_string( iCurrentPage ) +
+                                              ":" + std::to_string( i );
+            } else if( item.type == ItemType::Option ) {
+                group_option_counts[item.group]++;
+            }
+        }
         for( size_t i = 0; i < current_page.items_.size(); ++i ) {
             const PageItem &item = current_page.items_[i];
             bool visible = false;
@@ -3689,8 +3788,14 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 row.value = groups_state[item.data] ? _( "Expanded" ) : _( "Collapsed" );
                 row.checked = groups_state[item.data];
                 row.detail = remove_color_tags( item.fmt_tooltip( item.group, current_options ) );
+                // Tree node (R02.1): expanding/collapsing goes through the
+                // dedicated intents in the handler, not a gameplay action.
+                row.parent_id = tree_root_published ? tree_root_id : "";
+                row.depth = group_depth;
+                row.expanded = groups_state[item.data];
+                row.actions = { "focus", "activate", "expand", "collapse", "open_tree" };
                 reader_targets.emplace( row_id,
-                                        reader_target{ reader_target_kind::group, iCurrentPage, static_cast<int>( i ) } );
+                                        reader_target{ reader_target_kind::group, iCurrentPage, static_cast<int>( i ), item.data } );
                 snapshot.nodes.push_back( std::move( row ) );
                 continue;
             }
@@ -3705,11 +3810,87 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             row.checked = type == "bool" && option.getValue() == "true";
             row.enabled = prerequisite_met;
             row.detail = remove_color_tags( item.fmt_tooltip( item.group, current_options ) );
+            if( type == "string_input" && option.getMaxLength() > 0 ) {
+                // The original editor enforces this limit while typing
+                // without ever stating it; publish it so the limit is
+                // known before a draft is entered (R19.4).
+                row.detail += string_format( _( " Maximum length: %d characters." ),
+                                             option.getMaxLength() );
+            }
             if( !prerequisite_met ) {
                 row.disabled_reason = _( "The prerequisite for this option is not met." );
             }
+            // Tree placement (R02.1) and form contract (R02.3). The applied
+            // value stays in "value" as display text; the raw applied value,
+            // the domain and any unapplied draft travel as form metadata.
+            const auto header = group_header_ids.find( item.group );
+            const bool grouped = !item.group.empty() && header != group_header_ids.end();
+            row.parent_id = grouped ? header->second :
+                            tree_root_published ? tree_root_id : "";
+            row.depth = grouped ? group_depth + 1 : group_depth;
+            row.expanded = true;
+            // An int_map option's domain is the discrete mIntValues set,
+            // not a contiguous range: publish it as a choice field over
+            // exactly that set (R19.4). As an "int" field without a range
+            // it previously accepted any integer draft, and
+            // cOpt::setValue then silently reset out-of-set values to
+            // the default instead of applying what was drafted.
+            row.field_type = type == "bool" ? "bool" :
+                             type == "int_map" ? "choice" :
+                             type == "int" ? "int" :
+                             type == "float" ? "float" :
+                             type == "string_select" ? "choice" : "text";
+            row.applied_value = option.getValue();
+            if( type == "int" || type == "float" ) {
+                row.has_field_range = true;
+                row.field_min = option.getNumericMin();
+                row.field_max = option.getNumericMax();
+                row.field_step = option.getNumericStep();
+            }
+            if( type == "bool" ) {
+                row.choices = { { "true", _( "True" ) }, { "false", _( "False" ) } };
+            } else if( type == "int_map" ) {
+                for( const auto &mapped : option.mIntValues ) {
+                    row.choices.push_back( { std::to_string( mapped.first ),
+                                             mapped.second.translated() } );
+                }
+            } else {
+                for( const auto &item_choice : option.getItems() ) {
+                    row.choices.push_back( { item_choice.first, item_choice.second.translated() } );
+                }
+            }
+            row.actions = { "focus", "activate", "set_value", "select_choice", "apply", "cancel_draft" };
+            const auto draft = reader_drafts.find( row_id );
+            if( draft != reader_drafts.end() ) {
+                row.has_draft = true;
+                row.draft_value = draft->second;
+                a11y::semantic_intent probe;
+                probe.action = row.field_type == "choice" ? "select_choice" : "set_value";
+                probe.value = draft->second;
+                std::string error_code;
+                if( !a11y::validate_intent_value( row, probe, error_code ) ) {
+                    // Defense in depth: the runtime already rejected invalid
+                    // drafts, but a draft can go stale if the domain changes
+                    // while the screen is open. The reason is published as
+                    // localized text, never as the internal code.
+                    row.field_error = error_code == "not_a_number" ? _( "The draft is not a number." ) :
+                                      error_code == "value_out_of_range" ? _( "The draft is outside the allowed range." ) :
+                                      error_code == "value_step_mismatch" ? _( "The draft does not match the allowed step." ) :
+                                      error_code == "not_a_choice" ? _( "The draft is not one of the choices." ) :
+                                      _( "The draft cannot be applied." );
+                }
+                if( row.field_error.empty() && type == "string_input" &&
+                    option.getMaxLength() > 0 &&
+                    utf8_width( draft->second ) > option.getMaxLength() ) {
+                    // The text contract carries no length field, so an
+                    // over-long draft is flagged here and refused by the
+                    // apply handler instead of being truncated silently
+                    // (R19.4).
+                    row.field_error = _( "The draft is longer than the maximum length." );
+                }
+            }
             reader_targets.emplace( row_id,
-                                    reader_target{ reader_target_kind::option, iCurrentPage, static_cast<int>( i ) } );
+                                    reader_target{ reader_target_kind::option, iCurrentPage, static_cast<int>( i ), item.data } );
             snapshot.nodes.push_back( std::move( row ) );
 
             for( const bool next : { false, true } ) {
@@ -3722,6 +3903,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 adjustment.enabled = prerequisite_met;
                 adjustment.detail = next ? _( "Activate to select the next value." ) :
                                    _( "Activate to select the previous value." );
+                adjustment.parent_id = row_id;
+                adjustment.depth = row.depth + 1;
+                adjustment.expanded = true;
                 if( !prerequisite_met ) {
                     adjustment.disabled_reason = _( "The prerequisite for this option is not met." );
                 }
@@ -3730,6 +3914,65 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                     iCurrentPage, static_cast<int>( i )
                 } );
                 snapshot.nodes.push_back( std::move( adjustment ) );
+            }
+        }
+
+        // Cross-field constraints (R02.3): an option whose prerequisite is
+        // another option published on this same page names that field's
+        // node as a dependency. Prerequisites on other pages cannot be
+        // referenced and stay expressed by enabled/disabled_reason only.
+        for( a11y::semantic_node &node : snapshot.nodes ) {
+            if( node.field_type.empty() ) {
+                continue;
+            }
+            const auto self = reader_targets.find( node.id );
+            if( self == reader_targets.end() || self->second.kind != reader_target_kind::option ) {
+                continue;
+            }
+            const auto found = current_options.find( self->second.data );
+            if( found == current_options.end() || !found->second.hasPrerequisite() ) {
+                continue;
+            }
+            const std::string prerequisite = found->second.getPrerequisite();
+            for( const auto &entry : reader_targets ) {
+                if( entry.second.kind == reader_target_kind::option &&
+                    entry.second.data == prerequisite && entry.first != node.id &&
+                    std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
+                [&entry]( const a11y::semantic_node & candidate ) { return candidate.id == entry.first; } ) ) {
+                    node.depends_on.push_back( entry.first );
+                    break;
+                }
+            }
+        }
+
+        // Tree sibling sets (R02.1): position/total of a tree node count its
+        // siblings under the same parent in the published set, and
+        // has_children reflects children actually published.
+        {
+            std::unordered_map<std::string, int> sibling_totals;
+            for( const a11y::semantic_node &node : snapshot.nodes ) {
+                if( node.depth >= 0 ) {
+                    sibling_totals[node.parent_id]++;
+                }
+            }
+            std::unordered_map<std::string, int> sibling_seen;
+            for( a11y::semantic_node &node : snapshot.nodes ) {
+                if( node.depth < 0 ) {
+                    continue;
+                }
+                node.position = ++sibling_seen[node.parent_id];
+                node.total = sibling_totals[node.parent_id];
+                node.has_children = sibling_totals.count( node.id ) != 0;
+            }
+            // A collapsed group still has children in the tree even though
+            // none are published; has_children describes the tree, while
+            // expanded describes what is currently published.
+            for( a11y::semantic_node &node : snapshot.nodes ) {
+                const auto target = reader_targets.find( node.id );
+                if( target != reader_targets.end() &&
+                    target->second.kind == reader_target_kind::group ) {
+                    node.has_children = group_option_counts[target->second.data] > 0;
+                }
             }
         }
 
@@ -3751,6 +3994,11 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         }
         for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            // Tree nodes keep their sibling position/total from the pass
+            // above; flat nodes (commands) keep the whole-list numbering.
+            if( snapshot.nodes[i].depth >= 0 ) {
+                continue;
+            }
             snapshot.nodes[i].position = static_cast<int>( i + 1 );
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }

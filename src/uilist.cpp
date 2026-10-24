@@ -893,6 +893,37 @@ std::unique_ptr<a11y::screen_scope> uilist::create_reader_scope( input_context &
         if( intent.action == "cancel" ) {
             return allow_cancel ? std::optional<std::string>( "UILIST.QUIT" ) : std::nullopt;
         }
+        // Shared menu state nodes (R04.1): filter, category tabs and the
+        // explicit empty state are published by update_reader alongside the
+        // entries. They never confirm an entry; acting on them only changes
+        // which entries are published next.
+        if( intent.node == "filter" ) {
+            if( intent.action == "activate" && filtering ) {
+                return std::optional<std::string>( "UILIST.FILTER" );
+            }
+            return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
+        }
+        if( intent.node == "filter:clear" && intent.action == "activate" && filtering ) {
+            filter.clear();
+            filterlist();
+            return std::optional<std::string>( "TIMEOUT" );
+        }
+        if( intent.node == "empty" ) {
+            return intent.action == "focus" || intent.action == "activate"
+                   ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
+        }
+        if( intent.node.compare( 0, 9, "category:" ) == 0 && intent.action == "activate" ) {
+            const std::string key = intent.node.substr( 9 );
+            for( std::size_t i = 0; i < categories.size(); ++i ) {
+                if( categories[i].first == key ) {
+                    current_category = i;
+                    switch_to_category = i;
+                    filterlist();
+                    return std::optional<std::string>( "TIMEOUT" );
+                }
+            }
+            return std::nullopt;
+        }
         if( intent.node.compare( 0, 7, "action:" ) == 0 && intent.action == "activate" ) {
             return intent.node.substr( 7 );
         }
@@ -927,7 +958,30 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
         a11y::semantic_snapshot snapshot;
         snapshot.title = remove_color_tags( title.empty() ? _( "Menu" ) : title );
         snapshot.summary = remove_color_tags( text );
-        snapshot.focus = "entry:" + std::to_string( selected );
+        // Shared menu state (R04.1): the reader must be able to hear which
+        // subset of the menu it is browsing. position/total on each entry
+        // already count the filtered set; the summary additionally names
+        // the category, the active filter text and the unfiltered total,
+        // none of which were published anywhere before.
+        const bool subset_active = !categories.empty() || ( filtering && !filter.empty() ) ||
+                                   fentries.size() != entries.size();
+        if( subset_active ) {
+            if( !snapshot.summary.empty() ) {
+                snapshot.summary += "\n";
+            }
+            snapshot.summary += string_format( _( "Showing %1$d of %2$d entries." ),
+                                               static_cast<int>( fentries.size() ),
+                                               static_cast<int>( entries.size() ) );
+            if( !categories.empty() && current_category < categories.size() ) {
+                snapshot.summary += " " + string_format( _( "Category: %1$s." ),
+                                        remove_color_tags( categories[current_category].second ) );
+            }
+            if( filtering && !filter.empty() ) {
+                snapshot.summary += " " + string_format( _( "Filter: %1$s." ),
+                                        remove_color_tags( filter ) );
+            }
+        }
+        snapshot.focus = fentries.empty() ? "empty" : "entry:" + std::to_string( selected );
         for( std::size_t i = 0; i < fentries.size(); ++i ) {
             const int index = fentries[i];
             if( index < 0 || index >= static_cast<int>( entries.size() ) ) {
@@ -955,6 +1009,51 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
                 node.disabled_reason = entry.a11y_disabled_reason.empty() ?
                                        _( "This entry cannot be selected." ) : entry.a11y_disabled_reason;
             }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        // Category tabs (R04.1): one node per category, named by its
+        // display name, so the reader can hear where it is and switch by
+        // name instead of blind left/right actions.
+        for( std::size_t i = 0; i < categories.size(); ++i ) {
+            a11y::semantic_node node;
+            node.id = "category:" + categories[i].first;
+            node.role = "tab";
+            node.label = remove_color_tags( categories[i].second );
+            node.selected = i == current_category;
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( categories.size() );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        // Filter state (R04.1): the node names the active filter text and
+        // the filtered/unfiltered counts; activating it opens the existing
+        // filter popup, and a separate node clears the filter in place.
+        if( filtering ) {
+            a11y::semantic_node node;
+            node.id = "filter";
+            node.role = "status";
+            node.label = _( "Filter" );
+            node.value = filter.empty() ? _( "No filter" ) : remove_color_tags( filter );
+            node.detail = string_format( _( "Showing %1$d of %2$d entries." ),
+                                         static_cast<int>( fentries.size() ),
+                                         static_cast<int>( entries.size() ) );
+            snapshot.nodes.push_back( std::move( node ) );
+            if( !filter.empty() ) {
+                a11y::semantic_node clear;
+                clear.id = "filter:clear";
+                clear.label = _( "Clear filter" );
+                snapshot.nodes.push_back( std::move( clear ) );
+            }
+        }
+        // Explicit empty state (R04.1): without this node an empty result
+        // set published only command nodes and a dangling "entry:-1" focus.
+        if( fentries.empty() ) {
+            a11y::semantic_node node;
+            node.id = "empty";
+            node.role = "status";
+            node.label = filter.empty() && categories.empty()
+                        ? _( "This menu has no entries." )
+                        : _( "No entries match the current category or filter." );
+            node.actions = { "focus", "activate" };
             snapshot.nodes.push_back( std::move( node ) );
         }
         std::vector<std::string> reader_actions;
@@ -1235,6 +1334,15 @@ void uilist::settext( const std::string &str )
 void uilist::set_selected( int index )
 {
     selected = previewing = std::clamp( index, 0, static_cast<int>( entries.size() - 1 ) );
+    // Keep the filtered-space cursor in sync with the logical (unfiltered)
+    // index: callers pass a logical index here, while fselected indexes
+    // fentries. Without this, a later scrollby(abs(...)) with the same
+    // logical index silently lands on a different entry whenever a
+    // category or filter is active (R04.1).
+    const auto found = std::find( fentries.begin(), fentries.end(), selected );
+    if( found != fentries.end() ) {
+        fselected = static_cast<int>( std::distance( fentries.begin(), found ) );
+    }
 }
 
 void uilist::add_category( const std::string &key, const std::string &name )

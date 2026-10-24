@@ -60,9 +60,14 @@ trade_preset::trade_preset( Character const &you, Character const &trader )
     save_state = &inventory_ui_default_state;
     append_cell(
     [&]( item_location const & loc ) {
-        return format_money( npc_trading::trading_price( _trader, _u, { loc, 1 } ) );
+        return format_money( unit_price( loc ) );
     },
     _( "Unit price" ) );
+}
+
+int trade_preset::unit_price( const item_location &loc ) const
+{
+    return npc_trading::trading_price( _trader, _u, { loc, 1 } );
 }
 
 bool trade_preset::is_shown( item_location const &loc ) const
@@ -74,7 +79,7 @@ bool trade_preset::is_shown( item_location const &loc ) const
 
 std::string trade_preset::get_denial( const item_location &loc ) const
 {
-    int const price = npc_trading::trading_price( _trader, _u, { loc, 1 } );
+    int const price = unit_price( loc );
 
     if( _u.is_npc() ) {
         npc const &np = *_u.as_npc();

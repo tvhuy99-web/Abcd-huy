@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <memory>
 
+#include "a11y_android.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_type.h"
@@ -47,6 +48,7 @@ static const activity_id ACT_JACKHAMMER( "ACT_JACKHAMMER" );
 static const activity_id ACT_MIGRATION_CANCEL( "ACT_MIGRATION_CANCEL" );
 static const activity_id ACT_NULL( "ACT_NULL" );
 static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
+static const activity_id ACT_PICKUP( "ACT_PICKUP" );
 static const activity_id ACT_READ( "ACT_READ" );
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
@@ -348,6 +350,19 @@ void player_activity::do_turn( Character &you )
     }
 
     if( *this && moves_left <= 0 ) {
+        // Reader completion cues (R21.2): fired at the same point the
+        // engine treats the activity as finished, for the avatar only.
+        // The cue duplicates what the finish path itself announces in
+        // the message log; it carries no extra information.
+        if( you.is_avatar() ) {
+            if( type == ACT_PICKUP ) {
+                a11y::android::cue( "pickup" );
+            } else if( moves_total >= 1000 ) {
+                // A long activity (at least ten turns of moves): short
+                // finishes are already covered by their own messages.
+                a11y::android::cue( "activity_done" );
+            }
+        }
         // Note: For some activities "finish" is a misnomer; that's why we explicitly check if the
         // type is ACT_NULL below.
         if( !type->completion_EOC.is_null() ) {

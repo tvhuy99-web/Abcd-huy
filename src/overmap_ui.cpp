@@ -20,6 +20,7 @@
 
 #include "activity_actor_definitions.h"
 #include "all_enum_values.h"
+#include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
@@ -543,6 +544,34 @@ std::tuple<char, nc_color, size_t> get_note_display_info( std::string_view note 
     return result;
 }
 
+// Spoken equivalent of a map note's visual glyph and color (R13.2): the
+// glyph is a single character on the visual map, so the reader names it and
+// the color instead of relying on the character's shape or hue.
+static std::string note_symbol_description( const std::string &note )
+{
+    const std::tuple<char, nc_color, std::size_t> display_info = get_note_display_info( note );
+    const char symbol = std::get<0>( display_info );
+    const nc_color color = std::get<1>( display_info );
+    std::string symbol_text;
+    if( ( symbol >= 'a' && symbol <= 'z' ) || ( symbol >= 'A' && symbol <= 'Z' ) ) {
+        symbol_text = string_format( _( "letter %c" ), symbol );
+    } else if( symbol >= '0' && symbol <= '9' ) {
+        symbol_text = string_format( _( "digit %c" ), symbol );
+    } else if( symbol == '!' ) {
+        symbol_text = _( "exclamation mark" );
+    } else {
+        symbol_text = std::string( 1, symbol );
+    }
+    std::string color_text = get_note_string_from_color( color );
+    for( const std::pair<const std::string, note_color> &color_pair : get_note_color_names() ) {
+        if( color_pair.second.color == color ) {
+            color_text = color_pair.second.name.translated();
+            break;
+        }
+    }
+    return string_format( _( "Note symbol: %1$s. Note color: %2$s." ), symbol_text, color_text );
+}
+
 static std::array<std::pair<nc_color, std::string>, npm_width *npm_height> get_overmap_neighbors(
     const tripoint_abs_omt &current )
 {
@@ -867,7 +896,7 @@ class map_notes_callback : public uilist_callback
                                             note_text, point.x(), point.y(), _z,
                                             overmap_relative_location( position, get_avatar().pos_abs_omt() ),
                                             danger );
-            node.detail = location;
+            node.detail = location + " " + note_symbol_description( note );
 
             if( action == "CONFIRM" ) {
                 node.detail += " " + std::string( _( "Selecting this note returns to the map at its location; it does not start travel." ) );
@@ -957,6 +986,7 @@ static point_abs_omt draw_notes( const tripoint_abs_omt &origin )
                                                    "Distance from player: %4$d map tiles. %5$s %6$s" ),
                                                 p.x(), p.y(), origin.z(), distance_player, location_desc,
                                                 danger_desc_text );
+            nmenu.entries[row].a11y_value += " " + note_symbol_description( note );
             row++;
         }
         map_notes_callback cb( notes, origin.z() );
@@ -1541,6 +1571,8 @@ static bool create_point_of_interest( const tripoint_abs_omt &curs )
 }
 
 // if false, search yielded no results
+static std::string overmap_tile_description( const tripoint_abs_omt &position );
+
 static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
                     const tripoint_abs_omt &orig )
 {
@@ -2185,10 +2217,21 @@ static std::string overmap_tile_description( const tripoint_abs_omt &position )
     std::string result = vision == om_vision_level::unseen ?
                          std::string( _( "Unexplored map tile" ) ) :
                          overmap_buffer.ter( position )->get_name( vision );
+    // State how much the character actually knows about this tile, using the
+    // same wording as the visual sidebar: a name given at a lower vision
+    // level is less precise (R13.1 accuracy boundary).
+    if( vision == om_vision_level::vague ) {
+        result += ". " + std::string( _( "You can only make out vague details of what's here." ) );
+    } else if( vision == om_vision_level::outlines ) {
+        result += ". " + std::string( _( "You can only make out outlines of what's here." ) );
+    } else if( vision == om_vision_level::details ) {
+        result += ". " + std::string( _( "You can make out some details of what's here." ) );
+    }
     if( overmap_buffer.has_note( position ) ) {
         const std::string note = overmap_buffer.note( position );
         const std::size_t note_start = std::get<2>( get_note_display_info( note ) );
         result += ". " + string_format( _( "Map note: %s" ), note.substr( note_start ) );
+        result += " " + note_symbol_description( note );
     }
     const int danger_radius = overmap_buffer.note_danger_radius( position );
     if( danger_radius >= 0 ) {
@@ -2239,6 +2282,16 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                                       overmap_relative_location( cursor, origin ) );
     snapshot.summary += ". " + std::string( _( "Selecting a map tile only moves the cursor; "
                                   "travel is a separate command." ) );
+    // Point-selection flows (ui::omap::choose_point, used by camp missions
+    // such as cut logs / hide site / fortifications / survey and by other
+    // callers) state their selection criteria only in this message, which
+    // the visual UI draws in a corner. Publish the same words so the
+    // reader hears what kind of tile and range is being asked for (R14.4).
+    // Every display entry point resets overmap_data first and only
+    // choose_point sets message, so this is empty during plain browsing.
+    if( !g->overmap_data.message.empty() ) {
+        snapshot.summary += " " + remove_color_tags( g->overmap_data.message );
+    }
     snapshot.focus = "overmap:cursor";
 
     a11y::semantic_node current;
@@ -2247,6 +2300,14 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     current.label = _( "Map cursor" );
     current.value = overmap_tile_description( cursor );
     current.detail = snapshot.summary;
+    // Link the mission screen to the map (R13.4): the visual map marks the
+    // active objective's target tile; the reader states it in words. The
+    // target is a location the game itself gives the player, so naming the
+    // exact tile stays inside the character's knowledge.
+    const tripoint_abs_omt objective_target = get_avatar().get_active_mission_target();
+    if( objective_target != tripoint_abs_omt::invalid && objective_target == cursor ) {
+        current.value += ". " + std::string( _( "This tile is the target of your current objective." ) );
+    }
     current.selected = true;
     current.actions = { "focus" };
     snapshot.nodes.push_back( std::move( current ) );
@@ -2271,6 +2332,9 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         route_node.detail = string_format( _( "Route map tiles: %1$d. Relative location: %2$s." ),
                                            static_cast<int>( route.size() ),
                                            overmap_relative_location( destination, origin ) );
+        route_node.detail += " " + std::string( _( "Choosing another destination replaces this "
+                                              "route; choosing your own tile clears it. Focusing this "
+                                              "route only moves the map cursor to the destination." ) );
         route_node.actions = { "focus", "activate" };
         focus_targets.emplace( route_node.id, destination );
     }
@@ -2358,6 +2422,63 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
             command.role = "checkbox";
             command.checked = uistate.overmap_show_map_notes;
             command.detail = _( "Show or hide map notes visually. The reader still describes a note at the cursor." );
+        } else if( command.id == "TOGGLE_BLINKING" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_blinking;
+            command.detail = _( "Blink the visual map between the explored view and the overlay view. This changes only the visual display; reader descriptions do not change." );
+        } else if( command.id == "TOGGLE_OVERLAYS" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_overlays;
+            command.detail = _( "Show or hide visual overlay information, such as explored shading. This changes only the visual display." );
+        } else if( command.id == "TOGGLE_HORDES" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_hordes;
+            command.detail = _( "Show or hide monster horde markers on the visual map. Hordes are only ever shown where the character's senses allow." );
+        } else if( command.id == "TOGGLE_CITY_LABELS" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_city_labels;
+            command.detail = _( "Show or hide city name labels on the visual map. Labels are only drawn for places the character has seen the outlines of." );
+        } else if( command.id == "TOGGLE_MAP_REVEALS" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_revealed_omts;
+            command.detail = _( "Show or hide the marker for map tiles revealed by maps the character has read." );
+        } else if( command.id == "TOGGLE_FOREST_TRAILS" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_show_forest_trails;
+            command.detail = _( "Show or hide forest trails on the visual map; when hidden, trail tiles are drawn as forest." );
+        } else if( command.id == "TOGGLE_OVERMAP_WEATHER" ) {
+            command.role = "checkbox";
+            command.checked = uistate.overmap_visible_weather;
+            command.detail = _( "Show or hide the weather overlay on the visual map." );
+            if( !get_map().is_outside( get_avatar().pos_bub() ) ) {
+                command.enabled = false;
+                command.disabled_reason = _( "The weather overlay can only be changed while the player is outside." );
+                command.detail = command.disabled_reason;
+            }
+        } else if( command.id == "TOGGLE_EXPLORED" ) {
+            command.role = "checkbox";
+            command.checked = overmap_buffer.is_explored( cursor );
+            command.detail = _( "Mark the cursor tile as explored, or remove that mark. This changes the map's remembered state for this tile; it does not move the player." );
+        } else if( command.id == "TOGGLE_LAND_USE_CODES" ) {
+            if( !debug_mode ) {
+                command.enabled = false;
+                command.disabled_reason = _( "Land use codes are only available in debug mode." );
+                command.detail = command.disabled_reason;
+            } else {
+                command.role = "checkbox";
+                command.checked = uistate.overmap_show_land_use_codes;
+                command.detail = _( "Show or hide land use codes on the visual map (debug display)." );
+            }
+        } else if( command.id == "look" ) {
+            command.detail = _( "Open the look-around view at the cursor tile on the local map. This closes the overmap and does not move the player." );
+        } else if( command.id == "zoom_in" ) {
+            command.detail = _( "Zoom the visual map in. This changes only the visual scale; reader descriptions do not change." );
+        } else if( command.id == "zoom_out" ) {
+            command.detail = _( "Zoom the visual map out. This changes only the visual scale; reader descriptions do not change." );
+        } else if( command.id == "SEARCH" ) {
+            command.detail = _( "Search for map tiles and notes by name around the cursor. Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor." );
+        } else if( command.id == "MISSIONS" ) {
+            command.detail = _( "Open the missions screen with the active, completed and failed mission lists and points of interest." );
         }
     }
     for( int dy = -1; dy <= 1; ++dy ) {
@@ -2379,6 +2500,20 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
             snapshot.nodes.push_back( std::move( adjacent ) );
         }
     }
+    // Legend in words (R13.1): the visual map explains itself with symbols
+    // and colors; the reader gets the same rules as text, including the
+    // accuracy boundary for tile names.
+    a11y::append_document( snapshot, "overmap:legend", _( "Map legend in words" ),
+                           _( "Each map tile is named at the level of detail the character actually has: "
+                              "full knowledge, some details, outlines only, or vague details. A tile the "
+                              "character has never seen is announced as unexplored and is not named. "
+                              "Cursor coordinates are exact because the map is the character's own record. "
+                              "A map note is read as its text plus its symbol and color in words, and a "
+                              "danger area is stated as a radius in map tiles. The current route node "
+                              "names the planned destination; starting travel is a separate command. "
+                              "The target tile of the current objective is announced when the cursor "
+                              "reaches it. Search finds only tiles the character has seen and notes the "
+                              "character made." ) );
     snapshot.nodes.insert( snapshot.nodes.end(), std::make_move_iterator( commands.begin() ),
                            std::make_move_iterator( commands.end() ) );
     for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
@@ -2669,6 +2804,18 @@ static tripoint_abs_omt display()
                 same_path_selected = true;
             } else {
                 player_character.omt_path.swap( path );
+            }
+            if( path.empty() && curs != player_character.pos_abs_omt() ) {
+                // No route could be planned and any previous route was just
+                // cleared. State the engine's reason instead of failing
+                // silently (R13.3), mirroring the travel attempt's feedback.
+                if( curs.z() != player_character.posz() ) {
+                    popup( _( "No route was set: auto travel requires source and destination on the same Z level." ) );
+                } else if( overmap_buffer.seen( curs ) == om_vision_level::unseen ) {
+                    popup( _( "No route was set: the destination tile is unexplored." ) );
+                } else {
+                    popup( _( "No route was set: unable to find a path to the destination." ) );
+                }
             }
             if( same_path_selected && !player_character.omt_path.empty() ) {
                 if( try_travel_to_destination( player_character, curs, curs, driving ) ) {

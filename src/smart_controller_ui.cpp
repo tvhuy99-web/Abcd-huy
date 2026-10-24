@@ -1,5 +1,8 @@
 #include "smart_controller_ui.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+
 #include <algorithm>
 #include <functional>
 #include <optional>
@@ -145,10 +148,202 @@ void smart_controller_ui::control()
         refresh();
     } );
 
+    // Reader adapter (R15.4): this screen is drawn by hand, so its input
+    // context would otherwise only get the generic command fallback,
+    // which never publishes the thresholds themselves. The settings are
+    // published as R02 form fields with the domains the slider math in
+    // this same function enforces: multiples of 5 percent, the low
+    // threshold in [5, 90], the high threshold in [10, 95], and always
+    // at least 5 points between them. Reader edits follow the form
+    // contract -- set_value/select_choice only record a draft, apply
+    // writes it through the same settings references the sliders write,
+    // with the same coupling (raising low pushes high up, lowering high
+    // pulls low down). The one exception mirrors the original screen:
+    // activating the Enabled field is the screen's own CONFIRM, which
+    // toggles the flag immediately, exactly as the keypress does.
+    std::optional<bool> draft_enabled;
+    std::optional<int> draft_lo;
+    std::optional<int> draft_hi;
+    a11y::screen_scope reader( &ctxt, "smart-engine-controller",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "smart:enabled" ) {
+            if( intent.action == "focus" ) {
+                selection = smart_controller_ui_selection::enabled;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "select_choice" ) {
+                draft_enabled = intent.value == "true";
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "apply" ) {
+                if( draft_enabled ) {
+                    settings.enabled = *draft_enabled;
+                    draft_enabled.reset();
+                }
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "cancel_draft" ) {
+                draft_enabled.reset();
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                selection = smart_controller_ui_selection::enabled;
+                draft_enabled.reset();
+                return std::string( "CONFIRM" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "smart:battery_lo" || intent.node == "smart:battery_hi" ) {
+            const bool is_lo = intent.node == "smart:battery_lo";
+            std::optional<int> &draft = is_lo ? draft_lo : draft_hi;
+            if( intent.action == "focus" ) {
+                selection = smart_controller_ui_selection::lo_and_hi_slider;
+                slider = is_lo ? 0 : 1;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "set_value" ) {
+                draft = std::stoi( intent.value );
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "apply" ) {
+                if( draft ) {
+                    if( is_lo ) {
+                        settings.battery_lo = clamp( ( *draft / 5 ) * 5, 5, 90 );
+                        settings.battery_hi = std::max( settings.battery_lo + 5,
+                                                        settings.battery_hi );
+                    } else {
+                        settings.battery_hi = clamp( ( *draft / 5 ) * 5, 10, 95 );
+                        settings.battery_lo = std::min( settings.battery_hi - 5,
+                                                        settings.battery_lo );
+                    }
+                    draft.reset();
+                }
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "cancel_draft" ) {
+                draft.reset();
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "smart:manual" ) {
+            if( intent.action == "focus" ) {
+                selection = smart_controller_ui_selection::manual;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                selection = smart_controller_ui_selection::manual;
+                return std::string( "CONFIRM" );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           _( "Smart Engine Controller" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+        snapshot.summary = string_format(
+                               _( "Smart engine controller: %1$s. Battery low threshold: %2$d%%. "
+                                  "Battery high threshold: %3$d%%." ),
+                               settings.enabled ? _( "enabled" ) : _( "disabled" ),
+                               settings.battery_lo, settings.battery_hi );
+
+        a11y::semantic_node enabled_node;
+        enabled_node.id = "smart:enabled";
+        enabled_node.role = "checkbox";
+        enabled_node.label = _( "Enabled" );
+        enabled_node.field_type = "bool";
+        enabled_node.applied_value = settings.enabled ? "true" : "false";
+        enabled_node.value = settings.enabled ? _( "Enabled" ) : _( "Disabled" );
+        enabled_node.checked = settings.enabled;
+        enabled_node.choices = { { "true", _( "Enabled" ) }, { "false", _( "Disabled" ) } };
+        enabled_node.actions = { "focus", "activate", "select_choice", "apply", "cancel_draft" };
+        enabled_node.selected = selection == smart_controller_ui_selection::enabled;
+        if( draft_enabled ) {
+            enabled_node.has_draft = true;
+            enabled_node.draft_value = *draft_enabled ? "true" : "false";
+        }
+        if( enabled_node.selected ) {
+            snapshot.focus = enabled_node.id;
+        }
+        snapshot.nodes.push_back( enabled_node );
+
+        const auto threshold_node = [&]( const char *id, const std::string & label,
+        const std::string & detail, int applied, int minimum, int maximum,
+        const std::optional<int> &draft, const char *depends ) {
+            a11y::semantic_node node;
+            node.id = id;
+            node.role = "slider";
+            node.label = label;
+            node.detail = detail;
+            node.field_type = "int";
+            node.applied_value = std::to_string( applied );
+            node.value = string_format( "%d%%", applied );
+            node.has_field_range = true;
+            node.field_min = minimum;
+            node.field_max = maximum;
+            node.field_step = 5;
+            node.depends_on = { depends };
+            node.actions = { "focus", "set_value", "apply", "cancel_draft" };
+            if( draft ) {
+                node.has_draft = true;
+                node.draft_value = std::to_string( *draft );
+            }
+            return node;
+        };
+        a11y::semantic_node lo_node = threshold_node( "smart:battery_lo",
+                                      _( "Battery low threshold" ),
+                                      _( "Hard limit: at or below this battery charge, the controller forbids discharging the battery for the electric motors." ),
+                                      settings.battery_lo, 5, 90, draft_lo, "smart:battery_hi" );
+        lo_node.selected = selection == smart_controller_ui_selection::lo_and_hi_slider &&
+                           slider == 0;
+        if( lo_node.selected ) {
+            snapshot.focus = lo_node.id;
+        }
+        snapshot.nodes.push_back( lo_node );
+        a11y::semantic_node hi_node = threshold_node( "smart:battery_hi",
+                                      _( "Battery high threshold" ),
+                                      _( "Soft limit: at or below this battery charge, the controller charges the battery toward this level and limits discharging; above it, discharging is allowed." ),
+                                      settings.battery_hi, 10, 95, draft_hi, "smart:battery_lo" );
+        hi_node.selected = selection == smart_controller_ui_selection::lo_and_hi_slider &&
+                           slider == 1;
+        if( hi_node.selected ) {
+            snapshot.focus = hi_node.id;
+        }
+        snapshot.nodes.push_back( hi_node );
+
+        a11y::semantic_node manual;
+        manual.id = "smart:manual";
+        manual.role = "button";
+        manual.label = _( "User manual" );
+        manual.detail = _( "Open the smart engine controller user manual." );
+        manual.actions = { "focus", "activate" };
+        manual.selected = selection == smart_controller_ui_selection::manual;
+        if( manual.selected ) {
+            snapshot.focus = manual.id;
+        }
+        snapshot.nodes.push_back( manual );
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     std::string action;
 
     do {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         action = ctxt.handle_input();
 
         if( action == "CONFIRM" || ( action == "NEXT_TAB" &&

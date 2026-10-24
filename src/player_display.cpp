@@ -14,6 +14,9 @@
 #include <vector>
 
 #include "addiction.h"
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "bionics.h"
 #include "bodygraph.h"
 #include "bodypart.h"
@@ -1520,6 +1523,366 @@ static std::pair<unsigned, unsigned> calculate_shared_column_win_height(
     return { first_win_size_y_max, second_win_size_y_max };
 }
 
+namespace
+{
+// Reader adapter for the character sheet (R10.1). Everything published
+// here is data this screen itself prints: the four stats, the encumbrance
+// numbers, the speed list and move cost, and the EFFECTS tab's own
+// name/description pairs (which include pain, malnutrition, sunlight and
+// addiction entries the screen synthesises). Temperature is published as
+// the same qualitative word display::temp_text_color gives the sidebar
+// and this screen's warmth column -- the color that used to carry its
+// severity is redundant once the word is spoken. Morale is the total the
+// morale screen prints. No hit points or other numbers this screen does
+// not show are introduced.
+//
+// R19.1 adds the SKILLS, TRAITS and PROFICIENCIES rows the R10 snapshot
+// only had tab nodes for. Skills come from the same skillslist disp_info
+// built with skill_ui's get_HeaderSkills (skill_ui.cpp itself has no
+// screen, input context or loop -- it is only the header/skip helper for
+// this tab), traits from the same traitslist, proficiencies from
+// display_proficiencies(), all in the order the tabs print them.
+a11y::semantic_snapshot player_display_reader_snapshot(
+    const input_context &ctxt, const Character &you, const player_display_tab curtab,
+    const unsigned int line,
+    const std::vector<std::pair<std::string, std::string>> &effect_name_and_text,
+    const std::vector<speedlist_entry> &speedlist, const int move_cost,
+    const std::vector<HeaderSkill> &skillslist,
+    const std::vector<trait_and_var> &traitslist )
+{
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Character status" ) );
+    static const std::vector<std::pair<player_display_tab, std::string>> tabs = {
+        { player_display_tab::stats, _( "Stats" ) },
+        { player_display_tab::encumbrance, _( "Encumbrance and warmth" ) },
+        { player_display_tab::speed, _( "Speed" ) },
+        { player_display_tab::skills, _( "Skills" ) },
+        { player_display_tab::traits, _( "Traits" ) },
+        { player_display_tab::bionics, _( "Bionics" ) },
+        { player_display_tab::effects, _( "Effects" ) },
+        { player_display_tab::proficiencies, _( "Proficiencies" ) }
+    };
+    static const std::vector<std::string> tab_ids = {
+        "pd:tab:stats", "pd:tab:encumbrance", "pd:tab:speed", "pd:tab:skills",
+        "pd:tab:traits", "pd:tab:bionics", "pd:tab:effects", "pd:tab:proficiencies"
+    };
+    for( std::size_t i = 0; i < tabs.size(); ++i ) {
+        a11y::semantic_node node;
+        node.id = tab_ids[i];
+        node.role = "tab";
+        node.label = tabs[i].second;
+        node.selected = curtab == tabs[i].first;
+        node.actions = { "focus", "activate" };
+        if( node.selected ) {
+            snapshot.focus = node.id;
+            snapshot.summary = tabs[i].second;
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    const auto stat_text = []( const std::string & name, const int current, const int base ) {
+        return current == base ? string_format( _( "%1$s: %2$d" ), name, current )
+               : string_format( _( "%1$s: %2$d (base %3$d)" ), name, current, base );
+    };
+    a11y::append_document( snapshot, "pd:stats", _( "Stats" ),
+                           stat_text( _( "Strength" ), you.get_str(), you.get_str_base() ) + ". " +
+                           stat_text( _( "Dexterity" ), you.get_dex(), you.get_dex_base() ) + ". " +
+                           stat_text( _( "Intelligence" ), you.get_int(), you.get_int_base() ) + ". " +
+                           stat_text( _( "Perception" ), you.get_per(), you.get_per_base() ) + ". " +
+                           // The stats tab also prints these as words/strings;
+                           // the raw BMI and lifestyle numbers behind the
+                           // words are not shown there and are not read here.
+                           string_format( _( "Weight: %s" ), display::weight_string( you ) ) + ". " +
+                           string_format( _( "Lifestyle: %s" ), display::health_string( you ) ) + ". " +
+                           string_format( _( "Height: %s" ), you.height_string() ) + ". " +
+                           string_format( _( "Age: %s" ), you.age_string() ) + ". " +
+                           string_format( _( "Blood type: %1$s%2$s" ),
+                                          io::enum_to_string( you.my_blood_type ),
+                                          you.blood_rh_factor ? "+" : "-" ) );
+    a11y::append_document( snapshot, "pd:needs", _( "Needs and condition" ),
+                           string_format( _( "Hunger: %s" ), display::hunger_text_color( you ).first ) + ". " +
+                           string_format( _( "Thirst: %s" ), display::thirst_text_color( you ).first ) + ". " +
+                           string_format( _( "Sleepiness: %s" ), display::sleepiness_text_color( you ).first ) + ". " +
+                           string_format( _( "Pain: %s" ), display::pain_text_color( you ).first ) + ". " +
+                           string_format( _( "Temperature: %s" ), display::temp_text_color( you ).first ) + ". " +
+                           string_format( _( "Morale: %d" ), you.get_morale_level() ) + ". " +
+                           string_format( _( "Weariness: %s" ), display::weariness_text_color( you ).first ) );
+    a11y::semantic_table warmth_table;
+    warmth_table.id = "pd:warmth";
+    warmth_table.columns = { { "part", _( "Body part" ), "" },
+                             { "encumbrance", _( "Encumbrance" ), "" },
+                             { "temperature", _( "Temperature" ), "" } };
+    snapshot.tables.push_back( warmth_table );
+    const auto bps = list_and_combine_bps( you, nullptr );
+    for( std::size_t i = 0; i < bps.size(); ++i ) {
+        const bodypart_id &bp = bps[i].first;
+        a11y::semantic_node node;
+        node.id = "pd:warmth:" + bp.id().str();
+        node.label = body_part_name( bp );
+        // The tab prints encumbrance as two numbers -- base + layer
+        // penalty -- so the cell keeps both instead of only the total.
+        const std::string encumb = string_format( "%1$d + %2$d",
+                                 you.get_part_encumbrance( bp ) - you.get_part_layer_penalty( bp ),
+                                 you.get_part_layer_penalty( bp ) );
+        // The tab's warmth color classifies get_part_temp_conv, while
+        // display::temp_text_color classifies get_part_temp_cur; to stay
+        // truthful to what this tab shows, the word is derived from the
+        // converged temperature with the same thresholds and vocabulary
+        // temp_text_color itself uses.
+        const units::temperature conv = you.get_part_temp_conv( bp );
+        const std::string temp = conv > BODYTEMP_SCORCHING ? _( "Scorching!" ) :
+                                 conv > BODYTEMP_VERY_HOT ? _( "Very hot!" ) :
+                                 conv > BODYTEMP_HOT ? _( "Warm" ) :
+                                 conv > BODYTEMP_COLD ? _( "Comfortable" ) :
+                                 conv > BODYTEMP_VERY_COLD ? _( "Chilly" ) :
+                                 conv > BODYTEMP_FREEZING ? _( "Very cold!" ) : _( "Freezing!" );
+        node.value = encumb;
+        node.table_id = "pd:warmth";
+        node.row_index = static_cast<int>( i );
+        node.cells = { { "part", node.label, "", "" },
+                       { "encumbrance", encumb, "", "" },
+                       { "temperature", temp, "", "" } };
+        node.detail = string_format( _( "Encumbrance %1$s. Temperature: %2$s" ), encumb, temp );
+        node.position = i + 1;
+        node.total = bps.size();
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    // Skills (R19.1). draw_skills_tab prints, per skill row, the name,
+    // the knowledge level and the knowledge exercise as "level (NN%)"
+    // (for dodge, the current dodge value first), under a category
+    // header from SkillDisplayType. draw_skills_info prints the skill
+    // description, the theory and practice level descriptions, and --
+    // only when the skill isRusty() -- the practical level/exercise and
+    // a learning bonus. The tab carries three states by color alone,
+    // restated here in words from the same predicates the tab tests:
+    // CQB-locked, !can_train(), and knowledge ahead of practice
+    // (skill_gap / skill_small_gap). The exercise>=100 highlight needs
+    // no word: the tab already prints that percentage as text. The
+    // skills info pane names no proficiencies, so none are published
+    // here; proficiencies are the separate tab/window below.
+    a11y::semantic_table skills_table;
+    skills_table.id = "pd:skills";
+    skills_table.columns = { { "skill", _( "Skill" ), "" },
+                             { "category", _( "Category" ), "" },
+                             { "level", _( "Level" ), "" },
+                             { "progress", _( "Progress" ), "%" },
+                             { "dodge", _( "Dodge" ), "" },
+                             { "status", _( "Status" ), "" } };
+    snapshot.tables.push_back( skills_table );
+    int skill_total = 0;
+    for( const HeaderSkill &entry : skillslist ) {
+        if( !entry.is_header ) {
+            ++skill_total;
+        }
+    }
+    std::string skill_category;
+    int skill_row = 0;
+    for( std::size_t i = 0; i < skillslist.size(); ++i ) {
+        const HeaderSkill &entry = skillslist[i];
+        if( entry.is_header ) {
+            skill_category = SkillDisplayType::get_skill_type(
+                                 entry.skill->display_category() ).display_string();
+            a11y::semantic_node header;
+            // The id carries the list index, not just the category:
+            // get_HeaderSkills emits a header whenever the category
+            // changes in sort-rank order, so one category could in
+            // principle head two runs and a category-only id could
+            // duplicate (which validate_snapshot would reject).
+            header.id = "pd:skill:category:" + std::to_string( i );
+            header.role = "status";
+            header.label = skill_category;
+            header.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( header ) );
+            continue;
+        }
+        const Skill *aSkill = entry.skill;
+        const SkillLevel &level = you.get_skill_level_object( aSkill->ident() );
+        int exercise = level.knowledgeExperience();
+        int level_num = level.knowledgeLevel();
+        const bool can_train = level.can_train();
+        const bool skill_gap = level_num > level.level();
+        const bool skill_small_gap = exercise > level.exercise();
+        bool locked = false;
+        if( you.has_active_bionic( bio_cqb ) && is_cqb_skill( aSkill->ident() ) ) {
+            level_num = 5;
+            exercise = 0;
+            locked = true;
+        }
+        level_num = you.enchantment_cache->modify_value( aSkill->ident(), level_num );
+        const int progress = exercise < 0 ? 0 : exercise;
+        std::string status;
+        const auto append_status = [&status]( const std::string & word ) {
+            if( !status.empty() ) {
+                status += ", ";
+            }
+            status += word;
+        };
+        if( locked ) {
+            append_status( _( "Locked" ) );
+        }
+        if( !can_train ) {
+            append_status( _( "Cannot train" ) );
+        }
+        if( skill_gap || skill_small_gap ) {
+            append_status( _( "Practice below knowledge" ) );
+        }
+        std::string info_text = aSkill->description();
+        info_text = string_format( _( "%s\n%s\n%s" ), info_text,
+                                   aSkill->get_level_description( level.knowledgeLevel(), false ),
+                                   aSkill->get_level_description( level.level(), true ) );
+        float level_gap = 100.0f * std::max( level.knowledgeLevel(), 1 ) / std::max( level.level(), 1 );
+        if( level.knowledgeLevel() == 1 && level.level() == 0 ) {
+            level_gap = 150.0f;
+        }
+        float learning_bonus = 100.0f * std::max( ( 1.0f + you.get_int() / 40.0f ) - 0.1f *
+                               level.exercise() / level.knowledgeExperience(), 1.0f );
+        if( level.isRusty() ) {
+            info_text = string_format( _( "%s\n\nPractical level: %d (%d%%) " ), info_text,
+                                       level.level(), level.exercise() );
+            if( level.knowledgeLevel() > level.level() ) {
+                info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
+                                           level_gap );
+            } else {
+                info_text = string_format( _( "%s| Learning bonus: %.0f%%" ), info_text,
+                                           learning_bonus );
+            }
+        }
+        if( !status.empty() ) {
+            info_text += "\n" + string_format( _( "Status: %s" ), status );
+        }
+        a11y::semantic_node node;
+        node.id = "pd:skill:" + aSkill->ident().str();
+        node.role = "listitem";
+        node.label = aSkill->name();
+        node.value = string_format( "%d (%d%%)", level_num, progress );
+        node.detail = remove_color_tags( info_text );
+        node.selected = curtab == player_display_tab::skills && i == line;
+        node.table_id = "pd:skills";
+        node.row_index = skill_row;
+        node.position = skill_row + 1;
+        node.total = skill_total;
+        node.cells = { { "skill", node.label, "", "" },
+                       { "category", skill_category, "", "" },
+                       { "level", std::to_string( level_num ), "", std::to_string( level_num ) },
+                       { "progress", std::to_string( progress ), "%", std::to_string( progress ) },
+                       { "status", status, "", "" } };
+        if( aSkill->ident() == skill_dodge ) {
+            const std::string dodge = string_format( "%.1f", you.get_dodge() );
+            node.cells.push_back( { "dodge", dodge, "", dodge } );
+        }
+        ++skill_row;
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    // Traits (R19.1). The name is trait_and_var::name() exactly as
+    // draw_traits_tab prints it (variant-aware); the description source
+    // is Character::mutation_desc(trait) exactly as draw_traits_info
+    // uses for this tab (variant resolved from cached_mutations, tags
+    // parsed), plus that pane's own purifier note when !purifiable() --
+    // the one state this tab's info pane states in text. The tab's
+    // get_display_color() has no legend text on this screen and doubles
+    // as the list's sort key; following the R17 precedent it is not
+    // restated as a category word, and the printed order (which the
+    // color determines) is preserved as published.
+    for( std::size_t i = 0; i < traitslist.size(); ++i ) {
+        const trait_and_var &cur = traitslist[i];
+        a11y::semantic_node node;
+        node.id = "pd:trait:" + cur.trait.str();
+        node.role = "listitem";
+        node.label = cur.name();
+        std::string trait_desc = you.mutation_desc( cur.trait );
+        if( !you.purifiable( cur.trait ) ) {
+            trait_desc +=
+                _( "\n<color_yellow>This trait is an intrinsic part of you now, purifier won't be able to remove it.</color>" );
+        }
+        node.detail = remove_color_tags( string_format( "%s: %s", cur.name(), trait_desc ) );
+        node.selected = curtab == player_display_tab::traits && i == line;
+        node.position = static_cast<int>( i ) + 1;
+        node.total = static_cast<int>( traitslist.size() );
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    // Proficiencies tab (R19.1): the summary list of the dedicated
+    // proficiencies window (proficiency_ui.cpp). The tab prints the name
+    // (plus the floored practice percentage for a learnable proficiency
+    // still being learned); its info pane prints the known/progress
+    // sentence and the description. The full per-proficiency record
+    // (time to learn, category, pre-requisites, leads-to) lives in that
+    // window's adapter, not here.
+    a11y::semantic_table profs_table;
+    profs_table.id = "pd:proficiencies";
+    profs_table.columns = { { "proficiency", _( "Proficiency" ), "" },
+                            { "status", _( "Status" ), "" },
+                            { "progress", _( "Progress" ), "%" } };
+    snapshot.tables.push_back( profs_table );
+    const std::vector<display_proficiency> profs = you.display_proficiencies();
+    for( std::size_t i = 0; i < profs.size(); ++i ) {
+        const display_proficiency &cur = profs[i];
+        a11y::semantic_node node;
+        node.id = "pd:proficiency:" + cur.id.str();
+        node.role = "listitem";
+        node.label = cur.id->name();
+        const std::string status = cur.known ? _( "Known" ) : _( "In progress" );
+        node.value = status;
+        std::string progress_text;
+        if( cur.known ) {
+            progress_text = _( "You know this proficiency." );
+        } else {
+            progress_text = string_format( _( "You are %.2f%% of the way towards learning this proficiency." ),
+                                           cur.practice * 100 );
+            if( debug_mode ) {
+                progress_text += string_format( "\nYou have spent %s practicing this proficiency.",
+                                                to_string( cur.spent ) );
+            }
+        }
+        node.detail = remove_color_tags( cur.id->name() + "\n" + progress_text + "\n" +
+                                         cur.id->description() );
+        node.selected = curtab == player_display_tab::proficiencies && i == line;
+        node.table_id = "pd:proficiencies";
+        node.row_index = static_cast<int>( i );
+        node.position = static_cast<int>( i ) + 1;
+        node.total = static_cast<int>( profs.size() );
+        node.cells = { { "proficiency", node.label, "", "" },
+                       { "status", status, "", "" } };
+        if( !cur.known ) {
+            const std::string prog = string_format( "%.2f", cur.practice * 100.0f );
+            node.cells.push_back( { "progress", prog, "%", prog } );
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    std::string effects_text;
+    for( const auto &entry : effect_name_and_text ) {
+        if( !effects_text.empty() ) {
+            effects_text += "\n";
+        }
+        effects_text += entry.first + ": " + remove_color_tags( entry.second );
+    }
+    a11y::append_document( snapshot, "pd:effects", _( "Effects" ),
+                           effects_text.empty() ? _( "No effects." ) : effects_text );
+    std::string speed_text = string_format( _( "Speed: %d" ), you.get_speed() ) + ". " +
+                             string_format( _( "Move cost: %d" ), move_cost );
+    for( const speedlist_entry &entry : speedlist ) {
+        speed_text += ". " + remove_color_tags( entry.description ) + ": " +
+                      string_format( "%+d", entry.val ) + ( entry.percent ? "%" : "" );
+    }
+    a11y::append_document( snapshot, "pd:speed", _( "Speed" ), speed_text );
+    return snapshot;
+}
+
+std::optional<player_display_tab> player_display_tab_for_node( const std::string &node )
+{
+    static const std::map<std::string, player_display_tab> by_id = {
+        { "pd:tab:stats", player_display_tab::stats },
+        { "pd:tab:encumbrance", player_display_tab::encumbrance },
+        { "pd:tab:speed", player_display_tab::speed },
+        { "pd:tab:skills", player_display_tab::skills },
+        { "pd:tab:traits", player_display_tab::traits },
+        { "pd:tab:bionics", player_display_tab::bionics },
+        { "pd:tab:effects", player_display_tab::effects },
+        { "pd:tab:proficiencies", player_display_tab::proficiencies }
+    };
+    const auto found = by_id.find( node );
+    return found == by_id.end() ? std::nullopt
+           : std::optional<player_display_tab>( found->second );
+}
+} // namespace
+
 void Character::disp_info( bool customize_character )
 {
     // Customizing any character is always enabled in debug mode
@@ -1966,7 +2329,30 @@ void Character::disp_info( bool customize_character )
     // needs to have the same windows in the same order as player_display_tab so that mouse scrolling can work
     std::vector<catacurses::window *> windows{ &w_stats, &w_encumb, &w_speed, &w_skills, &w_traits, &w_bionics, &w_effects, &w_proficiencies };
 
+    // Reader adapter (R10.1): tab activation only moves this screen's own
+    // tab/line state, exactly like the LEFT/RIGHT keys in
+    // handle_player_display_action; every other intent (including QUIT)
+    // goes through the registered commands of this context. Browsing this
+    // screen never starts treatment or any other gameplay action.
+    a11y::screen_scope reader( &ctxt, "player_display",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" ) {
+            if( const std::optional<player_display_tab> tab =
+                        player_display_tab_for_node( intent.node ) ) {
+                curtab = *tab;
+                line = curtab == player_display_tab::skills ? 1 : 0;
+                info_line = 0;
+                return "TIMEOUT";
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     do {
+        if( a11y::enabled() ) {
+            reader.update( player_display_reader_snapshot( ctxt, *this, curtab, line,
+                           effect_name_and_text, speedlist, move_cost, skillslist, traitslist ) );
+        }
         ui_manager::redraw_invalidated();
 
         done = handle_player_display_action( *this, line, info_line, curtab, ctxt, ui_tip, ui_info,

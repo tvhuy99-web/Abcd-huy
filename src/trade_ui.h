@@ -64,6 +64,11 @@ class trade_preset : public inventory_selector_preset
 
         bool is_shown( item_location const &loc ) const override;
         std::string get_denial( const item_location &loc ) const override;
+        /** Unit price (in cents) of a single unit of @p loc, from the same
+         * npc_trading::trading_price call the preset's "Unit price" column
+         * displays. The accessibility reader publishes this value per row
+         * (R14.2) so it is never recomputed from a second formula. */
+        int unit_price( const item_location &loc ) const;
         bool cat_sort_compare( const inventory_entry &lhs, const inventory_entry &rhs ) const override;
 
     private:

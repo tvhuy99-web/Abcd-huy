@@ -4,12 +4,17 @@
 #include <array>
 #include <cctype>
 #include <cstring>
+#include <iterator>
+#include <map>
 #include <memory>
+#include <optional>
 #include <set>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_imgui.h"
 #include "character_id.h"
 #include "game.h"
@@ -20,6 +25,7 @@
 #include "npc.h"
 #include "overmapbuffer.h"
 #include "skill.h"
+#include "string_formatter.h"
 #include "translations.h"
 #include "ui_manager.h"
 
@@ -103,10 +109,30 @@ class study_zone_window : public cataimgui::window
         }
 
         study_zone_ui_result execute() {
+            // Reader adapter (R16): this ImGui window would otherwise only
+            // get the generic command fallback, which never publishes the
+            // per-companion skill checkboxes. The preferences are published
+            // as an R02 table (one row per skill, one column per companion)
+            // whose cells are presentation only; each (skill, companion)
+            // pair is also a bool form field in the tree under its skill
+            // row. Reader edits follow the form contract --
+            // select_choice only records a draft in reader_drafts, apply
+            // writes it through the same insert/erase logic as the ImGui
+            // checkbox in draw_skill_row, and activate toggles immediately
+            // like that checkbox. Every write goes to
+            // npc_skill_preferences, the single real store owned by
+            // study_zone_options; the drafts are never a parallel store.
+            a11y::screen_scope reader( &ctxt, "study-zone",
+            [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+                return reader_intent( intent );
+            } );
             bool canceled_result = false;
             bool confirmed = false;
             while( get_is_open() ) {
                 ui_manager::redraw();
+                if( a11y::enabled() ) {
+                    reader.update( build_snapshot() );
+                }
                 std::string action = ctxt.handle_input();
 
                 if( action == "CONFIRM" ) {
@@ -287,7 +313,273 @@ class study_zone_window : public cataimgui::window
         }
 
     private:
+        // The state the ImGui checkbox in draw_skill_row shows for one
+        // (companion, skill) pair: an entry must exist and contain the
+        // skill. A missing entry (erased when its set became empty) reads
+        // as unchecked for every skill, exactly as drawn -- even though
+        // study_zone_options::get_skill_preferences treats a missing entry
+        // as "reads everything" when the zone is later applied.
+        bool skill_allowed( const std::string &npc_name, const skill_id &skill ) const {
+            const auto found = npc_skill_preferences.find( npc_name );
+            return found != npc_skill_preferences.end() && found->second.count( skill ) > 0;
+        }
+
+        // The state change of draw_skill_row, shared by the reader's
+        // apply and activate paths: insert or erase the skill, and erase
+        // the companion's entry altogether when its set becomes empty.
+        void set_skill_allowed( const std::string &npc_name, const skill_id &skill,
+                                bool allowed ) {
+            if( allowed ) {
+                npc_skill_preferences[npc_name].insert( skill );
+            } else {
+                const auto found = npc_skill_preferences.find( npc_name );
+                if( found != npc_skill_preferences.end() ) {
+                    found->second.erase( skill );
+                    if( found->second.empty() ) {
+                        npc_skill_preferences.erase( found );
+                    }
+                }
+            }
+            preferences_changed = true;
+        }
+
+        // The Check All / Clear All loops of draw_footer. The reader has
+        // no filter, so they run over every skill in all_skills, not over
+        // the footer's filtered_skills.
+        void set_all_skills( bool allowed ) {
+            for( const std::string &npc_name : npc_names ) {
+                std::set<skill_id> &npc_skills = npc_skill_preferences[npc_name];
+                for( const skill_id &skill : all_skills ) {
+                    if( allowed ) {
+                        npc_skills.insert( skill );
+                    } else {
+                        npc_skills.erase( skill );
+                    }
+                }
+                if( !allowed && npc_skills.empty() ) {
+                    npc_skill_preferences.erase( npc_name );
+                }
+            }
+            preferences_changed = true;
+        }
+
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent ) {
+            if( intent.node == "study:check_all" || intent.node == "study:clear_all" ) {
+                if( intent.action == "focus" ) {
+                    return std::string( "TIMEOUT" );
+                }
+                if( intent.action == "activate" ) {
+                    set_all_skills( intent.node == "study:check_all" );
+                    return std::string( "TIMEOUT" );
+                }
+                return std::nullopt;
+            }
+            if( intent.node == "study:done" ) {
+                if( intent.action == "focus" ) {
+                    return std::string( "TIMEOUT" );
+                }
+                if( intent.action == "activate" ) {
+                    return std::string( "CONFIRM" );
+                }
+                return std::nullopt;
+            }
+            if( intent.node == "study:empty" ) {
+                if( intent.action == "focus" ) {
+                    return std::string( "TIMEOUT" );
+                }
+                return std::nullopt;
+            }
+            for( const skill_id &skill : all_skills ) {
+                if( intent.node == "study:skill:" + skill.str() ) {
+                    if( intent.action == "focus" ) {
+                        return std::string( "TIMEOUT" );
+                    }
+                    return std::nullopt;
+                }
+                for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                    if( intent.node != "study:allow:" + std::to_string( i ) + ":" + skill.str() ) {
+                        continue;
+                    }
+                    const std::string &npc_name = npc_names[i];
+                    const std::pair<std::string, std::string> draft_key( npc_name, skill.str() );
+                    if( intent.action == "focus" ) {
+                        return std::string( "TIMEOUT" );
+                    }
+                    if( intent.action == "select_choice" ) {
+                        reader_drafts[draft_key] = intent.value == "true";
+                        return std::string( "TIMEOUT" );
+                    }
+                    if( intent.action == "apply" ) {
+                        const auto draft = reader_drafts.find( draft_key );
+                        if( draft != reader_drafts.end() ) {
+                            set_skill_allowed( npc_name, skill, draft->second );
+                            reader_drafts.erase( draft );
+                        }
+                        return std::string( "TIMEOUT" );
+                    }
+                    if( intent.action == "cancel_draft" ) {
+                        reader_drafts.erase( draft_key );
+                        return std::string( "TIMEOUT" );
+                    }
+                    if( intent.action == "activate" ) {
+                        set_skill_allowed( npc_name, skill, !skill_allowed( npc_name, skill ) );
+                        reader_drafts.erase( draft_key );
+                        return std::string( "TIMEOUT" );
+                    }
+                    return std::nullopt;
+                }
+            }
+            return a11y::registered_intent( ctxt, intent );
+        }
+
+        a11y::semantic_snapshot build_snapshot() {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                               _( "Study Zone Skill Preferences" ) );
+            std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+            snapshot.nodes.clear();
+            // The semantics study_zone_options applies later: a companion
+            // with a preference entry studies only the skills in it, and a
+            // companion with no entry reads every skill.
+            snapshot.summary = string_format(
+                                   _( "Each companion studies only books for the skills marked "
+                                      "for them in this study zone; a companion with no "
+                                      "preference entry reads every skill. "
+                                      "%1$d companions, %2$d skills." ),
+                                   static_cast<int>( npc_names.size() ),
+                                   static_cast<int>( all_skills.size() ) );
+            if( npc_names.empty() ) {
+                a11y::semantic_node empty;
+                empty.id = "study:empty";
+                empty.role = "document";
+                empty.label = _( "No companions." );
+                empty.detail = _( "No companions." );
+                empty.actions = { "focus" };
+                snapshot.nodes.push_back( std::move( empty ) );
+            } else {
+                // Table contract (R02.2): the skills table is declared
+                // once; skill rows below only carry cells referencing
+                // these columns, and cells never carry actions.
+                a11y::semantic_table skills_table;
+                skills_table.id = "study:skills";
+                skills_table.columns.push_back( { "skill", _( "Skill" ), "" } );
+                for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                    skills_table.columns.push_back( { "npc:" + std::to_string( i ), npc_names[i],
+                                                      "" } );
+                }
+                snapshot.tables.push_back( skills_table );
+                for( std::size_t row = 0; row < all_skills.size(); ++row ) {
+                    const skill_id &skill = all_skills[row];
+                    const std::string row_id = "study:skill:" + skill.str();
+                    int allowed_count = 0;
+                    for( const std::string &npc_name : npc_names ) {
+                        if( skill_allowed( npc_name, skill ) ) {
+                            ++allowed_count;
+                        }
+                    }
+                    // Row role: medical and trade rows leave the default
+                    // role, so this row does the same.
+                    a11y::semantic_node node;
+                    node.id = row_id;
+                    node.label = skill->name();
+                    // The row itself only carries the cells; editing a
+                    // (skill, companion) pair goes through the child
+                    // checkbox nodes below, so the row offers no activate.
+                    node.actions = { "focus" };
+                    node.detail = string_format( _( "Allowed for %1$d of %2$d companions." ),
+                                                 allowed_count,
+                                                 static_cast<int>( npc_names.size() ) );
+                    node.depth = 0;
+                    node.has_children = true;
+                    node.expanded = true;
+                    node.table_id = "study:skills";
+                    node.row_index = static_cast<int>( row );
+                    node.cells.push_back( { "skill", skill->name(), "", "" } );
+                    for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                        const bool allowed = skill_allowed( npc_names[i], skill );
+                        node.cells.push_back( { "npc:" + std::to_string( i ),
+                                                allowed ? _( "Allowed" ) : _( "Not allowed" ), "",
+                                                allowed ? "1" : "0" } );
+                    }
+                    snapshot.nodes.push_back( node );
+                    for( std::size_t i = 0; i < npc_names.size(); ++i ) {
+                        const std::string &npc_name = npc_names[i];
+                        const bool allowed = skill_allowed( npc_name, skill );
+                        a11y::semantic_node child;
+                        child.id = "study:allow:" + std::to_string( i ) + ":" + skill.str();
+                        child.role = "checkbox";
+                        child.label = npc_name;
+                        child.detail = string_format(
+                                           _( "Allows %1$s to study %2$s. Currently %3$s." ),
+                                           npc_name, skill->name(),
+                                           allowed ? _( "allowed" ) : _( "not allowed" ) );
+                        child.parent_id = row_id;
+                        child.depth = 1;
+                        child.field_type = "bool";
+                        child.applied_value = allowed ? "true" : "false";
+                        child.value = allowed ? _( "Allowed" ) : _( "Not allowed" );
+                        child.checked = allowed;
+                        child.choices = { { "true", _( "Enabled" ) },
+                                          { "false", _( "Disabled" ) } };
+                        child.actions = { "focus", "activate", "select_choice", "apply",
+                                          "cancel_draft" };
+                        const auto draft = reader_drafts.find(
+                                               std::make_pair( npc_name, skill.str() ) );
+                        if( draft != reader_drafts.end() ) {
+                            child.has_draft = true;
+                            child.draft_value = draft->second ? "true" : "false";
+                        }
+                        snapshot.nodes.push_back( std::move( child ) );
+                    }
+                }
+                a11y::semantic_node check_all;
+                check_all.id = "study:check_all";
+                check_all.label = _( "Check All" );
+                check_all.detail = _( "Check every skill for every companion." );
+                snapshot.nodes.push_back( std::move( check_all ) );
+                a11y::semantic_node clear_all;
+                clear_all.id = "study:clear_all";
+                clear_all.label = _( "Clear All" );
+                clear_all.detail = _( "Clear every skill for every companion." );
+                snapshot.nodes.push_back( std::move( clear_all ) );
+            }
+            a11y::semantic_node done;
+            done.id = "study:done";
+            done.label = _( "Done" );
+            done.detail = _( "Finish editing the study zone skill preferences." );
+            snapshot.nodes.push_back( std::move( done ) );
+            snapshot.nodes.insert( snapshot.nodes.end(),
+                                   std::make_move_iterator( commands.begin() ),
+                                   std::make_move_iterator( commands.end() ) );
+            snapshot.focus = !npc_names.empty() && !all_skills.empty()
+                             ? "study:skill:" + all_skills.front().str()
+                             : "study:done";
+            // Flat positions for ordinary nodes; tree nodes count their
+            // sibling set under the same parent (R02.1).
+            for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+                snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+                snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+            }
+            std::map<std::string, int> sibling_seen;
+            std::map<std::string, int> sibling_total;
+            for( const a11y::semantic_node &node : snapshot.nodes ) {
+                if( node.depth >= 0 ) {
+                    sibling_total[node.parent_id]++;
+                }
+            }
+            for( a11y::semantic_node &node : snapshot.nodes ) {
+                if( node.depth >= 0 ) {
+                    node.position = ++sibling_seen[node.parent_id];
+                    node.total = sibling_total[node.parent_id];
+                }
+            }
+            return snapshot;
+        }
+
         std::map<std::string, std::set<skill_id>> &npc_skill_preferences;
+        // Unapplied reader edits, keyed by (companion name, skill id).
+        // A draft changes nothing until apply writes it through
+        // set_skill_allowed into npc_skill_preferences above.
+        std::map<std::pair<std::string, std::string>, bool> reader_drafts;
         std::vector<skill_id> all_skills;
         std::vector<std::string> npc_names;
         std::string skill_filter;
