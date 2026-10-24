@@ -26,9 +26,75 @@ public final class ReaderStorageTest {
                 "BACKUP_", new String[] {"save", "config"});
     }
 
+    /** Restart after each legal rename boundary, with either root absent initially. */
+    private static void interruptedSwaps(Path base) throws Exception {
+        String[] roots = {"save", "config"};
+        for (int mask = 0; mask < 4; mask++) {
+            int originalCount = Integer.bitCount(mask);
+            for (int boundary = 0; boundary <= originalCount + roots.length; boundary++) {
+                Path trial = base.resolve("crash-" + mask + "-" + boundary);
+                StringBuilder originals = new StringBuilder();
+                for (int i = 0; i < roots.length; i++) {
+                    put(trial.resolve("stage/" + roots[i] + "/new"), "replacement");
+                    if ((mask & (1 << i)) != 0) {
+                        put(trial.resolve("live/" + roots[i] + "/old"), "original " + roots[i]);
+                        if (originals.length() > 0) { originals.append(','); }
+                        originals.append(roots[i]);
+                    }
+                }
+                Files.createDirectories(trial.resolve("live"));
+                put(trial.resolve("journal"), "BACKUP_SWAPPING\nroots=save,config\noriginals="
+                        + originals + "\n");
+                Files.createDirectories(trial.resolve("rollback"));
+                int performed = 0;
+                for (int i = 0; i < roots.length; i++) {
+                    if ((mask & (1 << i)) != 0 && performed++ < boundary) {
+                        Files.move(trial.resolve("live/" + roots[i]), trial.resolve("rollback/" + roots[i]));
+                    }
+                }
+                for (String root : roots) {
+                    if (performed++ < boundary) {
+                        Files.move(trial.resolve("stage/" + root), trial.resolve("live/" + root));
+                    }
+                }
+                tx(trial).recover();
+                tx(trial).recover();
+                for (int i = 0; i < roots.length; i++) {
+                    Path target = trial.resolve("live/" + roots[i]);
+                    boolean expected = (mask & (1 << i)) != 0;
+                    check(expected ? Files.readString(target.resolve("old")).equals("original " + roots[i])
+                            && !Files.exists(target.resolve("new")) : !Files.exists(target),
+                            "restart restores exact root " + mask + "/" + boundary + "/" + roots[i]);
+                }
+                check(!Files.exists(trial.resolve("journal")) && !Files.exists(trial.resolve("rollback")),
+                        "restart completes cleanup " + mask + "/" + boundary);
+            }
+        }
+
+        Path partial = base.resolve("recovery-crash");
+        put(partial.resolve("live/save/old"), "save restored before interruption");
+        put(partial.resolve("live/config/new"), "replacement");
+        put(partial.resolve("rollback/config/old"), "original config");
+        put(partial.resolve("journal"), "BACKUP_SWAPPING\nroots=save,config\noriginals=save,config\n");
+        tx(partial).recover();
+        check(Files.readString(partial.resolve("live/save/old")).equals("save restored before interruption")
+                && Files.readString(partial.resolve("live/config/old")).equals("original config"),
+                "restart during recovery preserves already restored roots");
+
+        Path committed = base.resolve("committed-crash");
+        put(committed.resolve("live/save/new"), "committed replacement");
+        put(committed.resolve("rollback/save/old"), "obsolete original");
+        put(committed.resolve("journal"), "BACKUP_COMMITTED\nroots=save\noriginals=save\n");
+        tx(committed).recover();
+        check(Files.readString(committed.resolve("live/save/new")).equals("committed replacement")
+                && !Files.exists(committed.resolve("rollback")) && !Files.exists(committed.resolve("journal")),
+                "committed restart preserves replacement and completes cleanup");
+    }
+
     public static void main(String[] args) throws Exception {
         Path base = Files.createTempDirectory("reader-storage-");
         try {
+            interruptedSwaps(base);
             Path happy = base.resolve("happy");
             put(happy.resolve("live/save/old"), "original");
             put(happy.resolve("stage/save/new"), "new");
