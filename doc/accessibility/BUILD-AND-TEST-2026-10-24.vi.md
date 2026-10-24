@@ -46,8 +46,15 @@ Chi tiết lỗi gốc và phạm vi từng sửa ở
 | Emulator API 35, x86_64 | PASS, 9 bài / 4 lớp | Startup, setup, cử chỉ và điều hướng Apply/Discard; dùng APK UI-only |
 | Build C++ toàn cây | PASS | cata_test liên kết thành công với toàn bộ nguồn và bài test |
 | C++ `[a11y]` tích hợp | PASS, 21 bài / 146 assertion | Dữ liệu engine thật, seed 2401024 |
-| C++ toàn bộ mặc định | ĐANG CHẠY | Hai shard chính thức, 16 + 2120 = 2136 bài, không trùng/thiếu |
+| C++ toàn bộ mặc định | PASS, 2.136 bài / 34.348.589 assertion | Hai shard chính thức; cả hai rc=0, không trùng/thiếu |
 | APK ARM64 đầy đủ | PASS | Native, assets, âm thanh, catalog và chữ ký; không phải APK UI-only |
+
+Hai shard hoàn tất: nhóm 16 bài đạt 4.977.612 assertion trong 860,476 giây;
+nhóm 2.120 bài đạt 29.370.977 assertion trong 1.530,98 giây. Chúng chạy
+song song với thư mục dữ liệu riêng. Không có assertion lỗi hoặc crash.
+Các ca từng lỗi trong hồ sơ cũ đều đi qua trong lượt này; đây là kết quả
+của cấu hình và seed đã ghi, không phải chứng minh căn nguyên mọi lỗi cũ
+hoặc bảo đảm mọi seed đều đạt.
 
 Các nhóm có thể kiểm tra trùng một hợp đồng; không cộng số assertion của
 chúng thành độ phủ tổng. Tệp biên dịch tạm hỏng trên host đã được dựng lại;
