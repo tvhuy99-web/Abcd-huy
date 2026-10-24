@@ -8,11 +8,23 @@ on:
 permissions:
   contents: read
 
-concurrency:
-  group: reader-audit-${{ github.ref }}
-  cancel-in-progress: true
-
 jobs:
+  changes:
+    runs-on: ubuntu-24.04
+    outputs:
+      host: ${{ steps.paths.outputs.host }}
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          fetch-depth: 2
+          persist-credentials: false
+      - id: paths
+        run: |
+          if git diff --quiet HEAD^ HEAD -- src tests lang CMakeLists.txt Makefile; then
+            echo 'host=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'host=true' >> "$GITHUB_OUTPUT"
+          fi
   checks:
     runs-on: ubuntu-24.04
     timeout-minutes: 20
@@ -32,6 +44,9 @@ jobs:
       - run: msgfmt --check -o /tmp/a11y-vi.mo lang/po/accessibility/vi.po
 
   android:
+    concurrency:
+      group: reader-android-${{ github.ref }}
+      cancel-in-progress: true
     runs-on: ubuntu-24.04
     timeout-minutes: 120
     steps:
@@ -95,6 +110,8 @@ jobs:
             android/app/build/reports/
 
   host:
+    needs: changes
+    if: ${{ github.event_name == 'workflow_dispatch' || needs.changes.outputs.host == 'true' }}
     runs-on: ubuntu-24.04
     timeout-minutes: 180
     steps:
@@ -124,3 +141,46 @@ jobs:
           name: reader-audit-host-results
           retention-days: 30
           path: build-evidence/
+
+  reader-ui:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    concurrency:
+      group: reader-ui-audit-${{ github.ref }}
+      cancel-in-progress: true
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools platforms;android-35'
+          log-accepted-android-sdk-licenses: false
+      - name: Enable emulator acceleration
+        run: |
+          echo 'KERNEL=="kvm", GROUP="kvm", MODE="0666", OPTIONS+="static_node=kvm"' | sudo tee /etc/udev/rules.d/99-kvm4all.rules
+          sudo udevadm control --reload-rules
+          sudo udevadm trigger --name-match=kvm
+      - name: Build UI-only test APKs
+        run: |
+          bash android/gradlew -p android --no-daemon --console=plain -PEXCLUDE_NATIVE_LIBS -Plocalize=false -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true -Paccessibility_test_signing=true assembleAccessibilityDebug assembleAccessibilityDebugAndroidTest
+      - uses: reactivecircus/android-emulator-runner@a421e43855164a8197daf9d8d40fe71c6996bb0d
+        with:
+          api-level: 35
+          arch: x86_64
+          target: google_apis
+          disable-animations: true
+          emulator-options: -no-window -no-audio -no-snapshot -gpu swiftshader_indirect -no-boot-anim
+          script: bash tools/accessibility/run_android_smoke.sh
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
+        with:
+          name: reader-audit-ui-results
+          path: |
+            android/app/build/reports/androidTests/
+            android/app/build/outputs/androidTest-results/
+            build-evidence/android-reader-ui/

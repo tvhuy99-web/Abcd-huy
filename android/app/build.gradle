@@ -324,6 +324,7 @@ android {
 
     buildFeatures {
         prefab true
+        buildConfig true
     }
 
     base {
