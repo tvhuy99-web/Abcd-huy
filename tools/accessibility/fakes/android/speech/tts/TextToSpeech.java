@@ -1,7 +1,11 @@
 package android.speech.tts;
 
 import android.content.Context;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
 import java.util.Locale;
+import java.util.Set;
 
 /** Narrow injectable behavior for driver tests, not an Android implementation. */
 public final class TextToSpeech {
@@ -11,6 +15,17 @@ public final class TextToSpeech {
     public static final int LANG_NOT_SUPPORTED = -2;
     public static final int QUEUE_FLUSH = 0;
     public static TextToSpeech latest;
+
+    /** Mirror of the real EngineInfo shape used by the voice probe (R06.1). */
+    public static final class EngineInfo {
+        public final String name;
+        public final String label;
+
+        public EngineInfo(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
+    }
 
     public interface OnInitListener {
         void onInit(int status);
@@ -45,8 +60,32 @@ public final class TextToSpeech {
         return languageResult;
     }
 
+    private Voice selectedVoice;
+
     public Voice getVoice() {
-        return new Voice(locale, networkVoice);
+        return selectedVoice != null ? selectedVoice : new Voice(locale, networkVoice);
+    }
+
+    public int setVoice(Voice voice) {
+        selectedVoice = voice;
+        return SUCCESS;
+    }
+
+    /** One fake engine with the current fake voice, for probe tests. */
+    public List<EngineInfo> getEngines() {
+        List<EngineInfo> engines = new ArrayList<>();
+        engines.add(new EngineInfo("fake.engine", "Fake engine"));
+        return engines;
+    }
+
+    public String getDefaultEngine() {
+        return "fake.engine";
+    }
+
+    public Set<Voice> getVoices() {
+        Set<Voice> voices = new HashSet<>();
+        voices.add(getVoice());
+        return voices;
     }
 
     public int setSpeechRate(float rate) {

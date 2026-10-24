@@ -1,7 +1,10 @@
 #include "clzones.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include <iterator>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "cata_scope_helpers.h"
 #include "character.h"
@@ -280,6 +283,290 @@ void zone_manager_ui::display_zone_manager()
 
     auto zones = get_zones();
 
+    // Reader adapter (R16): this screen is a ui_adaptor that draws the
+    // zone list itself, so the generic command fallback would never
+    // publish the zones. Rows are published as one R02 table; selecting
+    // a row only moves active_index (focus) or returns the screen's own
+    // CONFIRM (activate), which opens the original edit uilist. A row's
+    // identity is re-resolved against the live zones vector at intent
+    // time (veh_interact reader_session precedent): the list is rebuilt
+    // by get_zones() after most actions, so a stale row must not act on
+    // whatever happens to sit at its old position.
+    struct zone_reader_binding {
+        std::string id;
+        std::string name;
+        std::string type;
+        tripoint_abs_ms start;
+        tripoint_abs_ms end;
+    };
+    std::vector<zone_reader_binding> zone_reader_bindings;
+    std::optional<zone_reader_binding> zone_reader_armed_remove;
+    const auto zone_reader_make_binding = []( const std::string &id, const zone_data &zone ) {
+        return zone_reader_binding { id, zone.get_name(), zone.get_type().str(),
+                                     zone.get_start_point(), zone.get_end_point()
+                                   };
+    };
+    const auto zone_reader_find = [&zones]( const zone_reader_binding & binding )
+    -> std::optional<int> {
+        for( int i = 0; i < static_cast<int>( zones.size() ); ++i ) {
+            const zone_data &zone = zones[i].get();
+            if( zone.get_name() == binding.name && zone.get_type().str() == binding.type &&
+                zone.get_start_point() == binding.start && zone.get_end_point() == binding.end ) {
+                return i;
+            }
+        }
+        return std::nullopt;
+    };
+    a11y::screen_scope reader( &ctxt, "zone-manager",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "zone:remove:confirm" ) {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                if( !zone_reader_armed_remove ) {
+                    return std::nullopt;
+                }
+                const std::optional<int> armed_index =
+                    zone_reader_find( *zone_reader_armed_remove );
+                zone_reader_armed_remove.reset();
+                if( !armed_index ) {
+                    return std::nullopt;
+                }
+                // The original REMOVE_ZONE handling removes
+                // zones[active_index], so point it at the armed zone.
+                active_index = *armed_index;
+                return std::string( "REMOVE_ZONE" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "REMOVE_ZONE" && intent.action == "activate" ) {
+            if( zone_cnt == 0 || active_index < 0 || active_index >= zone_cnt ) {
+                return std::nullopt;
+            }
+            // Removal has its own confirmation node (published by the
+            // builder while this zone is armed and active); the first
+            // activation only arms it and never returns REMOVE_ZONE.
+            zone_reader_armed_remove = zone_reader_make_binding(
+                                           "zone:row:" + std::to_string( active_index ),
+                                           zones[active_index].get() );
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.action == "activate" ) {
+            // Activating anything else disarms a pending removal.
+            // Focusing does not.
+            zone_reader_armed_remove.reset();
+        }
+        for( const zone_reader_binding &binding : zone_reader_bindings ) {
+            if( intent.node != binding.id ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            const std::optional<int> found = zone_reader_find( binding );
+            if( !found ) {
+                return std::nullopt;
+            }
+            active_index = *found;
+            return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+                   : std::optional<std::string>( "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto build_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Zone manager" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        const tripoint_abs_ms player_absolute_pos = u.pos_abs();
+        const bool has_selection = zone_cnt > 0 && active_index >= 0 && active_index < zone_cnt;
+        const std::string selected_name = has_selection ? zones[active_index].get().get_name()
+                                          : std::string();
+
+        for( a11y::semantic_node &command : commands ) {
+            if( command.id == "SHOW_ALL_ZONES" ) {
+                command.role = "checkbox";
+                command.checked = show_all_zones;
+                command.detail = show_all_zones ? _( "Showing all zones." )
+                                 : _( "Showing only zones within sight range." );
+            } else if( command.id == "ENABLE_ZONE" ) {
+                command.detail = has_selection ? string_format(
+                                     _( "Enable the selected zone, %s." ), selected_name )
+                                 : _( "No zone is selected." );
+            } else if( command.id == "DISABLE_ZONE" ) {
+                command.detail = has_selection ? string_format(
+                                     _( "Disable the selected zone, %s." ), selected_name )
+                                 : _( "No zone is selected." );
+            } else if( command.id == "TOGGLE_ZONE_DISPLAY" ) {
+                command.detail = has_selection ? string_format(
+                                     _( "Toggle whether the selected zone, %s, is shown on the map." ),
+                                     selected_name )
+                                 : _( "No zone is selected." );
+            } else if( command.id == "ADD_ZONE" ) {
+                command.detail = _( "Add a zone: choose a zone type, set its options, "
+                                    "enter a name, then select the two corners of the zone." );
+            } else if( command.id == "ADD_PERSONAL_ZONE" ) {
+                command.detail = _( "Add a personal zone: choose a zone type, set its options, "
+                                    "enter a name, then select the two corners of the zone." );
+            }
+        }
+
+        if( zone_cnt == 0 ) {
+            snapshot.summary = _( "No Zones defined." );
+        } else {
+            snapshot.summary = string_format( _( "Showing %1$d of %2$d zones." ), zone_cnt,
+                                              static_cast<int>( mgr.get_zones( zones_faction ).size() ) );
+        }
+        snapshot.summary += " " + std::string( show_all_zones ? _( "Showing all zones." )
+                                               : _( "Showing only zones within sight range." ) );
+        if( stuff_changed ) {
+            snapshot.summary += " " + std::string( _( "There are unsaved changes." ) );
+        }
+
+        a11y::semantic_table zones_table;
+        zones_table.id = "zones:list";
+        zones_table.columns = { { "name", _( "Name" ), "" },
+                                { "type", _( "Type" ), "" },
+                                { "status", _( "Status" ), "" },
+                                { "personal", _( "Personal" ), "" },
+                                { "vehicle", _( "Vehicle" ), "" },
+                                { "direction", _( "Direction" ), "" },
+                                { "distance", _( "Distance" ), "tiles" },
+                                { "displayed", _( "Displayed" ), "" }
+                              };
+        snapshot.tables.push_back( zones_table );
+
+        // Axis-by-axis offset of an absolute point from the player, in
+        // the same wording a11y_world's relative_position_name uses.
+        const auto corner_offset = [&]( const tripoint_abs_ms & point_abs ) -> std::string {
+            const int dx = point_abs.x() - player_absolute_pos.x();
+            const int dy = point_abs.y() - player_absolute_pos.y();
+            const int dz = point_abs.z() - player_absolute_pos.z();
+            if( dx == 0 && dy == 0 && dz == 0 ) {
+                return _( "Current tile" );
+            }
+            std::string result;
+            if( dy != 0 ) {
+                result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ),
+                                         std::abs( dy ) );
+            }
+            if( dx != 0 ) {
+                if( !result.empty() ) {
+                    result += ", ";
+                }
+                result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ),
+                                         std::abs( dx ) );
+            }
+            if( dz != 0 ) {
+                if( dx != 0 || dy != 0 ) {
+                    result += ", ";
+                } else {
+                    result.clear();
+                }
+                result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                         std::abs( dz ) );
+            }
+            return result;
+        };
+
+        zone_reader_bindings.clear();
+        for( size_t i = 0; i < zones.size(); ++i ) {
+            const zone_data &zone = zones[i].get();
+            const std::string row_id = "zone:row:" + std::to_string( i );
+            const std::string type_name = mgr.get_name_from_type( zone.get_type() );
+            const std::string status = zone.get_enabled() ? _( "Enabled" ) : _( "Disabled" );
+            const tripoint_abs_ms center = zone.get_center_point();
+            const std::string direction = direction_name_short( direction_from(
+                                              player_absolute_pos, center ) );
+            const int distance = static_cast<int>( trig_dist( player_absolute_pos, center ) );
+
+            std::string detail = string_format( _( "Type: %s." ), type_name );
+            detail += " " + status + ".";
+            if( zone.get_temporarily_disabled() ) {
+                detail += " " + std::string( _( "Temporarily disabled." ) );
+            }
+            if( zone.get_is_personal() ) {
+                detail += " " + std::string( _( "Personal zone: it moves with you." ) );
+            }
+            if( zone.get_is_vehicle() ) {
+                detail += " " + std::string( _( "Vehicle zone." ) );
+            }
+            detail += " " + string_format( _( "Center: %1$s, %2$d tiles away." ), direction,
+                                           distance );
+            detail += " " + string_format( _( "First corner: %s." ),
+                                           corner_offset( zone.get_start_point() ) );
+            detail += " " + string_format( _( "Second corner: %s." ),
+                                           corner_offset( zone.get_end_point() ) );
+            const int size_x = std::abs( zone.get_end_point().x() - zone.get_start_point().x() ) + 1;
+            const int size_y = std::abs( zone.get_end_point().y() - zone.get_start_point().y() ) + 1;
+            const int size_z = std::abs( zone.get_end_point().z() - zone.get_start_point().z() ) + 1;
+            detail += " " + string_format( _( "Size: %1$d by %2$d tiles, %3$d levels." ),
+                                           size_x, size_y, size_z );
+            detail += " " + std::string( zone.get_is_displayed() ? _( "Shown on the map." )
+                                          : _( "Not shown on the map." ) );
+            if( zone.has_options() ) {
+                for( const auto &desc : zone.get_options().get_descriptions() ) {
+                    detail += " " + desc.first + ": " + desc.second + ".";
+                }
+            }
+
+            a11y::semantic_node node;
+            node.id = row_id;
+            node.role = "listitem";
+            node.label = zone.get_name();
+            node.value = string_format( _( "%1$s, %2$s" ), type_name, status );
+            node.detail = detail;
+            node.selected = static_cast<int>( i ) == active_index;
+            node.actions = { "focus", "activate" };
+            node.table_id = "zones:list";
+            node.row_index = static_cast<int>( i );
+            node.cells = { { "name", zone.get_name(), "", "" },
+                           { "type", type_name, "", "" },
+                           { "status", status, "", "" },
+                           { "personal", zone.get_is_personal() ? _( "Yes" ) : _( "No" ), "", "" },
+                           { "vehicle", zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ), "", "" },
+                           { "direction", direction, "", "" },
+                           { "distance", std::to_string( distance ), "", std::to_string( distance ) },
+                           { "displayed", zone.get_is_displayed() ? _( "Yes" ) : _( "No" ), "", "" }
+                         };
+            snapshot.nodes.push_back( std::move( node ) );
+            zone_reader_bindings.push_back( zone_reader_make_binding( row_id, zone ) );
+        }
+
+        if( zone_reader_armed_remove ) {
+            const std::optional<int> armed_index = zone_reader_find( *zone_reader_armed_remove );
+            if( armed_index && *armed_index == active_index ) {
+                a11y::semantic_node confirm;
+                confirm.id = "zone:remove:confirm";
+                confirm.role = "button";
+                confirm.label = string_format( _( "Confirm removal of zone %s" ),
+                                               zones[*armed_index].get().get_name() );
+                confirm.detail = _( "This zone will be removed from the list immediately. "
+                                    "The change is only saved when you confirm saving when you "
+                                    "leave; choosing not to save restores it." );
+                confirm.actions = { "focus", "activate" };
+                snapshot.nodes.push_back( std::move( confirm ) );
+            }
+        }
+
+        if( has_selection ) {
+            snapshot.focus = "zone:row:" + std::to_string( active_index );
+        } else if( zone_cnt == 0 ) {
+            snapshot.focus = "ADD_ZONE";
+        }
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     auto zones_manager_options = [&]() {
         werase( w_zones_options );
 
@@ -503,6 +790,10 @@ void zone_manager_ui::display_zone_manager()
         g->invalidate_main_ui_adaptor();
 
         ui_manager::redraw();
+
+        if( a11y::enabled() ) {
+            reader.update( build_snapshot() );
+        }
 
         //Wait for input
         const std::string action = ctxt.handle_input();

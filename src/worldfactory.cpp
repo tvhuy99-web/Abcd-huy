@@ -20,6 +20,7 @@
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "dependency_tree.h"
 #include "enums.h"
 #include "filesystem.h"
 #include "input.h"
@@ -208,7 +209,16 @@ WORLD *worldfactory::make_new_world( bool show_prompt, const std::string &world_
 
     retworld->create_timestamp();
 
-    return add_world( std::move( retworld ) );
+    WORLD *created_world = add_world( std::move( retworld ) );
+    if( created_world == nullptr && a11y::enabled() ) {
+        // add_world fails without any user-facing message when the world
+        // files cannot be written (WORLD::save only debug-logs). A
+        // cancellation cannot reach this point (the worldgen flows return
+        // earlier), and a mod conflict has already shown its own popup
+        // above, so this announcement only covers the silent I/O failure.
+        popup( _( "The world could not be created because its files could not be written." ) );
+    }
+    return created_world;
 }
 
 static std::optional<std::string> prompt_world_name( const std::string &title,
@@ -271,6 +281,12 @@ int worldfactory::show_worldgen_advanced( WORLD *world )
                 if( query_yn( _( "World name is empty.  Randomize the name?" ) ) ) {
                     world->world_name = pick_random_name();
                 }
+            } else if( !valid_worldname( ret.value() ) ) {
+                // The basic flow validates the name before finishing; this
+                // flow did not, so a duplicate or invalid name went straight
+                // to add_world and failed (or collided) silently.
+                // valid_worldname has already explained the problem with a
+                // popup; ask for another name instead (R07.1).
             } else {
                 // done, generate world
                 world->world_name = ret.value();
@@ -1057,6 +1073,27 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
                 if( id->obsolete ) {
                     node.detail += " " + std::string( _( "This mod is obsolete." ) );
                 }
+                // Same category/conflict notes as the mod-selection screen
+                // (R07.1): get_information alone lists neither.
+                if( !id->category.second.empty() ) {
+                    node.detail += " " + string_format( _( "Category: %s." ),
+                                                        id->category.second.translated() );
+                }
+                if( !id->conflicts.empty() ) {
+                    std::vector<std::string> conflict_names;
+                    conflict_names.reserve( id->conflicts.size() );
+                    for( const mod_id &conflict : id->conflicts ) {
+                        conflict_names.emplace_back( conflict.is_valid() ? conflict->name() :
+                                                     conflict.str() );
+                    }
+                    node.detail += " " + string_format( _( "Declared conflicts: %s." ),
+                                                        enumerate_as_string( conflict_names ) );
+                }
+                if( const std::optional<mod_id> conflict = mman_ui->find_mod_conflict( id,
+                        world_mods ) ) {
+                    node.detail += " " + string_format( _( "Conflicts with %s." ),
+                                                        ( *conflict )->name() );
+                }
             } else if( !id.is_valid() ) {
                 node.detail = string_format( _( "This mod is missing: %s." ), id.str() );
             }
@@ -1494,6 +1531,23 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             if( id->obsolete ) {
                 detail += " " + std::string( _( "This mod is obsolete." ) );
             }
+            if( !id->category.second.empty() ) {
+                detail += " " + string_format( _( "Category: %s." ),
+                                               id->category.second.translated() );
+            }
+            // The mod's own declared conflicts are part of its data, not
+            // only its relation to the current load order; get_information
+            // does not list them, so append them here (R07.1).
+            if( !id->conflicts.empty() ) {
+                std::vector<std::string> conflict_names;
+                conflict_names.reserve( id->conflicts.size() );
+                for( const mod_id &conflict : id->conflicts ) {
+                    conflict_names.emplace_back( conflict.is_valid() ? conflict->name() :
+                                                  conflict.str() );
+                }
+                detail += " " + string_format( _( "Declared conflicts: %s." ),
+                                               enumerate_as_string( conflict_names ) );
+            }
             if( const std::optional<mod_id> conflict = mman_ui->find_mod_conflict( id, active_mod_order ) ) {
                 detail += " " + string_format( _( "Conflicts with %s." ), ( *conflict )->name() );
             }
@@ -1524,6 +1578,20 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             if( !id.is_valid() ) {
                 node.enabled = false;
                 node.disabled_reason = _( "This mod is missing and cannot be added." );
+            } else if( !mman_ui->mm_tree.is_available( id ) ) {
+                // try_add refuses such mods silently (mod_manager_ui.cpp).
+                // Publish the refusal up front, with the dependency tree's
+                // own error text as the reason, so a reader user hears why
+                // this mod cannot be enabled instead of seeing no change
+                // after activating it (R07.1).
+                node.enabled = false;
+                dependency_node *mod_node = mman_ui->mm_tree.get_node( id );
+                node.disabled_reason = mod_node != nullptr
+                                       ? remove_color_tags( mod_node->s_errors() )
+                                       : std::string();
+                if( node.disabled_reason.empty() ) {
+                    node.disabled_reason = _( "This mod has errors and cannot be added." );
+                }
             }
             node.selected = active_header == 0 && cursel[0] == i;
             if( node.selected ) {
