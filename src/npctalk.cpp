@@ -22,6 +22,7 @@
 #include <vector>
 
 #include "achievement.h"
+#include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "action.h"
@@ -2939,7 +2940,6 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                !response_condition_exists[index] ||
                ( index < response_condition_eval.size() && response_condition_eval[index] );
     };
-    const std::string history_text = d_img.get_accessibility_history();
     a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent &intent ) ->
     std::optional<std::string> {
         if( intent.node == "dialogue:history" && intent.action == "focus" ) {
@@ -2969,18 +2969,36 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             return;
         }
         a11y::semantic_snapshot snapshot;
-        snapshot.title = _( "Dialogue" );
+        // The sidebar draws speaker_name() in large type for sighted
+        // players (dialogue_imgui.cpp draw_dialogue_sidebar); publish the
+        // same name in the title so the reader hears who is speaking.
+        // speaker_name() already covers every case the UI shows: the
+        // remote name for radio/intercom/computer conversations, the
+        // beta talker's display name otherwise, and "" (plain title)
+        // when this is not a conversation.
+        const std::string speaker = speaker_name( d_img );
+        snapshot.title = speaker.empty() ? _( "Dialogue" )
+                         : string_format( _( "Dialogue: %s" ), speaker );
         snapshot.summary = remove_color_tags( challenge );
         snapshot.focus = "dialogue:response:" + std::to_string( d_img.sel_response );
 
+        // Read the history fresh on every publish instead of capturing it
+        // once before the input loop: the text is the document node's
+        // whole content, and a stale capture could outlive later
+        // add_to_history() calls within this topic's lifetime.
+        const std::string history_text = d_img.get_accessibility_history();
         if( !history_text.empty() ) {
-            a11y::semantic_node history;
-            history.id = "dialogue:history";
-            history.role = "document";
-            history.label = _( "Conversation history" );
-            history.detail = history_text;
-            history.actions = { "focus" };
-            snapshot.nodes.push_back( std::move( history ) );
+            // Document pattern (a11y::append_document, as in
+            // mission_companion.cpp "companion:details"): the full
+            // verbatim history travels in detail with no length cap in
+            // validate_snapshot, and the Java presenter reads document
+            // nodes paragraph by paragraph (R04.4) instead of as one
+            // utterance. Keep the node's original intent surface: focus
+            // only -- opening/reading the document is a presenter action,
+            // never a gameplay activation.
+            a11y::append_document( snapshot, "dialogue:history",
+                                   _( "Conversation history" ), history_text );
+            snapshot.nodes.back().actions = { "focus" };
         }
 
         for( size_t index = 0; index < response_lines.size(); ++index ) {
@@ -2991,7 +3009,31 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             node.label = remove_color_tags( response.text );
             node.enabled = response_enabled( index );
             if( !node.enabled ) {
+                // The original UI never spells out the failed condition
+                // itself: create_option_line() only appends the authored
+                // show_reason (already part of the label above when the
+                // response is shown anyway) or, for a failed option with
+                // an explanation, replaces the line with that explanation
+                // (also the label). Keep the generic reason rather than
+                // inventing a specific one the engine does not publish.
                 node.disabled_reason = _( "This response is unavailable because its condition is not met." );
+            }
+            // Trial type and chance are already in the label, from the
+            // same create_option_line() text the sighted UI draws
+            // ("[PERSUADE 42%] ...", "[Skill 2/5] ..."). What the label
+            // cannot carry is the consequence colouring: hostile is drawn
+            // red and helpless light red, and choosing either makes this
+            // same function ask query_yn() before applying the response.
+            // Give the reader the same warning in words, from the same
+            // get_consequences() data, before the choice is made.
+            if( index < responses.size() ) {
+                const std::set<dialogue_consequence> consequences =
+                    responses[index].get_consequences( *this );
+                if( consequences.count( dialogue_consequence::hostile ) > 0 ) {
+                    node.detail = _( "Warning: this response may provoke an attack. The game will ask for confirmation before it takes effect." );
+                } else if( consequences.count( dialogue_consequence::helpless ) > 0 ) {
+                    node.detail = _( "Warning: this response may leave you helpless. The game will ask for confirmation before it takes effect." );
+                }
             }
             node.selected = d_img.sel_response == static_cast<int>( index );
             node.actions = { "focus", "activate" };

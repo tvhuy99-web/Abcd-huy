@@ -10,6 +10,7 @@
 #include <set>
 #include <utility>
 
+#include "a11y_semantics.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -2894,6 +2895,54 @@ class spellcasting_callback : public uilist_callback
             return false;
         }
 
+        void describe_accessibility_action( const std::string &action, const int entnum,
+                                            a11y::semantic_node &node ) const override {
+            if( action == "CAST_IGNORE" ) {
+                // The visual panel shows this state only as colored text
+                // ("[I] Ignore Distractions" / "Popup Distractions"); the
+                // reader node carries it as a checkbox with the same state
+                // the key() toggle above flips.
+                node.role = "checkbox";
+                node.checked = casting_ignore;
+                node.detail = casting_ignore
+                              ? _( "Distractions are currently ignored while casting. "
+                                   "Activate to show distraction popups while casting again." )
+                              : _( "Distractions currently show popups while casting. "
+                                   "Activate to ignore distractions while casting." );
+                return;
+            }
+            if( action == "SCROLL_UP_SPELL_MENU" || action == "SCROLL_DOWN_SPELL_MENU" ) {
+                node.detail = _( "Scrolls the on-screen spell information panel. The same "
+                                 "information is read in the selected spell's details." );
+                return;
+            }
+            if( action != "CHOOSE_INVLET" && action != "SCROLL_FAVORITE" ) {
+                return;
+            }
+            if( entnum < 0 || static_cast<size_t>( entnum ) >= known_spells.size() ) {
+                node.enabled = false;
+                node.disabled_reason = _( "Select a spell first." );
+                return;
+            }
+            const spell &selected_spell = *known_spells[entnum];
+            if( action == "CHOOSE_INVLET" ) {
+                // key() runs the shared choose_key_from_user prompt; this
+                // only names what that prompt will decide for this spell.
+                node.detail = string_format(
+                                  _( "Assign a new hotkey to %s, replace its current hotkey, "
+                                     "or remove the hotkey, using the standard key prompt." ),
+                                  selected_spell.name() );
+            } else if( action == "SCROLL_FAVORITE" ) {
+                node.role = "checkbox";
+                node.checked = get_player_character().magic->is_favorite( selected_spell.id() );
+                node.detail = node.checked
+                              ? string_format( _( "%s is a favorite spell. Activate to remove "
+                                                  "it from favorites." ), selected_spell.name() )
+                              : string_format( _( "Activate to mark %s as a favorite spell." ),
+                                               selected_spell.name() );
+            }
+        }
+
         float desired_extra_space_right( ) override {
             return std::clamp( float( EVEN_MINIMUM_TERM_WIDTH * ImGui::CalcTextSize( "X" ).x ),
                                ImGui::GetMainViewport()->Size.x * 3 / 8, ImGui::GetMainViewport()->Size.x );
@@ -3378,6 +3427,270 @@ int known_magic::get_invlet( const spell_id &sp )
     return 0;
 }
 
+// Plain-text mirror of spellcasting_callback::display_spell_info: every
+// datum the ImGui panel publishes for a spell, in the panel's order and
+// wording, so the shared uilist reader adapter can speak the same facts
+// through the entry detail. Nothing is added that the panel does not show.
+static std::string spell_reader_info( const spell &sp, Character &guy )
+{
+    std::vector<std::string> lines;
+    const bool is_psi = sp.has_flag( spell_flag::PSIONIC );
+
+    lines.emplace_back( sp.spell_class() == trait_NONE ? _( "Classless" ) :
+                        sp.spell_class()->name() );
+    std::string desc = sp.description();
+    parse_tags( desc, *get_avatar().as_character(), *get_avatar().as_character() );
+    if( !desc.empty() ) {
+        lines.emplace_back( desc );
+    }
+    const std::string spell_data = sp.enumerate_spell_data( guy );
+    if( !spell_data.empty() ) {
+        lines.emplace_back( spell_data );
+    }
+    if( sp.is_channeling_spell() ) {
+        lines.emplace_back(
+            _( "Passing turns after casting this spell will actively channel it, causing continued effects." ) );
+    }
+
+    // Calculates temp_level_adjust from EoC, saves it to the spell for later use, and prepares to display the result
+    int temp_level_adjust = sp.get_temp_level_adjustment();
+    std::string temp_level_adjust_string;
+    if( temp_level_adjust < 0 ) {
+        temp_level_adjust_string = " (-" + std::to_string( -temp_level_adjust ) + ")";
+    } else if( temp_level_adjust > 0 ) {
+        temp_level_adjust_string = " (+" + std::to_string( temp_level_adjust ) + ")";
+    }
+    lines.emplace_back( string_format( "%s: %d%s%s", is_psi ? _( "Power Level" ) : _( "Spell Level" ),
+                                       sp.get_effective_level(),
+                                       sp.is_max_level( guy ) ? _( " (MAX)" ) : "",
+                                       temp_level_adjust_string.c_str() ) );
+    lines.emplace_back( string_format( "%s: %d", _( "Max Level" ), sp.get_max_level( guy ) ) );
+
+    if( !sp.valid_caster_condition( guy ) ) {
+        lines.emplace_back( sp.failed_caster_condition_message() );
+    } else {
+        lines.emplace_back( remove_color_tags( sp.colorized_fail_percent( guy ) ) );
+    }
+    lines.emplace_back( string_format( "%s: %d", _( "Difficulty" ), sp.get_difficulty( guy ) ) );
+    lines.emplace_back( string_format( "%s: %d", _( "Current Exp" ), sp.xp() ) );
+    lines.emplace_back( string_format( "%s: %d", _( "to Next Level" ), sp.exp_to_next_level() ) );
+
+    const bool cost_encumb = sp.energy_cost_encumbered( guy );
+    if( guy.magic->has_enough_energy( guy, sp ) ) {
+        std::string cost_string = cost_encumb ? _( "Casting Cost (impeded)" ) : _( "Casting Cost" );
+        std::string psi_cost_string = cost_encumb ? _( "Channeling Cost (impeded)" ) :
+                                      _( "Channeling Cost" );
+        std::string energy_cur = sp.energy_source() == magic_energy_type::hp ? "" :
+                                 string_format( _( " (%s current)" ), sp.energy_cur_string( guy ) );
+        lines.emplace_back( string_format( "%s: %s %s%s",
+                                           is_psi ? psi_cost_string.c_str() : cost_string.c_str(),
+                                           sp.energy_cost_string( guy ).c_str(),
+                                           sp.energy_string().c_str(), energy_cur.c_str() ) );
+    } else {
+        lines.emplace_back( string_format( "%s %s: %s %s", _( "Not Enough" ),
+                                           sp.energy_string().c_str(),
+                                           sp.energy_cost_string( guy ).c_str(),
+                                           sp.energy_string().c_str() ) );
+    }
+    const bool c_t_encumb = sp.casting_time_encumbered( guy );
+    std::string psi_cast_time = c_t_encumb ? _( "Channeling Time (impeded)" ) : _( "Channeling Time" );
+    std::string cast_time = c_t_encumb ? _( "Casting Time (impeded)" ) : _( "Casting Time" );
+    lines.emplace_back( string_format( "%s: %s", is_psi ? psi_cast_time.c_str() : cast_time.c_str(),
+                                       moves_to_string( sp.casting_time( guy ) ).c_str() ) );
+
+    std::string targets;
+    if( sp.is_valid_target( spell_target::none ) ) {
+        targets = _( "self" );
+    } else {
+        targets = sp.enumerate_targets();
+    }
+    lines.emplace_back( string_format( "%s: %s", _( "Valid Targets" ), targets.c_str() ) );
+
+    const std::string target_ids = sp.list_targeted_monster_names();
+    if( !target_ids.empty() ) {
+        lines.emplace_back( string_format( _( "Only affects the monsters: %s" ), target_ids.c_str() ) );
+    }
+
+    std::string range = sp.range( guy ) <= 0 ? _( "self" ) : std::to_string( sp.range( guy ) );
+    lines.emplace_back( string_format( "%s: %s", _( "Range" ), range.c_str() ) );
+
+    std::string aoe_string_temp = is_psi ? _( "Power Radius" ) : _( "Spell Radius" );
+
+    // if it's any type of attack spell, the stats are normal.
+    if( sp.effect() == "attack" ) {
+        if( sp.aoe( guy ) > 0 ) {
+            std::string degree_string;
+            if( sp.shape() == spell_shape::cone ) {
+                aoe_string_temp = _( "Cone Arc" );
+                degree_string = _( "degrees" );
+            } else if( sp.shape() == spell_shape::line ) {
+                aoe_string_temp = _( "Line Width" );
+            }
+            lines.emplace_back( string_format( "%s: %d %s", aoe_string_temp.c_str(), sp.aoe( guy ),
+                                               degree_string.c_str() ) );
+        }
+    } else if( sp.effect() == "short_range_teleport" ) {
+        if( sp.aoe( guy ) > 0 ) {
+            lines.emplace_back( string_format( "%s: %d", _( "Variance" ), sp.aoe( guy ) ) );
+        }
+    } else if( sp.effect() == "summon" || sp.effect() == "fertilize_plant" ||
+               sp.effect() == "effect_on_condition" ) {
+        lines.emplace_back( string_format( "%s: %d", aoe_string_temp.c_str(), sp.aoe( guy ) ) );
+    } else if( sp.effect() == "ter_transform" ) {
+        lines.emplace_back( string_format( "%s: %s", aoe_string_temp.c_str(),
+                                           sp.aoe_string( guy ).c_str() ) );
+    } else if( sp.effect() == "banishment" ) {
+        if( sp.aoe( guy ) > 0 ) {
+            lines.emplace_back( string_format( _( "%s: %d" ), aoe_string_temp.c_str(), sp.aoe( guy ) ) );
+        }
+    }
+
+    // One line for damage / healing / spawn / summon effect. The panel
+    // prints the teleport Variance a second time in this section; the
+    // radius line above already stated it, so it is not repeated here.
+    const int damage = sp.damage( guy );
+    // if it's any type of attack spell, the stats are normal.
+    if( sp.effect() == "attack" ) {
+        if( damage > 0 ) {
+            std::string dot_string;
+            if( sp.damage_dot( guy ) != 0 ) {
+                //~ amount of damage per second, abbreviated
+                dot_string = string_format( _( ", %d/sec" ), static_cast<int>( sp.damage_dot( guy ) ) );
+            }
+            lines.emplace_back( string_format( "%s: %s %s%s", _( "Damage" ),
+                                               sp.damage_string( guy ).c_str(),
+                                               sp.damage_type_string().c_str(),
+                                               dot_string.c_str() ) );
+        } else if( damage < 0 ) {
+            lines.emplace_back( string_format( "%s: %s", _( "Healing" ),
+                                               sp.damage_string( guy ).c_str() ) );
+        }
+    } else if( sp.effect() == "fertilize_plant" ) {
+        if( damage > 0 ) {
+            lines.emplace_back( string_format( "%s: %s percent of a season", _( "Fertility Increase" ),
+                                               sp.damage_string( guy ).c_str() ) );
+        }
+    } else if( sp.effect() == "spawn_item" ) {
+        if( sp.has_flag( spell_flag::SPAWN_GROUP ) ) {
+            // todo: more user-friendly presentation
+            lines.emplace_back( string_format( _( "Spawn item group %1$s %2$d times" ),
+                                               sp.effect_data(),
+                                               sp.damage( guy ) ) );
+        } else {
+            lines.emplace_back( string_format( "%s %d %s", _( "Spawn" ), sp.damage( guy ),
+                                               item::nname( itype_id( sp.effect_data() ),
+                                                       sp.damage( guy ) ).c_str() ) );
+        }
+    } else if( sp.effect() == "summon" ) {
+        std::string monster_name = "FIXME";
+        if( sp.has_flag( spell_flag::SPAWN_GROUP ) ) {
+            // TODO: Get a more user-friendly group name
+            if( MonsterGroupManager::isValidMonsterGroup( mongroup_id( sp.effect_data() ) ) ) {
+                monster_name = "from " + sp.effect_data();
+            } else {
+                debugmsg( "Unknown monster group: %s", sp.effect_data() );
+            }
+        } else {
+            monster_name = monster( mtype_id( sp.effect_data() ) ).get_name( );
+        }
+        lines.emplace_back( string_format( "%s %d %s", _( "Summon" ), sp.damage( guy ),
+                                           monster_name.c_str() ) );
+    } else if( sp.effect() == "targeted_polymorph" ) {
+        std::string monster_name = sp.effect_data();
+        if( sp.has_flag( spell_flag::POLYMORPH_GROUP ) ) {
+            // TODO: Get a more user-friendly group name
+            if( MonsterGroupManager::isValidMonsterGroup( mongroup_id( sp.effect_data() ) ) ) {
+                monster_name = _( "random creature" );
+            } else {
+                debugmsg( "Unknown monster group: %s", sp.effect_data() );
+            }
+        } else if( monster_name.empty() ) {
+            monster_name = _( "random creature" );
+        } else {
+            monster_name = mtype_id( sp.effect_data() )->nname();
+        }
+        lines.emplace_back( string_format( _( "Targets under: %dhp become a %s" ), sp.damage( guy ),
+                                           monster_name.c_str() ) );
+    } else if( sp.effect() == "banishment" ) {
+        lines.emplace_back( string_format( "%s: %s %s", _( "Damage" ), sp.damage_string( guy ).c_str(),
+                                           sp.damage_type_string().c_str() ) );
+    }
+
+    // Show duration for spells that endure
+    if( sp.duration( guy ) > 0 || sp.has_flag( spell_flag::PERMANENT ) ||
+        sp.has_flag( spell_flag::PERMANENT_ALL_LEVELS ) ) {
+        lines.emplace_back( string_format( "%s: %s", _( "Duration" ), sp.duration_string( guy ).c_str() ) );
+    }
+
+    if( sp.has_components() ) {
+        if( !sp.components().get_components().empty() ) {
+            for( const std::string &line : sp.components().get_folded_components_list(
+                     &guy, 0, c_light_gray, guy.crafting_inventory( guy.pos_bub(), 0, false ),
+                     return_true<item> ) ) {
+                lines.emplace_back( line );
+            }
+        }
+        if( !( sp.components().get_tools().empty() && sp.components().get_qualities().empty() ) ) {
+            for( const std::string &line : sp.components().get_folded_tools_list(
+                     &guy, 0, c_light_gray, guy.crafting_inventory( guy.pos_bub(), 0, false ) ) ) {
+                lines.emplace_back( line );
+            }
+        }
+    }
+
+    std::string ret;
+    for( const std::string &line : lines ) {
+        if( !ret.empty() ) {
+            ret += "\n";
+        }
+        ret += line;
+    }
+    return ret;
+}
+
+// The refusal reason for a spell spell::can_cast rejects, taken only from
+// messages the engine itself owns, mirroring can_cast's check order: the
+// magic type's data-driven cannot-cast message, the failed caster
+// condition message (the same text the info panel and the cast path
+// print), and the cast path's not-enough-energy message from
+// Character::cast_spell. can_cast branches that own no message (cannot
+// attack, mute verbal spells, missing components) yield an empty reason
+// and the shared uilist adapter falls back to its generic sentence.
+static std::string spell_reader_disabled_reason( const spell &sp, Character &guy )
+{
+    if( sp.can_cast( guy ) ) {
+        return std::string();
+    }
+    if( guy.has_flag( json_flag_CANNOT_ATTACK ) ) {
+        return std::string();
+    }
+    const spell_type &sp_type = sp.id().obj();
+    if( sp_type.magic_type.has_value() ) {
+        const magic_type &mt = sp_type.magic_type.value().obj();
+        for( const std::string &flag_string : mt.cannot_cast_flags ) {
+            if( guy.has_flag( json_character_flag( flag_string ) ) ) {
+                return mt.cannot_cast_message.has_value() ? mt.cannot_cast_message.value() :
+                       std::string();
+            }
+        }
+    }
+    if( !sp.valid_caster_condition( guy ) ) {
+        return sp.failed_caster_condition_message();
+    }
+    if( guy.is_mute() && !guy.has_flag( json_flag_SILENT_SPELL ) && sp.has_flag( spell_flag::VERBAL ) ) {
+        return std::string();
+    }
+    if( !sp_type.spell_components.is_empty() &&
+        !sp_type.spell_components->can_make_with_inventory( &guy,
+                guy.crafting_inventory( guy.pos_bub(), 0, false ), return_true<item> ) ) {
+        return std::string();
+    }
+    if( !guy.magic->has_enough_energy( guy, sp ) ) {
+        return string_format( _( "You don't have enough %s to cast the spell." ), sp.energy_string() );
+    }
+    return std::string();
+}
+
 spell &known_magic::select_spell( Character &guy )
 {
     std::vector<spell *> known_spells_sorted = get_spells();
@@ -3466,8 +3779,26 @@ spell &known_magic::select_spell( Character &guy )
     }
 
     for( size_t i = 0; i < known_spells_sorted.size(); i++ ) {
-        spell_menu.addentry( static_cast<int>( i ), known_spells_sorted[i]->can_cast( guy ),
-                             get_invlet( known_spells_sorted[i]->id() ), known_spells_sorted[i]->name() );
+        spell &sp = *known_spells_sorted[i];
+        const int invlet = get_invlet( sp.id() );
+        spell_menu.addentry( static_cast<int>( i ), sp.can_cast( guy ),
+                             invlet, sp.name() );
+        uilist_entry &entry = spell_menu.entries.back();
+        entry.desc = spell_reader_info( sp, guy );
+        std::string value;
+        if( guy.magic->is_favorite( sp.id() ) ) {
+            value = _( "Favorite spell." );
+        }
+        if( invlet != 0 ) {
+            if( !value.empty() ) {
+                value += " ";
+            }
+            value += string_format( _( "Hotkey: %1$s." ), std::string( 1, static_cast<char>( invlet ) ) );
+        }
+        entry.a11y_value = value;
+        if( !entry.enabled ) {
+            entry.a11y_disabled_reason = spell_reader_disabled_reason( sp, guy );
+        }
     }
     refresh_favorite( &spell_menu, known_spells_sorted );
 
@@ -3630,6 +3961,191 @@ static void draw_minmax_row( const dialogue &d, const std::string &label, const 
     cataimgui::draw_colored_text( max_str );
 }
 
+// Plain-text counterpart of color_number( float ) as used by
+// draw_minmax_row: same thresholds and formats, without the color tags.
+static std::string spellbook_plain_number( const float num )
+{
+    if( num > 10 ) {
+        return string_format( "+%.0f", num );
+    } else if( num < -10 ) {
+        return string_format( "%.0f", num );
+    } else if( num > 0 ) {
+        return string_format( "+%.2f", num );
+    } else if( num < 0 ) {
+        return string_format( "%.2f", num );
+    } else {
+        return "0";
+    }
+}
+
+// Plain-text counterpart of one draw_minmax_row table row: the panel's
+// columns are "lvl 0", "per lvl" and "max lvl" under the row label, and
+// the per-level column is only drawn when the increment is nonzero.
+// One deliberate deviation: for a positive duration increment the panel's
+// color_string_from_number call drops the value and draws only "+", so
+// the text form keeps the value the panel meant to show.
+static void add_spellbook_minmax_line( std::vector<std::string> &lines, const dialogue &d,
+                                       const std::string &label, const dbl_or_var &min_d,
+                                       const dbl_or_var &inc_d, const dbl_or_var &max_d,
+                                       minmax_row_type type = minmax_row_type::DEFAULT,
+                                       bool check_minmax = false, bool absolute = false,
+                                       const spell_type *sp = nullptr )
+{
+    const int min = absolute ? std::abs( static_cast<int>( min_d.evaluate( d ) ) ) : static_cast<int>
+                    ( min_d.evaluate( d ) );
+    const float inc = absolute ? std::abs( static_cast<float>( inc_d.evaluate(
+            d ) ) ) : static_cast<float>( inc_d.evaluate( d ) );
+    const int max = absolute ? std::abs( static_cast<int>( max_d.evaluate( d ) ) ) : static_cast<int>
+                    ( max_d.evaluate( d ) );
+    if( check_minmax && ( min == 0 || max == 0 ) ) {
+        return;
+    }
+
+    std::string min_str;
+    std::string inc_str;
+    std::string max_str;
+
+    switch( type ) {
+        case minmax_row_type::DURATION:
+            if( min < 100 ) {
+                min_str = string_format( _( "%.2f seconds" ), min / 100.f );
+            } else {
+                min_str = to_string( time_duration::from_moves( min ), true );
+            }
+            if( inc < 100 ) {
+                inc_str = string_format( _( "%.2f seconds" ), inc / 100.f );
+            } else {
+                inc_str = to_string( time_duration::from_moves( static_cast<int>( inc ) ), true );
+            }
+            if( inc > 0 ) {
+                inc_str = "+" + inc_str;
+            }
+            if( max < 100 ) {
+                max_str = string_format( _( "%.2f seconds" ), max / 100.f );
+            } else {
+                max_str = to_string( time_duration::from_moves( max ), true );
+            }
+            break;
+        case minmax_row_type::ENERGY:
+            min_str = string_format( "%d %s", min, sp->energy_string() );
+            inc_str = spellbook_plain_number( inc );
+            max_str = std::to_string( max );
+            break;
+        default:
+            min_str = std::to_string( min );
+            inc_str = spellbook_plain_number( inc );
+            max_str = std::to_string( max );
+            break;
+    }
+
+    if( inc != 0 ) {
+        lines.emplace_back( string_format( _( "%1$s: level 0: %2$s, per level: %3$s, max level: %4$s" ),
+                                           label, min_str, inc_str, max_str ) );
+    } else {
+        lines.emplace_back( string_format( _( "%1$s: level 0: %2$s, max level: %3$s" ),
+                                           label, min_str, max_str ) );
+    }
+}
+
+// Plain-text mirror of draw_spellbook_info: the same spellbook panel data
+// (name, class, description, difficulty, max level, damage type and the
+// level 0 / per level / max level stat rows), so the shared uilist reader
+// adapter can speak it through the study menu's entry details.
+static std::string spellbook_reader_info( const spell_type &sp )
+{
+    const spell fake_spell( sp.id );
+    Character &pc = get_player_character();
+    dialogue d( get_talker_for( pc ), nullptr );
+
+    std::vector<std::string> lines;
+    lines.emplace_back( sp.name.translated() );
+    lines.emplace_back( sp.spell_class == trait_NONE ? _( "Classless" ) :
+                        sp.spell_class->name() );
+    const std::string desc = sp.description.translated();
+    if( !desc.empty() ) {
+        lines.emplace_back( desc );
+    }
+    lines.emplace_back( string_format( "%s: %d", _( "Difficulty" ),
+                                       static_cast<int>( sp.difficulty.evaluate( d ) ) ) );
+    lines.emplace_back( string_format( "%s: %d", _( "Max Level" ),
+                                       static_cast<int>( sp.max_level.evaluate( d ) ) ) );
+
+    const std::string fx = sp.effect_name;
+    std::string damage_string;
+    std::string aoe_string;
+    bool has_damage_type = false;
+    if( fx == "attack" ) {
+        damage_string = _( "Damage" );
+        aoe_string = _( "AoE" );
+        has_damage_type = sp.min_damage.evaluate( d ) > 0 && sp.max_damage.evaluate( d ) > 0;
+    } else if( fx == "spawn_item" || fx == "summon_monster" ) {
+        damage_string = _( "Spawned" );
+    } else if( fx == "fertilize_plant" ) {
+        damage_string = _( "Fertility Increase" );
+        aoe_string = _( "AoE" );
+    } else if( fx == "targeted_polymorph" ) {
+        damage_string = _( "Threshold" );
+    } else if( fx == "recover_energy" ) {
+        damage_string = _( "Recover" );
+    } else if( fx == "short_range_teleport" ) {
+        aoe_string = _( "Variance" );
+    } else if( fx == "area_pull" || fx == "area_push" ||  fx == "ter_transform" ) {
+        aoe_string = _( "AoE" );
+    }
+
+    if( has_damage_type ) {
+        lines.emplace_back( string_format( "%s: %s", _( "Damage Type" ),
+                                           fake_spell.damage_type_string() ) );
+    }
+
+    if( !damage_string.empty() ) {
+        if( damage_string == _( "Damage" ) && ( sp.min_damage.evaluate( d ) < 0 ||
+                                                sp.max_damage.evaluate( d ) < 0 ) ) {
+            damage_string = _( "Healing" );
+        }
+        if( fake_spell.has_flag( spell_flag::RANDOM_DAMAGE ) ) {
+            const std::pair<float, float> increment = sp.calculate_damage_increment();
+            const std::pair<int, int> max_damage = sp.damage_at_max_level();
+            lines.emplace_back( string_format(
+                                    _( "%s: level 0: %d-%d, per level: %.2f - %.2f, max level: %d-%d" ),
+                                    damage_string.c_str(),
+                                    static_cast<int>( std::abs( sp.min_damage.evaluate( d ) ) ),
+                                    std::abs( static_cast<int>( sp.max_damage.evaluate( d ) ) ),
+                                    std::min( std::abs( increment.first ), std::abs( increment.second ) ),
+                                    std::max( std::abs( increment.first ), std::abs( increment.second ) ),
+                                    std::min( std::abs( max_damage.first ), std::abs( max_damage.second ) ),
+                                    std::max( std::abs( max_damage.first ), std::abs( max_damage.second ) ) ) );
+        } else {
+            add_spellbook_minmax_line( lines, d, damage_string, sp.min_damage, sp.damage_increment,
+                                       sp.max_damage, minmax_row_type::DEFAULT, true );
+        }
+    }
+
+    add_spellbook_minmax_line( lines, d, _( "Range" ), sp.min_range, sp.range_increment, sp.max_range,
+                               minmax_row_type::DEFAULT, true );
+
+    if( !aoe_string.empty() ) {
+        add_spellbook_minmax_line( lines, d, aoe_string, sp.min_aoe, sp.aoe_increment, sp.max_aoe,
+                                   minmax_row_type::DEFAULT, true );
+    }
+
+    add_spellbook_minmax_line( lines, d, _( "Duration" ), sp.min_duration, sp.duration_increment,
+                               sp.max_duration, minmax_row_type::DURATION, true, false );
+    add_spellbook_minmax_line( lines, d, _( "Cast Cost" ), sp.base_energy_cost, sp.energy_increment,
+                               sp.final_energy_cost, minmax_row_type::ENERGY, false, false, &sp );
+    add_spellbook_minmax_line( lines, d, _( "Cast Time" ), sp.base_casting_time, sp.casting_time_increment,
+                               sp.final_casting_time, minmax_row_type::DURATION, false );
+
+    std::string ret;
+    for( const std::string &line : lines ) {
+        if( !ret.empty() ) {
+            ret += "\n";
+        }
+        ret += line;
+    }
+    return ret;
+}
+
 static void draw_spellbook_info( const spell_type &sp )
 {
     const spell fake_spell( sp.id );
@@ -3755,6 +4271,21 @@ float spellbook_callback::desired_extra_space_right( )
 
 void spellbook_callback::refresh( uilist *menu )
 {
+    // The study menu's entries are built by learn_spell_actor::use with
+    // only a name and a short state column; the rich per-spell data lives
+    // only in the ImGui panel drawn below. Publish the same data as entry
+    // detail text so the shared uilist reader adapter can speak it. The
+    // entry order matches the spells order by construction of that menu,
+    // and the disabled state wording ("Can't learn!" / "Level (Max)")
+    // already reaches the reader through the entries' second column.
+    if( menu != nullptr ) {
+        const size_t count = std::min( menu->entries.size(), spells.size() );
+        for( size_t i = 0; i < count; ++i ) {
+            if( menu->entries[i].desc.empty() ) {
+                menu->entries[i].desc = spellbook_reader_info( spells[i] );
+            }
+        }
+    }
     ImGui::TableSetColumnIndex( 2 );
     ImVec2 info_size = ImGui::GetContentRegionAvail();
     if( ImGui::BeginChild( "spellbook info", info_size,

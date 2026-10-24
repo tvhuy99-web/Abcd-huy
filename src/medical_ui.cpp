@@ -785,25 +785,53 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
                         ( node.id == "medical:tab:limbs" );
         snapshot.nodes.push_back( std::move( node ) );
     }
+    // Table contract (R02.2): limbs form one table whose columns are
+    // declared once here. Condition text follows the medical knowledge
+    // policy (coarse descriptions, never exact hit points), and cells are
+    // presentation only -- selecting a row still uses the row node's own
+    // focus/activate path in reader_intent, never a per-cell action.
+    a11y::semantic_table limbs_table;
+    limbs_table.id = "medical:limbs";
+    limbs_table.columns = { { "part", _( "Body part" ), "" },
+                            { "condition", _( "Condition" ), "" },
+                            { "flags", _( "Status" ), "" } };
+    snapshot.tables.push_back( limbs_table );
     const auto parts = you->get_all_body_parts( get_body_part_flags::sorted );
     for( std::size_t i = 0; i < parts.size(); ++i ) {
         const bodypart_id &part = parts[i];
         a11y::semantic_node node;
         node.id = "medical:limb:" + part.id().str();
         node.label = body_part_name( part );
-        node.value = a11y::limb_health_description( *you, part );
+        const std::string condition = a11y::limb_health_description( *you, part );
+        node.value = condition;
+        std::string flags;
+        const auto append_flag = [&flags]( const std::string &flag ) {
+            if( !flags.empty() ) {
+                flags += ", ";
+            }
+            flags += flag;
+        };
         if( you->has_effect( effect_bleed, part ) ) {
             node.value += " " + std::string( _( "BLEEDING" ) );
+            append_flag( _( "BLEEDING" ) );
         }
         if( you->has_effect( effect_bite, part ) ) {
             node.value += " " + std::string( _( "BITTEN" ) );
+            append_flag( _( "BITTEN" ) );
         }
         if( you->has_effect( effect_infected, part ) ) {
             node.value += " " + std::string( _( "SEPTIC" ) );
+            append_flag( _( "SEPTIC" ) );
         }
         if( you->has_wounds( part.id() ) ) {
             node.value += " " + std::string( _( "WOUNDED" ) );
+            append_flag( _( "WOUNDED" ) );
         }
+        node.table_id = "medical:limbs";
+        node.row_index = static_cast<int>( i );
+        node.cells = { { "part", node.label, "", "" },
+                       { "condition", condition, "", "" },
+                       { "flags", flags, "", "" } };
         node.detail = remove_color_tags( get_limb_effects( part ) + "\n" +
                                         get_limb_wounds( part ) + "\n" + get_limb_scores_and_modifiers( part ) );
         node.selected = bp == part;

@@ -84,6 +84,9 @@ class mission_ui_impl : public cataimgui::window
         explicit mission_ui_impl() : cataimgui::window( _( "Your missions" ),
                     ImGuiWindowFlags_NoResize | ImGuiWindowFlags_NoMove | ImGuiWindowFlags_NoNav ) {
         }
+        a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
+                const input_context &ctxt );
 
     private:
         void draw_mission_names( std::vector<mission *> missions, int &selected_mission,
@@ -96,9 +99,6 @@ class mission_ui_impl : public cataimgui::window
                                         const int &selected_mission ) const;
         void draw_label_with_value( const std::string &label, const std::string &value ) const;
         void draw_location( const std::string &label, const tripoint_abs_omt &loc ) const;
-        a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
-        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
-                const input_context &ctxt );
         const std::string &parsed_description_for( const mission &selected, npc *mission_giver );
 
         mission_ui_tab_enum selected_tab = mission_ui_tab_enum::ACTIVE;
@@ -542,6 +542,19 @@ a11y::semantic_snapshot mission_ui_impl::reader_snapshot( const input_context &c
         return ( node.id == "CONFIRM" && !can_set_objective ) ||
                ( node.id == "DELETE_POINT_OF_INTEREST" && !can_delete_point );
     } ), snapshot.nodes.end() );
+    // State the real effect of the two commands that change game state
+    // (R13.4): setting an objective only changes what is tracked, and the
+    // game deletes a point of interest immediately, with no confirmation.
+    for( a11y::semantic_node &node : snapshot.nodes ) {
+        if( node.id == "CONFIRM" ) {
+            node.detail = _( "Set the selected mission or point of interest as the current objective. "
+                             "This only changes which objective is tracked; it does not accept or hand "
+                             "in a mission, and it does not start travel." );
+        } else if( node.id == "DELETE_POINT_OF_INTEREST" ) {
+            node.detail = _( "Delete the selected point of interest. The game deletes it immediately, "
+                             "without a confirmation prompt." );
+        }
+    }
     return snapshot;
 }
 

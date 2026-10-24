@@ -165,9 +165,15 @@ namespace talk_function
 //Identifies which mission set the NPC draws from
 void companion_mission( npc &p );
 
-// Display the available missions and let the player choose one
+// Display the available missions and let the player choose one.
+// point_name optionally names the point offering the missions (for outposts,
+// the NPC the player is talking to); the reader summary uses it so the
+// listener can tell which point a mission list belongs to. Callers that do
+// not pass it (faction camp bulletin boards) are identified by camp name
+// looked up from omt_pos instead.
 bool display_and_choose_opts( mission_data &mission_key, const tripoint_abs_omt &omt_pos,
-                              const std::string &role_id, const std::string &title );
+                              const std::string &role_id, const std::string &title,
+                              const std::string &point_name = "" );
 
 /**
  * Send a companion on an individual mission or attaches them to a group to depart later

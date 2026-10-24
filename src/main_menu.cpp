@@ -8,7 +8,9 @@
 #include <cstdint>
 #include <cstdlib>
 #include <cstring>
+#include <ctime>
 #include <exception>
+#include <filesystem>
 #include <functional>
 #include <initializer_list>
 #include <istream>
@@ -89,7 +91,7 @@ bool confirm_realtime_progression_for_accessibility()
 
     const std::string action = query_popup()
                                .context( "YESNOQUIT" )
-                               .message( _( "Real-time turns are enabled. Monsters may act periodically while you listen, "
+                               .message( "%s", _( "Real-time turns are enabled. Monsters may act periodically while you listen, "
                                             "read menus, or prepare an action. Yes keeps them enabled, No turns them "
                                             "off and saves the setting, and Quit returns to the main menu." ) )
                                .option( "YES" ).option( "NO" ).option( "QUIT" )
@@ -108,6 +110,24 @@ bool confirm_realtime_progression_for_accessibility()
                   "They may be enabled again next time." ) );
     }
     return true;
+}
+
+// The generic Delete/Reset prompts in world_tab name neither the world nor
+// what is lost. When the reader is on, state the consequences in full
+// (R07.1); query_yn already defaults its cursor to No.
+bool confirm_world_removal_for_reader( const std::string &worldname, size_t save_count,
+                                       bool delete_world )
+{
+    const std::string saves = string_format( n_gettext( "%lu save", "%lu saves", save_count ),
+                                save_count );
+    if( delete_world ) {
+        return query_yn( string_format(
+                             _( "Delete the world \"%1$s\" permanently? This deletes the world folder and all %2$s inside it. This cannot be undone." ),
+                             worldname, saves ) );
+    }
+    return query_yn( string_format(
+                         _( "Reset the world \"%1$s\"? This removes all %2$s inside it and regenerates the world. Its settings and mod list are kept. This cannot be undone." ),
+                         worldname, saves ) );
 }
 } // namespace
 
@@ -1110,7 +1130,13 @@ bool main_menu::new_character_tab()
                 if( !remove_file( path ) ) {
                     popup( _( "Sorry, something went wrong." ) );
                 } else {
+                    const std::string deleted_template = templates[opt_val];
                     templates.erase( templates.begin() + opt_val );
+                    if( a11y::enabled() ) {
+                        // A successful delete otherwise announces nothing;
+                        // the failure case already has its popup above.
+                        popup( _( "Template \"%s\" deleted." ), deleted_template );
+                    }
                 }
             } else if( res == "LOAD" ) {
                 on_out_of_scope cleanup( [&pc]() {
@@ -1234,14 +1260,42 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         g->setup();
     } catch( const std::exception &err ) {
         debugmsg( "Error: %s", err.what() );
+        if( a11y::enabled() ) {
+            // R20.1: a failed load must speak and must offer a way back.
+            // Nothing about the save is touched here; returning false lets
+            // the main menu loop offer another save or world.
+            popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded because the "
+                      "world could not be prepared. The save was not changed, overwritten, or "
+                      "deleted. You can try another save or world from the main menu." ),
+                   savegame.decoded_name(), worldname );
+        }
         return false;
     }
 
-    if( g->load( savegame ) ) {
+    bool loaded = false;
+    try {
+        loaded = g->load( savegame );
+    } catch( const std::exception &err ) {
+        debugmsg( "Error: %s", err.what() );
+    }
+    if( loaded ) {
         cleanup.cancel();
         return true;
     }
 
+    if( a11y::enabled() ) {
+        // game::load fails silently (or through debugmsg) for a damaged,
+        // missing or incompatible character save. Name the save, state
+        // that it was left untouched, and name the recovery path: the
+        // caller returns to the load list / main menu, where another save
+        // can be chosen. No save data is overwritten or deleted on this
+        // path.
+        popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded. It may be "
+                  "damaged, missing, or from an incompatible version. The save was not "
+                  "changed, overwritten, or deleted. You can choose another save or return "
+                  "to the main menu." ),
+               savegame.decoded_name(), worldname );
+    }
     return false;
 }
 
@@ -1264,6 +1318,68 @@ static std::optional<std::chrono::seconds> get_playtime_from_save( const WORLD *
     return pt_seconds;
 }
 
+// R20.1: the save file's own modification time, formatted for the reader
+// list. This is filesystem data about the exact file the engine would
+// load (plain or zzip-compressed); when neither file exists or the time
+// cannot be read, there is nothing truthful to publish and the result
+// is empty.
+static std::string get_save_last_saved_text( const WORLD *world, const save_t &save )
+{
+    const cata_path folder = world->folder_path();
+    cata_path save_file = folder / ( save.base_path() + SAVE_EXTENSION );
+    if( !file_exist( save_file ) ) {
+        save_file = folder / ( save.base_path() + SAVE_EXTENSION + std::string( zzip_suffix ) );
+        if( !file_exist( save_file ) ) {
+            return std::string();
+        }
+    }
+    std::error_code ec;
+    const std::filesystem::file_time_type mtime =
+        std::filesystem::last_write_time( save_file.get_unrelative_path(), ec );
+    if( ec ) {
+        return std::string();
+    }
+    // Same file-time to system-time conversion as tgz_archiver uses.
+    const std::time_t when = std::chrono::system_clock::to_time_t(
+                                 std::chrono::time_point_cast<std::chrono::system_clock::duration>(
+                                     mtime - std::filesystem::file_time_type::clock::now() +
+                                     std::chrono::system_clock::now() ) );
+    std::tm local_time {};
+#if defined(_WIN32)
+    localtime_s( &local_time, &when );
+#else
+    localtime_r( &when, &local_time );
+#endif
+    // NOLINTNEXTLINE(modernize-avoid-c-arrays)
+    char buffer[32] {};
+    if( std::strftime( buffer, sizeof( buffer ), "%Y-%m-%d %H:%M", &local_time ) == 0 ) {
+        return std::string();
+    }
+    return buffer;
+}
+
+// R20.1: delete one character's save files inside its world folder. The
+// set removed is the one the engine itself treats as belonging to the
+// character: every file whose name starts with the save's base path
+// (the same prefix game::move_save_to_graveyard uses for a dead
+// character: .sav/.sav.zzip, .sav.log, .pt, .sav.shortcuts, ...), plus
+// the diary file, which is named from save_id + "_diary" instead of the
+// save prefix. World files, other characters' saves, and files outside
+// the world folder (memorials, achievements) are not touched. Returns
+// true only when the loadable save file itself is gone afterwards.
+static bool delete_character_save_files( const WORLD *world, const save_t &save )
+{
+    const cata_path folder = world->folder_path();
+    const std::string prefix = save.base_path() + ".";
+    for( const cata_path &file : get_files_from_path( prefix, folder ) ) {
+        remove_file( file );
+    }
+    remove_file( folder / ( base64_encode( save.decoded_name() + "_diary" ) + ".json" ) );
+    return !file_exist( folder / ( save.base_path() + SAVE_EXTENSION ) ) &&
+           !file_exist( folder / ( save.base_path() + SAVE_EXTENSION +
+                                   std::string( zzip_suffix ) ) );
+}
+
 bool main_menu::load_character_tab( const std::string &worldname )
 {
     WORLD *cur_world = world_generator->get_world( worldname );
@@ -1282,33 +1398,97 @@ bool main_menu::load_character_tab( const std::string &worldname )
         return false;
     }
 
-    uilist mmenu;
-    mmenu.title = string_format( _( "Load character from \"%s\"" ), worldname );
-    mmenu.border_color = c_white;
-    int opt_val = 0;
-    for( const save_t &s : savegames ) {
-        std::optional<std::chrono::seconds> playtime = get_playtime_from_save( cur_world, s );
-        std::string save_str = s.decoded_name();
-        std::string playtime_str;
-        if( playtime ) {
-            std::chrono::seconds::rep tmp_sec = playtime->count();
-            int pt_sec = static_cast<int>( tmp_sec % 60 );
-            int pt_min = static_cast<int>( tmp_sec % 3600 ) / 60;
-            int pt_hrs = static_cast<int>( tmp_sec / 3600 );
-            playtime_str = string_format( "<color_c_light_blue>[%02d:%02d:%02d]</color>",
-                                          pt_hrs, pt_min, static_cast<int>( pt_sec ) );
+    // With the reader on, selecting a save opens a Load/Delete/Cancel
+    // choice first (R20.1): browsing never loads, loading is its own
+    // confirmation, and deleting one save is a separate confirmation
+    // that names the save. The list is rebuilt after a deletion so the
+    // reader never acts on a stale entry. With the reader off the
+    // original one-step list is kept exactly as it was.
+    while( true ) {
+        uilist mmenu;
+        mmenu.title = string_format( _( "Load character from \"%s\"" ), worldname );
+        mmenu.border_color = c_white;
+        int opt_val = 0;
+        for( const save_t &s : savegames ) {
+            std::optional<std::chrono::seconds> playtime = get_playtime_from_save( cur_world, s );
+            std::string save_str = s.decoded_name();
+            std::string playtime_str;
+            if( playtime ) {
+                std::chrono::seconds::rep tmp_sec = playtime->count();
+                int pt_sec = static_cast<int>( tmp_sec % 60 );
+                int pt_min = static_cast<int>( tmp_sec % 3600 ) / 60;
+                int pt_hrs = static_cast<int>( tmp_sec / 3600 );
+                playtime_str = string_format( "<color_c_light_blue>[%02d:%02d:%02d]</color>",
+                                              pt_hrs, pt_min, static_cast<int>( pt_sec ) );
+            }
+            // TODO: Replace this API to allow adding context without an empty description.
+            mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN, save_str, "", playtime_str );
+            if( a11y::enabled() ) {
+                // Reader-only details from the same engine data the list
+                // itself uses: the world, the recorded play time (or the
+                // fact that none was recorded) and the save file's own
+                // modification time when it can be read.
+                std::string details = string_format( _( "World: %s." ), worldname );
+                if( playtime ) {
+                    std::chrono::seconds::rep tmp_sec = playtime->count();
+                    details += " " + string_format( _( "Play time: %02d:%02d:%02d." ),
+                                                    static_cast<int>( tmp_sec / 3600 ),
+                                                    static_cast<int>( tmp_sec % 3600 ) / 60,
+                                                    static_cast<int>( tmp_sec % 60 ) );
+                } else {
+                    details += " " + std::string( _( "Play time: not recorded." ) );
+                }
+                const std::string last_saved = get_save_last_saved_text( cur_world, s );
+                if( !last_saved.empty() ) {
+                    details += " " + string_format( _( "Last saved: %s." ), last_saved );
+                }
+                mmenu.entries.back().a11y_value = details;
+            }
         }
-        // TODO: Replace this API to allow adding context without an empty description.
-        mmenu.entries.emplace_back( opt_val++, true, MENU_AUTOASSIGN, save_str, "", playtime_str );
-    }
-    mmenu.entries.emplace_back( opt_val, true, 'q', _( "<- Back to Main Menu" ), c_yellow, c_yellow );
-    mmenu.query();
-    opt_val = mmenu.ret;
-    if( opt_val < 0 || static_cast<size_t>( opt_val ) >= savegames.size() ) {
-        return false;
-    }
+        mmenu.entries.emplace_back( opt_val, true, 'q', _( "<- Back to Main Menu" ), c_yellow, c_yellow );
+        mmenu.query();
+        opt_val = mmenu.ret;
+        if( opt_val < 0 || static_cast<size_t>( opt_val ) >= savegames.size() ) {
+            return false;
+        }
 
-    return main_menu::load_game( worldname, savegames[opt_val] );
+        const save_t chosen = savegames[opt_val];
+        if( !a11y::enabled() ) {
+            return main_menu::load_game( worldname, chosen );
+        }
+
+        const std::string res = query_popup()
+                                .context( "LOAD_DELETE_CANCEL" ).default_color( c_white )
+                                .message( _( "What to do with the save for \"%s\" in world \"%s\"?" ),
+                                          chosen.decoded_name(), worldname )
+                                .option( "LOAD" ).option( "DELETE" ).option( "CANCEL" ).cursor( 0 )
+                                .query().action;
+        if( res == "LOAD" ) {
+            return main_menu::load_game( worldname, chosen );
+        }
+        if( res == "DELETE" &&
+            query_yn( string_format(
+                          _( "Delete the save for \"%1$s\" in world \"%2$s\" permanently? This deletes the character's save files in that world. This cannot be undone." ),
+                          chosen.decoded_name(), worldname ) ) ) {
+            if( delete_character_save_files( cur_world, chosen ) ) {
+                cur_world->world_saves.erase(
+                    std::remove( cur_world->world_saves.begin(), cur_world->world_saves.end(),
+                                 chosen ),
+                    cur_world->world_saves.end() );
+                savegames.erase( savegames.begin() + opt_val );
+                popup( _( "Save for \"%s\" deleted." ), chosen.decoded_name() );
+            } else {
+                // The entry stays in the list: claiming a deletion that
+                // did not happen would strand the reader with a save
+                // they believe is gone.
+                popup( _( "The save for \"%s\" could not be deleted completely, so it has not been removed from the list." ),
+                       chosen.decoded_name() );
+            }
+        }
+        if( savegames.empty() ) {
+            return false;
+        }
+    }
 }
 
 void main_menu::world_tab( const std::string &worldname )
@@ -1376,24 +1556,55 @@ void main_menu::world_tab( const std::string &worldname )
         case 3: // Toggle save compression
             if( world_generator->get_world( worldname )->has_compression_enabled() ) {
                 if( query_yn( _( "Disable save compression?" ) ) ) {
-                    world_generator->get_world( worldname )->set_compression_enabled( false );
+                    const bool changed = world_generator->get_world( worldname )
+                                         ->set_compression_enabled( false );
+                    if( a11y::enabled() ) {
+                        // The toggle otherwise gives the reader no result.
+                        popup( changed ? _( "Save compression disabled for world \"%s\"." )
+                               : _( "Save compression could not be changed for world \"%s\"." ),
+                               worldname );
+                    }
                 }
             } else {
                 if( query_yn( _( "Enable save compression?" ) ) ) {
-                    world_generator->get_world( worldname )->set_compression_enabled( true );
+                    const bool changed = world_generator->get_world( worldname )
+                                         ->set_compression_enabled( true );
+                    if( a11y::enabled() ) {
+                        popup( changed ? _( "Save compression enabled for world \"%s\"." )
+                               : _( "Save compression could not be changed for world \"%s\"." ),
+                               worldname );
+                    }
                 }
             }
             break;
-        case 4: // Delete World
-            if( query_yn( _( "Delete the world and all saves within?" ) ) ) {
+        case 4: { // Delete World
+            WORLD *world = world_generator->get_world( worldname );
+            const size_t save_count = world != nullptr ? world->world_saves.size() : 0;
+            const bool confirmed = a11y::enabled()
+                                   ? confirm_world_removal_for_reader( worldname, save_count, true )
+                                   : query_yn( _( "Delete the world and all saves within?" ) );
+            if( confirmed ) {
                 clear_world( true );
+                if( a11y::enabled() ) {
+                    popup( _( "World \"%s\" deleted." ), worldname );
+                }
             }
             break;
-        case 5: // Reset World
-            if( query_yn( _( "Remove all saves and regenerate world?" ) ) ) {
+        }
+        case 5: { // Reset World
+            WORLD *world = world_generator->get_world( worldname );
+            const size_t save_count = world != nullptr ? world->world_saves.size() : 0;
+            const bool confirmed = a11y::enabled()
+                                   ? confirm_world_removal_for_reader( worldname, save_count, false )
+                                   : query_yn( _( "Remove all saves and regenerate world?" ) );
+            if( confirmed ) {
                 clear_world( false );
+                if( a11y::enabled() ) {
+                    popup( _( "World \"%s\" reset. All of its saves were removed." ), worldname );
+                }
             }
             break;
+        }
         default:
             break;
     }
