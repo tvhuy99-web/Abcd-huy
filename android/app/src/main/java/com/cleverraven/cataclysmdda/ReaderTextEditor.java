@@ -25,6 +25,15 @@ public final class ReaderTextEditor {
     private final Activity activity;
     private final Listener listener;
     private final boolean numeric;
+    private final boolean integer;
+    // Numeric domain from the form contract (R04.2). Null means the source
+    // publishes no bound: classic number popups have no min/max at all,
+    // only an edit step. The engine stays the authority; these values let
+    // the editor refuse an invalid draft before it is sent and speak the
+    // specific reason (not a number / out of range / wrong step).
+    private final Double rangeMin;
+    private final Double rangeMax;
+    private final Double rangeStep;
     private final LinearLayout root;
     private final LinearLayout choices;
     private final EditText field;
@@ -42,9 +51,18 @@ public final class ReaderTextEditor {
     }
 
     public ReaderTextEditor(Activity activity, String initial, boolean numeric, Listener listener) {
+        this(activity, initial, numeric, false, null, null, null, listener);
+    }
+
+    public ReaderTextEditor(Activity activity, String initial, boolean numeric, boolean integer,
+                            Double rangeMin, Double rangeMax, Double rangeStep, Listener listener) {
         this.activity = activity;
         this.listener = listener;
         this.numeric = numeric;
+        this.integer = integer;
+        this.rangeMin = rangeMin;
+        this.rangeMax = rangeMax;
+        this.rangeStep = rangeStep;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         TextView instructions = new TextView(activity);
@@ -54,8 +72,13 @@ public final class ReaderTextEditor {
         field = new EditText(activity);
         field.setSaveEnabled(false);
         field.setSingleLine(true);
+        // No suggestions/autocorrect: the text a user types or pastes must
+        // reach the game verbatim, especially search text, where the
+        // reader preserves the query exactly and only case-folds it when
+        // matching (R04.2).
         field.setInputType(numeric ? InputType.TYPE_CLASS_NUMBER | InputType.TYPE_NUMBER_FLAG_SIGNED
-                | InputType.TYPE_NUMBER_FLAG_DECIMAL : InputType.TYPE_CLASS_TEXT);
+                | InputType.TYPE_NUMBER_FLAG_DECIMAL
+                : InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_FLAG_NO_SUGGESTIONS);
         field.setContentDescription(activity.getString(R.string.a11yEditorValue));
         field.setText(initial);
         field.setSelection(field.length());
@@ -87,6 +110,10 @@ public final class ReaderTextEditor {
                 });
             }
             add(R.string.a11yEditorDigits, () -> open("digits"));
+            if (numeric && rangeStep != null) {
+                add(R.string.a11yEditorIncreaseStep, () -> stepBy(1));
+                add(R.string.a11yEditorDecreaseStep, () -> stepBy(-1));
+            }
             add(R.string.a11yEditorPunctuation, () -> open("punctuation"));
             if (!numeric) { add(R.string.a11yEditorSpace, () -> insert(" ")); }
             add(R.string.a11yEditorLeft, () -> move(-1));
@@ -104,7 +131,14 @@ public final class ReaderTextEditor {
                     readCurrent();
                 }
             });
-            add(R.string.a11yEditorApply, () -> listener.submit(getText()));
+            add(R.string.a11yEditorApply, () -> {
+                String error = validationError();
+                if (error != null) {
+                    listener.speak(error);
+                } else {
+                    listener.submit(getText());
+                }
+            });
             add(R.string.a11yEditorCancel, listener::cancel);
         } else if ("tones".equals(group)) {
             add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
@@ -244,8 +278,79 @@ public final class ReaderTextEditor {
         listener.speak(replacement);
     }
 
+    private String formatNumber(double value) {
+        if (integer || value == Math.floor(value) && Math.abs(value) < 1e15) {
+            return Long.toString(Math.round(value));
+        }
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    /** Mirrors the engine's field check (a11y_semantics check_field_value). */
+    private String validationError() {
+        if (!numeric) { return null; }
+        String text = getText();
+        double value;
+        try {
+            // The engine's parser skips leading whitespace but rejects
+            // anything trailing; mirror that instead of trim-everything.
+            if (text.isEmpty()
+                    || Character.isWhitespace(text.charAt(text.length() - 1))) {
+                throw new NumberFormatException("empty or trailing space");
+            }
+            value = Double.parseDouble(text.trim());
+        } catch (NumberFormatException invalid) {
+            return string(R.string.a11yEditorNotANumber);
+        }
+        if (!Double.isFinite(value) || integer && value != Math.floor(value)) {
+            return string(R.string.a11yEditorNotANumber);
+        }
+        if (rangeMin != null && rangeMax != null && (value < rangeMin || value > rangeMax)) {
+            return activity.getString(R.string.a11yEditorOutOfRange,
+                    formatNumber(rangeMin), formatNumber(rangeMax));
+        }
+        if (rangeMin != null && rangeStep != null && rangeStep > 0) {
+            double steps = (value - rangeMin) / rangeStep;
+            if (Math.abs(steps - Math.round(steps)) > 1e-9) {
+                return activity.getString(R.string.a11yEditorStepMismatch,
+                        formatNumber(rangeStep), formatNumber(rangeMin));
+            }
+        }
+        return null;
+    }
+
+    private void stepBy(int direction) {
+        clearing = false;
+        double value;
+        try {
+            value = Double.parseDouble(getText().trim());
+            if (!Double.isFinite(value)) { throw new NumberFormatException("not finite"); }
+        } catch (NumberFormatException invalid) {
+            listener.speak(string(R.string.a11yEditorNotANumber));
+            return;
+        }
+        value += direction * rangeStep;
+        if (rangeMin != null && rangeMax != null) {
+            value = Math.max(rangeMin, Math.min(rangeMax, value));
+        }
+        if (integer) { value = Math.round(value); }
+        String formatted = formatNumber(value);
+        field.setText(formatted);
+        field.setSelection(field.length());
+        listener.speak(formatted);
+    }
+
     public String valueDescription() {
-        return getText().isEmpty() ? string(R.string.a11yEditorEmpty) : getText();
+        if (getText().isEmpty()) { return string(R.string.a11yEditorEmpty); }
+        StringBuilder description = new StringBuilder(getText());
+        if (numeric && rangeMin != null && rangeMax != null) {
+            description.append(". ").append(activity.getString(R.string.a11yEditorRange,
+                    formatNumber(rangeMin), formatNumber(rangeMax)));
+        }
+        if (numeric && rangeStep != null) {
+            description.append(". ").append(activity.getString(R.string.a11yEditorStep,
+                    formatNumber(rangeStep)));
+        }
+        return description.toString();
     }
 
     public boolean back() {

@@ -12,6 +12,8 @@ Ngày 22/10/2026 (giờ Việt Nam), người dùng xác nhận APK `cb3c082` đ
 engine, offline, cử chỉ hoặc khả năng chơi độc lập. Không tự suy ra các mục đó
 đã đạt.
 
+> Ghi chú R22 (2026-10-23): đoạn lịch sử — APK thử giọng đời đầu, không phải mã hiện tại. Đoạn xác nhận `cb3c082` ngay trên được giữ nguyên văn chỉ để truy vết; mã hiện tại là nhánh `recovery/android-reader-ad5ecf0`.
+
 Theo yêu cầu mới, công việc chuyển sang ba giai đoạn: **viết toàn bộ mã → chạy
 toàn bộ kiểm thử → tổng hợp lỗi, sửa và kiểm thử lại**. Nhánh viết mã:
 `feature/android-reader-code-phase`. Mã mới chưa biên dịch/chạy test/tạo APK.
@@ -165,6 +167,8 @@ Các kết quả PASS bên dưới chỉ áp dụng cho mã nền/APK cũ có đ
 
 ## Trạng thái ngày 22/10/2026
 
+> Ghi chú R22 (2026-10-23): đoạn lịch sử — APK thử giọng đời đầu, không phải mã hiện tại. Toàn bộ mục trạng thái ngày 22/10/2026 này được giữ nguyên văn để truy vết.
+
 Đã có mã nền và màn thử giọng Việt native chạy được trong kiểm thử giao diện
 Android. **Chưa có bộ đọc hoặc điều khiển gameplay. Chưa nghiệm thu G0, G1,
 G2 hay khả năng chơi độc lập.** Chưa có kết quả nghe âm thanh trên điện thoại
@@ -208,6 +212,8 @@ không yêu cầu gỡ game đang có. Chưa merge vào `master`.
 
 ## Bằng chứng đã kiểm tra
 
+> Ghi chú R22 (2026-10-23): đoạn lịch sử — APK thử giọng đời đầu, không phải mã hiện tại. Các hàng nhắc tới `cb3c082` trong bảng dưới đây là bằng chứng của bản thử giọng đời đầu tại thời điểm đó; bảng được giữ nguyên văn.
+
 | Lớp kiểm tra | Kết quả | Giới hạn |
 | --- | --- | --- |
 | Công cụ kiểm kê | 4 unittest PASS | Không chứng minh đủ mọi màn hình |
@@ -224,6 +230,8 @@ opt-in mạng trở về false và thoát Activity. Chạy trực tiếp bằng 
 JUnit báo `OK (2 tests)`; không chấp nhận 0 tests như kết quả thành công.
 
 ### APK thử mới nhất
+
+> Ghi chú R22 (2026-10-23): đoạn lịch sử — APK thử giọng đời đầu, không phải mã hiện tại. Mục "APK thử mới nhất" dưới đây nói về bản thử tại `cb3c082` của thời điểm đó, không phải bản dựng của mã hiện tại; toàn bộ nội dung mục được giữ nguyên văn.
 
 [Build ARM64 tại cb3c082](https://github.com/tvhuy99-web/Abcd-huy/actions/runs/39723157038)
 đã PASS: compile đầy đủ trong 19 phút 15 giây, thư viện game/catalog Việt và

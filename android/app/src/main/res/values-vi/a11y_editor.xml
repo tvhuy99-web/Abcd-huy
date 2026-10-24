@@ -33,4 +33,11 @@
     <string name="a11yToneHook">Dấu hỏi</string>
     <string name="a11yToneTilde">Dấu ngã</string>
     <string name="a11yToneDot">Dấu nặng</string>
+    <string name="a11yEditorRange">Giá trị cho phép: %1$s đến %2$s</string>
+    <string name="a11yEditorStep">Bước nhảy: %1$s</string>
+    <string name="a11yEditorIncreaseStep">Tăng một bước</string>
+    <string name="a11yEditorDecreaseStep">Giảm một bước</string>
+    <string name="a11yEditorNotANumber">Hãy nhập một số. Bản nháp vẫn còn trong trình soạn thảo.</string>
+    <string name="a11yEditorOutOfRange">Giá trị phải từ %1$s đến %2$s. Bản nháp vẫn còn trong trình soạn thảo.</string>
+    <string name="a11yEditorStepMismatch">Giá trị phải thay đổi theo bước %1$s tính từ %2$s. Bản nháp vẫn còn trong trình soạn thảo.</string>
 </resources>

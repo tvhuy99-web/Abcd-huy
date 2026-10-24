@@ -33,4 +33,11 @@
     <string name="a11yToneHook">Hook tone</string>
     <string name="a11yToneTilde">Tilde tone</string>
     <string name="a11yToneDot">Dot tone</string>
+    <string name="a11yEditorRange">Allowed values: %1$s to %2$s</string>
+    <string name="a11yEditorStep">Step: %1$s</string>
+    <string name="a11yEditorIncreaseStep">Increase by one step</string>
+    <string name="a11yEditorDecreaseStep">Decrease by one step</string>
+    <string name="a11yEditorNotANumber">Enter a number. Your draft is still in the editor.</string>
+    <string name="a11yEditorOutOfRange">Value must be from %1$s to %2$s. Your draft is still in the editor.</string>
+    <string name="a11yEditorStepMismatch">Value must change in steps of %1$s from %2$s. Your draft is still in the editor.</string>
 </resources>

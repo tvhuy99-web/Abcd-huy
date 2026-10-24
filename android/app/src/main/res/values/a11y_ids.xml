@@ -11,7 +11,19 @@
     <item type="id" name="a11y_vertical_swipe_action" />
     <item type="id" name="a11y_try_gesture_mapping" />
     <item type="id" name="a11y_restore_gesture_defaults" />
+    <item type="id" name="a11y_voice_language" />
+    <item type="id" name="a11y_voice_engine" />
+    <item type="id" name="a11y_voice_choice" />
+    <item type="id" name="a11y_rescue_help" />
     <item type="id" name="a11y_test_voice" />
     <item type="id" name="a11y_stop_voice" />
     <item type="id" name="a11y_return" />
+    <item type="id" name="a11y_backup_export" />
+    <item type="id" name="a11y_backup_import" />
+    <item type="id" name="a11y_backup_open_picker" />
+    <item type="id" name="a11y_backup_confirm_restore" />
+    <item type="id" name="a11y_backup_cancel_restore" />
+    <item type="id" name="a11y_sound_cues" />
+    <item type="id" name="a11y_haptic_cues" />
+    <item type="id" name="a11y_diagnostics_read" />
 </resources>

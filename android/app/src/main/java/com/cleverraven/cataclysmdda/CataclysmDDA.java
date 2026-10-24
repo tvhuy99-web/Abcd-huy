@@ -117,6 +117,14 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.announceGameMessage(text, priority); }
     }
 
+    // Called from the SDL game thread with one internal cue literal
+    // (R21.2). The controller checks the lifecycle and the user's cue
+    // opt-in before anything plays.
+    public void onAccessibilityCue(String name) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onGameCue(name); }
+    }
+
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native boolean nativeReaderIntent(long session, long frame, long generation,
             long revision, long request, String node, String action, String value);

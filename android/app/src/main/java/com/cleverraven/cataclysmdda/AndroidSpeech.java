@@ -7,6 +7,10 @@ import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
 
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 import java.util.Locale;
 
 /** Android output driver. Gameplay priorities and context ownership belong to
@@ -15,7 +19,7 @@ import java.util.Locale;
  *  The owner must close this instance when its lifecycle ends.
  */
 public final class AndroidSpeech implements AutoCloseable {
-    public enum State { NEW, INITIALIZING, READY, MISSING_LANGUAGE, NETWORK_REQUIRED, FAILED, CLOSED }
+    public enum State { NEW, INITIALIZING, READY, MISSING_LANGUAGE, MISSING_VOICE, NETWORK_REQUIRED, FAILED, CLOSED }
     public enum Event { STARTED, DONE, CANCELLED, REJECTED, ERROR }
 
     public interface Listener {
@@ -23,6 +27,140 @@ public final class AndroidSpeech implements AutoCloseable {
         // for its game thread, never mutate gameplay from here.
         void onState(State state);
         void onUtterance(String clientId, Event event);
+    }
+
+    /** One installed TTS engine, as reported by a probe instance (R06.1). */
+    public static final class EngineOption {
+        public final String name;
+        public final String label;
+
+        EngineOption(String name, String label) {
+            this.name = name;
+            this.label = label;
+        }
+    }
+
+    /**
+     * One voice offered by one engine. Only the stable voice name is kept;
+     * the live {@link Voice} object is re-resolved inside the owning
+     * AndroidSpeech instance at initialize time, so a selection can be
+     * persisted and later reported MISSING_VOICE if the voice was removed.
+     */
+    public static final class VoiceOption {
+        public final String engineName;
+        public final String voiceName;
+        public final Locale locale;
+        public final boolean networkRequired;
+
+        VoiceOption(String engineName, Voice voice) {
+            this.engineName = engineName;
+            this.voiceName = voice.getName();
+            this.locale = voice.getLocale();
+            this.networkRequired = voice.isNetworkConnectionRequired();
+        }
+    }
+
+    /** Result of a one-shot engine/voice probe; lists are never null. */
+    public interface ProbeListener {
+        void onProbe(List<EngineOption> engines, List<VoiceOption> voices, boolean success);
+    }
+
+    private static final long PROBE_TIMEOUT_MS = 8000;
+
+    /**
+     * Enumerate installed engines and the voices of one engine (null asks
+     * for the system default engine) with a short-lived probe instance.
+     * The probe is always shut down before the callback and never speaks,
+     * so it cannot disturb the caller's own engine (R06.1/R06.2: exactly
+     * one speaking owner at a time; a probe is discovery-only).
+     */
+    public static void probeVoices(Context context, String engineName, ProbeListener listener) {
+        final Handler probeHandler = new Handler(Looper.getMainLooper());
+        final Context appContext = context.getApplicationContext();
+        probeHandler.post(() -> {
+            final TextToSpeech[] holder = new TextToSpeech[1];
+            final boolean[] finished = new boolean[1];
+            final Runnable timeout = () -> {
+                if (finished[0]) {
+                    return;
+                }
+                finished[0] = true;
+                shutdownProbe(holder[0]);
+                listener.onProbe(Collections.emptyList(), Collections.emptyList(), false);
+            };
+            probeHandler.postDelayed(timeout, PROBE_TIMEOUT_MS);
+            try {
+                TextToSpeech.OnInitListener onInit = status -> probeHandler.post(() -> {
+                    if (finished[0]) {
+                        return;
+                    }
+                    finished[0] = true;
+                    probeHandler.removeCallbacks(timeout);
+                    List<EngineOption> engines = new ArrayList<>();
+                    List<VoiceOption> voices = new ArrayList<>();
+                    boolean success = status == TextToSpeech.SUCCESS && holder[0] != null;
+                    if (success) {
+                        try {
+                            for (TextToSpeech.EngineInfo info : holder[0].getEngines()) {
+                                engines.add(new EngineOption(info.name, info.label));
+                            }
+                            List<Voice> found = new ArrayList<>(holder[0].getVoices());
+                            Collections.sort(found,
+                                    Comparator.comparing((Voice v) -> v.getLocale().toLanguageTag())
+                                            .thenComparing(Voice::getName));
+                            String owner = engineName;
+                            if (owner == null) {
+                                TextToSpeech.EngineInfo current = currentEngine(holder[0], engines);
+                                owner = current != null ? current.name : "";
+                            }
+                            for (Voice voice : found) {
+                                voices.add(new VoiceOption(owner, voice));
+                            }
+                        } catch (RuntimeException exception) {
+                            success = false;
+                            engines.clear();
+                            voices.clear();
+                        }
+                    }
+                    shutdownProbe(holder[0]);
+                    listener.onProbe(engines, voices, success);
+                });
+                holder[0] = engineName == null
+                        ? new TextToSpeech(appContext, onInit)
+                        : new TextToSpeech(appContext, onInit, engineName);
+            } catch (RuntimeException exception) {
+                if (!finished[0]) {
+                    finished[0] = true;
+                    probeHandler.removeCallbacks(timeout);
+                    listener.onProbe(Collections.emptyList(), Collections.emptyList(), false);
+                }
+            }
+        });
+    }
+
+    private static TextToSpeech.EngineInfo currentEngine(TextToSpeech tts,
+                                                         List<EngineOption> ignored) {
+        try {
+            String current = tts.getDefaultEngine();
+            for (TextToSpeech.EngineInfo info : tts.getEngines()) {
+                if (info.name.equals(current)) {
+                    return info;
+                }
+            }
+        } catch (RuntimeException ignoredException) {
+            // Fall through: the probe still reports voices without an owner name.
+        }
+        return null;
+    }
+
+    private static void shutdownProbe(TextToSpeech probe) {
+        if (probe != null) {
+            try {
+                probe.shutdown();
+            } catch (RuntimeException ignored) {
+                // Probe is discarded either way.
+            }
+        }
     }
 
     private static final long INIT_TIMEOUT_MS = 8000;
@@ -54,10 +192,27 @@ public final class AndroidSpeech implements AutoCloseable {
 
     /** Online voices require an explicit caller choice, never silent fallback. */
     public void initialize(String engineName, Locale language, float rate, boolean offlineOnly) {
-        handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly));
+        initialize(engineName, language, rate, offlineOnly, null);
+    }
+
+    /**
+     * Initialize with one explicitly chosen voice (by stable name, R06.1).
+     * A named voice that no longer exists fails MISSING_VOICE instead of
+     * silently speaking with a different voice; a named network voice
+     * under offlineOnly fails NETWORK_REQUIRED, exactly like the default
+     * voice path. Passing null keeps the engine-default voice behavior.
+     */
+    public void initialize(String engineName, Locale language, float rate, boolean offlineOnly,
+                           String voiceName) {
+        handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly, voiceName));
     }
 
     private void initializeOnMain(String engineName, Locale language, float rate, boolean offlineOnly) {
+        initializeOnMain(engineName, language, rate, offlineOnly, null);
+    }
+
+    private void initializeOnMain(String engineName, Locale language, float rate, boolean offlineOnly,
+                                  String voiceName) {
         if (state == State.CLOSED) {
             return;
         }
@@ -90,14 +245,35 @@ public final class AndroidSpeech implements AutoCloseable {
                         fail(State.FAILED);
                         return;
                     }
-                    Voice voice = engine.getVoice();
-                    if (voice == null || !language.getLanguage().equals(voice.getLocale().getLanguage())) {
-                        fail(State.MISSING_LANGUAGE);
-                        return;
-                    }
-                    if (offlineOnly && voice.isNetworkConnectionRequired()) {
-                        fail(State.NETWORK_REQUIRED);
-                        return;
+                    Voice voice;
+                    if (voiceName != null) {
+                        voice = findVoice(voiceName);
+                        if (voice == null) {
+                            fail(State.MISSING_VOICE);
+                            return;
+                        }
+                        if (!language.getLanguage().equals(voice.getLocale().getLanguage())) {
+                            fail(State.MISSING_LANGUAGE);
+                            return;
+                        }
+                        if (offlineOnly && voice.isNetworkConnectionRequired()) {
+                            fail(State.NETWORK_REQUIRED);
+                            return;
+                        }
+                        if (engine.setVoice(voice) == TextToSpeech.ERROR) {
+                            fail(State.FAILED);
+                            return;
+                        }
+                    } else {
+                        voice = engine.getVoice();
+                        if (voice == null || !language.getLanguage().equals(voice.getLocale().getLanguage())) {
+                            fail(State.MISSING_LANGUAGE);
+                            return;
+                        }
+                        if (offlineOnly && voice.isNetworkConnectionRequired()) {
+                            fail(State.NETWORK_REQUIRED);
+                            return;
+                        }
                     }
                     if (session.markReady(epoch)) {
                         setState(State.READY);
@@ -118,6 +294,20 @@ public final class AndroidSpeech implements AutoCloseable {
         } catch (RuntimeException exception) {
             fail(State.FAILED);
         }
+    }
+
+    /** Resolve a persisted voice name against this engine's current voices. */
+    private Voice findVoice(String voiceName) {
+        try {
+            for (Voice candidate : engine.getVoices()) {
+                if (voiceName.equals(candidate.getName())) {
+                    return candidate;
+                }
+            }
+        } catch (RuntimeException ignored) {
+            // Treated as missing: the caller recovers by explicit re-selection.
+        }
+        return null;
     }
 
     /** One chunk at a time; the caller waits for DONE before its next chunk.

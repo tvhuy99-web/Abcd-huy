@@ -56,7 +56,13 @@ public class SplashScreen extends Activity {
     private AlertDialog accessibilityServicesAlert;
     private boolean readerSetupOpened;
     private boolean installationRunning;
+    // The game Activity is launched exactly once per SplashScreen instance:
+    // repeated triggers (resume, dialog buttons, the Start button) and a
+    // queued delayed start must not stack a second launch (R03.2).
+    private boolean gameStartLaunched;
     private AndroidSpeech bootstrapSpeech;
+    private RescueAudioPlayer rescuePlayer;
+    private boolean rescueScreenShown;
     private BootstrapSelfVoiceSurface bootstrapSurface;
     private TextView bootstrapProgressText;
     private String pendingBootstrapSpeech;
@@ -99,6 +105,7 @@ public class SplashScreen extends Activity {
                     if (isFinishing() || isDestroyed()) { return; }
                     bootstrapSpeechInitializing = state == AndroidSpeech.State.INITIALIZING;
                     if (state == AndroidSpeech.State.READY) {
+                        rescueScreenShown = false;
                         if (pendingBootstrapSpeech != null) {
                             String message = pendingBootstrapSpeech;
                             pendingBootstrapSpeech = null;
@@ -108,10 +115,21 @@ public class SplashScreen extends Activity {
                         }
                     } else if (state == AndroidSpeech.State.FAILED
                             || state == AndroidSpeech.State.MISSING_LANGUAGE
+                            || state == AndroidSpeech.State.MISSING_VOICE
                             || state == AndroidSpeech.State.NETWORK_REQUIRED) {
                         View feedback = bootstrapProgressText != null ? bootstrapProgressText : bootstrapSurface;
                         if (feedback != null) {
                             feedback.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
+                        }
+                        // Packaged rescue audio (R06.3): TTS itself is the
+                        // broken piece here, so only pre-recorded clips can
+                        // still reach the user. During installation the
+                        // install screens speak for themselves on failure;
+                        // otherwise switch to the rescue screen once.
+                        if (!installationRunning && bootstrapSurface != null && !rescueScreenShown) {
+                            showBootstrapRescueScreen();
+                        } else if (!installationRunning) {
+                            playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED);
                         }
                     }
                 }
@@ -123,12 +141,92 @@ public class SplashScreen extends Activity {
         AndroidSpeech.State state = bootstrapSpeech.getState();
         if (refreshBootstrapSpeechOnResume || state == AndroidSpeech.State.NEW || state == AndroidSpeech.State.FAILED
                 || state == AndroidSpeech.State.MISSING_LANGUAGE
+                || state == AndroidSpeech.State.MISSING_VOICE
                 || state == AndroidSpeech.State.NETWORK_REQUIRED) {
             ReaderPreferences preferences = new ReaderPreferences(this);
             bootstrapSpeechInitializing = true;
-            bootstrapSpeech.initialize(null, new java.util.Locale("vi", "VN"), preferences.getRate(),
-                    !preferences.permitsNetworkVoice());
+            bootstrapSpeech.initialize(preferences.getSpeechEngineName(),
+                    java.util.Locale.forLanguageTag(preferences.getSpeechLanguageTag()),
+                    preferences.getRate(), !preferences.permitsNetworkVoice(),
+                    preferences.getSpeechVoiceName());
             refreshBootstrapSpeechOnResume = false;
+        }
+    }
+
+    private RescueAudioPlayer rescuePlayer() {
+        if (rescuePlayer == null) {
+            rescuePlayer = new RescueAudioPlayer(this);
+        }
+        return rescuePlayer;
+    }
+
+    private void playRescueClip(int clipResId) {
+        if (BuildConfig.FLAVOR.equals("accessibility")) {
+            rescuePlayer().play(clipResId);
+        }
+    }
+
+    /**
+     * Rescue screen for a broken/missing voice (R06.3). The buttons are
+     * ordinary labeled buttons in the exact order the packaged clip
+     * describes: replay the guidance, retry the voice, open the system
+     * voice settings, open reader setup, go back. This screen never tries
+     * to drive the Android settings UI; it only opens it and relies on
+     * the normal activity stack to bring the user back here.
+     */
+    private void showBootstrapRescueScreen() {
+        if (!shouldSelfVoiceBootstrap()) { return; }
+        rescueScreenShown = true;
+        showBootstrapMessage(R.string.a11yRescueTitle, getString(R.string.a11yRescueTtsMessage),
+                new int[] { R.string.a11yRescueReplay, R.string.a11yRescueRetryVoice,
+                        R.string.a11yAndroidVoiceSettings, R.string.a11yReaderSetup,
+                        R.string.a11yRescueBack },
+                new Runnable[] {
+                        () -> playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED),
+                        this::retryBootstrapVoice,
+                        this::openTtsSettings,
+                        () -> {
+                            readerSetupOpened = true;
+                            startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
+                        },
+                        () -> {
+                            Intent intent = new Intent(SplashScreen.this, SplashScreen.class);
+                            startActivity(intent);
+                            finish();
+                        }
+                });
+        playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED);
+    }
+
+    private void retryBootstrapVoice() {
+        playRescueClip(RescueAudioPlayer.CLIP_RETRYING);
+        if (bootstrapSpeech != null) {
+            bootstrapSpeech.close();
+            bootstrapSpeech = null;
+        }
+        rescueScreenShown = false;
+        ensureBootstrapSpeech();
+    }
+
+    private void openTtsSettings() {
+        try {
+            startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
+        } catch (ActivityNotFoundException missing) {
+            try {
+                startActivity(new Intent(Settings.ACTION_SETTINGS));
+            } catch (ActivityNotFoundException unavailable) {
+                showBootstrapMessage(R.string.a11ySettingsUnavailable,
+                        getString(R.string.a11yRescueTtsMessage),
+                        new int[] { R.string.a11yRescueReplay, R.string.a11yRescueBack },
+                        new Runnable[] {
+                                () -> playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED),
+                                () -> {
+                                    Intent intent = new Intent(SplashScreen.this, SplashScreen.class);
+                                    startActivity(intent);
+                                    finish();
+                                }
+                        });
+            }
         }
     }
 
@@ -312,6 +410,9 @@ public class SplashScreen extends Activity {
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause()");
+        if (rescuePlayer != null) {
+            rescuePlayer.stop();
+        }
         if (bootstrapSpeech != null) {
             bootstrapSpeech.cancel();
             refreshBootstrapSpeechOnResume = true;
@@ -352,8 +453,28 @@ public class SplashScreen extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (rescuePlayer != null) { rescuePlayer.release(); rescuePlayer = null; }
         if (bootstrapSpeech != null) { bootstrapSpeech.close(); }
         super.onDestroy();
+    }
+
+    // Install journal (R06.4): written by InstallProgramTask around the
+    // staged swap. A SWAPPING state found at launch means the previous
+    // process died mid-swap, so the "installed" version must not be
+    // trusted until the task has restored the rollback copy.
+    static final String INSTALL_JOURNAL_FILE = "install_journal.txt";
+
+    private String readInstallJournalState() {
+        File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
+        if (!journal.isFile()) {
+            return null;
+        }
+        try (BufferedReader reader = new BufferedReader(new FileReader(journal))) {
+            String line = reader.readLine();
+            return line == null ? null : line.trim();
+        } catch (IOException e) {
+            return null;
+        }
     }
 
     @Override
@@ -370,7 +491,11 @@ public class SplashScreen extends Activity {
         if (installationRunning) { return; }
         accessibilityServicesAlert.dismiss();
         // Start the game if already installed, otherwise start installing...
-        if (getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
+        // A mid-swap death (journal left at SWAPPING) forces the install
+        // task even when the version matches: the task restores the
+        // rollback copy before staging anything new (R06.4).
+        boolean swapInterrupted = "SWAPPING".equals(readInstallJournalState());
+        if (!swapInterrupted && getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
             // Show an alert box if the game crashed last time
             String externalFilesDir = getExternalFilesDir(null).getPath();
             File crashAlertPrompt = new File(externalFilesDir + "/config/crash.log.prompt");
@@ -464,6 +589,10 @@ public class SplashScreen extends Activity {
     private final class StartGameRunnable implements Runnable {
         @Override
         public void run() {
+            // A start queued before this Activity went away (or a second
+            // trigger racing the first launch) must not fire late (R03.2).
+            if (gameStartLaunched || isFinishing() || isDestroyed()) { return; }
+            gameStartLaunched = true;
             Intent intent = new Intent(SplashScreen.this, CataclysmDDA.class);
             intent.addFlags(Intent.FLAG_ACTIVITY_NO_ANIMATION);
             startActivity(intent);
@@ -492,6 +621,24 @@ public class SplashScreen extends Activity {
         private AlertDialog settingsAlert;
         private AlertDialog helpAlert;
         private String installationError;
+        private String installationErrorCode;
+
+        // Staged installation (R06.4): new data is copied to a staging
+        // tree, verified, and only then swapped into place. The previous
+        // live tree is kept as a rollback copy until the swap commits, and
+        // a journal in internal storage records the phase so a process
+        // death mid-swap is recovered on the next launch instead of
+        // leaving a half-written data tree that looks installed.
+        static final String ERR_NO_SPACE = "no_space";
+        static final String ERR_COPY = "copy";
+        static final String ERR_VERIFY = "verify";
+        static final String ERR_SWAP = "swap";
+        private static final String STAGING_DIR = ".reader_install_staging";
+        private static final String ROLLBACK_DIR = ".reader_install_rollback";
+        private static final long INSTALL_RESERVE_BYTES = 32L * 1024L * 1024L;
+        // Instance field on purpose: a String[] is not a compile-time
+        // constant, so it may not be static inside this inner class.
+        private final String[] DATA_TOPS = { "data", "gfx", "lang" };
 
         @Override
         protected void onPreExecute() {
@@ -617,15 +764,24 @@ public class SplashScreen extends Activity {
         }
 
         private void showBootstrapInstallationError() {
+            // The packaged clip names these buttons in this exact order:
+            // replay guidance, retry installation, open settings, exit.
+            final int clip = InstallProgramTask.ERR_NO_SPACE.equals(installationErrorCode)
+                    ? RescueAudioPlayer.CLIP_NO_SPACE : RescueAudioPlayer.CLIP_INSTALL_FAILED;
             showBootstrapMessage(R.string.installationFailed,
                     installationFailureDescription(),
-                    new int[] { R.string.a11yBootstrapRetry, R.string.a11yBootstrapOpenSettings,
-                            R.string.a11yBootstrapExit },
-                    new Runnable[] { SplashScreen.this::installOrRun, this::openBootstrapDeviceSettings,
+                    new int[] { R.string.a11yRescueReplay, R.string.a11yBootstrapRetry,
+                            R.string.a11yBootstrapOpenSettings, R.string.a11yBootstrapExit },
+                    new Runnable[] { () -> SplashScreen.this.playRescueClip(clip),
+                            SplashScreen.this::installOrRun, this::openBootstrapDeviceSettings,
                             () -> SplashScreen.this.finish() });
+            SplashScreen.this.playRescueClip(clip);
         }
 
         private String installationFailureDescription() {
+            if (InstallProgramTask.ERR_NO_SPACE.equals(installationErrorCode)) {
+                return getString(R.string.a11yBootstrapNoSpace);
+            }
             String detail = installationError == null || installationError.isEmpty()
                     ? getString(R.string.a11yBootstrapUnknownError) : installationError;
             return getString(R.string.a11yBootstrapInstallFailure, detail);
@@ -796,10 +952,16 @@ public class SplashScreen extends Activity {
         protected Boolean doInBackground(Void... params) {
             AssetManager assetManager = getAssets();
             String externalFilesDir = getExternalFilesDir(null).getPath();
+            File root = new File(externalFilesDir);
+            File staging = new File(root, STAGING_DIR);
+            File rollback = new File(root, ROLLBACK_DIR);
 
-            long deleteMillis;
             long copyMillis;
             try {
+                // Finish or undo whatever a previous process left behind
+                // before touching anything (journal-driven, see below).
+                recoverInterruptedInstall(root, staging, rollback);
+
                 // builds without the generated list fall back to walking the APK
                 long phaseStart = SystemClock.elapsedRealtime();
                 List<String> assetFiles = readAssetFileList(assetManager);
@@ -811,20 +973,40 @@ public class SplashScreen extends Activity {
                 }
                 totalFiles = assetFiles.size();
                 countMillis = SystemClock.elapsedRealtime() - phaseStart;
-                publishProgress(installedFiles, totalFiles);
+                publishProgress(0, totalFiles);
+
+                // Measure the exact uncompressed size by streaming the
+                // assets once. The totals are the completion criteria for
+                // the staged copy below: file count and byte count must
+                // match exactly, and the free-space check uses the same
+                // measured number instead of a guessed constant.
+                long expectedBytes = 0;
+                for (String assetFile : assetFiles) {
+                    expectedBytes += countAssetBytes(assetManager, assetFile);
+                }
+                long usable = root.getUsableSpace();
+                if (usable > 0 && usable < expectedBytes + INSTALL_RESERVE_BYTES) {
+                    installationErrorCode = ERR_NO_SPACE;
+                    installationError = "usable=" + usable + " needed=" + expectedBytes;
+                    return false;
+                }
 
                 phaseStart = SystemClock.elapsedRealtime();
-                // Clear out the old data if it exists (but preserve custom folders + files)
-                deleteRecursive(assetManager, externalFilesDir, new File(externalFilesDir + "/data"));
-                deleteRecursive(assetManager, externalFilesDir, new File(externalFilesDir + "/gfx"));
-                deleteRecursive(assetManager, externalFilesDir, new File(externalFilesDir + "/lang"));
-                deleteMillis = SystemClock.elapsedRealtime() - phaseStart;
-
-                phaseStart = SystemClock.elapsedRealtime();
-                // Install the new data over the top
+                // Stage the whole new tree next to the live one; the live
+                // tree (and the user's custom content inside it) is not
+                // modified in this phase, so a failure here loses nothing.
+                writeInstallJournal("STAGING");
+                deletePlain(staging);
+                if (!staging.mkdirs() && !staging.isDirectory()) {
+                    installationErrorCode = ERR_COPY;
+                    installationError = "cannot create staging directory";
+                    return false;
+                }
+                installedFiles = 0;
+                copiedBytes = 0;
                 String lastFolder = "";
                 for (String assetFile : assetFiles) {
-                    File target = new File(externalFilesDir + "/" + assetFile);
+                    File target = new File(staging, assetFile);
                     String folder = target.getParent();
                     if (!folder.equals(lastFolder)) {
                         new File(folder).mkdirs();
@@ -833,18 +1015,243 @@ public class SplashScreen extends Activity {
                     copyAsset(assetManager, assetFile, target.getPath());
                 }
                 copyMillis = SystemClock.elapsedRealtime() - phaseStart;
-            } catch(Exception e) {
+
+                // Completion check on the staged tree itself, not on the
+                // copy loop's claims: count and measure what is on disk.
+                long[] staged = measureTree(staging);
+                if (staged[0] != totalFiles || staged[1] != expectedBytes || staged[1] != copiedBytes) {
+                    installationErrorCode = ERR_VERIFY;
+                    installationError = "staged files=" + staged[0] + "/" + totalFiles
+                            + " bytes=" + staged[1] + "/" + expectedBytes;
+                    return false;
+                }
+                writeInstallJournal("STAGED");
+
+                // Swap: park the live tree as the rollback copy, move the
+                // staged tree in, then move the user's preserved custom
+                // content back out of the rollback copy. All moves are
+                // renames inside one filesystem. From the SWAPPING journal
+                // write until COMMITTED, a process death is recovered by
+                // restoring the rollback copy on the next launch.
+                installationErrorCode = ERR_SWAP;
+                writeInstallJournal("SWAPPING");
+                deletePlain(rollback);
+                if (!rollback.mkdirs() && !rollback.isDirectory()) {
+                    installationErrorCode = ERR_SWAP;
+                    installationError = "cannot create rollback directory";
+                    return false;
+                }
+                for (String top : DATA_TOPS) {
+                    moveDirectory(new File(root, top), new File(rollback, top));
+                }
+                for (String top : DATA_TOPS) {
+                    moveDirectory(new File(staging, top), new File(root, top));
+                }
+                restorePreservedCustom(rollback, root, assetFiles);
+                writeInstallJournal("COMMITTED");
+            } catch (Exception e) {
+                if (installationErrorCode == null) {
+                    installationErrorCode = ERR_COPY;
+                }
                 installationError = e.getMessage();
                 return false;
             }
 
-            // Remember which version the installed data is
+            // Remember which version the installed data is. This is only
+            // written after the swap committed, so the game is never
+            // reported ready on staged or half-swapped data.
             PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).edit().putString("installed", getVersionName()).commit();
 
-            publishProgress(++installedFiles);
+            deletePlain(rollback);
+            deletePlain(staging);
+            writeInstallJournal(null);
+            publishProgress(installedFiles, totalFiles);
             Log.i(TAG, "Installed " + installedFiles + " files, " + copiedBytes + " bytes: count "
-                  + countMillis + " ms, delete " + deleteMillis + " ms, copy " + copyMillis + " ms");
+                  + countMillis + " ms, staged copy " + copyMillis + " ms");
             return true;
+        }
+
+        private void writeInstallJournal(String state) {
+            File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
+            if (state == null) {
+                journal.delete();
+                return;
+            }
+            try (FileOutputStream out = new FileOutputStream(journal)) {
+                out.write((state + "\n" + getVersionName() + "\n").getBytes("UTF-8"));
+                out.getFD().sync();
+            } catch (IOException ignored) {
+                // A journal that cannot be written leaves the state
+                // unknown; the next launch then treats leftover staging
+                // as disposable and never trusts it as installed data.
+            }
+        }
+
+        private String readJournalState() {
+            File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
+            if (!journal.isFile()) {
+                return null;
+            }
+            try (BufferedReader reader = new BufferedReader(new FileReader(journal))) {
+                String line = reader.readLine();
+                return line == null ? null : line.trim();
+            } catch (IOException e) {
+                return null;
+            }
+        }
+
+        /**
+         * Bring the data tree back to a known state after a previous
+         * install died: STAGING/STAGED leftovers are discarded (the live
+         * tree was never touched), a SWAPPING leftover restores the
+         * parked rollback copy over the half-swapped live tree, and a
+         * COMMITTED leftover only needs its rollback copy cleaned up.
+         */
+        private void recoverInterruptedInstall(File root, File staging, File rollback) {
+            String state = readJournalState();
+            if (state == null) {
+                // No journal: staging/rollback leftovers cannot be
+                // trusted as part of any committed install.
+                deletePlain(staging);
+                deletePlain(rollback);
+                return;
+            }
+            if ("SWAPPING".equals(state) && rollback.isDirectory()) {
+                for (String top : DATA_TOPS) {
+                    File parked = new File(rollback, top);
+                    if (parked.exists()) {
+                        deletePlain(new File(root, top));
+                        parked.renameTo(new File(root, top));
+                    }
+                }
+            }
+            deletePlain(staging);
+            deletePlain(rollback);
+            writeInstallJournal(null);
+        }
+
+        /** Uncompressed length of one asset, measured by streaming it. */
+        private long countAssetBytes(AssetManager assetManager, String assetPath) throws IOException {
+            long total = 0;
+            byte[] chunk = new byte[256 * 1024];
+            try (InputStream in = assetManager.open(assetPath)) {
+                int read;
+                while ((read = in.read(chunk)) != -1) {
+                    total += read;
+                }
+            }
+            return total;
+        }
+
+        /** {file count, total bytes} of everything under a directory. */
+        private long[] measureTree(File directory) {
+            long[] result = { 0, 0 };
+            File[] children = directory.listFiles();
+            if (children == null) {
+                return result;
+            }
+            for (File child : children) {
+                if (child.isDirectory()) {
+                    long[] sub = measureTree(child);
+                    result[0] += sub[0];
+                    result[1] += sub[1];
+                } else {
+                    result[0]++;
+                    result[1] += child.length();
+                }
+            }
+            return result;
+        }
+
+        private void moveDirectory(File from, File to) throws IOException {
+            if (!from.exists()) {
+                return;
+            }
+            if (to.exists()) {
+                throw new IOException("swap target already exists: " + to.getPath());
+            }
+            File parent = to.getParentFile();
+            if (parent != null) {
+                parent.mkdirs();
+            }
+            if (!from.renameTo(to)) {
+                throw new IOException("cannot move " + from.getPath() + " to " + to.getPath());
+            }
+        }
+
+        /** Plain recursive delete with no preservation rules (staging/rollback only). */
+        private void deletePlain(File fileOrDirectory) {
+            if (fileOrDirectory == null || !fileOrDirectory.exists()) {
+                return;
+            }
+            if (fileOrDirectory.isDirectory()) {
+                File[] children = fileOrDirectory.listFiles();
+                if (children != null) {
+                    for (File child : children) {
+                        deletePlain(child);
+                    }
+                }
+            }
+            fileOrDirectory.delete();
+        }
+
+        /**
+         * Move the user's custom content out of the parked old tree into
+         * the new live tree, mirroring the preservation rules the old
+         * delete-then-copy flow applied: whole custom folders under
+         * data/sound, data/mods and data/gfx that are not shipped in the
+         * APK, any folder named font, and files named
+         * user-default-mods.json. Shipped paths are already in the new
+         * tree from staging and are left in the rollback copy to be
+         * discarded with it.
+         */
+        private void restorePreservedCustom(File rollback, File root, List<String> assetFiles) {
+            java.util.Set<String> shippedDirs = new java.util.HashSet<>();
+            for (String assetFile : assetFiles) {
+                String path = assetFile;
+                int slash;
+                while ((slash = path.lastIndexOf('/')) > 0) {
+                    path = path.substring(0, slash);
+                    shippedDirs.add(path);
+                }
+            }
+            restorePreservedCustomWalk(rollback, rollback, root, shippedDirs);
+        }
+
+        private void restorePreservedCustomWalk(File base, File current, File root,
+                                                java.util.Set<String> shippedDirs) {
+            File[] children = current.listFiles();
+            if (children == null) {
+                return;
+            }
+            for (File child : children) {
+                String relative = child.getPath().substring(base.getPath().length() + 1)
+                        .replace(File.separatorChar, '/');
+                if (child.isDirectory()) {
+                    String name = child.getName().toLowerCase();
+                    String parentName = current.equals(base) ? ""
+                            : current.getName().toLowerCase();
+                    boolean customUnderPreservedParent =
+                            ("sound".equals(parentName) || "mods".equals(parentName)
+                                    || "gfx".equals(parentName))
+                                    && !shippedDirs.contains(relative);
+                    if ("font".equals(name) || customUnderPreservedParent) {
+                        File target = new File(root, relative);
+                        if (!target.exists()) {
+                            target.getParentFile().mkdirs();
+                            child.renameTo(target);
+                        }
+                        continue;
+                    }
+                    restorePreservedCustomWalk(base, child, root, shippedDirs);
+                } else if (PRESERVE_FILES.contains(child.getName().toLowerCase())) {
+                    File target = new File(root, relative);
+                    if (!target.exists()) {
+                        target.getParentFile().mkdirs();
+                        child.renameTo(target);
+                    }
+                }
+            }
         }
 
         void deleteRecursive(AssetManager assetManager, String externalFilesDir, File fileOrDirectory) {
@@ -981,7 +1388,20 @@ public class SplashScreen extends Activity {
             installationRunning = false;
             removeDialog(INSTALL_DIALOG_ID);
             if(result) {
-                if (shouldSelfVoiceBootstrap()) { showBootstrapSettings(); }
+                if (shouldSelfVoiceBootstrap()) {
+                    showBootstrapSettings();
+                    // Installation suppressed the rescue screen while it
+                    // ran; if the voice is still broken now that the
+                    // install finished, offer the rescue path before the
+                    // user is left on a silent settings screen (R06.3).
+                    if (bootstrapSpeech != null && !rescueScreenShown
+                            && (bootstrapSpeech.getState() == AndroidSpeech.State.FAILED
+                            || bootstrapSpeech.getState() == AndroidSpeech.State.MISSING_LANGUAGE
+                            || bootstrapSpeech.getState() == AndroidSpeech.State.MISSING_VOICE
+                            || bootstrapSpeech.getState() == AndroidSpeech.State.NETWORK_REQUIRED)) {
+                        showBootstrapRescueScreen();
+                    }
+                }
                 else { settingsAlert.show(); }
             } else {
                 if (shouldSelfVoiceBootstrap()) { showBootstrapInstallationError(); }

@@ -28,6 +28,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final CataclysmDDA activity;
     private final ReaderPreferences preferences;
     private final ReaderSpeechQueue speech;
+    private final ReaderCuePlayer cues;
     private final AccessibilityManager accessibility;
     private final ReaderGestureSurface root;
     private final TextView title;
@@ -37,9 +38,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final List<Button> rowViews = new ArrayList<>();
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
     private ReaderSnapshot snapshot;
+    private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
     private String editorContext = "";
     private long editorRequest;
+    private String formContext = "";
+    private long formRequest;
     private boolean readScreenSummary;
     private String search = "";
     private boolean onlyCommands;
@@ -61,7 +65,47 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         this.activity = activity;
         preferences = new ReaderPreferences(activity);
         accessibility = (AccessibilityManager) activity.getSystemService(Context.ACCESSIBILITY_SERVICE);
-        speech = new ReaderSpeechQueue(activity, this::onSpeechHealth);
+        speech = new ReaderSpeechQueue(activity, new ReaderSpeechQueue.Listener() {
+            @Override
+            public void onHealth(AndroidSpeech.State state) {
+                onSpeechHealth(state);
+            }
+
+            @Override
+            public void onVoiceRecovered() {
+                if (closed) { return; }
+                status.setText(R.string.a11yReaderVoiceRecoveredDefault);
+                status.announceForAccessibility(
+                        activity.getString(R.string.a11yReaderVoiceRecoveredDefault));
+            }
+        });
+        // Optional cues (R21.2): fired by the engine at the same points
+        // that produce spoken outcomes/warnings, plus locally for intent
+        // rejection receipts. A cue failure is said out loud once.
+        cues = new ReaderCuePlayer(activity, preferences, () -> {
+            if (!closed) {
+                feedback(activity.getString(R.string.a11yCueUnavailable));
+            }
+        });
+        documentReader = new ReaderDocumentReader(activity);
+        // Document position survives interruptions (R04.4): the queue
+        // only reports whether the current paragraph finished or was cut
+        // off; the document reader decides what Continue replays.
+        speech.setCompletionListener(new ReaderSpeechQueue.CompletionListener() {
+            @Override
+            public void onFinished(String key) {
+                if (key.equals(documentReader.speechKey())) {
+                    documentReader.markFinished();
+                }
+            }
+
+            @Override
+            public void onInterrupted(String key) {
+                if (key.equals(documentReader.speechKey())) {
+                    documentReader.markInterrupted();
+                }
+            }
+        });
         root = new ReaderGestureSurface(activity, this);
         root.setOrientation(LinearLayout.VERTICAL);
         root.setClickable(true);
@@ -115,10 +159,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void onSpeechHealth(AndroidSpeech.State state) {
         if (closed) { return; }
+        ReaderDiagnostics.get().event("speech_" + state.name().toLowerCase(Locale.ROOT));
+        ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
         updateNativeState(false);
         if (state == AndroidSpeech.State.READY && !usesTouchExploration()) {
             readCurrent();
         } else if (state == AndroidSpeech.State.FAILED || state == AndroidSpeech.State.MISSING_LANGUAGE
+                || state == AndroidSpeech.State.MISSING_VOICE
                 || state == AndroidSpeech.State.NETWORK_REQUIRED) {
             status.setText(R.string.a11yReaderVoiceRecovery);
             status.announceForAccessibility(activity.getString(R.string.a11yReaderVoiceRecovery));
@@ -142,6 +189,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     public void onResume() {
+        if (closed) { return; }
+        ReaderDiagnostics.get().event("lifecycle_resume");
         foreground = true;
         windowFocused = activity.hasWindowFocus();
         presentationEpoch++;
@@ -168,6 +217,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     public void onPause() {
+        ReaderDiagnostics.get().event("lifecycle_pause");
+        ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
         foreground = false;
         presentationEpoch++;
         if (gestureMapTrialTimeout != null) {
@@ -177,19 +228,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         movementPractice = false;
         movementPracticeDirections = 0;
-        speech.stop();
+        // Lifecycle boundary (R20.3): not a plain stop — the queue also
+        // forgets its last utterance, its context and any pending TTS
+        // retry, so nothing queued or repeatable from this foreground
+        // session can be spoken after a later resume.
+        speech.clearForLifecycle();
+        documentReader.clear();
         snapshot = null;
         editor = null;
         editorRequest = 0;
+        formRequest = 0;
         rows.removeAllViews();
         updateNativeState(true);
     }
 
     public void onWindowFocusChanged(boolean focused) {
+        if (closed) { return; }
         windowFocused = focused;
         if (!focused) {
             root.cancelGesture();
-            speech.stop();
+            // Losing window focus (lock screen, call, system dialog) is
+            // the same speech boundary as onPause (R20.3): pending and
+            // repeatable speech from before it must not resume playing
+            // when focus returns; the republished snapshot speaks fresh.
+            speech.clearForLifecycle();
         }
         updateNativeState(false);
     }
@@ -220,6 +282,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 JSONObject object = new JSONObject(json);
                 if (object.has("status")) {
                     String code = object.getString("status");
+                    // Receipt outcomes feed the diagnostics counters
+                    // (R21.4): codes only, never the intent's contents.
+                    ReaderDiagnostics.get().count("receipt_" + code);
+                    if ("invalid_value".equals(code) && formRequest != 0
+                            && formReceiptMatches(object)) {
+                        // A form draft value was rejected on the game thread
+                        // (R02.4); the applied value was never touched.
+                        formRequest = 0;
+                        playRejectedCue();
+                        feedback(activity.getString(R.string.a11yEditorInvalid));
+                        return;
+                    }
                     if ("text_applied".equals(code)) {
                         if (editor != null && receiptMatches(object)) {
                             editor = null;
@@ -232,6 +306,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     if ("invalid_value".equals(code)) {
                         if (editor != null && receiptMatches(object)) {
                             editorRequest = 0;
+                            playRejectedCue();
                             feedback(activity.getString(R.string.a11yEditorInvalid));
                         }
                         return;
@@ -240,6 +315,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             : "unsupported".equals(code) ? R.string.a11yReaderUnsupported
                             : R.string.a11yReaderStale;
                     if (editor != null && receiptMatches(object)) { editorRequest = 0; }
+                    // A rejected intent gets the rejected cue (R21.2)
+                    // alongside its spoken receipt; both say the same
+                    // thing — nothing was performed.
+                    playRejectedCue();
                     feedback(activity.getString(label));
                     return;
                 }
@@ -364,23 +443,38 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
                 String previous = focus;
+                ReaderSnapshot previousSnapshot = snapshot;
                 snapshot = next;
                 speech.setContext(next.contextKey());
                 if (selectionChanged) {
                     focus = selectedItemFocus;
-                } else if (changedContext || next.find(focus) == null) {
+                } else if (changedContext) {
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
+                } else if (next.find(focus) == null) {
+                    // Focus policy (R02.1): a vanished node lands on its
+                    // nearest surviving ancestor, then on the nearest
+                    // surviving sibling, and only then on the default.
+                    focus = resolveFocusFallback(previousSnapshot, previous, next);
                 }
                 if (changedContext) {
                     controls = false;
                     movementPractice = false;
                     movementPracticeDirections = 0;
+                    // A mode change kills any gesture still in flight
+                    // (R05.3): the surface owner string also changes with
+                    // the context, and cancelling here makes the kill
+                    // explicit instead of relying on that check alone.
+                    root.cancelGesture();
                     editor = null;
                     editorRequest = 0;
+                    formRequest = 0;
                     readScreenSummary = true;
                     search = "";
                     onlyCommands = false;
+                    // Document sessions are per screen context (R04.4);
+                    // the saved position is kept for a later visit.
+                    documentReader.clear();
                 }
                 render();
                 if (selectionChanged) {
@@ -406,19 +500,90 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (closed || !foreground || !windowFocused || !preferences.isEnabled() || snapshot == null) {
                 return;
             }
+            ReaderDiagnostics.get().count(level == ReaderSpeechQueue.URGENT
+                    ? "announce_urgent" : "announce_info");
             if (usesTouchExploration()) {
                 status.setText(message);
                 status.announceForAccessibility(message);
             } else {
-                speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message, level);
+                // Information messages live 8 s in the queue (R21.1):
+                // long enough to be heard in a quiet moment, short
+                // enough that a burst of turn messages cannot still be
+                // describing an old turn half a minute later. Urgent
+                // warnings keep the standard 15 s life.
+                speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message,
+                        level, level == ReaderSpeechQueue.URGENT ? 15000 : 8000);
+                ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
             }
         });
+    }
+
+    /** A rejected intent: counted, then cued (R21.2/R21.4). */
+    private void playRejectedCue() {
+        ReaderDiagnostics.get().count("cue_rejected");
+        cues.play(ReaderCuePlayer.REJECTED);
+    }
+
+    /**
+     * Cue entry point from the engine (R21.2), called through
+     * CataclysmDDA.onAccessibilityCue. The name is one of the internal
+     * ReaderCuePlayer literals; the cue duplicates a signal that is
+     * also spoken, and the player itself checks the user's opt-in.
+     */
+    public void onGameCue(String name) {
+        if (closed || !foreground || !preferences.isEnabled() || name == null) {
+            return;
+        }
+        ReaderDiagnostics.get().count("cue_" + name);
+        cues.play(name);
     }
 
     private boolean receiptMatches(JSONObject object) {
         return Long.toString(editorRequest).equals(object.optString("request"))
                 && editorContext.equals(object.optString("session") + ":" + object.optString("frame")
                 + ":" + object.optString("generation"));
+    }
+
+    private boolean formReceiptMatches(JSONObject object) {
+        return Long.toString(formRequest).equals(object.optString("request"))
+                && formContext.equals(object.optString("session") + ":" + object.optString("frame")
+                + ":" + object.optString("generation"));
+    }
+
+    /**
+     * Where focus goes when the focused node disappears from a new snapshot
+     * of the same screen: nearest surviving ancestor in the tree, then the
+     * nearest surviving sibling under the same parent, then the snapshot
+     * default (R02.1).
+     */
+    private static String resolveFocusFallback(ReaderSnapshot oldSnapshot, String oldFocus,
+                                               ReaderSnapshot next) {
+        if (oldSnapshot != null) {
+            ReaderSnapshot.Node old = oldSnapshot.find(oldFocus);
+            if (old != null) {
+                String ancestor = old.parentId;
+                for (int guard = 0; guard < 32 && !ancestor.isEmpty(); guard++) {
+                    if (next.find(ancestor) != null) {
+                        return ancestor;
+                    }
+                    ReaderSnapshot.Node parent = oldSnapshot.find(ancestor);
+                    ancestor = parent == null ? "" : parent.parentId;
+                }
+                ReaderSnapshot.Node best = null;
+                for (ReaderSnapshot.Node candidate : next.nodes) {
+                    if (candidate.parentId.equals(old.parentId) && candidate.depth == old.depth
+                            && (best == null || Math.abs(candidate.position - old.position)
+                            < Math.abs(best.position - old.position))) {
+                        best = candidate;
+                    }
+                }
+                if (best != null) {
+                    return best.id;
+                }
+            }
+        }
+        return next.find(next.focus) != null ? next.focus
+                : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
     }
 
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {
@@ -440,8 +605,81 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             text.append(". ").append(node.disabledReason.isEmpty()
                     ? activity.getString(R.string.a11yReaderDisabledEntry) : node.disabledReason);
         }
+        // Tree state (R02.1): position/total already count the sibling set
+        // for tree nodes, so only the level and the expansion state are new.
+        if (node.depth >= 0 && node.hasChildren) {
+            text.append(". ").append(activity.getString(node.expanded
+                    ? R.string.a11yTreeExpanded : R.string.a11yTreeCollapsed));
+        }
+        if (includeDetail && node.depth >= 0) {
+            text.append(". ").append(activity.getString(R.string.a11yTreeLevel, node.depth + 1));
+        }
+        // Table row (R02.2): read the cells under their column headers. A
+        // cell that repeats the row label or is empty adds nothing.
+        if (!node.tableId.isEmpty() && snapshot != null) {
+            ReaderSnapshot.Table table = snapshot.table(node.tableId);
+            for (ReaderSnapshot.Cell cell : node.cells) {
+                if (cell.value.isEmpty() || cell.value.equals(node.label)) { continue; }
+                text.append(". ");
+                ReaderSnapshot.Column column = table == null ? null : table.column(cell.column);
+                if (column != null && !column.header.isEmpty()) {
+                    text.append(column.header).append(": ");
+                }
+                text.append(cell.value);
+                String unit = !cell.unit.isEmpty() ? cell.unit
+                        : column != null ? column.unit : "";
+                if (!unit.isEmpty()) { text.append(' ').append(unit); }
+            }
+        }
+        // Form state (R02.3): a pending draft and a field error are always
+        // spoken; the choice list is detail-only.
+        if (node.hasDraft) {
+            text.append(". ").append(activity.getString(R.string.a11yFormDraftValue,
+                    displayRawValue(node, node.draftValue)));
+        }
+        if (!node.fieldError.isEmpty()) {
+            text.append(". ").append(activity.getString(R.string.a11yFormFieldError,
+                    node.fieldError));
+        }
+        if (includeDetail && !node.choices.isEmpty()) {
+            StringBuilder choices = new StringBuilder();
+            for (ReaderSnapshot.Choice choice : node.choices) {
+                if (choices.length() > 0) { choices.append(", "); }
+                choices.append(choice.label.isEmpty() ? choice.value : choice.label);
+            }
+            text.append(". ").append(activity.getString(R.string.a11yFormChoices,
+                    choices.toString()));
+        }
+        // Numeric domain (R04.2): the range and step are detail-level
+        // facts of a field, spoken on request, not on every focus move.
+        if (includeDetail && node.hasFieldRange) {
+            text.append(". ").append(activity.getString(R.string.a11yEditorRange,
+                    displayRawValue(node, formatRawNumber(node.fieldMin)),
+                    displayRawValue(node, formatRawNumber(node.fieldMax))));
+            if (node.fieldStep > 0) {
+                text.append(". ").append(activity.getString(R.string.a11yEditorStep,
+                        formatRawNumber(node.fieldStep)));
+            }
+        }
+        if (includeDetail && !node.hasFieldRange && node.fieldStep > 0) {
+            text.append(". ").append(activity.getString(R.string.a11yEditorStep,
+                    formatRawNumber(node.fieldStep)));
+        }
         if (includeDetail && !node.detail.isEmpty()) { text.append(". ").append(node.detail); }
         return text.toString();
+    }
+
+    private static String formatRawNumber(double value) {
+        if (value == Math.floor(value) && Math.abs(value) < 1e15) {
+            return Long.toString(Math.round(value));
+        }
+        return java.math.BigDecimal.valueOf(value).stripTrailingZeros().toPlainString();
+    }
+
+    /** Display text for a raw form value: the choice label when there is one. */
+    private static String displayRawValue(ReaderSnapshot.Node node, String raw) {
+        ReaderSnapshot.Choice choice = node.choiceFor(raw);
+        return choice != null && !choice.label.isEmpty() ? choice.label : raw;
     }
 
     private int index() {
@@ -493,6 +731,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (snapshot == null) { return; }
         title.setText(snapshot.title);
         status.setText(snapshot.summary);
+        // A pending form draft on the focused field gets explicit Apply and
+        // Discard controls (R02.3); browsing alone never applies it.
+        final ReaderSnapshot.Node focusedNode = snapshot.find(focus);
+        if (focusedNode != null && focusedNode.hasDraft) {
+            final ReaderSnapshot ownerSnapshot = snapshot;
+            if (focusedNode.actions.contains("apply")) {
+                Button apply = button(rows, R.string.a11yReaderApplyValue, () -> {
+                    if (snapshot == ownerSnapshot && focusedNode.id.equals(focus)) {
+                        send("apply", "");
+                    }
+                });
+                rowViews.add(apply);
+            }
+            if (focusedNode.actions.contains("cancel_draft")) {
+                Button discard = button(rows, R.string.a11yReaderCancelDraft, () -> {
+                    if (snapshot == ownerSnapshot && focusedNode.id.equals(focus)) {
+                        send("cancel_draft", "");
+                    }
+                });
+                rowViews.add(discard);
+            }
+        }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         if (!search.isEmpty() || onlyCommands) {
             status.setText(activity.getString(R.string.a11yReaderSearchCount, filtered.size()));
@@ -578,6 +838,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean movementPracticeEnabled() {
+        // Practice deliberately does not require snapshot.swipeMovementAllowed:
+        // it never sends a gameplay intent, it only reads direction labels
+        // and counts practiced directions (see practiceMovementDirection).
         return movementPractice && !controls && editor == null
                 && snapshot != null && snapshot.find("world:here") != null;
     }
@@ -617,9 +880,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean worldMovementEnabled() {
+        // The engine decides whether walking gestures are meaningful for the
+        // current game state (on foot, not driving/remote/death camera, no
+        // activity or automatic travel) and publishes that decision as
+        // snapshot.swipeMovementAllowed (R00.2). The presence of the
+        // "world:here" node alone is not sufficient: it also exists for the
+        // death camera. The user's fast-movement preference and the local
+        // editor/modal/practice checks still apply on top.
         return !controls && !movementPractice && editor == null
                 && preferences.isFastMovementEnabled()
-                && snapshot != null && snapshot.find("world:here") != null;
+                && snapshot != null && snapshot.swipeMovementAllowed
+                && snapshot.find("world:here") != null
+                && hasAllMovementDirections(snapshot);
+    }
+
+    /** Walking swipes need the full eight-direction set the practice teaches. */
+    private static boolean hasAllMovementDirections(ReaderSnapshot snapshot) {
+        String[] directions = { "UP", "RIGHTUP", "RIGHT", "RIGHTDOWN",
+                "DOWN", "LEFTDOWN", "LEFT", "LEFTUP" };
+        for (String direction : directions) {
+            if (snapshot.find(direction) == null) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
@@ -643,13 +927,54 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
+        // Command group headers (R04.3) are browsing landmarks only:
+        // activating one reads it, it never sends an intent.
+        if (node.id.startsWith("group:")) {
+            feedback(activity.getString(R.string.a11yCommandGroup) + ". " + node.label);
+            return;
+        }
+        // Tree parents expand and collapse through their dedicated intents,
+        // never through a gameplay activation (R02.1).
+        if (node.hasChildren && (node.actions.contains("expand")
+                || node.actions.contains("collapse"))) {
+            String action = node.expanded ? "collapse" : "expand";
+            if (node.actions.contains(action)) {
+                send(action, "");
+                return;
+            }
+        }
+        // Form fields (R02.3): choosing or toggling only writes a draft on
+        // the engine side; the separate Apply control commits it.
+        if (!node.fieldType.isEmpty()) {
+            if ("choice".equals(node.fieldType) && node.actions.contains("select_choice")
+                    && !node.choices.isEmpty()) {
+                String current = node.effectiveRawValue();
+                int index = -1;
+                for (int i = 0; i < node.choices.size(); i++) {
+                    if (node.choices.get(i).value.equals(current)) { index = i; break; }
+                }
+                ReaderSnapshot.Choice next = node.choices.get(
+                        Math.floorMod(index + 1, node.choices.size()));
+                send("select_choice", next.value);
+                return;
+            }
+            if ("bool".equals(node.fieldType) && node.actions.contains("set_value")) {
+                send("set_value", "true".equals(node.effectiveRawValue()) ? "false" : "true");
+                return;
+            }
+            if (node.actions.contains("set_value")) {
+                openFormEditor(node);
+                return;
+            }
+        }
         if (node.actions.contains("set_text")) {
             openEditor(node);
             return;
         }
         if ("document".equals(node.role)) {
-            if (usesTouchExploration()) { feedback(node.detail); }
-            else { speech.say(node.id + ":document", node.detail, ReaderSpeechQueue.LONG_TEXT); }
+            // Long documents are read in paragraphs with a resumable
+            // session position (R04.4), not as one whole-text utterance.
+            speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
             return;
         }
         send("activate", "");
@@ -658,18 +983,75 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void openEditor(ReaderSnapshot.Node node) {
         editorContext = snapshot.contextKey();
         editorRequest = 0;
+        // Number popups publish their edit step (and no range) through the
+        // form contract since R04.2; text fields keep the plain editor.
         editor = new ReaderTextEditor(activity, node.value, "number".equals(node.role),
+                "int".equals(node.fieldType), null, null,
+                node.fieldStep > 0 ? node.fieldStep : null,
                 new ReaderTextEditor.Listener() {
                     @Override
                     public void speak(String text) { feedback(text); }
                     @Override
                     public void submit(String text) {
-                        if (editorRequest == 0) { editorRequest = send("set_text", text); }
+                        // A callback of an editor that was already closed
+                        // must not mint a fresh intent (R03.2); the views
+                        // are gone by then, this is the explicit guard.
+                        if (editor != null && editorRequest == 0) {
+                            editorRequest = send("set_text", text);
+                        }
                     }
                     @Override
                     public void cancel() {
                         editor = null;
                         editorRequest = 0;
+                        root.cancelGesture();
+                        render();
+                        readCurrent();
+                    }
+                });
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yEditorInstructions));
+    }
+
+    /**
+     * Draft editor for numeric and text form fields (R02.3). Submitting only
+     * sends a set_value intent: the engine stores it as an unapplied draft
+     * and the refreshed snapshot speaks it as such. The editor closes as
+     * soon as the intent is accepted by the mailbox; an invalid_value
+     * receipt is matched through formRequest and spoken separately.
+     */
+    private void openFormEditor(ReaderSnapshot.Node node) {
+        formContext = snapshot.contextKey();
+        formRequest = 0;
+        final String nodeId = node.id;
+        // The field's published domain reaches the editor (R04.2): the
+        // user hears the range/step and an invalid draft is refused with
+        // its specific reason before any intent is sent; the engine
+        // re-validates at its gate regardless.
+        editor = new ReaderTextEditor(activity, node.effectiveRawValue(),
+                "int".equals(node.fieldType) || "float".equals(node.fieldType),
+                "int".equals(node.fieldType),
+                node.hasFieldRange ? node.fieldMin : null,
+                node.hasFieldRange ? node.fieldMax : null,
+                node.hasFieldRange && node.fieldStep > 0 ? node.fieldStep : null,
+                new ReaderTextEditor.Listener() {
+                    @Override
+                    public void speak(String text) { feedback(text); }
+                    @Override
+                    public void submit(String text) {
+                        if (editor == null || formRequest != 0 || snapshot == null
+                                || !nodeId.equals(focus)) { return; }
+                        formRequest = send("set_value", text);
+                        if (formRequest != 0) {
+                            editor = null;
+                            root.cancelGesture();
+                            render();
+                        }
+                    }
+                    @Override
+                    public void cancel() {
+                        editor = null;
                         root.cancelGesture();
                         render();
                         readCurrent();
@@ -706,14 +1088,67 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         feedback(activity.getString(R.string.a11yReaderSearch));
     }
 
+    private void performDocumentControl(int docIndex) {
+        switch (docIndex) {
+            case 0: speakDocument(documentReader.continueReading()); break;
+            case 1: speakDocument(documentReader.nextParagraph()); break;
+            case 2: speakDocument(documentReader.previousParagraph()); break;
+            case 3: speakDocument(documentReader.repeatLastSentence()); break;
+            case 4: speakDocument(documentReader.spellCurrent()); break;
+            case 5: feedback(documentReader.bookmarkHere()); break;
+            case 6: speakDocument(documentReader.goToBookmark()); break;
+            case 7: openDocumentSearch(); break;
+            case 8: speakDocument(documentReader.findNext()); break;
+            case 9: speakDocument(documentReader.findPrevious()); break;
+            default: break;
+        }
+    }
+
+    /** In-document search (R04.4): same editor as screen search, but the
+     *  query is kept verbatim, recorded in the document's session search
+     *  history, and matched against the document text itself. */
+    private void openDocumentSearch() {
+        if (editor != null || !documentReader.isOpen()) { return; }
+        controls = false;
+        editorRequest = 0;
+        editor = new ReaderTextEditor(activity, documentReader.lastQuery(), false,
+                new ReaderTextEditor.Listener() {
+                    @Override
+                    public void speak(String text) { feedback(text); }
+
+                    @Override
+                    public void submit(String text) {
+                        editor = null;
+                        root.cancelGesture();
+                        render();
+                        speakDocument(documentReader.find(text));
+                    }
+
+                    @Override
+                    public void cancel() { editor = null; render(); readCurrent(); }
+                });
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yDocSearch) + ". "
+                + documentReader.searchHistorySpeech());
+    }
+
     private long send(String action, String value) {
         ReaderSnapshot owner = snapshot;
-        if (owner == null || !foreground || !windowFocused || lastSuspended) { return 0; }
+        // The closed check is explicit, not implied by the lifecycle flags:
+        // after close() no intent of this controller may reach the game,
+        // even if a stray lifecycle callback ran first (R03.4).
+        if (closed || owner == null || !foreground || !windowFocused || lastSuspended) { return 0; }
         final long request = REQUEST_SEQUENCE.incrementAndGet();
         try {
             if (!CataclysmDDA.nativeReaderIntent(owner.session, owner.frame, owner.generation,
                     owner.revision, request, focus, action, value)) {
-                feedback(activity.getString(R.string.a11yReaderStale));
+                // Focus intents are re-sent on every navigation and race
+                // screen changes routinely; a rejected one is dropped
+                // silently instead of announcing a stale entry (R03.1).
+                if (!"focus".equals(action)) {
+                    feedback(activity.getString(R.string.a11yReaderStale));
+                }
             } else { return request; }
         } catch (UnsatisfiedLinkError unavailable) {
             feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
@@ -749,6 +1184,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (node != null) { feedback(nodeText(node, true)); }
     }
 
+    /**
+     * Spell the focused item grapheme by grapheme (R21.3). Names that
+     * have no translation are spoken exactly as written; spelling is
+     * how the listener checks the precise letters, including names in
+     * another language or script.
+     */
+    private void spellCurrentItem() {
+        if (editor != null) { feedback(editor.valueDescription()); return; }
+        ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
+        if (node == null) {
+            feedback(activity.getString(R.string.a11yReaderWaiting));
+            return;
+        }
+        feedback(ReaderDocumentReader.spellText(nodeText(node, true),
+                activity.getString(R.string.a11yDocSpellTruncated)));
+    }
+
     private void feedback(String text) {
         if (!foreground || closed) { return; }
         if (usesTouchExploration()) {
@@ -759,8 +1211,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    /** Document speech stays at LONG_TEXT priority: warnings may cut it
+     *  off, and the document reader then resumes at the same paragraph. */
+    private void speakDocument(String text) {
+        if (text == null || text.isEmpty()) { return; }
+        if (usesTouchExploration()) {
+            feedback(text);
+        } else {
+            speech.say(documentReader.speechKey(), text, ReaderSpeechQueue.LONG_TEXT);
+        }
+    }
+
     @Override
     public void stopSpeech() { speech.stop(); }
+
+    /** Document controls appended while a document session is open (R04.4). */
+    private static final int[] DOC_CONTROLS = {
+            R.string.a11yDocContinue, R.string.a11yDocNextParagraph,
+            R.string.a11yDocPreviousParagraph, R.string.a11yDocRepeatSentence,
+            R.string.a11yDocSpellParagraph, R.string.a11yDocBookmarkSet,
+            R.string.a11yDocBookmarkGo, R.string.a11yDocSearch,
+            R.string.a11yDocSearchNext, R.string.a11yDocSearchPrevious };
 
     private int[] controlLabels() {
         int[] labels = new int[] { R.string.a11yReaderReturn, R.string.a11yReaderWhere,
@@ -771,12 +1242,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 preferences.isFastMovementEnabled() ? R.string.a11yReaderFastMovementOn
                 : preferences.hasCompletedMovementPractice() ? R.string.a11yReaderFastMovementOffReady
                 : R.string.a11yReaderFastMovementOffPractice,
-                R.string.a11yReaderMovementPractice };
+                R.string.a11yReaderMovementPractice,
+                R.string.a11yReaderSpell };
         if (!preferences.isFastMovementEnabled()
                 && !preferences.hasCompletedMovementPractice()) {
             int[] expanded = new int[labels.length + 1];
             System.arraycopy(labels, 0, expanded, 0, labels.length);
             expanded[labels.length] = R.string.a11yReaderSkipMovementPracticeEnable;
+            labels = expanded;
+        }
+        if (documentReader.isOpen()) {
+            int[] expanded = new int[labels.length + DOC_CONTROLS.length];
+            System.arraycopy(labels, 0, expanded, 0, labels.length);
+            System.arraycopy(DOC_CONTROLS, 0, expanded, labels.length, DOC_CONTROLS.length);
             labels = expanded;
         }
         if (preferences.isGestureMapTrialActive()) {
@@ -800,10 +1278,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     public void onBackPressed() {
+        if (closed) { return; }
         if (movementPractice) { endMovementPractice(); return; }
         if (editor != null) { editor.back(); return; }
         if (controls) {
             controls = false;
+            root.cancelGesture();
             render();
             readCurrent();
         } else { showControls(); }
@@ -834,8 +1314,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
+        // Document controls (R04.4) sit after the base controls and the
+        // optional skip-practice entry, before the trial entries that
+        // controlLabels() always appends last.
+        if (documentReader.isOpen()) {
+            int docStart = 14 + (!preferences.isFastMovementEnabled()
+                    && !preferences.hasCompletedMovementPractice() ? 1 : 0);
+            if (index >= docStart && index < docStart + DOC_CONTROLS.length) {
+                performDocumentControl(index - docStart);
+                return;
+            }
+        }
         switch (index) {
-            case 0: controls = false; render(); readCurrent(); break;
+            case 0: controls = false; root.cancelGesture(); render(); readCurrent(); break;
             case 1:
                 feedback(snapshot == null ? activity.getString(R.string.a11yReaderWaiting)
                         : snapshot.title + ". " + snapshot.summary);
@@ -843,7 +1334,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             case 2: detail(); break;
             case 3: if (usesTouchExploration()) { readCurrent(); } else { speech.repeat(); } break;
             case 4: stopSpeech(); break;
-            case 5: controls = false; render(); send("cancel", ""); break;
+            case 5: controls = false; root.cancelGesture(); render(); send("cancel", ""); break;
             case 6: openSettings(); break;
             case 7: feedback(activity.getString(R.string.a11yReaderGestureInstructions)); break;
             case 8: openSearch(); break;
@@ -872,7 +1363,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 break;
             }
             case 12: beginMovementPractice(); break;
-            case 13:
+            case 13: spellCurrentItem(); break;
+            case 14:
                 if (!preferences.isFastMovementEnabled()
                         && !preferences.hasCompletedMovementPractice()) {
                     preferences.setFastMovementEnabled(true);
@@ -915,6 +1407,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 preferences.revertGestureMapTrial();
                 gestureMapTrialTimeout = null;
+                // Never leave a hybrid state: if practice was somehow active
+                // when the trial expired, it ends together with the trial
+                // instead of surviving under the forced controls screen.
+                movementPractice = false;
+                movementPracticeDirections = 0;
                 root.cancelGesture();
                 if (foreground) {
                     controls = true;
@@ -961,6 +1458,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yReaderMovementPracticeWorldRequired));
             return;
         }
+        if (preferences.isGestureMapTrialPending()) {
+            // The two exercises must never be live at once (R00.3): practice
+            // captures every directional swipe, so a gesture-map trial left
+            // running underneath it could not be tested and its timeout
+            // would fire mid-practice. Entering practice ends the trial and
+            // returns the confirmed gesture map.
+            revertGestureMapTrial();
+        }
         movementPractice = true;
         movementPracticeDirections = 0;
         controls = false;
@@ -997,6 +1502,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             gestureMapTrialTimeout = null;
         }
         root.cancelGesture();
+        documentReader.clear();
+        cues.close();
         speech.close();
         if (accessibility != null) {
             accessibility.removeTouchExplorationStateChangeListener(explorationListener);

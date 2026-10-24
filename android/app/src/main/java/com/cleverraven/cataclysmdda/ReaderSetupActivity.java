@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
+import android.net.Uri;
 import android.os.Bundle;
 import android.provider.Settings;
 import android.view.GestureDetector;
@@ -17,6 +18,10 @@ import android.widget.SeekBar;
 import android.widget.ScrollView;
 import android.widget.TextView;
 
+import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Locale;
 
@@ -26,9 +31,53 @@ public final class ReaderSetupActivity extends Activity {
             "com.cleverraven.cataclysmdda.extra.DISABLE_SETUP_SELF_VOICE";
 
     private AndroidSpeech speech;
+    private RescueAudioPlayer rescuePlayer;
+    private boolean rescueClipPlayed;
+    // Backup and restore (R20.2). All of this state is instance memory
+    // only: the pending picker action, the staged-but-unconfirmed import
+    // and the busy flag are never written to savedInstanceState or to
+    // preferences, so an Activity recreate or a process death abandons
+    // them instead of completing a restore the user confirmed in a
+    // previous instance (R20.3).
+    private static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
+    private static final int REQUEST_BACKUP_EXPORT = 4201;
+    private static final int REQUEST_BACKUP_IMPORT = 4202;
+    private static final int BACKUP_ACTION_NONE = 0;
+    private static final int BACKUP_ACTION_EXPORT = 1;
+    private static final int BACKUP_ACTION_IMPORT = 2;
+    private ReaderBackupArchive backupArchive;
+    private Button backupExport;
+    private Button backupImport;
+    private Button backupOpenPicker;
+    private Button backupConfirmRestore;
+    private Button backupCancelRestore;
+    private int pendingBackupAction = BACKUP_ACTION_NONE;
+    private boolean stagedBackupReady;
+    private boolean backupBusy;
+    private int backupOperationSequence;
     private TextView status;
     private Button sample;
     private CheckBox online;
+    // Voice selection drafts (R06.1). These are only written to
+    // ReaderPreferences after a sample spoken with exactly these values
+    // finishes and the user confirms; cycling a choice invalidates the
+    // previous sample, so an untested selection can never be saved.
+    private Button languageChoice;
+    private Button engineChoice;
+    private Button voiceChoice;
+    private TextView voiceDataStatus;
+    private String draftEngineName;
+    private String draftEngineLabel;
+    private String draftVoiceName;
+    private String draftLanguageTag = ReaderPreferences.DEFAULT_SPEECH_LANGUAGE;
+    private boolean draftVoiceNetwork;
+    private final ArrayList<AndroidSpeech.EngineOption> probedEngines = new ArrayList<>();
+    private final ArrayList<AndroidSpeech.VoiceOption> probedVoices = new ArrayList<>();
+    private boolean voiceProbeRunning;
+    private boolean voiceProbeFailed;
+    private String testedEngineName;
+    private String testedVoiceName;
+    private String testedLanguageTag;
     private CheckBox leftHandedNavigation;
     private SeekBar rate;
     private TextView rateValue;
@@ -82,6 +131,25 @@ public final class ReaderSetupActivity extends Activity {
         online.setChecked(false);
         layout.addView(online);
         selfVoiceControls.add(online);
+
+        TextView voiceHeading = new TextView(this);
+        voiceHeading.setText(R.string.a11yVoiceSelectionHeading);
+        layout.addView(voiceHeading);
+        selfVoiceControls.add(voiceHeading);
+        ReaderPreferences savedSpeechPreferences = new ReaderPreferences(this);
+        draftEngineName = savedSpeechPreferences.getSpeechEngineName();
+        draftVoiceName = savedSpeechPreferences.getSpeechVoiceName();
+        draftLanguageTag = savedSpeechPreferences.getSpeechLanguageTag();
+        languageChoice = button(layout, R.string.a11yVoiceProbing, view -> cycleVoiceLanguage());
+        languageChoice.setId(R.id.a11y_voice_language);
+        engineChoice = button(layout, R.string.a11yVoiceProbing, view -> cycleVoiceEngine());
+        engineChoice.setId(R.id.a11y_voice_engine);
+        voiceChoice = button(layout, R.string.a11yVoiceProbing, view -> cycleVoiceVoice());
+        voiceChoice.setId(R.id.a11y_voice_choice);
+        voiceDataStatus = new TextView(this);
+        voiceDataStatus.setText(R.string.a11yVoiceProbing);
+        layout.addView(voiceDataStatus);
+        selfVoiceControls.add(voiceDataStatus);
 
         TextView rateLabel = new TextView(this);
         rateLabel.setText(R.string.a11ySpeechRateLabel);
@@ -180,8 +248,12 @@ public final class ReaderSetupActivity extends Activity {
             heard.setEnabled(false);
             testedNetworkConsent = online.isChecked();
             testedRate = selectedRate();
+            testedEngineName = draftEngineName;
+            testedVoiceName = draftVoiceName;
+            testedLanguageTag = draftLanguageTag;
             sample.setEnabled(false);
-            speech.initialize(null, new Locale("vi", "VN"), testedRate, !online.isChecked());
+            speech.initialize(testedEngineName, Locale.forLanguageTag(testedLanguageTag),
+                    testedRate, !online.isChecked(), testedVoiceName);
         });
         sample.setId(R.id.a11y_test_voice);
         sample.setSaveEnabled(false);
@@ -197,8 +269,15 @@ public final class ReaderSetupActivity extends Activity {
                 view -> openSettings("com.android.settings.TTS_SETTINGS"));
         button(layout, R.string.showAccessibilitySettings,
                 view -> openSettings(Settings.ACTION_ACCESSIBILITY_SETTINGS));
+        button(layout, R.string.a11yRescueHelp, view -> rescuePlayer().play(
+                RescueAudioPlayer.CLIP_SETUP_FAILED)).setId(R.id.a11y_rescue_help);
         heard = button(layout, R.string.a11yConfirmHeardEnable, view -> {
-            new ReaderPreferences(this).confirmHeardAndEnable(testedNetworkConsent, testedRate);
+            ReaderPreferences preferences = new ReaderPreferences(this);
+            preferences.confirmHeardAndEnable(testedNetworkConsent, testedRate);
+            // Save exactly the voice selection the finished sample used;
+            // draft values that were never sample-tested cannot reach
+            // storage because changing them disables this button.
+            preferences.saveSpeechSelection(testedEngineName, testedVoiceName, testedLanguageTag);
             showStatus(R.string.a11yReaderEnabledNotice, true);
         });
         heard.setEnabled(false);
@@ -207,6 +286,80 @@ public final class ReaderSetupActivity extends Activity {
             new ReaderPreferences(this).disable();
             showStatus(R.string.a11yReaderDisabledNotice, true);
         });
+
+        TextView cuesHeading = new TextView(this);
+        cuesHeading.setText(R.string.a11yCuesHeading);
+        layout.addView(cuesHeading);
+        selfVoiceControls.add(cuesHeading);
+
+        // Cue toggles (R21.2) save immediately, like the left-handed
+        // toggle: they do not change what is spoken, only whether the
+        // optional sound/vibration duplicate of an event also plays.
+        // Enabling one plays a sample through a short-lived player so
+        // the user hears/feels exactly what they turned on.
+        CheckBox soundCues = new CheckBox(this);
+        soundCues.setId(R.id.a11y_sound_cues);
+        soundCues.setText(R.string.a11ySoundCues);
+        soundCues.setChecked(new ReaderPreferences(this).areSoundCuesEnabled());
+        soundCues.setOnCheckedChangeListener((button, checked) -> {
+            new ReaderPreferences(this).setSoundCuesEnabled(checked);
+            if (checked) { sampleCuePlayer().play(ReaderCuePlayer.ACTIVITY_DONE); }
+        });
+        layout.addView(soundCues);
+        selfVoiceControls.add(soundCues);
+
+        CheckBox hapticCues = new CheckBox(this);
+        hapticCues.setId(R.id.a11y_haptic_cues);
+        hapticCues.setText(R.string.a11yHapticCues);
+        hapticCues.setChecked(new ReaderPreferences(this).areHapticCuesEnabled());
+        hapticCues.setOnCheckedChangeListener((button, checked) -> {
+            new ReaderPreferences(this).setHapticCuesEnabled(checked);
+            if (checked) { sampleCuePlayer().play(ReaderCuePlayer.ACTIVITY_DONE); }
+        });
+        layout.addView(hapticCues);
+        selfVoiceControls.add(hapticCues);
+
+        TextView diagnosticsHeading = new TextView(this);
+        diagnosticsHeading.setText(R.string.a11yDiagnosticsHeading);
+        layout.addView(diagnosticsHeading);
+        selfVoiceControls.add(diagnosticsHeading);
+        button(layout, R.string.a11yDiagnosticsRead, view -> readDiagnosticsReport())
+                .setId(R.id.a11y_diagnostics_read);
+
+        TextView backupHeading = new TextView(this);
+        backupHeading.setText(R.string.a11yBackupHeading);
+        layout.addView(backupHeading);
+        selfVoiceControls.add(backupHeading);
+        backupExport = button(layout, R.string.a11yBackupExport,
+                view -> chooseBackupPicker(true));
+        backupExport.setId(R.id.a11y_backup_export);
+        backupImport = button(layout, R.string.a11yBackupImport,
+                view -> chooseBackupPicker(false));
+        backupImport.setId(R.id.a11y_backup_import);
+        backupOpenPicker = button(layout, R.string.a11yBackupOpenPickerExport,
+                view -> openBackupPicker());
+        backupOpenPicker.setId(R.id.a11y_backup_open_picker);
+        backupOpenPicker.setEnabled(false);
+        backupConfirmRestore = button(layout, R.string.a11yBackupConfirmRestore,
+                view -> confirmBackupRestore());
+        backupConfirmRestore.setId(R.id.a11y_backup_confirm_restore);
+        backupConfirmRestore.setEnabled(false);
+        backupCancelRestore = button(layout, R.string.a11yBackupCancelRestore,
+                view -> cancelBackupRestore());
+        backupCancelRestore.setId(R.id.a11y_backup_cancel_restore);
+        backupCancelRestore.setEnabled(false);
+        File backupRoot = getExternalFilesDir(null);
+        if (backupRoot != null) {
+            backupArchive = new ReaderBackupArchive(backupRoot,
+                    new File(getFilesDir(), BACKUP_JOURNAL_FILE));
+            // A fresh screen instance owns no staged import: first put
+            // back whatever a swap interrupted by process death parked,
+            // then discard any staged backup the dead instance left
+            // unconfirmed, so it can never be restored from here without
+            // a new file choice and a new explicit confirmation.
+            backupArchive.recoverInterruptedSwap();
+            backupArchive.cancelStagedImport();
+        }
         button(layout, R.string.a11yReturnToStartup, view -> finish()).setId(R.id.a11y_return);
         setContentView(selfVoicingSurface);
 
@@ -219,9 +372,11 @@ public final class ReaderSetupActivity extends Activity {
                 sample.setEnabled(state != AndroidSpeech.State.INITIALIZING);
                 switch (state) {
                     case INITIALIZING:
+                        rescueClipPlayed = false;
                         showStatus(R.string.a11ySpeechInitializing, true);
                         break;
                     case READY:
+                        rescueClipPlayed = false;
                         if (sampleRequested && foreground) {
                             sampleRequested = false;
                             speech.speak("voice-test-" + (++sampleSequence), getString(R.string.a11ySpeechSample));
@@ -241,18 +396,28 @@ public final class ReaderSetupActivity extends Activity {
                         sampleRequested = false;
                         heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechMissingVietnamese, true);
+                        playRescueClipOnce();
+                        break;
+                    case MISSING_VOICE:
+                        sampleAttempted = false;
+                        sampleRequested = false;
+                        heard.setEnabled(false);
+                        showStatus(R.string.a11yVoiceMissing, true);
+                        playRescueClipOnce();
                         break;
                     case NETWORK_REQUIRED:
                         sampleAttempted = false;
                         sampleRequested = false;
                         heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechNetworkRequired, true);
+                        playRescueClipOnce();
                         break;
                     case FAILED:
                         sampleAttempted = false;
                         sampleRequested = false;
                         heard.setEnabled(false);
                         showStatus(R.string.a11ySpeechFailed, true);
+                        playRescueClipOnce();
                         break;
                     default:
                         break;
@@ -302,6 +467,508 @@ public final class ReaderSetupActivity extends Activity {
                 }
             }
         });
+        startVoiceProbe(draftEngineName);
+    }
+
+    private RescueAudioPlayer rescuePlayer() {
+        if (rescuePlayer == null) {
+            rescuePlayer = new RescueAudioPlayer(this);
+        }
+        return rescuePlayer;
+    }
+
+    private ReaderCuePlayer sampleCues;
+
+    /** Short-lived cue player used only for the toggle samples (R21.2). */
+    private ReaderCuePlayer sampleCuePlayer() {
+        if (sampleCues == null) {
+            sampleCues = new ReaderCuePlayer(this, new ReaderPreferences(this), null);
+        }
+        return sampleCues;
+    }
+
+    /**
+     * Speak the diagnostics report (R21.4). The store holds codes and
+     * counters only — no utterance text, no save names — so the whole
+     * report is safe to read aloud and to share as a bug report.
+     */
+    private void readDiagnosticsReport() {
+        ReaderDiagnostics diagnostics = ReaderDiagnostics.get();
+        if (!diagnostics.hasSession()) {
+            showStatus(R.string.a11yDiagnosticsNone, true);
+            return;
+        }
+        StringBuilder report = new StringBuilder(getString(R.string.a11yDiagnosticsTitle));
+        report.append(' ').append(getString(R.string.a11yDiagnosticsUptime,
+                diagnostics.uptimeSeconds()));
+        ReaderSpeechQueue.Stats stats = diagnostics.speechStats();
+        if (stats != null) {
+            report.append(' ').append(getString(R.string.a11yDiagnosticsSpeech,
+                    stats.spoken, stats.interrupted, stats.droppedDuplicate,
+                    stats.droppedExpired, stats.evicted));
+            if (stats.lastStartLatencyMs >= 0) {
+                report.append(' ').append(getString(R.string.a11yDiagnosticsLatency,
+                        stats.lastStartLatencyMs, stats.maxStartLatencyMs));
+            } else {
+                report.append(' ').append(getString(R.string.a11yDiagnosticsLatencyNone));
+            }
+            report.append(' ').append(getString(R.string.a11yDiagnosticsQueue, stats.pending,
+                    getString(stats.speaking ? R.string.a11yDiagnosticsYes
+                            : R.string.a11yDiagnosticsNo)));
+        }
+        report.append(' ').append(getString(R.string.a11yDiagnosticsAnnouncements,
+                diagnostics.counter("announce_info"), diagnostics.counter("announce_urgent")));
+        report.append(' ').append(getString(R.string.a11yDiagnosticsReceipts,
+                diagnostics.counter("receipt_stale"), diagnostics.counter("receipt_disabled"),
+                diagnostics.counter("receipt_invalid_value"),
+                diagnostics.counter("receipt_unsupported")));
+        report.append(' ').append(getString(R.string.a11yDiagnosticsCues,
+                diagnostics.counter("cue_blocked"), diagnostics.counter("cue_danger"),
+                diagnostics.counter("cue_pickup"), diagnostics.counter("cue_activity_done"),
+                diagnostics.counter("cue_rejected"), diagnostics.counter("cue_unavailable"),
+                diagnostics.counter("cue_focus_denied")));
+        java.util.List<String> events = diagnostics.recentEvents();
+        if (events.isEmpty()) {
+            report.append(' ').append(getString(R.string.a11yDiagnosticsNoEvents));
+        } else {
+            StringBuilder joined = new StringBuilder();
+            for (String event : events) {
+                if (joined.length() > 0) {
+                    joined.append("; ");
+                }
+                joined.append(event);
+            }
+            report.append(' ').append(getString(R.string.a11yDiagnosticsEvents,
+                    joined.toString()));
+        }
+        showStatusText(report.toString(), true);
+    }
+
+    /**
+     * Play the packaged rescue clip once per failure episode (R06.3):
+     * when speech itself is broken the user still hears what the labeled
+     * buttons on this screen do, in order.
+     */
+    private void playRescueClipOnce() {
+        if (usesSystemAccessibility() || rescueClipPlayed) {
+            return;
+        }
+        rescueClipPlayed = true;
+        rescuePlayer().play(RescueAudioPlayer.CLIP_SETUP_FAILED);
+    }
+
+    // ---- Backup and restore (R20.2) ----
+
+    /**
+     * Step one of export/import: speak the whole guidance while this
+     * screen still owns speech, and only arm the Continue button. The
+     * system file picker is a separate, deliberate second activation, so
+     * the user has heard what the picker takeover means, what choosing a
+     * file there does, and that returning here announces the result
+     * before the picker ever opens.
+     */
+    private void chooseBackupPicker(boolean export) {
+        if (backupBusy) {
+            return;
+        }
+        if (backupArchive == null) {
+            showStatus(R.string.a11yBackupStorageUnavailable, true);
+            return;
+        }
+        pendingBackupAction = export ? BACKUP_ACTION_EXPORT : BACKUP_ACTION_IMPORT;
+        backupOpenPicker.setText(export ? R.string.a11yBackupOpenPickerExport
+                : R.string.a11yBackupOpenPickerImport);
+        updateBackupButtons();
+        showStatusText(getString(export ? R.string.a11yBackupExportGuidance
+                : R.string.a11yBackupImportGuidance), true);
+    }
+
+    /** Step two: hand the screen to the system picker and nothing else. */
+    private void openBackupPicker() {
+        if (backupBusy || pendingBackupAction == BACKUP_ACTION_NONE) {
+            return;
+        }
+        boolean export = pendingBackupAction == BACKUP_ACTION_EXPORT;
+        Intent intent = new Intent(export ? Intent.ACTION_CREATE_DOCUMENT
+                : Intent.ACTION_OPEN_DOCUMENT);
+        intent.addCategory(Intent.CATEGORY_OPENABLE);
+        intent.setType("application/zip");
+        if (export) {
+            intent.putExtra(Intent.EXTRA_TITLE, "cdda-backup.zip");
+        }
+        try {
+            startActivityForResult(intent,
+                    export ? REQUEST_BACKUP_EXPORT : REQUEST_BACKUP_IMPORT);
+        } catch (ActivityNotFoundException unavailable) {
+            pendingBackupAction = BACKUP_ACTION_NONE;
+            updateBackupButtons();
+            showStatus(R.string.a11yBackupPickerUnavailable, true);
+        }
+    }
+
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode != REQUEST_BACKUP_EXPORT && requestCode != REQUEST_BACKUP_IMPORT) {
+            return;
+        }
+        boolean export = requestCode == REQUEST_BACKUP_EXPORT;
+        pendingBackupAction = BACKUP_ACTION_NONE;
+        updateBackupButtons();
+        Uri uri = resultCode == RESULT_OK && data != null ? data.getData() : null;
+        if (uri == null) {
+            // Returning without a choice is announced on this screen, the
+            // clear way back the pre-picker guidance promised.
+            showStatus(R.string.a11yBackupPickerCancelled, true);
+            return;
+        }
+        if (backupArchive == null) {
+            showStatus(R.string.a11yBackupStorageUnavailable, true);
+            return;
+        }
+        if (export) {
+            runBackupOperation(() -> {
+                OutputStream out;
+                try {
+                    out = getContentResolver().openOutputStream(uri, "w");
+                } catch (IOException e) {
+                    throw new ReaderBackupArchive.BackupException(
+                            ReaderBackupArchive.ERR_IO, String.valueOf(e.getMessage()));
+                }
+                if (out == null) {
+                    throw new ReaderBackupArchive.BackupException(
+                            ReaderBackupArchive.ERR_IO, "no output stream for chosen file");
+                }
+                return backupArchive.exportTo(out);
+            }, summary -> showStatusText(getString(R.string.a11yBackupExportDone,
+                    summary.files, summary.bytes), true));
+        } else {
+            runBackupOperation(() -> {
+                InputStream in;
+                try {
+                    in = getContentResolver().openInputStream(uri);
+                } catch (IOException e) {
+                    throw new ReaderBackupArchive.BackupException(
+                            ReaderBackupArchive.ERR_INVALID, String.valueOf(e.getMessage()));
+                }
+                if (in == null) {
+                    throw new ReaderBackupArchive.BackupException(
+                            ReaderBackupArchive.ERR_INVALID, "no input stream for chosen file");
+                }
+                try (InputStream stream = in) {
+                    return backupArchive.stageImport(stream);
+                } catch (IOException e) {
+                    throw new ReaderBackupArchive.BackupException(
+                            ReaderBackupArchive.ERR_IO, String.valueOf(e.getMessage()));
+                }
+            }, summary -> {
+                stagedBackupReady = true;
+                updateBackupButtons();
+                showStatusText(getString(R.string.a11yBackupImportReady,
+                        summary.files, summary.bytes), true);
+            });
+        }
+    }
+
+    /**
+     * The only restore trigger: an explicit activation of the Confirm
+     * button for the import staged and announced in this same screen
+     * instance. There is no other caller of restoreStagedImport, and in
+     * particular nothing in onResume/onActivityResult restores on its own.
+     */
+    private void confirmBackupRestore() {
+        if (backupBusy || !stagedBackupReady || backupArchive == null) {
+            return;
+        }
+        runBackupOperation(() -> backupArchive.restoreStagedImport(), summary -> {
+            stagedBackupReady = false;
+            updateBackupButtons();
+            showStatusText(getString(R.string.a11yBackupRestoreDone, summary.files), true);
+        });
+    }
+
+    private void cancelBackupRestore() {
+        if (backupArchive != null) {
+            backupArchive.cancelStagedImport();
+        }
+        stagedBackupReady = false;
+        pendingBackupAction = BACKUP_ACTION_NONE;
+        updateBackupButtons();
+        showStatus(R.string.a11yBackupRestoreCancelled, true);
+    }
+
+    private void updateBackupButtons() {
+        if (backupExport == null || backupImport == null || backupOpenPicker == null
+                || backupConfirmRestore == null || backupCancelRestore == null) {
+            return;
+        }
+        backupExport.setEnabled(!backupBusy);
+        backupImport.setEnabled(!backupBusy);
+        backupOpenPicker.setEnabled(!backupBusy && pendingBackupAction != BACKUP_ACTION_NONE);
+        backupConfirmRestore.setEnabled(!backupBusy && stagedBackupReady);
+        backupCancelRestore.setEnabled(!backupBusy && stagedBackupReady);
+    }
+
+    private interface BackupWork {
+        ReaderBackupArchive.Summary run() throws ReaderBackupArchive.BackupException;
+    }
+
+    private interface BackupDone {
+        void onDone(ReaderBackupArchive.Summary summary);
+    }
+
+    /**
+     * Backup file work runs off the main thread; its result is only
+     * announced if this exact screen instance is still alive and still
+     * owns the operation, so a completion from before a recreate can
+     * never speak or change state in the new instance.
+     */
+    private void runBackupOperation(BackupWork work, BackupDone done) {
+        backupBusy = true;
+        updateBackupButtons();
+        showStatus(R.string.a11yBackupWorking, true);
+        final int operation = ++backupOperationSequence;
+        new Thread(() -> {
+            try {
+                ReaderBackupArchive.Summary summary = work.run();
+                runOnUiThread(() -> {
+                    if (operation != backupOperationSequence || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    backupBusy = false;
+                    updateBackupButtons();
+                    done.onDone(summary);
+                });
+            } catch (ReaderBackupArchive.BackupException failure) {
+                runOnUiThread(() -> {
+                    if (operation != backupOperationSequence || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    backupBusy = false;
+                    stagedBackupReady = backupArchive != null && backupArchive.hasStagedImport();
+                    updateBackupButtons();
+                    announceBackupError(failure);
+                });
+            } catch (RuntimeException failure) {
+                runOnUiThread(() -> {
+                    if (operation != backupOperationSequence || isFinishing() || isDestroyed()) {
+                        return;
+                    }
+                    backupBusy = false;
+                    stagedBackupReady = backupArchive != null && backupArchive.hasStagedImport();
+                    updateBackupButtons();
+                    showStatusText(getString(R.string.a11yBackupFailed,
+                            ReaderBackupArchive.ERR_IO), true);
+                });
+            }
+        }).start();
+    }
+
+    /** Every backup failure is spoken and states that nothing changed. */
+    private void announceBackupError(ReaderBackupArchive.BackupException failure) {
+        switch (failure.code) {
+            case ReaderBackupArchive.ERR_NO_SPACE:
+                showStatus(R.string.a11yBackupNoSpace, true);
+                break;
+            case ReaderBackupArchive.ERR_INVALID:
+                showStatus(R.string.a11yBackupInvalid, true);
+                break;
+            case ReaderBackupArchive.ERR_VERIFY:
+                showStatus(R.string.a11yBackupVerifyFailed, true);
+                break;
+            case ReaderBackupArchive.ERR_EMPTY:
+                showStatus(R.string.a11yBackupEmpty, true);
+                break;
+            case ReaderBackupArchive.ERR_SWAP:
+                showStatus(R.string.a11yBackupSwapFailed, true);
+                break;
+            default:
+                showStatusText(getString(R.string.a11yBackupFailed, failure.code), true);
+                break;
+        }
+    }
+
+    // ---- Voice selection (R06.1) ----
+
+    private void startVoiceProbe(String engineName) {
+        voiceProbeRunning = true;
+        voiceProbeFailed = false;
+        updateVoiceChoiceDescriptions();
+        AndroidSpeech.probeVoices(this, engineName, (engines, voices, success) -> {
+            if (isFinishing() || isDestroyed()) {
+                return;
+            }
+            voiceProbeRunning = false;
+            voiceProbeFailed = !success;
+            probedEngines.clear();
+            probedEngines.addAll(engines);
+            probedVoices.clear();
+            probedVoices.addAll(voices);
+            if (success) {
+                adoptProbedDefaults();
+            }
+            updateVoiceChoiceDescriptions();
+        });
+    }
+
+    /** Keep the draft valid against what the probed engine really offers. */
+    private void adoptProbedDefaults() {
+        if (probedVoices.isEmpty()) {
+            draftVoiceName = null;
+            draftVoiceNetwork = false;
+            return;
+        }
+        boolean languagePresent = false;
+        boolean voicePresent = false;
+        for (AndroidSpeech.VoiceOption voice : probedVoices) {
+            if (voice.locale.toLanguageTag().equals(draftLanguageTag)) {
+                languagePresent = true;
+            }
+            if (voice.voiceName.equals(draftVoiceName)) {
+                voicePresent = true;
+                draftVoiceNetwork = voice.networkRequired;
+            }
+        }
+        if (!languagePresent) {
+            draftLanguageTag = probedVoices.get(0).locale.toLanguageTag();
+            for (AndroidSpeech.VoiceOption voice : probedVoices) {
+                if ("vi".equals(voice.locale.getLanguage())) {
+                    draftLanguageTag = voice.locale.toLanguageTag();
+                    break;
+                }
+            }
+            voicePresent = false;
+        }
+        if (!voicePresent) {
+            AndroidSpeech.VoiceOption chosen = null;
+            for (AndroidSpeech.VoiceOption voice : probedVoices) {
+                if (voice.locale.toLanguageTag().equals(draftLanguageTag)
+                        && !voice.networkRequired) {
+                    chosen = voice;
+                    break;
+                }
+            }
+            if (chosen == null) {
+                for (AndroidSpeech.VoiceOption voice : probedVoices) {
+                    if (voice.locale.toLanguageTag().equals(draftLanguageTag)) {
+                        chosen = voice;
+                        break;
+                    }
+                }
+            }
+            if (chosen != null) {
+                draftVoiceName = chosen.voiceName;
+                draftVoiceNetwork = chosen.networkRequired;
+            }
+        }
+    }
+
+    private void cycleVoiceEngine() {
+        ArrayList<String> options = new ArrayList<>();
+        options.add(null);
+        for (AndroidSpeech.EngineOption engine : probedEngines) {
+            options.add(engine.name);
+        }
+        int index = options.indexOf(draftEngineName);
+        draftEngineName = options.get(Math.floorMod(index + 1, options.size()));
+        draftEngineLabel = null;
+        for (AndroidSpeech.EngineOption engine : probedEngines) {
+            if (engine.name.equals(draftEngineName)) {
+                draftEngineLabel = engine.label;
+            }
+        }
+        draftVoiceName = null;
+        draftVoiceNetwork = false;
+        invalidateSampleForChangedSettings();
+        startVoiceProbe(draftEngineName);
+    }
+
+    private void cycleVoiceLanguage() {
+        ArrayList<String> tags = new ArrayList<>();
+        for (AndroidSpeech.VoiceOption voice : probedVoices) {
+            String tag = voice.locale.toLanguageTag();
+            if (!tags.contains(tag)) {
+                tags.add(tag);
+            }
+        }
+        if (tags.isEmpty()) {
+            return;
+        }
+        int index = tags.indexOf(draftLanguageTag);
+        draftLanguageTag = tags.get(Math.floorMod(index + 1, tags.size()));
+        draftVoiceName = null;
+        draftVoiceNetwork = false;
+        adoptProbedDefaults();
+        invalidateSampleForChangedSettings();
+        updateVoiceChoiceDescriptions();
+    }
+
+    private void cycleVoiceVoice() {
+        ArrayList<AndroidSpeech.VoiceOption> choices = voicesForDraftLanguage();
+        if (choices.isEmpty()) {
+            return;
+        }
+        int index = -1;
+        for (int i = 0; i < choices.size(); i++) {
+            if (choices.get(i).voiceName.equals(draftVoiceName)) {
+                index = i;
+            }
+        }
+        AndroidSpeech.VoiceOption next = choices.get(Math.floorMod(index + 1, choices.size()));
+        draftVoiceName = next.voiceName;
+        draftVoiceNetwork = next.networkRequired;
+        invalidateSampleForChangedSettings();
+        updateVoiceChoiceDescriptions();
+    }
+
+    private ArrayList<AndroidSpeech.VoiceOption> voicesForDraftLanguage() {
+        ArrayList<AndroidSpeech.VoiceOption> result = new ArrayList<>();
+        for (AndroidSpeech.VoiceOption voice : probedVoices) {
+            if (voice.locale.toLanguageTag().equals(draftLanguageTag)) {
+                result.add(voice);
+            }
+        }
+        return result;
+    }
+
+    private void updateVoiceChoiceDescriptions() {
+        if (languageChoice == null || engineChoice == null || voiceChoice == null
+                || voiceDataStatus == null) {
+            return;
+        }
+        if (voiceProbeRunning) {
+            languageChoice.setText(R.string.a11yVoiceProbing);
+            engineChoice.setText(R.string.a11yVoiceProbing);
+            voiceChoice.setText(R.string.a11yVoiceProbing);
+            voiceDataStatus.setText(R.string.a11yVoiceProbing);
+            return;
+        }
+        if (draftEngineLabel == null && draftEngineName != null) {
+            for (AndroidSpeech.EngineOption engine : probedEngines) {
+                if (engine.name.equals(draftEngineName)) {
+                    draftEngineLabel = engine.label;
+                }
+            }
+        }
+        String languageName = Locale.forLanguageTag(draftLanguageTag)
+                .getDisplayName(Locale.getDefault());
+        languageChoice.setText(getString(R.string.a11yVoiceLanguage, languageName));
+        engineChoice.setText(getString(R.string.a11yVoiceEngine,
+                draftEngineName == null ? getString(R.string.a11yVoiceEngineDefault)
+                        : draftEngineLabel != null ? draftEngineLabel : draftEngineName));
+        voiceChoice.setText(getString(R.string.a11yVoiceSelect,
+                draftVoiceName == null ? getString(R.string.a11yVoiceDefaultVoice) : draftVoiceName));
+        if (voiceProbeFailed) {
+            voiceDataStatus.setText(R.string.a11yVoiceProbeFailed);
+        } else if (draftVoiceName == null) {
+            voiceDataStatus.setText(R.string.a11yVoiceDefaultData);
+        } else {
+            voiceDataStatus.setText(draftVoiceNetwork
+                    ? R.string.a11yVoiceNetworkData : R.string.a11yVoiceOfflineData);
+        }
+        languageChoice.setContentDescription(languageChoice.getText());
+        engineChoice.setContentDescription(engineChoice.getText());
+        voiceChoice.setContentDescription(voiceChoice.getText());
     }
 
     private Button button(LinearLayout layout, int label, View.OnClickListener listener) {
@@ -757,9 +1424,14 @@ public final class ReaderSetupActivity extends Activity {
             AndroidSpeech.State state = speech.getState();
             if (state == AndroidSpeech.State.NEW || state == AndroidSpeech.State.FAILED
                     || state == AndroidSpeech.State.MISSING_LANGUAGE
+                    || state == AndroidSpeech.State.MISSING_VOICE
                     || state == AndroidSpeech.State.NETWORK_REQUIRED) {
                 selfVoiceInstructionsPending = true;
-                speech.initialize(null, new Locale("vi", "VN"), new ReaderPreferences(this).getRate(), true);
+                ReaderPreferences preferences = new ReaderPreferences(this);
+                speech.initialize(preferences.getSpeechEngineName(),
+                        Locale.forLanguageTag(preferences.getSpeechLanguageTag()),
+                        preferences.getRate(), !preferences.permitsNetworkVoice(),
+                        preferences.getSpeechVoiceName());
             } else if (state == AndroidSpeech.State.READY) {
                 speakFocusedControl();
             }
@@ -772,6 +1444,9 @@ public final class ReaderSetupActivity extends Activity {
         sampleRequested = false;
         sampleAttempted = false;
         heard.setEnabled(false);
+        if (rescuePlayer != null) {
+            rescuePlayer.stop();
+        }
         if (speech != null) {
             speech.cancel();
         }
@@ -780,6 +1455,17 @@ public final class ReaderSetupActivity extends Activity {
 
     @Override
     protected void onDestroy() {
+        // A backup worker finishing after this instance is gone must not
+        // announce or mutate anything in a successor instance (R20.3).
+        backupOperationSequence++;
+        if (sampleCues != null) {
+            sampleCues.close();
+            sampleCues = null;
+        }
+        if (rescuePlayer != null) {
+            rescuePlayer.release();
+            rescuePlayer = null;
+        }
         if (speech != null) {
             speech.close();
         }
