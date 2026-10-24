@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <climits>
+#include <cstdint>
 #include <cstdlib>
 #include <functional>
 #include <map>
@@ -13,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_outcome.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -189,15 +191,52 @@ static bool check_water_affect_items( avatar &you )
     return true;
 }
 
+namespace
+{
+// RAII fallback for avatar_action::move (R08). Explicit outcome records
+// made at the engine branches inside move() always win: if the outcome
+// sequence advanced during the call, the destructor records nothing.
+// Otherwise the only fact the fallback may state is the position delta --
+// a changed position means the avatar moved, and an unchanged position
+// means the result is undetermined. "blocked" is never inferred from an
+// unchanged position; only the invalid-move branch records it, with the
+// blocker classified from what the engine itself can name there.
+class move_outcome_guard
+{
+    public:
+        explicit move_outcome_guard( const avatar &you )
+            : you_( you ), start_pos_( you.pos_abs() ),
+              start_sequence_( a11y::last_action_outcome().sequence ) {}
+        move_outcome_guard( const move_outcome_guard & ) = delete;
+        move_outcome_guard &operator=( const move_outcome_guard & ) = delete;
+        ~move_outcome_guard() {
+            if( a11y::last_action_outcome().sequence != start_sequence_ ) {
+                return;
+            }
+            if( you_.pos_abs() != start_pos_ ) {
+                a11y::record_action_outcome( a11y::action_outcome_kind::moved, "" );
+            } else {
+                a11y::record_action_outcome( a11y::action_outcome_kind::undetermined, "" );
+            }
+        }
+    private:
+        const avatar &you_;
+        tripoint_abs_ms start_pos_;
+        std::uint64_t start_sequence_ = 0;
+};
+} // namespace
+
 bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 {
     map &here = get_map();
+    const move_outcome_guard outcome_guard( you );
 
     bool in_shell = you.has_active_mutation( trait_SHELL2 ) ||
                     you.has_active_mutation( trait_SHELL3 );
     if( ( !g->check_safe_mode_allowed() ) || in_shell ) {
         if( in_shell ) {
             add_msg( m_warning, _( "You can't move while in your shell.  Deactivate it to go mobile." ) );
+            a11y::record_action_outcome( a11y::action_outcome_kind::blocked, "your shell" );
         }
         return false;
     }
@@ -264,6 +303,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 
         if( retreating ) {
             add_msg( m_info, _( "You are too enraged to retreat!" ) );
+            a11y::record_action_outcome( a11y::action_outcome_kind::undetermined, "" );
             return false;
         }
     }
@@ -426,9 +466,14 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                 add_msg( m_warning,
                          _( "Not attacking the %1$s -- safe mode is on!  (%2$s to turn it off)" ), critter.name(),
                          msg_safe_mode );
+                a11y::record_action_outcome( a11y::action_outcome_kind::safe_mode_blocked,
+                                             critter.disp_name() );
                 return false;
             }
-            you.melee_attack( critter, true );
+            if( you.melee_attack( critter, true ) ) {
+                a11y::record_action_outcome( a11y::action_outcome_kind::attacked,
+                                             critter.disp_name() );
+            }
             if( critter.is_hallucination() ) {
                 critter.die( &m, &you );
             }
@@ -456,7 +501,9 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             return false;
         }
 
-        you.melee_attack( np, true );
+        if( you.melee_attack( np, true ) ) {
+            a11y::record_action_outcome( a11y::action_outcome_kind::attacked, np.disp_name() );
+        }
         np.make_angry();
         return false;
     }
@@ -548,6 +595,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         && m.open_door( you, dest_loc, !m.is_outside( you.pos_bub() ) ) ) {
         you.mod_moves( -you.get_speed() );
         you.add_msg_if_player( _( "You open the %s." ), door_name );
+        a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
         // if auto move is on, continue moving next turn
         if( you.is_auto_moving() ) {
             you.defer_move( dest_loc );
@@ -586,6 +634,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                     }
                     g->set_safe_mode( SAFE_MODE_ON );
                 }
+                a11y::record_action_outcome( a11y::action_outcome_kind::undetermined,
+                                             "Safe mode stopped the move" );
                 return false; // cancel automove
             }
         }
@@ -611,6 +661,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
             }
             //~ %1$s - vehicle name, %2$s - part name
             you.add_msg_if_player( _( "You open the %1$s's %2$s." ), veh1->name, door_name );
+            a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
         }
         you.mod_moves( -you.get_speed() );
         // if auto move is on, continue moving next turn
@@ -629,6 +680,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         } else {
             you.add_msg_if_player( _( "You open the %s." ), door_name );
         }
+        a11y::record_action_outcome( a11y::action_outcome_kind::opened, door_name );
         // if auto move is on, continue moving next turn
         if( you.is_auto_moving() ) {
             you.defer_move( dest_loc );
@@ -650,6 +702,23 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
                locked_doors.find( t.id() ) != locked_doors.end() ) {
         // Don't drain move points for learning something you could learn just by looking
         add_msg( _( "That door is locked!" ) );
+    }
+    {
+        // Classify the blocker in the engine's own order: a creature the
+        // avatar can actually see at the destination first (an unseen
+        // creature is never named), then the map's obstacle name, which
+        // already covers vehicle parts and terrain/furniture names exactly
+        // as the engine announces them.
+        std::string blocker;
+        if( Creature *const creature = creatures.creature_at( dest_loc ) ) {
+            if( you.sees( here, *creature ) ) {
+                blocker = creature->disp_name();
+            }
+        }
+        if( blocker.empty() ) {
+            blocker = m.obstacle_name( dest_loc );
+        }
+        a11y::record_action_outcome( a11y::action_outcome_kind::blocked, blocker );
     }
     return false;
 }

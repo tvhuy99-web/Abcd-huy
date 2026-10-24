@@ -10,6 +10,9 @@
 #include <unordered_set>
 #include <utility>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
@@ -223,7 +226,26 @@ void computer_session::use()
             if( !activatable ) {
                 action_name = string_format( _( "%s (UNAVAILABLE)" ), action_name );
             }
-            computer_menu.addentry( i, activatable, MENU_AUTOASSIGN, action_name );
+            // Reader (R17): state the one consequence the engine itself
+            // announces before an option runs, in the entry description
+            // the shared uilist adapter publishes. Selecting this option
+            // prompts "Hack into system?" first exactly when its own
+            // security or the computer's alert count makes the activation
+            // check below (current.security + comp.alerts > 0) require a
+            // password; the string is the same one use() prints at that
+            // point. The label stays the option's original name.
+            // can_activate() is a pure boolean terrain check with no
+            // reason text anywhere in the engine, so a non-activatable
+            // entry deliberately gets no a11y_disabled_reason here: the
+            // shared adapter falls back to its default reason instead of
+            // an invented one.
+            std::string entry_desc;
+            if( comp.options[i].security > 0 ||
+                comp.options[i].security + comp.alerts > 0 ) {
+                entry_desc = _( "Password required." );
+            }
+            computer_menu.addentry_desc( i, activatable, MENU_AUTOASSIGN, action_name,
+                                         entry_desc );
         }
 
         ui_manager::redraw();
@@ -851,7 +873,27 @@ void computer_session::action_list_mutations()
         uilist wmenu;
 
         for( const trait_id &traits_iter : category_mutations ) {
-            wmenu.addentry( -1, true, -2, traits_iter.obj().name() );
+            // Reader (R17): the shared uilist adapter publishes entry
+            // descriptions, so give each mutation the same facts the
+            // selection handler below prints to the terminal --
+            // description, replacements and cancellations, all from the
+            // mutation branch itself -- instead of a name alone. The
+            // label stays the mutation's original name.
+            const mutation_branch &mdata = traits_iter.obj();
+            std::string entry_desc = mdata.desc();
+            if( !mdata.replacements.empty() ) {
+                entry_desc += "\n" + std::string( _( "Changes to:" ) );
+                for( const trait_id &replacement : mdata.replacements ) {
+                    entry_desc += "\n" + replacement->name();
+                }
+            }
+            if( !mdata.cancels.empty() ) {
+                entry_desc += "\n" + std::string( _( "Cancels:" ) );
+                for( const trait_id &cancel : mdata.cancels ) {
+                    entry_desc += "\n" + cancel->name();
+                }
+            }
+            wmenu.addentry_desc( -1, true, -2, traits_iter.obj().name(), entry_desc );
         }
 
         do {
@@ -1718,17 +1760,93 @@ bool computer_session::query_bool( const std::string &text, Args &&... args )
     return query_ynq( text, std::forward<Args>( args )... ) == ynq::yes;
 }
 
+std::string computer_session::terminal_text() const
+{
+    std::string text;
+    for( const std::pair<int, std::string> &line : lines ) {
+        if( !text.empty() ) {
+            text += '\n';
+        }
+        if( line.first > 0 ) {
+            text.append( static_cast<size_t>( line.first ), ' ' );
+        }
+        text += remove_color_tags( line.second );
+    }
+    return text;
+}
+
 template<typename ...Args>
 bool computer_session::query_any( const std::string &text, Args &&... args )
 {
-    print_indented_line( 0, width, text, std::forward<Args>( args )... );
-    return query_any();
+    // Format once: the printed line and the reader summary are then the
+    // same string, and the already-formatted text cannot be reinterpreted
+    // as a format string when it is printed.
+    const std::string formatted_text = string_format( text, std::forward<Args>( args )... );
+    print_indented_line( 0, width, "%s", formatted_text );
+    return query_any_impl( formatted_text );
 }
 
 bool computer_session::query_any()
 {
-    ui_manager::redraw();
-    inp_mngr.wait_for_any_key();
+    return query_any_impl( terminal_text() );
+}
+
+bool computer_session::query_any_impl( const std::string &summary )
+{
+    if( !a11y::enabled() ) {
+        ui_manager::redraw();
+        inp_mngr.wait_for_any_key();
+        return true;
+    }
+    // Reader (R17): wait_for_any_key() never goes through handle_input --
+    // on Android it builds a WAIT_FOR_ANY_KEY context but does not poll
+    // it -- so reader intents could never be served while the terminal
+    // waited. Poll a local context instead. Physical-key behaviour is
+    // equivalent: ANY_INPUT is registered, so every key that is not bound
+    // to a registered action in this context is returned as ANY_INPUT by
+    // input_context (the same fallback bionics_ui and query_popup rely
+    // on), Enter is bound to the globally-defined CONFIRM, and mouse
+    // events with no action are ignored inside handle_input before the
+    // ANY_INPUT fallback, exactly as wait_for_any_key ignores them.
+    // Either result ends the wait; only a reader focus intent, which the
+    // handler answers with TIMEOUT, keeps it open.
+    input_context ctxt( "COMPUTER_CONTINUE", keyboard_mode::keycode );
+    ctxt.register_action( "ANY_INPUT" );
+    ctxt.register_action( "CONFIRM" );
+    a11y::screen_scope reader( &ctxt, "computer-continue",
+    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node == "computer:continue" ) {
+            if( intent.action == "activate" ) {
+                return std::string( "ANY_INPUT" );
+            }
+            return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" )
+                   : std::nullopt;
+        }
+        if( intent.node == "computer:text" && intent.action == "focus" ) {
+            return std::string( "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    a11y::semantic_snapshot snapshot;
+    snapshot.title = comp.name.empty() ? _( "Computer" ) : remove_color_tags( comp.name );
+    snapshot.summary = remove_color_tags( summary );
+    if( !lines.empty() ) {
+        a11y::append_document( snapshot, "computer:text", _( "Computer output" ),
+                               terminal_text() );
+    }
+    a11y::semantic_node continue_node;
+    continue_node.id = "computer:continue";
+    continue_node.role = "button";
+    continue_node.label = _( "Continue" );
+    snapshot.focus = continue_node.id;
+    snapshot.nodes.push_back( std::move( continue_node ) );
+    reader.update( std::move( snapshot ) );
+
+    std::string action;
+    do {
+        ui_manager::redraw();
+        action = ctxt.handle_input();
+    } while( action == "TIMEOUT" );
     return true;
 }
 
@@ -1753,6 +1871,39 @@ computer_session::ynq computer_session::query_ynq( const std::string &text, Args
                          ctxt.describe_key_and_name( "YES", allow_key ),
                          ctxt.describe_key_and_name( "NO", allow_key ),
                          ctxt.describe_key_and_name( "QUIT", allow_key ) );
+
+    // Reader (R17): without a scope bound to this context, handle_input
+    // would publish only the generic YES/NO/QUIT command fallback, which
+    // has no question -- the question exists only in the terminal lines.
+    // Publish it once, before the loop: the summary is the exact
+    // formatted question, the command nodes come from command_snapshot
+    // (their ids are the action ids, so registered_intent returns the
+    // original YES/NO/QUIT actions, and a reader "cancel" resolves to
+    // the registered QUIT), and the whole current terminal text rides
+    // along as a document node. The scope is bound to &ctxt, so the
+    // generic fallback in handle_input does not replace it. The
+    // question does not change inside the loop, so one update is
+    // enough; the known limit is that lines printed after this point,
+    // while the question is already open, are not republished until
+    // the next query. A reader intent arrives as a default (error-type)
+    // raw event, which both allow_key filters accept, so the case rule
+    // for physical keys is unchanged and reader answers are not
+    // rejected by it.
+    a11y::screen_scope reader( &ctxt, "computer-query",
+    [&ctxt]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           comp.name.empty() ? _( "Computer" )
+                                           : remove_color_tags( comp.name ) );
+        snapshot.summary = remove_color_tags( formatted_text );
+        if( !lines.empty() ) {
+            a11y::append_document( snapshot, "computer:text", _( "Computer output" ),
+                                   terminal_text() );
+        }
+        reader.update( std::move( snapshot ) );
+    }
 
     do {
         ui_manager::redraw();

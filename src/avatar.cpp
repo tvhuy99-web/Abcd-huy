@@ -14,6 +14,7 @@
 #include <string>
 #include <utility>
 
+#include "a11y_outcome.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar_action.h"
@@ -1293,7 +1294,12 @@ void avatar::set_movement_mode( const move_mode_id &new_mode )
             stop_hauling();
         }
         add_msg( new_mode->change_message( true, get_steed_type() ) );
+        const move_mode_id old_mode = move_mode;
         move_mode = new_mode;
+        if( old_mode != new_mode ) {
+            a11y::record_action_outcome( a11y::action_outcome_kind::stance_changed,
+                                         new_mode->name() );
+        }
         // Enchantments based on move modes can stack inappropriately without a recalc here
         recalculate_enchantment_cache();
         recoil = MAX_RECOIL;

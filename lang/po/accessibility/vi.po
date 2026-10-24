@@ -173,7 +173,7 @@ msgid "%s: health indicator %d of 5"
 msgstr "%s: chỉ báo sức khỏe %d trên 5 vạch"
 
 msgid "Vehicle controls"
-msgstr "Điều khiển phương tiện"
+msgstr "Điều khiển xe"
 
 msgid "World"
 msgstr "Thế giới"
@@ -247,7 +247,7 @@ msgid "Approximate sound marker"
 msgstr "Dấu âm thanh ước lượng"
 
 msgid "Visible vehicle"
-msgstr "Phương tiện đang nhìn thấy"
+msgstr "Xe đang nhìn thấy"
 
 msgid "Visible items"
 msgstr "Vật phẩm đang nhìn thấy"
@@ -417,7 +417,8 @@ msgid "Construction"
 msgstr "Xây dựng"
 
 msgid "Blueprint"
-msgstr "Bản thiết kế"
+msgid_plural "copies of Blueprint"
+msgstr[0] "Bản thiết kế"
 
 msgid "Batch"
 msgstr "Theo mẻ"
@@ -523,7 +524,7 @@ msgstr "Sinh vật đang nhìn thấy: %s"
 
 #, c-format
 msgid "Visible vehicle: %s"
-msgstr "Phương tiện đang nhìn thấy: %s"
+msgstr "Xe đang nhìn thấy: %s"
 
 msgid "No visible creature or vehicle is under the aim point."
 msgstr "Không có sinh vật hoặc phương tiện đang nhìn thấy tại điểm ngắm."
@@ -532,7 +533,7 @@ msgid "Creature"
 msgstr "Sinh vật"
 
 msgid "Vehicle"
-msgstr "Phương tiện"
+msgstr "Xe"
 
 msgid "Cannot change target while the weapon has no ammunition."
 msgstr "Không thể đổi mục tiêu khi vũ khí đã hết đạn."
@@ -656,7 +657,7 @@ msgstr "Địa điểm và thời điểm bắt đầu"
 
 #, c-format
 msgid "Location: %1$s. City: %2$s. Start of cataclysm: %3$s. Start of game: %4$s. Starting vehicle: %5$s."
-msgstr "Địa điểm: %1$s. Thành phố: %2$s. Thời điểm thảm họa bắt đầu: %3$s. Thời điểm bắt đầu cuộc chơi: %4$s. Phương tiện khởi đầu: %5$s."
+msgstr "Địa điểm: %1$s. Thành phố: %2$s. Thời điểm thảm họa bắt đầu: %3$s. Thời điểm bắt đầu cuộc chơi: %4$s. Xe khởi đầu: %5$s."
 
 msgid "Scenario description"
 msgstr "Mô tả kịch bản"
@@ -1064,3 +1065,2196 @@ msgstr "Đang bật lượt thời gian thực. Thế giới vẫn có thể ti�
 
 msgid "Waiting advances game time. The world may change while you wait."
 msgstr "Chờ làm thời gian trong game tiếp tục trôi. Thế giới có thể thay đổi trong lúc bạn chờ."
+
+#, c-format
+msgid "Category: %s."
+msgstr "Nhóm: %s."
+
+#, c-format
+msgid "Declared conflicts: %s."
+msgstr "Xung đột đã khai báo: %s."
+
+msgid "This mod has errors and cannot be added."
+msgstr "Mod này có lỗi và không thể thêm vào."
+
+#, c-format
+msgid "Bionics: %s"
+msgstr "Bionic: %s"
+
+#, c-format
+msgid "Spells: %s"
+msgstr "Phép: %s"
+
+#, c-format
+msgid "Level: %d"
+msgstr "Cấp độ: %d"
+
+#, c-format
+msgid "Level: %1$d + %2$d from profession or background"
+msgstr "Cấp độ: %1$d + %2$d từ nghề hoặc nền tảng"
+
+#, c-format
+msgid "Stat points left: %d."
+msgstr "Điểm thuộc tính còn lại: %d."
+
+#, c-format
+msgid "Skill points left: %d."
+msgstr "Điểm kỹ năng còn lại: %d."
+
+#, c-format
+msgid "%1$d (%2$s). Range %3$d to %4$d."
+msgstr "%1$d (%2$s). Phạm vi từ %3$d đến %4$d."
+
+msgid "This scenario starts in a city, but cities are disabled."
+msgstr "Kịch bản này bắt đầu ở thành phố, nhưng thành phố đang bị tắt."
+
+msgid "This trait is locked by your scenario, profession or background and cannot be removed."
+msgstr "Đặc tính này bị khóa bởi kịch bản, nghề hoặc nền tảng của bạn và không thể gỡ bỏ."
+
+#, c-format
+msgid "The character template \"%s\" could not be loaded. Its file may be missing or damaged."
+msgstr "Không tải được mẫu nhân vật \"%s\". Tệp của mẫu có thể đã mất hoặc bị hỏng."
+
+#, c-format
+msgid "Delete the world \"%1$s\" permanently? This deletes the world folder and all %2$s inside it. This cannot be undone."
+msgstr "Xóa vĩnh viễn thế giới \"%1$s\"? Thao tác này sẽ xóa thư mục thế giới và mọi %2$s bên trong. Không thể hoàn tác."
+
+#, c-format
+msgid "Reset the world \"%1$s\"? This removes all %2$s inside it and regenerates the world. Its settings and mod list are kept. This cannot be undone."
+msgstr "Đặt lại thế giới \"%1$s\"? Thao tác này sẽ xóa mọi %2$s bên trong và tạo lại thế giới. Thiết lập và danh sách mod của thế giới được giữ nguyên. Không thể hoàn tác."
+
+#, c-format
+msgid "Save compression enabled for world \"%s\"."
+msgstr "Đã bật nén bản lưu cho thế giới \"%s\"."
+
+#, c-format
+msgid "Save compression disabled for world \"%s\"."
+msgstr "Đã tắt nén bản lưu cho thế giới \"%s\"."
+
+#, c-format
+msgid "Save compression could not be changed for world \"%s\"."
+msgstr "Không đổi được nén bản lưu cho thế giới \"%s\"."
+
+#, c-format
+msgid "World \"%s\" deleted."
+msgstr "Đã xóa thế giới \"%s\"."
+
+#, c-format
+msgid "World \"%s\" reset. All of its saves were removed."
+msgstr "Đã đặt lại thế giới \"%s\". Mọi bản lưu của thế giới đã bị xóa."
+
+#, c-format
+msgid "Template \"%s\" deleted."
+msgstr "Đã xóa mẫu \"%s\"."
+
+msgid "The world could not be created because its files could not be written."
+msgstr "Không tạo được thế giới vì không ghi được tệp của nó."
+
+msgid "Moved."
+msgstr "Đã di chuyển."
+
+#, c-format
+msgid "Opened the %s."
+msgstr "Đã mở %s."
+
+#, c-format
+msgid "Blocked by %s."
+msgstr "Bị chặn bởi %s."
+
+#, c-format
+msgid "Attacked %s."
+msgstr "Đã tấn công %s."
+
+#, c-format
+msgid "Movement mode: %s."
+msgstr "Chế độ di chuyển: %s."
+
+msgid "Moved to another level."
+msgstr "Đã sang tầng khác."
+
+msgid "The last action's result could not be determined."
+msgstr "Không xác định được kết quả của hành động vừa rồi."
+
+#, c-format
+msgid "Door: %s"
+msgstr "Cửa: %s"
+
+msgid "Locked"
+msgstr "Đã khóa"
+
+msgid "Closed"
+msgstr "Đang đóng"
+
+msgid "Open"
+msgstr "Đang mở"
+
+#, c-format
+msgid "Vehicle part: %s"
+msgstr "Bộ phận xe: %s"
+
+#, c-format
+msgid "%1$s, intensity %2$d of %3$d"
+msgstr "%1$s, cường độ %2$d trên %3$d"
+
+msgid "Last action outcome"
+msgstr "Kết quả hành động gần nhất"
+
+msgid "Explore mode"
+msgstr "Chế độ thăm dò"
+
+msgid "Move a read-only cursor away from your character to inspect distant tiles. Exploring never moves your character and does not use game time."
+msgstr "Di chuyển một con trỏ chỉ đọc ra xa nhân vật để xem các ô ở xa. Thăm dò không bao giờ di chuyển nhân vật của bạn và không tốn thời gian trong trò chơi."
+
+msgid "Explore cursor"
+msgstr "Con trỏ thăm dò"
+
+#, c-format
+msgid "Relative to you: %s"
+msgstr "So với vị trí của bạn: %s"
+
+msgid "Moves only the explore cursor. Your character does not move and no game time passes."
+msgstr "Chỉ di chuyển con trỏ thăm dò. Nhân vật của bạn không di chuyển và thời gian trong trò chơi không trôi qua."
+
+#, c-format
+msgid "Move explore cursor: %s"
+msgstr "Di chuyển con trỏ thăm dò: %s"
+
+msgid "Move explore cursor up one level"
+msgstr "Di chuyển con trỏ thăm dò lên một tầng"
+
+msgid "Move explore cursor down one level"
+msgstr "Di chuyển con trỏ thăm dò xuống một tầng"
+
+msgid "Recenter explore cursor"
+msgstr "Đưa con trỏ thăm dò về giữa"
+
+msgid "Returns the explore cursor to your character's tile."
+msgstr "Đưa con trỏ thăm dò trở về ô của nhân vật."
+
+msgid "Exit explore mode"
+msgstr "Thoát chế độ thăm dò"
+
+msgid "Returns the scan to your character."
+msgstr "Đưa vùng quét trở về nhân vật của bạn."
+
+msgid "Vehicle: %s"
+msgstr "Xe: %s"
+
+msgid "Remote control"
+msgstr "Điều khiển từ xa"
+
+msgid "Engine strain: %s"
+msgstr "Mức gắng sức của động cơ: %s"
+
+msgid "Fuel: %s"
+msgstr "Nhiên liệu: %s"
+
+msgid "Battery: %s"
+msgstr "Pin: %s"
+
+msgid "Tile: %s"
+msgstr "Ô: %s"
+
+msgid "the reference tile"
+msgstr "ô gốc"
+
+msgid "%d ahead"
+msgstr "trước %d"
+
+msgid "%d back"
+msgstr "sau %d"
+
+msgid "%d to the right"
+msgstr "phải %d"
+
+msgid "%d to the left"
+msgstr "trái %d"
+
+msgid "Condition: "
+msgstr "Tình trạng: "
+
+msgid "Tanks and fuel stores"
+msgstr "Bình chứa và kho nhiên liệu"
+
+msgid "This part cannot be chosen for this action."
+msgstr "Không thể chọn bộ phận này cho thao tác hiện tại."
+
+msgid "Contents: %s"
+msgstr "Bên trong: %s"
+
+msgid "Cargo volume: %1$s of %2$s %3$s. "
+msgstr "Thể tích hàng: %1$s trên %2$s %3$s. "
+
+msgid "Cursor tile"
+msgstr "Ô con trỏ"
+
+msgid "Terrain: %s."
+msgstr "Địa hình: %s."
+
+msgid "Parts here: %d."
+msgstr "Số bộ phận tại đây: %d."
+
+msgid "Label: %s."
+msgstr "Nhãn: %s."
+
+msgid " Interior."
+msgstr " Bên trong xe."
+
+msgid " Exterior."
+msgstr " Bên ngoài xe."
+
+msgid "Leaking."
+msgstr " Đang rò rỉ."
+
+msgid "Capacity: %1$d. Charge: %2$d%%."
+msgstr "Dung lượng: %1$d. Mức sạc: %2$d%%."
+
+msgid "Ammunition: %1$s, %2$d."
+msgstr "Đạn: %1$s, %2$d."
+
+msgid "No ammunition."
+msgstr "Không có đạn."
+
+msgid "Crew: %s."
+msgstr "Người ngồi: %s."
+
+msgid "Fault: %1$s. %2$s"
+msgstr "Lỗi: %1$s. %2$s"
+
+msgid "In use: yes."
+msgstr "Đang dùng: có."
+
+msgid "In use: no."
+msgstr "Đang dùng: không."
+
+msgid "Fuel: %s. "
+msgstr "Nhiên liệu: %s. "
+
+msgid "Contents: "
+msgstr "Bên trong: "
+
+msgid "Contents (frozen): "
+msgstr "Bên trong (đã đông): "
+
+msgid "Contents (rotten): "
+msgstr "Bên trong (đã hỏng): "
+
+msgid "Contents: %1$s, %2$.1f L."
+msgstr "Bên trong: %1$s, %2$.1f L."
+
+msgid "Empty."
+msgstr "Trống."
+
+msgid ", and %d more"
+msgstr ", và %d mục nữa"
+
+msgid "No parts in this category can be installed here."
+msgstr "Không có bộ phận nào trong nhóm này lắp được tại đây."
+
+msgid "This part cannot be installed here. The requirements say why."
+msgstr "Không thể lắp bộ phận này tại đây. Phần yêu cầu cho biết lý do."
+
+msgid "Broken; repairing replaces it."
+msgstr "Đã hỏng; sửa chữa sẽ thay mới."
+
+msgid "There are no parts which can be repaired here."
+msgstr "Không có bộ phận nào sửa được tại đây."
+
+msgid "This part cannot be removed."
+msgstr "Không thể tháo bộ phận này."
+
+msgid "Browsing does not change the vehicle; activate a part to choose it."
+msgstr "Duyệt qua không làm thay đổi xe; kích hoạt một bộ phận để chọn nó."
+
+msgid "Battery low threshold"
+msgstr "Ngưỡng pin thấp"
+
+msgid "Battery high threshold"
+msgstr "Ngưỡng pin cao"
+
+msgid "Smart Engine Controller"
+msgstr "Bộ điều khiển động cơ thông minh"
+
+msgid "Smart engine controller: %1$s. Battery low threshold: %2$d%%. Battery high threshold: %3$d%%."
+msgstr "Bộ điều khiển động cơ thông minh: %1$s. Ngưỡng pin thấp: %2$d%%. Ngưỡng pin cao: %3$d%%."
+
+msgid "Open the smart engine controller user manual."
+msgstr "Mở hướng dẫn sử dụng bộ điều khiển động cơ thông minh."
+
+msgid "Safe speed: %1$s. Top speed: %2$s %3$s."
+msgstr "Tốc độ an toàn: %1$s. Tốc độ tối đa: %2$s %3$s."
+
+msgid " %1$s: %2$d%%."
+msgstr " %1$s: %2$d%%."
+
+msgid "Vehicle: %1$s. Status: %2$s. Mass: %3$.0f %4$s. Cargo: %5$s of %6$s %7$s."
+msgstr "Xe: %1$s. Trạng thái: %2$s. Khối lượng: %3$.0f %4$s. Hàng hóa: %5$s trên %6$s %7$s."
+
+msgid "Hard limit: at or below this battery charge, the controller forbids discharging the battery for the electric motors."
+msgstr "Giới hạn cứng: khi mức pin bằng hoặc dưới ngưỡng này, bộ điều khiển cấm xả pin cho động cơ điện."
+
+msgid "Soft limit: at or below this battery charge, the controller charges the battery toward this level and limits discharging; above it, discharging is allowed."
+msgstr "Giới hạn mềm: khi mức pin bằng hoặc dưới ngưỡng này, bộ điều khiển sạc pin hướng tới mức này và hạn chế xả pin; trên mức này, xả pin được phép."
+
+msgid "The save for \"%1$s\" in world \"%2$s\" could not be loaded because the world could not be prepared. The save was not changed, overwritten, or deleted. You can try another save or world from the main menu."
+msgstr "Không tải được bản lưu của \"%1$s\" trong thế giới \"%2$s\" vì không chuẩn bị được thế giới. Bản lưu không bị thay đổi, ghi đè hay xóa. Bạn có thể thử bản lưu hoặc thế giới khác từ menu chính."
+
+msgid "The save for \"%1$s\" in world \"%2$s\" could not be loaded. It may be damaged, missing, or from an incompatible version. The save was not changed, overwritten, or deleted. You can choose another save or return to the main menu."
+msgstr "Không tải được bản lưu của \"%1$s\" trong thế giới \"%2$s\". Bản lưu có thể đã hỏng, bị thiếu, hoặc thuộc phiên bản không tương thích. Bản lưu không bị thay đổi, ghi đè hay xóa. Bạn có thể chọn bản lưu khác hoặc quay lại menu chính."
+
+msgid "World: %s."
+msgstr "Thế giới: %s."
+
+msgid "Play time: %02d:%02d:%02d."
+msgstr "Thời gian chơi: %02d:%02d:%02d."
+
+msgid "Play time: not recorded."
+msgstr "Thời gian chơi: chưa được ghi lại."
+
+msgid "Last saved: %s."
+msgstr "Lưu lần cuối: %s."
+
+msgid "What to do with the save for \"%s\" in world \"%s\"?"
+msgstr "Bạn muốn làm gì với bản lưu của \"%s\" trong thế giới \"%s\"?"
+
+msgid "Delete the save for \"%1$s\" in world \"%2$s\" permanently? This deletes the character's save files in that world. This cannot be undone."
+msgstr "Xóa vĩnh viễn bản lưu của \"%1$s\" trong thế giới \"%2$s\"? Thao tác này xóa các tệp lưu của nhân vật trong thế giới đó. Không thể hoàn tác."
+
+msgid "Save for \"%s\" deleted."
+msgstr "Đã xóa bản lưu của \"%s\"."
+
+msgid "The save for \"%s\" could not be deleted completely, so it has not been removed from the list."
+msgstr "Không xóa được hoàn toàn bản lưu của \"%s\", nên bản lưu chưa bị gỡ khỏi danh sách."
+
+msgid "Message log"
+msgstr "Nhật ký thông báo"
+
+msgid "No messages to show."
+msgstr "Không có thông báo nào để hiển thị."
+
+msgid "Message history"
+msgstr "Lịch sử thông báo"
+
+msgid "The game could not be saved. You are still in the game; nothing was quit."
+msgstr "Không lưu được trò chơi. Bạn vẫn đang ở trong trò chơi; chưa thoát gì cả."
+
+msgid "Quicksave failed. The game was not saved."
+msgstr "Lưu nhanh thất bại. Trò chơi chưa được lưu."
+
+msgid "Your character's memorial file was written, and the character's save was moved to the graveyard folder."
+msgstr "Tệp tưởng niệm của nhân vật đã được ghi, và bản lưu của nhân vật đã được chuyển vào thư mục nghĩa địa (graveyard)."
+
+
+msgid ""
+"\n"
+"Already in progress by:"
+msgstr ""
+"\n"
+"Đã có người đang thực hiện:"
+
+msgid ""
+"\n"
+"No suitable location for a new expansion was found around this camp."
+msgstr ""
+"\n"
+"Không tìm được vị trí phù hợp cho một khu mở rộng mới quanh trại này."
+
+#, c-format
+msgid " (%.1f L %s)"
+msgstr " (%.1f L %s)"
+
+#, c-format
+msgid " (%d of %d charge)"
+msgstr " (%d trên %d lần sạc)"
+
+msgid ""
+" Essential menu key (reader policy): removing or resetting it needs a second activation to confirm."
+msgstr ""
+" Phím menu thiết yếu (chính sách của bộ đọc): muốn xóa hoặc đặt lại phím này phải kích hoạt thêm lần nữa để xác nhận."
+
+#, c-format
+msgid " Fault: %1$s. %2$s"
+msgstr " Lỗi: %1$s. %2$s"
+
+#, c-format
+msgid " Known friendly creatures in the area (%1$d): %2$s."
+msgstr " Sinh vật thân thiện đã biết trong vùng ảnh hưởng (%1$d): %2$s."
+
+#, c-format
+msgid " Label: %s."
+msgstr " Nhãn: %s."
+
+msgid " Leaking."
+msgstr " Đang rò rỉ."
+
+#, c-format
+msgid " Maximum length: %d characters."
+msgstr " Độ dài tối đa: %d ký tự."
+
+#, c-format
+msgid " Mode: %1$s. Level difference from you: %2$d."
+msgstr " Chế độ: %1$s. Chênh lệch tầng so với bạn: %2$d."
+
+msgid ""
+" No known friendly creature is in the area. This counts only creatures you can see, so it does not guarantee the area is safe."
+msgstr ""
+" Không có sinh vật thân thiện đã biết nào trong vùng ảnh hưởng. Số này chỉ tính các sinh vật bạn nhìn thấy được, nên không bảo đảm vùng này an toàn."
+
+#, c-format
+msgid " Parts here: %d."
+msgstr " Số bộ phận tại đây: %d."
+
+#, c-format
+msgid " Safe speed: %1$s. Top speed: %2$s %3$s."
+msgstr " Tốc độ an toàn: %1$s. Tốc độ tối đa: %2$s %3$s."
+
+#, c-format
+msgid " Steadiness: %1$d%%. Sight dispersion: %2$d."
+msgstr " Độ ổn định: %1$d%%. Độ phân tán của kính ngắm: %2$d."
+
+msgid " Warning: you are inside the area of effect."
+msgstr " Cảnh báo: bạn đang ở trong vùng ảnh hưởng."
+
+msgid " [DONE]"
+msgstr " [ĐÃ XONG]"
+
+msgid " left]"
+msgstr " còn lại]"
+
+#, c-format
+msgid "%1$d of %2$d actions shown."
+msgstr "Đang hiển thị %1$d trên %2$d hành động."
+
+#, c-format
+msgid "%1$d of %2$d help topics shown."
+msgstr "Đang hiển thị %1$d trên %2$d chủ đề trợ giúp."
+
+#, c-format
+msgid ""
+"%1$s: %2$d\n"
+msgstr ""
+"%1$s: %2$d\n"
+
+#, c-format
+msgid "%1$s: %2$d (base %3$d)"
+msgstr "%1$s: %2$d (gốc %3$d)"
+
+#, c-format
+msgid "%1$s: held by %2$s"
+msgstr "%1$s: do %2$s giữ"
+
+#, c-format
+msgid "%1$s: level 0: %2$s, max level: %3$s"
+msgstr "%1$s: cấp 0: %2$s, cấp tối đa: %3$s"
+
+#, c-format
+msgid "%1$s: level 0: %2$s, per level: %3$s, max level: %4$s"
+msgstr "%1$s: cấp 0: %2$s, mỗi cấp: %3$s, cấp tối đa: %4$s"
+
+#, c-format
+msgid "%1$s: need %2$d in total across groups; available %3$d."
+msgstr "%1$s: cần tổng cộng %2$d gộp mọi nhóm; hiện có %3$d."
+
+#, c-format
+msgid ""
+"%1$s: valid for %2$s.\n"
+msgstr ""
+"%1$s: hợp lệ cho %2$s.\n"
+
+#, c-format
+msgid "%d bionics."
+msgstr "%d bionic."
+
+#, c-format
+msgid "%d column left"
+msgstr "còn %d cột bên trái"
+
+#, c-format
+msgid "%d column right"
+msgstr "còn %d cột bên phải"
+
+#, c-format
+msgid "%d columns left"
+msgstr "còn %d cột bên trái"
+
+#, c-format
+msgid "%d columns right"
+msgstr "còn %d cột bên phải"
+
+#, c-format
+msgid "%d mutations"
+msgstr "%d đột biến"
+
+#, c-format
+msgid "%d row down"
+msgstr "xuống %d hàng"
+
+#, c-format
+msgid "%d row up"
+msgstr "lên %d hàng"
+
+#, c-format
+msgid "%d rows down"
+msgstr "xuống %d hàng"
+
+#, c-format
+msgid "%d rows up"
+msgstr "lên %d hàng"
+
+#, c-format
+msgid "%s (from profession)"
+msgstr "%s (từ nghề nghiệp)"
+
+#, c-format
+msgid "%s (from scenario)"
+msgstr "%s (từ kịch bản)"
+
+#, c-format
+msgid "%s is a favorite spell. Activate to remove it from favorites."
+msgstr "%s là phép yêu thích. Kích hoạt để bỏ khỏi danh sách yêu thích."
+
+#, c-format
+msgid "%s now owes you %s."
+msgstr "%s hiện nợ bạn %s."
+
+#, c-format
+msgid "%s: level 0: %d-%d, per level: %.2f - %.2f, max level: %d-%d"
+msgstr "%s: cấp 0: %d-%d, mỗi cấp: %.2f - %.2f, cấp tối đa: %d-%d"
+
+msgid ""
+"* is used as a wildcard and matching is case insensitive. Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed."
+msgstr ""
+"* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ thường. Ví dụ: 'footsteps' khớp đúng tên âm thanh, 'a loud ba*' khớp các âm thanh bắt đầu bằng 'a loud ba', '*losion!' khớp các âm thanh kết thúc bằng 'losion!', và 'a *oud*ba*' cho thấy có thể dùng nhiều dấu *."
+
+msgid ""
+"* is used as a wildcard and matching is case insensitive. Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed."
+msgstr ""
+"* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ thường. Ví dụ: 'human' khớp mọi NPC, 'zombie' khớp đúng tên quái vật, 'acidic zo*' khớp các quái vật bắt đầu bằng 'acidic zo', '*mbie' khớp các quái vật kết thúc bằng 'mbie', và '*cid*zo*ie' cho thấy có thể dùng nhiều dấu *."
+
+msgid ""
+"* is used as a wildcard and matching is case insensitive; for example 'wooden ar*' matches items beginning with 'wood ar' and '*rrow' matches items ending with 'rrow'. Prefix a rule with 'm:' to match items made of a material (for example 'm:kevlar' matches items made of Kevlar), or with 'M:' to match items made purely of the listed materials (for example 'M:copper', or 'M:steel,iron' where multiple materials are allowed as an OR search)."
+msgstr ""
+"* được dùng làm ký tự đại diện và việc so khớp không phân biệt chữ hoa chữ thường; ví dụ 'wooden ar*' khớp các vật phẩm bắt đầu bằng 'wood ar' và '*rrow' khớp các vật phẩm kết thúc bằng 'rrow'. Đặt tiền tố 'm:' cho quy tắc để khớp vật phẩm làm từ một vật liệu (ví dụ 'm:kevlar' khớp vật phẩm làm từ Kevlar), hoặc tiền tố 'M:' để khớp vật phẩm làm hoàn toàn từ các vật liệu đã liệt kê (ví dụ 'M:copper', hoặc 'M:steel,iron' khi được phép dùng nhiều vật liệu theo kiểu tìm HOẶC)."
+
+msgid ". User customized."
+msgstr ". Người dùng đã tùy chỉnh."
+
+msgid "0 means max view distance."
+msgstr "0 nghĩa là khoảng cách nhìn tối đa."
+
+msgid "1 column left"
+msgstr "còn 1 cột bên trái"
+
+msgid "1 column right"
+msgstr "còn 1 cột bên phải"
+
+msgid "1 row down"
+msgstr "xuống 1 hàng"
+
+msgid "1 row up"
+msgstr "lên 1 hàng"
+
+msgid ""
+"A leader can only lead those willing to follow.  Everyone must get a say in choosing the new leader."
+msgstr ""
+"Một thủ lĩnh chỉ lãnh đạo được những người sẵn lòng đi theo. Mọi người đều phải có tiếng nói trong việc chọn thủ lĩnh mới."
+
+msgid "A rule cannot be empty. Use * to match everything."
+msgstr "Quy tắc không được để trống. Dùng * để khớp mọi thứ."
+
+#, c-format
+msgid "About %d%% complete."
+msgstr "Đã hoàn thành khoảng %d%%."
+
+msgid "Action"
+msgstr "Hành động"
+
+msgid ""
+"Activate a listed target or a move aim point control to move the aim point. This does not fire or spend a turn. Use the fire command separately to confirm an attack."
+msgstr ""
+"Kích hoạt một mục tiêu trong danh sách hoặc một điều khiển dời điểm ngắm để dời điểm ngắm. Việc này không bắn và không tốn lượt. Dùng lệnh bắn riêng để xác nhận tấn công."
+
+msgid ""
+"Activate a panel to toggle it on or off, or move it up or down to change the display order. Activate a layout name to switch the sidebar layout. Changes are saved when you exit, as on the original screen."
+msgstr ""
+"Kích hoạt một bảng để bật hoặc tắt nó, hoặc di chuyển nó lên hay xuống để đổi thứ tự hiển thị. Kích hoạt tên một bố cục để đổi bố cục thanh bên. Thay đổi được lưu khi bạn thoát, giống như trên màn hình gốc."
+
+msgid "Activate again to reset all keybindings now."
+msgstr "Kích hoạt lần nữa để đặt lại toàn bộ gán phím ngay bây giờ."
+
+msgid "Activate an action row to add a keybinding that applies everywhere."
+msgstr "Kích hoạt một hàng hành động để thêm gán phím áp dụng ở mọi nơi."
+
+msgid "Activate an action row to add a keybinding that applies only on this screen."
+msgstr "Kích hoạt một hàng hành động để thêm gán phím chỉ áp dụng trên màn hình này."
+
+msgid "Activate an action row to remove its keybinding."
+msgstr "Kích hoạt một hàng hành động để xóa gán phím của nó."
+
+msgid "Activate an action row to reset it to its default keybinding."
+msgstr "Kích hoạt một hàng hành động để đặt lại gán phím mặc định của nó."
+
+msgid "Activate an action row to run that action and leave this menu."
+msgstr "Kích hoạt một hàng hành động để chạy hành động đó và rời khỏi menu này."
+
+msgid "Activate this field to clear both filters."
+msgstr "Kích hoạt trường này để xóa cả hai bộ lọc."
+
+msgid ""
+"Activate to choose a color template from the original list and load it into this screen."
+msgstr "Kích hoạt để chọn một mẫu màu từ danh sách gốc và nạp vào màn hình này."
+
+msgid ""
+"Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen."
+msgstr ""
+"Kích hoạt để chọn một chủ đề màu từ danh sách gốc. Chủ đề đã chọn thay thế tệp màu nền ngay lập tức, giống như trên màn hình gốc."
+
+msgid "Activate to choose a custom replacement from the original list."
+msgstr "Kích hoạt để chọn một màu thay thế tùy chỉnh từ danh sách gốc."
+
+msgid "Activate to edit the currently selected column, Normal or Invert."
+msgstr "Kích hoạt để sửa cột đang chọn, Thường hoặc Đảo ngược."
+
+#, c-format
+msgid "Activate to mark %s as a favorite spell."
+msgstr "Kích hoạt để đánh dấu %s là phép yêu thích."
+
+msgid "Activate to remove this custom replacement and return to the default."
+msgstr "Kích hoạt để xóa màu thay thế tùy chỉnh này và quay về mặc định."
+
+msgid "Activate to switch to this sidebar layout."
+msgstr "Kích hoạt để chuyển sang bố cục thanh bên này."
+
+msgid ""
+"Add a personal zone: choose a zone type, set its options, enter a name, then select the two corners of the zone."
+msgstr ""
+"Thêm vùng cá nhân: chọn loại vùng, đặt các tùy chọn của nó, nhập tên, rồi chọn hai góc của vùng."
+
+msgid ""
+"Add a zone: choose a zone type, set its options, enter a name, then select the two corners of the zone."
+msgstr ""
+"Thêm vùng: chọn loại vùng, đặt các tùy chọn của nó, nhập tên, rồi chọn hai góc của vùng."
+
+msgid ""
+"Add the two default rules: a blacklist rule matching every hostile-spotted creature, and a whitelist rule matching every sound."
+msgstr ""
+"Thêm hai quy tắc mặc định: một quy tắc danh sách chặn khớp mọi sinh vật bị phát hiện là thù địch, và một quy tắc danh sách cho phép khớp mọi âm thanh."
+
+msgid ""
+"Adjust the selected amount of the highlighted item in this pane to balance the current offer. This changes the selection, like toggling an item; it does not complete the trade."
+msgstr ""
+"Điều chỉnh số lượng đã chọn của vật phẩm đang được làm nổi bật trong ngăn này để cân bằng đề nghị hiện tại. Việc này thay đổi lựa chọn, giống như bật/tắt một vật phẩm; nó không hoàn tất giao dịch."
+
+msgid "Advanced inventory"
+msgstr "Kho nâng cao"
+
+#, c-format
+msgid "Age: %s"
+msgstr "Tuổi: %s"
+
+msgid "Airtight."
+msgstr "Kín khí."
+
+msgid "All actions"
+msgstr "Mọi hành động"
+
+msgid "All groups together can be met from the same inventory."
+msgstr "Gộp mọi nhóm lại vẫn đáp ứng được từ cùng một hành trang."
+
+msgid ""
+"All groups together cannot be met from the same inventory, even if individual groups look available."
+msgstr ""
+"Gộp mọi nhóm lại không đáp ứng được từ cùng một hành trang, dù từng nhóm riêng lẻ trông có vẻ đủ."
+
+#, c-format
+msgid "All morale modified to: %d%%"
+msgstr "Toàn bộ nhuệ khí được sửa thành: %d%%"
+
+msgid "All start conditions are met."
+msgstr "Mọi điều kiện bắt đầu đều đã thỏa."
+
+msgid "All topics"
+msgstr "Mọi chủ đề"
+
+msgid "Allowed"
+msgstr "Được phép"
+
+#, c-format
+msgid "Allowed for %1$d of %2$d companions."
+msgstr "Được phép với %1$d trên %2$d đồng đội."
+
+#, c-format
+msgid "Allows %1$s to study %2$s. Currently %3$s."
+msgstr "Cho phép %1$s học %2$s. Hiện tại: %3$s."
+
+msgid "Already assigned to this camp."
+msgstr "Đã được phân vào trại này."
+
+msgid ""
+"Also produces items from a byproduct group; the exact items are generated when the craft finishes."
+msgstr ""
+"Cũng tạo ra vật phẩm từ một nhóm sản phẩm phụ; vật phẩm chính xác được sinh ra khi việc chế tạo hoàn thành."
+
+msgid "Armed"
+msgstr "Đã vũ trang"
+
+msgid ""
+"As an experienced leader, only you know what will be required of future leaders.  You will choose."
+msgstr ""
+"Là một thủ lĩnh giàu kinh nghiệm, chỉ bạn biết những gì sẽ đòi hỏi ở các thủ lĩnh tương lai. Bạn sẽ là người chọn."
+
+#, c-format
+msgid ""
+"Assign a new hotkey to %s, replace its current hotkey, or remove the hotkey, using the standard key prompt."
+msgstr ""
+"Gán một phím nóng mới cho %s, thay phím nóng hiện tại của nó, hoặc xóa phím nóng, bằng hộp nhập phím tiêu chuẩn."
+
+msgid "Assign followers to this camp"
+msgstr "Phân người đi theo vào trại này"
+
+msgid "Assign job priorities"
+msgstr "Phân mức ưu tiên công việc"
+
+msgid ""
+"Assign this follower to this camp. This opens the job priority screen for that follower."
+msgstr ""
+"Phân người đi theo này vào trại này. Việc này mở màn hình mức ưu tiên công việc cho người đi theo đó."
+
+msgid "Assigned key(s)"
+msgstr "Phím đã gán"
+
+msgid "Assigned to another camp."
+msgstr "Đã được phân vào trại khác."
+
+msgid "Attitude applies only to hostile-spotted rules."
+msgstr "Thái độ chỉ áp dụng cho các quy tắc phát hiện thù địch."
+
+#, c-format
+msgid ""
+"Auto pickup is currently %1$s in the options. Current tab: %2$s. %3$d rule(s) on this tab."
+msgstr ""
+"Tự động nhặt hiện đang %1$s trong tùy chọn. Tab hiện tại: %2$s. Có %3$d quy tắc ở tab này."
+
+msgid "Auto pickup is currently disabled. Activate to enable it."
+msgstr "Tự động nhặt hiện đang tắt. Kích hoạt để bật."
+
+msgid "Auto pickup is currently enabled. Activate to disable it."
+msgstr "Tự động nhặt hiện đang bật. Kích hoạt để tắt."
+
+msgid "Auto-pickup"
+msgstr "Tự động nhặt"
+
+msgid "Back to the topic list"
+msgstr "Quay lại danh sách chủ đề"
+
+msgid ""
+"Balance the trade with your bank account, changing the bank adjustment shown in the summary. This only works with the CAPITALISM option on, does not change the selected items, and does not complete the trade."
+msgstr ""
+"Cân bằng giao dịch bằng tài khoản ngân hàng của bạn, thay đổi khoản điều chỉnh ngân hàng hiển thị trong phần tóm tắt. Việc này chỉ hoạt động khi tùy chọn CAPITALISM đang bật, không thay đổi các vật phẩm đã chọn, và không hoàn tất giao dịch."
+
+msgid "Batteries"
+msgstr "Pin"
+
+msgid "Binding scope"
+msgstr "Phạm vi gán phím"
+
+msgid "Blacklist/Whitelist"
+msgstr "Danh sách chặn/Danh sách cho phép"
+
+msgid "Blast"
+msgstr "Vụ nổ"
+
+msgid "Blind throw"
+msgstr "Ném mù"
+
+msgid ""
+"Blink the visual map between the explored view and the overlay view. This changes only the visual display; reader descriptions do not change."
+msgstr ""
+"Chuyển bản đồ hình ảnh qua lại giữa khung nhìn đã khám phá và khung nhìn lớp phủ. Việc này chỉ thay đổi phần hiển thị hình ảnh; mô tả của bộ đọc không đổi."
+
+#, c-format
+msgid "Blood type: %1$s%2$s"
+msgstr "Nhóm máu: %1$s%2$s"
+
+msgid ""
+"Blueprint mode: choosing a construction records it for the zone; nothing is placed."
+msgstr ""
+"Chế độ bản thiết kế: việc chọn một công trình chỉ ghi nó cho vùng; không có gì được đặt xuống."
+
+msgid "Body part"
+msgstr "Bộ phận cơ thể"
+
+msgid "Byproducts"
+msgstr "Sản phẩm phụ"
+
+#, c-format
+msgid "Camp: %1$s. Followers: %2$d."
+msgstr "Trại: %1$s. Người đi theo: %2$d."
+
+#, c-format
+msgid "Camp: %1$s. Workers stationed: %2$d."
+msgstr "Trại: %1$s. Nhân công đóng tại trại: %2$d."
+
+msgid "Cancel the trade and leave this screen without exchanging anything."
+msgstr "Hủy giao dịch và rời khỏi màn hình này mà không trao đổi gì."
+
+msgid "Cancel without selecting a tile."
+msgstr "Hủy mà không chọn ô nào."
+
+msgid "Cannot move the aim point while the weapon has no ammunition."
+msgstr "Không thể dời điểm ngắm khi vũ khí không còn đạn."
+
+msgid "Cannot train"
+msgstr "Không thể huấn luyện"
+
+#, c-format
+msgid "Category: %1$s."
+msgstr "Danh mục: %1$s."
+
+#, c-format
+msgid "Category: %1$s. %2$d proficiencies."
+msgstr "Danh mục: %1$s. %2$d kỹ năng thành thạo."
+
+#, c-format
+msgid "Category: %s"
+msgstr "Danh mục: %s"
+
+#, c-format
+msgid "Center: %1$s, %2$d tiles away."
+msgstr "Tâm: %1$s, cách %2$d ô."
+
+msgid "Change this worker's job priorities."
+msgstr "Đổi mức ưu tiên công việc của nhân công này."
+
+msgid "Character and information"
+msgstr "Nhân vật và thông tin"
+
+msgid "Check every skill for every companion."
+msgstr "Đánh dấu mọi kỹ năng cho mọi đồng đội."
+
+msgid "Choose a difficulty to start."
+msgstr "Chọn một độ khó để bắt đầu."
+
+msgid ""
+"Choose a menu command first (Remove, Reset, Add local keybinding, Add global keybinding, or Execute), then activate an action row."
+msgstr ""
+"Trước tiên hãy chọn một lệnh menu (Xóa, Đặt lại, Thêm gán phím cục bộ, Thêm gán phím toàn cục, hoặc Thực thi), rồi kích hoạt một hàng hành động."
+
+msgid "Choose the new position of the zone."
+msgstr "Chọn vị trí mới của vùng."
+
+msgid ""
+"Choosing another destination replaces this route; choosing your own tile clears it. Focusing this route only moves the map cursor to the destination."
+msgstr ""
+"Chọn một điểm đến khác sẽ thay tuyến này; chọn ô của chính bạn sẽ xóa tuyến. Đặt tiêu điểm vào tuyến này chỉ dời con trỏ bản đồ tới điểm đến."
+
+msgid "Clear every skill for every companion."
+msgstr "Bỏ đánh dấu mọi kỹ năng cho mọi đồng đội."
+
+msgid "Clear filter"
+msgstr "Xóa bộ lọc"
+
+msgid "Color name"
+msgstr "Tên màu"
+
+#, c-format
+msgid "Color: %1$s. At %2$s, %3$s from robot."
+msgstr "Màu: %1$s. Tại %2$s, %3$s so với rô-bốt."
+
+#, c-format
+msgid "Color: %1$s. At %2$s."
+msgstr "Màu: %1$s. Tại %2$s."
+
+msgid "Combat and survival"
+msgstr "Chiến đấu và sinh tồn"
+
+msgid "Computer"
+msgstr "Máy tính"
+
+msgid "Computer output"
+msgstr "Kết quả từ máy tính"
+
+msgid "Cone"
+msgstr "Hình nón"
+
+#, c-format
+msgid "Confirm removal of rule %s"
+msgstr "Xác nhận xóa quy tắc %s"
+
+#, c-format
+msgid "Confirm removal of zone %s"
+msgstr "Xác nhận xóa vùng %s"
+
+msgid ""
+"Confirm the trade: the decision to exchange the items selected on both sides. The game asks once more before anything changes hands. Selecting items alone never trades them."
+msgstr ""
+"Xác nhận giao dịch: quyết định trao đổi các vật phẩm đã chọn ở cả hai phía. Trò chơi sẽ hỏi thêm một lần nữa trước khi bất cứ thứ gì đổi chủ. Chỉ chọn vật phẩm không bao giờ làm chúng được giao dịch."
+
+#, c-format
+msgid ""
+"Conflict with: %1$s. %2$s. If you choose this key, the game will ask before removing it from the conflicting action(s)."
+msgstr ""
+"Xung đột với: %1$s. %2$s. Nếu bạn chọn phím này, trò chơi sẽ hỏi trước khi gỡ nó khỏi (các) hành động đang xung đột."
+
+#, c-format
+msgid "Container chain: %s"
+msgstr "Chuỗi vật chứa: %s"
+
+#, c-format
+msgid "Contains %d item stacks."
+msgstr "Chứa %d chồng vật phẩm."
+
+#, c-format
+msgid "Costs %1$d kcal.  Food stored: %2$d kcal."
+msgstr "Tốn %1$d kcal.  Lương thực đang trữ: %2$d kcal."
+
+msgid "Covered"
+msgstr "Đang bị che"
+
+#, c-format
+msgid "Covers: %s"
+msgstr "Che phủ: %s"
+
+msgid "Crafting conditions"
+msgstr "Điều kiện chế tạo"
+
+#, c-format
+msgid "Crafting: %1$s.  Batch: %2$d."
+msgstr "Chế tạo: %1$s.  Mẻ: %2$d."
+
+msgid "Current layout"
+msgstr "Bố cục hiện tại"
+
+msgid "Currently on a companion mission."
+msgstr "Hiện đang làm nhiệm vụ đồng đội."
+
+msgid "Cursor"
+msgstr "Con trỏ"
+
+msgid "Customized"
+msgstr "Đã tùy chỉnh"
+
+msgid "Degraded and cannot be repaired beyond the current level."
+msgstr "Đã xuống cấp và không thể sửa quá mức hiện tại."
+
+msgid ""
+"Delete the selected point of interest. The game deletes it immediately, without a confirmation prompt."
+msgstr ""
+"Xóa điểm quan tâm đang chọn. Trò chơi xóa nó ngay lập tức, không hỏi xác nhận."
+
+#, c-format
+msgid "Destination pane: %s"
+msgstr "Ngăn đích: %s"
+
+#, c-format
+msgid "Dialogue: %s"
+msgstr "Hội thoại: %s"
+
+msgid "Direction"
+msgstr "Hướng"
+
+msgid "Disable the selected rule, marking it inactive so it no longer takes effect."
+msgstr "Tắt quy tắc đang chọn, đánh dấu nó không hoạt động để nó không còn tác dụng."
+
+#, c-format
+msgid "Disable the selected zone, %s."
+msgstr "Tắt vùng đang chọn, %s."
+
+msgid "Displayed"
+msgstr "Được hiển thị"
+
+msgid "Distance"
+msgstr "Khoảng cách"
+
+msgid ""
+"Distractions are currently ignored while casting. Activate to show distraction popups while casting again."
+msgstr ""
+"Hiện đang bỏ qua các yếu tố gây xao nhãng khi thi triển. Kích hoạt để hiện lại cửa sổ yếu tố gây xao nhãng khi thi triển."
+
+msgid ""
+"Distractions currently show popups while casting. Activate to ignore distractions while casting."
+msgstr ""
+"Hiện các yếu tố gây xao nhãng sẽ hiện cửa sổ khi thi triển. Kích hoạt để bỏ qua yếu tố gây xao nhãng khi thi triển."
+
+#, c-format
+msgid ""
+"Each companion studies only books for the skills marked for them in this study zone; a companion with no preference entry reads every skill. %1$d companions, %2$d skills."
+msgstr ""
+"Mỗi đồng đội chỉ học sách của các kỹ năng đã đánh dấu cho họ trong vùng học này; đồng đội không có mục tùy chọn nào sẽ đọc mọi kỹ năng. %1$d đồng đội, %2$d kỹ năng."
+
+msgid ""
+"Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen."
+msgstr ""
+"Mỗi mục nêu tên một màu của trò chơi, màu thay thế thường tùy chỉnh và màu thay thế đảo ngược tùy chỉnh của nó, hoặc ghi mặc định khi không có màu thay thế tùy chỉnh. Kích hoạt Thường hoặc Đảo ngược để chọn một màu thay thế từ danh sách gốc, hoặc xóa một màu thay thế tùy chỉnh. Một số thay đổi màu có thể cần khởi động lại. Thay đổi được lưu khi bạn thoát và xác nhận, giống như trên màn hình gốc."
+
+msgid ""
+"Each map tile is named at the level of detail the character actually has: full knowledge, some details, outlines only, or vague details. A tile the character has never seen is announced as unexplored and is not named. Cursor coordinates are exact because the map is the character's own record. A map note is read as its text plus its symbol and color in words, and a danger area is stated as a radius in map tiles. The current route node names the planned destination; starting travel is a separate command. The target tile of the current objective is announced when the cursor reaches it. Search finds only tiles the character has seen and notes the character made."
+msgstr ""
+"Mỗi ô bản đồ được gọi tên ở mức chi tiết mà nhân vật thật sự có: biết đầy đủ, biết một số chi tiết, chỉ biết đường nét, hoặc biết mơ hồ. Ô mà nhân vật chưa từng thấy được công bố là chưa khám phá và không được gọi tên. Tọa độ con trỏ là chính xác vì bản đồ là bản ghi của chính nhân vật. Ghi chú bản đồ được đọc gồm nội dung của nó cộng với biểu tượng và màu của nó bằng lời, và vùng nguy hiểm được nêu dưới dạng bán kính tính bằng ô bản đồ. Node tuyến hiện tại nêu tên điểm đến đã lên kế hoạch; việc bắt đầu di chuyển là một lệnh riêng. Ô đích của mục tiêu hiện tại được công bố khi con trỏ tới đó. Tìm kiếm chỉ tìm các ô nhân vật đã thấy và các ghi chú nhân vật đã tạo."
+
+#, c-format
+msgid "Effects: %s"
+msgstr "Hiệu ứng: %s"
+
+msgid "Enable the selected rule, marking it active so it takes effect."
+msgstr "Bật quy tắc đang chọn, đánh dấu nó đang hoạt động để nó có tác dụng."
+
+#, c-format
+msgid "Enable the selected zone, %s."
+msgstr "Bật vùng đang chọn, %s."
+
+#, c-format
+msgid "Encumbrance %1$s. Temperature: %2$s"
+msgstr "Độ cản trở %1$s. Nhiệt độ: %2$s"
+
+msgid "Encumbrance and warmth"
+msgstr "Độ cản trở và độ ấm"
+
+#, c-format
+msgid "Encumbrance on %s: %d"
+msgstr "Độ cản trở ở %s: %d"
+
+#, c-format
+msgid "Encumbrance: %d"
+msgstr "Độ cản trở: %d"
+
+msgid "Engines"
+msgstr "Động cơ"
+
+msgid "Execute action"
+msgstr "Thực thi hành động"
+
+msgid "Favorite spell."
+msgstr "Phép yêu thích."
+
+msgid "Filter actions by name"
+msgstr "Lọc hành động theo tên"
+
+msgid "Filter topics by name"
+msgstr "Lọc chủ đề theo tên"
+
+#, c-format
+msgid "Filter: %1$s."
+msgstr "Bộ lọc: %1$s."
+
+#, c-format
+msgid "Filter: %1$s. Showing %2$d of %3$d proficiencies."
+msgstr "Bộ lọc: %1$s. Đang hiển thị %2$d trên %3$d kỹ năng thành thạo."
+
+msgid "Filtering"
+msgstr "Đang lọc"
+
+msgid "Finish and use this tile."
+msgstr "Hoàn tất và dùng ô này."
+
+msgid "Finish editing the study zone skill preferences."
+msgstr "Hoàn tất việc sửa tùy chọn kỹ năng của vùng học."
+
+#, c-format
+msgid ""
+"Firing mode: %1$s. Ammunition remaining: %2$d. Switching the firing mode or the ammunition is done with the separate switch mode and switch ammo commands in this same list."
+msgstr ""
+"Chế độ bắn: %1$s. Đạn còn lại: %2$d. Việc đổi chế độ bắn hoặc loại đạn được thực hiện bằng các lệnh đổi chế độ và đổi đạn riêng trong cùng danh sách này."
+
+#, c-format
+msgid ""
+"First corner: %1$s. Second corner: %2$s. Size: %3$d by %4$d tiles, %5$d levels."
+msgstr "Góc thứ nhất: %1$s. Góc thứ hai: %2$s. Kích thước: %3$d x %4$d ô, %5$d tầng."
+
+#, c-format
+msgid "First corner: %s."
+msgstr "Góc thứ nhất: %s."
+
+msgid "Flagged"
+msgstr "Đã cắm cờ"
+
+#, c-format
+msgid "Focus trends towards: %d"
+msgstr "Độ tập trung có xu hướng về: %d"
+
+#, c-format
+msgid "Free volume: %1$s of %2$s."
+msgstr "Thể tích trống: %1$s trên %2$s."
+
+#, c-format
+msgid "Free weight: %1$s of %2$s."
+msgstr "Khối lượng còn chứa được: %1$s trên %2$s."
+
+#, c-format
+msgid "Fruit at column %1$d, row %2$d: %3$s."
+msgstr "Trái cây tại cột %1$d, hàng %2$d: %3$s."
+
+#, c-format
+msgid "Fruit: %s"
+msgstr "Trái cây: %s"
+
+msgid "Fruit: at the snake's head"
+msgstr "Trái cây: ngay tại đầu rắn"
+
+msgid ""
+"Game goal: switch all the lights on. # is on and - is off. Toggling a light switches the selected light and its 4 neighbors (above, below, left and right); a neighbor outside the board is not toggled. Move the cursor with the direction keys, toggle the selected light with the space bar or 5, reset to return the board to its starting state, and quit to leave the game."
+msgstr ""
+"Mục tiêu của trò chơi: bật mọi bóng đèn. # là đang bật và - là đang tắt. Việc bật/tắt một bóng đèn sẽ chuyển trạng thái của bóng đèn đang chọn và 4 bóng kề của nó (trên, dưới, trái và phải); bóng kề nằm ngoài bàn cờ thì không được chuyển. Di chuyển con trỏ bằng các phím hướng, bật/tắt bóng đèn đang chọn bằng phím cách hoặc phím 5, đặt lại để đưa bàn cờ về trạng thái ban đầu, và thoát để rời khỏi trò chơi."
+
+#, c-format
+msgid "Game over. Total score: %d."
+msgstr "Trò chơi kết thúc. Tổng điểm: %d."
+
+#, c-format
+msgid "Goal %d: row %d, column %d: %s."
+msgstr "Đích %d: hàng %d, cột %d: %s."
+
+msgid "Goals:"
+msgstr "Các đích:"
+
+msgid "Ground."
+msgstr "Mặt đất."
+
+#, c-format
+msgid "Height: %s"
+msgstr "Chiều cao: %s"
+
+msgid "Hidden"
+msgstr "Bị ẩn"
+
+msgid "Hidden."
+msgstr "Bị ẩn."
+
+msgid "Holster: holds a single item."
+msgstr "Bao đựng: chứa một vật phẩm duy nhất."
+
+msgid "Hotkey"
+msgstr "Phím nóng"
+
+#, c-format
+msgid "Hotkey: %1$s."
+msgstr "Phím nóng: %1$s."
+
+#, c-format
+msgid "Hotkey: %s"
+msgstr "Phím nóng: %s"
+
+msgid "How to play"
+msgstr "Cách chơi"
+
+#, c-format
+msgid "Hunger: %s"
+msgstr "Đói: %s"
+
+msgid "Inactive"
+msgstr "Không hoạt động"
+
+msgid "Include/Exclude"
+msgstr "Bao gồm/Loại trừ"
+
+msgid "Inspect this follower."
+msgstr "Xem xét người đi theo này."
+
+msgid "Interaction and items"
+msgstr "Tương tác và vật phẩm"
+
+#, c-format
+msgid ""
+"Invalid command: use direction keys or press %1$s to quit. Robot at %2$s. %3$d objects on the field."
+msgstr ""
+"Lệnh không hợp lệ: dùng các phím hướng hoặc nhấn %1$s để thoát. Rô-bốt tại %2$s. Có %3$d vật thể trên sân."
+
+#, c-format
+msgid "Inverted color for %s"
+msgstr "Màu đảo ngược cho %s"
+
+msgid "Item"
+msgstr "Vật phẩm"
+
+#, c-format
+msgid "Items: %1$d of %2$d."
+msgstr "Vật phẩm: %1$d trên %2$d."
+
+msgid "Known"
+msgstr "Đã biết"
+
+msgid "Land use codes are only available in debug mode."
+msgstr "Mã sử dụng đất chỉ có trong chế độ gỡ lỗi."
+
+#, c-format
+msgid "Leads to: %s"
+msgstr "Dẫn tới: %s"
+
+msgid "Learned"
+msgstr "Đã học"
+
+msgid "Level"
+msgstr "Cấp"
+
+#, c-format
+msgid ""
+"Level %d of %d. Score %d. Moves %d (total %d). Packages on goals: %d of %d. You are at row %d, column %d."
+msgstr ""
+"Màn %d trên %d. Điểm %d. Nước đi %d (tổng %d). Kiện hàng trên đích: %d trên %d. Bạn đang ở hàng %d, cột %d."
+
+#, c-format
+msgid "Lifestyle: %s"
+msgstr "Lối sống: %s"
+
+msgid "Lights On"
+msgstr "Bật đèn"
+
+msgid "Lights On rules"
+msgstr "Luật trò Bật đèn"
+
+#, c-format
+msgid ""
+"Lights On: %1$d of %2$d lights are on. Cursor at row %3$d, column %4$d: %5$s. Toggling a light also toggles its 4 neighbors; turn every light on to win."
+msgstr ""
+"Bật đèn: %1$d trên %2$d bóng đèn đang bật. Con trỏ tại hàng %3$d, cột %4$d: %5$s. Việc bật/tắt một bóng đèn cũng bật/tắt 4 bóng kề của nó; hãy bật mọi bóng đèn để thắng."
+
+msgid ""
+"List every monster type whose name matches the selected rule, regardless of attitude."
+msgstr "Liệt kê mọi loại quái vật có tên khớp quy tắc đang chọn, bất kể thái độ."
+
+msgid "Load a color theme"
+msgstr "Nạp một chủ đề màu"
+
+msgid "Load template"
+msgstr "Nạp mẫu"
+
+msgid "Local to this screen"
+msgstr "Cục bộ trên màn hình này"
+
+msgid "Making and vehicles"
+msgstr "Chế tạo và xe"
+
+msgid "Manual turret"
+msgstr "Tháp pháo thủ công"
+
+msgid "Map legend in words"
+msgstr "Chú giải bản đồ bằng lời"
+
+msgid ""
+"Mark the cursor tile as explored, or remove that mark. This changes the map's remembered state for this tile; it does not move the player."
+msgstr ""
+"Đánh dấu ô tại con trỏ là đã khám phá, hoặc gỡ dấu đó. Việc này thay đổi trạng thái ghi nhớ của bản đồ đối với ô đó; nó không di chuyển người chơi."
+
+#, c-format
+msgid "Maximum item length: %s."
+msgstr "Chiều dài vật phẩm tối đa: %s."
+
+msgid "Mine"
+msgstr "Mìn"
+
+#, c-format
+msgid ""
+"Minesweeper board: %1$d columns by %2$d rows. Mines: %3$d. Flags placed: %4$d. Cells revealed: %5$d of %6$d. Cursor: row %7$d, column %8$d: %9$s."
+msgstr ""
+"Bàn Dò mìn: %1$d cột x %2$d hàng. Mìn: %3$d. Cờ đã cắm: %4$d. Ô đã mở: %5$d trên %6$d. Con trỏ: hàng %7$d, cột %8$d: %9$s."
+
+msgid "Minesweeper rules"
+msgstr "Luật trò Dò mìn"
+
+#, c-format
+msgid "Mode: %1$s. Range: %2$d. Targets in range: %3$d. "
+msgstr "Chế độ: %1$s. Tầm: %2$d. Mục tiêu trong tầm: %3$d. "
+
+#, c-format
+msgid "Mode: %s"
+msgstr "Chế độ: %s"
+
+#, c-format
+msgid "Mode: %s."
+msgstr "Chế độ: %s."
+
+#, c-format
+msgid "Morale %d"
+msgstr "Nhuệ khí %d"
+
+msgid "Morale sources"
+msgstr "Nguồn nhuệ khí"
+
+msgid "Morale summary"
+msgstr "Tóm tắt nhuệ khí"
+
+#, c-format
+msgid "Morale: %d"
+msgstr "Nhuệ khí: %d"
+
+#, c-format
+msgid "Most damaged (can't repair): %s"
+msgstr "Hư hại nhất (không sửa được): %s"
+
+#, c-format
+msgid "Most damaged: %s"
+msgstr "Hư hại nhất: %s"
+
+msgid "Move aim point down one level"
+msgstr "Dời điểm ngắm xuống một tầng"
+
+msgid "Move aim point up one level"
+msgstr "Dời điểm ngắm lên một tầng"
+
+#, c-format
+msgid "Move aim point: %s"
+msgstr "Dời điểm ngắm: %s"
+
+msgid "Move the aim point from the reader"
+msgstr "Dời điểm ngắm từ bộ đọc"
+
+msgid ""
+"Move the cursor to inspect tiles. Confirm to finish here, or cancel to return."
+msgstr ""
+"Di chuyển con trỏ để xem xét các ô. Xác nhận để hoàn tất tại đây, hoặc hủy để quay lại."
+
+msgid "Move zone"
+msgstr "Di chuyển vùng"
+
+msgid "Movement and looking"
+msgstr "Di chuyển và quan sát"
+
+msgid "Movement mode"
+msgstr "Chế độ di chuyển"
+
+msgid "Moves only the aim point by one tile. This does not fire or spend a turn."
+msgstr "Chỉ dời điểm ngắm đi một ô. Việc này không bắn và không tốn lượt."
+
+msgid "Moves only the aim point down one level. This does not fire or spend a turn."
+msgstr "Chỉ dời điểm ngắm xuống một tầng. Việc này không bắn và không tốn lượt."
+
+msgid "Moves only the aim point up one level. This does not fire or spend a turn."
+msgstr "Chỉ dời điểm ngắm lên một tầng. Việc này không bắn và không tốn lượt."
+
+#, c-format
+msgid "Mutations: %1$s. %2$d active, %3$d passive."
+msgstr "Đột biến: %1$s. %2$d chủ động, %3$d bị động."
+
+msgid "Needs and condition"
+msgstr "Nhu cầu và tình trạng"
+
+#, c-format
+msgid "Needs repair: %s"
+msgstr "Cần sửa: %s"
+
+msgid "Neither side owes anything after this trade."
+msgstr "Không phía nào nợ gì sau giao dịch này."
+
+msgid "Next category"
+msgstr "Danh mục tiếp theo"
+
+msgid "No actions are available."
+msgstr "Không có hành động nào khả dụng."
+
+msgid "No actions match the filter."
+msgstr "Không có hành động nào khớp bộ lọc."
+
+msgid "No adjacent location is currently valid for the selected construction."
+msgstr "Hiện không có vị trí kề nào hợp lệ cho công trình đang chọn."
+
+msgid "No adjacent mines"
+msgstr "Không có mìn kề bên"
+
+msgid "No companion on this mission is ready to return yet."
+msgstr "Chưa có đồng đội nào trong nhiệm vụ này sẵn sàng trở về."
+
+msgid "No companions."
+msgstr "Không có đồng đội."
+
+msgid "No conflict with any other action."
+msgstr "Không xung đột với hành động nào khác."
+
+msgid "No entries match the current category or filter."
+msgstr "Không có mục nào khớp danh mục hoặc bộ lọc hiện tại."
+
+msgid "No fruit yet"
+msgstr "Chưa có trái cây"
+
+msgid "No fruit yet."
+msgstr "Chưa có trái cây."
+
+msgid "No goals in this level."
+msgstr "Không có đích nào trong màn này."
+
+msgid "No help topics are available."
+msgstr "Không có chủ đề trợ giúp nào."
+
+msgid "No help topics match the filter."
+msgstr "Không có chủ đề trợ giúp nào khớp bộ lọc."
+
+msgid "No proficiencies match the filter."
+msgstr "Không có kỹ năng thành thạo nào khớp bộ lọc."
+
+msgid "No proficiencies."
+msgstr "Không có kỹ năng thành thạo."
+
+msgid ""
+"No route was set: auto travel requires source and destination on the same Z level."
+msgstr ""
+"Chưa đặt được tuyến: di chuyển tự động đòi hỏi điểm đi và điểm đến ở cùng một mức Z."
+
+msgid "No route was set: the destination tile is unexplored."
+msgstr "Chưa đặt được tuyến: ô đích chưa được khám phá."
+
+msgid "No route was set: unable to find a path to the destination."
+msgstr "Chưa đặt được tuyến: không tìm được đường tới điểm đến."
+
+msgid "No trade took place. Nothing was exchanged."
+msgstr "Không có giao dịch nào diễn ra. Không có gì được trao đổi."
+
+msgid "No zone is selected."
+msgstr "Chưa chọn vùng nào."
+
+#, c-format
+msgid "Normal color for %s"
+msgstr "Màu thường cho %s"
+
+#, c-format
+msgid "Normal: %s. Invert: %s."
+msgstr "Thường: %s. Đảo ngược: %s."
+
+#, c-format
+msgid "North: %s. South: %s. East: %s. West: %s."
+msgstr "Bắc: %s. Nam: %s. Đông: %s. Tây: %s."
+
+msgid "Not active"
+msgstr "Không hoạt động"
+
+msgid "Not allowed"
+msgstr "Không được phép"
+
+msgid "Not kitten"
+msgstr "Không phải mèo con"
+
+msgid "Not on a goal"
+msgstr "Không ở trên đích"
+
+#, c-format
+msgid "Not qualified: %s"
+msgstr "Không đủ điều kiện: %s"
+
+msgid "Not shown on the map."
+msgstr "Không hiển thị trên bản đồ."
+
+#, c-format
+msgid "Note symbol: %1$s. Note color: %2$s."
+msgstr "Biểu tượng ghi chú: %1$s. Màu ghi chú: %2$s."
+
+msgid ""
+"Notes:\n"
+"Abandon this camp\n"
+"\n"
+"WARNING: This takes effect immediately, with no further confirmation.  Companions on missions are recalled, companions assigned here stop guarding, and the camp is removed."
+msgstr ""
+"Ghi chú:\n"
+"Bỏ trại này\n"
+"\n"
+"CẢNH BÁO: Việc này có hiệu lực ngay lập tức, không hỏi xác nhận thêm. Các đồng đội đang làm nhiệm vụ được gọi về, các đồng đội được phân tại đây ngừng canh gác, và trại bị xóa."
+
+msgid ""
+"Notes:\n"
+"Three companions are already crafting. Finish or recall a crafting job before starting another."
+msgstr ""
+"Ghi chú:\n"
+"Đã có ba đồng đội đang chế tạo. Hãy hoàn tất hoặc gọi về một việc chế tạo trước khi bắt đầu việc khác."
+
+#, c-format
+msgid "Object: symbol '%c'"
+msgstr "Vật thể: ký hiệu '%c'"
+
+msgid "On a goal"
+msgstr "Đang ở trên đích"
+
+msgid ""
+"Open the look-around view at the cursor tile on the local map. This closes the overmap and does not move the player."
+msgstr ""
+"Mở khung nhìn quan sát xung quanh tại ô con trỏ trên bản đồ cục bộ. Việc này đóng bản đồ lớn và không di chuyển người chơi."
+
+msgid ""
+"Open the missions screen with the active, completed and failed mission lists and points of interest."
+msgstr ""
+"Mở màn hình nhiệm vụ với danh sách nhiệm vụ đang hoạt động, đã hoàn thành và đã thất bại cùng các điểm quan tâm."
+
+msgid "Other commands on this screen"
+msgstr "Các lệnh khác trên màn hình này"
+
+#, c-format
+msgid "Package %d"
+msgstr "Kiện hàng %d"
+
+#, c-format
+msgid "Pain level: %+d"
+msgstr "Mức đau: %+d"
+
+#, c-format
+msgid "Pain: %s"
+msgstr "Đau: %s"
+
+#, c-format
+msgid "Panel %d of %d in the display order. Width: %d. Height: %d."
+msgstr "Bảng %d trên %d trong thứ tự hiển thị. Rộng: %d. Cao: %d."
+
+msgid "Passive"
+msgstr "Bị động"
+
+msgid "Perception"
+msgstr "Tri giác"
+
+msgid "Personal zone: it moves with you."
+msgstr "Vùng cá nhân: nó di chuyển theo bạn."
+
+msgid "Placement"
+msgstr "Vị trí đặt"
+
+#, c-format
+msgid "Pocket %d"
+msgstr "Túi %d"
+
+msgid "Practice below knowledge"
+msgstr "Luyện tập dưới mức kiến thức"
+
+#, c-format
+msgid "Pre-requisites: %s"
+msgstr "Điều kiện tiên quyết: %s"
+
+msgid "Previous category"
+msgstr "Danh mục trước"
+
+#, c-format
+msgid "Progress: %.2f%%"
+msgstr "Tiến độ: %.2f%%"
+
+msgid "Proximity distance"
+msgstr "Khoảng cách lân cận"
+
+msgid "Proximity distance does not apply to whitelisted hostile-spotted rules."
+msgstr ""
+"Khoảng cách lân cận không áp dụng cho các quy tắc phát hiện thù địch nằm trong danh sách cho phép."
+
+msgid "Reach"
+msgstr "Tầm với"
+
+#, c-format
+msgid "Reader filter: %s"
+msgstr "Bộ lọc của bộ đọc: %s"
+
+msgid "Reader filter: it only changes which action rows are listed here."
+msgstr ""
+"Bộ lọc của bộ đọc: nó chỉ thay đổi những hàng hành động nào được liệt kê tại đây."
+
+msgid ""
+"Reader-composed operation: the engine only resets one action at a time, so this runs the engine's own per-action reset for every action listed here. Conflict prompts, if any, are the engine's per-action ones."
+msgstr ""
+"Thao tác do bộ đọc tổ hợp: engine chỉ đặt lại một hành động mỗi lần, nên thao tác này chạy cơ chế đặt lại từng hành động của chính engine cho mọi hành động được liệt kê tại đây. Các câu hỏi về xung đột, nếu có, là câu hỏi theo từng hành động của engine."
+
+msgid ""
+"Reader-only filter: the help screen itself has no search. Filtering only changes which topic rows are listed here; the help topics themselves never change."
+msgstr ""
+"Bộ lọc chỉ dành cho bộ đọc: bản thân màn hình trợ giúp không có tìm kiếm. Việc lọc chỉ thay đổi những hàng chủ đề nào được liệt kê tại đây; chính các chủ đề trợ giúp không bao giờ thay đổi."
+
+msgid "Reassigning"
+msgstr "Đang gán lại"
+
+msgid "Recent status alerts"
+msgstr "Cảnh báo trạng thái gần đây"
+
+#, c-format
+msgid "Remove custom inverted color for %s"
+msgstr "Xóa màu đảo ngược tùy chỉnh cho %s"
+
+#, c-format
+msgid "Remove custom normal color for %s"
+msgstr "Xóa màu thường tùy chỉnh cho %s"
+
+#, c-format
+msgid "Required skill: %1$s, level %2$d; you have %3$d."
+msgstr "Kỹ năng yêu cầu: %1$s, cấp %2$d; bạn có %3$d."
+
+msgid "Reset all keybindings for this context to the defaults"
+msgstr "Đặt lại mọi gán phím cho ngữ cảnh này về mặc định"
+
+msgid ""
+"Reveal every cell that does not hide a mine to win; revealing a mine loses the game. The number on a revealed cell counts the mines in the eight neighboring cells. Activate a covered cell to reveal it. Use the flag action on a covered cell to place a flag where you believe a mine is hidden, or to remove a flag you placed; a flag only records your suspicion and never changes what is hidden."
+msgstr ""
+"Mở mọi ô không giấu mìn để thắng; mở phải ô có mìn sẽ thua. Con số trên một ô đã mở đếm số mìn trong tám ô kề xung quanh. Kích hoạt một ô đang bị che để mở nó. Dùng hành động cắm cờ trên một ô đang bị che để đặt cờ tại nơi bạn tin là có mìn giấu, hoặc gỡ một lá cờ bạn đã đặt; lá cờ chỉ ghi lại phỏng đoán của bạn và không bao giờ thay đổi thứ đang bị giấu."
+
+msgid "Rigid."
+msgstr "Cứng."
+
+msgid "Robot"
+msgstr "Rô-bốt"
+
+msgid "Robot Finds Kitten"
+msgstr "Rô-bốt tìm mèo con"
+
+msgid "Robot Finds Kitten: instructions. Read the rules, then start the game."
+msgstr "Rô-bốt tìm mèo con: hướng dẫn. Đọc luật chơi, rồi bắt đầu trò chơi."
+
+#, c-format
+msgid ""
+"Robot at %1$s. %2$d objects on the field. Move with the direction commands; touch an object to learn whether it is kitten."
+msgstr ""
+"Rô-bốt tại %1$s. Có %2$d vật thể trên sân. Di chuyển bằng các lệnh hướng; chạm vào một vật thể để biết nó có phải mèo con hay không."
+
+#, c-format
+msgid "Robot at %s."
+msgstr "Rô-bốt tại %s."
+
+#, c-format
+msgid "Row %d, column %d"
+msgstr "Hàng %d, cột %d"
+
+#, c-format
+msgid "Row %d, column %d. %s."
+msgstr "Hàng %d, cột %d. %s."
+
+#, c-format
+msgid "Row %d, column %d. %s. %s"
+msgstr "Hàng %d, cột %d. %s. %s"
+
+msgid "Rule"
+msgstr "Quy tắc"
+
+msgid ""
+"Rules: push every package onto a goal. You can push one package at a time, and a package cannot be pulled. Undo, reset, previous level and next level are available as commands on this screen."
+msgstr ""
+"Luật chơi: đẩy mọi kiện hàng lên một đích. Bạn chỉ đẩy được một kiện hàng mỗi lần, và không kéo được kiện hàng. Hoàn tác, đặt lại, màn trước và màn tiếp theo có sẵn dưới dạng lệnh trên màn hình này."
+
+#, c-format
+msgid "Safe mode blocked the attack on %s."
+msgstr "Chế độ an toàn đã chặn đòn tấn công vào %s."
+
+#, c-format
+msgid "Safe mode is currently %1$s. %2$d global rule(s) and %3$d character rule(s)."
+msgstr ""
+"Chế độ an toàn hiện đang %1$s. Có %2$d quy tắc toàn cục và %3$d quy tắc nhân vật."
+
+#, c-format
+msgid "Safe mode: %s"
+msgstr "Chế độ an toàn: %s"
+
+#, c-format
+msgid ""
+"Score: %1$d. Snake length: %2$d. Head at column %3$d, row %4$d. Heading %5$s. %6$s. Reader timing: with the screen reader on, the snake waits for your direction at each step instead of moving in real time. The snake, scoring and growth rules are unchanged."
+msgstr ""
+"Điểm: %1$d. Độ dài rắn: %2$d. Đầu ở cột %3$d, hàng %4$d. Hướng đi %5$s. %6$s. Nhịp của bộ đọc: khi bộ đọc bật, rắn chờ hướng đi của bạn ở mỗi bước thay vì di chuyển theo thời gian thực. Các luật về rắn, điểm số và tăng trưởng không đổi."
+
+msgid ""
+"Scrolls the on-screen spell information panel. The same information is read in the selected spell's details."
+msgstr ""
+"Cuộn bảng thông tin phép trên màn hình. Thông tin tương tự được đọc trong phần chi tiết của phép đang chọn."
+
+msgid "Sealed: the contents cannot be seen."
+msgstr "Đã niêm phong: không nhìn thấy được bên trong."
+
+msgid ""
+"Search for map tiles and notes by name around the cursor. Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor."
+msgstr ""
+"Tìm các ô bản đồ và ghi chú theo tên quanh con trỏ. Chỉ tìm được các ô nhân vật đã thấy và các ghi chú nhân vật đã tạo; việc chọn một kết quả chỉ dời con trỏ bản đồ."
+
+#, c-format
+msgid "Second corner: %s."
+msgstr "Góc thứ hai: %s."
+
+msgid ""
+"Select a mutation to reassign or press [<color_yellow>SPACE</color>] to cancel."
+msgstr "Chọn một đột biến để gán lại hoặc nhấn [<color_yellow>SPACE</color>] để hủy."
+
+msgid "Select a spell first."
+msgstr "Hãy chọn một phép trước."
+
+msgid "Select only"
+msgstr "Chỉ chọn"
+
+msgid "Select the first corner of the zone."
+msgstr "Chọn góc thứ nhất của vùng."
+
+msgid ""
+"Select the second corner of the zone. The selection so far is described below."
+msgstr "Chọn góc thứ hai của vùng. Phần đã chọn tính đến nay được mô tả bên dưới."
+
+msgid "Select zone corner"
+msgstr "Chọn góc vùng"
+
+msgid "Selected for reordering."
+msgstr "Đã chọn để sắp xếp lại."
+
+msgid "Selection"
+msgstr "Vùng chọn"
+
+msgid ""
+"Set the selected mission or point of interest as the current objective. This only changes which objective is tracked; it does not accept or hand in a mission, and it does not start travel."
+msgstr ""
+"Đặt nhiệm vụ hoặc điểm quan tâm đang chọn làm mục tiêu hiện tại. Việc này chỉ thay đổi mục tiêu nào đang được theo dõi; nó không nhận hay nộp nhiệm vụ, và không bắt đầu di chuyển."
+
+msgid "Set this tile as the corner of the zone."
+msgstr "Đặt ô này làm góc của vùng."
+
+#, c-format
+msgid ""
+"Shape: %1$s. Area measure: %2$s. The area extends toward %3$s and covers levels from %4$d to %5$d relative to your level."
+msgstr ""
+"Hình dạng: %1$s. Số đo vùng: %2$s. Vùng trải về hướng %3$s và bao phủ các tầng từ %4$d đến %5$d so với tầng của bạn."
+
+msgid "Shared total"
+msgstr "Tổng dùng chung"
+
+msgid ""
+"Show or hide city name labels on the visual map. Labels are only drawn for places the character has seen the outlines of."
+msgstr ""
+"Hiện hoặc ẩn nhãn tên thành phố trên bản đồ hình ảnh. Nhãn chỉ được vẽ cho những nơi nhân vật đã thấy đường nét."
+
+msgid ""
+"Show or hide forest trails on the visual map; when hidden, trail tiles are drawn as forest."
+msgstr ""
+"Hiện hoặc ẩn đường mòn trong rừng trên bản đồ hình ảnh; khi ẩn, các ô đường mòn được vẽ thành rừng."
+
+msgid "Show or hide land use codes on the visual map (debug display)."
+msgstr "Hiện hoặc ẩn mã sử dụng đất trên bản đồ hình ảnh (hiển thị gỡ lỗi)."
+
+msgid ""
+"Show or hide monster horde markers on the visual map. Hordes are only ever shown where the character's senses allow."
+msgstr ""
+"Hiện hoặc ẩn dấu bầy quái vật trên bản đồ hình ảnh. Bầy quái vật chỉ được hiển thị ở nơi giác quan của nhân vật cho phép."
+
+msgid ""
+"Show or hide the marker for map tiles revealed by maps the character has read."
+msgstr ""
+"Hiện hoặc ẩn dấu cho các ô bản đồ được tiết lộ bởi những bản đồ nhân vật đã đọc."
+
+msgid "Show or hide the weather overlay on the visual map."
+msgstr "Hiện hoặc ẩn lớp phủ thời tiết trên bản đồ hình ảnh."
+
+msgid ""
+"Show or hide visual overlay information, such as explored shading. This changes only the visual display."
+msgstr ""
+"Hiện hoặc ẩn thông tin lớp phủ hình ảnh, chẳng hạn phần tô bóng đã khám phá. Việc này chỉ thay đổi phần hiển thị hình ảnh."
+
+msgid "Showing"
+msgstr "Đang hiển thị"
+
+#, c-format
+msgid "Showing %1$d of %2$d entries."
+msgstr "Đang hiển thị %1$d trên %2$d mục."
+
+#, c-format
+msgid "Showing %1$d of %2$d zones."
+msgstr "Đang hiển thị %1$d trên %2$d vùng."
+
+msgid "Showing all zones."
+msgstr "Đang hiển thị mọi vùng."
+
+msgid "Showing only zones within sight range."
+msgstr "Đang hiển thị chỉ các vùng trong tầm nhìn."
+
+#, c-format
+msgid ""
+"Showing the first %1$d of %2$d targets. The list is limited to %1$d entries; use the next and previous target commands to move through the full target list."
+msgstr ""
+"Đang hiển thị %1$d mục tiêu đầu tiên trên %2$d. Danh sách bị giới hạn ở %1$d mục; dùng các lệnh mục tiêu tiếp theo và mục tiêu trước để đi hết toàn bộ danh sách mục tiêu."
+
+msgid "Shown on the map."
+msgstr "Được hiển thị trên bản đồ."
+
+#, c-format
+msgid "Size: %1$d by %2$d tiles, %3$d levels."
+msgstr "Kích thước: %1$d x %2$d ô, %3$d tầng."
+
+#, c-format
+msgid "Sleepiness level: %+d"
+msgstr "Mức buồn ngủ: %+d"
+
+msgid "Snake"
+msgstr "Rắn săn mồi"
+
+msgid "Snake rules"
+msgstr "Luật trò Rắn săn mồi"
+
+msgid "Sokoban board and rules"
+msgstr "Bàn và luật Sokoban"
+
+#, c-format
+msgid "Source pane: %s"
+msgstr "Ngăn nguồn: %s"
+
+#, c-format
+msgid "Source: %1$s. Destination: %2$s."
+msgstr "Nguồn: %1$s. Đích: %2$s."
+
+#, c-format
+msgid "Speed: %d"
+msgstr "Tốc độ: %d"
+
+msgid "Spell area of effect"
+msgstr "Vùng ảnh hưởng của phép"
+
+#, c-format
+msgid "Stacks: %1$d. Volume: %2$s. Weight: %3$s."
+msgstr "Chồng: %1$d. Thể tích: %2$s. Khối lượng: %3$s."
+
+msgid "Start game"
+msgstr "Bắt đầu trò chơi"
+
+msgid "Start the game."
+msgstr "Bắt đầu trò chơi."
+
+msgid "Steer east"
+msgstr "Lái sang đông"
+
+msgid "Steer north"
+msgstr "Lái lên bắc"
+
+msgid "Steer south"
+msgstr "Lái xuống nam"
+
+msgid ""
+"Steer the snake with the direction commands. The snake keeps moving in its current direction until you steer it. Eat fruit to score 500 points per fruit and grow 10 segments longer; the game also speeds up slightly with each fruit when played in real time. The snake wraps around the edges of the board: leaving one side brings it back in on the opposite side. If the snake runs into its own body, the game is over. Reader timing: with the screen reader on, the snake waits for your direction at each step instead of moving in real time. The snake, scoring and growth rules are unchanged."
+msgstr ""
+"Điều khiển rắn bằng các lệnh hướng. Rắn tiếp tục di chuyển theo hướng hiện tại cho đến khi bạn lái nó. Ăn trái cây để ghi 500 điểm mỗi trái và dài thêm 10 đốt; trò chơi cũng nhanh lên một chút với mỗi trái cây khi chơi theo thời gian thực. Rắn đi vòng qua các cạnh của bàn: rời khỏi một phía sẽ đưa nó trở lại ở phía đối diện. Nếu rắn đâm vào chính thân mình, trò chơi kết thúc. Nhịp của bộ đọc: khi bộ đọc bật, rắn chờ hướng đi của bạn ở mỗi bước thay vì di chuyển theo thời gian thực. Các luật về rắn, điểm số và tăng trưởng không đổi."
+
+msgid "Steer west"
+msgstr "Lái sang tây"
+
+msgid ""
+"Switch to the other trade pane, between the trader's items and your items. This only changes which pane you are browsing; it does not change the offer."
+msgstr ""
+"Chuyển sang ngăn giao dịch còn lại, giữa vật phẩm của người bán và vật phẩm của bạn. Việc này chỉ thay đổi ngăn bạn đang duyệt; nó không thay đổi đề nghị."
+
+#, c-format
+msgid "Tab: %1$s. Active bionics: %2$d. Passive bionics: %3$d."
+msgstr "Tab: %1$s. Bionic chủ động: %2$d. Bionic bị động: %3$d."
+
+msgid "Temperature (cold)"
+msgstr "Nhiệt độ (lạnh)"
+
+msgid "Temperature (heat)"
+msgstr "Nhiệt độ (nóng)"
+
+#, c-format
+msgid "Temperature: %s"
+msgstr "Nhiệt độ: %s"
+
+msgid "Temporarily disabled."
+msgstr "Tạm thời bị tắt."
+
+msgid "That is not kitten."
+msgstr "Đó không phải mèo con."
+
+msgid "The activity was canceled."
+msgstr "Hoạt động đã bị hủy."
+
+msgid "The batch would create too many items."
+msgstr "Mẻ này sẽ tạo ra quá nhiều vật phẩm."
+
+#, c-format
+msgid ""
+"The board is too large to list in full; only the area around the cursor is listed: rows %1$d to %2$d, columns %3$d to %4$d."
+msgstr ""
+"Bàn quá lớn để liệt kê toàn bộ; chỉ liệt kê vùng quanh con trỏ: hàng %1$d đến %2$d, cột %3$d đến %4$d."
+
+msgid "The camp does not have another day of food to offer."
+msgstr "Trại không còn thêm một ngày lương thực nào để cung cấp."
+
+msgid ""
+"The crafter cannot craft this: requirements or the primary skill are not met."
+msgstr ""
+"Người chế tạo không thể chế tạo món này: yêu cầu hoặc kỹ năng chính chưa thỏa."
+
+msgid "The draft cannot be applied."
+msgstr "Bản nháp không thể áp dụng được."
+
+msgid "The draft does not match the allowed step."
+msgstr "Bản nháp không khớp bước cho phép."
+
+msgid "The draft is longer than the maximum length."
+msgstr "Bản nháp dài hơn độ dài tối đa."
+
+msgid "The draft is not a number."
+msgstr "Bản nháp không phải là số."
+
+msgid "The draft is not one of the choices."
+msgstr "Bản nháp không nằm trong các lựa chọn."
+
+msgid "The draft is outside the allowed range."
+msgstr "Bản nháp nằm ngoài phạm vi cho phép."
+
+msgid "The food offer is already at zero days."
+msgstr "Đề nghị lương thực đã ở mức không ngày."
+
+#, c-format
+msgid "The game screen's own filter is also active: %s."
+msgstr "Bộ lọc riêng của màn hình trò chơi cũng đang hoạt động: %s."
+
+msgid ""
+"The rule is removed from the list right away. The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No restores the rules as they were."
+msgstr ""
+"Quy tắc bị xóa khỏi danh sách ngay lập tức. Thay đổi chỉ được lưu khi bạn trả lời Có cho câu hỏi \"Lưu thay đổi?\" khi rời màn hình này; trả lời Không sẽ khôi phục các quy tắc như cũ."
+
+msgid ""
+"The rule is removed from this tab's list right away. The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it."
+msgstr ""
+"Quy tắc bị xóa khỏi danh sách của tab này ngay lập tức. Thay đổi chỉ được lưu khi bạn trả lời Có cho câu hỏi \"Lưu thay đổi?\" khi rời màn hình này; trả lời Không sẽ hủy bỏ nó."
+
+msgid ""
+"The screen's filter box is being edited. Confirm or quit filtering to return to the action list."
+msgstr ""
+"Hộp lọc của màn hình đang được sửa. Xác nhận hoặc thoát chế độ lọc để quay lại danh sách hành động."
+
+msgid "The weather overlay can only be changed while the player is outside."
+msgstr "Lớp phủ thời tiết chỉ thay đổi được khi người chơi ở ngoài trời."
+
+msgid "There are no plots ready for planting in this expansion."
+msgstr "Không có luống nào sẵn sàng để trồng trong khu mở rộng này."
+
+msgid "There are no plots that need plowing in this expansion."
+msgstr "Không có luống nào cần cày trong khu mở rộng này."
+
+msgid "There are no targets. "
+msgstr "Không có mục tiêu nào. "
+
+msgid "There are unsaved changes."
+msgstr "Có thay đổi chưa lưu."
+
+msgid "There is nothing ready to harvest in this expansion."
+msgstr "Không có gì sẵn sàng để thu hoạch trong khu mở rộng này."
+
+msgid ""
+"These are registered commands. Screen contents may require a dedicated reader. The game does not publish a cost for individual commands; some commands open a follow-up step, such as choosing a direction, target or item, on the next screen."
+msgstr ""
+"Đây là các lệnh đã đăng ký. Nội dung màn hình có thể cần một bộ đọc riêng. Trò chơi không công bố chi phí cho từng lệnh; một số lệnh mở ra một bước tiếp theo, chẳng hạn chọn hướng, mục tiêu hoặc vật phẩm, ở màn hình kế tiếp."
+
+#, c-format
+msgid "Thirst: %s"
+msgstr "Khát: %s"
+
+msgid "This is the current sidebar layout."
+msgstr "Đây là bố cục thanh bên hiện tại."
+
+msgid "This menu has no entries."
+msgstr "Menu này không có mục nào."
+
+msgid "This tile is the target of your current objective."
+msgstr "Ô này là đích của mục tiêu hiện tại của bạn."
+
+msgid ""
+"This zone will be removed from the list immediately. The change is only saved when you confirm saving when you leave; choosing not to save restores it."
+msgstr ""
+"Vùng này sẽ bị xóa khỏi danh sách ngay lập tức. Thay đổi chỉ được lưu khi bạn xác nhận lưu lúc rời đi; chọn không lưu sẽ khôi phục nó."
+
+#, c-format
+msgid "Time to complete: %s"
+msgstr "Thời gian hoàn thành: %s"
+
+#, c-format
+msgid "Time to learn: %s"
+msgstr "Thời gian học: %s"
+
+#, c-format
+msgid "Toggle whether the selected zone, %s, is shown on the map."
+msgstr "Bật/tắt việc vùng đang chọn, %s, có được hiển thị trên bản đồ hay không."
+
+msgid "Too dark: the crafter cannot see well enough to craft."
+msgstr "Quá tối: người chế tạo không nhìn đủ rõ để chế tạo."
+
+msgid "Topic"
+msgstr "Chủ đề"
+
+#, c-format
+msgid "Total morale: %+d"
+msgstr "Tổng nhuệ khí: %+d"
+
+#, c-format
+msgid "Trade completed. You gave items worth %s and received items worth %s."
+msgstr ""
+"Giao dịch hoàn tất. Bạn đã đưa vật phẩm trị giá %s và nhận vật phẩm trị giá %s."
+
+msgid "Traits"
+msgstr "Đặc tính"
+
+msgid "Type"
+msgstr "Loại"
+
+#, c-format
+msgid "Type: %s."
+msgstr "Loại: %s."
+
+msgid "Unbound"
+msgstr "Chưa gán"
+
+#, c-format
+msgid "Unit price: %s"
+msgstr "Đơn giá: %s"
+
+msgid "Unknown mode"
+msgstr "Chế độ không rõ"
+
+msgid "Unknown shape"
+msgstr "Hình dạng không rõ"
+
+msgid "Unread"
+msgstr "Chưa đọc"
+
+msgid "Vehicle storage."
+msgstr "Kho của xe."
+
+msgid "Vehicle zone."
+msgstr "Vùng xe."
+
+#, c-format
+msgid "Viewing container: %s"
+msgstr "Đang xem vật chứa: %s"
+
+#, c-format
+msgid "Volume: %1$s. Weight: %2$s."
+msgstr "Thể tích: %1$s. Khối lượng: %2$s."
+
+msgid "Waiting and system"
+msgstr "Chờ đợi và hệ thống"
+
+#, c-format
+msgid ""
+"Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to remove its keybinding anyway."
+msgstr ""
+"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của bộ đọc, không phải luật của engine). Kích hoạt hàng của nó lần nữa để vẫn xóa gán phím của nó."
+
+#, c-format
+msgid ""
+"Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to reset its keybinding anyway."
+msgstr ""
+"Cảnh báo: %1$s là phím menu thiết yếu (chính sách của bộ đọc, không phải luật của engine). Kích hoạt hàng của nó lần nữa để vẫn đặt lại gán phím của nó."
+
+msgid ""
+"Warning: this resets every keybinding for this context to its default. Activate it again to proceed."
+msgstr ""
+"Cảnh báo: việc này đặt lại mọi gán phím cho ngữ cảnh này về mặc định. Kích hoạt lần nữa để tiếp tục."
+
+msgid ""
+"Warning: this response may leave you helpless. The game will ask for confirmation before it takes effect."
+msgstr ""
+"Cảnh báo: câu trả lời này có thể khiến bạn bất lực. Trò chơi sẽ hỏi xác nhận trước khi nó có hiệu lực."
+
+msgid ""
+"Warning: this response may provoke an attack. The game will ask for confirmation before it takes effect."
+msgstr ""
+"Cảnh báo: câu trả lời này có thể châm ngòi một cuộc tấn công. Trò chơi sẽ hỏi xác nhận trước khi nó có hiệu lực."
+
+msgid "Watertight."
+msgstr "Kín nước."
+
+msgid "Weapon and firing mode"
+msgstr "Vũ khí và chế độ bắn"
+
+#, c-format
+msgid "Weariness: %s"
+msgstr "Mức mệt mỏi: %s"
+
+#, c-format
+msgid "Weight: %s"
+msgstr "Khối lượng: %s"
+
+msgid "You found kitten! Way to go, robot!"
+msgstr "Bạn đã tìm thấy mèo con! Giỏi lắm, rô-bốt!"
+
+#, c-format
+msgid "You now owe %s %s."
+msgstr "Bạn hiện nợ %s %s."
+
+#, c-format
+msgid "You paid %s from your bank account. Your cash is now %s."
+msgstr "Bạn đã trả %s từ tài khoản ngân hàng. Tiền mặt của bạn hiện là %s."
+
+#, c-format
+msgid "You received %s into your bank account. Your cash is now %s."
+msgstr "Bạn đã nhận %s vào tài khoản ngân hàng. Tiền mặt của bạn hiện là %s."
+
+msgid ""
+"You will allow fate to choose the next leader.  Whether it's by dice, drawing straws, or picking names out of a hat, it will be purely random."
+msgstr ""
+"Bạn sẽ để số phận chọn thủ lĩnh tiếp theo. Dù bằng xúc xắc, rút thăm, hay bốc tên từ một chiếc mũ, mọi thứ đều hoàn toàn ngẫu nhiên."
+
+msgid "Zone manager"
+msgstr "Quản lý vùng"
+
+msgid ""
+"Zoom the visual map in. This changes only the visual scale; reader descriptions do not change."
+msgstr ""
+"Phóng to bản đồ hình ảnh. Việc này chỉ thay đổi tỷ lệ hình ảnh; mô tả của bộ đọc không đổi."
+
+msgid ""
+"Zoom the visual map out. This changes only the visual scale; reader descriptions do not change."
+msgstr ""
+"Thu nhỏ bản đồ hình ảnh. Việc này chỉ thay đổi tỷ lệ hình ảnh; mô tả của bộ đọc không đổi."
+
+msgid "a package is on this goal"
+msgstr "một kiện hàng đang ở trên đích này"
+
+msgid "allowed"
+msgstr "được phép"
+
+#, c-format
+msgid "column %d of %d, row %d of %d"
+msgstr "cột %d trên %d, hàng %d trên %d"
+
+#, c-format
+msgid "digit %c"
+msgstr "chữ số %c"
+
+#, c-format
+msgid "distance %1$d (0 means max view distance)"
+msgstr "khoảng cách %1$d (0 nghĩa là khoảng cách nhìn tối đa)"
+
+msgid "enabled"
+msgstr "đang bật"
+
+msgid "exclamation mark"
+msgstr "dấu chấm than"
+
+msgid "goal"
+msgstr "đích"
+
+msgid "high"
+msgstr "cao"
+
+#, c-format
+msgid "letter %c"
+msgstr "chữ cái %c"
+
+msgid "low"
+msgstr "thấp"
+
+msgid "no package yet"
+msgstr "chưa có kiện hàng nào"
+
+msgid "not allowed"
+msgstr "không được phép"
+
+msgid "off"
+msgstr "tắt"
+
+msgid "on"
+msgstr "bật"
+
+msgid "package"
+msgstr "kiện hàng"
+
+msgid "package on goal"
+msgstr "kiện hàng trên đích"
+
+msgid "the current bindings"
+msgstr "các gán phím hiện tại"
+
+msgid "the global default bindings"
+msgstr "các gán phím mặc định toàn cục"
+
+#, c-format
+msgid "the local bindings for this screen (context %s)"
+msgstr "các gán phím cục bộ cho màn hình này (ngữ cảnh %s)"
+
+msgid "the local bindings for this screen and the global default bindings"
+msgstr "các gán phím cục bộ cho màn hình này và các gán phím mặc định toàn cục"
+
+msgid "you, on a goal"
+msgstr "bạn, đang ở trên một đích"
+
+#, c-format
+msgid "%d messages."
+msgstr "%d thông báo."
+
+#, c-format
+msgid "Showing the newest %1$d of %2$d messages. Older messages are not included; use the filter to narrow the list."
+msgstr "Đang hiển thị %1$d thông báo mới nhất trong %2$d thông báo. Các thông báo cũ hơn không được đưa vào; dùng bộ lọc để thu hẹp danh sách."

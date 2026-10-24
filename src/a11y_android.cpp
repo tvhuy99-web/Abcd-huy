@@ -169,6 +169,50 @@ void announce( const std::string &text, const int priority )
 #endif
 }
 
+void cue( const std::string &name )
+{
+    // Only the four internal literals are accepted: the Java side maps
+    // each to a bundled sound and vibration pattern, so no engine data
+    // (and no knowledge the player has not earned) crosses this channel.
+    if( name != "blocked" && name != "danger" && name != "pickup" &&
+        name != "activity_done" ) {
+        return;
+    }
+#if defined(__ANDROID__)
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr ) {
+        return;
+    }
+    if( env->PushLocalFrame( 8 ) < 0 ) {
+        if( env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        if( cls != nullptr ) {
+            jmethodID method = env->GetMethodID( cls, "onAccessibilityCue",
+                                                "(Ljava/lang/String;)V" );
+            if( method != nullptr ) {
+                // The whitelist above is pure ASCII, so plain
+                // NewStringUTF is exact here.
+                jstring value = env->NewStringUTF( name.c_str() );
+                if( value != nullptr ) {
+                    env->CallVoidMethod( activity, method, value );
+                }
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        // A cue failure must never unwind through the game loop.
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#endif
+}
+
 void status( const std::string &code, const semantic_intent *intent )
 {
     // Codes are internal literals; translated user-facing text belongs to Java.

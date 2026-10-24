@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "advanced_inv_area.h"
 #include "advanced_inv_listitem.h"
 #include "advanced_inv_pagination.h"
@@ -2005,10 +2007,201 @@ void advanced_inventory::process_action( const std::string &input_action )
            advanced_inventory::side::left;
 }
 
+// Accessibility reader adapter for the advanced inventory (R09.3).
+// The session only ever returns registered action ids to process_action(),
+// exactly like the real key path: it never moves items itself. Moving is
+// re-validated by the engine at commit time (action_move_item() runs
+// query_destination()/query_charges() and the destination capacity, ownership
+// and canputitems() checks again). There is deliberately no new cancel
+// mechanism here: QUIT is published as one of the command nodes below, and
+// the quantity prompt opened by MOVE_VARIABLE_ITEM (query_charges()) has its
+// own reader scope and cancel.
+class advanced_inventory::reader_session
+{
+    public:
+        reader_session( advanced_inventory &owner, input_context &context ) :
+            owner( owner ), context( context ),
+            screen( &context, "advanced-inventory",
+        [this]( const a11y::semantic_intent &intent ) {
+            return handle( intent );
+        } ) {}
+
+        void update() {
+            if( !a11y::enabled() ) {
+                return;
+            }
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( context,
+                                                 _( "Advanced inventory" ) );
+            std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+            snapshot.nodes.clear();
+            snapshot.summary = string_format( _( "Source: %1$s. Destination: %2$s." ),
+                                              pane_area_name( owner.src ),
+                                              pane_area_name( owner.dest ) );
+
+            snapshot.nodes.push_back( pane_node( owner.src, true ) );
+            snapshot.nodes.push_back( pane_node( owner.dest, false ) );
+
+            advanced_inventory_pane &spane = owner.panes[owner.src];
+            advanced_inv_listitem *current = spane.get_cur_item_ptr();
+            for( const advanced_inv_listitem &entry : spane.items ) {
+                if( entry.items.empty() ) {
+                    continue;
+                }
+                const item_location &location = entry.items.front();
+                const std::string id = bind( location );
+                a11y::semantic_node node;
+                node.id = id;
+                node.role = "button";
+                node.label = remove_color_tags( entry.name.empty() ?
+                                                 location->display_name() : entry.name );
+                node.value = string_format(
+                                 _( "Stacks: %1$d. Volume: %2$s. Weight: %3$s." ),
+                                 entry.stacks, format_volume( entry.volume ),
+                                 string_format( "%.1f %s", convert_weight( entry.weight ),
+                                                weight_units() ) );
+                node.detail = location.describe( &get_player_character() );
+                if( entry.autopickup ) {
+                    node.detail += "\n" + std::string( _( "Auto-pickup" ) );
+                }
+                node.selected = current == &entry;
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+
+            snapshot.nodes.insert( snapshot.nodes.end(),
+                                   std::make_move_iterator( commands.begin() ),
+                                   std::make_move_iterator( commands.end() ) );
+            for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+                snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+                snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+            }
+            screen.update( std::move( snapshot ) );
+        }
+
+    private:
+        struct row_binding {
+            item_location location;
+            std::string id;
+        };
+        advanced_inventory &owner;
+        input_context &context;
+        std::vector<row_binding> bindings;
+        std::size_t serial = 0;
+        a11y::screen_scope screen;
+
+        std::string bind( const item_location &location ) {
+            const auto binding = std::find_if( bindings.begin(), bindings.end(),
+            [&]( const row_binding &b ) {
+                return b.location == location;
+            } );
+            if( binding != bindings.end() ) {
+                return binding->id;
+            }
+            bindings.push_back( { location, "item:" + std::to_string( ++serial ) } );
+            return bindings.back().id;
+        }
+
+        std::string pane_area_name( side pane_side ) const {
+            const advanced_inventory_pane &pane = owner.panes[pane_side];
+            return remove_color_tags( owner.squares[pane.get_area()].name );
+        }
+
+        // Status node for one pane. Totals are the whole square's contents
+        // (ground plus vehicle storage), matching the volume/volume_veh and
+        // weight/weight_veh pairs stored on advanced_inv_area.
+        a11y::semantic_node pane_node( side pane_side, bool is_source ) const {
+            const advanced_inventory_pane &pane = owner.panes[pane_side];
+            const advanced_inv_area &square = owner.squares[pane.get_area()];
+            a11y::semantic_node node;
+            node.id = is_source ? "advanced-inventory:source-pane"
+                      : "advanced-inventory:destination-pane";
+            node.role = "status";
+            // TOGGLE_TAB is a real pane switch in process_action() (it sets
+            // src = dest and recomputes dest as the other pane), so activating
+            // a pane status node may offer it; focus alone changes nothing.
+            node.actions = { "focus", "activate" };
+            node.label = string_format( is_source ? _( "Source pane: %s" )
+                                        : _( "Destination pane: %s" ),
+                                        remove_color_tags( square.name ) );
+            const std::string &desc = square.desc[pane.in_vehicle() ? 1 : 0];
+            node.value = desc.empty() ? remove_color_tags( square.name )
+                         : remove_color_tags( desc );
+            if( pane.in_vehicle() ) {
+                node.value += " " + std::string( _( "Vehicle storage." ) );
+            } else {
+                node.value += " " + std::string( _( "Ground." ) );
+            }
+            node.detail = string_format( _( "Volume: %1$s. Weight: %2$s." ),
+                                         format_volume( square.volume + square.volume_veh ),
+                                         string_format( "%.1f %s",
+                                                 convert_weight( square.weight + square.weight_veh ),
+                                                 weight_units() ) );
+            if( square.max_size > 0 ) {
+                node.detail += "\n" + string_format( _( "Items: %1$d of %2$d." ),
+                                                     square.get_item_count(), square.max_size );
+            }
+            if( pane.container ) {
+                node.detail += "\n" + string_format( _( "Viewing container: %s" ),
+                                                     pane.container->tname( 1, false ) );
+            }
+            node.selected = is_source;
+            return node;
+        }
+
+        std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
+            if( intent.node == "advanced-inventory:source-pane" ||
+                intent.node == "advanced-inventory:destination-pane" ) {
+                if( intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+                if( intent.action == "activate" ) {
+                    return "TOGGLE_TAB";
+                }
+                return std::nullopt;
+            }
+            const auto binding = std::find_if( bindings.begin(), bindings.end(),
+            [&]( const row_binding &b ) {
+                return b.id == intent.node;
+            } );
+            if( binding == bindings.end() ) {
+                return a11y::registered_intent( context, intent );
+            }
+            // Re-resolve the bound handle against the source pane's current
+            // rows (R03 gate): no list index or listitem pointer captured at
+            // publish time is trusted, because sorting, filtering, recalc or
+            // a completed move may have rebuilt the pane since then.
+            advanced_inventory_pane &spane = owner.panes[owner.src];
+            const auto found = std::find_if( spane.items.begin(), spane.items.end(),
+            [&]( const advanced_inv_listitem &entry ) {
+                return !entry.items.empty() && entry.items.front() == binding->location;
+            } );
+            if( found == spane.items.end() ) {
+                return std::nullopt;
+            }
+            if( intent.action == "focus" ) {
+                spane.index = static_cast<int>( std::distance( spane.items.begin(), found ) );
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" ) {
+                spane.index = static_cast<int>( std::distance( spane.items.begin(), found ) );
+                // The variable-amount path: query_charges() asks how much to
+                // move and action_move_item() re-checks the destination.
+                return "MOVE_VARIABLE_ITEM";
+            }
+            return std::nullopt;
+        }
+};
+
 void advanced_inventory::display()
 {
     avatar &player_character = get_avatar();
     input_context ctxt{ register_ctxt() };
+    // Declared after ctxt (and destroyed before it, in reverse order) so the
+    // reader scope never outlives its input owner, including on the early
+    // moves < 0 return inside the loop below.
+    reader_session reader( *this, ctxt );
 
     exit = false;
     if( !is_processing() ) {
@@ -2101,6 +2294,7 @@ void advanced_inventory::display()
             break;
         }
 
+        reader.update();
         process_action( ctxt.handle_input() );
     }
 }

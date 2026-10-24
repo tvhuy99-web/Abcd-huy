@@ -1,6 +1,7 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <iterator>
 #include <list>
 #include <map>
 #include <memory>
@@ -9,6 +10,8 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "bionics.h"
 #include "bodypart.h"
@@ -222,14 +225,14 @@ char get_free_invlet( Character &p )
     return ' ';
 }
 
-static void draw_bionics_titlebar( const catacurses::window &window, avatar *p,
-                                   bionic_menu_mode mode )
+// The current-power and available-fuel strings the titlebar draws,
+// factored out unchanged so the reader adapter in power_bionics()
+// publishes exactly the same formatting instead of a second copy that
+// could drift apart from what the screen shows.
+static std::string bionic_fuel_string( avatar *p )
 {
     map &here = get_map();
 
-    input_context ctxt( "BIONICS", keyboard_mode::keychar );
-
-    werase( window );
     std::string fuel_string;
     bool found_fuel = false;
     fuel_string = _( "Available Fuel: " );
@@ -262,6 +265,11 @@ static void draw_bionics_titlebar( const catacurses::window &window, avatar *p,
     if( !found_fuel ) {
         fuel_string.clear();
     }
+    return fuel_string;
+}
+
+static std::string bionic_power_string( avatar *p )
+{
     std::string power_string;
     const units::energy curr_power = p->get_power_level();
     const int kilo = units::to_kilojoule( curr_power );
@@ -282,6 +290,17 @@ static void draw_bionics_titlebar( const catacurses::window &window, avatar *p,
     } else {
         power_string = std::to_string( milli ) + pgettext( "energy unit: millijoule", "mJ" );
     }
+    return power_string;
+}
+
+static void draw_bionics_titlebar( const catacurses::window &window, avatar *p,
+                                   bionic_menu_mode mode )
+{
+    input_context ctxt( "BIONICS", keyboard_mode::keychar );
+
+    werase( window );
+    std::string fuel_string = bionic_fuel_string( p );
+    const std::string power_string = bionic_power_string( p );
 
     const int pwr_str_pos = right_print( window, 1, 1, c_white,
                                          string_format( _( "Bionic Power: <color_light_blue>%s</color>/<color_light_blue>%ikJ</color>" ),
@@ -682,6 +701,182 @@ void avatar::power_bionics()
     ctxt.register_action( "TOGGLE_SPRITE" );
     ctxt.register_action( "SORT" );
 
+    // Reader adapter (R17): this screen is drawn by a ui_adaptor loop, so
+    // without its own adapter the input context only gets the generic
+    // command fallback, which never publishes the bionic list itself.
+    // The handler never calls activate_bionic()/deactivate_bionic()
+    // directly: "activate" on an entry only moves the cursor onto that
+    // entry and returns CONFIRM, so the loop below handles it exactly
+    // like a keypress -- ACTIVATING toggles through the original code
+    // (including the nested weapon uilist), EXAMINING ignores CONFIRM,
+    // and REASSIGNING selects the entry for choose_key_from_user().
+    // Every branch re-reads the live tab lists, tab mode and cursor at
+    // intent time; nothing is captured from a published snapshot.
+    a11y::screen_scope reader( &ctxt, "bionics",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node == "bionics:tab:active" || intent.node == "bionics:tab:passive" ) {
+            if( intent.action == "focus" ) {
+                // Browsing a tab name must not switch tabs.
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                const bionic_tab_mode target = intent.node == "bionics:tab:active"
+                                                ? TAB_ACTIVE : TAB_PASSIVE;
+                if( tab_mode == target ) {
+                    return std::string( "TIMEOUT" );
+                }
+                // NEXT_TAB moves ACTIVE -> PASSIVE and PREV_TAB moves
+                // PASSIVE -> ACTIVE in the loop below; pick the action
+                // whose direction matches the requested tab.
+                return std::string( target == TAB_PASSIVE ? "NEXT_TAB" : "PREV_TAB" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "bionics:empty" ) {
+            if( intent.action == "focus" || intent.action == "activate" ) {
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        if( ( intent.action == "focus" || intent.action == "activate" ) &&
+            intent.node.rfind( "bionics:entry:", 0 ) == 0 ) {
+            sorted_bionics *live_list = tab_mode == TAB_ACTIVE ? &active : &passive;
+            for( size_t i = 0; i < live_list->size(); ++i ) {
+                if( intent.node != "bionics:entry:" + std::to_string( i ) ) {
+                    continue;
+                }
+                cursor = static_cast<int>( i );
+                // Keep the cursor inside the visible window, the same
+                // invariant the UP/DOWN handling maintains; the loop
+                // clamps scroll_position again before the next redraw.
+                const int live_max_scroll = std::max( 0,
+                                            static_cast<int>( live_list->size() ) - LIST_HEIGHT );
+                if( cursor < scroll_position ) {
+                    scroll_position = cursor;
+                } else if( LIST_HEIGHT > 0 && cursor - scroll_position >= LIST_HEIGHT ) {
+                    scroll_position = cursor - LIST_HEIGHT + 1;
+                }
+                scroll_position = clamp( scroll_position, 0, live_max_scroll );
+                return std::string( intent.action == "activate" ? "CONFIRM" : "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Bionics" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        // Summary: the same power/fuel formatting the titlebar draws
+        // (shared helpers above, color tags stripped for the reader),
+        // then the current tab with both tab counts, then the menu mode.
+        snapshot.summary = remove_color_tags( string_format(
+                _( "Bionic Power: <color_light_blue>%s</color>/<color_light_blue>%ikJ</color>" ),
+                bionic_power_string( this ), units::to_kilojoule( get_max_power_level() ) ) );
+        std::string fuel_text = remove_color_tags( bionic_fuel_string( this ) );
+        while( !fuel_text.empty() && fuel_text.back() == ' ' ) {
+            fuel_text.pop_back();
+        }
+        if( !fuel_text.empty() ) {
+            snapshot.summary += "\n" + fuel_text;
+        }
+        snapshot.summary += "\n" + string_format(
+                                _( "Tab: %1$s. Active bionics: %2$d. Passive bionics: %3$d." ),
+                                tab_mode == TAB_ACTIVE ? _( "Active" ) : _( "Passive" ),
+                                static_cast<int>( active.size() ),
+                                static_cast<int>( passive.size() ) );
+        std::string mode_text;
+        switch( menu_mode ) {
+            case ACTIVATING:
+                mode_text = _( "Activating" );
+                break;
+            case EXAMINING:
+                mode_text = _( "Examining" );
+                break;
+            case REASSIGNING:
+                mode_text = _( "Reassigning" );
+                break;
+        }
+        snapshot.summary += "\n" + string_format( _( "Mode: %s." ), mode_text );
+
+        const auto append_tab = [&]( const char *id, const std::string &label,
+                                     const bionic_tab_mode tab, const size_t count,
+                                     const int position ) {
+            a11y::semantic_node node;
+            node.id = id;
+            node.role = "tab";
+            node.label = label;
+            node.detail = string_format( _( "%d bionics." ), static_cast<int>( count ) );
+            node.selected = tab_mode == tab;
+            node.position = position;
+            node.total = 2;
+            snapshot.nodes.push_back( std::move( node ) );
+        };
+        append_tab( "bionics:tab:active", _( "Active" ), TAB_ACTIVE, active.size(), 1 );
+        append_tab( "bionics:tab:passive", _( "Passive" ), TAB_PASSIVE, passive.size(), 2 );
+
+        sorted_bionics *current_list = tab_mode == TAB_ACTIVE ? &active : &passive;
+        if( current_list->empty() ) {
+            // Empty state, mirroring the uilist precedent: a status node
+            // carrying the exact message the screen itself draws.
+            a11y::semantic_node node;
+            node.id = "bionics:empty";
+            node.role = "status";
+            node.label = tab_mode == TAB_ACTIVE
+                         ? _( "No activatable bionics installed." )
+                         : _( "No passive bionics installed." );
+            node.actions = { "focus", "activate" };
+            snapshot.focus = node.id;
+            snapshot.nodes.push_back( std::move( node ) );
+        } else {
+            for( size_t i = 0; i < current_list->size(); ++i ) {
+                const bionic &bio = *( *current_list )[i];
+                a11y::semantic_node node;
+                node.id = "bionics:entry:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = remove_color_tags( build_bionic_powerdesc_string( bio, this ) );
+                // The full description draw_description() shows:
+                // description, power usage, occupied body parts and an
+                // installed weapon when there is one.
+                std::string detail = bio.id->description.translated();
+                const std::string poweronly_string = build_bionic_poweronly_string( bio, this );
+                if( !poweronly_string.empty() ) {
+                    detail += "\n" + string_format( _( "Power usage: %s" ), poweronly_string );
+                }
+                const std::string bps_text = list_occupied_bps( bio.id,
+                                             _( "This bionic occupies the following body parts:" ), true );
+                if( !bps_text.empty() ) {
+                    detail += "\n" + bps_text;
+                }
+                if( bio.has_weapon() ) {
+                    detail += "\n" + string_format( _( "Installed weapon: %s" ),
+                                                    bio.get_weapon().tname() );
+                }
+                node.detail = remove_color_tags( detail );
+                node.selected = static_cast<int>( i ) == cursor;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( current_list->size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+        }
+
+        // Screen commands after the screen's own nodes, as in the smart
+        // controller adapter: TOGGLE_EXAMINE, REASSIGN, TOGGLE_SAFE_FUEL,
+        // TOGGLE_SHUTDOWN, TOGGLE_SPRITE, SORT, NEXT_TAB, PREV_TAB, QUIT
+        // and HELP_KEYBINDINGS reach the loop through registered_intent.
+        // They act on the bionic at the cursor, which a reader "focus"
+        // on an entry has already positioned.
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         if( hide ) {
             return;
@@ -771,6 +966,9 @@ void avatar::power_bionics()
 
     for( ;; ) {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
 
         //track which list we are looking at
         ::sorted_bionics *current_bionic_list = tab_mode == TAB_ACTIVE ? &active : &passive;

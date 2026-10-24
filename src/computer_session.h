@@ -85,6 +85,15 @@ class computer_session
         bool query_any( const std::string &text, Args &&... args );
         // Wait for any key without new output
         bool query_any();
+        // Reader (R17): the terminal text currently in `lines`, joined in
+        // display order with color tags removed, for publication as a
+        // document node. Presentation only: reading it never activates a
+        // computer option.
+        std::string terminal_text() const;
+        // Backend of both query_any forms. `summary` is the text just
+        // printed for the templated form; the no-output form passes the
+        // whole current terminal text instead.
+        bool query_any_impl( const std::string &summary );
 
         void action_amigara_log();
         void action_amigara_start();

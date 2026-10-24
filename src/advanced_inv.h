@@ -79,6 +79,11 @@ class advanced_inventory
         std::unique_ptr<ui_adaptor> ui;
         std::unique_ptr<string_input_popup> spopup;
 
+        // Accessibility reader session (R09.3), defined in advanced_inv.cpp.
+        // Declared here so the session can re-resolve panes, squares and the
+        // current item against live state when an intent arrives.
+        class reader_session;
+
         // swap the panes and windows via std::swap()
         void swap_panes();
 

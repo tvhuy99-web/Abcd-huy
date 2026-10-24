@@ -9,6 +9,8 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "body_part_set.h"
 #include "bodypart.h"
@@ -598,6 +600,280 @@ static void draw_grid( const catacurses::window &w, int left_pane_w, int mid_pan
     wnoutrefresh( w );
 }
 
+namespace
+{
+// Reader adapter for the armor layering screen (R09.4).
+//
+// Turn cost: browsing, focusing an item, switching tabs and the
+// MOVE_ARMOR pick-up / put-down selection below are in-screen operations
+// and cost no turns -- the handler only synchronizes tabindex,
+// leftListIndex and selected, then returns "TIMEOUT" or "MOVE_ARMOR" to
+// the original loop. EQUIP_ARMOR, EQUIP_ARMOR_HERE and REMOVE_ARMOR are
+// likewise returned to that loop, so equipping and removing still go
+// through the engine activities -- and the original warnings and
+// confirmation popups -- exactly as on the keyboard path.
+struct armor_layers_reader {
+    public:
+        armor_layers_reader( input_context &ctxt_arg, Character &guy_arg,
+                             std::list<item> &worn_arg,
+                             const cata::flat_set<bodypart_id> &armor_cat_arg,
+                             int &tabindex_arg, int &leftListIndex_arg,
+                             int &selected_arg ) :
+            ctxt( ctxt_arg ), guy( guy_arg ), worn( worn_arg ),
+            armor_cat( armor_cat_arg ), tabindex( tabindex_arg ),
+            leftListIndex( leftListIndex_arg ), selected( selected_arg ),
+            screen( &ctxt_arg, "armor-layers", [this]( const a11y::semantic_intent &intent ) {
+                return handle( intent );
+            } ) {
+        }
+
+        void update() {
+            const std::vector<std::list<item>::iterator> shown = displayed_items();
+            const bodypart_id tab_bp = current_tab();
+            a11y::semantic_snapshot snapshot;
+            snapshot.title = _( "Sort Armor" );
+            snapshot.summary = tab_bp == bodypart_str_id::NULL_ID() ? _( "All" ) :
+                               body_part_name_as_heading( tab_bp, 1 );
+            // One tab per armor_cat entry, "All" (NULL_ID) included, in
+            // armor_cat order -- the same order PREV_TAB / NEXT_TAB walk.
+            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
+                const bodypart_id &bp = armor_cat[i];
+                a11y::semantic_node node;
+                node.id = tab_node_id( bp );
+                node.role = "tab";
+                node.label = bp == bodypart_str_id::NULL_ID() ? _( "All" ) :
+                             body_part_name_as_heading( bp, 1 );
+                node.selected = tabindex == static_cast<int>( i );
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( armor_cat.size() );
+                if( node.selected && shown.empty() ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            // Worn items of the current tab, in worn order, which is the
+            // real layer order (innermost first), as in the left pane.
+            const int focus_index = shown.empty() ? -1 :
+                                    std::clamp( leftListIndex, 0,
+                                                static_cast<int>( shown.size() ) - 1 );
+            for( std::size_t i = 0; i < shown.size(); ++i ) {
+                a11y::semantic_node node;
+                node.id = binding_id( shown[i] );
+                node.role = "listitem";
+                node.label = shown[i]->tname();
+                node.detail = item_detail( *shown[i], tab_bp, static_cast<int>( i ) );
+                node.selected = static_cast<int>( i ) == focus_index;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( shown.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            // Encumbrance per body part. armor_cat holds exactly one
+            // NULL_ID ("All") entry, hence the -1 in the total.
+            int part_position = 0;
+            const int part_total = static_cast<int>( armor_cat.size() ) - 1;
+            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
+                const bodypart_id &bp = armor_cat[i];
+                if( bp == bodypart_str_id::NULL_ID() ) {
+                    continue;
+                }
+                a11y::semantic_node node;
+                node.id = encumbrance_node_id( bp );
+                node.role = "status";
+                node.label = body_part_name( bp );
+                // Character::encumb() is the same unitless final value
+                // the original encumbrance pane prints for a body part;
+                // there is no unit in the source data.
+                node.value = string_format( "%d", guy.encumb( bp ) );
+                node.detail = string_format( _( "Encumbrance: %d" ), guy.encumb( bp ) );
+                node.actions = { "focus" };
+                node.position = ++part_position;
+                node.total = part_total;
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            // Commands last, from the shared builder: they act on the
+            // highlighted item, so the focus synchronization above is
+            // what makes them hit the item the reader is on.
+            a11y::semantic_snapshot commands =
+                a11y::command_snapshot( ctxt, _( "Sort Armor" ) );
+            snapshot.nodes.insert( snapshot.nodes.end(),
+                                   std::make_move_iterator( commands.nodes.begin() ),
+                                   std::make_move_iterator( commands.nodes.end() ) );
+            screen.update( std::move( snapshot ) );
+        }
+
+    private:
+        struct item_binding {
+            std::list<item>::iterator worn_it;
+            std::string id;
+        };
+
+        static std::string tab_node_id( const bodypart_id &bp ) {
+            return bp == bodypart_str_id::NULL_ID() ? std::string( "armor:tab:all" ) :
+                   "armor:tab:" + bp.id().str();
+        }
+
+        static std::string encumbrance_node_id( const bodypart_id &bp ) {
+            return "armor:encumbrance:" + bp.id().str();
+        }
+
+        bodypart_id current_tab() const {
+            if( tabindex < 0 || tabindex >= static_cast<int>( armor_cat.size() ) ) {
+                return bodypart_str_id::NULL_ID();
+            }
+            return armor_cat[tabindex];
+        }
+
+        // The list the left pane shows for the current tab, rebuilt
+        // exactly as on_redraw builds tmp_worn: every worn item for
+        // "All", only the items covering the tab's body part otherwise.
+        std::vector<std::list<item>::iterator> displayed_items() {
+            std::vector<std::list<item>::iterator> shown;
+            if( tabindex < 0 || tabindex >= static_cast<int>( armor_cat.size() ) ) {
+                return shown;
+            }
+            const bodypart_id &bp = armor_cat[tabindex];
+            for( auto it = worn.begin(); it != worn.end(); ++it ) {
+                if( bp == bodypart_str_id::NULL_ID() || it->covers( bp ) ) {
+                    shown.push_back( it );
+                }
+            }
+            return shown;
+        }
+
+        // Stable node ID for one worn item. std::list iterators survive
+        // the splices and sorts of the original loop, so the iterator is
+        // the item's identity for the life of this screen; the displayed
+        // index is never used as identity.
+        std::string binding_id( const std::list<item>::iterator &worn_it ) {
+            for( const item_binding &binding : bindings ) {
+                if( binding.worn_it == worn_it ) {
+                    return binding.id;
+                }
+            }
+            bindings.push_back( { worn_it, "armor:item:" + std::to_string( ++serial ) } );
+            return bindings.back().id;
+        }
+
+        std::string item_detail( const item &worn_item, const bodypart_id &tab_bp,
+                                 int display_index ) const {
+            std::string detail;
+            const auto append_line = [&detail]( const std::string &line ) {
+                if( line.empty() ) {
+                    return;
+                }
+                if( !detail.empty() ) {
+                    detail += "\n";
+                }
+                detail += line;
+            };
+            append_line( clothing_layer( worn_item ) );
+            std::vector<bodypart_id> covered;
+            for( const bodypart_id &part : guy.get_all_body_parts() ) {
+                if( worn_item.covers( part ) ) {
+                    covered.push_back( part );
+                }
+            }
+            if( !covered.empty() ) {
+                append_line( string_format( _( "Covers: %s" ), body_part_names( covered ) ) );
+            }
+            if( tab_bp == bodypart_str_id::NULL_ID() ) {
+                // No single body part on the "All" tab: publish the
+                // item's average encumbrance across its portions.
+                append_line( string_format( _( "Encumbrance: %d" ),
+                                            worn_item.get_avg_encumber( guy ) ) );
+            } else {
+                append_line( string_format( _( "Encumbrance on %s: %d" ),
+                                            body_part_name( tab_bp ),
+                                            worn_item.get_encumber( guy, tab_bp ) ) );
+            }
+            if( display_index == selected ) {
+                append_line( _( "Selected for reordering." ) );
+            }
+            if( worn_item.has_flag( json_flag_HIDDEN ) ) {
+                append_line( _( "Hidden." ) );
+            }
+            return detail;
+        }
+
+        std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
+            // Tabs: activation jumps straight to that tab (browsing, no
+            // turn cost); it is not the original loop's wrapping
+            // NEXT_TAB / PREV_TAB.
+            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
+                if( intent.node != tab_node_id( armor_cat[i] ) ) {
+                    continue;
+                }
+                if( intent.action == "activate" ) {
+                    tabindex = static_cast<int>( i );
+                    leftListIndex = 0;
+                    selected = -1;
+                    return "TIMEOUT";
+                }
+                if( intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+            }
+            // Encumbrance status nodes are read-only.
+            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
+                const bodypart_id &bp = armor_cat[i];
+                if( bp != bodypart_str_id::NULL_ID() &&
+                    intent.node == encumbrance_node_id( bp ) &&
+                    intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+            }
+            // Items: re-resolve the binding at intent time (R03). The
+            // stored iterator is only an identity -- the item must still
+            // be in worn and in the tab displayed right now, and the
+            // cursor index is recomputed against that current list.
+            const auto binding = std::find_if( bindings.begin(), bindings.end(),
+            [&intent]( const item_binding &b ) {
+                return b.id == intent.node;
+            } );
+            if( binding != bindings.end() &&
+                ( intent.action == "focus" || intent.action == "activate" ) ) {
+                bool still_worn = false;
+                for( auto it = worn.begin(); it != worn.end(); ++it ) {
+                    if( it == binding->worn_it ) {
+                        still_worn = true;
+                        break;
+                    }
+                }
+                if( !still_worn ) {
+                    return std::nullopt;
+                }
+                const std::vector<std::list<item>::iterator> shown = displayed_items();
+                const auto found = std::find( shown.begin(), shown.end(), binding->worn_it );
+                if( found == shown.end() ) {
+                    return std::nullopt;
+                }
+                leftListIndex = static_cast<int>( std::distance( shown.begin(), found ) );
+                // Focus only synchronizes the original cursor. Activation
+                // also toggles the pick-up-for-reordering mode through
+                // the original MOVE_ARMOR branch: the move itself, and
+                // its integrated-armor warning, stay there.
+                return intent.action == "activate" ? std::optional<std::string>( "MOVE_ARMOR" ) :
+                       std::optional<std::string>( "TIMEOUT" );
+            }
+            return a11y::registered_intent( ctxt, intent );
+        }
+
+        input_context &ctxt;
+        Character &guy;
+        std::list<item> &worn;
+        const cata::flat_set<bodypart_id> &armor_cat;
+        int &tabindex;
+        int &leftListIndex;
+        int &selected;
+        std::vector<item_binding> bindings;
+        std::size_t serial = 0;
+        a11y::screen_scope screen;
+};
+} // namespace
+
 void outfit::sort_armor( Character &guy )
 {
     // FIXME: get_all_body_parts() doesn't return a sorted list
@@ -923,6 +1199,8 @@ void outfit::sort_armor( Character &guy )
         wnoutrefresh( w_encumb );
     } );
 
+    armor_layers_reader reader( ctxt, guy, worn, armor_cat, tabindex, leftListIndex, selected );
+
     bool exit = false;
     while( !exit ) {
         if( guy.is_avatar() ) {
@@ -944,6 +1222,9 @@ void outfit::sort_armor( Character &guy )
         }
 
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update();
+        }
         const std::string action = ctxt.handle_input();
         if( guy.is_npc() && action == "ASSIGN_INVLETS" ) {
             // It doesn't make sense to assign invlets to NPC items

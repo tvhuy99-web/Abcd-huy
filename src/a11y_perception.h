@@ -7,6 +7,10 @@
 namespace a11y
 {
 enum class observation_source { unknown, remembered, visible };
+// Door state derived only from the tile's own ter/furn ids (the live ids for
+// a visible tile, the memorized ids for a remembered tile). Published only
+// for tiles carrying the DOOR flag; none means no door claim is made.
+enum class door_state { none, locked, closed, open };
 struct tile_observation {
     observation_source source = observation_source::unknown;
     std::string terrain;
@@ -17,7 +21,11 @@ struct tile_observation {
     std::vector<std::string> special_perceptions;
     std::vector<std::string> seen_items;
     std::string vehicle;
+    // Name of the vehicle part at this tile; visible tiles only, read from
+    // the same vpart_position that supplied the vehicle name.
+    std::string vehicle_part;
     std::string heard_marker;
+    door_state door = door_state::none;
     bool impassable = false;
     bool route_feature = false;
 };

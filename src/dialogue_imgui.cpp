@@ -8,6 +8,7 @@
 #include <unordered_set>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "cata_imgui.h"
 #include "catacharset.h"
 #include "debug.h"
@@ -277,8 +278,19 @@ void dialogue_imgui::draw_dialogue_imgui( bool is_computer, bool is_not_conversa
             } while( cat != -1 && topic_category( conversation->topic_stack.back() ) == cat );
         }
         if( next.id == "TALK_DONE" || conversation->topic_stack.empty() ) {
-            conversation->actor( true )->say(
-                dialog_helper::bye_message( conversation->actor( true )->get_npc() ) );
+            const std::string bye =
+                dialog_helper::bye_message( conversation->actor( true )->get_npc() );
+            conversation->actor( true )->say( bye );
+            // npc::say() only produces a sound (plus a warning message
+            // when the character cannot hear/reply); the spoken bye
+            // line itself never reaches the message log, and the
+            // dialogue snapshot is already gone when the conversation
+            // ends. Announce the same line through the reader's message
+            // channel so the end of the conversation leaves an audible
+            // trace. No-op when the reader is off or suspended.
+            if( !bye.empty() ) {
+                a11y::announce_game_message( bye, false );
+            }
             conversation->done = true;
         } else if( next.id != "TALK_NONE" ) {
             conversation->add_topic( next );
@@ -394,15 +406,29 @@ void dialogue_imgui_impl::add_to_history( const std::string &text, nc_color colo
 std::string dialogue_imgui_impl::get_accessibility_history() const
 {
     std::string result;
+    // The visual history separates turns with a blank padding message
+    // (dialogue::opt_imgui adds one after each NPC line). Keep that
+    // grouping as a blank line in the accessible text: the document
+    // presenter splits documents into paragraphs on blank lines, so
+    // each turn -- speaker name line first, then the spoken text, both
+    // kept verbatim -- becomes one navigable paragraph instead of the
+    // whole conversation collapsing into a single block. Empty
+    // messages carry no words, so dropping them (as before) would
+    // lose only this turn separation, never any text.
+    bool pending_break = false;
     for( const history_message &msg : history ) {
         const std::string text = remove_color_tags( msg.text );
         if( text.empty() ) {
+            if( !result.empty() ) {
+                pending_break = true;
+            }
             continue;
         }
         if( !result.empty() ) {
-            result += "\n";
+            result += pending_break ? "\n\n" : "\n";
         }
         result += text;
+        pending_break = false;
     }
     return result;
 }

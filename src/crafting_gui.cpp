@@ -2604,7 +2604,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             const temp_crafting_inventory &inventory = avail.inv_override ?
                     *avail.inv_override : crafter->crafting_inventory();
             a11y::append_requirements( documents, "craft:requirements", rec.simple_requirements(),
-                                       *crafter, inventory, rec.get_component_filter(), manual_batch );
+                                       *crafter, inventory, rec.get_component_filter(), manual_batch,
+                                       &rec.deduped_requirements() );
             std::string stats;
             for( const scaling_stat stat : character_requirement_display_order ) {
                 const auto requirement = rec.get_character_requirements().find( stat );
@@ -2614,6 +2615,49 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 }
             }
             a11y::append_document( documents, "craft:stats", _( "Character requirements:" ), stats );
+            // Start conditions (R12.1): the same gate the CONFIRM path applies
+            // (can_start_craft), published before activation so the reason a
+            // craft cannot start is readable instead of only appearing as a
+            // popup after the fact. Lighting is the engine's own check.
+            std::string conditions = string_format( _( "Crafter: %s\n" ),
+                                                    crafter->name_and_maybe_activity() );
+            switch( can_start_craft( rec, avail, *crafter, manual_batch ) ) {
+                case craft_confirm_result::ok:
+                    conditions += _( "All start conditions are met." );
+                    break;
+                case craft_confirm_result::cannot_craft:
+                    conditions += _( "The crafter cannot craft this: requirements or the primary skill are not met." );
+                    break;
+                case craft_confirm_result::too_many_results:
+                    conditions += _( "The batch would create too many items." );
+                    break;
+                case craft_confirm_result::too_dark:
+                    conditions += _( "Too dark: the crafter cannot see well enough to craft." );
+                    break;
+            }
+            a11y::append_document( documents, "craft:conditions", _( "Crafting conditions" ), conditions );
+            // Byproducts (R12.2): the details text only lists byproducts when
+            // the visual UI has already generated its cached preview, so a
+            // recipe can read as byproduct-free when it is not. Publish the
+            // deterministic part straight from the recipe data instead --
+            // the same arithmetic get_byproducts applies to legacy entries --
+            // and never roll the item group here: group items are generated
+            // by the real craft, and their actual results are announced from
+            // the finished craft, not from a preview rolled for the reader.
+            if( rec.has_byproducts() ) {
+                std::string byproduct_text;
+                for( const auto &entry : rec.legacy_byproducts() ) {
+                    const int per_batch = entry.second * ( entry.first->count_by_charges()
+                                                           ? entry.first->charges_default() : 1 );
+                    byproduct_text += string_format( _( "%1$s: %2$d\n" ),
+                                                     entry.first->nname( per_batch * manual_batch ),
+                                                     per_batch * manual_batch );
+                }
+                if( rec.has_byproduct_group() ) {
+                    byproduct_text += _( "Also produces items from a byproduct group; the exact items are generated when the craft finishes." );
+                }
+                a11y::append_document( documents, "craft:byproducts", _( "Byproducts" ), byproduct_text );
+            }
             if( rec.has_steps() ) {
                 const crafting_cost_context cost{ crafter->book_bonuses_nearby(),
                                                    compute_tool_speeds( rec, *crafter ) };

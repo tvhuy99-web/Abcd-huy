@@ -1119,6 +1119,27 @@ construction_id construction_menu( const bool blueprint )
                     description += line + "\n";
                 }
                 a11y::append_document( snapshot, "construction:details", _( "Construction details" ), description );
+                // Valid placement directions (R12.4): con_preview is the
+                // engine's own preview for the selected group -- a point is
+                // present only when can_construct and player_can_build both
+                // pass there -- so publishing its directions states engine
+                // validity, never hidden tile data. The specific reason a
+                // chosen invalid direction fails stays with
+                // place_construction's explain_failure messages.
+                std::string placement;
+                if( blueprint ) {
+                    placement = _( "Blueprint mode: choosing a construction records it for the zone; nothing is placed." );
+                } else if( con_preview.empty() ) {
+                    placement = _( "No adjacent location is currently valid for the selected construction." );
+                } else {
+                    for( const auto &entry : con_preview ) {
+                        placement += string_format( _( "%1$s: valid for %2$s.\n" ),
+                                                    direction_name( direction_from( player_character.pos_bub(),
+                                                                    entry.first ) ),
+                                                    entry.second->group->name() );
+                    }
+                }
+                a11y::append_document( snapshot, "construction:placement", _( "Placement" ), placement );
                 const std::string key = constructs[select].str() + ":" + std::to_string( filter_mode ) +
                                         ":" + std::to_string( detail::get_current_language_version() );
                 if( key != reader_detail_key ) {
@@ -1134,11 +1155,24 @@ construction_id construction_menu( const bool blueprint )
                             continue;
                         }
                         const std::string prefix = "construction:stage:" + std::to_string( stage );
-                        const std::string state = ( resources ? _( "Skills and materials are sufficient." ) :
-                                                    _( "Skills or materials are missing." ) ) +
-                                                  std::string( "\n" ) + ( location ?
-                                                          _( "A nearby location meets the construction conditions." ) :
-                                                          _( "No nearby location meets the construction conditions." ) );
+                        std::string state = ( resources ? _( "Skills and materials are sufficient." ) :
+                                              _( "Skills or materials are missing." ) ) +
+                                            std::string( "\n" ) + ( location ?
+                                                    _( "A nearby location meets the construction conditions." ) :
+                                                    _( "No nearby location meets the construction conditions." ) );
+                        // Stage facts the visual panel shows (time, required
+                        // skills, annotation) in words, not only via the
+                        // details buffer.
+                        state += "\n" + string_format( _( "Time to complete: %s" ),
+                                                       to_string( time_duration::from_moves( con->time ) ) );
+                        for( const auto &skill : con->required_skills ) {
+                            state += "\n" + string_format( _( "Required skill: %1$s, level %2$d; you have %3$d." ),
+                                                           skill.first.obj().name(), skill.second,
+                                                           static_cast<int>( player_character.get_skill_level( skill.first ) ) );
+                        }
+                        if( !con->pre_note.empty() ) {
+                            state += "\n" + remove_color_tags( con->pre_note.translated() );
+                        }
                         a11y::append_document( documents, prefix, string_format( _( "Stage/Variant #%d: " ), stage ),
                                                state );
                         a11y::append_requirements( documents, prefix, *con->requirements, player_character,

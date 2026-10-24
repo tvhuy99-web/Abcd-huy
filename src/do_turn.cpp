@@ -146,6 +146,15 @@ bool cleanup_at_end()
         g->write_memorial_file( g->stats().value_of( event_statistic_last_words )
                                 .get<cata_variant_type::string>() );
         get_memorial().clear();
+        if( a11y::enabled() ) {
+            // R20.4: exporting and removing the dead character's save is
+            // entirely automatic and was silent: the memorial file was
+            // written and the save moved to the graveyard folder with
+            // no spoken trace either happened.
+            a11y::announce_game_message(
+                _( "Your character's memorial file was written, and the character's save was moved to the graveyard folder." ),
+                false );
+        }
         std::vector<std::string> characters = g->list_active_saves();
         // remove current player from the active characters list, as they are dead
         std::vector<std::string>::iterator curchar = std::find( characters.begin(),
@@ -192,10 +201,21 @@ bool cleanup_at_end()
             }
 
             if( queryDelete || get_option<std::string>( "WORLD_END" ) == "delete" ) {
-                world_generator->delete_world( world_generator->active_world->world_name, true );
-
+                const std::string ended_world_name = world_generator->active_world->world_name;
+                world_generator->delete_world( ended_world_name, true );
+                if( a11y::enabled() ) {
+                    // R20.4: when the WORLD_END option deletes the world
+                    // automatically there was no spoken result at all;
+                    // name the outcome like the main-menu deletion does.
+                    popup( _( "World \"%s\" deleted." ), ended_world_name );
+                }
             } else if( queryReset || get_option<std::string>( "WORLD_END" ) == "reset" ) {
-                world_generator->delete_world( world_generator->active_world->world_name, false );
+                const std::string ended_world_name = world_generator->active_world->world_name;
+                world_generator->delete_world( ended_world_name, false );
+                if( a11y::enabled() ) {
+                    popup( _( "World \"%s\" reset. All of its saves were removed." ),
+                           ended_world_name );
+                }
             }
         } else if( get_option<std::string>( "WORLD_END" ) != "keep" ) {
             std::string tmpmessage;
@@ -293,7 +313,19 @@ void handle_key_blocking_activity()
         bool refresh = true;
         if( action == "pause" ) {
             if( u.activity.is_interruptible_with_kb() || u.has_destination() ) {
-                g->cancel_activity_query( _( "Confirm:" ) );
+                const bool canceled = g->cancel_activity_query( _( "Confirm:" ) );
+                if( canceled && a11y::enabled() ) {
+                    // Report the engine's actual result, not the request:
+                    // cancel_activity_query only returns true after it has
+                    // canceled the activity (and possibly resumed a backlog
+                    // one, which the next activity snapshot will describe).
+                    // Declining the query announces nothing here -- the
+                    // activity simply continues and its snapshot is
+                    // unchanged. This announcement is the completion of
+                    // the reader's separate cancel intent; merely stopping
+                    // speech never reaches this code path.
+                    a11y::announce_game_message( _( "The activity was canceled." ), false );
+                }
             }
         } else if( action == "zoom_in" ) {
             g->zoom_in();
