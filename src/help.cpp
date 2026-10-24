@@ -1,13 +1,21 @@
 #include "help.h"
 
+#include <charconv>
 #include <cmath>
 #include <iterator>
+#include <optional>
 #include <string>
+#include <system_error>
+#include <utility>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_assert.h"
 #include "cata_imgui.h"
 #include "cata_path.h"
+#include "cata_utility.h"
 #include "character.h"
 #include "color.h"
 #include "debug.h"
@@ -311,9 +319,288 @@ float help_window::get_wrap_width()
 void help_window::show()
 {
     const std::map<const int, const help_category> &cats = data.get_help_categories();
+
+    // Reader adapter (R19.2). Structure of the original screen, verified
+    // against this file and data/core/help.json (+ mod help files):
+    // - Topics ARE the "categories": help_data loads a flat, order-keyed
+    //   map of help_category (name + paragraphs) from JSON type "help".
+    //   There is no grouping level above them, no search field and no
+    //   links inside a topic: paragraphs carry only color tags and
+    //   monospaced diagrams. Navigation is exactly the two loops below:
+    //   the selection loop (per-topic alphabet hotkeys assigned in the
+    //   constructor, SELECT/CONFIRM opens, QUIT leaves the window) and the
+    //   topic loop (UP/DOWN/HOME/END/PAGE scroll, LEFT/PREV_TAB and
+    //   RIGHT/NEXT_TAB jump to the wrap-around neighbour topic,
+    //   CONFIRM/QUIT returns to the selection loop, and a footer
+    //   SELECT/CONFIRM jumps to the hovered neighbour). Opening a topic
+    //   only marks it read in help_data (per-session set) and swaps the
+    //   translated paragraphs; it never costs a turn or touches the game.
+    //
+    // Audit of the pre-existing screen_reader mode (the SCREEN_READER_MODE
+    // option, read once into the screen_reader member): it changes ONLY
+    // how this window draws, for an EXTERNAL screen reader scraping the
+    // curses/ImTui text (the option text names orca on curses). Its four
+    // effects here are: read topics get a "(read) " prefix in
+    // draw_category_option() (otherwise read state is color-only), and
+    // format_title()/format_subtitle()/format_footer() drop their
+    // box-drawing art, the footer becoming the sentence "Previous
+    // category: %s. Next category: %s". It publishes nothing, has no
+    // navigation model and cannot expose topic text as a document, so it
+    // is NOT equivalent to this adapter and the adapter is not gated on
+    // it. It is left fully in place: the two do not conflict (the adapter
+    // builds nodes from the same help_data/translated_paragraphs the draw
+    // code uses, never from drawn text), and where they overlap the
+    // adapter carries the same facts structurally -- read state as the
+    // topic row's status cell instead of the "(read) " prefix, and the
+    // prev/next names in the topic summary in the footer's own words.
+    //
+    // Because the original UI has no search, the topic filter below is a
+    // reader-only presentation filter (the same lcmatch the keybinding
+    // menu's filter uses): it only changes which rows are published, it
+    // never alters help_data, and its node detail says so. Focus on any
+    // node is observation-only; "activate" on a topic row only sets
+    // selected_option and returns CONFIRM so the selection loop itself
+    // opens the topic (swap_translated_paragraphs + mark_read included),
+    // the neighbour/back nodes return the topic loop's own LEFT/RIGHT/
+    // QUIT actions, and returning lands on the topic row last opened.
+    std::string reader_filter;
+    std::optional<std::string> reader_filter_draft;
+    int reader_last_topic = -1;
+    const auto reader_handle_intent = [&]( const a11y::semantic_intent &intent )
+    -> std::optional<std::string> {
+        if( intent.node == "help:filter" ) {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "set_value" ) {
+                reader_filter_draft = intent.value;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "apply" ) {
+                if( reader_filter_draft ) {
+                    reader_filter = *reader_filter_draft;
+                    reader_filter_draft.reset();
+                }
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "cancel_draft" ) {
+                reader_filter_draft.reset();
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "help:no_results" || intent.node == "help:document" ) {
+            // Reading a document is Java-side (ReaderDocumentReader);
+            // neither node carries a game-side effect.
+            if( intent.action == "focus" || intent.action == "activate" ) {
+                return std::string( "TIMEOUT" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "help:nav:prev" || intent.node == "help:nav:next" ||
+            intent.node == "help:nav:back" ) {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                // The topic loop's own actions: LEFT/RIGHT move between
+                // neighbour topics (marking them read), QUIT returns to
+                // the topic list, exactly like the footer controls.
+                if( intent.node == "help:nav:prev" ) {
+                    return std::string( "LEFT" );
+                }
+                if( intent.node == "help:nav:next" ) {
+                    return std::string( "RIGHT" );
+                }
+                return std::string( "QUIT" );
+            }
+            return std::nullopt;
+        }
+        static const std::string topic_prefix = "help:topic:";
+        if( intent.node.rfind( topic_prefix, 0 ) == 0 &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            const std::string suffix = intent.node.substr( topic_prefix.size() );
+            int option = -1;
+            const char *const begin = suffix.data();
+            const char *const end = begin + suffix.size();
+            const std::from_chars_result parsed = std::from_chars( begin, end, option );
+            if( parsed.ec != std::errc() || parsed.ptr != end ||
+                cats.find( option ) == cats.end() ) {
+                return std::nullopt;
+            }
+            if( intent.action == "focus" ) {
+                // Browsing must not arm the selection loop's CONFIRM
+                // branch, so selected_option is left untouched.
+                return std::string( "TIMEOUT" );
+            }
+            selected_option = option;
+            return std::string( "CONFIRM" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    };
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot;
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, _( "Help" ) );
+        std::vector<a11y::semantic_node> command_nodes = std::move( commands.nodes );
+        if( !has_selected_category ) {
+            snapshot.title = _( "Help" );
+            a11y::semantic_node filter_node;
+            filter_node.id = "help:filter";
+            filter_node.role = "text";
+            filter_node.label = _( "Filter topics by name" );
+            filter_node.detail = _( "Reader-only filter: the help screen itself has no "
+                                    "search. Filtering only changes which topic rows are "
+                                    "listed here; the help topics themselves never change." );
+            filter_node.field_type = "text";
+            filter_node.applied_value = reader_filter;
+            filter_node.value = reader_filter.empty() ? _( "All topics" ) : reader_filter;
+            filter_node.actions = { "focus", "set_value", "apply", "cancel_draft" };
+            if( reader_filter_draft ) {
+                filter_node.has_draft = true;
+                filter_node.draft_value = *reader_filter_draft;
+            }
+            snapshot.nodes.push_back( filter_node );
+
+            a11y::semantic_table topics_table;
+            topics_table.id = "help:topics";
+            topics_table.columns = { { "topic", _( "Topic" ), "" },
+                { "status", _( "Status" ), "" },
+                { "hotkey", _( "Hotkey" ), "" }
+            };
+            snapshot.tables.push_back( topics_table );
+            int shown = 0;
+            for( const auto &cat : cats ) {
+                const std::string name = remove_color_tags( cat.second.name.translated() );
+                if( !reader_filter.empty() && !lcmatch( name, reader_filter ) ) {
+                    continue;
+                }
+                const auto hotkey_it = hotkeys.find( cat.first );
+                const std::string hotkey = hotkey_it == hotkeys.end() ? std::string()
+                                           : hotkey_it->second.short_description();
+                const std::string status = data.is_read( cat.first ) ? _( "Read" ) : _( "Unread" );
+                a11y::semantic_node node;
+                node.id = "help:topic:" + std::to_string( cat.first );
+                node.role = "listitem";
+                node.label = name;
+                node.value = status;
+                if( !hotkey.empty() ) {
+                    node.detail = string_format( _( "Hotkey: %s" ), hotkey );
+                }
+                node.table_id = "help:topics";
+                node.row_index = shown;
+                node.cells = { { "topic", name, "", "" },
+                    { "status", status, "", "" },
+                    { "hotkey", hotkey, "", "" }
+                };
+                node.selected = cat.first == reader_last_topic;
+                snapshot.nodes.push_back( std::move( node ) );
+                ++shown;
+            }
+            if( shown == 0 ) {
+                a11y::semantic_node node;
+                node.id = "help:no_results";
+                node.role = "status";
+                node.label = reader_filter.empty()
+                             ? _( "No help topics are available." )
+                             : _( "No help topics match the filter." );
+                node.actions = { "focus", "activate" };
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            snapshot.summary = string_format( _( "%1$d of %2$d help topics shown." ),
+                                              shown, static_cast<int>( cats.size() ) );
+            if( !reader_filter.empty() ) {
+                snapshot.summary += " " + string_format( _( "Filter: %s" ), reader_filter );
+            }
+            snapshot.focus = "help:filter";
+            if( reader_last_topic != -1 && cats.find( reader_last_topic ) != cats.end() &&
+                ( reader_filter.empty() ||
+                  lcmatch( remove_color_tags( cats.at( reader_last_topic ).name.translated() ),
+                           reader_filter ) ) ) {
+                // Back from a topic returns to that topic's row.
+                snapshot.focus = "help:topic:" + std::to_string( reader_last_topic );
+            } else if( shown > 0 ) {
+                // The first published row is the first category in map
+                // order that passed the filter.
+                for( const auto &cat : cats ) {
+                    if( reader_filter.empty() ||
+                        lcmatch( remove_color_tags( cat.second.name.translated() ),
+                                 reader_filter ) ) {
+                        snapshot.focus = "help:topic:" + std::to_string( cat.first );
+                        break;
+                    }
+                }
+            } else {
+                snapshot.focus = "help:no_results";
+            }
+        } else {
+            const help_category &cat = data.get_help_category( loaded_option );
+            reader_last_topic = loaded_option;
+            snapshot.title = remove_color_tags( cat.name.translated() );
+            const std::string prev_cat_name =
+                data.get_help_category( previous_option( loaded_option ) ).name.translated();
+            const std::string next_cat_name =
+                data.get_help_category( next_option( loaded_option ) ).name.translated();
+            // The same sentence the screen_reader footer draws.
+            snapshot.summary = string_format(
+                                   _( "Previous category: %s. Next category: %s" ),
+                                   remove_color_tags( prev_cat_name ),
+                                   remove_color_tags( next_cat_name ) );
+            // The document is the topic's own translated paragraphs --
+            // the exact strings draw_category() renders (after
+            // swap_translated_paragraphs() ran parse_tags on them).
+            // MM_SEPARATOR paragraphs are skipped: their stored string
+            // is a color name for the drawn rule, not text. Subtitles
+            // and monospaced diagrams stay as paragraphs of the text.
+            std::string document_text;
+            for( const std::pair<std::string, message_modifier> &paragraph :
+                 translated_paragraphs ) {
+                if( paragraph.second == MM_SEPARATOR || paragraph.first.empty() ) {
+                    continue;
+                }
+                if( !document_text.empty() ) {
+                    document_text += "\n\n";
+                }
+                document_text += paragraph.first;
+            }
+            const bool has_document = !document_text.empty();
+            if( has_document ) {
+                a11y::append_document( snapshot, "help:document", cat.name.translated(),
+                                       document_text );
+            }
+            const auto append_nav = [&]( const char *id, const std::string &label,
+                                         const std::string &detail ) {
+                a11y::semantic_node node;
+                node.id = id;
+                node.role = "command";
+                node.label = label;
+                node.detail = detail;
+                node.actions = { "focus", "activate" };
+                snapshot.nodes.push_back( std::move( node ) );
+            };
+            append_nav( "help:nav:prev", _( "Previous category" ),
+                        remove_color_tags( prev_cat_name ) );
+            append_nav( "help:nav:back", _( "Back to the topic list" ), "" );
+            append_nav( "help:nav:next", _( "Next category" ),
+                        remove_color_tags( next_cat_name ) );
+            snapshot.focus = has_document ? "help:document" : "help:nav:back";
+        }
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( command_nodes.begin() ),
+                               std::make_move_iterator( command_nodes.end() ) );
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+    a11y::screen_scope reader_scope( &ctxt, "help", reader_handle_intent );
+
     while( true ) {
         while( !has_selected_category ) {
             ui_manager::redraw_invalidated();
+            if( a11y::enabled() ) {
+                reader_scope.update( make_reader_snapshot() );
+            }
             std::string action = imgui_action == "" ? ctxt.handle_input( 50 ) : imgui_action;
             imgui_action = "";
             input_event input = ctxt.get_raw_input();
@@ -343,6 +630,9 @@ void help_window::show()
         }
         while( has_selected_category ) {
             ui_manager::redraw_invalidated();
+            if( a11y::enabled() ) {
+                reader_scope.update( make_reader_snapshot() );
+            }
             std::string action = imgui_action == "" ? ctxt.handle_input( 50 ) : imgui_action;
             imgui_action = "";
             if( selected_option != -1 ) {

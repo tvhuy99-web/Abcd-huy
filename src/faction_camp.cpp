@@ -5,6 +5,7 @@
 #include <climits>
 #include <cmath>
 #include <functional>
+#include <iterator>
 #include <list>
 #include <map>
 #include <memory>
@@ -19,6 +20,8 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "basecamp.h"
 #include "build_reqs.h"
@@ -542,6 +545,25 @@ static bool update_time_fixed( std::string &entry, const comp_list &npc_list,
     return avail;
 }
 
+// Appends who is already working on a mission (and how long is left, in the
+// same words update_time_left uses) to a start entry that is locked for
+// exactly that reason. Without this, a locked start entry shows only the
+// job description and neither the visual UI nor the reader can tell that
+// the lock is "someone is already doing it" (R14.4).
+static void append_workers_in_progress( std::string &entry, const comp_list &npc_list )
+{
+    entry += _( "\nAlready in progress by:" );
+    for( const auto &comp : npc_list ) {
+        entry += "\n  " + comp->get_name();
+        if( comp->companion_mission_time_ret < calendar::turn ) {
+            entry += _( " [DONE]" );
+        } else {
+            entry += " [" + to_string( comp->companion_mission_time_ret - calendar::turn ) +
+                     _( " left]" );
+        }
+    }
+}
+
 static bool update_emergency_recall( std::string &entry, const comp_list &npc_list,
                                      const time_duration &duration )
 {
@@ -1034,6 +1056,9 @@ void basecamp::get_available_missions_by_dir( mission_data &mission_key, const p
         comp_list npc_list = get_mission_workers( miss_id );
         entry = om_upgrade_description( faction_wall_level_n_0_string, {} );
         //  Should add check for materials as well as active mission.
+        if( !npc_list.empty() ) {
+            append_workers_in_progress( entry, npc_list );
+        }
         mission_key.add_start( miss_id, name_display_of( miss_id ),
                                entry, npc_list.empty() );
         if( !npc_list.empty() ) {
@@ -1048,6 +1073,9 @@ void basecamp::get_available_missions_by_dir( mission_data &mission_key, const p
         npc_list = get_mission_workers( miss_id );
         //  Should add check for materials as well as active mission.
         //  Should also check if there are any trenches to improve.
+        if( !npc_list.empty() ) {
+            append_workers_in_progress( entry, npc_list );
+        }
         mission_key.add_start( miss_id, name_display_of( miss_id ),
                                entry,
                                npc_list.empty() );
@@ -1122,6 +1150,18 @@ void basecamp::get_available_missions_by_dir( mission_data &mission_key, const p
         // WTF?
         if( npc_list.size() < 3 ) {
             add_available_recipes( mission_key, Camp_Crafting, dir );
+        } else {
+            // Keep the Crafting entry present but locked, with the reason,
+            // instead of letting it vanish from the list entirely: a locked
+            // entry can be browsed and its state heard, a missing one
+            // cannot. Same dummy recipe id add_available_recipes uses; the
+            // entry can never be started while locked.
+            std::string craft_entry = _( "Notes:\n"
+                                         "Three companions are already crafting. Finish or recall a "
+                                         "crafting job before starting another." );
+            append_workers_in_progress( craft_entry, npc_list );
+            mission_key.add_start( { Camp_Crafting, "DUMMY_RECIPE_REPLACED_IN_CAMP", {}, dir },
+                                   _( "Crafting" ), craft_entry, false );
         }
 
         if( !npc_list.empty() ) {
@@ -1228,9 +1268,17 @@ void basecamp::get_available_missions_by_dir( mission_data &mission_key, const p
             const tripoint_abs_omt target_omt = omt_pos + dir;
             const tripoint_bub_ms target_pnt = get_map().get_bub( project_to<coords::ms>( target_omt ) );
             // FIXME/HACK: Always checks buckwheat seeds!
+            const auto can_plant = warm_enough_to_plant( target_pnt, itype_seed_buckwheat );
+            if( plots > 0 && !can_plant.success() ) {
+                // Locked only by the temperature: publish the engine's own
+                // reason (the same words field_plant pops up) instead of
+                // leaving the plot count as the only clue.
+                entry += "\n";
+                entry += can_plant.c_str();
+            }
             mission_key.add_start( miss_id,
                                    name_display_of( miss_id ), entry,
-                                   plots > 0 && warm_enough_to_plant( target_pnt, itype_seed_buckwheat ).success() );
+                                   plots > 0 && can_plant.success() );
         }
         if( !npc_list.empty() ) {
             entry = action_of( miss_id.id );
@@ -1312,6 +1360,12 @@ void basecamp::get_available_missions( mission_data &mission_key, map &here )
             const mission_id miss_id = { Camp_Survey_Expansion, "", {}, base_dir };
             comp_list npc_list = get_mission_workers( miss_id );
             entry = faction_mission_camp_survey_expansion->describe( npc_list.size() );
+            if( !possible_expansion_found ) {
+                // Locked only because the survey found no valid spot: say so
+                // in the entry instead of leaving the plain description,
+                // which gives no hint why the entry cannot be started.
+                entry += _( "\nNo suitable location for a new expansion was found around this camp." );
+            }
             mission_key.add_start( miss_id, name_display_of( miss_id ),
                                    entry, npc_list.size() < faction_mission_camp_survey_expansion->positions &&
                                    possible_expansion_found );
@@ -1382,7 +1436,18 @@ void basecamp::get_available_missions( mission_data &mission_key, map &here )
         }
         {
             const mission_id miss_id = { Camp_Abandon, "", {}, base_dir };
-            entry = _( "Notes:\nAbandon this camp" );
+            // abandon_camp() asks for no confirmation: selecting this
+            // entry abandons the camp at once. The entry text is the only
+            // place that can say so before the reader commits (the same
+            // pattern as the Emergency Recall warning built below), so it
+            // states the consequences abandon_camp() actually performs:
+            // mission companions are recalled, assigned companions stop
+            // guarding, and the camp is removed.
+            entry = _( "Notes:\nAbandon this camp\n\n"
+                       "WARNING: This takes effect immediately, with no further "
+                       "confirmation.  Companions on missions are recalled, "
+                       "companions assigned here stop guarding, and the camp "
+                       "is removed." );
             mission_key.add( {miss_id, false}, name_display_of( miss_id ), entry );
         }
     }
@@ -1447,7 +1512,23 @@ void basecamp::choose_new_leader()
     choices.emplace_back _( "sortition" );
     choices.emplace_back _( "democratic" );
 
-    choice = uilist( _( "Choose how the new leader will be determined." ), choices );
+    // Build the menu entry by entry so each method carries, as its
+    // description, the same explanation its confirmation query_yn below
+    // gives after the method is picked. The descriptions are not shown
+    // visually (desc_enabled is off), but the shared uilist reader
+    // publishes them as entry detail (R04.1), so the reader hears what
+    // each method means before choosing it; the query_yn confirmation
+    // itself is unchanged.
+    uilist leader_menu;
+    leader_menu.title = _( "Choose how the new leader will be determined." );
+    leader_menu.addentry_desc( 0, true, MENU_AUTOASSIGN, choices[0],
+                               _( "As an experienced leader, only you know what will be required of future leaders.  You will choose." ) );
+    leader_menu.addentry_desc( 1, true, MENU_AUTOASSIGN, choices[1],
+                               _( "You will allow fate to choose the next leader.  Whether it's by dice, drawing straws, or picking names out of a hat, it will be purely random." ) );
+    leader_menu.addentry_desc( 2, true, MENU_AUTOASSIGN, choices[2],
+                               _( "A leader can only lead those willing to follow.  Everyone must get a say in choosing the new leader." ) );
+    leader_menu.query();
+    choice = leader_menu.ret;
 
     if( choice < 0 || static_cast<size_t>( choice ) >= choices.size() ) {
         popup( _( "You choose to wait…" ) );
@@ -1524,12 +1605,30 @@ void basecamp::choose_new_leader()
 
 void basecamp::player_eats_meal()
 {
+    // Read before the menu is built, so the reader entries below can state
+    // each portion's cost against the stock it is drawn from. The stock
+    // cannot change while this menu is open, so the checks after the menu
+    // use this same value exactly as before.
+    const int food_available = fac()->food_supply().kcal();
     uilist smenu;
     smenu.text = _( "Have a meal?" );
     int i = 1;
-    smenu.addentry( i++, true, '1', _( "Snack" ) );
-    smenu.addentry( i++, true, '2', _( "Meal" ) );
-    smenu.addentry( i++, true, '3', _( "Just stuff your face.  You're hungry!" ) );
+    // The descriptions are not shown visually (desc_enabled is off), but
+    // the shared uilist reader publishes them as entry detail (R04.1).
+    // Each cost is the same formula applied to that entry's return value
+    // below: ret * 750 - 250.
+    smenu.addentry_desc( i, true, '1', _( "Snack" ),
+                         string_format( _( "Costs %1$d kcal.  Food stored: %2$d kcal." ),
+                                        i * 750 - 250, food_available ) );
+    i++;
+    smenu.addentry_desc( i, true, '2', _( "Meal" ),
+                         string_format( _( "Costs %1$d kcal.  Food stored: %2$d kcal." ),
+                                        i * 750 - 250, food_available ) );
+    i++;
+    smenu.addentry_desc( i, true, '3', _( "Just stuff your face.  You're hungry!" ),
+                         string_format( _( "Costs %1$d kcal.  Food stored: %2$d kcal." ),
+                                        i * 750 - 250, food_available ) );
+    i++;
     smenu.query();
     if( smenu.ret_act != "CONFIRM" ) {
         popup( _( "You decide not to have anything after all." ) );
@@ -1537,7 +1636,6 @@ void basecamp::player_eats_meal()
     }
     int kcal_to_eat = smenu.ret * 750 - 250; // 500, 1250, 2000 kcal
     Character &you = get_player_character();
-    const int &food_available = fac()->food_supply().kcal();
     if( food_available <= 0 ) {
         popup( _( "You check storage for some food, but there is nothing but dust and cobwebs…" ) );
         return;
@@ -2123,6 +2221,102 @@ void basecamp::worker_assignment_ui()
     std::vector<npc *> followers;
     npc *cur_npc = nullptr;
 
+    // Reader adapter (R14.4): this screen is drawn by hand, so its input
+    // context would otherwise only get the generic command fallback, which
+    // publishes the commands but never the followers themselves. This
+    // snapshot publishes what the pane shows -- the follower names in list
+    // order -- plus each follower's camp assignment, which is this camp's
+    // own data (the pane's INSPECT_NPC screen shows the same follower).
+    // Browsing only moves the original cursor; activation returns CONFIRM
+    // and the original loop performs the assignment itself through
+    // talk_function::assign_camp, so browsing can never assign anyone.
+    a11y::screen_scope reader( &ctxt, "faction-camp-workers",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        for( size_t i = 0; i < followers.size(); i++ ) {
+            npc *guy = followers[i];
+            if( guy == nullptr ||
+                intent.node != "camp-worker:" + std::to_string( guy->getID().get_value() ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            // Re-resolve against the current list at intent time and keep
+            // the loop's cached pointer in sync: its CONFIRM and
+            // INSPECT_NPC branches act on cur_npc, not on the index.
+            selection = i;
+            cur_npc = guy;
+            return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
+                   std::optional<std::string>( "TIMEOUT" );
+        }
+        if( intent.node == "camp-workers:empty" ) {
+            return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) :
+                   std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           _( "Assign followers to this camp" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+        snapshot.summary = string_format( _( "Camp: %1$s. Followers: %2$d." ),
+                                          camp_name(), static_cast<int>( followers.size() ) );
+        // The pane's footer states what CONFIRM and INSPECT_NPC do on this
+        // screen; say the same on the command nodes.
+        for( a11y::semantic_node &command : commands ) {
+            if( command.id == "CONFIRM" ) {
+                command.detail = _( "Assign this follower to this camp. This opens the job priority screen for that follower." );
+            } else if( command.id == "INSPECT_NPC" ) {
+                command.detail = _( "Inspect this follower." );
+            }
+        }
+        if( followers.empty() ) {
+            a11y::semantic_node node;
+            node.id = "camp-workers:empty";
+            node.role = "status";
+            node.label = _( "You have no companions following you." );
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = "camp-workers:empty";
+        }
+        for( size_t i = 0; i < followers.size(); i++ ) {
+            npc *guy = followers[i];
+            if( guy == nullptr ) {
+                continue;
+            }
+            a11y::semantic_node node;
+            node.id = "camp-worker:" + std::to_string( guy->getID().get_value() );
+            node.role = "listitem";
+            node.label = guy->disp_name();
+            std::string detail;
+            if( guy->assigned_camp.has_value() && *guy->assigned_camp == omt_pos ) {
+                detail = _( "Already assigned to this camp." );
+            } else if( guy->assigned_camp.has_value() ) {
+                detail = _( "Assigned to another camp." );
+            }
+            if( guy->has_companion_mission() ) {
+                if( !detail.empty() ) {
+                    detail += "\n";
+                }
+                detail += _( "Currently on a companion mission." );
+            }
+            node.detail = detail;
+            node.selected = i == selection;
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( followers.size() );
+            if( node.selected ) {
+                snapshot.focus = node.id;
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_followers );
 
@@ -2160,6 +2354,9 @@ void basecamp::worker_assignment_ui()
         }
 
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         const std::string action = ctxt.handle_input();
         if( action == "INSPECT_NPC" ) {
             if( cur_npc ) {
@@ -2206,6 +2403,107 @@ void basecamp::job_assignment_ui()
 
     std::vector<npc *> stationed_npcs;
     npc *cur_npc = nullptr;
+
+    // Reader adapter (R14.4): like worker_assignment_ui above, this screen
+    // is drawn by hand, so without a dedicated scope the reader would only
+    // hear the generic command list -- never the stationed workers, and
+    // never the job priorities the right pane shows for the selected
+    // worker. The snapshot publishes every stationed worker with the same
+    // priority lines the pane prints (verb and priority, from the worker's
+    // own job data). Browsing only moves the original cursor; activation
+    // returns CONFIRM and the original loop opens its priority menu, so
+    // browsing can never change a priority.
+    a11y::screen_scope reader( &ctxt, "faction-camp-jobs",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        for( size_t i = 0; i < stationed_npcs.size(); i++ ) {
+            npc *guy = stationed_npcs[i];
+            if( guy == nullptr ||
+                intent.node != "camp-job-worker:" + std::to_string( guy->getID().get_value() ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            // Re-resolve against the current list at intent time and keep
+            // the loop's cached pointer in sync: its CONFIRM and
+            // INSPECT_NPC branches act on cur_npc, not on the index.
+            selection = i;
+            cur_npc = guy;
+            return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
+                   std::optional<std::string>( "TIMEOUT" );
+        }
+        if( intent.node == "camp-jobs:empty" ) {
+            return intent.action == "focus" ? std::optional<std::string>( "TIMEOUT" ) :
+                   std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           _( "Assign job priorities" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+        snapshot.summary = string_format( _( "Camp: %1$s. Workers stationed: %2$d." ),
+                                          camp_name(), static_cast<int>( stationed_npcs.size() ) );
+        // The pane's footer states what CONFIRM and INSPECT_NPC do on this
+        // screen; say the same on the command nodes.
+        for( a11y::semantic_node &command : commands ) {
+            if( command.id == "CONFIRM" ) {
+                command.detail = _( "Change this worker's job priorities." );
+            } else if( command.id == "INSPECT_NPC" ) {
+                command.detail = _( "Inspect this follower." );
+            }
+        }
+        if( stationed_npcs.empty() ) {
+            a11y::semantic_node node;
+            node.id = "camp-jobs:empty";
+            node.role = "status";
+            node.label = _( "There are no NPCs stationed here" );
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = "camp-jobs:empty";
+        }
+        for( size_t i = 0; i < stationed_npcs.size(); i++ ) {
+            npc *guy = stationed_npcs[i];
+            if( guy == nullptr ) {
+                continue;
+            }
+            a11y::semantic_node node;
+            node.id = "camp-job-worker:" + std::to_string( guy->getID().get_value() );
+            node.role = "listitem";
+            node.label = guy->disp_name();
+            // The same lines the right pane prints for the selected
+            // worker: one "verb : priority" line per prioritised job, or
+            // the pane's own no-job text.
+            if( !guy->has_job() ) {
+                node.detail = _( "No current job." );
+            } else {
+                std::string detail;
+                for( activity_id &elem : guy->job.get_prioritised_vector() ) {
+                    player_activity test_act = player_activity( elem );
+                    const int priority = guy->job.get_priority_of_job( elem );
+                    if( !detail.empty() ) {
+                        detail += "\n";
+                    }
+                    detail += string_format( _( "%s : %s" ), test_act.get_verb(),
+                                             std::to_string( priority ) );
+                }
+                node.detail = detail;
+            }
+            node.selected = i == selection;
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( stationed_npcs.size() );
+            if( node.selected ) {
+                snapshot.focus = node.id;
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        return snapshot;
+    };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_jobs );
@@ -2266,6 +2564,9 @@ void basecamp::job_assignment_ui()
         }
 
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
 
         const std::string action = ctxt.handle_input();
         if( action == "INSPECT_NPC" ) {
@@ -3381,10 +3682,29 @@ void basecamp::start_crafting( const mission_id &miss_id )
             }
             // FIXME: Isn't there a smarter way to do this??
             std::string refuse_string = string_format( "<color_red>%s</color>", refusal_reason );
-            choose_crafter.addentry_col( i, can_be_picked, input_event(), guy->disp_name(), refuse_string );
+            // The refusal text otherwise reaches the reader only as the
+            // entry's second column value, while its disabled reason stays
+            // the shared menu's generic sentence. Publish the plain reason
+            // as the entry description and as its a11y disabled reason
+            // (R04.1), so a companion who cannot be picked says why. The
+            // entry stays disabled exactly as before: activation of a
+            // disabled entry is still impossible, and this function does
+            // not re-check can_be_picked after the menu returns.
+            choose_crafter.addentry_col( i, can_be_picked, input_event(), guy->disp_name(), refuse_string,
+                                         refusal_reason );
+            if( !can_be_picked && !refusal_reason.empty() ) {
+                choose_crafter.entries.back().a11y_disabled_reason = refusal_reason;
+            }
             i++;
         }
     }
+
+    // Name the craft the companion is being chosen for: the reader comes
+    // here from the crafting screen, and the menu text is published as
+    // the shared reader's summary (R04.1). The recipe and batch are the
+    // ones select_crafter_and_crafting_recipe just returned.
+    choose_crafter.text = string_format( _( "Crafting: %1$s.  Batch: %2$d." ),
+                                         making->result()->nname( num_to_make ), num_to_make );
 
     choose_crafter.query();
 
@@ -3641,6 +3961,18 @@ void basecamp::start_farm_op( const point_rel_omt &dir, const mission_id &miss_i
     std::pair<size_t, std::string> farm_data = farm_action( dir, op );
     size_t plots_cnt = farm_data.first;
     if( !plots_cnt ) {
+        // This chain otherwise ended silently: the mission entry that led
+        // here was enabled from a plot count taken when the mission list
+        // was built, so a count that has since dropped to zero left the
+        // player with no message at all. State the outcome for this
+        // operation, using the same plot wording as farm_description.
+        if( op == farm_ops::harvest ) {
+            popup( _( "There is nothing ready to harvest in this expansion." ) );
+        } else if( op == farm_ops::plant ) {
+            popup( _( "There are no plots ready for planting in this expansion." ) );
+        } else {
+            popup( _( "There are no plots that need plowing in this expansion." ) );
+        }
         return;
     }
 
@@ -4302,7 +4634,34 @@ void basecamp::recruit_return( const mission_id &miss_id, int score )
         rec_options.emplace_back( _( "Make Offer" ) );
         rec_options.emplace_back( _( "Not Interested" ) );
 
-        rec_m = uilist( description, rec_options );
+        // Build the menu entry by entry instead of using the one-shot
+        // uilist constructor, so the two food-offer entries carry the
+        // limits the handlers below already enforce silently: "Increase
+        // Food" does nothing once the offer would exceed the camp's days
+        // of food, and "Decrease Food" does nothing at zero. As disabled
+        // entries they now state that reason to the reader through the
+        // shared uilist adapter (R04.1) instead of appearing to accept
+        // and then only re-showing the same overview. The overview text
+        // itself (stats, food asked, faction food days, recruit chance)
+        // is unchanged and is published as the menu's summary.
+        uilist rec_menu;
+        rec_menu.text = description;
+        const int food_days_available = camp_food_supply_days( NO_EXERCISE );
+        rec_menu.addentry( 0, food_desire + 1 <= food_days_available, MENU_AUTOASSIGN,
+                           rec_options[0] );
+        if( food_desire + 1 > food_days_available ) {
+            rec_menu.entries.back().a11y_disabled_reason =
+                _( "The camp does not have another day of food to offer." );
+        }
+        rec_menu.addentry( 1, food_desire > 0, MENU_AUTOASSIGN, rec_options[1] );
+        if( food_desire <= 0 ) {
+            rec_menu.entries.back().a11y_disabled_reason =
+                _( "The food offer is already at zero days." );
+        }
+        rec_menu.addentry( 2, true, MENU_AUTOASSIGN, rec_options[2] );
+        rec_menu.addentry( 3, true, MENU_AUTOASSIGN, rec_options[3] );
+        rec_menu.query();
+        rec_m = rec_menu.ret;
         if( rec_m < 0 || rec_m == 3 || static_cast<size_t>( rec_m ) >= rec_options.size() ) {
             popup( _( "You decide you aren't interested…" ) );
             return;

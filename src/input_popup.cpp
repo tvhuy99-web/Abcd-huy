@@ -7,6 +7,7 @@
 #include <cmath>
 #include <locale>
 #include <sstream>
+#include <type_traits>
 
 #include "coordinates.h"
 #include "catacharset.h"
@@ -476,7 +477,9 @@ T number_input_popup<T>::query()
         reader_value.imbue( std::locale::classic() );
         reader_value << value;
         reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                       remove_color_tags( reader_description() ), reader_value.str(), true ) );
+                       remove_color_tags( reader_description() ), reader_value.str(), true,
+                       step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
+                       std::is_integral<T>::value ) );
         std::string action = ctxt.handle_input();
 
         if( handle_custom_callbacks( action ) ) {

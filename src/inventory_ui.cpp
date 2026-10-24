@@ -3575,6 +3575,62 @@ class inventory_selector::reader_session
                 return;
             }
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context, owner.title );
+            // R14.2 trade hook (trade_selector sessions only; every other
+            // selector keeps the plain command snapshot). The trade actions
+            // are registered on _ctxt_trade in the trade_selector
+            // constructor, so command_snapshot already publishes them as
+            // command nodes and registered_intent already routes their
+            // activation back into trade_selector::execute(). What was
+            // missing is an effect description: the shared builder only
+            // carries the bound-key description, under which CONFIRM
+            // reads like a generic selection confirm and is easily
+            // confused with TOGGLE_ENTRY on a row. Per the R04.3 rule for
+            // consequential commands, this screen's adapter states the
+            // effect first and keeps the key description after it.
+            const trade_preset *trade_pricing =
+                dynamic_cast<const trade_preset *>( &owner.preset );
+            if( dynamic_cast<const trade_selector *>( &owner ) != nullptr ) {
+                for( a11y::semantic_node &command : snapshot.nodes ) {
+                    std::string effect;
+                    if( command.id == trade_selector::ACTION_SWITCH_PANES ) {
+                        effect = _( "Switch to the other trade pane, between the trader's "
+                                    "items and your items. This only changes which pane you "
+                                    "are browsing; it does not change the offer." );
+                    } else if( command.id == trade_selector::ACTION_AUTOBALANCE ) {
+                        effect = _( "Adjust the selected amount of the highlighted item in "
+                                    "this pane to balance the current offer. This changes "
+                                    "the selection, like toggling an item; it does not "
+                                    "complete the trade." );
+                    } else if( command.id == trade_selector::ACTION_BANKBALANCE ) {
+                        effect = _( "Balance the trade with your bank account, changing the "
+                                    "bank adjustment shown in the summary. This only works "
+                                    "with the CAPITALISM option on, does not change the "
+                                    "selected items, and does not complete the trade." );
+                    } else if( command.id == trade_selector::ACTION_TRADE_OK ) {
+                        effect = _( "Confirm the trade: the decision to exchange the items "
+                                    "selected on both sides. The game asks once more before "
+                                    "anything changes hands. Selecting items alone never "
+                                    "trades them." );
+                    } else if( command.id == trade_selector::ACTION_TRADE_CANCEL ) {
+                        effect = _( "Cancel the trade and leave this screen without "
+                                    "exchanging anything." );
+                    }
+                    if( !effect.empty() ) {
+                        command.detail = effect + " " + command.detail;
+                    }
+                }
+                if( trade_pricing != nullptr ) {
+                    // R14.2 table contract (R02.2): trade rows form one
+                    // table whose per-unit price column is declared once
+                    // here; rows below fill it from the preset's own
+                    // trading_price data.
+                    a11y::semantic_table trade_table;
+                    trade_table.id = "trade:items";
+                    trade_table.columns = { { "item", _( "Item" ), "" },
+                                            { "unit_price", _( "Unit price" ), "" } };
+                    snapshot.tables.push_back( std::move( trade_table ) );
+                }
+            }
             snapshot.summary = remove_color_tags( owner.get_accessibility_summary() );
             for( const std::string &line : owner.get_stats() ) {
                 snapshot.summary += "\n" + remove_color_tags( line );
@@ -3582,7 +3638,28 @@ class inventory_selector::reader_session
             if( !owner.filter.empty() ) {
                 snapshot.summary += "\n" + string_format( _( "Filter: %s" ), owner.filter );
             }
+            // R09.1 audit of the neighbouring flows, all confirmed reachable
+            // from this adapter without extra wiring: favorite is the
+            // TOGGLE_FAVORITE command and filtering is INVENTORY_FILTER /
+            // RESET_FILTER; both are registered in the inventory_selector
+            // constructor, so command_snapshot publishes them as command
+            // nodes and on_input() handles them -- and because a row "focus"
+            // moves the highlight first, TOGGLE_FAVORITE acts on the
+            // reader-focused row. Compare runs through two
+            // inventory_compare_selector passes plus the item-info screen
+            // behind EXAMINE, and load/unload from the inventory goes through
+            // the item action menu, a uilist covered by the shared R04 menu
+            // adapter, not through this selector.
+            const bool quantity_form = has_quantity_form();
+            // R14.2: row index within the "trade:items" table, assigned in
+            // publication order; only used when trade_pricing is non-null.
+            int trade_row_index = 0;
+            struct published_row {
+                inventory_entry *entry;
+                item_location location;
+            };
             std::vector<a11y::semantic_node> rows;
+            std::vector<published_row> published;
             for( inventory_column *column : owner.columns ) {
                 if( !column->visible() ) {
                     continue;
@@ -3599,7 +3676,7 @@ class inventory_selector::reader_session
                         return b.column == column && b.location == location;
                     } );
                     if( binding == bindings.end() ) {
-                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ) } );
+                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ), std::nullopt } );
                         binding = std::prev( bindings.end() );
                     }
                     entry->cache_denial( owner.preset );
@@ -3612,8 +3689,52 @@ class inventory_selector::reader_session
                                                std::to_string( entry->chosen_count ),
                                                std::to_string( entry->get_available_count() ) );
                     node.detail = location.describe( &owner.u );
+                    // R09.1: describe() names only the immediate container
+                    // ("inside X"), so same-named stacks nested in different
+                    // containers are told apart by this shortened chain of
+                    // container names from parent_item() (at most 4 levels).
+                    if( location.has_parent() ) {
+                        std::vector<std::string> chain;
+                        item_location ancestor = location.parent_item();
+                        for( int level = 0; level < 4 && ancestor; ++level ) {
+                            chain.push_back( remove_color_tags( ancestor->display_name() ) );
+                            if( !ancestor.has_parent() ) {
+                                break;
+                            }
+                            ancestor = ancestor.parent_item();
+                        }
+                        if( !chain.empty() ) {
+                            node.detail += "\n" + string_format( _( "Container chain: %s" ),
+                                                                 string_join( chain, " > " ) );
+                        }
+                    }
                     for( std::size_t i = 1; i < cells.size(); ++i ) {
-                        node.detail += "\n" + remove_color_tags( cells[i] );
+                        if( trade_pricing != nullptr && i == 1 ) {
+                            // R14.2: the trade preset's only appended cell
+                            // is its "Unit price" column (index 1, right
+                            // after the caption at index 0). The generic
+                            // loop would publish it as a bare money value;
+                            // label it so the price per unit is unambiguous
+                            // when the detail is read aloud.
+                            node.detail += "\n" + string_format( _( "Unit price: %s" ),
+                                                                 remove_color_tags( cells[i] ) );
+                        } else {
+                            node.detail += "\n" + remove_color_tags( cells[i] );
+                        }
+                    }
+                    if( trade_pricing != nullptr ) {
+                        // R14.2 table cells (R02.2): the value is the
+                        // preset column's own formatted trading_price for
+                        // one unit, and "compare" carries the raw cents so
+                        // the Java side can compare prices without parsing
+                        // presentation text. Cells carry no action;
+                        // selection stays on the row node.
+                        const int unit_price = trade_pricing->unit_price( location );
+                        node.table_id = "trade:items";
+                        node.row_index = trade_row_index++;
+                        node.cells = { { "item", node.label, "", "" },
+                                       { "unit_price", format_money( unit_price ), "",
+                                         std::to_string( unit_price ) } };
                     }
                     node.enabled = entry->is_selectable();
                     node.disabled_reason = remove_color_tags( entry->denial.value_or( "" ) );
@@ -3622,16 +3743,238 @@ class inventory_selector::reader_session
                     if( node.selected ) {
                         snapshot.focus = node.id;
                     }
+                    if( quantity_form ) {
+                        // R09.1 quantity form (R02.3) for multi-select
+                        // sessions: the applied value is chosen_count, the
+                        // domain is 0..get_available_count() with step 1.
+                        // "set_value" only stores a draft in the binding;
+                        // chosen_count changes solely through "apply" below.
+                        // CONFIRM sessions get no form: their count lives in
+                        // the caller's number popup.
+                        node.field_type = "int";
+                        node.has_field_range = true;
+                        node.field_min = 0.0;
+                        node.field_max = static_cast<double>( entry->get_available_count() );
+                        node.field_step = 1.0;
+                        node.applied_value = std::to_string( entry->chosen_count );
+                        node.actions = { "focus", "activate", "set_value", "apply", "cancel_draft" };
+                        if( binding->draft.has_value() ) {
+                            long long draft_value = 0;
+                            const long long available =
+                                static_cast<long long>( entry->get_available_count() );
+                            if( parse_count( *binding->draft, draft_value ) && draft_value >= 0 &&
+                                draft_value <= available ) {
+                                node.has_draft = true;
+                                node.draft_value = *binding->draft;
+                            } else {
+                                // The available count shrank under the
+                                // draft: drop it instead of publishing an
+                                // out-of-domain draft, which snapshot
+                                // validation would reject wholesale.
+                                binding->draft.reset();
+                            }
+                        }
+                    }
                     rows.push_back( std::move( node ) );
+                    published.push_back( { entry, location } );
                 }
             }
-            for( std::size_t i = 0; i < rows.size(); ++i ) {
-                rows[i].position = i + 1;
-                rows[i].total = rows.size();
+            // R09.2 tree (R02.1): a row's parent is the published row of its
+            // parent_item(), matched by item_location identity across every
+            // visible column, never by name or display position. A row whose
+            // item has no parent is a root (depth 0); a row whose parent
+            // exists but is not published stays flat (depth -1) -- no parent
+            // is invented. Contents of a collapsed container are absent from
+            // get_entries, so they are naturally never published here.
+            const std::size_t item_rows = rows.size();
+            const std::size_t no_parent = item_rows;
+            std::vector<std::size_t> parent_row( item_rows, no_parent );
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                if( !published[i].location.has_parent() ) {
+                    continue;
+                }
+                const item_location parent = published[i].location.parent_item();
+                for( std::size_t j = 0; j < item_rows; ++j ) {
+                    if( j != i && published[j].location == parent ) {
+                        parent_row[i] = j;
+                        break;
+                    }
+                }
             }
-            rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
-                         std::make_move_iterator( snapshot.nodes.end() ) );
-            snapshot.nodes = std::move( rows );
+            std::vector<int> tree_depth( item_rows, -1 );
+            std::vector<char> depth_done( item_rows, 0 );
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                if( depth_done[i] ) {
+                    continue;
+                }
+                // Walk up the published-parent chain once, then assign
+                // depths back down. The visited path guards against cycles;
+                // depths are capped at a11y::max_tree_depth.
+                std::vector<std::size_t> path;
+                std::size_t cur = i;
+                bool cycle = false;
+                while( !depth_done[cur] ) {
+                    if( std::find( path.begin(), path.end(), cur ) != path.end() ) {
+                        cycle = true;
+                        break;
+                    }
+                    path.push_back( cur );
+                    if( parent_row[cur] == no_parent ) {
+                        break;
+                    }
+                    cur = parent_row[cur];
+                }
+                if( cycle ) {
+                    for( const std::size_t idx : path ) {
+                        tree_depth[idx] = -1;
+                        depth_done[idx] = 1;
+                    }
+                    continue;
+                }
+                int parent_depth = -1;
+                std::size_t start = 0;
+                if( depth_done[cur] ) {
+                    parent_depth = tree_depth[cur];
+                    start = path.size();
+                } else {
+                    // cur is path.back(), a row without a published parent:
+                    // a root when the item itself has no parent, flat when
+                    // its real parent simply is not published.
+                    tree_depth[cur] = published[cur].location.has_parent() ? -1 : 0;
+                    depth_done[cur] = 1;
+                    parent_depth = tree_depth[cur];
+                    start = path.size() - 1;
+                }
+                for( std::size_t k = start; k-- > 0; ) {
+                    const std::size_t idx = path[k];
+                    tree_depth[idx] = parent_depth >= 0 &&
+                                      parent_depth + 1 <= a11y::max_tree_depth
+                                      ? parent_depth + 1 : -1;
+                    depth_done[idx] = 1;
+                    parent_depth = tree_depth[idx];
+                }
+            }
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                rows[i].depth = tree_depth[i];
+                if( tree_depth[i] > 0 ) {
+                    rows[i].parent_id = rows[parent_row[i]].id;
+                }
+            }
+            // R09.2 pocket nodes: one read-only "status" child per container
+            // pocket of a published item. A sealed pocket reports only that
+            // it is sealed: its contents are never listed or counted.
+            std::vector<std::vector<a11y::semantic_node>> pockets_of( item_rows );
+            std::vector<std::size_t> published_children( item_rows, 0 );
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                if( tree_depth[i] > 0 ) {
+                    ++published_children[parent_row[i]];
+                }
+            }
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                const item *held = published[i].location.get_item();
+                if( held == nullptr ) {
+                    continue;
+                }
+                const std::vector<const item_pocket *> pockets = held->get_container_pockets();
+                for( std::size_t pi = 0; pi < pockets.size(); ++pi ) {
+                    const item_pocket *pocket = pockets[pi];
+                    const pocket_data *data = pocket->get_pocket_data();
+                    if( data == nullptr ) {
+                        continue;
+                    }
+                    a11y::semantic_node pocket_node;
+                    pocket_node.id = "pocket:" + rows[i].id + ":" + std::to_string( pi );
+                    pocket_node.role = "status";
+                    pocket_node.actions = { "focus" };
+                    std::string pocket_name;
+                    if( !data->pocket_name.empty() ) {
+                        pocket_name = remove_color_tags( data->pocket_name.translated() );
+                    } else if( !pocket->get_name().empty() ) {
+                        pocket_name = remove_color_tags( pocket->get_name().translated() );
+                    }
+                    pocket_node.label = pocket_name.empty()
+                                        ? string_format( _( "Pocket %d" ), static_cast<int>( pi ) + 1 )
+                                        : pocket_name;
+                    std::vector<std::string> lines;
+                    if( !data->description.empty() ) {
+                        lines.push_back( remove_color_tags( data->description.translated() ) );
+                    }
+                    if( pocket->sealed() ) {
+                        lines.push_back( _( "Sealed: the contents cannot be seen." ) );
+                    } else if( pocket->size() > 0 ) {
+                        lines.push_back( string_format( _( "Contains %d item stacks." ),
+                                                        static_cast<int>( pocket->size() ) ) );
+                    }
+                    lines.push_back( string_format( _( "Free volume: %1$s of %2$s." ),
+                                                    vol_to_string( pocket->remaining_volume() ),
+                                                    vol_to_string( pocket->volume_capacity() ) ) );
+                    lines.push_back( string_format( _( "Free weight: %1$s of %2$s." ),
+                                                    weight_to_string( pocket->remaining_weight() ),
+                                                    weight_to_string( pocket->weight_capacity() ) ) );
+                    if( data->max_item_length > 0_mm ) {
+                        lines.push_back( string_format( _( "Maximum item length: %s." ),
+                                                        length_to_string( data->max_item_length ) ) );
+                    }
+                    if( pocket->watertight() ) {
+                        lines.push_back( _( "Watertight." ) );
+                    }
+                    if( pocket->airtight() ) {
+                        lines.push_back( _( "Airtight." ) );
+                    }
+                    if( pocket->rigid() ) {
+                        lines.push_back( _( "Rigid." ) );
+                    }
+                    if( data->holster ) {
+                        lines.push_back( _( "Holster: holds a single item." ) );
+                    }
+                    pocket_node.detail = string_join( lines, "\n" );
+                    // A pocket hangs under its item only when the item is
+                    // itself a tree node; under a flat (orphan) item it
+                    // stays flat rather than breaking the depth contract.
+                    if( tree_depth[i] >= 0 && tree_depth[i] + 1 <= a11y::max_tree_depth ) {
+                        pocket_node.parent_id = rows[i].id;
+                        pocket_node.depth = tree_depth[i] + 1;
+                        ++published_children[i];
+                    }
+                    pockets_of[i].push_back( std::move( pocket_node ) );
+                }
+            }
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                rows[i].has_children = published_children[i] > 0 ||
+                                       published[i].entry->contents_count > 0;
+                rows[i].expanded = published_children[i] > 0;
+            }
+            // Publish each item immediately followed by its pocket nodes.
+            // Tree nodes get position/total within their sibling set under
+            // the same parent (roots form one set); flat nodes keep the
+            // flat position/total over the whole published list.
+            std::vector<a11y::semantic_node> ordered;
+            for( std::size_t i = 0; i < item_rows; ++i ) {
+                ordered.push_back( std::move( rows[i] ) );
+                for( a11y::semantic_node &pocket_node : pockets_of[i] ) {
+                    ordered.push_back( std::move( pocket_node ) );
+                }
+            }
+            std::map<std::string, int> sibling_totals;
+            for( const a11y::semantic_node &node : ordered ) {
+                if( node.depth >= 0 ) {
+                    ++sibling_totals[node.parent_id];
+                }
+            }
+            std::map<std::string, int> sibling_seen;
+            for( std::size_t i = 0; i < ordered.size(); ++i ) {
+                a11y::semantic_node &node = ordered[i];
+                if( node.depth >= 0 ) {
+                    node.position = ++sibling_seen[node.parent_id];
+                    node.total = sibling_totals[node.parent_id];
+                } else {
+                    node.position = static_cast<int>( i ) + 1;
+                    node.total = static_cast<int>( ordered.size() );
+                }
+            }
+            ordered.insert( ordered.end(), std::make_move_iterator( snapshot.nodes.begin() ),
+                            std::make_move_iterator( snapshot.nodes.end() ) );
+            snapshot.nodes = std::move( ordered );
             screen.update( std::move( snapshot ) );
         }
 
@@ -3640,6 +3983,9 @@ class inventory_selector::reader_session
             inventory_column *column;
             item_location location;
             std::string id;
+            // Unapplied quantity draft (R09.1/R02.3), raw intent text. Only
+            // "apply" in handle() may turn it into a chosen_count change.
+            std::optional<std::string> draft;
         };
         inventory_selector &owner;
         input_context &context;
@@ -3649,7 +3995,50 @@ class inventory_selector::reader_session
         std::size_t serial = 0;
         a11y::screen_scope screen;
 
+        // Quantity form exists only on genuine multi-select sessions.
+        // inventory_compare_selector also activates with "TOGGLE_ENTRY" but
+        // its chosen_count is a 0/1 comparison marker owned by its own
+        // toggle_entry( inventory_entry * ); routing a count through the
+        // multiselector API would corrupt its compared pair, so it keeps
+        // the plain checkbox behaviour. CONFIRM sessions have no form.
+        bool has_quantity_form() const {
+            return activation == "TOGGLE_ENTRY" &&
+                   dynamic_cast<const inventory_multiselector *>( &owner ) != nullptr &&
+                   dynamic_cast<const inventory_compare_selector *>( &owner ) == nullptr;
+        }
+
+        static bool parse_count( const std::string &text, long long &value ) {
+            if( text.empty() || text.size() > 18 ) {
+                return false;
+            }
+            std::size_t pos = 0;
+            bool negative = false;
+            if( text[pos] == '-' ) {
+                negative = true;
+                ++pos;
+            }
+            if( pos == text.size() ) {
+                return false;
+            }
+            long long result = 0;
+            for( ; pos < text.size(); ++pos ) {
+                if( text[pos] < '0' || text[pos] > '9' ) {
+                    return false;
+                }
+                result = result * 10 + ( text[pos] - '0' );
+            }
+            value = negative ? -result : result;
+            return true;
+        }
+
         std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
+            // R09.2: pocket nodes are read-only status nodes. They are not
+            // bindings: "focus" only reads them (no highlight change, no
+            // turn spent) and every other action is refused.
+            if( intent.node.rfind( "pocket:", 0 ) == 0 ) {
+                return intent.action == "focus"
+                       ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
+            }
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
             [&]( const row_binding &b ) { return b.id == intent.node; } );
             if( binding == bindings.end() ) {
@@ -3677,6 +4066,50 @@ class inventory_selector::reader_session
                     column->on_mode_change( owner.mode );
                 }
                 return activation;
+            }
+            if( !has_quantity_form() ) {
+                return std::nullopt;
+            }
+            if( intent.action == "set_value" ) {
+                // The runtime already validated the value against the
+                // published domain (R02.4). Store the draft only; the
+                // applied chosen_count does not change here.
+                binding->draft = intent.value;
+                return "TIMEOUT";
+            }
+            if( intent.action == "cancel_draft" ) {
+                binding->draft.reset();
+                return "TIMEOUT";
+            }
+            if( intent.action == "apply" ) {
+                if( !binding->draft.has_value() ) {
+                    return std::nullopt;
+                }
+                long long value = 0;
+                if( !parse_count( *binding->draft, value ) ) {
+                    binding->draft.reset();
+                    return std::nullopt;
+                }
+                if( !entry.is_selectable() ) {
+                    return std::nullopt;
+                }
+                // The entry was re-resolved by location above, at commit
+                // time; a vanished item already returned nullopt. Clamp to
+                // the live domain, then set the count through the
+                // multiselector's public API: toggle_entry( entry, count )
+                // wraps the protected set_chosen_count( entry, count ),
+                // refreshes the selection column and fires on_toggle()
+                // (trade panes recalculate through it). set_chosen_count
+                // itself is not reachable from this base-class session.
+                const long long available = static_cast<long long>( entry.get_available_count() );
+                const long long clamped = std::clamp( value, 0LL, available );
+                inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
+                if( multi == nullptr ) {
+                    return std::nullopt;
+                }
+                multi->toggle_entry( entry, static_cast<std::size_t>( clamped ) );
+                binding->draft.reset();
+                return "TIMEOUT";
             }
             return std::nullopt;
         }

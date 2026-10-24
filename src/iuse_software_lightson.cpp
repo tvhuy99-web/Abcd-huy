@@ -1,9 +1,15 @@
 #include "iuse_software_lightson.h"
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+
 #include <algorithm>
 #include <cstddef>
+#include <iterator>
 #include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
 #include "cata_utility.h"
@@ -15,6 +21,7 @@
 #include "output.h"
 #include "point.h"
 #include "rng.h"
+#include "string_formatter.h"
 #include "translations.h"
 #include "ui_helpers.h"
 #include "ui_manager.h"
@@ -146,6 +153,106 @@ int lightson_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    // Reader adapter: the board is drawn by hand, so the generic command
+    // fallback would never publish the lights themselves. Every cell is
+    // public information in this game (there is no hidden state), so the
+    // whole board is published as one node per cell. Focusing a cell only
+    // moves the cursor and observes it; only activating a cell toggles,
+    // through the same TOGGLE_SPACE action the keyboard uses.
+    a11y::screen_scope reader( &ctxt, "lightson",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node.rfind( "lights:cell:", 0 ) == 0 ) {
+            const std::string suffix =
+                intent.node.substr( std::string( "lights:cell:" ).size() );
+            const std::size_t separator = suffix.find( ':' );
+            if( separator == std::string::npos ) {
+                return std::nullopt;
+            }
+            const std::string x_text = suffix.substr( 0, separator );
+            const std::string y_text = suffix.substr( separator + 1 );
+            if( x_text.empty() || y_text.empty() || x_text.size() > 3 || y_text.size() > 3 ||
+                x_text.find_first_not_of( "0123456789" ) != std::string::npos ||
+                y_text.find_first_not_of( "0123456789" ) != std::string::npos ) {
+                return std::nullopt;
+            }
+            const point cell( std::stoi( x_text ), std::stoi( y_text ) );
+            if( cell.x < 0 || cell.x >= level_size.x || cell.y < 0 ||
+                cell.y >= level_size.y ) {
+                return std::nullopt;
+            }
+            if( intent.action == "focus" ) {
+                position = cell;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                position = cell;
+                return std::string( "TOGGLE_SPACE" );
+            }
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           _( "Lights On" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        int on_count = 0;
+        for( int y = 0; y < level_size.y; ++y ) {
+            for( int x = 0; x < level_size.x; ++x ) {
+                if( get_value_at( point( x, y ) ) ) {
+                    ++on_count;
+                }
+            }
+        }
+        const int total_cells = level_size.x * level_size.y;
+        const bool cursor_on = total_cells > 0 && get_value_at( position );
+        snapshot.summary = string_format(
+                               _( "Lights On: %1$d of %2$d lights are on. Cursor at row %3$d, "
+                                  "column %4$d: %5$s. Toggling a light also toggles its "
+                                  "4 neighbors; turn every light on to win." ),
+                               on_count, total_cells, position.y + 1, position.x + 1,
+                               cursor_on ? _( "On" ) : _( "Off" ) );
+
+        a11y::append_document( snapshot, "lights:rules", _( "Lights On rules" ),
+                               _( "Game goal: switch all the lights on. # is on and - is off. "
+                                  "Toggling a light switches the selected light and its "
+                                  "4 neighbors (above, below, left and right); a neighbor "
+                                  "outside the board is not toggled. Move the cursor with "
+                                  "the direction keys, toggle the selected light with the "
+                                  "space bar or 5, reset to return the board to its "
+                                  "starting state, and quit to leave the game." ) );
+
+        for( int y = 0; y < level_size.y; ++y ) {
+            for( int x = 0; x < level_size.x; ++x ) {
+                const point cell( x, y );
+                const bool on = get_value_at( cell );
+                a11y::semantic_node node;
+                node.id = string_format( "lights:cell:%d:%d", x, y );
+                node.role = "button";
+                node.label = string_format( _( "Row %d, column %d" ), y + 1, x + 1 );
+                node.value = on ? _( "On" ) : _( "Off" );
+                node.selected = cell == position;
+                node.actions = { "focus", "activate" };
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+        }
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         std::vector<std::string> shortcuts;
         shortcuts.emplace_back( _( "<spacebar or 5> toggle lights" ) );
@@ -187,6 +294,9 @@ int lightson_game::start_game()
             new_level();
         }
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         std::string action = ctxt.handle_input();
         if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction_rel_ms( action ) ) {
             position.y = clamp( position.y + vec->y(), 0, level_size.y - 1 );

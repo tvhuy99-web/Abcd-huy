@@ -1,11 +1,16 @@
 #include "iuse_software_snake.h"
 
 #include <cstddef>
+#include <iterator>
 #include <map>
+#include <optional>
 #include <string>
 #include <utility>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "catacharset.h"  // utf8_width()
 #include "color.h"
 #include "cursesdef.h"
@@ -124,6 +129,168 @@ int snake_game::start_game()
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
 
+    // Reader adapter: this scope lives across both loops below (the main
+    // game loop and the game-over loop), switched by this phase flag.
+    bool game_over = false;
+    a11y::screen_scope reader( &ctxt, "snake",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "snake:dir:up" || intent.node == "snake:dir:down" ||
+            intent.node == "snake:dir:left" || intent.node == "snake:dir:right" ) {
+            if( intent.action == "focus" ) {
+                // Browsing to a steering command must never steer -- and
+                // must not even step the snake: every action this loop
+                // returns from handle_input() advances the snake one
+                // cell. Returning nullopt injects no action at all, so
+                // the loop keeps waiting for a real steering command.
+                return std::nullopt;
+            }
+            if( intent.action == "activate" ) {
+                if( intent.node == "snake:dir:up" ) {
+                    return std::string( "UP" );
+                }
+                if( intent.node == "snake:dir:down" ) {
+                    return std::string( "DOWN" );
+                }
+                if( intent.node == "snake:dir:left" ) {
+                    return std::string( "LEFT" );
+                }
+                return std::string( "RIGHT" );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "snake:fruit" ) {
+            // Observation only: no action is injected (see above).
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Snake" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        // The timing policy is part of the rules in both phases: with the
+        // reader on, the main loop below blocks in handle_input() with no
+        // timeout instead of handle_input( iGameSpeed ), so the snake
+        // waits for a direction at each step instead of moving in real
+        // time. Speed, scoring and growth rules are unchanged.
+        const std::string rules_text = _(
+                                           "Steer the snake with the direction commands. The snake keeps moving in its "
+                                           "current direction until you steer it. Eat fruit to score 500 points per "
+                                           "fruit and grow 10 segments longer; the game also speeds up slightly with "
+                                           "each fruit when played in real time. The snake wraps around the edges of "
+                                           "the board: leaving one side brings it back in on the opposite side. If "
+                                           "the snake runs into its own body, the game is over. Reader timing: with "
+                                           "the screen reader on, the snake waits for your direction at each step "
+                                           "instead of moving in real time. The snake, scoring and growth rules are "
+                                           "unchanged." );
+
+        if( game_over ) {
+            snapshot.summary = string_format( _( "Game over. Total score: %d." ), iScore );
+        } else {
+            // vSnakeBody entries are (row, column); the head is the last entry.
+            const int head_y = vSnakeBody.empty() ? 0 : vSnakeBody.back().first;
+            const int head_x = vSnakeBody.empty() ? 0 : vSnakeBody.back().second;
+
+            std::string heading;
+            if( iDirX == 1 ) {
+                heading = _( "east" );
+            } else if( iDirX == -1 ) {
+                heading = _( "west" );
+            } else if( iDirY == 1 ) {
+                heading = _( "south" );
+            } else {
+                heading = _( "north" );
+            }
+
+            const bool has_fruit = iFruitPosX != 0 && iFruitPosY != 0;
+            std::string fruit_relative;
+            if( has_fruit ) {
+                const int dx = iFruitPosX - head_x;
+                const int dy = iFruitPosY - head_y;
+                std::vector<std::string> parts;
+                if( dx > 0 ) {
+                    parts.push_back( string_format( dx == 1 ? _( "%d column right" )
+                                                    : _( "%d columns right" ), dx ) );
+                } else if( dx < 0 ) {
+                    parts.push_back( string_format( dx == -1 ? _( "%d column left" )
+                                                    : _( "%d columns left" ), -dx ) );
+                }
+                if( dy < 0 ) {
+                    parts.push_back( string_format( dy == -1 ? _( "%d row up" )
+                                                    : _( "%d rows up" ), -dy ) );
+                } else if( dy > 0 ) {
+                    parts.push_back( string_format( dy == 1 ? _( "%d row down" )
+                                                    : _( "%d rows down" ), dy ) );
+                }
+                for( size_t i = 0; i < parts.size(); ++i ) {
+                    if( i > 0 ) {
+                        fruit_relative += ", ";
+                    }
+                    fruit_relative += parts[i];
+                }
+            }
+            const std::string fruit_text = has_fruit
+                                           ? ( fruit_relative.empty()
+                                               ? _( "Fruit: at the snake's head" )
+                                               : string_format( _( "Fruit: %s" ), fruit_relative ) )
+                                           : _( "No fruit yet" );
+
+            snapshot.summary = string_format(
+                                   _( "Score: %1$d. Snake length: %2$d. Head at column %3$d, row %4$d. "
+                                      "Heading %5$s. %6$s. Reader timing: with the screen reader on, the "
+                                      "snake waits for your direction at each step instead of moving in real "
+                                      "time. The snake, scoring and growth rules are unchanged." ),
+                                   iScore, static_cast<int>( vSnakeBody.size() ), head_x + 1, head_y + 1,
+                                   heading, fruit_text );
+
+            const struct {
+                const char *id;
+                std::string label;
+                int dx;
+                int dy;
+            } directions[] = {
+                { "snake:dir:up", _( "Steer north" ), 0, -1 },
+                { "snake:dir:down", _( "Steer south" ), 0, 1 },
+                { "snake:dir:left", _( "Steer west" ), -1, 0 },
+                { "snake:dir:right", _( "Steer east" ), 1, 0 },
+            };
+            for( const auto &direction : directions ) {
+                a11y::semantic_node node;
+                node.id = direction.id;
+                node.label = direction.label;
+                node.actions = { "focus", "activate" };
+                node.selected = iDirX == direction.dx && iDirY == direction.dy;
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( node );
+            }
+
+            a11y::semantic_node fruit_node;
+            fruit_node.id = "snake:fruit";
+            fruit_node.label = _( "Fruit" );
+            fruit_node.actions = { "focus" };
+            fruit_node.detail = has_fruit
+                                ? string_format( _( "Fruit at column %1$d, row %2$d: %3$s." ),
+                                                 iFruitPosX + 1, iFruitPosY + 1, fruit_relative )
+                                : _( "No fruit yet." );
+            snapshot.nodes.push_back( fruit_node );
+        }
+
+        a11y::append_document( snapshot, "snake:rules", _( "Snake rules" ), rules_text );
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_snake );
         print_header( w_snake );
@@ -208,7 +375,18 @@ int snake_game::start_game()
 
         ui_manager::redraw();
 
-        const std::string action = ctxt.handle_input( iGameSpeed );
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
+
+        // Reader timing policy (explicit): with the screen reader on, block
+        // in handle_input() with no timeout so the snake waits for the
+        // player's direction at each step instead of moving in real time.
+        // Only the cadence changes from real-time to turn-based; the snake,
+        // speed-up, scoring and growth rules above are unchanged. With the
+        // reader off, the original timed input is kept.
+        const std::string action = a11y::enabled() ? ctxt.handle_input()
+                                   : ctxt.handle_input( iGameSpeed );
 
         if( action == "UP" ) {
             if( iDirY != 1 ) {
@@ -239,8 +417,12 @@ int snake_game::start_game()
     ui.on_redraw( [&]( const ui_adaptor & ) {
         snake_over( w_snake, iScore );
     } );
+    game_over = true;
     do {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         const std::string action = ctxt.handle_input();
         if( action == "QUIT" ) {
             break;

@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <cctype>
+#include <charconv>
 #include <cstddef>
 #include <cstdint>
 #include <chrono>
@@ -12,10 +13,12 @@
 #include <memory>
 #include <optional>
 #include <set>
+#include <system_error>
 #include <type_traits>
 #include <utility>
 
 #include "action.h"
+#include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "cata_imgui.h"
 #include "cata_utility.h"
@@ -487,42 +490,27 @@ const std::string &input_context::handle_input( const int timeout )
     const auto input_started = std::chrono::steady_clock::now();
     std::unique_ptr<a11y::screen_scope> reader_scope;
     const auto install_reader_scope = [&]() {
+    // A dedicated adapter built while the reader was unavailable gets its
+    // screen before the generic command fallback is considered, so an
+    // already-open screen picks up its real adapter in place (R03.3).
+    a11y::activate_pending_scopes( this );
     if( a11y::enabled() && !reader_scope && !a11y::bound_to( this ) ) {
         reader_scope = std::make_unique<a11y::screen_scope>( this, category,
         [this]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
-            if( intent.action == "cancel" ) {
-                for( const std::string &candidate : { "QUIT", "UILIST.QUIT", "CANCEL" } ) {
-                    if( std::find( registered_actions.begin(), registered_actions.end(), candidate ) !=
-                        registered_actions.end() ) {
-                        return candidate;
-                    }
-                }
-            } else if( intent.action == "activate" &&
-                       std::find( registered_actions.begin(), registered_actions.end(), intent.node ) !=
-                       registered_actions.end() ) {
-                return intent.node;
-            }
-            return std::nullopt;
+            // Same handler as every adapter built on command_snapshot
+            // (R04.3); the inline copy here had drifted (its cancel
+            // candidates lacked TEXT.QUIT).
+            return a11y::registered_intent( *this, intent );
         } );
-        a11y::semantic_snapshot snapshot;
-        snapshot.title = _( "Commands for the current screen" );
-        snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader." );
-        for( const std::string &action : registered_actions ) {
-            if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ||
-                action.rfind( "A11Y_INTERNAL_", 0 ) == 0 ) {
-                continue;
-            }
-            a11y::semantic_node node;
-            node.id = action;
-            node.role = "command";
-            node.label = get_action_name( action );
-            node.actions = { "focus", "activate" };
-            snapshot.nodes.push_back( std::move( node ) );
-        }
-        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
-            snapshot.nodes[i].position = i + 1;
-            snapshot.nodes[i].total = snapshot.nodes.size();
-        }
+        // One shared builder for every command list (R04.3): grouping,
+        // bound-key descriptions and the exclusion list live in
+        // a11y::command_snapshot. The inline copy that used to be here
+        // had already drifted from it (it published SELECT and MOUSE_MOVE
+        // and had no descriptions).
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( *this,
+                                           _( "Commands for the current screen" ) );
+        snapshot.summary = _( "These are registered commands. Screen contents may require a dedicated reader. "
+                              "The game does not publish a cost for individual commands; some commands open a follow-up step, such as choosing a direction, target or item, on the next screen." );
         reader_scope->update( std::move( snapshot ) );
     }
     };
@@ -1061,6 +1049,60 @@ bool input_context::action_add( const std::string &name, const std::string &acti
         while( candidate.type != input_event_t::error ) {
             uilist_entry entry( static_cast<int>( key_options.size() ), true, -1,
                                 candidate.long_description() );
+            // Reader-only conflict preview (R19.3), published BEFORE the
+            // reader commits to a key: get_conflicts() alone names the
+            // conflicting actions but not which context holds the key, so
+            // each conflicting action is supplemented with its holder,
+            // determined exactly the way draw_controls() distinguishes
+            // local from global -- inp_mngr.get_input_for_action( action,
+            // "default" ) holds only the global (default context)
+            // bindings, while get_action_attributes( action, category )
+            // reports via overwrite_default whether a local entry for
+            // this screen's context exists and shadows the default. The
+            // uilist reader publishes entry.desc as the node's detail;
+            // resolve_conflicts() below remains the final gate and still
+            // asks before anything is actually removed.
+            const std::string conflicts = get_conflicts( candidate, action_id );
+            if( conflicts.empty() ) {
+                entry.desc = _( "No conflict with any other action." );
+            } else {
+                std::string holders;
+                for( const std::string &other : registered_actions ) {
+                    if( other == action_id || !action_uses_input( other, candidate ) ) {
+                        continue;
+                    }
+                    bool overwrite_default = false;
+                    const action_attributes &other_attributes =
+                        inp_mngr.get_action_attributes( other, category, &overwrite_default );
+                    const std::vector<input_event> &local_events = other_attributes.input_events;
+                    const bool in_local = overwrite_default &&
+                                          std::find( local_events.begin(), local_events.end(),
+                                                     candidate ) != local_events.end();
+                    const std::vector<input_event> &default_events =
+                        inp_mngr.get_input_for_action( other, default_context_id );
+                    const bool in_default = std::find( default_events.begin(), default_events.end(),
+                                                       candidate ) != default_events.end();
+                    std::string holder;
+                    if( in_local && in_default ) {
+                        holder = _( "the local bindings for this screen and the global default bindings" );
+                    } else if( in_local ) {
+                        holder = string_format( _( "the local bindings for this screen (context %s)" ),
+                                                category );
+                    } else if( in_default ) {
+                        holder = _( "the global default bindings" );
+                    } else {
+                        holder = _( "the current bindings" );
+                    }
+                    if( !holders.empty() ) {
+                        holders += "; ";
+                    }
+                    holders += string_format( _( "%1$s: held by %2$s" ),
+                                              get_action_name( other ), holder );
+                }
+                entry.desc = string_format(
+                                 _( "Conflict with: %1$s. %2$s. If you choose this key, the game will ask before removing it from the conflicting action(s)." ),
+                                 conflicts, holders );
+            }
             key_menu.addentry( entry );
             key_options.push_back( candidate );
             candidate = queue.next( candidate );
@@ -1160,6 +1202,423 @@ action_id input_context::display_menu( bool permit_execute_action )
     kb_menu.hotkeys = ctxt.get_available_single_char_hotkeys( display_help_hotkeys );
     kb_menu.init();
     int raw_input_char = 0;
+
+    // Reader adapter (R19.3), built locally in this function following
+    // the help-screen precedent in help.cpp: a screen_scope bound to the
+    // HELP_KEYBINDINGS context (so ctxt.handle_input() serves these
+    // intents instead of installing the generic command fallback for
+    // this context) plus local lambdas, with no header changes. The
+    // generic fallback already published this context's menu commands
+    // (REMOVE / RESET / ADD_LOCAL / ADD_GLOBAL / FILTER / EXECUTE /
+    // QUIT ...) through a11y::command_snapshot; what it could not
+    // publish is the screen's own content, which is what this adapter
+    // adds:
+    // - one table row (R02) per action in
+    //   kb_menu.filtered_registered_actions (name from
+    //   get_action_name(), current keys from get_desc(), customized
+    //   flag computed exactly as draw_controls() computes it), so the
+    //   reader can pick the action to remove / reset / add a key for;
+    // - a mode node mirroring kb_menu.status, and a filter field (see
+    //   below);
+    // - a "reset all" command (see below).
+    // Focusing a row is observation only. Activating a row while a mode
+    // is armed only sets kb_menu.highlight_row_index and returns
+    // "SELECT", so the existing dispatch branch at the bottom of this
+    // loop runs action_remove / action_reset / action_add itself, sets
+    // `changed` and returns the status to show; no keybinding logic is
+    // duplicated here, every change still goes through
+    // inp_mngr.add/remove_input_for_action, and the save/discard
+    // semantics after the loop are unchanged.
+    //
+    // Filter: cataimgui::window exposes get_filter()/clear_filter()
+    // but no setter, so a reader-typed phrase cannot be written into
+    // the screen's own filter box from here. Like the help adapter,
+    // the reader filter is therefore presentation-only: it narrows
+    // which of the (screen-filtered) rows are published, using the
+    // same lcmatch on action names as filter_strings_by_phrase(). Row
+    // node ids keep the index into kb_menu.filtered_registered_actions,
+    // so activation still targets the exact row the loop would
+    // dispatch. The screen's own filter text is published on the same
+    // node, and activating the node clears both filters (the screen one
+    // through the existing kb_menu.clear_filter()).
+    //
+    // Essential keys are a READER POLICY, not an engine fact: the
+    // engine has no notion of an essential keybinding. The set below is
+    // built from real registrations only -- QUIT, SELECT, TEXT.CONFIRM,
+    // UILIST.UP and UILIST.DOWN of the HELP_KEYBINDINGS context (the
+    // actions this menu itself is operated with), plus CONFIRM and
+    // QUIT of the parent context being edited when they are the
+    // target. Removing or resetting one of these through a row first
+    // publishes a warning and returns TIMEOUT; only a second activation
+    // of the same row in the same mode dispatches.
+    //
+    // Reset all: the engine has no reset-everything operation --
+    // action_reset() resets a single action against
+    // basic_action_contexts, and nothing in the input manager iterates
+    // it. The published "reset all" is therefore a reader-composed
+    // operation, labelled as such on its node: when confirmed (the
+    // same two-step pattern), the loop below calls the engine's own
+    // action_reset() once per registered action, so per-action
+    // conflict prompts and semantics stay the engine's.
+    std::string reader_filter;
+    std::optional<std::string> reader_filter_draft;
+    int reader_last_row = -1;
+    std::set<std::string> reader_essential;
+    for( const char *essential_id : { "QUIT", "SELECT", "TEXT.CONFIRM",
+                                      "UILIST.UP", "UILIST.DOWN" } ) {
+        if( ctxt.is_registered_action( essential_id ) ) {
+            reader_essential.insert( essential_id );
+        }
+    }
+    for( const char *essential_id : { "CONFIRM", "QUIT" } ) {
+        if( is_registered_action( essential_id ) ) {
+            reader_essential.insert( essential_id );
+        }
+    }
+    bool reader_warning_active = false;
+    std::string reader_warning_action;
+    kb_menu_status reader_warning_status = kb_menu_status::show;
+    bool reader_reset_all_armed = false;
+    bool reader_do_reset_all = false;
+    const auto reader_warning_text = [&]() -> std::string {
+        const std::string name = remove_color_tags( get_action_name( reader_warning_action ) );
+        if( reader_warning_status == kb_menu_status::remove ) {
+            return string_format( _( "Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to remove its keybinding anyway." ),
+                                  name );
+        }
+        return string_format( _( "Warning: %1$s is an essential menu key (reader policy, not an engine rule). Activate its row again to reset its keybinding anyway." ),
+                              name );
+    };
+    const auto reader_handle_intent = [&]( const a11y::semantic_intent &intent )
+    -> std::optional<std::string> {
+        if( intent.node == "keybindings:filter" ) {
+            if( intent.action == "focus" ) {
+                return TIMEOUT;
+            }
+            if( intent.action == "set_value" ) {
+                reader_filter_draft = intent.value;
+                return TIMEOUT;
+            }
+            if( intent.action == "apply" ) {
+                if( reader_filter_draft ) {
+                    reader_filter = *reader_filter_draft;
+                    reader_filter_draft.reset();
+                    reader_last_row = -1;
+                }
+                return TIMEOUT;
+            }
+            if( intent.action == "cancel_draft" ) {
+                reader_filter_draft.reset();
+                return TIMEOUT;
+            }
+            if( intent.action == "activate" ) {
+                // Clear both filters: the reader one above, and the
+                // screen's own through the existing clear_filter().
+                reader_filter.clear();
+                reader_filter_draft.reset();
+                reader_last_row = -1;
+                kb_menu.clear_filter();
+                return TIMEOUT;
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "keybindings:mode" || intent.node == "keybindings:warning" ||
+            intent.node == "keybindings:no_results" ) {
+            // Readouts: focusing or activating them changes nothing.
+            if( intent.action == "focus" || intent.action == "activate" ) {
+                return TIMEOUT;
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "keybindings:reset_all" ) {
+            if( intent.action == "focus" ) {
+                return TIMEOUT;
+            }
+            if( intent.action == "activate" ) {
+                if( !reader_reset_all_armed ) {
+                    reader_reset_all_armed = true;
+                    a11y::announce_game_message(
+                        _( "Warning: this resets every keybinding for this context to its default. Activate it again to proceed." ),
+                        true );
+                    return TIMEOUT;
+                }
+                reader_reset_all_armed = false;
+                // The resets themselves run in the loop below, on the
+                // other side of handle_input(), like every other
+                // keybinding change in this menu.
+                reader_do_reset_all = true;
+                return TIMEOUT;
+            }
+            return std::nullopt;
+        }
+        static const std::string row_prefix = "keybindings:row:";
+        if( intent.node.rfind( row_prefix, 0 ) == 0 ) {
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            const std::string suffix = intent.node.substr( row_prefix.size() );
+            int index = -1;
+            const char *const begin = suffix.data();
+            const char *const end = begin + suffix.size();
+            const std::from_chars_result parsed = std::from_chars( begin, end, index );
+            if( parsed.ec != std::errc() || parsed.ptr != end || index < 0 ||
+                index >= static_cast<int>( kb_menu.filtered_registered_actions.size() ) ) {
+                return std::nullopt;
+            }
+            const std::string &action_id = kb_menu.filtered_registered_actions[index];
+            // The row must still be part of the published (reader
+            // filtered) set, not just of the screen-filtered list.
+            if( !reader_filter.empty() &&
+                !lcmatch( remove_color_tags( get_action_name( action_id ) ), reader_filter ) ) {
+                return std::nullopt;
+            }
+            reader_last_row = index;
+            if( intent.action == "focus" ) {
+                // Observation only: highlight_row_index is left
+                // untouched, so browsing can never arm the dispatch
+                // branch at the bottom of the loop.
+                return TIMEOUT;
+            }
+            if( kb_menu.status == kb_menu_status::show ||
+                kb_menu.status == kb_menu_status::filter ) {
+                // No operation is armed: a row can only be acted on
+                // after a menu command chose the operation.
+                return TIMEOUT;
+            }
+            const bool essential_target = reader_essential.count( action_id ) > 0 &&
+                                          ( kb_menu.status == kb_menu_status::remove ||
+                                            kb_menu.status == kb_menu_status::reset );
+            if( essential_target ) {
+                if( reader_warning_active && reader_warning_action == action_id &&
+                    reader_warning_status == kb_menu.status ) {
+                    // Second activation of the same row in the same
+                    // mode: confirmed, dispatch below.
+                    reader_warning_active = false;
+                    kb_menu.highlight_row_index = index;
+                    return std::string( "SELECT" );
+                }
+                reader_warning_active = true;
+                reader_warning_action = action_id;
+                reader_warning_status = kb_menu.status;
+                a11y::announce_game_message( reader_warning_text(), true );
+                return TIMEOUT;
+            }
+            reader_warning_active = false;
+            reader_reset_all_armed = false;
+            kb_menu.highlight_row_index = index;
+            return std::string( "SELECT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    };
+    const auto make_reader_snapshot = [&]() -> a11y::semantic_snapshot {
+        // A warning only survives while the mode it was armed in is
+        // still the current mode; leaving the mode (QUIT returns to
+        // show) drops it instead of confirming a stale target later.
+        if( reader_warning_active && kb_menu.status != reader_warning_status ) {
+            reader_warning_active = false;
+        }
+        a11y::semantic_snapshot snapshot;
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, _( "Keybindings" ) );
+        std::vector<a11y::semantic_node> command_nodes = std::move( commands.nodes );
+        snapshot.title = _( "Keybindings" );
+
+        // Mode node: what activating a row would do right now.
+        a11y::semantic_node mode_node;
+        mode_node.id = "keybindings:mode";
+        mode_node.role = "status";
+        const std::string context_line = category == "DEFAULTMODE"
+                                         ? _( "Currently showing keys for the main game." )
+                                         : string_format( _( "Currently showing keys ONLY for the last opened window: %s!" ),
+                                                 category );
+        std::string mode_name;
+        std::string mode_hint;
+        switch( kb_menu.status ) {
+            case kb_menu_status::show:
+                mode_name = _( "Showing" );
+                mode_hint = _( "Choose a menu command first (Remove, Reset, Add local keybinding, Add global keybinding, or Execute), then activate an action row." );
+                break;
+            case kb_menu_status::remove:
+                mode_name = _( "Remove keybinding" );
+                mode_hint = _( "Activate an action row to remove its keybinding." );
+                break;
+            case kb_menu_status::reset:
+                mode_name = _( "Reset keybinding" );
+                mode_hint = _( "Activate an action row to reset it to its default keybinding." );
+                break;
+            case kb_menu_status::add:
+                mode_name = _( "Add local keybinding" );
+                mode_hint = _( "Activate an action row to add a keybinding that applies only on this screen." );
+                break;
+            case kb_menu_status::add_global:
+                mode_name = _( "Add global keybinding" );
+                mode_hint = _( "Activate an action row to add a keybinding that applies everywhere." );
+                break;
+            case kb_menu_status::execute:
+                mode_name = _( "Execute action" );
+                mode_hint = _( "Activate an action row to run that action and leave this menu." );
+                break;
+            case kb_menu_status::filter:
+                mode_name = _( "Filtering" );
+                mode_hint = _( "The screen's filter box is being edited. Confirm or quit filtering to return to the action list." );
+                break;
+        }
+        mode_node.label = string_format( _( "Mode: %s" ), mode_name );
+        mode_node.detail = context_line + " " + mode_hint;
+        mode_node.actions = { "focus", "activate" };
+        snapshot.nodes.push_back( mode_node );
+
+        // Filter field (reader filter; see the adapter comment above).
+        a11y::semantic_node filter_node;
+        filter_node.id = "keybindings:filter";
+        filter_node.role = "text";
+        filter_node.label = _( "Filter actions by name" );
+        filter_node.detail = _( "Reader filter: it only changes which action rows are listed here." );
+        if( !kb_menu.get_filter().empty() ) {
+            filter_node.detail += " " + string_format(
+                                  _( "The game screen's own filter is also active: %s." ),
+                                  kb_menu.get_filter() );
+        }
+        filter_node.detail += " " + std::string( _( "Activate this field to clear both filters." ) );
+        filter_node.field_type = "text";
+        filter_node.applied_value = reader_filter;
+        filter_node.value = reader_filter.empty() ? _( "All actions" ) : reader_filter;
+        filter_node.actions = { "focus", "set_value", "apply", "cancel_draft", "activate" };
+        if( reader_filter_draft ) {
+            filter_node.has_draft = true;
+            filter_node.draft_value = *reader_filter_draft;
+        }
+        snapshot.nodes.push_back( filter_node );
+
+        if( reader_warning_active ) {
+            a11y::semantic_node warning_node;
+            warning_node.id = "keybindings:warning";
+            warning_node.role = "status";
+            warning_node.label = reader_warning_text();
+            warning_node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( warning_node );
+        }
+
+        // Reset all (reader-composed; see the adapter comment above).
+        a11y::semantic_node reset_all_node;
+        reset_all_node.id = "keybindings:reset_all";
+        reset_all_node.role = "command";
+        reset_all_node.label = _( "Reset all keybindings for this context to the defaults" );
+        reset_all_node.detail = _( "Reader-composed operation: the engine only resets one action at a time, so this runs the engine's own per-action reset for every action listed here. Conflict prompts, if any, are the engine's per-action ones." );
+        if( reader_reset_all_armed ) {
+            reset_all_node.value = _( "Armed" );
+            reset_all_node.detail += " " + std::string( _( "Activate again to reset all keybindings now." ) );
+        }
+        reset_all_node.actions = { "focus", "activate" };
+        snapshot.nodes.push_back( reset_all_node );
+
+        a11y::semantic_table actions_table;
+        actions_table.id = "keybindings:actions";
+        actions_table.columns = { { "action", _( "Action" ), "" },
+            { "keys", _( "Assigned key(s)" ), "" },
+            { "scope", _( "Binding scope" ), "" },
+            { "customized", _( "Customized" ), "" }
+        };
+        snapshot.tables.push_back( actions_table );
+
+        int shown = 0;
+        std::string first_row_id;
+        std::string last_row_id;
+        for( size_t i = 0; i < kb_menu.filtered_registered_actions.size(); ++i ) {
+            const std::string &action_id = kb_menu.filtered_registered_actions[i];
+            const std::string name = remove_color_tags( get_action_name( action_id ) );
+            if( !reader_filter.empty() && !lcmatch( name, reader_filter ) ) {
+                continue;
+            }
+            // Same current-vs-basic comparison draw_controls() draws
+            // its colors and "*" marker from.
+            bool overwrite_default;
+            const action_attributes &attributes = inp_mngr.get_action_attributes( action_id,
+                                                  category, &overwrite_default );
+            bool basic_overwrite_default;
+            const action_attributes &basic_attributes = inp_mngr.get_action_attributes( action_id,
+                    category, &basic_overwrite_default, true );
+            const bool customized = overwrite_default != basic_overwrite_default
+                                    || attributes.input_events != basic_attributes.input_events;
+            const std::string keys = remove_color_tags( get_desc( action_id ) );
+            const std::string scope = attributes.input_events.empty() ? _( "Unbound" )
+                                      : overwrite_default ? _( "Local to this screen" ) : _( "Global" );
+            a11y::semantic_node node;
+            node.id = "keybindings:row:" + std::to_string( i );
+            node.role = "listitem";
+            node.label = name;
+            node.value = keys;
+            node.detail = scope;
+            if( customized ) {
+                node.detail += _( ". User customized." );
+            }
+            if( reader_essential.count( action_id ) > 0 ) {
+                node.detail += _( " Essential menu key (reader policy): removing or resetting it needs a second activation to confirm." );
+            }
+            if( reader_warning_active && reader_warning_action == action_id &&
+                reader_warning_status == kb_menu.status ) {
+                node.detail += " " + reader_warning_text();
+            }
+            node.table_id = "keybindings:actions";
+            node.row_index = shown;
+            node.cells = { { "action", name, "", "" },
+                { "keys", keys, "", "" },
+                { "scope", scope, "", "" },
+                { "customized", customized ? _( "Yes" ) : _( "No" ), "", "" }
+            };
+            node.selected = static_cast<int>( i ) == reader_last_row;
+            node.actions = { "focus", "activate" };
+            if( first_row_id.empty() ) {
+                first_row_id = node.id;
+            }
+            if( node.selected ) {
+                last_row_id = node.id;
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+            ++shown;
+        }
+        if( shown == 0 ) {
+            a11y::semantic_node node;
+            node.id = "keybindings:no_results";
+            node.role = "status";
+            node.label = reader_filter.empty() && kb_menu.get_filter().empty()
+                         ? _( "No actions are available." )
+                         : _( "No actions match the filter." );
+            node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        snapshot.summary = string_format( _( "%1$d of %2$d actions shown." ), shown,
+                                          static_cast<int>( org_registered_actions.size() ) );
+        if( !reader_filter.empty() ) {
+            snapshot.summary += " " + string_format( _( "Reader filter: %s" ), reader_filter );
+        }
+        if( reader_warning_active ) {
+            snapshot.summary += " " + reader_warning_text();
+        }
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( command_nodes.begin() ),
+                               std::make_move_iterator( command_nodes.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+
+        if( reader_warning_active ) {
+            snapshot.focus = "keybindings:warning";
+        } else if( !last_row_id.empty() ) {
+            snapshot.focus = last_row_id;
+        } else if( !first_row_id.empty() ) {
+            snapshot.focus = first_row_id;
+        } else if( shown == 0 ) {
+            snapshot.focus = "keybindings:no_results";
+        } else {
+            snapshot.focus = "keybindings:filter";
+        }
+        return snapshot;
+    };
+    a11y::screen_scope reader_scope( &ctxt, "keybindings", reader_handle_intent );
+
     //const auto redraw = [&]( ui_adaptor & ui ) {
     //};
     //ui.on_redraw( redraw );
@@ -1167,6 +1626,9 @@ action_id input_context::display_menu( bool permit_execute_action )
     while( true ) {
         kb_menu.highlight_row_index = -1;
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader_scope.update( make_reader_snapshot() );
+        }
         if( kb_menu.has_button_action() ) {
             action = kb_menu.get_button_action();
             raw_input_char = 0;
@@ -1178,6 +1640,22 @@ action_id input_context::display_menu( bool permit_execute_action )
             if( v.second == raw_input_char ) {
                 action.clear();
             }
+        }
+
+        if( reader_do_reset_all ) {
+            reader_do_reset_all = false;
+            // Reader-composed reset-all (see the adapter comment
+            // above): the engine's own per-action reset, once per
+            // registered action of this context. `changed` follows the
+            // same rule as the per-row reset branch below, so the
+            // save/discard prompt after the loop covers these too.
+            for( const std::string &reset_id : org_registered_actions ) {
+                if( action_reset( reset_id ) ) {
+                    changed = true;
+                }
+            }
+            kb_menu.status = kb_menu_status::show;
+            continue;
         }
 
         kb_menu.filtered_registered_actions = filter_strings_by_phrase( org_registered_actions,

@@ -907,7 +907,13 @@ void game::quicksave()
     time_t now = std::time( nullptr ); //timestamp for start of saving procedure
 
     //perform save
-    save();
+    if( !save() && a11y::enabled() ) {
+        // R20.1: quicksave (and autosave, which runs through here) used
+        // to fail silently apart from a debug message. The counters
+        // below still reset exactly as before; only the reader gets a
+        // spoken result.
+        ::popup( _( "Quicksave failed. The game was not saved." ) );
+    }
     //Now reset counters for autosaving, so we don't immediately autosave after a quicksave or autosave.
     moves_since_last_save = 0;
     last_save_timestamp = now;

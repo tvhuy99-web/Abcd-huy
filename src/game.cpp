@@ -1,4 +1,7 @@
 #include "game.h"
+#include "a11y_input.h"
+#include "a11y_outcome.h"
+#include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "map_memory.h"
 
@@ -5980,6 +5983,38 @@ std::optional<tripoint_bub_ms> game::look_around()
     return result.position;
 }
 
+// Axis-by-axis position relative to the avatar, for the look_around
+// reader adapter (R16). This re-states, locally, the wording of
+// relative_position_name in a11y_world.cpp (which is not shared):
+// north/south and east/west offsets with tile counts, plus the level
+// difference when the tile is on another level.
+static std::string look_around_relative_position_name( const int dx, const int dy, const int dz )
+{
+    if( dx == 0 && dy == 0 && dz == 0 ) {
+        return _( "Current tile" );
+    }
+    std::string result;
+    if( dy != 0 ) {
+        result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    }
+    if( dx != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+    }
+    if( dz != 0 ) {
+        if( dx != 0 || dy != 0 ) {
+            result += ", ";
+        } else {
+            result.clear();
+        }
+        result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                 std::abs( dz ) );
+    }
+    return result;
+}
+
 look_around_result game::look_around(
     const bool show_window, tripoint_bub_ms &center, const tripoint_bub_ms &start_point,
     bool has_first_point,
@@ -6146,6 +6181,106 @@ look_around_result game::look_around(
             zone_cursor, is_moving_zone );
     add_draw_callback( zone_cb );
 
+    // Reader adapter (R16): look_around is also the zone corner picker
+    // and the zone move picker, so the reader must say which mode this
+    // is, where the cursor is relative to the avatar, what tile is
+    // there, and -- before the second corner is confirmed -- how large
+    // the selection so far is. Cursor movement stays on the original
+    // direction actions; every intent is just the registered one, and
+    // focusing a node changes nothing. The scope is created here,
+    // after ctxt has registered its actions and before the do loop, so
+    // the builder can capture zone_start/zone_end, which the loop
+    // recomputes on every iteration before input is handled.
+    a11y::screen_scope reader( &ctxt, "look-around",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto build_snapshot = [&]() {
+        const std::string title = select_zone ? _( "Select zone corner" )
+                                  : ( is_moving_zone ? _( "Move zone" ) : _( "Look around" ) );
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        for( a11y::semantic_node &command : commands ) {
+            if( command.id == "CONFIRM" ) {
+                command.detail = select_zone ? _( "Set this tile as the corner of the zone." )
+                                 : _( "Finish and use this tile." );
+            } else if( command.id == "QUIT" ) {
+                command.detail = _( "Cancel without selecting a tile." );
+            }
+        }
+
+        if( select_zone && !has_first_point ) {
+            snapshot.summary = _( "Select the first corner of the zone." );
+        } else if( select_zone && has_first_point ) {
+            snapshot.summary = _( "Select the second corner of the zone. "
+                                  "The selection so far is described below." );
+        } else if( is_moving_zone ) {
+            snapshot.summary = _( "Choose the new position of the zone." );
+        } else {
+            snapshot.summary = _( "Move the cursor to inspect tiles. "
+                                  "Confirm to finish here, or cancel to return." );
+        }
+
+        const tripoint_bub_ms avatar_pos = u.pos_bub();
+        const auto relative_to_avatar = [&]( const tripoint_bub_ms & point ) {
+            return look_around_relative_position_name( point.x() - avatar_pos.x(),
+                    point.y() - avatar_pos.y(), point.z() - avatar_pos.z() );
+        };
+
+        a11y::semantic_node cursor;
+        cursor.id = "look:cursor";
+        cursor.role = "status";
+        cursor.label = _( "Cursor" );
+        // Knowledge boundary (R08 precedent): a cursor on another level
+        // may only read map memory, never the live tile.
+        const std::string cursor_text = relative_to_avatar( lp ) + ". " +
+                                        a11y::describe_tile( lp.z() != u.posz()
+                                                ? a11y::observe_memory_tile( lp )
+                                                : a11y::observe_tile( lp ) );
+        cursor.value = cursor_text;
+        cursor.detail = cursor_text;
+        cursor.actions = { "focus" };
+        snapshot.nodes.push_back( cursor );
+
+        const auto add_selection = [&]( const tripoint_bub_ms & first,
+                                        const tripoint_bub_ms & second ) {
+            a11y::semantic_node selection;
+            selection.id = "look:selection";
+            selection.role = "status";
+            selection.label = _( "Selection" );
+            const std::string text = string_format(
+                                         _( "First corner: %1$s. Second corner: %2$s. "
+                                            "Size: %3$d by %4$d tiles, %5$d levels." ),
+                                         relative_to_avatar( first ), relative_to_avatar( second ),
+                                         std::abs( second.x() - first.x() ) + 1,
+                                         std::abs( second.y() - first.y() ) + 1,
+                                         std::abs( second.z() - first.z() ) + 1 );
+            selection.value = text;
+            selection.detail = text;
+            selection.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( selection ) );
+        };
+        if( select_zone && has_first_point ) {
+            add_selection( start_point, lp );
+        } else if( is_moving_zone && zone_start && zone_end ) {
+            add_selection( *zone_start, *zone_end );
+        }
+
+        snapshot.focus = "look:cursor";
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     is_looking = true;
     const tripoint_rel_ms prev_offset = u.view_offset;
 #if defined(TILES)
@@ -6189,6 +6324,10 @@ look_around_result game::look_around(
 
         if( ( select_zone && has_first_point ) || is_moving_zone ) {
             ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
+        }
+
+        if( a11y::enabled() ) {
+            reader.update( build_snapshot() );
         }
 
         //Wait for input
@@ -9328,11 +9467,48 @@ static std::optional<tripoint_bub_ms> find_empty_spot_nearby( const tripoint_bub
     return std::nullopt;
 }
 
+namespace
+{
+// RAII fallback for game::vertical_move (R08), same contract as the guard
+// in avatar_action::move: an explicit outcome record made during the call
+// wins; otherwise a changed z-level means vertical_moved and an unchanged
+// one means undetermined. "blocked" is never inferred here.
+class vertical_move_outcome_guard
+{
+    public:
+        vertical_move_outcome_guard( const avatar &you, const bool active )
+            : you_( you ), start_pos_( you.pos_abs() ),
+              start_sequence_( a11y::last_action_outcome().sequence ), active_( active ) {}
+        vertical_move_outcome_guard( const vertical_move_outcome_guard & ) = delete;
+        vertical_move_outcome_guard &operator=( const vertical_move_outcome_guard & ) = delete;
+        ~vertical_move_outcome_guard() {
+            if( !active_ || a11y::last_action_outcome().sequence != start_sequence_ ) {
+                return;
+            }
+            if( you_.pos_abs().z() != start_pos_.z() ) {
+                a11y::record_action_outcome( a11y::action_outcome_kind::vertical_moved, "" );
+            } else {
+                a11y::record_action_outcome( a11y::action_outcome_kind::undetermined, "" );
+            }
+        }
+    private:
+        const avatar &you_;
+        tripoint_abs_ms start_pos_;
+        std::uint64_t start_sequence_ = 0;
+        bool active_ = true;
+};
+} // namespace
+
 void game::vertical_move( int movez, bool force, bool peeking )
 {
     if( u.has_flag( json_flag_CANNOT_MOVE ) ) {
+        // The guard is not constructed on this path: a character that
+        // cannot move at all produces no action outcome (R08).
         return;
     }
+    // Peeking between levels is observation, not an action: it must not
+    // overwrite the last real action outcome (R08.3).
+    const vertical_move_outcome_guard outcome_guard( u, !peeking );
 
     if( u.is_mounted() ) {
         monster *mons = u.mounted_creature.get();

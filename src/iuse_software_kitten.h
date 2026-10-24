@@ -9,6 +9,7 @@
 
 #include "color.h"
 #include "cursesdef.h"
+#include "input_context.h"
 #include "mdarray.h"
 #include "point.h"
 
@@ -32,6 +33,13 @@ class robot_finds_kitten
         void process_input();
         catacurses::window bkatwin;
         catacurses::window w;
+        // One persistent input context for the whole game. The original
+        // code created a throwaway context inside show() and again inside
+        // process_input(), but the reader adapter (a11y::screen_scope)
+        // must bind to the very context whose handle_input() polls input,
+        // so the context lives here and is registered once, in the
+        // constructor. show() only calls the const get_desc() on it.
+        input_context ctxt;
         kobject robot;
         kobject kitten;
         kobject empty;
