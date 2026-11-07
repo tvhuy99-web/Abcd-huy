@@ -182,6 +182,21 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
+    /** Launch the separate native game-audio controls from Settings. */
+    public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) { return; }
+            Intent intent = new Intent(this, SoundSettingsActivity.class);
+            intent.putExtra("native_music_volume", music);
+            intent.putExtra("native_effects_volume", effects);
+            intent.putExtra("native_sound_enabled", enabled);
+            startActivity(intent);
+        });
+    }
+
+    // Java never edits native options on this thread. C++ drains a queue.
+    static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
+
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native boolean nativeReaderIntent(long session, long frame, long generation,
             long revision, long request, String node, String action, String value);

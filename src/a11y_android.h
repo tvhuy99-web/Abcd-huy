@@ -22,6 +22,13 @@ void publish( const std::string &json );
 void announce( const std::string &text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
+#if defined(__ANDROID__)
+// Sound settings are queued by the Java UI, then applied on the C++ game
+// thread from the main-menu loop, preserving SDL/option thread ownership.
+void open_sound_settings( int music, int effects, bool enabled );
+void queue_sound_settings( int music, int effects, bool enabled );
+void apply_pending_sound_settings();
+#endif
 // Accessible recovery actions for SDL debug messages, even without an
 // active semantic snapshot. The game thread retains authority to continue.
 void present_debug_prompt( const std::string &report );

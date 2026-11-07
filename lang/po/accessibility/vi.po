@@ -3334,3 +3334,8 @@ msgstr "Bị chặn"
 
 msgid "Trap: %s"
 msgstr "Bẫy %s"
+
+# Compact sound configuration in the Android main-menu Settings tab.
+msgctxt "Main Menu|Settings"
+msgid "Sound Settings"
+msgstr "Cài đặt âm thanh"

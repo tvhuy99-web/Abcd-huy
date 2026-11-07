@@ -26,9 +26,23 @@ class TtsSettingsWiringTest(unittest.TestCase):
         settings = (JAVA / "TtsSettingsActivity.java").read_text(
             encoding="utf-8"
         )
-        toggle = settings.index("column.addView(enabled);")
-        engine = settings.index("engineButton = button(")
-        self.assertLess(toggle, engine)
+        ordered = (
+            "column.addView(enabled);",
+            "engineSpinner = selector(",
+            "languageSpinner = selector(",
+            "voiceSpinner = selector(",
+            "rate = slider(",
+            "pitch = slider(",
+            "volume = slider(",
+            "sampleButton = button(",
+            "button(column, R.string.a11yTtsCancel",
+            "button(column, R.string.a11yTtsSave",
+        )
+        positions = [settings.index(part) for part in ordered]
+        self.assertEqual(positions, sorted(positions))
+        self.assertNotIn("column.addView(online)", settings)
+        self.assertNotIn("a11yTtsRestoreDefaults, view ->", settings)
+        self.assertNotIn("a11yAndroidVoiceSettings, view ->", settings)
         self.assertIn("saved.isEnabled()", settings)
         self.assertIn("previewPassed", settings)
         self.assertIn("saveTtsSettings(", settings)

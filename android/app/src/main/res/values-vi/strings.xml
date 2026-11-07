@@ -57,7 +57,7 @@
 
     <!-- Dedicated TTS configuration; all values are saved together. -->
     <string name="a11yTtsSettingsTitle">Cài đặt TTS</string>
-    <string name="a11yTtsEnable">Bật trình đọc TTS trong game</string>
+    <string name="a11yTtsEnable">Trình đọc TTS</string>
     <string name="a11yTtsEngine">Bộ máy đọc</string>
     <string name="a11yTtsLanguage">Ngôn ngữ</string>
     <string name="a11yTtsVoice">Giọng đọc</string>
@@ -78,7 +78,7 @@
     <string name="a11yTtsLanguageChoice">Ngôn ngữ: %1$s</string>
     <string name="a11yTtsVoiceChoice">Giọng đọc: %1$s</string>
     <string name="a11yTtsRestoreDefaults">Khôi phục giọng mặc định</string>
-    <string name="a11yTtsCancel">Hủy, không lưu</string>
+    <string name="a11yTtsCancel">Hủy</string>
     <string name="a11yTtsSample">Nghe thử</string>
     <string name="a11yTtsSave">Lưu</string>
     <string name="a11yTtsVolumeTooLow">Âm lượng bằng không. Hãy tăng âm lượng trước khi bật đọc bằng lời nói.</string>
@@ -155,4 +155,9 @@
     <string name="a11yBindUnavailable">Lệnh không khả dụng.</string>
     <string name="a11yBindMenuTitle">Chọn cử chỉ</string>
     <string name="a11yBindTouchExploration">TalkBack của Android có thể chiếm một số cử chỉ nhiều ngón. Nếu cử chỉ không hoạt động, hãy dùng nút có nhãn trên màn hình.</string>
+    <string name="a11ySoundSettingsTitle">Cài đặt âm thanh</string>
+    <string name="a11yMusicEnabled">Nhạc nền</string>
+    <string name="a11yMusicVolumeValue">Âm lượng nhạc: %1$d</string>
+    <string name="a11yEffectsEnabled">Hiệu ứng âm thanh</string>
+    <string name="a11yEffectsVolumeValue">Âm lượng hiệu ứng: %1$d</string>
 </resources>

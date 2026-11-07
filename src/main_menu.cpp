@@ -577,6 +577,7 @@ void main_menu::init_strings()
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "<I|i>mGui Demo Screen" ) );
 #if defined(__ANDROID__)
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "TTS Settings" ) );
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Sound Settings" ) );
 #endif
 
     vSettingsHotkeys.clear();
@@ -795,6 +796,9 @@ bool main_menu::opening_screen()
         return std::nullopt;
     } );
     while( !start ) {
+#if defined(__ANDROID__)
+        a11y::android::apply_pending_sound_settings();
+#endif
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot;
@@ -1118,6 +1122,11 @@ bool main_menu::opening_screen()
 #if defined(__ANDROID__)
                     } else if( sel2 == 7 ) { // Native Android TTS settings
                         a11y::android::open_tts_settings();
+                    } else if( sel2 == 8 ) { // Native game sound settings
+                        a11y::android::open_sound_settings(
+                            get_option<int>( "MUSIC_VOLUME" ),
+                            get_option<int>( "SOUND_EFFECT_VOLUME" ),
+                            get_option<bool>( "SOUND_ENABLED" ) );
 #endif
                     }
                     break;

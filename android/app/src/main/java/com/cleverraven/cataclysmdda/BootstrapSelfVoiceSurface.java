@@ -10,6 +10,7 @@ import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.util.ArrayList;
@@ -113,8 +114,12 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     }
 
     private void collect(View view) {
-        if (view.getVisibility() != View.VISIBLE) { return; }
-        if (view instanceof TextView || view instanceof SeekBar) {
+        if (view.getVisibility() != View.VISIBLE
+                || view.getImportantForAccessibility() == View.IMPORTANT_FOR_ACCESSIBILITY_NO) {
+            return;
+        }
+        if (view instanceof TextView || view instanceof SeekBar
+                || view instanceof Spinner) {
             items.add(view);
             return;
         }
@@ -129,7 +134,11 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         focus = Math.floorMod(focus, items.size());
         View view = items.get(focus);
         String text;
-        if (view instanceof CompoundButton) {
+        if (view instanceof Spinner) {
+            Spinner spinner = (Spinner) view;
+            Object selected = spinner.getSelectedItem();
+            text = selected == null ? "" : selected.toString();
+        } else if (view instanceof CompoundButton) {
             CompoundButton button = (CompoundButton) view;
             text = button.getText() + ". " + getContext().getString(
                     button.isChecked() ? R.string.a11yChecked : R.string.a11yUnchecked);
@@ -173,8 +182,20 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     private void activateFocused() {
         if (items.isEmpty()) { return; }
         View view = items.get(focus);
-        if (view.isEnabled() && view.isClickable()) { view.performClick(); }
-        else { speakFocused(); }
+        if (view instanceof Spinner && view.isEnabled()) {
+            // For self-voicing gestures, activating a dropdown selects the
+            // next item. With TalkBack, Android shows the normal popup list.
+            Spinner spinner = (Spinner) view;
+            if (spinner.getCount() > 0) {
+                spinner.setSelection((spinner.getSelectedItemPosition() + 1)
+                        % spinner.getCount());
+                post(this::speakFocused);
+            }
+        } else if (view.isEnabled() && view.isClickable()) {
+            view.performClick();
+        } else {
+            speakFocused();
+        }
     }
 
     @Override

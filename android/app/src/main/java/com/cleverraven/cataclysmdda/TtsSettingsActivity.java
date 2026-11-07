@@ -1,20 +1,21 @@
 package com.cleverraven.cataclysmdda;
 
 import android.app.Activity;
-import android.content.ActivityNotFoundException;
-import android.content.Intent;
 import android.os.Bundle;
-import android.provider.Settings;
 import android.view.View;
 import android.view.accessibility.AccessibilityManager;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
 import android.widget.SeekBar;
+import android.widget.Spinner;
 import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.Locale;
+import java.util.Objects;
 
 /**
  * Dedicated, self-voiced TTS settings. All edits are drafts until Save.
@@ -27,10 +28,13 @@ public final class TtsSettingsActivity extends Activity {
     private BootstrapSelfVoiceSurface surface;
     private RescueAudioPlayer rescue;
     private CheckBox enabled;
-    private CheckBox online;
-    private Button engineButton;
-    private Button languageButton;
-    private Button voiceButton;
+    private final ArrayList<String> languageChoices = new ArrayList<>();
+    private final ArrayList<AndroidSpeech.VoiceOption> voiceChoices = new ArrayList<>();
+    private Spinner engineSpinner;
+    private Spinner languageSpinner;
+    private Spinner voiceSpinner;
+    private boolean allowNetwork;
+    private boolean updatingChoices;
     private Button sampleButton;
     private SeekBar rate;
     private SeekBar pitch;
@@ -58,6 +62,7 @@ public final class TtsSettingsActivity extends Activity {
         engineName = saved.getSpeechEngineName();
         voiceName = saved.getSpeechVoiceName();
         languageTag = saved.getSpeechLanguageTag();
+        allowNetwork = saved.permitsNetworkVoice();
 
         surface = new BootstrapSelfVoiceSurface(this, new BootstrapSelfVoiceSurface.Listener() {
             @Override
@@ -100,22 +105,22 @@ public final class TtsSettingsActivity extends Activity {
         enabled = new CheckBox(this);
         enabled.setText(R.string.a11yTtsEnable);
         enabled.setChecked(saved.isEnabled());
-        enabled.setOnCheckedChangeListener((view, checked) -> {
-            invalidatePreview();
-            announce(getString(checked ? R.string.a11yTtsEnabledDraft
-                    : R.string.a11yTtsDisableWarning));
-        });
+        enabled.setOnCheckedChangeListener((view, checked) -> invalidatePreview());
         column.addView(enabled);
 
-        engineButton = button(column, R.string.a11yTtsEngine, view -> cycleEngine());
-        languageButton = button(column, R.string.a11yTtsLanguage, view -> cycleLanguage());
-        voiceButton = button(column, R.string.a11yTtsVoice, view -> cycleVoice());
+        engineSpinner = selector(column, R.string.a11yTtsEngine);
+        languageSpinner = selector(column, R.string.a11yTtsLanguage);
+        voiceSpinner = selector(column, R.string.a11yTtsVoice);
+        bindSelectors();
 
         rateText = label(column, R.string.a11yTtsRate);
+        rateText.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         rate = slider(column, 25, Math.round((saved.getRate() - 0.5f) * 10.0f));
         pitchText = label(column, R.string.a11yTtsPitch);
+        pitchText.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         pitch = slider(column, 15, Math.round((saved.getPitch() - 0.5f) * 10.0f));
         volumeText = label(column, R.string.a11yTtsVolume);
+        volumeText.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         volume = slider(column, 20, Math.round(saved.getVolume() * 20.0f));
         SeekBar.OnSeekBarChangeListener changed = new SeekBar.OnSeekBarChangeListener() {
             @Override
@@ -137,17 +142,10 @@ public final class TtsSettingsActivity extends Activity {
         volume.setOnSeekBarChangeListener(changed);
         updateSliders();
 
-        online = new CheckBox(this);
-        online.setText(R.string.a11yTtsAllowNetwork);
-        online.setChecked(saved.permitsNetworkVoice());
-        online.setOnCheckedChangeListener((view, checked) -> invalidatePreview());
-        column.addView(online);
-
-        status = label(column, R.string.a11yTtsLoading);
-        button(column, R.string.a11yTtsRestoreDefaults, view -> restoreDefaults());
-        button(column, R.string.a11yAndroidVoiceSettings, view -> openAndroidSettings());
-        button(column, R.string.a11yTtsCancel, view -> finish());
+        // Internal feedback has no separate on-screen explanation row.
+        status = new TextView(this);
         sampleButton = button(column, R.string.a11yTtsSample, view -> testVoice());
+        button(column, R.string.a11yTtsCancel, view -> finish());
         button(column, R.string.a11yTtsSave, view -> saveSettings());
 
         setContentView(surface);
@@ -199,6 +197,64 @@ public final class TtsSettingsActivity extends Activity {
         result.setOnClickListener(action);
         parent.addView(result);
         return result;
+    }
+
+    private Spinner selector(LinearLayout parent, int label) {
+        Spinner result = new Spinner(this);
+        result.setPrompt(getString(label));
+        parent.addView(result);
+        return result;
+    }
+
+    private void setChoices(Spinner spinner, ArrayList<String> choices, int selected) {
+        ArrayAdapter<String> adapter = new ArrayAdapter<>(this,
+                android.R.layout.simple_spinner_item, choices);
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item);
+        spinner.setAdapter(adapter);
+        spinner.setSelection(Math.max(0, Math.min(selected, choices.size() - 1)));
+    }
+
+    private void bindSelectors() {
+        engineSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (probeRunning || updatingChoices || position > engines.size()) { return; }
+                String selected = position == 0 ? null : engines.get(position - 1).name;
+                if (Objects.equals(engineName, selected)) { return; }
+                engineName = selected;
+                engineLabel = null;
+                voiceName = null;
+                invalidatePreview();
+                startProbe();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+        languageSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (probeRunning || updatingChoices || position >= languageChoices.size()) { return; }
+                String selected = languageChoices.get(position);
+                if (Objects.equals(languageTag, selected)) { return; }
+                languageTag = selected;
+                voiceName = null;
+                adoptAvailableVoice();
+                invalidatePreview();
+                updateChoices();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
+        voiceSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
+            @Override
+            public void onItemSelected(AdapterView<?> parent, View view, int position, long id) {
+                if (probeRunning || updatingChoices || position >= voiceChoices.size()) { return; }
+                AndroidSpeech.VoiceOption selected = voiceChoices.get(position);
+                String name = selected == null ? null : selected.voiceName;
+                if (Objects.equals(voiceName, name)) { return; }
+                voiceName = name;
+                invalidatePreview();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) { }
+        });
     }
 
     private TextView label(LinearLayout parent, int label) {
@@ -303,73 +359,58 @@ public final class TtsSettingsActivity extends Activity {
         if (fallback != null) { voiceName = fallback.voiceName; }
     }
 
-    private void cycleEngine() {
-        if (probeRunning) { return; }
-        ArrayList<String> choices = new ArrayList<>();
-        choices.add(null);
-        for (AndroidSpeech.EngineOption engine : engines) { choices.add(engine.name); }
-        int index = choices.indexOf(engineName);
-        engineName = choices.get(Math.floorMod(index + 1, choices.size()));
-        voiceName = null;
-        engineLabel = null;
-        invalidatePreview();
-        startProbe();
-    }
-
-    private void cycleLanguage() {
-        if (probeRunning) { return; }
-        ArrayList<String> tags = new ArrayList<>();
-        for (AndroidSpeech.VoiceOption voice : voices) {
-            String tag = voice.locale.toLanguageTag();
-            if (!tags.contains(tag)) { tags.add(tag); }
-        }
-        if (tags.isEmpty()) { return; }
-        int index = tags.indexOf(languageTag);
-        languageTag = tags.get(Math.floorMod(index + 1, tags.size()));
-        voiceName = null;
-        adoptAvailableVoice();
-        invalidatePreview();
-        updateChoices();
-        speakCurrentChoice();
-    }
-
-    private void cycleVoice() {
-        if (probeRunning) { return; }
-        ArrayList<AndroidSpeech.VoiceOption> choices = new ArrayList<>();
-        for (AndroidSpeech.VoiceOption voice : voices) {
-            if (voice.locale.toLanguageTag().equals(languageTag)) { choices.add(voice); }
-        }
-        if (choices.isEmpty()) { return; }
-        int index = -1;
-        for (int i = 0; i < choices.size(); i++) {
-            if (choices.get(i).voiceName.equals(voiceName)) { index = i; }
-        }
-        voiceName = choices.get(Math.floorMod(index + 1, choices.size())).voiceName;
-        invalidatePreview();
-        updateChoices();
-        speakCurrentChoice();
-    }
-
     private void updateChoices() {
-        engineButton.setEnabled(!probeRunning);
-        languageButton.setEnabled(!probeRunning && !voices.isEmpty());
-        voiceButton.setEnabled(!probeRunning && !voices.isEmpty());
-        sampleButton.setEnabled(!probeRunning);
-        String chosen = getString(R.string.a11yTtsSystemDefault);
-        for (AndroidSpeech.EngineOption engine : engines) {
-            if (engine.name.equals(engineName)) {
-                engineLabel = engine.label;
-                chosen = engine.label;
-                break;
+        updatingChoices = true;
+        try {
+            ArrayList<String> engineLabels = new ArrayList<>();
+            engineLabels.add(getString(R.string.a11yTtsEngineChoice,
+                    getString(R.string.a11yTtsSystemDefault)));
+            int engineIndex = 0;
+            for (AndroidSpeech.EngineOption engine : engines) {
+                engineLabels.add(getString(R.string.a11yTtsEngineChoice, engine.label));
+                if (engine.name.equals(engineName)) {
+                    engineLabel = engine.label;
+                    engineIndex = engineLabels.size() - 1;
+                }
             }
+            setChoices(engineSpinner, engineLabels, engineIndex);
+            engineSpinner.setEnabled(!probeRunning);
+
+            languageChoices.clear();
+            languageChoices.add(languageTag);
+            for (AndroidSpeech.VoiceOption voice : voices) {
+                String tag = voice.locale.toLanguageTag();
+                if (!languageChoices.contains(tag)) { languageChoices.add(tag); }
+            }
+            ArrayList<String> languages = new ArrayList<>();
+            for (String tag : languageChoices) {
+                Locale locale = Locale.forLanguageTag(tag);
+                languages.add(getString(R.string.a11yTtsLanguageChoice,
+                        locale.getDisplayName(Locale.getDefault())));
+            }
+            setChoices(languageSpinner, languages, 0);
+            languageSpinner.setEnabled(!probeRunning && !voices.isEmpty());
+
+            voiceChoices.clear();
+            voiceChoices.add(null);
+            ArrayList<String> voiceLabels = new ArrayList<>();
+            voiceLabels.add(getString(R.string.a11yTtsVoiceChoice,
+                    getString(R.string.a11yTtsSystemDefault)));
+            int voiceIndex = 0;
+            for (AndroidSpeech.VoiceOption voice : voices) {
+                if (!voice.locale.toLanguageTag().equals(languageTag)) { continue; }
+                voiceChoices.add(voice);
+                voiceLabels.add(getString(R.string.a11yTtsVoiceChoice, voice.voiceName));
+                if (voice.voiceName.equals(voiceName)) {
+                    voiceIndex = voiceLabels.size() - 1;
+                }
+            }
+            setChoices(voiceSpinner, voiceLabels, voiceIndex);
+            voiceSpinner.setEnabled(!probeRunning && !voices.isEmpty());
+            sampleButton.setEnabled(!probeRunning);
+        } finally {
+            updatingChoices = false;
         }
-        if (engineName != null && engineLabel != null) { chosen = engineLabel; }
-        engineButton.setText(getString(R.string.a11yTtsEngineChoice, chosen));
-        Locale locale = Locale.forLanguageTag(languageTag);
-        languageButton.setText(getString(R.string.a11yTtsLanguageChoice,
-                locale.getDisplayName(Locale.getDefault())));
-        voiceButton.setText(getString(R.string.a11yTtsVoiceChoice,
-                voiceName == null ? getString(R.string.a11yTtsSystemDefault) : voiceName));
     }
 
     private void speakCurrentChoice() {
@@ -382,7 +423,7 @@ public final class TtsSettingsActivity extends Activity {
         previewRequested = true;
         status.setText(R.string.a11ySpeechInitializing);
         speech.initialize(engineName, Locale.forLanguageTag(languageTag),
-                selectedRate(), !online.isChecked(), voiceName,
+                selectedRate(), !allowNetwork, voiceName,
                 selectedPitch(), selectedVolume());
     }
 
@@ -400,38 +441,10 @@ public final class TtsSettingsActivity extends Activity {
             return;
         }
         new ReaderPreferences(this).saveTtsSettings(enabled.isChecked(), engineName,
-                voiceName, languageTag, online.isChecked(), selectedRate(),
+                voiceName, languageTag, allowNetwork, selectedRate(),
                 selectedPitch(), selectedVolume());
         setResult(RESULT_OK);
         finish();
-    }
-
-    private void restoreDefaults() {
-        engineName = null;
-        engineLabel = null;
-        voiceName = null;
-        languageTag = ReaderPreferences.DEFAULT_SPEECH_LANGUAGE;
-        enabled.setChecked(true);
-        online.setChecked(false);
-        rate.setProgress(5);
-        pitch.setProgress(5);
-        volume.setProgress(20);
-        updateSliders();
-        invalidatePreview();
-        startProbe();
-    }
-
-    private void openAndroidSettings() {
-        invalidatePreview();
-        try {
-            startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
-        } catch (ActivityNotFoundException missing) {
-            try {
-                startActivity(new Intent(Settings.ACTION_SETTINGS));
-            } catch (ActivityNotFoundException unavailable) {
-                announce(getString(R.string.a11ySettingsUnavailable));
-            }
-        }
     }
 
     private boolean usesTalkBack() {
@@ -450,7 +463,7 @@ public final class TtsSettingsActivity extends Activity {
     private void announce(String message) {
         status.setText(message);
         if (usesTalkBack()) {
-            status.announceForAccessibility(message);
+            surface.announceForAccessibility(message);
         } else {
             speakLocal(message);
         }
@@ -462,7 +475,7 @@ public final class TtsSettingsActivity extends Activity {
         foreground = true;
         if (speech != null) {
             speech.initialize(engineName, Locale.forLanguageTag(languageTag),
-                    selectedRate(), !online.isChecked(), voiceName,
+                    selectedRate(), !allowNetwork, voiceName,
                     selectedPitch(), selectedVolume());
         }
     }

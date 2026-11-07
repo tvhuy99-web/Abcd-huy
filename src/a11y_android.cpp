@@ -9,6 +9,7 @@
 #if defined(__ANDROID__)
 #include <jni.h>
 #include "catacharset.h"
+#include "options.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
 #endif
@@ -23,6 +24,17 @@ std::atomic<std::uint64_t> epoch{ 1 };
 std::mutex inbox_mutex;
 std::deque<semantic_intent> inbox;
 std::atomic<int> debug_prompt_response{ 0 };
+#if defined(__ANDROID__)
+// UI thread only queues updates. C++ options and audio are modified on the
+// native game thread, never from a Java callback.
+struct pending_sound_settings {
+    int music;
+    int effects;
+    bool enabled;
+};
+std::mutex sound_settings_mutex;
+std::optional<pending_sound_settings> pending_sound;
+#endif
 } // namespace
 
 bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
@@ -255,6 +267,64 @@ void dismiss_debug_prompt()
 #endif
 }
 
+#if defined(__ANDROID__)
+void queue_sound_settings( const int music, const int effects, const bool enabled )
+{
+    if( music < 0 || music > 128 || effects < 0 || effects > 128 ) {
+        return;
+    }
+    {
+        const std::lock_guard<std::mutex> lock( sound_settings_mutex );
+        pending_sound = pending_sound_settings{ music, effects, enabled };
+    }
+    PushWakeEvent();
+}
+
+void apply_pending_sound_settings()
+{
+    std::optional<pending_sound_settings> update;
+    {
+        const std::lock_guard<std::mutex> lock( sound_settings_mutex );
+        update = pending_sound;
+        pending_sound.reset();
+    }
+    if( !update ) {
+        return;
+    }
+    get_options().get_option( "SOUND_ENABLED" ).setValue(
+        std::string( update->enabled ? "true" : "false" ) );
+    get_options().get_option( "MUSIC_VOLUME" ).setValue( update->music );
+    get_options().get_option( "SOUND_EFFECT_VOLUME" ).setValue( update->effects );
+    // This also updates SDL music output and the global sound-enabled flag.
+    get_options().save();
+}
+
+void open_sound_settings( const int music, const int effects, const bool enabled )
+{
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityOpenSoundSettings", "(IIZ)V" );
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method, music, effects,
+                                 enabled ? JNI_TRUE : JNI_FALSE );
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+}
+#endif
+
 void open_tts_settings()
 {
 #if defined(__ANDROID__)
@@ -372,6 +442,13 @@ std::string from_java( JNIEnv *env, jstring value )
     return utf32_to_utf8( codepoints );
 }
 } // namespace
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeQueueSoundSettings(
+    JNIEnv *, jclass, jint music, jint effects, jboolean enabled )
+{
+    a11y::android::queue_sound_settings( music, effects, enabled == JNI_TRUE );
+}
 
 extern "C" JNIEXPORT void JNICALL
 Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReader(

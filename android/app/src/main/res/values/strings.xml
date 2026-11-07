@@ -57,7 +57,7 @@
 
     <!-- Dedicated TTS configuration; all values are saved together. -->
     <string name="a11yTtsSettingsTitle">TTS settings</string>
-    <string name="a11yTtsEnable">Enable in-game TTS reader</string>
+    <string name="a11yTtsEnable">TTS reader</string>
     <string name="a11yTtsEngine">Speech engine</string>
     <string name="a11yTtsLanguage">Reading language</string>
     <string name="a11yTtsVoice">Voice</string>
@@ -78,7 +78,7 @@
     <string name="a11yTtsLanguageChoice">Language: %1$s</string>
     <string name="a11yTtsVoiceChoice">Voice: %1$s</string>
     <string name="a11yTtsRestoreDefaults">Restore default voice settings</string>
-    <string name="a11yTtsCancel">Cancel, do not save</string>
+    <string name="a11yTtsCancel">Cancel</string>
     <string name="a11yTtsSample">Listen to sample</string>
     <string name="a11yTtsSave">Save</string>
     <string name="a11yTtsVolumeTooLow">Volume is zero. Increase the volume before enabling spoken navigation.</string>
@@ -155,4 +155,9 @@
     <string name="a11yBindUnavailable">Command unavailable.</string>
     <string name="a11yBindMenuTitle">Select a gesture</string>
     <string name="a11yBindTouchExploration">Android TalkBack may reserve some multi-finger gestures. Use the accessible on-screen controls if a gesture is intercepted.</string>
+    <string name="a11ySoundSettingsTitle">Sound settings</string>
+    <string name="a11yMusicEnabled">Background music</string>
+    <string name="a11yMusicVolumeValue">Music volume: %1$d</string>
+    <string name="a11yEffectsEnabled">Sound effects</string>
+    <string name="a11yEffectsVolumeValue">Effects volume: %1$d</string>
 </resources>

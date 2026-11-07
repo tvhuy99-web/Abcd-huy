@@ -78,6 +78,9 @@
         <activity android:name="TtsSettingsActivity"
                   android:exported="false"
                   android:label="@string/a11yTtsSettingsTitle" />
+        <activity android:name="SoundSettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11ySoundSettingsTitle" />
         <!-- Expose app's private data directory for backup without root -->
         <provider
             android:name=".CDDADocumentsProvider"
