@@ -730,14 +730,23 @@ bool main_menu::opening_screen()
     EM_ASM( window.dispatchEvent( new Event( 'menuready' ) ); );
 #endif
 
+    // The visual menu overlays a submenu under nine persistent top-level
+    // tabs. For the screen reader, these are *separate navigation levels*:
+    // publishing both at once makes the five New Game modes unreachable.
+    bool reader_submenu_open = false;
     a11y::screen_scope reader( &ctxt, "MAIN_MENU",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "cancel" ) {
+            if( reader_submenu_open ) {
+                reader_submenu_open = false;
+                return "TIMEOUT";
+            }
             return "QUIT";
         }
         for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
             if( intent.node == "tab:" + std::to_string( i ) ) {
                 if( sel1 != static_cast<int>( i ) ) {
+                    reader_submenu_open = false;
                     sel1 = i;
                     sel2 = i == static_cast<std::size_t>( getopt( main_menu_opts::LOADCHAR ) ) ? last_world_pos : 0;
                     sel_line = 0;
@@ -749,9 +758,26 @@ bool main_menu::opening_screen()
                     if( sel1 == getopt( main_menu_opts::HELP ) || sel1 == getopt( main_menu_opts::TUTORIAL ) ) {
                         return "CONFIRM";
                     }
+                    // Selecting a category enters its own accessible page;
+                    // don't implicitly execute the highlighted sub-choice.
+                    const bool has_children = sel1 == getopt( main_menu_opts::NEWCHAR ) ||
+                                              sel1 == getopt( main_menu_opts::SETTINGS ) ||
+                                              sel1 == getopt( main_menu_opts::WORLD ) ||
+                                              sel1 == getopt( main_menu_opts::MOTD ) ||
+                                              sel1 == getopt( main_menu_opts::CREDITS ) ||
+                                              ( sel1 == getopt( main_menu_opts::LOADCHAR ) &&
+                                                !world_generator->get_all_worlds().empty() );
+                    if( has_children ) {
+                        reader_submenu_open = true;
+                        sel2 = 0;
+                        sel_line = 0;
+                    }
                 }
                 return "TIMEOUT";
             }
+        }
+        if( !reader_submenu_open ) {
+            return std::nullopt;
         }
         const std::string prefix = "item:" + std::to_string( sel1 ) + ':';
         int count = 0;
@@ -772,9 +798,17 @@ bool main_menu::opening_screen()
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot;
-            snapshot.title = _( "Cataclysm: Dark Days Ahead - Main menu" );
-            snapshot.focus = "tab:" + std::to_string( sel1 );
-            for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
+            snapshot.title = reader_submenu_open ?
+                             remove_color_tags( shortcut_text( c_white, vMenuItems[sel1] ) ) :
+                             _( "Cataclysm: Dark Days Ahead - Main menu" );
+            snapshot.focus = reader_submenu_open ?
+                             ( ( sel1 == getopt( main_menu_opts::MOTD ) ||
+                                 sel1 == getopt( main_menu_opts::CREDITS ) ) ?
+                               "document:" + std::to_string( sel1 ) :
+                               "item:" + std::to_string( sel1 ) + ':' + std::to_string( sel2 ) ) :
+                             "tab:" + std::to_string( sel1 );
+            if( !reader_submenu_open ) {
+                for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
                 a11y::semantic_node node;
                 node.id = "tab:" + std::to_string( i );
                 node.role = "tab";
@@ -783,12 +817,16 @@ bool main_menu::opening_screen()
                 node.position = i + 1;
                 node.total = vMenuItems.size();
                 snapshot.nodes.push_back( std::move( node ) );
+                }
             }
             std::vector<std::string> items;
-            if( sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
-            if( sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
-            if( sel1 == getopt( main_menu_opts::WORLD ) ) { items.push_back( _( "Create New World" ) ); }
-            if( sel1 == getopt( main_menu_opts::WORLD ) || sel1 == getopt( main_menu_opts::LOADCHAR ) ) {
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
+            if( reader_submenu_open && sel1 == getopt( main_menu_opts::WORLD ) ) {
+                items.push_back( _( "Create New World" ) );
+            }
+            if( reader_submenu_open && ( sel1 == getopt( main_menu_opts::WORLD ) ||
+                                         sel1 == getopt( main_menu_opts::LOADCHAR ) ) ) {
                 for( std::size_t i = 0; i < world_generator->get_all_worlds().size(); ++i ) {
                     items.push_back( world_generator->get_world_name( i ) );
                 }
@@ -827,7 +865,9 @@ bool main_menu::opening_screen()
                 }
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            if( sel1 == getopt( main_menu_opts::MOTD ) || sel1 == getopt( main_menu_opts::CREDITS ) ) {
+            if( reader_submenu_open &&
+                ( sel1 == getopt( main_menu_opts::MOTD ) ||
+                  sel1 == getopt( main_menu_opts::CREDITS ) ) ) {
                 a11y::semantic_node body;
                 body.id = "document:" + std::to_string( sel1 );
                 body.role = "document";
@@ -845,6 +885,7 @@ bool main_menu::opening_screen()
         for( int i = 0; static_cast<size_t>( i ) < vMenuHotkeys.size() && !match; ++i ) {
             for( const std::string &hotkey : vMenuHotkeys[i] ) {
                 if( sInput.text == hotkey && sel1 != i ) {
+                    reader_submenu_open = false;
                     sel1 = i;
                     sel2 = i == getopt( main_menu_opts::LOADCHAR ) ? last_world_pos : 0;
                     sel_line = 0;
@@ -930,6 +971,7 @@ bool main_menu::opening_screen()
             }
 #endif
         } else if( action == "LEFT" || action == "PREV_TAB" || action == "RIGHT" || action == "NEXT_TAB" ) {
+            reader_submenu_open = false;
             sel_line = 0;
             sel1 = inc_clamp_wrap( sel1, action == "RIGHT" || action == "NEXT_TAB",
                                    static_cast<int>( main_menu_opts::NUM_MENU_OPTS ) );
