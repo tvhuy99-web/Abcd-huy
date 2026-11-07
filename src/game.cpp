@@ -687,13 +687,18 @@ void game::reenter_fullscreen()
 /*
  * Initialize more stuff after mapbuffer is loaded.
  */
-void game::setup()
+void game::setup( bool loading_saved_character )
 {
+#if defined(__ANDROID__)
+    const auto setup_started_at = std::chrono::steady_clock::now();
+#endif
     a11y::replace_game_session();
     new_game = true;
     if( a11y::android::enabled() && !a11y::android::suspended() ) {
         a11y::android::announce( "A11Y_LOADING:" +
-                                 std::string( _( "Loading world data. Please wait." ) ), 1 );
+                                 std::string( loading_saved_character ?
+                                              _( "Loading saved character." ) :
+                                              _( "Preparing new character." ) ), 1 );
     }
     {
         static_popup popup;
@@ -703,6 +708,9 @@ void game::setup()
 
         load_core_data();
     }
+#if defined(__ANDROID__)
+    const auto core_data_loaded_at = std::chrono::steady_clock::now();
+#endif
 
     // invalidate calendar caches in case we were previously playing
     // a different world
@@ -712,6 +720,15 @@ void game::setup()
 
     world_generator->get_mod_manager().check_mods_list( world_generator->active_world );
     load_world_modfiles();
+#if defined(__ANDROID__)
+    const auto mods_loaded_at = std::chrono::steady_clock::now();
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=" <<
+                              ( loading_saved_character ? "resume" : "new" ) <<
+                              " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  core_data_loaded_at - setup_started_at ).count() <<
+                              " mods_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_loaded_at - core_data_loaded_at ).count();
+#endif
     // Panel manager needs JSON data to be loaded before init
     panel_manager::get_manager().init();
 
@@ -798,6 +815,9 @@ void game::legacy_migrate_npctalk_var_prefix( global_variables::impl_t &map_of_v
 // Set up all default values for a new game
 bool game::start_game()
 {
+#if defined(__ANDROID__)
+    const auto new_game_started_at = std::chrono::steady_clock::now();
+#endif
     if( !gamemode ) {
         gamemode = std::make_unique<special_game>();
     }
@@ -1092,6 +1112,11 @@ bool game::start_game()
         debug_menu::do_debug_quick_setup();
         add_msg( m_good, _( "Debug character detected.  Quick setup applied, good luck on the testing!" ) );
     }
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=new phase=character_and_world_ms " <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - new_game_started_at ).count();
+#endif
     return true;
 }
 

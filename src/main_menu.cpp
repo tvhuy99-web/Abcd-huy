@@ -841,6 +841,10 @@ bool main_menu::opening_screen()
                 node.total = items.size();
                 if( sel1 == getopt( main_menu_opts::NEWCHAR ) && i < vNewGameHints.size() ) {
                     node.detail = remove_color_tags( vNewGameHints[i] );
+                    if( i == 3 || i == 4 ) {
+                        node.detail += " " + std::string( _(
+                                               "Creates a NEW character. To continue a saved character, choose Load Game." ) );
+                    }
                 }
                 if( sel1 == getopt( main_menu_opts::WORLD ) && i == 0 ) {
                     node.detail = _( "Activate to choose a name and configure a new world." );
@@ -1253,6 +1257,15 @@ bool main_menu::new_character_tab()
         // Pick a world, suppressing prompts if it's "play now" mode.
         const bool is_play_now = sel2 == 3 || sel2 == 4;
         if( a11y::enabled() && is_play_now ) {
+            const bool has_saves = std::any_of( world_generator->get_all_worlds().begin(),
+            world_generator->get_all_worlds().end(), []( const auto & pair ) {
+                return !pair.second->world_saves.empty();
+            } );
+            if( has_saves && !query_yn( _(
+                                            "Play Now creates a NEW character, not your saved character. "
+                                            "To resume, use Load Game. Create another new character?" ) ) ) {
+                return false;
+            }
             // Quick Play can spend a long time generating a world without a
             // menu snapshot. Confirm activation before the loading UI appears.
             a11y::android::announce( "A11Y_LOADING:" +
@@ -1326,7 +1339,7 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     world_generator->set_active_world( world );
 
     try {
-        g->setup();
+        g->setup( true );
     } catch( const std::exception &err ) {
         debugmsg( "Error: %s", err.what() );
         if( a11y::enabled() ) {
@@ -1349,6 +1362,10 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     }
     if( loaded ) {
         cleanup.cancel();
+        if( a11y::android::enabled() && !a11y::android::suspended() ) {
+            a11y::android::announce( "A11Y_LOADING:" +
+                                     string_format( _( "Save loaded: %s." ), savegame.decoded_name() ), 1 );
+        }
         return true;
     }
 

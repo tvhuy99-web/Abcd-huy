@@ -310,8 +310,11 @@ bool game::load( const std::string &world )
 
     try {
         world_generator->set_active_world( wptr );
-        g->setup();
-        g->load( wptr->world_saves.front() );
+        g->setup( true );
+        // A failed character load must not be reported as a successful resume.
+        if( !g->load( wptr->world_saves.front() ) ) {
+            return false;
+        }
     } catch( const std::exception &err ) {
         debugmsg( "cannot load world '%s': %s", world, err.what() );
         return false;
@@ -322,6 +325,9 @@ bool game::load( const std::string &world )
 
 bool game::load( const save_t &name )
 {
+#if defined(__ANDROID__)
+    const auto load_started_at = std::chrono::steady_clock::now();
+#endif
     a11y::replace_game_session();
     map &here = get_map();
 
@@ -495,7 +501,15 @@ bool game::load( const save_t &name )
 
     for( const named_entry &e : entries ) {
         loading_ui::show( _( "Loading the save…" ), e.first );
+#if defined(__ANDROID__)
+        const auto stage_started_at = std::chrono::steady_clock::now();
+#endif
         e.second();
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=" << e.first <<
+                                  " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - stage_started_at ).count();
+#endif
         if( abort ) {
             loading_ui::done();
             return false;
@@ -503,6 +517,11 @@ bool game::load( const save_t &name )
     }
 
     loading_ui::done();
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=save_total ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - load_started_at ).count();
+#endif
     return true;
 }
 

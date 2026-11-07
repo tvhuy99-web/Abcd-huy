@@ -3313,3 +3313,19 @@ msgstr "Tọa độ. X %1$d. Y %2$d. Tầng Z %3$d."
 
 msgid "Outside loaded map"
 msgstr "Ngoài bản đồ đang nạp"
+
+msgid "Loading saved character."
+msgstr "Đang tải nhân vật đã lưu."
+
+msgid "Preparing new character."
+msgstr "Đang tạo nhân vật mới."
+
+msgid "Creates a NEW character. To continue a saved character, choose Load Game."
+msgstr "Tạo NHÂN VẬT MỚI. Muốn tiếp tục nhân vật đã lưu, hãy chọn Tải trò chơi."
+
+msgid "Play Now creates a NEW character, not your saved character. To resume, use Load Game. Create another new character?"
+msgstr "Chơi ngay sẽ tạo NHÂN VẬT MỚI, không tải nhân vật cũ. Muốn chơi tiếp, hãy chọn Tải trò chơi. Bạn có muốn tạo nhân vật mới không?"
+
+#, c-format
+msgid "Save loaded: %s."
+msgstr "Đã tải bản lưu: %s."

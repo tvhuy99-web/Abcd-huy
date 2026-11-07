@@ -23,6 +23,7 @@ on:
       - 'tools/accessibility/test_external_screen_gestures.py'
       - 'tools/accessibility/test_game_menu_gestures.py'
       - 'tools/accessibility/test_multifinger_recovery.py'
+      - 'tools/accessibility/test_save_load_distinction.py'
       - 'tools/accessibility/test_android_debug_prompt.py'
       - 'tools/accessibility/test_quiet_world_gestures.py'
       - 'tools/accessibility/test_otopack_on_demand.py'
@@ -44,6 +45,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_external_screen_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_game_menu_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_multifinger_recovery.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_save_load_distinction.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_android_debug_prompt.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_quiet_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_otopack_on_demand.py -v
