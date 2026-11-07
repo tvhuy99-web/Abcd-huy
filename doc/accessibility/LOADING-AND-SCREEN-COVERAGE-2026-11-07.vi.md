@@ -8,7 +8,7 @@ Thực hiện trên nhánh `integration/reader-vietnamese-20261107`. Đây là r
 - Màn ảnh đen có viền và mẹo màu xanh, phía dưới có nhãn trạng thái ví dụ “Đang khởi tạo. Công thức chế tạo”. Đây là `loading_ui::show()`, chưa chứng minh đã vào màn chơi.
 - `game::setup()` hủy session trợ năng của menu chính khi bắt đầu tải, làm snapshot tạm thời không tồn tại.
 - `GameReaderController.announceGameMessage()` trước đây chặn các thông báo khi `snapshot == null`. Màn ImGui tải không tạo `screen_scope`, nên bị im lặng.
-- Sau khi trò chơi tạo snapshot `world:here`, ứng dụng trước đây chỉ đọc ô hiện tại, không báo rõ “đã vào màn chơi”.
+- Sau khi trò chơi tạo snapshot `world:here`, ứng dụng trước đây chỉ đọc ô hiện tại, đã từng đọc lặp câu “đã vào màn chơi”.
 
 ## Thay đổi
 
@@ -17,7 +17,7 @@ Thực hiện trên nhánh `integration/reader-vietnamese-20261107`. Đây là r
 3. Giới hạn thông báo trạng thái để tránh TTS bị ngập: nói lần đầu, sau đó tối đa theo sự thay đổi đã đủ 8 giây hoặc nhắc lại sau 30 giây có hoạt động tải.
 4. Cho bộ đọc Java nhận trạng thái tải ngay cả khi `snapshot == null`, giữ bước tải gần nhất để đọc lại.
 5. Nếu sau 45 giây không có cập nhật và cũng không có snapshot, nhắc rằng trò chơi có thể đang tải hoặc không phản hồi. **Không đoán là đã hoàn tất**.
-6. Khi có snapshot bản đồ đầu tiên, đọc rõ đã vào game và ô/vị trí hiện tại. Cử chỉ di chuyển nhân vật vẫn dùng cơ chế riêng của game.
+6. Khi có snapshot bản đồ đầu tiên, im lặng ở ô thường; chỉ phát ngắn gọn địa hình quan trọng. Cử chỉ di chuyển nhân vật vẫn dùng cơ chế riêng của game.
 7. Màn trình diễn ImGui dành cho nhà phát triển không có adapter trợ năng. Khi trình đọc bật, cung cấp mục quay lại bằng `uilist` có lời đọc thay vì chuyển vào trang demo im lặng.
 
 ## Đối chiếu các nhóm giao diện
@@ -48,7 +48,7 @@ Thực hiện trên nhánh `integration/reader-vietnamese-20261107`. Đây là r
 ## Thử nghiệm quan trọng trên điện thoại
 
 - Đặt TTS tiếng Việt sẵn sàng, mở game mới lần đầu; xác nhận tên từng màn khởi động.
-- Trò chơi Mới → Chơi ngay! (Kịch bản Mặc định). Phải nghe xác nhận bắt đầu tải, tiến độ có giới hạn, mẹo một lần, sau đó “Đã vào màn chơi”.
+- Trò chơi Mới → Chơi ngay! (Kịch bản Mặc định). Phải nghe xác nhận bắt đầu tải, tiến độ có giới hạn, mẹo một lần, sau đó chỉ đọc những địa hình đáng chú ý hoặc khi người chơi kiểm tra chủ động.
 - Khi đang tải, dùng cử chỉ đọc lại phải nghe giai đoạn gần nhất.
 - Kiểm tra tương tự với tải nhân vật cũ, tạo nhân vật tùy chỉnh, bản đồ, NPC, túi đồ, chế tạo, tùy chọn và cài đặt TTS.
 - Để yên >45 giây khi cố ý làm chậm tải; phải có cảnh báo chưa nhận được màn hình.

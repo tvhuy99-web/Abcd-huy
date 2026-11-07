@@ -514,14 +514,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 boolean enteredMenu = nativeLayerChanged || enteredTreeLayer
                         || (changedContext && next.find("world:here") == null);
-                // A world snapshot is the first proof that the loading screen
-                // has finished. Speak the transition explicitly, not merely
-                // the focused tile, so a blind player knows play has begun.
-                boolean enteredWorld = changedContext && next.find("world:here") != null;
+                ReaderSnapshot.Node nextTile = next.find("world:here");
+                ReaderSnapshot.Node previousTile = previousSnapshot == null ? null
+                        : previousSnapshot.find("world:here");
+                boolean worldView = nextTile != null;
+                // Routine steps are silent, including context refreshes. A
+                // newly encountered noteworthy obstacle, trap, creature or
+                // landmark is announced briefly without the tile preamble.
+                boolean newlyNoteworthy = worldView && previousTile != null
+                        && "alert".equals(nextTile.role)
+                        && (!"alert".equals(previousTile.role)
+                            || !nextTile.value.equals(previousTile.value));
                 render();
-                if (enteredWorld && next.find(focus) != null) {
-                    feedback(activity.getString(R.string.a11yEnteredWorld) + ". "
-                            + nodeText(next.find(focus), false));
+                if (worldView) {
+                    if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredMenu && next.find(focus) != null) {
                     feedback(next.title + ". " + nodeText(next.find(focus), false));
                 } else if (selectionChanged) {
@@ -1071,8 +1077,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void twoFingerTap(int count) {
         if (!directWorldGesturesEnabled()) { return; }
-        // The three-finger hub menu has been removed.
-        if (count == 3) { return; }
+        if (count == 3) { openActionMenu(); return; }
         ReaderSnapshot.Node document = snapshot.find(count == 1
                 ? "world:status" : "world:messages");
         String spoken = document == null ? "" : document.detail;
@@ -1093,6 +1098,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public void openActionMenu() {
+        // Use the game's semantic Actions list, never the deleted Android
+        // overlay, so command categories and their submenus remain readable.
+        if (!directWorldGesturesEnabled()) { return; }
+        if (snapshot.find("action_menu") == null) {
+            feedback(activity.getString(R.string.a11yBindUnavailable));
+            return;
+        }
+        requestLiveWorldCommand("action_menu");
+    }
+
+    @Override
     public void moveDirection(int dx, int dy) {
         if (!worldMovementEnabled()) { return; }
         String action = actionForDirection(dx, dy);
@@ -1101,8 +1118,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yFastMovementUnavailable));
             return;
         }
+        String previous = focus;
         focus = action;
         send("activate", "");
+        // Leave the reading cursor on the tile for an explicit long press.
+        focus = previous;
     }
 
     @Override

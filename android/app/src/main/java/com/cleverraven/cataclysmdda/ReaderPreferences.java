@@ -139,11 +139,10 @@ public final class ReaderPreferences {
         editor.apply();
     }
 
-    // Optional sound/haptic cues (R21.2). Both default OFF: speech is
-    // the primary channel and every cue duplicates a spoken signal, so
-    // cues are an explicit opt-in in reader setup, never a surprise.
+    // Short movement/action sounds are on by default in the accessibility
+    // build. Existing user choices remain authoritative, and haptics stay off.
     public boolean areSoundCuesEnabled() {
-        return values.getBoolean("sound_cues", false);
+        return values.getBoolean("sound_cues", true);
     }
 
     public void setSoundCuesEnabled(boolean enabled) {

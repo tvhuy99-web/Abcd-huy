@@ -533,13 +533,21 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     const auto observe_scan_tile = [&]( const tripoint_bub_ms & position ) {
         return cursor_on_other_level ? observe_memory_tile( position ) : observe_tile( position );
     };
-    semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( observe_tile( origin ) ) );
+    const tile_observation current_tile = observe_tile( origin );
+    semantic_node here = document( "world:here", _( "Current tile" ), describe_tile( current_tile ) );
+    // Native classification, not a language-specific substring heuristic:
+    // only noteworthy terrain should interrupt movement with short speech.
+    const bool noteworthy_here = has_noteworthy_information( current_tile );
+    here.role = noteworthy_here ? "alert" : "document";
+    here.value = current_tile.terrain;
+    if( noteworthy_here ) {
+        here.value = noteworthy_category( current_tile ) + ". " + current_tile.terrain;
+    }
     if( camera_offset ) {
         here.label = _( "Death camera center" );
         result.summary = _( "Death camera is active. Use Look to inspect the view, move or center the camera, "
                             "or accept your fate to finish watching." );
     }
-    here.value = here.detail;
     result.nodes.push_back( std::move( here ) );
     for( int distance = 1; distance <= scan_depth; ++distance ) {
         for( const int dz : { distance, -distance } ) {

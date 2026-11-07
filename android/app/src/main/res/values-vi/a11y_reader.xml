@@ -183,5 +183,4 @@
     <string name="a11yDebugPromptCopied">Đã yêu cầu sao chép. Màn hình lỗi vẫn mở.</string>
     <string name="a11yLoadingStatus">Đang tải trò chơi. %1$s. Bạn chưa cần thao tác.</string>
     <string name="a11yLoadingStillWaiting">Game vẫn chưa cung cấp màn hình có thể đọc. Có thể game đang tiếp tục tải hoặc đã ngừng phản hồi. Bạn có thể dùng cử chỉ đọc lại để nghe bước tải gần nhất.</string>
-    <string name="a11yEnteredWorld">Đã vào màn chơi. Vị trí hiện tại</string>
 </resources>

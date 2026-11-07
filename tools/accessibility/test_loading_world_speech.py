@@ -32,8 +32,8 @@ class LoadingWorldSpeech(unittest.TestCase):
         self.assertIn("lastLoadingStatus = spokenMessage;", reader)
         self.assertIn("handler.postDelayed(loadingSilenceWarning, 45000);", reader)
         self.assertIn("lastLoadingStatus = \"\";", reader)
-        self.assertIn('next.find("world:here") != null', reader)
-        self.assertIn("R.string.a11yEnteredWorld", reader)
+        self.assertIn('ReaderSnapshot.Node nextTile = next.find("world:here")', reader)
+        self.assertNotIn("R.string.a11yEnteredWorld", reader)
         self.assertIn("loadingSilenceWarning", reader)
 
     def test_read_again_speaks_last_stage_while_waiting(self):

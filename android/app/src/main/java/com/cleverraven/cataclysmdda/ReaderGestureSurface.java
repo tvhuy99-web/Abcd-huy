@@ -34,6 +34,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void scanDirection(int dx, int dy);
         void twoFingerTap(int count);
         void threeFingerTap();
+        /** Three sequential single-finger taps open the native action menu. */
+        void openActionMenu();
         boolean handleCustomGesture(String gestureId);
         void activate();
         void detail();
@@ -45,6 +47,12 @@ public final class ReaderGestureSurface extends LinearLayout {
     private final GestureDetector detector;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable multiTapTimeout;
+    private Runnable worldTapTimeout;
+    private int worldTapCount;
+    private String worldTapOwner;
+    private long worldTapLastTime;
+    private float worldTapX;
+    private float worldTapY;
     private int multiTapCount;
     private int multiTapFingers;
     private String multiTapOwner;
@@ -79,6 +87,9 @@ public final class ReaderGestureSurface extends LinearLayout {
 
             @Override
             public boolean onDoubleTap(MotionEvent event) {
+                // Defer only gameplay's second tap until a third tap is ruled
+                // out. Menus keep immediate double-tap activation.
+                if (listener.directWorldGesturesEnabled()) { return true; }
                 if (previousTapOwner == null || !previousTapOwner.equals(owner)) {
                     cancelled = true;
                     return true;
@@ -154,6 +165,56 @@ public final class ReaderGestureSurface extends LinearLayout {
         multiTapCount = 0;
         multiTapFingers = 0;
         multiTapOwner = null;
+    }
+
+    private void clearWorldTaps() {
+        if (worldTapTimeout != null) {
+            handler.removeCallbacks(worldTapTimeout);
+            worldTapTimeout = null;
+        }
+        worldTapCount = 0;
+        worldTapOwner = null;
+    }
+
+    private void queueWorldTap(MotionEvent event, String gestureOwner) {
+        long when = event.getEventTime();
+        float x = event.getX(), y = event.getY();
+        float slop = listener.swipeDistancePx();
+        if (worldTapCount > 0 && (gestureOwner == null
+                || !gestureOwner.equals(worldTapOwner)
+                || when - worldTapLastTime > ViewConfiguration.getDoubleTapTimeout()
+                || Math.abs(x - worldTapX) > slop
+                || Math.abs(y - worldTapY) > slop)) {
+            clearWorldTaps();
+        }
+        if (worldTapCount == 0) {
+            worldTapOwner = gestureOwner;
+            worldTapX = x;
+            worldTapY = y;
+        }
+        worldTapCount++;
+        worldTapLastTime = when;
+        if (worldTapTimeout != null) { handler.removeCallbacks(worldTapTimeout); }
+        if (worldTapCount >= 3) {
+            String expectedOwner = worldTapOwner;
+            clearWorldTaps();
+            if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
+                    && listener.directWorldGesturesEnabled()) {
+                listener.openActionMenu();
+            }
+        } else {
+            worldTapTimeout = () -> {
+                int count = worldTapCount;
+                String expectedOwner = worldTapOwner;
+                clearWorldTaps();
+                if (count == 2 && expectedOwner != null
+                        && expectedOwner.equals(listener.gestureContext())
+                        && listener.directWorldGesturesEnabled()) {
+                    listener.activate();
+                }
+            };
+            handler.postDelayed(worldTapTimeout, ViewConfiguration.getDoubleTapTimeout());
+        }
     }
 
     /** One/two/three taps are mutually exclusive, for 2/3/4 fingers. */
@@ -410,6 +471,11 @@ public final class ReaderGestureSurface extends LinearLayout {
                     && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
                     && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
             previousTapOwner = tap ? owner : null;
+            if (tap && listener.directWorldGesturesEnabled()) {
+                queueWorldTap(event, owner);
+            } else if (!tap) {
+                clearWorldTaps();
+            }
         }
         return true;
     }
@@ -462,6 +528,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         owner = null;
         previousTapOwner = null;
         clearMultiTap();
+        clearWorldTaps();
         oneFingerPath.clear();
         backPointerCount = 0;
         ignoreUntilPointersReleased = false;

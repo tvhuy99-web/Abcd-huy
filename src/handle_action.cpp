@@ -3593,6 +3593,7 @@ bool game::handle_action()
     gamemode->pre_action( act );
 
     int before_action_moves = player_character.get_moves();
+    const tripoint_bub_ms position_before_action = player_character.pos_bub();
 
     // These actions are allowed while deathcam is active. Registered in game::get_player_input
     if( uquit == QUIT_WATCH || !player_character.is_dead_state() ) {
@@ -3613,6 +3614,11 @@ bool game::handle_action()
     }
 
     gamemode->post_action( act );
+
+    // A sound-only cue after confirmed motion. It never speaks ground tiles.
+    if( a11y::enabled() && player_character.pos_bub() != position_before_action ) {
+        a11y::android::cue( "footstep" );
+    }
 
     player_character.movecounter = ( !player_character.is_dead_state() ? ( before_action_moves -
                                      player_character.get_moves() ) : 0 );

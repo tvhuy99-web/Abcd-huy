@@ -22,6 +22,8 @@ public final class GameMenuGestureDispatchTest {
         int backs;
         int scans;
         int sliderChanges;
+        int actionMenus;
+        int activations;
 
         @Override public boolean usesTouchExploration() { return false; }
         @Override public String gestureContext() { return playing ? "world" : "menu"; }
@@ -50,8 +52,9 @@ public final class GameMenuGestureDispatchTest {
         }
         @Override public void twoFingerTap(int count) { }
         @Override public void threeFingerTap() { }
+        @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) { return false; }
-        @Override public void activate() { }
+        @Override public void activate() { activations++; }
         @Override public void detail() { }
         @Override public void readCurrent() { }
         @Override public void stopSpeech() { }
@@ -92,6 +95,32 @@ public final class GameMenuGestureDispatchTest {
                 MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
                 200, 210, true);
         touch(surface, start, start + 130, MotionEvent.ACTION_UP, 200, 0, false);
+    }
+
+    @Test
+    public void tripleTapOpensActionsWithoutDoubleTapActivation() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                Actions actions = new Actions();
+                actions.playing = true;
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long start = SystemClock.uptimeMillis();
+                for (int i = 0; i < 3; i++) {
+                    long down = start + i * 95L;
+                    touch(surface, down, down, MotionEvent.ACTION_DOWN, 60, 0, false);
+                    touch(surface, down, down + 35,
+                            MotionEvent.ACTION_UP, 60, 0, false);
+                }
+                assertEquals("Triple tap opens the native action menu", 1, actions.actionMenus);
+                assertEquals("A third tap never activates the second-tap command",
+                        0, actions.activations);
+            });
+        }
     }
 
     @Test

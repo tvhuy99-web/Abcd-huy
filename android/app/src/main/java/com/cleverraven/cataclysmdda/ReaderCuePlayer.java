@@ -18,14 +18,10 @@ import java.util.Map;
 /**
  * Optional sound and vibration cues for reader events (R21.2).
  *
- * A cue is never the only carrier of information: every cue name maps
- * to an event the reader also speaks (an urgent game message, a spoken
- * action outcome, a spoken rejection receipt), so turning cues off —
- * the default — loses nothing, and a cue respects the character's
- * knowledge rights by construction because it is fired only from the
- * same engine points that produce the spoken text. A cue also never
- * covers speech: it asks for transient ducking focus and plays a short
- * packaged tone alongside, never instead of, the utterance.
+ * Speech remains authoritative for warnings and action outcomes; optional
+ * short sound effects complement it. A confirmed footstep intentionally has
+ * no spoken tile narration. Turning effects off never hides critical alerts.
+ * Audio focus is transient, so cues do not replace spoken information.
  *
  * The spoken channel is owned by ReaderSpeechQueue; this class owns
  * only the SoundPool and the Vibrator. Playback failure is reported to
@@ -38,6 +34,7 @@ public final class ReaderCuePlayer {
     public static final String PICKUP = "pickup";
     public static final String ACTIVITY_DONE = "activity_done";
     public static final String REJECTED = "rejected";
+    public static final String FOOTSTEP = "footstep";
 
     public interface Listener {
         /** A cue could not be played (load failure, no vibrator). */
@@ -63,6 +60,7 @@ public final class ReaderCuePlayer {
         CUES.put(PICKUP, new Cue(R.raw.a11y_cue_pickup, new long[]{0, 40}, 700));
         CUES.put(ACTIVITY_DONE, new Cue(R.raw.a11y_cue_done, new long[]{0, 50, 60, 50}, 1200));
         CUES.put(REJECTED, new Cue(R.raw.a11y_cue_blocked, new long[]{0, 90}, 700));
+        CUES.put(FOOTSTEP, new Cue(R.raw.a11y_cue_step, new long[]{0, 10}, 150));
     }
 
     private final Context context;

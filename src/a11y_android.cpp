@@ -284,11 +284,10 @@ void open_tts_settings()
 
 void cue( const std::string &name )
 {
-    // Only the four internal literals are accepted: the Java side maps
-    // each to a bundled sound and vibration pattern, so no engine data
-    // (and no knowledge the player has not earned) crosses this channel.
+    // Only internal literals may reach Android's packaged cue mapping.
+    // Footsteps are a short sound-only acknowledgement of actual movement.
     if( name != "blocked" && name != "danger" && name != "pickup" &&
-        name != "activity_done" ) {
+        name != "activity_done" && name != "footstep" ) {
         return;
     }
 #if defined(__ANDROID__)

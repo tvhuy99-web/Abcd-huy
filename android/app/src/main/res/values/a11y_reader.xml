@@ -183,5 +183,4 @@
     <string name="a11yDebugPromptCopied">Copy requested. The error screen remains open.</string>
     <string name="a11yLoadingStatus">Loading game. %1$s. No action is needed yet.</string>
     <string name="a11yLoadingStillWaiting">The game has not provided an accessible screen yet. It may still be loading or may have stopped responding. You can repeat the last loading stage with the read gesture.</string>
-    <string name="a11yEnteredWorld">You are now in the game. Current position</string>
 </resources>
