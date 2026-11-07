@@ -82,4 +82,6 @@
     <string name="a11yTtsSample">Listen to sample</string>
     <string name="a11yTtsSave">Save</string>
     <string name="a11yTtsVolumeTooLow">Volume is zero. Increase the volume before enabling spoken navigation.</string>
+    <string name="a11yTtsEnabledDraft">TTS is on. Choose Listen to sample and Save to apply.</string>
+    <string name="a11yTtsDisableWarning">TTS is off in this draft. Saving will silence the in-game reader. Keep TalkBack available to enable it again.</string>
 </resources>

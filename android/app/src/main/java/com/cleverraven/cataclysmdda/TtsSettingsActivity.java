@@ -97,7 +97,11 @@ public final class TtsSettingsActivity extends Activity {
         enabled = new CheckBox(this);
         enabled.setText(R.string.a11yTtsEnable);
         enabled.setChecked(saved.isEnabled());
-        enabled.setOnCheckedChangeListener((view, checked) -> invalidatePreview());
+        enabled.setOnCheckedChangeListener((view, checked) -> {
+            invalidatePreview();
+            announce(getString(checked ? R.string.a11yTtsEnabledDraft
+                    : R.string.a11yTtsDisableWarning));
+        });
         column.addView(enabled);
 
         engineButton = button(column, R.string.a11yTtsEngine, view -> cycleEngine());

@@ -1,0 +1,47 @@
+name: Android TTS settings validation
+
+on:
+  pull_request:
+    paths:
+      - 'android/app/src/main/**'
+      - 'android/app/src/androidTest/**'
+      - 'src/main_menu.cpp'
+      - 'src/a11y_android.cpp'
+      - 'src/a11y_android.h'
+      - 'lang/po/accessibility/vi.po'
+      - 'tools/accessibility/test_tts_settings.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tts-source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/accessibility -p test_tts_settings.py -v
+  android-java:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          log-accepted-android-sdk-licenses: false
+      - name: Compile app and Android instrumentation test Java
+        run: |
+          bash android/gradlew -p android --no-daemon --console=plain \
+            -PEXCLUDE_NATIVE_LIBS -Plocalize=false \
+            -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true \
+            compileAccessibilityDebugJavaWithJavac \
+            compileAccessibilityDebugAndroidTestJavaWithJavac

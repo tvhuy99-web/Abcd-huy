@@ -82,4 +82,6 @@
     <string name="a11yTtsSample">Nghe thử</string>
     <string name="a11yTtsSave">Lưu</string>
     <string name="a11yTtsVolumeTooLow">Âm lượng bằng không. Hãy tăng âm lượng trước khi bật đọc bằng lời nói.</string>
+    <string name="a11yTtsEnabledDraft">Đã bật TTS trong bản nháp. Hãy Nghe thử rồi Lưu để áp dụng.</string>
+    <string name="a11yTtsDisableWarning">Đã tắt TTS trong bản nháp. Nếu Lưu, game sẽ ngừng đọc. Hãy giữ TalkBack để có thể bật lại.</string>
 </resources>
