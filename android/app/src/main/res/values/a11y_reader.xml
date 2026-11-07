@@ -175,4 +175,10 @@
     <string name="a11yDiagnosticsCues">Cues requested: %1$d blocked, %2$d danger, %3$d pickups, %4$d activities finished, %5$d rejected intents. Cue problems: %6$d unavailable, %7$d skipped because another app held the audio.</string>
     <string name="a11yDiagnosticsEvents">Recent events: %1$s</string>
     <string name="a11yDiagnosticsNoEvents">No events recorded.</string>
+    <string name="a11yDebugPromptTitle">Game error. Recovery screen.</string>
+    <string name="a11yDebugPromptInstructions">Swipe right to Continue, Ignore this error or Copy report. Double tap to choose. Swipe two fingers down to continue.</string>
+    <string name="a11yDebugPromptContinue">Continue playing</string>
+    <string name="a11yDebugPromptIgnore">Ignore this error in the future and continue</string>
+    <string name="a11yDebugPromptCopy">Copy error report</string>
+    <string name="a11yDebugPromptCopied">Copy requested. The error screen remains open.</string>
 </resources>
