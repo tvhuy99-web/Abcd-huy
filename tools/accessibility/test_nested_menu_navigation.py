@@ -44,7 +44,10 @@ class NestedMenuNavigationTests(unittest.TestCase):
         self.assertIn('send("expand", "");', code)
         self.assertIn("private boolean backReaderLayer()", code)
         self.assertIn("firstDirectChild(snapshot, parent.id)", code)
-        self.assertIn("readerLayerParent = parent.parentId;", code)
+        self.assertIn(
+            'readerLayerParent = parent == null ? "" : parent.parentId;',
+            code,
+        )
 
     def test_talkback_and_spoken_navigation_share_same_focus(self):
         code = self.controller
