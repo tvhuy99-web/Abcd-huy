@@ -1306,6 +1306,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 send("expand", "");
                 return;
             }
+            // Switching a tab is an engine action. The new snapshot will
+            // expose that tab's children; then enter its first item instead
+            // of leaving focus on the tab header.
+            if ("tab".equals(node.role) && node.actions.contains("activate")) {
+                pendingReaderLayer = node.id;
+            }
         }
         // Form fields (R02.3): choosing or toggling only writes a draft on
         // the engine side; the separate Apply control commits it.
