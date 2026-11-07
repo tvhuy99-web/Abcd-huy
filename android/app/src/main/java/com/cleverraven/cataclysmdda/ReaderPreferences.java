@@ -331,7 +331,8 @@ public final class ReaderPreferences {
         trialStartedElapsedMs = 0L;
         values.edit().remove("left_handed_navigation").remove("swipe_distance_level")
         .remove("swipe_duration_level").remove("horizontal_swipe_action")
-        .remove("vertical_swipe_action").remove(TRIAL_HORIZONTAL_ACTION)
+        .remove("vertical_swipe_action").remove("world_gesture_bindings_v1")
+        .remove(TRIAL_HORIZONTAL_ACTION)
         .remove(TRIAL_VERTICAL_ACTION).remove(LEGACY_GESTURE_TRIAL_PENDING)
         .remove(LEGACY_GESTURE_TRIAL_DEADLINE).apply();
     }

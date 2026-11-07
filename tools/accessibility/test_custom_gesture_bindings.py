@@ -37,6 +37,11 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("mapping.put(gesture, target)", src)
         self.assertIn("mapping.values().removeAll(", src)
         self.assertIn('putString(KEY, json.toString())', src)
+        prefs = (JAVA / "ReaderPreferences.java").read_text(
+            encoding="utf-8"
+        )
+        restore = prefs.split("public void restoreGestureDefaults()", 1)[1]
+        self.assertIn('remove("world_gesture_bindings_v1")', restore)
 
     def test_hold_selects_entry_and_shortcut_dispatch_precedes_default(self):
         ctrl = (JAVA / "GameReaderController.java").read_text(
