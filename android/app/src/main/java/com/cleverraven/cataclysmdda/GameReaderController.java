@@ -67,17 +67,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastEnabled;
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
-    private final Runnable loadingSilenceWarning = () -> {
-        if (!closed && foreground && windowFocused && preferences.isEnabled()
-                && snapshot == null && !lastLoadingStatus.isEmpty()) {
-            feedback(activity.getString(R.string.a11yLoadingStillWaiting));
-        }
-    };
+    private final Runnable loadingSilenceWarning;
 
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
         preferences = new ReaderPreferences(activity);
+        // Initialize this after the final activity/preferences references.
+        loadingSilenceWarning = () -> {
+            if (!closed && foreground && windowFocused && preferences.isEnabled()
+                    && snapshot == null && !lastLoadingStatus.isEmpty()) {
+                feedback(activity.getString(R.string.a11yLoadingStillWaiting));
+            }
+        };
         gestureBindings = new ReaderGestureBindings(activity);
         accessibility = (AccessibilityManager) activity.getSystemService(Context.ACCESSIBILITY_SERVICE);
         speech = new ReaderSpeechQueue(activity, new ReaderSpeechQueue.Listener() {
