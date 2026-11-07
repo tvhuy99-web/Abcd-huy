@@ -407,6 +407,11 @@ static void debug_error_prompt(
     ctxt.register_manual_key( 'C' );
     ctxt.register_manual_key( 'I' );
     ctxt.register_manual_key( ' ' );
+    // The debug input reader normally blocks indefinitely. A bounded
+    // timeout is required to consume JNI gesture responses after a wake
+    // event; otherwise it resumes waiting without returning to this loop.
+    const int previous_timeout = inp_mngr.get_timeout();
+    inp_mngr.set_timeout( 150 );
 #endif
     for( bool stop = false; !stop; ) {
         ui_manager::redraw();
@@ -448,6 +453,7 @@ static void debug_error_prompt(
 #endif
     }
 #if defined(__ANDROID__)
+    inp_mngr.set_timeout( previous_timeout );
     a11y::android::dismiss_debug_prompt();
 #endif
 }
