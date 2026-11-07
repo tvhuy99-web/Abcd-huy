@@ -13,8 +13,9 @@ ROOT = Path(__file__).resolve().parents[2]
 WORLD = ROOT / "src" / "a11y_world.cpp"
 VI_PO = ROOT / "lang" / "po" / "accessibility" / "vi.po"
 ANDROID = ROOT / "android" / "app"
-SPLASH = ANDROID / "src/main/java/com/cleverraven/cataclysmdda/SplashScreen.java"
-READER = ANDROID / "src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java"
+JAVA_DIR = ANDROID / "src/main/java/com/cleverraven/cataclysmdda"
+SPLASH = JAVA_DIR / "SplashScreen.java"
+READER = JAVA_DIR / "GameReaderController.java"
 VALUES = ANDROID / "src/main/res"
 
 
@@ -31,9 +32,17 @@ class ConciseSpeechTest(unittest.TestCase):
             "void announce_player_coordinates()", 1
         )[0]
         self.assertIn("std::string spoken;", body)
-        self.assertIn("for( int distance = 1; distance <= 16; ++distance )", body)
-        self.assertIn('string_format( _( "Tile %1$d: %2$s." ), distance, detail )', body)
-        self.assertNotIn('string_format( _( "Scan %s, 16 tiles, nearest to farthest."', body)
+        self.assertIn(
+            "for( int distance = 1; distance <= 16; ++distance )", body
+        )
+        self.assertIn(
+            'string_format( _( "Tile %1$d: %2$s." ), distance, detail )',
+            body,
+        )
+        self.assertNotIn(
+            'string_format( _( "Scan %s, 16 tiles, nearest to farthest."',
+            body,
+        )
         self.assertIn('"A11Y_SCAN:" + spoken', body)
         self.assertIn('msgstr "Ô %1$d, %2$s."', self.po)
 
@@ -62,9 +71,10 @@ class ConciseSpeechTest(unittest.TestCase):
         )
 
     def test_installation_announces_only_quarter_milestones(self):
-        body = self.splash.split("private void reportBootstrapProgress(", 1)[1].split(
-            "private void showCrashAlert()", 1
-        )[0]
+        rest = self.splash.split(
+            "private void reportBootstrapProgress(", 1
+        )[1]
+        body = rest.split("private void showCrashAlert()", 1)[0]
         self.assertIn("int bucket = percent / 25;", body)
         self.assertIn("if (bucket > lastBootstrapProgressBucket)", body)
         self.assertIn("if (bucket > 0)", body)
@@ -73,14 +83,11 @@ class ConciseSpeechTest(unittest.TestCase):
         self.assertEqual(1, body.count("speakBootstrap(progress)"))
         for locale in ("values", "values-vi"):
             root = ET.parse(VALUES / locale / "a11y_reader.xml").getroot()
-            self.assertEqual(
-                1,
-                sum(
-                    elem.attrib.get("name") == "a11yBootstrapProgress"
-                    and "%1$d%%" in (elem.text or "")
-                    for elem in root.findall("string")
-                ),
-            )
+            strings = {
+                elem.attrib.get("name"): elem.text
+                for elem in root.findall("string")
+            }
+            self.assertIn("%1$d%%", strings["a11yBootstrapProgress"])
 
     def test_resource_xml_is_valid_and_speech_contract_is_bilingual(self):
         for locale in ("values", "values-vi"):
