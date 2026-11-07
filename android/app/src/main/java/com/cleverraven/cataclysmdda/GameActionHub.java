@@ -36,6 +36,19 @@ final class GameActionHub {
             this.kind = kind;
             this.group = group;
         }
+
+        /** Stable identity shared by the same native command in all groups. */
+        String shortcutTarget() {
+            switch (kind) {
+                case OPEN_GROUP: return "hub:group:" + group;
+                case OPEN_SEARCH: return "hub:search";
+                case OPEN_ALL: return "hub:all";
+                case OPEN_TTS: return "hub:tts";
+                case OPEN_READER_SETUP: return "hub:reader_setup";
+                case EXECUTE: return node.isEmpty() ? null : "action:" + node;
+                default: return null;
+            }
+        }
     }
 
     // Root index zero is search. Groups 1..15 are the requested sections.
