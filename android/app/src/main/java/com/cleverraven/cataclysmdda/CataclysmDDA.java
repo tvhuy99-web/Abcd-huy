@@ -15,7 +15,9 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -96,6 +98,29 @@ public class CataclysmDDA extends SDLActivity {
         readerController = null;
         if (reader != null) { reader.close(); }
         super.onDestroy();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // GnollHack uses the Activity root to prevent parent interception
+        // when another finger joins a gesture. Our transparent reader surface
+        // receives the pointer sequence after this Activity-level guard.
+        GameReaderController reader = readerController;
+        if (event != null && reader != null && reader.isEnabled()
+                && !reader.usesTouchExploration() && getWindow() != null) {
+            int action = event.getActionMasked();
+            View decor = getWindow().getDecorView();
+            if (decor instanceof ViewGroup) {
+                if (action == MotionEvent.ACTION_POINTER_DOWN
+                        && event.getPointerCount() >= 2) {
+                    ((ViewGroup) decor).requestDisallowInterceptTouchEvent(true);
+                } else if (action == MotionEvent.ACTION_UP
+                        || action == MotionEvent.ACTION_CANCEL) {
+                    ((ViewGroup) decor).requestDisallowInterceptTouchEvent(false);
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
     }
 
     @Override

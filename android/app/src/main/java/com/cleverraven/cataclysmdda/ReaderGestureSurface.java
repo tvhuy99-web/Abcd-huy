@@ -6,6 +6,7 @@ import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.ViewConfiguration;
+import android.view.ViewParent;
 import android.widget.LinearLayout;
 
 import java.util.ArrayList;
@@ -58,6 +59,17 @@ public final class ReaderGestureSurface extends LinearLayout {
     private String multiTapOwner;
     private final List<float[]> oneFingerPath = new ArrayList<>();
     private int maxPointers;
+    // Per-pointer tracking matches Android's stable pointer IDs, not indices.
+    // Some devices cancel a three/four-finger touch sequence before UP.
+    private static final int MAX_READER_FINGERS = 4;
+    private static final long MULTI_FINGER_JOIN_MS = 400L;
+    private static final long MULTI_CANCEL_TAP_MS = 700L;
+    private final int[] multiPointerIds = new int[MAX_READER_FINGERS];
+    private final float[] multiPointerStartX = new float[MAX_READER_FINGERS];
+    private final float[] multiPointerStartY = new float[MAX_READER_FINGERS];
+    private int multiTrackedCount;
+    private boolean multiFingerMoved;
+    private boolean lateMultiFingerJoin;
     private float multiStartX;
     private float multiStartY;
     private float multiLastX;
@@ -155,6 +167,94 @@ public final class ReaderGestureSurface extends LinearLayout {
         float sum = 0;
         for (int i = 0; i < event.getPointerCount(); i++) { sum += event.getY(i); }
         return sum / event.getPointerCount();
+    }
+
+    private void requestParentCapture(boolean disallow) {
+        ViewParent parent = getParent();
+        if (parent != null) {
+            parent.requestDisallowInterceptTouchEvent(disallow);
+        }
+    }
+
+    private void capturePointerStarts(MotionEvent event) {
+        int count = Math.min(MAX_READER_FINGERS, event.getPointerCount());
+        multiTrackedCount = count;
+        for (int i = 0; i < count; i++) {
+            multiPointerIds[i] = event.getPointerId(i);
+            multiPointerStartX[i] = event.getX(i);
+            multiPointerStartY[i] = event.getY(i);
+        }
+        multiFingerMoved = false;
+        lateMultiFingerJoin = false;
+    }
+
+    private void rememberNewPointer(MotionEvent event) {
+        if (event.getPointerCount() > MAX_READER_FINGERS) {
+            multiTrackedCount = 0;
+            return;
+        }
+        if (event.getEventTime() - downTime > MULTI_FINGER_JOIN_MS) {
+            lateMultiFingerJoin = true;
+        }
+        int index = event.getActionIndex();
+        if (multiTrackedCount != event.getPointerCount() - 1 || index < 0
+                || index >= event.getPointerCount()) {
+            multiTrackedCount = 0; // The pointer sequence is not trustworthy.
+            return;
+        }
+        for (int i = 0; i < multiTrackedCount; i++) {
+            if (multiPointerIds[i] == event.getPointerId(index)) {
+                multiTrackedCount = 0;
+                return;
+            }
+        }
+        multiPointerIds[multiTrackedCount] = event.getPointerId(index);
+        multiPointerStartX[multiTrackedCount] = event.getX(index);
+        multiPointerStartY[multiTrackedCount] = event.getY(index);
+        multiTrackedCount++;
+    }
+
+    private void trackMultiFingerMovement(MotionEvent event) {
+        float thresholdPx = Math.min(listener.swipeDistancePx() * 0.6f,
+                32f * getResources().getDisplayMetrics().density);
+        float limit = thresholdPx * thresholdPx;
+        for (int i = 0; i < event.getPointerCount(); i++) {
+            int pointerId = event.getPointerId(i);
+            for (int saved = 0; saved < multiTrackedCount; saved++) {
+                if (multiPointerIds[saved] == pointerId) {
+                    float dx = event.getX(i) - multiPointerStartX[saved];
+                    float dy = event.getY(i) - multiPointerStartY[saved];
+                    if (dx * dx + dy * dy > limit) { multiFingerMoved = true; }
+                    break;
+                }
+            }
+        }
+    }
+
+    private boolean recoverCancelledMultiTap(MotionEvent event) {
+        // Follow the GnollHack pattern, but only synthesize a *tap*, never
+        // turn a system-cancelled drag or navigation gesture into a command.
+        if (!multiple || cancelled || maxPointers < 3 || maxPointers > 4
+                || maxPointers != event.getPointerCount()
+                || multiTrackedCount != maxPointers || multiFingerMoved
+                || lateMultiFingerJoin || owner == null
+                || !owner.equals(listener.gestureContext())
+                || !listener.directWorldGesturesEnabled()
+                || event.getEventTime() - downTime > MULTI_CANCEL_TAP_MS) {
+            return false;
+        }
+        for (int i = 0; i < event.getPointerCount(); i++) {
+            boolean known = false;
+            for (int saved = 0; saved < multiTrackedCount; saved++) {
+                if (multiPointerIds[saved] == event.getPointerId(i)) {
+                    known = true;
+                    break;
+                }
+            }
+            if (!known) { return false; }
+        }
+        trackMultiFingerMovement(event);
+        return !multiFingerMoved;
     }
 
     private void clearMultiTap() {
@@ -315,6 +415,13 @@ public final class ReaderGestureSurface extends LinearLayout {
             return super.dispatchTouchEvent(event);
         }
         int action = event.getActionMasked();
+        if (action == MotionEvent.ACTION_POINTER_DOWN && event.getPointerCount() >= 2) {
+            // Disallow parent view interception for the rest of this sequence.
+            // A separate Activity-level hook also protects the outer SDL root.
+            requestParentCapture(true);
+        } else if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+            requestParentCapture(false);
+        }
         // After a handled two-finger Back swipe, consume the remaining UP.
         if (ignoreUntilPointersReleased) {
             if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
@@ -326,6 +433,9 @@ public final class ReaderGestureSurface extends LinearLayout {
             owner = listener.gestureContext();
             multiple = false;
             maxPointers = 1;
+            multiTrackedCount = 0;
+            multiFingerMoved = false;
+            lateMultiFingerJoin = false;
             backPointerCount = 0;
             cancelled = false;
             activateOnUp = false;
@@ -337,12 +447,27 @@ public final class ReaderGestureSurface extends LinearLayout {
             oneFingerPath.clear();
             recordOneFinger(firstX, firstY);
         } else if (action == MotionEvent.ACTION_CANCEL) {
-            cancelGesture();
+            boolean recovered = recoverCancelledMultiTap(event);
+            String capturedOwner = owner;
+            int capturedFingers = maxPointers;
+            cancelGesture(recovered);
             detector.onTouchEvent(event);
+            if (recovered) {
+                // Do not let the OS cancellation eat a valid multi-finger tap.
+                queueMultiTap(capturedOwner, capturedFingers);
+            }
             return true;
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
             multiple = true;
             maxPointers = Math.max(maxPointers, event.getPointerCount());
+            if (event.getPointerCount() == 2) {
+                capturePointerStarts(event);
+                lateMultiFingerJoin = event.getEventTime() - downTime
+                        > MULTI_FINGER_JOIN_MS;
+            } else {
+                trackMultiFingerMovement(event);
+                rememberNewPointer(event);
+            }
             activateOnUp = false;
             MotionEvent cancel = MotionEvent.obtain(event);
             cancel.setAction(MotionEvent.ACTION_CANCEL);
@@ -366,6 +491,10 @@ public final class ReaderGestureSurface extends LinearLayout {
             multiLastY = multiStartY;
         }
         if (multiple) {
+            if (action == MotionEvent.ACTION_MOVE
+                    || action == MotionEvent.ACTION_POINTER_UP) {
+                trackMultiFingerMovement(event);
+            }
             // Two fingers down means Back on menus/forms. In active gameplay
             // it keeps its existing 16-tile scan action.
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
@@ -523,12 +652,20 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     public void cancelGesture() {
+        cancelGesture(false);
+    }
+
+    private void cancelGesture(boolean keepMultiTap) {
         cancelled = true;
         activateOnUp = false;
         owner = null;
         previousTapOwner = null;
-        clearMultiTap();
+        if (!keepMultiTap) { clearMultiTap(); }
         clearWorldTaps();
+        multiTrackedCount = 0;
+        multiFingerMoved = false;
+        lateMultiFingerJoin = false;
+        requestParentCapture(false);
         oneFingerPath.clear();
         backPointerCount = 0;
         ignoreUntilPointersReleased = false;

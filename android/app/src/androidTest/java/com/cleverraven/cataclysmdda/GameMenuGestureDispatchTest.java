@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.SystemClock;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 
 import androidx.test.core.app.ActivityScenario;
 import androidx.test.ext.junit.runners.AndroidJUnit4;
@@ -24,6 +25,9 @@ public final class GameMenuGestureDispatchTest {
         int sliderChanges;
         int actionMenus;
         int activations;
+        int tripleFingerTaps;
+        int fourFingerTaps;
+        int fourFingerSwipes;
 
         @Override public boolean usesTouchExploration() { return false; }
         @Override public String gestureContext() { return playing ? "world" : "menu"; }
@@ -51,9 +55,13 @@ public final class GameMenuGestureDispatchTest {
             if (dx == 0 && dy == 1) { scans++; }
         }
         @Override public void twoFingerTap(int count) { }
-        @Override public void threeFingerTap() { }
+        @Override public void threeFingerTap() { tripleFingerTaps++; }
         @Override public void openActionMenu() { actionMenus++; }
-        @Override public boolean handleCustomGesture(String id) { return false; }
+        @Override public boolean handleCustomGesture(String id) {
+            if ("tap_4_1".equals(id)) { fourFingerTaps++; return true; }
+            if ("swipe_4_right".equals(id)) { fourFingerSwipes++; return true; }
+            return false;
+        }
         @Override public void activate() { activations++; }
         @Override public void detail() { }
         @Override public void readCurrent() { }
@@ -82,6 +90,51 @@ public final class GameMenuGestureDispatchTest {
                 0, 0, 0, 0);
         surface.dispatchTouchEvent(event);
         event.recycle();
+    }
+
+    private static void multiTouch(ReaderGestureSurface surface, long downTime,
+                                   long eventTime, int action, int pointers,
+                                   float offsetX) {
+        MotionEvent.PointerProperties[] properties =
+                new MotionEvent.PointerProperties[pointers];
+        MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointers];
+        for (int i = 0; i < pointers; i++) {
+            properties[i] = new MotionEvent.PointerProperties();
+            // Deliberately non-contiguous IDs: pointer index is not identity.
+            properties[i].id = 10 + i * 2;
+            properties[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
+            coords[i] = new MotionEvent.PointerCoords();
+            coords[i].x = 50 + i * 45 + offsetX;
+            coords[i].y = 140;
+            coords[i].pressure = 1.0f;
+            coords[i].size = 1.0f;
+        }
+        MotionEvent event = MotionEvent.obtain(downTime, eventTime, action,
+                pointers, properties, coords, 0, 0, 1.0f, 1.0f,
+                0, 0, 0, 0);
+        surface.dispatchTouchEvent(event);
+        event.recycle();
+    }
+
+    private static void startMulti(ReaderGestureSurface surface, int count, long time) {
+        multiTouch(surface, time, time, MotionEvent.ACTION_DOWN, 1, 0);
+        for (int fingers = 2; fingers <= count; fingers++) {
+            multiTouch(surface, time, time + fingers * 35L,
+                    MotionEvent.ACTION_POINTER_DOWN
+                            | ((fingers - 1) << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                    fingers, 0);
+        }
+    }
+
+    private static void endMulti(ReaderGestureSurface surface, int count,
+                                 long time, float dx) {
+        for (int fingers = count; fingers >= 2; fingers--) {
+            multiTouch(surface, time, time + 180 + (count - fingers) * 20L,
+                    MotionEvent.ACTION_POINTER_UP
+                            | ((fingers - 1) << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                    fingers, dx);
+        }
+        multiTouch(surface, time, time + 280, MotionEvent.ACTION_UP, 1, dx);
     }
 
     private static void swipeTwoDown(ReaderGestureSurface surface) {
@@ -119,6 +172,75 @@ public final class GameMenuGestureDispatchTest {
                 assertEquals("Triple tap opens the native action menu", 1, actions.actionMenus);
                 assertEquals("A third tap never activates the second-tap command",
                         0, actions.activations);
+            });
+        }
+    }
+
+    @Test
+    public void threeFingerSystemCancelRecoversOneTapOnly() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, start);
+                // Android delivered ACTION_CANCEL with the same three stable
+                // pointer IDs: recover a tap instead of silently discarding it.
+                multiTouch(surface[0], start, start + 145,
+                        MotionEvent.ACTION_CANCEL, 3, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.tripleFingerTaps);
+                // A dragged system cancellation must never become a tap.
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, start);
+                multiTouch(surface[0], start, start + 115,
+                        MotionEvent.ACTION_MOVE, 3, 100);
+                multiTouch(surface[0], start, start + 145,
+                        MotionEvent.ACTION_CANCEL, 3, 100);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals("Only the valid cancelled tap is recovered",
+                        1, actions.tripleFingerTaps);
+            });
+        }
+    }
+
+    @Test
+    public void fourFingerTapAndSwipeReachBindings() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface[0], 4, start);
+                endMulti(surface[0], 4, start, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.fourFingerTaps);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface[0], 4, start);
+                multiTouch(surface[0], start, start + 155,
+                        MotionEvent.ACTION_MOVE, 4, 110);
+                endMulti(surface[0], 4, start, 110);
+                assertEquals(1, actions.fourFingerSwipes);
             });
         }
     }
