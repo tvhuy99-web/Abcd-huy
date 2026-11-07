@@ -1,6 +1,7 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
 import java.util.ArrayList;
@@ -67,6 +68,27 @@ public final class AndroidSpeechTest {
                 "Callbacks must be unique and ordered");
         Looper.advance(10000);
         check(speech.getState() == AndroidSpeech.State.READY, "Completed speech cancels watchdog");
+
+        fresh();
+        speech.initialize(null, new Locale("vi", "VN"), 1.0f, true,
+                null, 1.3f, 0.65f);
+        Looper.runReady();
+        engine = TextToSpeech.latest;
+        engine.finishInit(TextToSpeech.SUCCESS);
+        Looper.runReady();
+        check(speech.getState() == AndroidSpeech.State.READY,
+                "Pitch/volume initialization should be ready");
+        check(Math.abs(engine.pitch - 1.3f) < 0.001f,
+                "Pitch is forwarded to the Android engine");
+        speech.speak("volume", "Kiểm tra âm lượng");
+        Looper.runReady();
+        check(engine.lastSpeakOptions instanceof Bundle,
+                "TTS speak uses Android Bundle parameters");
+        if (engine.lastSpeakOptions instanceof Bundle) {
+            Bundle options = (Bundle) engine.lastSpeakOptions;
+            check(Math.abs(options.getFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME)
+                    - 0.65f) < 0.001f, "Volume reaches TTS speak parameters");
+        }
 
         fresh();
         engine = ready();
