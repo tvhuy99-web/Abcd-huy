@@ -29,17 +29,14 @@ class QuietWorld(unittest.TestCase):
         self.assertIn('requestLiveWorldCommand("action_menu");', ctrl)
         self.assertNotIn("showComprehensiveMenu(", ctrl)
 
-    def test_footstep_is_only_after_confirmed_movement(self):
+    def test_temporary_footstep_is_removed(self):
         engine = (ROOT / "src/handle_action.cpp").read_text(
             encoding="utf-8")
         cue = (JAVA / "ReaderCuePlayer.java").read_text(encoding="utf-8")
         pref = (JAVA / "ReaderPreferences.java").read_text(encoding="utf-8")
-        self.assertIn('a11y::android::cue( "footstep" );', engine)
-        self.assertIn("player_character.pos_bub() != position_before_action",
-                      engine)
-        self.assertIn("R.raw.a11y_cue_step", cue)
-        self.assertIn('values.getBoolean("sound_cues", true)', pref)
-        self.assertIn("values.getBoolean(\"haptic_cues\", false)", pref)
+        self.assertNotIn('a11y::android::cue( "footstep" );', engine)
+        self.assertNotIn("R.raw.a11y_cue_step", cue)
+        self.assertIn('values.getBoolean("sound_cues", false)', pref)
 
 
 if __name__ == "__main__":

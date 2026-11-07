@@ -183,4 +183,14 @@
     <string name="a11yDebugPromptCopied">Đã yêu cầu sao chép. Màn hình lỗi vẫn mở.</string>
     <string name="a11yLoadingStatus">Đang tải trò chơi. %1$s. Bạn chưa cần thao tác.</string>
     <string name="a11yLoadingStillWaiting">Game vẫn chưa cung cấp màn hình có thể đọc. Có thể game đang tiếp tục tải hoặc đã ngừng phản hồi. Bạn có thể dùng cử chỉ đọc lại để nghe bước tải gần nhất.</string>
+    <string name="a11ySoundpackHeading">Bộ âm thanh trò chơi Otopack</string>
+    <string name="a11ySoundpackStarting">Đang tải Otopack từ GitHub. Dung lượng tải khá lớn. Bạn có thể chọn chơi tạm không có soundpack bất cứ lúc nào.</string>
+    <string name="a11ySoundpackMobileData">Otopack có hơn 500 MB dữ liệu âm thanh. Kết nối di động có thể bị tính phí. Tải bằng mạng di động ngay, hay chơi trước mà không tải?</string>
+    <string name="a11ySoundpackDownloadMobile">Tải bằng dữ liệu di động</string>
+    <string name="a11ySoundpackPlayWithout">Chơi tạm không có soundpack</string>
+    <string name="a11ySoundpackProgress">Đang cài Otopack: đã ghi %1$d mê-ga-bai, %2$d tệp. Bạn có thể chọn chơi tạm không có soundpack.</string>
+    <string name="a11ySoundpackComplete">Đã cài xong bộ âm thanh Otopack. Đang mở trò chơi.</string>
+    <string name="a11ySoundpackStorageUnavailable">Không thể truy cập thư mục dữ liệu trò chơi.</string>
+    <string name="a11ySoundpackFailed">Chưa cài được Otopack: %1$s. Bạn có thể thử tải lại hoặc chơi mà không có bộ âm thanh. Dữ liệu lưu game không thay đổi.</string>
+    <string name="a11ySoundpackRetry">Thử tải lại</string>
 </resources>

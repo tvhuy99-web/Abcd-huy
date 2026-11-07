@@ -1764,12 +1764,15 @@ void options_manager::add_options_general()
 
 
         std::vector<id_and_option> const soundpacks = build_soundpacks_list();
+        const bool has_otopack = std::any_of( soundpacks.begin(), soundpacks.end(),
+        []( const id_and_option & option ) { return option.first == "otopack"; } );
         add( "SOUNDPACKS", page_id, to_translation( "Choose soundpack" ),
              to_translation( "Choose the soundpack you want to use.  Requires restart." ),
-             soundpacks, std::any_of( soundpacks.begin(), soundpacks.end(),
+             soundpacks, has_otopack ? "otopack" : (
+                 std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) {
             return option.first == "CC-Sounds";
-        } )  ? "CC-Sounds" : "basic",
+        } )  ? "CC-Sounds" : "basic" ),
         COPT_NO_SOUND_HIDE
            ); // populate the options dynamically
 
@@ -4740,6 +4743,15 @@ void options_manager::load()
         get_option( "USE_LANG" ).setValue( "vi" );
     }
 #endif
+
+    // Automatically use the optional Otopack only when the player has not
+    // selected a different soundpack. The downloader installs it before the
+    // native engine loads its sound configuration.
+    if( SOUNDPACKS.find( "otopack" ) != SOUNDPACKS.end() &&
+        ( get_option( "SOUNDPACKS" ).getValue() == "basic" ||
+          get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ) ) {
+        get_option( "SOUNDPACKS" ).setValue( "otopack" );
+    }
 
     update_global_locale();
     update_options_cache();

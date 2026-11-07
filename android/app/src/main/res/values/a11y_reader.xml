@@ -183,4 +183,14 @@
     <string name="a11yDebugPromptCopied">Copy requested. The error screen remains open.</string>
     <string name="a11yLoadingStatus">Loading game. %1$s. No action is needed yet.</string>
     <string name="a11yLoadingStillWaiting">The game has not provided an accessible screen yet. It may still be loading or may have stopped responding. You can repeat the last loading stage with the read gesture.</string>
+    <string name="a11ySoundpackHeading">Optional Otopack game sound</string>
+    <string name="a11ySoundpackStarting">Downloading Otopack game sounds from GitHub. This is a large download. You may choose to play without sound at any time.</string>
+    <string name="a11ySoundpackMobileData">Otopack includes more than 500 MB of audio. Your connection may charge for mobile data. Download it now using this connection, or start playing without the soundpack?</string>
+    <string name="a11ySoundpackDownloadMobile">Download using mobile data</string>
+    <string name="a11ySoundpackPlayWithout">Play without soundpack</string>
+    <string name="a11ySoundpackProgress">Installing Otopack: %1$d megabytes written, %2$d files. Please wait. You may play without soundpack instead.</string>
+    <string name="a11ySoundpackComplete">Otopack sounds installed. Starting the game.</string>
+    <string name="a11ySoundpackStorageUnavailable">The game files directory cannot be accessed.</string>
+    <string name="a11ySoundpackFailed">Otopack could not be installed: %1$s. You may retry or start the game without it. Your saved games were not changed.</string>
+    <string name="a11ySoundpackRetry">Try downloading again</string>
 </resources>

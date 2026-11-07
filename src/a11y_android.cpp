@@ -284,10 +284,9 @@ void open_tts_settings()
 
 void cue( const std::string &name )
 {
-    // Only internal literals may reach Android's packaged cue mapping.
-    // Footsteps are a short sound-only acknowledgement of actual movement.
+    // Only established accessibility alerts may reach the Android cue mapping.
     if( name != "blocked" && name != "danger" && name != "pickup" &&
-        name != "activity_done" && name != "footstep" ) {
+        name != "activity_done" ) {
         return;
     }
 #if defined(__ANDROID__)

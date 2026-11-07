@@ -29,6 +29,7 @@ import android.content.SharedPreferences;
 import android.content.pm.PackageInfo;
 import android.content.res.AssetManager;
 import android.net.Uri;
+import android.net.ConnectivityManager;
 import android.os.*;
 import android.preference.PreferenceManager;
 import android.provider.Settings;
@@ -58,6 +59,14 @@ public class SplashScreen extends Activity {
     // repeated triggers (resume, dialog buttons, the Start button) and a
     // queued delayed start must not stack a second launch (R03.2).
     private boolean gameStartLaunched;
+    // Optional gameplay soundpack gate. The packaged data/sound tree is not
+    // touched, and Skip/Cancel never modifies any existing save.
+    private boolean soundpackGateResolved;
+    private boolean soundpackDownloadRunning;
+    private boolean soundpackMeteredApproved;
+    private OptionalSoundpackInstaller soundpackInstaller;
+    private AlertDialog soundpackDialog;
+    private TextView soundpackProgressText;
     private AndroidSpeech bootstrapSpeech;
     private RescueAudioPlayer rescuePlayer;
     private boolean rescueScreenShown;
@@ -463,6 +472,8 @@ public class SplashScreen extends Activity {
 
     @Override
     protected void onDestroy() {
+        if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
+        if (soundpackDialog != null) { soundpackDialog.dismiss(); }
         if (rescuePlayer != null) { rescuePlayer.release(); rescuePlayer = null; }
         if (bootstrapSpeech != null) { bootstrapSpeech.close(); }
         super.onDestroy();
@@ -573,6 +584,10 @@ public class SplashScreen extends Activity {
     }
 
     private void startGameActivity(boolean delay) {
+        if (BuildConfig.FLAVOR.equals("accessibility") && !soundpackGateResolved) {
+            prepareGameSoundpack();
+            return;
+        }
         if (!delay) {
             runOnUiThread(new StartGameRunnable());
         }
@@ -586,6 +601,168 @@ public class SplashScreen extends Activity {
                 }
             };
             timer.schedule(gameStartTask, 1500);
+        }
+    }
+
+    private void prepareGameSoundpack() {
+        if (gameStartLaunched || soundpackDownloadRunning || isFinishing() || isDestroyed()) {
+            return;
+        }
+        File gameRoot = getExternalFilesDir(null);
+        if (gameRoot == null) {
+            showSoundpackFailure(getString(R.string.a11ySoundpackStorageUnavailable));
+            return;
+        }
+        if (OptionalSoundpackInstaller.isInstalled(gameRoot)) {
+            soundpackGateResolved = true;
+            startGameActivity(false);
+            return;
+        }
+        if (!soundpackMeteredApproved) {
+            ConnectivityManager network = (ConnectivityManager)
+                    getSystemService(CONNECTIVITY_SERVICE);
+            if (network != null && network.isActiveNetworkMetered()) {
+                showSoundpackMobileDataWarning();
+                return;
+            }
+        }
+        startSoundpackDownload(gameRoot);
+    }
+
+    private void showSoundpackMobileDataWarning() {
+        Runnable approve = () -> {
+            soundpackMeteredApproved = true;
+            prepareGameSoundpack();
+        };
+        if (shouldSelfVoiceBootstrap()) {
+            showBootstrapMessage(R.string.a11ySoundpackHeading,
+                    getString(R.string.a11ySoundpackMobileData),
+                    new int[] { R.string.a11ySoundpackDownloadMobile, R.string.a11ySoundpackPlayWithout },
+                    new Runnable[] { approve, this::skipSoundpack });
+            speakBootstrap(getString(R.string.a11ySoundpackMobileData));
+            bootstrapBackAction = this::skipSoundpack;
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.a11ySoundpackHeading)
+                    .setMessage(R.string.a11ySoundpackMobileData)
+                    .setPositiveButton(R.string.a11ySoundpackDownloadMobile,
+                            (dialog, which) -> approve.run())
+                    .setNegativeButton(R.string.a11ySoundpackPlayWithout,
+                            (dialog, which) -> skipSoundpack())
+                    .setCancelable(false)
+                    .show();
+        }
+    }
+
+    private void skipSoundpack() {
+        // Continue game startup even if Wi-Fi is unavailable, data costs too
+        // much, or the user does not want this third-party soundpack.
+        if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
+        soundpackGateResolved = true;
+        soundpackDownloadRunning = false;
+        if (soundpackDialog != null) {
+            soundpackDialog.dismiss();
+            soundpackDialog = null;
+        }
+        startGameActivity(false);
+    }
+
+    private void startSoundpackDownload(File gameRoot) {
+        if (soundpackDownloadRunning) { return; }
+        soundpackDownloadRunning = true;
+        soundpackInstaller = new OptionalSoundpackInstaller();
+        showSoundpackProgress();
+        OptionalSoundpackInstaller task = soundpackInstaller;
+        new Thread(() -> {
+            String failure = null;
+            try {
+                task.downloadAndInstall(gameRoot, (received, extracted, files) ->
+                        runOnUiThread(() -> reportSoundpackProgress(extracted, files)));
+            } catch (IOException error) {
+                failure = error.getMessage() == null ? "unknown error" : error.getMessage();
+                Log.e(TAG, "Soundpack download failed", error);
+            }
+            final String result = failure;
+            runOnUiThread(() -> {
+                if (soundpackInstaller != task || soundpackGateResolved
+                        || isFinishing() || isDestroyed()) { return; }
+                soundpackDownloadRunning = false;
+                if (soundpackDialog != null) {
+                    soundpackDialog.dismiss();
+                    soundpackDialog = null;
+                }
+                if (result == null && OptionalSoundpackInstaller.isInstalled(gameRoot)) {
+                    speakBootstrap(getString(R.string.a11ySoundpackComplete));
+                    soundpackGateResolved = true;
+                    startGameActivity(false);
+                } else {
+                    showSoundpackFailure(result == null ? "incomplete archive" : result);
+                }
+            });
+        }, "otopack-download").start();
+    }
+
+    private void showSoundpackProgress() {
+        String label = getString(R.string.a11ySoundpackStarting);
+        if (shouldSelfVoiceBootstrap()) {
+            LinearLayout content = new LinearLayout(this);
+            content.setOrientation(LinearLayout.VERTICAL);
+            TextView heading = new TextView(this);
+            heading.setText(R.string.a11ySoundpackHeading);
+            content.addView(heading);
+            soundpackProgressText = new TextView(this);
+            soundpackProgressText.setText(label);
+            soundpackProgressText.setAccessibilityLiveRegion(
+                    View.ACCESSIBILITY_LIVE_REGION_POLITE);
+            content.addView(soundpackProgressText);
+            Button skip = new Button(this);
+            skip.setText(R.string.a11ySoundpackPlayWithout);
+            skip.setOnClickListener(v -> skipSoundpack());
+            content.addView(skip);
+            showBootstrapContent(content);
+            bootstrapBackAction = this::skipSoundpack;
+            speakBootstrap(label);
+        } else {
+            soundpackDialog = new AlertDialog.Builder(this)
+                    .setTitle(R.string.a11ySoundpackHeading)
+                    .setMessage(label)
+                    .setNegativeButton(R.string.a11ySoundpackPlayWithout,
+                            (dialog, which) -> skipSoundpack())
+                    .setCancelable(false)
+                    .create();
+            soundpackDialog.show();
+        }
+    }
+
+    private void reportSoundpackProgress(long extracted, int files) {
+        if (!soundpackDownloadRunning || soundpackGateResolved) { return; }
+        String progress = getString(R.string.a11ySoundpackProgress,
+                extracted / (1024 * 1024), files);
+        if (soundpackProgressText != null) {
+            soundpackProgressText.setText(progress);
+            speakBootstrap(progress);
+        } else if (soundpackDialog != null) {
+            soundpackDialog.setMessage(progress);
+        }
+    }
+
+    private void showSoundpackFailure(String detail) {
+        String message = getString(R.string.a11ySoundpackFailed, detail);
+        if (shouldSelfVoiceBootstrap()) {
+            showBootstrapMessage(R.string.a11ySoundpackHeading, message,
+                    new int[] { R.string.a11ySoundpackRetry, R.string.a11ySoundpackPlayWithout },
+                    new Runnable[] { this::prepareGameSoundpack, this::skipSoundpack });
+            speakBootstrap(message);
+            bootstrapBackAction = this::skipSoundpack;
+        } else {
+            new AlertDialog.Builder(this)
+                    .setTitle(R.string.a11ySoundpackHeading)
+                    .setMessage(message)
+                    .setPositiveButton(R.string.a11ySoundpackRetry, (dialog, which) ->
+                            prepareGameSoundpack())
+                    .setNegativeButton(R.string.a11ySoundpackPlayWithout, (dialog, which) ->
+                            skipSoundpack())
+                    .setCancelable(false).show();
         }
     }
 

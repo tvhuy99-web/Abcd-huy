@@ -24,6 +24,8 @@ on:
       - 'tools/accessibility/test_game_menu_gestures.py'
       - 'tools/accessibility/test_android_debug_prompt.py'
       - 'tools/accessibility/test_quiet_world_gestures.py'
+      - 'tools/accessibility/test_otopack_on_demand.py'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/OptionalSoundpackInstaller.java'
       - 'tools/accessibility/test_loading_world_speech.py'
   workflow_dispatch:
 
@@ -42,6 +44,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_game_menu_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_android_debug_prompt.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_quiet_world_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_otopack_on_demand.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_loading_world_speech.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v

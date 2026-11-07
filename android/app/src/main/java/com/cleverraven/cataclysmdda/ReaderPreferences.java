@@ -139,10 +139,10 @@ public final class ReaderPreferences {
         editor.apply();
     }
 
-    // Short movement/action sounds are on by default in the accessibility
-    // build. Existing user choices remain authoritative, and haptics stay off.
+    // The packaged accessibility cues remain optional. The downloaded
+    // gameplay soundpack is a separate native-game audio system.
     public boolean areSoundCuesEnabled() {
-        return values.getBoolean("sound_cues", true);
+        return values.getBoolean("sound_cues", false);
     }
 
     public void setSoundCuesEnabled(boolean enabled) {

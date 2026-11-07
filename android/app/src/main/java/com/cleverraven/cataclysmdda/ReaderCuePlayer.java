@@ -18,10 +18,9 @@ import java.util.Map;
 /**
  * Optional sound and vibration cues for reader events (R21.2).
  *
- * Speech remains authoritative for warnings and action outcomes; optional
- * short sound effects complement it. A confirmed footstep intentionally has
- * no spoken tile narration. Turning effects off never hides critical alerts.
- * Audio focus is transient, so cues do not replace spoken information.
+ * Optional audio cues duplicate warnings or outcomes that are also spoken.
+ * These packaged accessibility cues are off by default and never replace
+ * the externally downloaded gameplay soundpack.
  *
  * The spoken channel is owned by ReaderSpeechQueue; this class owns
  * only the SoundPool and the Vibrator. Playback failure is reported to
@@ -34,7 +33,6 @@ public final class ReaderCuePlayer {
     public static final String PICKUP = "pickup";
     public static final String ACTIVITY_DONE = "activity_done";
     public static final String REJECTED = "rejected";
-    public static final String FOOTSTEP = "footstep";
 
     public interface Listener {
         /** A cue could not be played (load failure, no vibrator). */
@@ -60,7 +58,6 @@ public final class ReaderCuePlayer {
         CUES.put(PICKUP, new Cue(R.raw.a11y_cue_pickup, new long[]{0, 40}, 700));
         CUES.put(ACTIVITY_DONE, new Cue(R.raw.a11y_cue_done, new long[]{0, 50, 60, 50}, 1200));
         CUES.put(REJECTED, new Cue(R.raw.a11y_cue_blocked, new long[]{0, 90}, 700));
-        CUES.put(FOOTSTEP, new Cue(R.raw.a11y_cue_step, new long[]{0, 10}, 150));
     }
 
     private final Context context;
