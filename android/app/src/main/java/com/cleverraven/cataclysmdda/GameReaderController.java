@@ -54,6 +54,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // visual expansion state. Parent IDs are supplied by semantic snapshots.
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
+    private int pendingReaderLayerRevisions;
     private boolean focusNewMenuRow;
     // A native modal may temporarily cover a parent screen. Frame identity
     // survives that push/pop, so return to the last visited item, not item 1.
@@ -502,6 +503,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (changedContext) {
                     readerLayerParent = "";
                     pendingReaderLayer = "";
+                    pendingReaderLayerRevisions = 0;
                 } else if (!pendingReaderLayer.isEmpty()) {
                     ReaderSnapshot.Node parent = next.find(pendingReaderLayer);
                     ReaderSnapshot.Node child = parent == null ? null
@@ -511,8 +513,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         selectedItemFocus = child.id;
                         selectionChanged = true;
                         enteredTreeLayer = true;
+                        pendingReaderLayer = "";
+                        pendingReaderLayerRevisions = 0;
+                    } else if (parent == null || ++pendingReaderLayerRevisions > 8) {
+                        // Publication may race ahead of the engine's actual
+                        // expand/tab intent. Never drop it after one stale
+                        // snapshot, but bound the pending focus request.
+                        pendingReaderLayer = "";
+                        pendingReaderLayerRevisions = 0;
                     }
-                    pendingReaderLayer = "";
                 }
                 if (!readerLayerParent.isEmpty()) {
                     ReaderSnapshot.Node currentParent = next.find(readerLayerParent);
@@ -839,6 +848,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (first == null) { return false; }
         readerLayerParent = parent.id;
         pendingReaderLayer = "";
+        pendingReaderLayerRevisions = 0;
         focus = first.id;
         root.cancelGesture();
         focusNewMenuRow = true;
@@ -853,6 +863,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             ReaderSnapshot.Node parent = snapshot.find(readerLayerParent);
             readerLayerParent = parent == null ? "" : parent.parentId;
             pendingReaderLayer = "";
+            pendingReaderLayerRevisions = 0;
             focus = parent == null ? snapshot.focus : parent.id;
             root.cancelGesture();
             focusNewMenuRow = true;
@@ -1303,6 +1314,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (node.expanded && enterReaderLayer(node)) { return; }
             if (node.actions.contains("expand")) {
                 pendingReaderLayer = node.id;
+                pendingReaderLayerRevisions = 0;
                 send("expand", "");
                 return;
             }
@@ -1313,6 +1325,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // child in onSnapshot().
         if ("tab".equals(node.role) && node.actions.contains("activate")) {
             pendingReaderLayer = node.id;
+            pendingReaderLayerRevisions = 0;
         }
         // Form fields (R02.3): choosing or toggling only writes a draft on
         // the engine side; the separate Apply control commits it.
