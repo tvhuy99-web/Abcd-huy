@@ -13,6 +13,7 @@ on:
       - 'src/handle_action.cpp'
       - 'tools/accessibility/test_world_gestures.py'
       - 'tools/accessibility/test_custom_gesture_bindings.py'
+      - 'tools/accessibility/test_nested_menu_navigation.py'
       - 'lang/po/accessibility/vi.po'
       - 'tools/accessibility/test_tts_settings.py'
   workflow_dispatch:
@@ -30,6 +31,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_tts_settings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_nested_menu_navigation.py -v
   android-java:
     runs-on: ubuntu-24.04
     timeout-minutes: 30

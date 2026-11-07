@@ -809,14 +809,14 @@ bool main_menu::opening_screen()
                              "tab:" + std::to_string( sel1 );
             if( !reader_submenu_open ) {
                 for( std::size_t i = 0; i < vMenuItems.size(); ++i ) {
-                a11y::semantic_node node;
-                node.id = "tab:" + std::to_string( i );
-                node.role = "tab";
-                node.label = remove_color_tags( shortcut_text( c_white, vMenuItems[i] ) );
-                node.selected = sel1 == static_cast<int>( i );
-                node.position = i + 1;
-                node.total = vMenuItems.size();
-                snapshot.nodes.push_back( std::move( node ) );
+                    a11y::semantic_node node;
+                    node.id = "tab:" + std::to_string( i );
+                    node.role = "tab";
+                    node.label = remove_color_tags( shortcut_text( c_white, vMenuItems[i] ) );
+                    node.selected = sel1 == static_cast<int>( i );
+                    node.position = i + 1;
+                    node.total = vMenuItems.size();
+                    snapshot.nodes.push_back( std::move( node ) );
                 }
             }
             std::vector<std::string> items;
@@ -930,6 +930,7 @@ bool main_menu::opening_screen()
             for( const auto &it : main_menu_button_map ) {
                 if( coord.has_value() && it.first.contains( coord.value() ) ) {
                     if( sel1 != it.second ) {
+                        reader_submenu_open = false;
                         sel1 = it.second;
                         sel2 = sel1 == getopt( main_menu_opts::LOADCHAR ) ? last_world_pos : 0;
                         sel_line = 0;
