@@ -27,6 +27,9 @@
 #include <vector>
 
 #include "cached_options.h"
+#if defined(__ANDROID__)
+#include "a11y_android.h"
+#endif
 #include "cata_assert.h"
 #include "cata_scope_helpers.h"
 #include "cata_utility.h"
@@ -397,6 +400,9 @@ static void debug_error_prompt(
     } );
 
 #if defined(__ANDROID__)
+    // Native debug canvases have no reader snapshot. Provide a spoken,
+    // focusable Android recovery panel rather than only printing glyphs.
+    a11y::android::present_debug_prompt( formatted_report );
     input_context ctxt( "DEBUG_MSG", keyboard_mode::keycode );
     ctxt.register_manual_key( 'C' );
     ctxt.register_manual_key( 'I' );
@@ -421,7 +427,29 @@ static void debug_error_prompt(
                 ui_manager::redraw();
                 break;
         }
+#if defined(__ANDROID__)
+        // SDL wake events let a gesture response return from blocking input.
+        switch( a11y::android::take_debug_prompt_response() ) {
+            case 1: // Continue
+                stop = true;
+                break;
+            case 2: // Ignore future identical error and continue
+                ignored_messages.insert( msg_key );
+                stop = true;
+                break;
+            case 3: // Copy report; keep error panel open
+#if defined(TILES)
+                SetClipboardText( formatted_report );
+#endif
+                break;
+            default:
+                break;
+        }
+#endif
     }
+#if defined(__ANDROID__)
+    a11y::android::dismiss_debug_prompt();
+#endif
 }
 
 void replay_buffered_debugmsg_prompts()
