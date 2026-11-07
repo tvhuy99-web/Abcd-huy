@@ -175,4 +175,10 @@
     <string name="a11yDiagnosticsCues">Cue đã yêu cầu: %1$d bị chặn, %2$d nguy hiểm, %3$d nhặt đồ, %4$d hoàn thành hoạt động, %5$d ý định bị từ chối. Sự cố cue: %6$d không khả dụng, %7$d bị bỏ qua vì ứng dụng khác đang giữ âm thanh.</string>
     <string name="a11yDiagnosticsEvents">Sự kiện gần đây: %1$s</string>
     <string name="a11yDiagnosticsNoEvents">Chưa ghi sự kiện nào.</string>
+    <string name="a11yDebugPromptTitle">Lỗi trò chơi. Màn hình xử lý lỗi.</string>
+    <string name="a11yDebugPromptInstructions">Vuốt phải để đến Tiếp tục, Bỏ qua lỗi này hoặc Sao chép báo cáo. Chạm hai lần để chọn. Vuốt hai ngón xuống để tiếp tục.</string>
+    <string name="a11yDebugPromptContinue">Tiếp tục chơi</string>
+    <string name="a11yDebugPromptIgnore">Bỏ qua lỗi này trong tương lai và tiếp tục</string>
+    <string name="a11yDebugPromptCopy">Sao chép báo cáo lỗi</string>
+    <string name="a11yDebugPromptCopied">Đã yêu cầu sao chép. Màn hình lỗi vẫn mở.</string>
 </resources>
