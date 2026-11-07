@@ -476,6 +476,8 @@ public class SplashScreen extends Activity {
 
     @Override
     protected void onDestroy() {
+        SessionDebugLog.event("LIFECYCLE", "splash_onDestroy finishing=" + isFinishing());
+        // Splash.finish() launches the game. It is not a normal game exit.
         if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
         if (soundpackDialog != null) { soundpackDialog.dismiss(); }
         if (rescuePlayer != null) { rescuePlayer.release(); rescuePlayer = null; }
@@ -549,6 +551,8 @@ public class SplashScreen extends Activity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SessionDebugLog.start(this);
+        SessionDebugLog.event("LIFECYCLE", "splash_onCreate");
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
         CataclysmDDA.applyStoredScreenOrientation(this);

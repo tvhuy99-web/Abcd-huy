@@ -115,6 +115,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             @Override
             public void onLongPress(MotionEvent event) {
                 if (valid()) {
+                    SessionDebugLog.event("GESTURE", "one_finger_long_press"
+                            + " context=" + owner);
                     longPressHandled = true;
                     listener.detail();
                 }
@@ -302,6 +304,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             clearWorldTaps();
             if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
                     && listener.directWorldGesturesEnabled()) {
+                SessionDebugLog.event("GESTURE", "one_finger_triple_tap_action_hub");
                 listener.openActionMenu();
             }
         } else {
@@ -352,6 +355,8 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     private void dispatchMultiTap(int fingers, int count) {
+        SessionDebugLog.event("GESTURE", "multi_tap fingers=" + fingers
+                + " count=" + count);
         if (!listener.directWorldGesturesEnabled()) { return; }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);
         if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
@@ -451,6 +456,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             oneFingerPath.clear();
             recordOneFinger(firstX, firstY);
         } else if (action == MotionEvent.ACTION_CANCEL) {
+            SessionDebugLog.event("TOUCH", "cancel fingers=" + maxPointers
+                    + " age_ms=" + (event.getEventTime() - downTime));
             boolean recovered = recoverCancelledMultiTap(event);
             String capturedOwner = owner;
             int capturedFingers = maxPointers;
@@ -525,6 +532,10 @@ public final class ReaderGestureSurface extends LinearLayout {
                 multiLastY = centroidY(event);
             }
             if (action == MotionEvent.ACTION_UP) {
+                SessionDebugLog.event("TOUCH", "finish multi_fingers=" + maxPointers
+                        + " duration_ms=" + (event.getEventTime() - downTime)
+                        + " dx=" + (multiLastX - multiStartX)
+                        + " dy=" + (multiLastY - multiStartY));
                 boolean permitted = !cancelled && owner != null
                         && owner.equals(listener.gestureContext())
                         && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
@@ -582,6 +593,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             } else if (listener.directWorldGesturesEnabled()) {
                 String gesture = identifyOneFingerSwipe(oneFingerPath, listener.swipeDistancePx());
                 if (gesture != null) {
+                    SessionDebugLog.event("GESTURE", "one_finger=" + gesture
+                            + " duration_ms=" + (event.getEventTime() - downTime));
                     clearMultiTap();
                     if (!listener.handleCustomGesture(gesture)
                             && gesture.indexOf('_', "swipe_".length()) < 0) {
@@ -616,6 +629,8 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     private void handleSwipe(float dx, float dy) {
+        SessionDebugLog.event("GESTURE", "swipe dx=" + dx + " dy=" + dy
+                + " world_move=" + listener.worldMovementEnabled());
         swipeHandled = true;
         int[] direction = directionForSwipe(dx, dy);
         if (direction != null && listener.movementPracticeEnabled()) {

@@ -4,6 +4,7 @@ import android.content.Context;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.speech.tts.TextToSpeech;
 import android.speech.tts.UtteranceProgressListener;
 import android.speech.tts.Voice;
@@ -11,6 +12,8 @@ import android.speech.tts.Voice;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.List;
 import java.util.Locale;
 
@@ -175,6 +178,8 @@ public final class AndroidSpeech implements AutoCloseable {
     private Runnable initTimeout;
     private Runnable startTimeout;
     private float utteranceVolume = 1.0f;
+    private final Map<String, Long> queuedAt = new HashMap<>();
+    private final Map<String, Long> speakingAt = new HashMap<>();
 
     public AndroidSpeech(Context context, Listener listener) {
         this.context = context.getApplicationContext();
@@ -323,6 +328,9 @@ public final class AndroidSpeech implements AutoCloseable {
      */
     public void speak(String clientId, String text) {
         handler.post(() -> {
+            SessionDebugLog.event("TTS_REQUEST", "id=" + clientId
+                    + " length=" + (text == null ? -1 : text.length())
+                    + " text=" + text);
             if (state == State.CLOSED) {
                 return;
             }
@@ -336,6 +344,7 @@ public final class AndroidSpeech implements AutoCloseable {
                 emit(clientId, Event.REJECTED);
                 return;
             }
+            queuedAt.put(clientId, SystemClock.elapsedRealtime());
             try {
                 Bundle options = new Bundle();
                 options.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, utteranceVolume);
@@ -469,6 +478,7 @@ public final class AndroidSpeech implements AutoCloseable {
     }
 
     private void setState(State value) {
+        SessionDebugLog.event("TTS_STATE", "state=" + value);
         state = value;
         if (listener != null) {
             listener.onState(value);
@@ -476,6 +486,20 @@ public final class AndroidSpeech implements AutoCloseable {
     }
 
     private void emit(String clientId, Event event) {
+        long now = SystemClock.elapsedRealtime();
+        Long queued = queuedAt.get(clientId);
+        if (event == Event.STARTED) {
+            speakingAt.put(clientId, now);
+        }
+        Long speaking = speakingAt.get(clientId);
+        SessionDebugLog.event("TTS_EVENT", "id=" + clientId
+                + " event=" + event
+                + " queue_ms=" + (queued == null ? "unknown" : (now - queued))
+                + " speaking_ms=" + (speaking == null ? "unknown" : (now - speaking)));
+        if (event != Event.STARTED) {
+            queuedAt.remove(clientId);
+            speakingAt.remove(clientId);
+        }
         if (listener != null) {
             listener.onUtterance(clientId, event);
         }

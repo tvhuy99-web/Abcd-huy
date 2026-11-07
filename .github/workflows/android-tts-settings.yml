@@ -18,6 +18,7 @@ on:
       - 'tools/accessibility/test_world_gestures.py'
       - 'tools/accessibility/test_custom_gesture_bindings.py'
       - 'tools/accessibility/test_comprehensive_hub_restore.py'
+      - 'tools/accessibility/test_session_debug_log.py'
       - 'tools/accessibility/test_nested_menu_navigation.py'
       - 'lang/po/accessibility/vi.po'
       - 'tools/accessibility/test_tts_settings.py'
@@ -56,6 +57,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_comprehensive_hub_restore.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_session_debug_log.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_nested_menu_navigation.py -v
   android-java:
     runs-on: ubuntu-24.04

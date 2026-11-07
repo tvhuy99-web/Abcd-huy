@@ -3590,6 +3590,14 @@ bool game::handle_action()
     }
 
     // This has no action unless we're in a special game mode.
+#if defined(__ANDROID__)
+    const auto diagnostic_action_started = std::chrono::steady_clock::now();
+    const std::string diagnostic_action_name = action_ident( act );
+    if( act != ACTION_TIMEOUT ) {
+        a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                         "start action=" + diagnostic_action_name );
+    }
+#endif
     gamemode->pre_action( act );
 
     int before_action_moves = player_character.get_moves();
@@ -3602,6 +3610,15 @@ bool game::handle_action()
     // actions allowed only while alive
     if( !player_character.is_dead_state() ) {
         if( !do_regular_action( act, player_character, mouse_target ) ) {
+#if defined(__ANDROID__)
+            if( act != ACTION_TIMEOUT ) {
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                         std::chrono::steady_clock::now() - diagnostic_action_started ).count();
+                a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                                 "rejected action=" + diagnostic_action_name +
+                                                 " elapsed_ms=" + std::to_string( elapsed ) );
+            }
+#endif
             return false;
         }
     }
@@ -3619,5 +3636,14 @@ bool game::handle_action()
     dbg( D_INFO ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
                                     to_turn<int>( calendar::turn ), before_action_moves, player_character.movecounter,
                                     player_character.get_moves() );
+#if defined(__ANDROID__)
+    if( act != ACTION_TIMEOUT ) {
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 std::chrono::steady_clock::now() - diagnostic_action_started ).count();
+        a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                         "finished action=" + diagnostic_action_name +
+                                         " elapsed_ms=" + std::to_string( elapsed ) );
+    }
+#endif
     return !player_character.is_dead_state();
 }

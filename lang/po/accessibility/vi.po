@@ -3339,3 +3339,8 @@ msgstr "Bẫy %s"
 msgctxt "Main Menu|Settings"
 msgid "Sound Settings"
 msgstr "Cài đặt âm thanh"
+
+# Tenth game main-menu option on Android.
+msgctxt "Main Menu"
+msgid "<D|d>ebug Log"
+msgstr "<N|n>hật ký gỡ lỗi"

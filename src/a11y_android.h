@@ -23,6 +23,10 @@ void announce( const std::string &text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
 #if defined(__ANDROID__)
+// Main menu controls for the bounded, per-launch Android diagnostic journal.
+void open_debug_log();
+void normal_exit();
+void diagnostic_event( const std::string &category, const std::string &detail );
 // Sound settings are queued by the Java UI, then applied on the C++ game
 // thread from the main-menu loop, preserving SDL/option thread ownership.
 void open_sound_settings( int music, int effects, bool enabled );

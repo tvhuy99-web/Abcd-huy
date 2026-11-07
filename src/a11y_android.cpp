@@ -299,6 +299,69 @@ void apply_pending_sound_settings()
     get_options().save();
 }
 
+void diagnostic_event( const std::string &category, const std::string &detail )
+{
+    // Called on the native game thread; only ASCII internal action IDs are
+    // sent here. User-entered text never crosses this diagnostic bridge.
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 8 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityNativeDiagnostic",
+                                             "(Ljava/lang/String;Ljava/lang/String;)V" );
+        if( method != nullptr ) {
+            jstring kind = env->NewStringUTF( category.c_str() );
+            jstring info = env->NewStringUTF( detail.c_str() );
+            if( kind != nullptr && info != nullptr ) {
+                env->CallVoidMethod( activity, method, kind, info );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+}
+
+void open_debug_log()
+{
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityOpenDebugLog", "()V" );
+        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+}
+
+void normal_exit()
+{
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityNormalExit", "()V" );
+        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+}
+
 void open_sound_settings( const int music, const int effects, const bool enabled )
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );

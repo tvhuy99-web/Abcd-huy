@@ -4,6 +4,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
+import android.os.SystemClock;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
@@ -38,6 +39,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final TextView status;
     private final LinearLayout rows;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private final LinkedHashMap<Long, Long> pendingIntentTimes = new LinkedHashMap<>();
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
     private ReaderSnapshot snapshot;
     // Loading screens do not publish semantic snapshots. Keep their last
@@ -255,6 +257,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 JSONObject object = new JSONObject(json);
                 if (object.has("status")) {
                     String code = object.getString("status");
+                    long requestId = object.optLong("request", 0L);
+                    Long since = pendingIntentTimes.remove(requestId);
+                    SessionDebugLog.event("INTENT_RESULT", "request=" + requestId
+                            + " status=" + code + " elapsed_ms="
+                            + (since == null ? "unknown"
+                            : (SystemClock.elapsedRealtime() - since)));
                     // Receipt outcomes feed the diagnostics counters
                     // (R21.4): codes only, never the intent's contents.
                     ReaderDiagnostics.get().count("receipt_" + code);
@@ -310,6 +318,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 ReaderSnapshot next = new ReaderSnapshot(object);
+                SessionDebugLog.event("SCREEN", "category=" + next.category
+                        + " title=" + next.title + " focus=" + next.focus
+                        + " nodes=" + next.nodes.size());
                 if (snapshot != null && next.session == snapshot.session && next.frame == snapshot.frame
                         && (next.generation < snapshot.generation ||
                         (next.generation == snapshot.generation && next.revision < snapshot.revision))) {
@@ -933,6 +944,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void navigate(int delta) {
+        SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
+                + " hub=" + comprehensiveMenu);
         if (debugReport != null) {
             debugFocus = Math.max(0, Math.min(3, debugFocus + delta));
             readCurrent();
@@ -1078,6 +1091,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean handleCustomGesture(String gestureId) {
         if (!directWorldGesturesEnabled()) { return false; }
         String target = gestureBindings.targetFor(gestureId);
+        SessionDebugLog.event("GESTURE_BINDING", "gesture=" + gestureId
+                + " target=" + target);
         if (target == null) { return false; }
         // Assignments override the built-in gesture only in the live world.
         // Do not fall through to the default action on stale/unavailable nodes.
@@ -1154,6 +1169,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void scanDirection(int dx, int dy) {
+        SessionDebugLog.event("GESTURE_ACTION", "scan dx=" + dx + " dy=" + dy);
         if (Math.abs(dx) + Math.abs(dy) != 1) { return; }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
                 : dx < 0 ? "reader:scan:west" : "reader:scan:east";
@@ -1191,6 +1207,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void moveDirection(int dx, int dy) {
+        SessionDebugLog.event("GESTURE_ACTION", "move dx=" + dx + " dy=" + dy
+                + " enabled=" + worldMovementEnabled());
         if (!worldMovementEnabled()) { return; }
         String action = actionForDirection(dx, dy);
         ReaderSnapshot.Node node = snapshot.find(action);
@@ -1207,6 +1225,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void activate() {
+        SessionDebugLog.event("ACTION", "activate focus=" + focus
+                + " hub=" + comprehensiveMenu);
         if (debugReport != null) {
             if (debugFocus == 0) { readCurrent(); }
             else { submitDebugResponse(debugFocus); }
@@ -1372,17 +1392,37 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // even if a stray lifecycle callback ran first (R03.4).
         if (closed || owner == null || !foreground || !windowFocused || lastSuspended) { return 0; }
         final long request = REQUEST_SEQUENCE.incrementAndGet();
+        long begun = SystemClock.elapsedRealtime();
+        // Text and number editors can contain user-authored/private values;
+        // record action metadata, not the typed contents.
+        SessionDebugLog.event("INTENT", "id=" + request + " screen="
+                + owner.category + " node=" + focus + " action=" + action
+                + " value=" + ("focus".equals(action) || "activate".equals(action)
+                        ? "<none>" : "<redacted>"));
         try {
             if (!CataclysmDDA.nativeReaderIntent(owner.session, owner.frame, owner.generation,
                     owner.revision, request, focus, action, value)) {
+                SessionDebugLog.event("INTENT_RESULT", "id=" + request
+                        + " accepted=false elapsed_ms="
+                        + (SystemClock.elapsedRealtime() - begun));
                 // Focus intents are re-sent on every navigation and race
                 // screen changes routinely; a rejected one is dropped
                 // silently instead of announcing a stale entry (R03.1).
                 if (!"focus".equals(action)) {
                     feedback(activity.getString(R.string.a11yReaderStale));
                 }
-            } else { return request; }
+            } else {
+                if (pendingIntentTimes.size() > 64) {
+                    pendingIntentTimes.remove(pendingIntentTimes.keySet().iterator().next());
+                }
+                pendingIntentTimes.put(request, begun);
+                SessionDebugLog.event("INTENT_RESULT", "id=" + request
+                        + " accepted=true send_ms="
+                        + (SystemClock.elapsedRealtime() - begun));
+                return request;
+            }
         } catch (UnsatisfiedLinkError unavailable) {
+            SessionDebugLog.event("ERROR", "JNI nativeReaderIntent " + unavailable);
             feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
         }
         return 0;
@@ -1781,6 +1821,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void stopSpeech() { speech.stop(); }
 
     public void onBackPressed() {
+        SessionDebugLog.event("ACTION", "back focus=" + focus
+                + " hub=" + comprehensiveMenu);
         if (closed) { return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.back(); return; }
@@ -1808,6 +1850,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
      * Read a short introduction first; navigating to the report reads it all.
      */
     public void showDebugPrompt(String report) {
+        SessionDebugLog.event("DEBUG_PROMPT", report);
         if (closed || report == null || report.isEmpty() || !preferences.isEnabled()) {
             return;
         }

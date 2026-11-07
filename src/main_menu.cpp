@@ -81,6 +81,9 @@ enum class main_menu_opts : int {
     HELP,
     CREDITS,
     QUIT,
+#if defined(__ANDROID__)
+    DEBUG_LOG,
+#endif
     NUM_MENU_OPTS,
 };
 
@@ -287,6 +290,9 @@ void main_menu::display_sub_menu( int sel, const point &bottom_left, int sel_lin
         break;
         case main_menu_opts::HELP:
         case main_menu_opts::QUIT:
+#if defined(__ANDROID__)
+        case main_menu_opts::DEBUG_LOG:
+#endif
         default:
             return;
     }
@@ -520,6 +526,9 @@ void main_menu::init_strings()
     vMenuItems.emplace_back( pgettext( "Main Menu", "<C|c>redits" ) );
 #if !defined(EMSCRIPTEN)
     vMenuItems.emplace_back( pgettext( "Main Menu", "<Q|q>uit" ) );
+#endif
+#if defined(__ANDROID__)
+    vMenuItems.emplace_back( pgettext( "Main Menu", "<D|d>ebug Log" ) );
 #endif
 
     // new game menu items
@@ -756,7 +765,11 @@ bool main_menu::opening_screen()
                     if( sel1 == getopt( main_menu_opts::QUIT ) ) {
                         return "QUIT";
                     }
-                    if( sel1 == getopt( main_menu_opts::HELP ) || sel1 == getopt( main_menu_opts::TUTORIAL ) ) {
+                    if( sel1 == getopt( main_menu_opts::HELP ) || sel1 == getopt( main_menu_opts::TUTORIAL )
+#if defined(__ANDROID__)
+                        || sel1 == getopt( main_menu_opts::DEBUG_LOG )
+#endif
+                      ) {
                         return "CONFIRM";
                     }
                     // Selecting a category enters its own accessible page;
@@ -976,6 +989,9 @@ bool main_menu::opening_screen()
         if( action == "QUIT" ) {
 #if !defined(EMSCRIPTEN)
             if( query_yn( _( "Really quit?" ) ) ) {
+#if defined(__ANDROID__)
+                a11y::android::normal_exit();
+#endif
                 return false;
             }
 #endif
@@ -1023,6 +1039,9 @@ bool main_menu::opening_screen()
                 case main_menu_opts::TUTORIAL:
                 case main_menu_opts::HELP:
                 case main_menu_opts::QUIT:
+#if defined(__ANDROID__)
+                case main_menu_opts::DEBUG_LOG:
+#endif
                 default:
                     break;
             }
@@ -1041,6 +1060,11 @@ bool main_menu::opening_screen()
                 on_move();
             }
         } else if( action == "CONFIRM" ) {
+#if defined(__ANDROID__)
+            a11y::android::diagnostic_event( "MAIN_MENU", "confirm item=" +
+                                             std::to_string( sel1 ) + " subitem=" +
+                                             std::to_string( sel2 ) );
+#endif
             switch( static_cast<main_menu_opts>( sel1 ) ) {
                 case main_menu_opts::HELP: {
                     help_window hw;
@@ -1048,7 +1072,15 @@ bool main_menu::opening_screen()
                     break;
                 }
                 case main_menu_opts::QUIT:
+#if defined(__ANDROID__)
+                    a11y::android::normal_exit();
+#endif
                     return false;
+#if defined(__ANDROID__)
+                case main_menu_opts::DEBUG_LOG:
+                    a11y::android::open_debug_log();
+                    break;
+#endif
                 case main_menu_opts::TUTORIAL:
                     if( MAP_SHARING::isSharing() ) {
                         on_error();

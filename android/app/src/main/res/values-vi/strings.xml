@@ -160,4 +160,16 @@
     <string name="a11yMusicVolumeValue">Âm lượng nhạc: %1$d</string>
     <string name="a11yEffectsEnabled">Hiệu ứng âm thanh</string>
     <string name="a11yEffectsVolumeValue">Âm lượng hiệu ứng: %1$d</string>
+    <string name="a11yDebugLogTitle">Nhật ký gỡ lỗi</string>
+    <string name="a11yDebugLogEnabled">Ghi nhật ký</string>
+    <string name="a11yDebugLogExport">Xuất nhật ký</string>
+    <string name="a11yDebugLogClear">Xóa nhật ký</string>
+    <string name="a11yDebugLogConfirmClear">Xóa nhật ký phiên hiện tại và nhật ký sự cố trước?</string>
+    <string name="a11yDebugLogCleared">Đã xóa nhật ký</string>
+    <string name="a11yDebugLogCrashAvailable">Có nhật ký sự cố phiên trước, có thể xuất.</string>
+    <string name="a11yDebugLogPreviousCrash">Phiên bị văng trước</string>
+    <string name="a11yDebugLogCurrentSession">Phiên hiện tại</string>
+    <string name="a11yDebugLogEmpty">Chưa có nhật ký để xuất</string>
+    <string name="a11yDebugLogExportError">Không xuất được nhật ký</string>
+    <string name="a11yDebugLogExported">Đã lưu nhật ký</string>
 </resources>

@@ -81,6 +81,9 @@
         <activity android:name="SoundSettingsActivity"
                   android:exported="false"
                   android:label="@string/a11ySoundSettingsTitle" />
+        <activity android:name="DebugLogActivity"
+                  android:exported="false"
+                  android:label="@string/a11yDebugLogTitle" />
         <!-- Expose app's private data directory for backup without root -->
         <provider
             android:name=".CDDADocumentsProvider"

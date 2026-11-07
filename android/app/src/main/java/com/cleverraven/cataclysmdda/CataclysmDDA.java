@@ -64,6 +64,8 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SessionDebugLog.start(this);
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onCreate");
         super.onCreate(savedInstanceState);
         if (mLayout != null) {
             mLayout.setVisibility(View.INVISIBLE);
@@ -78,6 +80,7 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     protected void onResume() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onResume");
         super.onResume();
         applyStoredScreenOrientation(this);
         applySystemUiMode();
@@ -87,6 +90,7 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     protected void onPause() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onPause");
         GameReaderController reader = readerController;
         if (reader != null) { reader.onPause(); }
         super.onPause();
@@ -94,6 +98,11 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     protected void onDestroy() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onDestroy finishing="
+                + isFinishing() + " changingConfig=" + isChangingConfigurations());
+        if (isFinishing() && !isChangingConfigurations()) {
+            SessionDebugLog.finishNormally();
+        }
         GameReaderController reader = readerController;
         readerController = null;
         if (reader != null) { reader.close(); }
@@ -132,6 +141,7 @@ public class CataclysmDDA extends SDLActivity {
 
     // Called on the SDL game thread. Presentation is posted to the main looper.
     public void onAccessibilitySnapshot(String json) {
+        SessionDebugLog.event("SNAPSHOT", "bytes=" + json.length());
         GameReaderController reader = readerController;
         if (reader != null) { reader.receive(json); }
     }
@@ -139,6 +149,7 @@ public class CataclysmDDA extends SDLActivity {
     // Called from the SDL game thread. The controller moves presentation to
     // the main looper and drops messages without a live reader context.
     public void onAccessibilityAnnouncement(String text, int priority) {
+        SessionDebugLog.event("GAME_SPEECH", "priority=" + priority + " text=" + text);
         GameReaderController reader = readerController;
         if (reader != null) { reader.announceGameMessage(text, priority); }
     }
@@ -156,6 +167,7 @@ public class CataclysmDDA extends SDLActivity {
      * reader panel even if the game menu never finished initializing.
      */
     public void onAccessibilityDebugPrompt(String report) {
+        SessionDebugLog.event("NATIVE_ERROR", report);
         runOnUiThread(() -> {
             GameReaderController reader = readerController;
             if (reader != null && !isFinishing() && !isDestroyed()) {
@@ -172,6 +184,26 @@ public class CataclysmDDA extends SDLActivity {
     }
 
     static native void nativeDebugPromptResponse(int action);
+
+    /** Native engine diagnostic events do not depend on TTS being enabled. */
+    public void onAccessibilityNativeDiagnostic(String category, String detail) {
+        SessionDebugLog.event(category, detail);
+    }
+
+    /** SDL's confirmed normal quit clears the active journal synchronously. */
+    public void onAccessibilityNormalExit() {
+        SessionDebugLog.finishNormally();
+    }
+
+    /** The tenth entry in the native main menu. */
+    public void onAccessibilityOpenDebugLog() {
+        SessionDebugLog.event("MENU", "debug_log_open_requested");
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, DebugLogActivity.class));
+            }
+        });
+    }
 
     /** Open the Android voice configuration requested from the game menu. */
     public void onAccessibilityOpenTtsSettings() {
