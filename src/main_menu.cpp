@@ -1097,8 +1097,20 @@ bool main_menu::opening_screen()
                         style_picker picker;
                         picker.show();
                     } else if( sel2 == 6 ) { /// ImGui demo
-                        imgui_demo_ui demo;
-                        demo.run();
+                        if( a11y::enabled() ) {
+                            // This developer-only visual demonstration has
+                            // no semantic controls. Do not strand readers on
+                            // a silent ImGui canvas.
+                            uilist accessible_demo( _( "ImGui demonstration" ), {} );
+                            accessible_demo.text = _(
+                                                       "This developer demonstration does not provide accessible game controls. "
+                                                       "Choose Back to return to Settings." );
+                            accessible_demo.addentry( 0, true, 'q', _( "Back to settings" ) );
+                            accessible_demo.query();
+                        } else {
+                            imgui_demo_ui demo;
+                            demo.run();
+                        }
 #if defined(__ANDROID__)
                     } else if( sel2 == 7 ) { // Native Android TTS settings
                         a11y::android::open_tts_settings();
@@ -1240,6 +1252,12 @@ bool main_menu::new_character_tab()
         // loading the world.
         // Pick a world, suppressing prompts if it's "play now" mode.
         const bool is_play_now = sel2 == 3 || sel2 == 4;
+        if( a11y::enabled() && is_play_now ) {
+            // Quick Play can spend a long time generating a world without a
+            // menu snapshot. Confirm activation before the loading UI appears.
+            a11y::android::announce( "A11Y_LOADING:" +
+                                     std::string( _( "Preparing a new world. Please wait." ) ), 1 );
+        }
         WORLD *world = world_generator->pick_world( !is_play_now, is_play_now );
         if( world == nullptr ) {
             return false;

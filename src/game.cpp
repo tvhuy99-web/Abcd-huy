@@ -1,4 +1,5 @@
 #include "game.h"
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
@@ -690,6 +691,10 @@ void game::setup()
 {
     a11y::replace_game_session();
     new_game = true;
+    if( a11y::android::enabled() && !a11y::android::suspended() ) {
+        a11y::android::announce( "A11Y_LOADING:" +
+                                 std::string( _( "Loading world data. Please wait." ) ), 1 );
+    }
     {
         static_popup popup;
         popup.message( "%s", _( "Please wait while the world data loads…\nLoading core data" ) );
@@ -811,6 +816,10 @@ bool game::start_game()
     overmap_buffer.init_region_layout();
 
     background_pane background;
+    if( a11y::android::enabled() && !a11y::android::suspended() ) {
+        a11y::android::announce( "A11Y_LOADING:" +
+                                 std::string( _( "Creating your character and starting the game." ) ), 1 );
+    }
     static_popup popup;
     popup.message( "%s", _( "Please wait as we build your world" ) );
     ui_manager::redraw();

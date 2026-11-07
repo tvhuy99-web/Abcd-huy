@@ -38,6 +38,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
     private ReaderSnapshot snapshot;
+    // Loading screens do not publish semantic snapshots. Keep their last
+    // visible status available to repeat, even after the main menu clears.
+    private String lastLoadingStatus = "";
+    private final Runnable loadingSilenceWarning = () -> {
+        if (!closed && foreground && windowFocused && preferences.isEnabled()
+                && snapshot == null && !lastLoadingStatus.isEmpty()) {
+            feedback(activity.getString(R.string.a11yLoadingStillWaiting));
+        }
+    };
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
     private String editorContext = "";
@@ -190,6 +199,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         speech.clearForLifecycle();
         documentReader.clear();
         snapshot = null;
+        lastLoadingStatus = "";
+        handler.removeCallbacks(loadingSilenceWarning);
         readerLayerParent = "";
         pendingReaderLayer = "";
         editor = null;
@@ -281,6 +292,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 if (object.optBoolean("inactive")) {
                     snapshot = null;
+                    lastLoadingStatus = "";
+                    handler.removeCallbacks(loadingSilenceWarning);
                     editor = null;
                     editorRequest = 0;
                     root.cancelGesture();
@@ -426,6 +439,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     rememberScreenFocus(previousSnapshot, previous);
                 }
                 snapshot = next;
+                lastLoadingStatus = "";
+                handler.removeCallbacks(loadingSilenceWarning);
                 speech.setContext(next.contextKey());
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
@@ -496,8 +511,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 boolean enteredMenu = nativeLayerChanged || enteredTreeLayer
                         || (changedContext && next.find("world:here") == null);
+                // A world snapshot is the first proof that the loading screen
+                // has finished. Speak the transition explicitly, not merely
+                // the focused tile, so a blind player knows play has begun.
+                boolean enteredWorld = changedContext && next.find("world:here") != null;
                 render();
-                if (enteredMenu && next.find(focus) != null) {
+                if (enteredWorld && next.find(focus) != null) {
+                    feedback(activity.getString(R.string.a11yEnteredWorld) + ". "
+                            + nodeText(next.find(focus), false));
+                } else if (enteredMenu && next.find(focus) != null) {
                     feedback(next.title + ". " + nodeText(next.find(focus), false));
                 } else if (selectionChanged) {
                     readCurrent();
@@ -516,12 +538,32 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void announceGameMessage(String text, int priority) {
         if (text == null || text.trim().isEmpty() || text.length() > 16000) { return; }
         final String message = text;
+        final boolean loading = message.startsWith("A11Y_LOADING:");
         final boolean extendedScan = message.startsWith("A11Y_SCAN:");
-        final String spokenMessage = extendedScan ? message.substring("A11Y_SCAN:".length()) : message;
+        final String spokenMessage = loading ? message.substring("A11Y_LOADING:".length())
+                : extendedScan ? message.substring("A11Y_SCAN:".length()) : message;
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         handler.post(() -> {
-            if (closed || !foreground || !windowFocused || !preferences.isEnabled() || snapshot == null) {
+            if (closed || !foreground || !windowFocused || !preferences.isEnabled()
+                    || (snapshot == null && !loading)) {
+                return;
+            }
+            if (loading) {
+                // This is a temporary progress notification, not a game node.
+                // It must be audible precisely when the old screen is inactive.
+                lastLoadingStatus = spokenMessage;
+                handler.removeCallbacks(loadingSilenceWarning);
+                handler.postDelayed(loadingSilenceWarning, 45000);
+                String statusText = activity.getString(R.string.a11yLoadingStatus, spokenMessage);
+                if (usesTouchExploration()) {
+                    status.setText(statusText);
+                    root.announceForAccessibility(statusText);
+                } else {
+                    speech.say("loading-progress", statusText,
+                            ReaderSpeechQueue.INFORMATION, 30000);
+                }
+                ReaderDiagnostics.get().event("loading_progress");
                 return;
             }
             ReaderDiagnostics.get().count(level == ReaderSpeechQueue.URGENT
@@ -1257,7 +1299,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { editor.readCurrent(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
-        if (node == null) { return; }
+        if (node == null) {
+            if (snapshot == null && !lastLoadingStatus.isEmpty()) {
+                feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
+            }
+            return;
+        }
         String spoken = nodeText(node, false);
         if (usesTouchExploration()) {
             root.announceForAccessibility(spoken);
@@ -1274,6 +1321,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { feedback(editor.valueDescription()); return; }
+        if (snapshot == null && !lastLoadingStatus.isEmpty()) {
+            feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) { feedback(nodeText(node, true)); }
     }
