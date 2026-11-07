@@ -34,7 +34,7 @@
     <string name="unavailable">Không khả dụng</string>
     <string name="unavailableOption">Tùy chọn bạn chọn hiện không khả dụng.</string>
     <string name="a11yReaderSetup">Cài đặt trình đọc và giọng nói</string>
-    <string name="a11yReaderSetupExplanation">Trình đọc nội bộ tự bật khi mở trò chơi, không cần qua màn thử nghiệm hay xác nhận thủ công. Cài đặt giọng là tùy chọn. Nếu chưa nghe được, hãy kiểm tra giọng tiếng Việt trên Android và giữ TalkBack làm phương án dự phòng.</string>
+    <string name="a11yReaderSetupExplanation">Trình đọc nội bộ tự bật khi mở trò chơi, không cần bước xác nhận thủ công. Cài đặt giọng là tùy chọn. Nếu chưa nghe được, hãy kiểm tra giọng tiếng Việt trên Android và giữ TalkBack làm phương án dự phòng.</string>
     <string name="a11yTestVietnamese">Nghe giọng đang chọn</string>
     <string name="a11yStopSpeech">Dừng lời đọc</string>
     <string name="a11yAndroidVoiceSettings">Mở cài đặt giọng đọc Android</string>
