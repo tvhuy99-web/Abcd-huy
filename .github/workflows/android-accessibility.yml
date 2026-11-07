@@ -142,16 +142,16 @@ jobs:
                           raise SystemExit('Candidate is not signed with the stable accessibility test key')
                       aapt = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/aapt'
                       badging = subprocess.check_output([str(aapt), 'dump', 'badging', str(apk)], text=True)
-                      pkg = re.search(r"^package: name='([^']+)' versionCode='(\\d+)'", badging, re.M)
+                      pkg = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", badging, re.M)
                       expected_code = 100000 + int(os.environ['GITHUB_RUN_NUMBER'])
                       if not pkg or pkg.group(1) != 'com.cleverraven.cataclysmdda.accessibility':
                           raise SystemExit('APK package ID changed; it cannot update existing accessibility installs')
                       if int(pkg.group(2)) != expected_code:
                           raise SystemExit('Incorrect monotonically increasing versionCode')
                       pathlib.Path('build-evidence/package.txt').write_text(
-                          f"package={pkg.group(1)}\\nversionCode={pkg.group(2)}\\n"
-                          f"certificate_sha256={expected}\\n", encoding='utf-8')
-                  out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\\n')
+                          f"package={pkg.group(1)}\nversionCode={pkg.group(2)}\n"
+                          f"certificate_sha256={expected}\n", encoding='utf-8')
+                  out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\n')
           PY
       - name: Summarize stable test identity and artifact
         if: success() && matrix.name == 'candidate'
