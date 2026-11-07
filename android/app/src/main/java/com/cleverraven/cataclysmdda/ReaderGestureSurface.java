@@ -1,8 +1,11 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
+import android.view.ViewConfiguration;
 import android.widget.LinearLayout;
 
 /** Owns each pointer sequence once. Native widgets retain normal TalkBack gestures. */
@@ -20,6 +23,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
         void moveDirection(int dx, int dy);
+        boolean directWorldGesturesEnabled();
+        void scanDirection(int dx, int dy);
+        void twoFingerTap(int count);
+        void threeFingerTap();
         void activate();
         void detail();
         void readCurrent();
@@ -28,6 +35,15 @@ public final class ReaderGestureSurface extends LinearLayout {
 
     private final Listener listener;
     private final GestureDetector detector;
+    private final Handler handler = new Handler(Looper.getMainLooper());
+    private Runnable multiTapTimeout;
+    private int twoFingerTapCount;
+    private String multiTapOwner;
+    private int maxPointers;
+    private float multiStartX;
+    private float multiStartY;
+    private float multiLastX;
+    private float multiLastY;
     private String owner;
     private String previousTapOwner;
     private boolean multiple;
@@ -102,6 +118,55 @@ public final class ReaderGestureSurface extends LinearLayout {
         return !cancelled && !multiple && owner != null && owner.equals(listener.gestureContext());
     }
 
+    private static float centroidX(MotionEvent event) {
+        float sum = 0;
+        for (int i = 0; i < event.getPointerCount(); i++) { sum += event.getX(i); }
+        return sum / event.getPointerCount();
+    }
+
+    private static float centroidY(MotionEvent event) {
+        float sum = 0;
+        for (int i = 0; i < event.getPointerCount(); i++) { sum += event.getY(i); }
+        return sum / event.getPointerCount();
+    }
+
+    private void clearMultiTap() {
+        if (multiTapTimeout != null) {
+            handler.removeCallbacks(multiTapTimeout);
+            multiTapTimeout = null;
+        }
+        twoFingerTapCount = 0;
+        multiTapOwner = null;
+    }
+
+    /** Resolve one/two/three two-finger taps as one mutually exclusive sequence. */
+    private void queueTwoFingerTap(String tapOwner) {
+        if (twoFingerTapCount > 0 && !tapOwner.equals(multiTapOwner)) {
+            clearMultiTap();
+        }
+        if (twoFingerTapCount == 0) { multiTapOwner = tapOwner; }
+        twoFingerTapCount++;
+        if (multiTapTimeout != null) {
+            handler.removeCallbacks(multiTapTimeout);
+            multiTapTimeout = null;
+        }
+        if (twoFingerTapCount == 3) {
+            clearMultiTap();
+            if (listener.directWorldGesturesEnabled()) { listener.twoFingerTap(3); }
+        } else {
+            multiTapTimeout = () -> {
+                int count = twoFingerTapCount;
+                String expected = multiTapOwner;
+                clearMultiTap();
+                if (expected != null && expected.equals(listener.gestureContext())
+                        && listener.directWorldGesturesEnabled()) {
+                    listener.twoFingerTap(count);
+                }
+            };
+            handler.postDelayed(multiTapTimeout, ViewConfiguration.getDoubleTapTimeout());
+        }
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (listener.usesTouchExploration()) {
@@ -112,6 +177,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         if (action == MotionEvent.ACTION_DOWN) {
             owner = listener.gestureContext();
             multiple = false;
+            maxPointers = 1;
             cancelled = false;
             activateOnUp = false;
             swipeHandled = false;
@@ -125,25 +191,55 @@ public final class ReaderGestureSurface extends LinearLayout {
             return true;
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
             multiple = true;
+            maxPointers = Math.max(maxPointers, event.getPointerCount());
             activateOnUp = false;
             MotionEvent cancel = MotionEvent.obtain(event);
             cancel.setAction(MotionEvent.ACTION_CANCEL);
             detector.onTouchEvent(cancel);
             cancel.recycle();
-            if (event.getPointerCount() > 2) {
-                cancelled = true;
-            }
+            if (maxPointers > 3) { cancelled = true; }
+            multiStartX = centroidX(event);
+            multiStartY = centroidY(event);
+            multiLastX = multiStartX;
+            multiLastY = multiStartY;
         }
         if (multiple) {
-            if (Math.hypot(event.getX() - firstX, event.getY() - firstY) > listener.swipeDistancePx()) {
-                cancelled = true;
+            if ((action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_POINTER_UP)
+                    && event.getPointerCount() == maxPointers) {
+                multiLastX = centroidX(event);
+                multiLastY = centroidY(event);
             }
             if (action == MotionEvent.ACTION_UP) {
-                if (!cancelled && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
-                        && owner != null && owner.equals(listener.gestureContext())) {
-                    listener.stopSpeech();
+                boolean permitted = !cancelled && owner != null
+                        && owner.equals(listener.gestureContext())
+                        && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
+                        && listener.directWorldGesturesEnabled();
+                float dx = multiLastX - multiStartX;
+                float dy = multiLastY - multiStartY;
+                if (permitted && maxPointers == 2) {
+                    if (Math.max(Math.abs(dx), Math.abs(dy)) >= listener.swipeDistancePx()) {
+                        clearMultiTap();
+                        // Only cardinal directions are accepted, never diagonals.
+                        if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
+                            listener.scanDirection(dx > 0 ? 1 : -1, 0);
+                        } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
+                            listener.scanDirection(0, dy > 0 ? 1 : -1);
+                        }
+                    } else {
+                        queueTwoFingerTap(owner);
+                    }
+                } else if (permitted && maxPointers == 3
+                        && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()) {
+                    clearMultiTap();
+                    listener.threeFingerTap();
+                } else {
+                    clearMultiTap();
                 }
-                cancelGesture();
+                // Keep any pending two-finger tap series across pointer resets.
+                multiple = false;
+                cancelled = true;
+                owner = null;
+                previousTapOwner = null;
             }
             return true;
         }
@@ -182,11 +278,12 @@ public final class ReaderGestureSurface extends LinearLayout {
         if (direction != null && listener.movementPracticeEnabled()) {
             listener.practiceMovementDirection(direction[0], direction[1]);
         } else if (listener.worldMovementEnabled()) {
-            if (direction != null) {
-                listener.moveDirection(direction[0], direction[1]);
+            // Walking is four-way and immediately enabled in the live world.
+            if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
+                listener.moveDirection(dx > 0 ? 1 : -1, 0);
+            } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
+                listener.moveDirection(0, dy > 0 ? 1 : -1);
             }
-            // Without explicit world movement mode, menus never interpret a
-            // diagonal as movement.
         } else if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
             performMappedSwipeAction(listener.horizontalSwipeAction(),
                                      navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
@@ -218,5 +315,6 @@ public final class ReaderGestureSurface extends LinearLayout {
         activateOnUp = false;
         owner = null;
         previousTapOwner = null;
+        clearMultiTap();
     }
 }
