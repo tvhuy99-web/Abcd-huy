@@ -44,7 +44,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private long editorRequest;
     private String formContext = "";
     private long formRequest;
-    private boolean readScreenSummary;
     private String search = "";
     private boolean onlyCommands;
     private String focus = "";
@@ -481,7 +480,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     editor = null;
                     editorRequest = 0;
                     formRequest = 0;
-                    readScreenSummary = true;
                     search = "";
                     onlyCommands = false;
                     // Document sessions are per screen context (R04.4);
@@ -603,15 +601,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!node.value.isEmpty()) { text.append(". ").append(node.value); }
         if (node.checked) { text.append(". ").append(activity.getString(R.string.a11yChecked)); }
         else if ("checkbox".equals(node.role)) { text.append(". ").append(activity.getString(R.string.a11yUnchecked)); }
-        if (node.selected) { text.append(". ").append(activity.getString(R.string.a11ySelected)); }
+        // Selection is already represented by focus. Do not say "selected"
+        // on every swipe; the full state is still available on Detail.
+        if (includeDetail && node.selected) {
+            text.append(". ").append(activity.getString(R.string.a11ySelected));
+        }
         if (!search.isEmpty() || onlyCommands) {
             List<ReaderSnapshot.Node> filtered = visibleNodes();
             int position = filtered.indexOf(node);
             if (position >= 0) {
-                text.append(". ").append(activity.getString(R.string.a11yPosition, position + 1, filtered.size()));
+                text.append(", ").append(activity.getString(R.string.a11yPosition, position + 1, filtered.size()));
             }
         } else if (node.position > 0 && node.total > 0) {
-            text.append(". ").append(activity.getString(R.string.a11yPosition, node.position, node.total));
+            text.append(", ").append(activity.getString(R.string.a11yPosition, node.position, node.total));
         }
         if (!node.enabled) {
             text.append(". ").append(node.disabledReason.isEmpty()
@@ -1179,12 +1181,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
+            // Spoken navigation stays short on every screen: item + position.
+            // Screen title/summary can be requested with "Where am I?".
+            // Never shorten warnings, disabled reasons, field values or
+            // explicit details in the name of concision.
+            String spoken = nodeText(node, false);
             if (usesTouchExploration()) {
-                status.announceForAccessibility(nodeText(node, false));
+                status.announceForAccessibility(spoken);
             } else {
-                String summary = readScreenSummary ? snapshot.summary + ". " : "";
-                readScreenSummary = false;
-                speech.focus(node.id, snapshot.title + ". " + summary + nodeText(node, false));
+                speech.focus(node.id, spoken);
             }
         }
     }

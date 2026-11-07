@@ -206,7 +206,7 @@ public final class ReaderTextEditor {
     public void activate() { items.get(selected).action.run(); }
 
     public void readCurrent() {
-        listener.speak(items.get(selected).label + ". "
+        listener.speak(items.get(selected).label + ", "
                 + activity.getString(R.string.a11yPosition, selected + 1, items.size()));
     }
 
