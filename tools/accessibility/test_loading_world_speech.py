@@ -30,17 +30,26 @@ class LoadingWorldSpeech(unittest.TestCase):
         self.assertIn('message.startsWith("A11Y_LOADING:")', reader)
         self.assertIn("(snapshot == null && !loading)", reader)
         self.assertIn("lastLoadingStatus = spokenMessage;", reader)
-        self.assertIn("handler.postDelayed(loadingSilenceWarning, 45000);", reader)
+        self.assertNotIn("loadingSilenceWarning", reader)
         self.assertIn("lastLoadingStatus = \"\";", reader)
         self.assertIn('ReaderSnapshot.Node nextTile = next.find("world:here")', reader)
         self.assertNotIn("R.string.a11yEnteredWorld", reader)
-        self.assertIn("loadingSilenceWarning", reader)
+        self.assertNotIn("R.string.a11yLoadingStillWaiting", reader)
 
     def test_read_again_speaks_last_stage_while_waiting(self):
         reader = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         self.assertIn('if (snapshot == null && !lastLoadingStatus.isEmpty()) {',
                       reader)
         self.assertIn("R.string.a11yLoadingStatus, lastLoadingStatus", reader)
+
+    def test_loading_phrases_are_only_the_status_itself(self):
+        en = (ROOT / "android/app/src/main/res/values/a11y_reader.xml").read_text(encoding="utf-8")
+        vi = (ROOT / "android/app/src/main/res/values-vi/a11y_reader.xml").read_text(encoding="utf-8")
+        for resources in (en, vi):
+            self.assertIn('<string name="a11yLoadingStatus">%1$s</string>', resources)
+            self.assertNotIn("a11yLoadingStillWaiting", resources)
+        self.assertNotIn("Bạn chưa cần thao tác", vi)
+        self.assertNotIn("dùng cử chỉ đọc lại", vi)
 
 
 if __name__ == "__main__":

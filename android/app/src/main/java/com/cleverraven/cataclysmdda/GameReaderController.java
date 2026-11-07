@@ -67,19 +67,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastEnabled;
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
-    private final Runnable loadingSilenceWarning;
-
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
         preferences = new ReaderPreferences(activity);
-        // Initialize this after the final activity/preferences references.
-        loadingSilenceWarning = () -> {
-            if (!closed && foreground && windowFocused && preferences.isEnabled()
-                    && snapshot == null && !lastLoadingStatus.isEmpty()) {
-                feedback(activity.getString(R.string.a11yLoadingStillWaiting));
-            }
-        };
         gestureBindings = new ReaderGestureBindings(activity);
         accessibility = (AccessibilityManager) activity.getSystemService(Context.ACCESSIBILITY_SERVICE);
         speech = new ReaderSpeechQueue(activity, new ReaderSpeechQueue.Listener() {
@@ -203,7 +194,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         documentReader.clear();
         snapshot = null;
         lastLoadingStatus = "";
-        handler.removeCallbacks(loadingSilenceWarning);
         readerLayerParent = "";
         pendingReaderLayer = "";
         editor = null;
@@ -296,8 +286,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (object.optBoolean("inactive")) {
                     snapshot = null;
                     lastLoadingStatus = "";
-                    handler.removeCallbacks(loadingSilenceWarning);
-                    editor = null;
+                                editor = null;
                     editorRequest = 0;
                     root.cancelGesture();
                     speech.setContext("");
@@ -443,8 +432,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 snapshot = next;
                 lastLoadingStatus = "";
-                handler.removeCallbacks(loadingSilenceWarning);
-                speech.setContext(next.contextKey());
+                        speech.setContext(next.contextKey());
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
                     readerLayerParent = "";
@@ -562,9 +550,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // This is a temporary progress notification, not a game node.
                 // It must be audible precisely when the old screen is inactive.
                 lastLoadingStatus = spokenMessage;
-                handler.removeCallbacks(loadingSilenceWarning);
-                handler.postDelayed(loadingSilenceWarning, 45000);
-                String statusText = activity.getString(R.string.a11yLoadingStatus, spokenMessage);
+                        String statusText = activity.getString(R.string.a11yLoadingStatus, spokenMessage);
                 if (usesTouchExploration()) {
                     status.setText(statusText);
                     root.announceForAccessibility(statusText);
