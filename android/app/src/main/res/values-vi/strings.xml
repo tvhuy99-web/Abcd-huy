@@ -84,4 +84,29 @@
     <string name="a11yTtsVolumeTooLow">Âm lượng bằng không. Hãy tăng âm lượng trước khi bật đọc bằng lời nói.</string>
     <string name="a11yTtsEnabledDraft">Đã bật TTS trong bản nháp. Hãy Nghe thử rồi Lưu để áp dụng.</string>
     <string name="a11yTtsDisableWarning">Đã tắt TTS trong bản nháp. Nếu Lưu, game sẽ ngừng đọc. Hãy giữ TalkBack để có thể bật lại.</string>
+
+    <!-- Consolidated spoken gameplay hub. -->
+    <string name="a11yHubSearch">Tìm lệnh</string>
+    <string name="a11yHubNearby">Việc có thể làm tại đây</string>
+    <string name="a11yHubExplore">Quan sát và bản đồ</string>
+    <string name="a11yHubMovement">Di chuyển và tư thế</string>
+    <string name="a11yHubInteraction">Tương tác với môi trường</string>
+    <string name="a11yHubInventory">Túi đồ và vật phẩm</string>
+    <string name="a11yHubHealth">Ăn uống, nghỉ ngơi và y tế</string>
+    <string name="a11yHubEquipment">Trang bị và sửa chữa</string>
+    <string name="a11yHubCombat">Chiến đấu, vũ khí và phép thuật</string>
+    <string name="a11yHubCrafting">Chế tạo và xây dựng</string>
+    <string name="a11yHubCharacter">Nhân vật và năng lực</string>
+    <string name="a11yHubMissions">Nhiệm vụ và quan hệ</string>
+    <string name="a11yHubVehicles">Phương tiện và hành trình</string>
+    <string name="a11yHubAutomation">Quản lý khu vực và tự động hóa</string>
+    <string name="a11yHubReader">Thông tin, trình đọc và trợ giúp</string>
+    <string name="a11yHubSystem">Hệ thống, TTS và lưu game</string>
+    <string name="a11yHubTitle">Menu tổng hợp</string>
+    <string name="a11yHubAllCommands">Tất cả lệnh</string>
+    <string name="a11yHubEmpty">Không có mục khả dụng</string>
+    <string name="a11yHubNoMessages">Không có thông báo gần đây</string>
+    <string name="a11yHubTts">Cài đặt TTS</string>
+    <string name="a11yHubReaderSetup">Cài đặt trình đọc</string>
+    <string name="a11yHubNoMatches">Không tìm thấy lệnh phù hợp</string>
 </resources>

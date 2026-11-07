@@ -84,4 +84,29 @@
     <string name="a11yTtsVolumeTooLow">Volume is zero. Increase the volume before enabling spoken navigation.</string>
     <string name="a11yTtsEnabledDraft">TTS is on. Choose Listen to sample and Save to apply.</string>
     <string name="a11yTtsDisableWarning">TTS is off in this draft. Saving will silence the in-game reader. Keep TalkBack available to enable it again.</string>
+
+    <!-- Consolidated spoken gameplay hub. -->
+    <string name="a11yHubSearch">Search commands</string>
+    <string name="a11yHubNearby">Actions available here</string>
+    <string name="a11yHubExplore">Explore and maps</string>
+    <string name="a11yHubMovement">Movement and posture</string>
+    <string name="a11yHubInteraction">Interact with surroundings</string>
+    <string name="a11yHubInventory">Inventory and items</string>
+    <string name="a11yHubHealth">Food, rest and medical</string>
+    <string name="a11yHubEquipment">Equipment and repairs</string>
+    <string name="a11yHubCombat">Combat and magic</string>
+    <string name="a11yHubCrafting">Crafting and construction</string>
+    <string name="a11yHubCharacter">Character and abilities</string>
+    <string name="a11yHubMissions">Missions and relations</string>
+    <string name="a11yHubVehicles">Vehicles and travel</string>
+    <string name="a11yHubAutomation">Zones and automation</string>
+    <string name="a11yHubReader">Reader and information</string>
+    <string name="a11yHubSystem">System and saves</string>
+    <string name="a11yHubTitle">Comprehensive menu</string>
+    <string name="a11yHubAllCommands">All commands</string>
+    <string name="a11yHubEmpty">No available entries</string>
+    <string name="a11yHubNoMessages">No recent messages</string>
+    <string name="a11yHubTts">TTS settings</string>
+    <string name="a11yHubReaderSetup">Reader settings</string>
+    <string name="a11yHubNoMatches">Search returned no matches</string>
 </resources>
