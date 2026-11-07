@@ -65,6 +65,8 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("identifyOneFingerSwipe(", src)
         self.assertIn("first + \"_\" + second", src)
         self.assertIn("maxPointers <= 4", src)
+        self.assertIn("if (maxPointers == 2)", src)
+        self.assertIn("listener.scanDirection(", src)
         self.assertIn("queueMultiTap(owner, maxPointers)", src)
         self.assertIn("dispatchMultiTap(fingers, 3)", src)
 

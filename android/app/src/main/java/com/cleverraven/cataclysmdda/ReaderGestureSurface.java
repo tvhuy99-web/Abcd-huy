@@ -295,11 +295,17 @@ public final class ReaderGestureSurface extends LinearLayout {
                     String direction = cardinal(dx, dy, threshold);
                     if (direction != null) {
                         clearMultiTap();
-                        String gesture = ReaderGestureBindings.idForSwipe(maxPointers, direction);
-                        if (gesture != null && !listener.handleCustomGesture(gesture)
-                                && maxPointers == 2) {
-                            listener.scanDirection(dx > threshold ? 1 : dx < -threshold ? -1 : 0,
-                                    dy > threshold ? 1 : dy < -threshold ? -1 : 0);
+                        if (maxPointers == 2) {
+                            // Two-finger swipes are dedicated to the 16-tile scan,
+                            // not among the 33 assignable shortcut gestures.
+                            listener.scanDirection("right".equals(direction) ? 1
+                                    : "left".equals(direction) ? -1 : 0,
+                                    "down".equals(direction) ? 1
+                                    : "up".equals(direction) ? -1 : 0);
+                        } else {
+                            String gesture = ReaderGestureBindings.idForSwipe(
+                                    maxPointers, direction);
+                            if (gesture != null) { listener.handleCustomGesture(gesture); }
                         }
                     } else if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) {
                         queueMultiTap(owner, maxPointers);
