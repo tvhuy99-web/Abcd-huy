@@ -19,6 +19,9 @@ semantic_snapshot world_snapshot( const input_context &context, int scan_radius,
                                   std::optional<point> camera_offset = std::nullopt,
                                   std::optional<tripoint_rel_ms> explore_cursor = std::nullopt );
 semantic_snapshot activity_snapshot( const input_context &context );
+// Unrestricted, read-only 16-tile accessibility scan. Never moves the avatar or advances time.
+void announce_linear_scan( int dx, int dy );
+void announce_player_coordinates();
 // Speak only meaningful transitions, while a live world input scope exists.
 void announce_status_changes();
 void reset_status_monitor();

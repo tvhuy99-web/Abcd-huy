@@ -323,6 +323,22 @@ input_context game::get_player_input( std::string &action )
     std::unique_ptr<a11y::screen_scope> reader;
     reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        // Multi-finger reads are verified against the live world snapshot.
+        // They never enqueue movement, consume moves, or change the turn.
+        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
+            if( intent.node == "reader:scan:north" ) {
+                a11y::announce_linear_scan( 0, -1 );
+            } else if( intent.node == "reader:scan:south" ) {
+                a11y::announce_linear_scan( 0, 1 );
+            } else if( intent.node == "reader:scan:west" ) {
+                a11y::announce_linear_scan( -1, 0 );
+            } else if( intent.node == "reader:scan:east" ) {
+                a11y::announce_linear_scan( 1, 0 );
+            } else if( intent.node == "reader:coordinates" ) {
+                a11y::announce_player_coordinates();
+            }
+            return std::nullopt;
+        }
         // Explore intents are reader-local: they only move the reading
         // cursor and republish the snapshot. They are intercepted before
         // registered_intent so an explore node can never fall through to

@@ -3282,3 +3282,34 @@ msgstr "Nhóm kỹ năng tiếp"
 msgctxt "Main Menu|Settings"
 msgid "TTS Settings"
 msgstr "Cài đặt TTS"
+
+# Direct world gestures and unrestricted assistive scan, 2026-11-07.
+msgid "Scan 16 tiles north"
+msgstr "Quét 16 ô phía Bắc"
+
+msgid "Scan 16 tiles south"
+msgstr "Quét 16 ô phía Nam"
+
+msgid "Scan 16 tiles west"
+msgstr "Quét 16 ô phía Tây"
+
+msgid "Scan 16 tiles east"
+msgstr "Quét 16 ô phía Đông"
+
+msgid "Read current coordinates"
+msgstr "Đọc tọa độ hiện tại"
+
+#, c-format
+msgid "Scan %s, 16 tiles, nearest to farthest."
+msgstr "Quét phía %s, 16 ô, từ gần đến xa."
+
+#, c-format
+msgid "Tile %1$d: %2$s."
+msgstr "Ô %1$d: %2$s."
+
+#, c-format
+msgid "Coordinates. X %1$d. Y %2$d. Z %3$d."
+msgstr "Tọa độ. X %1$d. Y %2$d. Tầng Z %3$d."
+
+msgid "Outside loaded map"
+msgstr "Ngoài bản đồ đang nạp"

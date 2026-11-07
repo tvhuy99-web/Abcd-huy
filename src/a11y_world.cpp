@@ -8,6 +8,7 @@
 #include <string>
 #include <utility>
 #include <vector>
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_body.h"
 #include "a11y_outcome.h"
@@ -18,19 +19,24 @@
 #include "calendar.h"
 #include "character.h"
 #include "coordinates.h"
+#include "creature.h"
+#include "creature_tracker.h"
 #include "display.h"
 #include "effect.h"
 #include "game.h"
 #include "input_context.h"
+#include "item.h"
 #include "map.h"
 #include "messages.h"
 #include "output.h"
 #include "options.h"
 #include "point.h"
 #include "string_formatter.h"
+#include "trap.h"
 #include "translations.h"
 #include "type_id.h"
 #include "vehicle.h"
+#include "vpart_position.h"
 
 namespace a11y
 {
@@ -652,6 +658,13 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         recent += message.first + ": " + message.second + ". ";
     }
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
+    // A small explicit command surface lets Android multi-finger gestures
+    // request live information without trusting coordinates from Java.
+    result.nodes.push_back( button( "reader:scan:north", _( "Scan 16 tiles north" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:south", _( "Scan 16 tiles south" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:west", _( "Scan 16 tiles west" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:east", _( "Scan 16 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
     // Nearby observations are read-only. A tile selection never walks, attacks
     // or constructs a route. Direction commands below use the normal engine.
     struct nearby_tile_node {
@@ -801,6 +814,72 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     auto commands = command_snapshot( context, result.title );
     for( auto &node : commands.nodes ) { result.nodes.push_back( std::move( node ) ); }
     return result;
+}
+
+// Deliberately bypass observe_tile() and its visibility/memory restrictions:
+ // this explicit assistive scan reveals the live map, even behind walls.
+void announce_linear_scan( const int dx, const int dy )
+{
+    if( std::abs( dx ) + std::abs( dy ) != 1 ) {
+        return;
+    }
+    map &here = get_map();
+    const tripoint_bub_ms origin = get_avatar().pos_bub( here );
+    const std::string direction = dy < 0 ? _( "North" ) : dy > 0 ? _( "South" ) :
+                                  dx < 0 ? _( "West" ) : _( "East" );
+    std::string spoken = string_format( _( "Scan %s, 16 tiles, nearest to farthest." ), direction );
+    for( int distance = 1; distance <= 16; ++distance ) {
+        const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
+        std::string detail;
+        if( !here.inbounds( pos ) ) {
+            detail = _( "Outside loaded map" );
+        } else {
+            detail = here.tername( pos );
+            if( here.has_furn( pos ) ) {
+                detail += ". " + here.furnname( pos );
+            }
+            if( here.impassable( pos ) ) {
+                detail += ". " + std::string( _( "Impassable" ) );
+            }
+            for( const auto &entry : here.field_at( pos ) ) {
+                detail += ". " + entry.second.name();
+            }
+            const trap &hazard = here.tr_at( pos );
+            if( !hazard.is_null() ) {
+                detail += ". " + string_format( _( "Trap: %s" ), hazard.name() );
+            }
+            const Creature *creature = get_creature_tracker().creature_at( pos, true );
+            if( creature != nullptr && creature != &get_avatar() ) {
+                detail += ". " + creature->disp_name();
+            }
+            const optional_vpart_position vp = here.veh_at( pos );
+            if( vp ) {
+                detail += ". " + string_format( _( "Vehicle: %s" ), vp->vehicle().name );
+            }
+            std::map<std::string, int> items;
+            for( const item &obj : here.i_at( pos ) ) {
+                ++items[obj.tname()];
+            }
+            for( const auto &entry : items ) {
+                detail += ". " + entry.first;
+                if( entry.second > 1 ) {
+                    detail += " " + std::to_string( entry.second );
+                }
+            }
+        }
+        spoken += " " + string_format( _( "Tile %1$d: %2$s." ), distance, detail );
+    }
+    // Native calls never read game state off-thread. Android handles the
+    // prefixed utterance as long-form TTS rather than a short event notice.
+    a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
+}
+
+void announce_player_coordinates()
+{
+    const tripoint_abs_ms pos = get_avatar().pos_abs();
+    a11y::android::announce(
+        string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
+                       pos.x(), pos.y(), pos.z() ), 1 );
 }
 
 semantic_snapshot activity_snapshot( const input_context &context )
