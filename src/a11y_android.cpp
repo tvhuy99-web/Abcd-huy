@@ -169,6 +169,33 @@ void announce( const std::string &text, const int priority )
 #endif
 }
 
+void open_tts_settings()
+{
+#if defined(__ANDROID__)
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        if( cls != nullptr ) {
+            jmethodID method = env->GetMethodID( cls, "onAccessibilityOpenTtsSettings", "()V" );
+            if( method != nullptr ) {
+                env->CallVoidMethod( activity, method );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#endif
+}
+
 void cue( const std::string &name )
 {
     // Only the four internal literals are accepted: the Java side maps

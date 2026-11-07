@@ -1,6 +1,7 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
+import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.speech.tts.TextToSpeech;
@@ -173,6 +174,7 @@ public final class AndroidSpeech implements AutoCloseable {
     private volatile State state = State.NEW;
     private Runnable initTimeout;
     private Runnable startTimeout;
+    private float utteranceVolume = 1.0f;
 
     public AndroidSpeech(Context context, Listener listener) {
         this.context = context.getApplicationContext();
@@ -204,15 +206,17 @@ public final class AndroidSpeech implements AutoCloseable {
      */
     public void initialize(String engineName, Locale language, float rate, boolean offlineOnly,
                            String voiceName) {
-        handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly, voiceName));
+        initialize(engineName, language, rate, offlineOnly, voiceName, 1.0f, 1.0f);
     }
 
-    private void initializeOnMain(String engineName, Locale language, float rate, boolean offlineOnly) {
-        initializeOnMain(engineName, language, rate, offlineOnly, null);
+    public void initialize(String engineName, Locale language, float rate, boolean offlineOnly,
+                           String voiceName, float pitch, float volume) {
+        handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly,
+                                            voiceName, pitch, volume));
     }
 
     private void initializeOnMain(String engineName, Locale language, float rate, boolean offlineOnly,
-                                  String voiceName) {
+                                  String voiceName, float pitch, float volume) {
         if (state == State.CLOSED) {
             return;
         }
@@ -220,10 +224,13 @@ public final class AndroidSpeech implements AutoCloseable {
         shutdownEngine();
         final long epoch = session.newEngine();
         setState(State.INITIALIZING);
-        if (language == null || !Float.isFinite(rate) || rate < 0.2f || rate > 3.0f) {
+        if (language == null || !Float.isFinite(rate) || rate < 0.2f || rate > 3.0f
+                || !Float.isFinite(pitch) || pitch < 0.5f || pitch > 2.0f
+                || !Float.isFinite(volume) || volume < 0.0f || volume > 1.0f) {
             fail(State.FAILED);
             return;
         }
+        utteranceVolume = volume;
         try {
             TextToSpeech.OnInitListener onInit = status -> handler.post(() -> {
                 if (state != State.INITIALIZING || !session.isCurrentEngine(epoch)) {
@@ -241,6 +248,7 @@ public final class AndroidSpeech implements AutoCloseable {
                         return;
                     }
                     if (result < 0 || engine.setSpeechRate(rate) == TextToSpeech.ERROR
+                            || engine.setPitch(pitch) == TextToSpeech.ERROR
                             || engine.setOnUtteranceProgressListener(progress) == TextToSpeech.ERROR) {
                         fail(State.FAILED);
                         return;
@@ -329,7 +337,9 @@ public final class AndroidSpeech implements AutoCloseable {
                 return;
             }
             try {
-                if (engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, token) == TextToSpeech.ERROR) {
+                Bundle options = new Bundle();
+                options.putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, utteranceVolume);
+                if (engine.speak(text, TextToSpeech.QUEUE_FLUSH, options, token) == TextToSpeech.ERROR) {
                     finish(token, Event.ERROR);
                     fail(State.FAILED);
                     return;

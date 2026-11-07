@@ -1,5 +1,6 @@
 #include "main_menu.h"
 #include "a11y_runtime.h"
+#include "a11y_android.h"
 
 #include <algorithm>
 #include <array>
@@ -574,6 +575,9 @@ void main_menu::init_strings()
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Colo<r|R>s" ) );
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "ImGui <S|s>tyles" ) );
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "<I|i>mGui Demo Screen" ) );
+#if defined(__ANDROID__)
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "TTS Settings" ) );
+#endif
 
     vSettingsHotkeys.clear();
     for( const std::string &item : vSettingsSubItems ) {
@@ -1052,6 +1056,10 @@ bool main_menu::opening_screen()
                     } else if( sel2 == 6 ) { /// ImGui demo
                         imgui_demo_ui demo;
                         demo.run();
+#if defined(__ANDROID__)
+                    } else if( sel2 == 7 ) { // Native Android TTS settings
+                        a11y::android::open_tts_settings();
+#endif
                     }
                     break;
                 case main_menu_opts::WORLD:

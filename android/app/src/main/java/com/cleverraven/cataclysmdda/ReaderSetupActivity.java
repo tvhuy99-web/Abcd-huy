@@ -252,8 +252,10 @@ public final class ReaderSetupActivity extends Activity {
             testedVoiceName = draftVoiceName;
             testedLanguageTag = draftLanguageTag;
             sample.setEnabled(false);
+            ReaderPreferences saved = new ReaderPreferences(this);
             speech.initialize(testedEngineName, Locale.forLanguageTag(testedLanguageTag),
-                    testedRate, !online.isChecked(), testedVoiceName);
+                    testedRate, !online.isChecked(), testedVoiceName,
+                    saved.getPitch(), saved.getVolume());
         });
         sample.setId(R.id.a11y_test_voice);
         sample.setSaveEnabled(false);
@@ -1448,7 +1450,8 @@ public final class ReaderSetupActivity extends Activity {
                 speech.initialize(preferences.getSpeechEngineName(),
                         Locale.forLanguageTag(preferences.getSpeechLanguageTag()),
                         preferences.getRate(), !preferences.permitsNetworkVoice(),
-                        preferences.getSpeechVoiceName());
+                        preferences.getSpeechVoiceName(), preferences.getPitch(),
+                        preferences.getVolume());
             } else if (state == AndroidSpeech.State.READY) {
                 speakFocusedControl();
             }

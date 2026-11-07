@@ -4,6 +4,7 @@ import org.libsdl.app.SDLActivity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -123,6 +124,15 @@ public class CataclysmDDA extends SDLActivity {
     public void onAccessibilityCue(String name) {
         GameReaderController reader = readerController;
         if (reader != null) { reader.onGameCue(name); }
+    }
+
+    /** Open the Android voice configuration requested from the game menu. */
+    public void onAccessibilityOpenTtsSettings() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, TtsSettingsActivity.class));
+            }
+        });
     }
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);

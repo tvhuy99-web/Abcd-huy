@@ -88,6 +88,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private ReaderPreferences initPreferences;
     private String initEngineName;
     private String initVoiceName;
+    private float initPitch = 1.0f;
+    private float initVolume = 1.0f;
     private Locale initLocale;
     private float initRate;
     private boolean initOfflineOnly;
@@ -287,12 +289,15 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         initVoiceName = preferences.getSpeechVoiceName();
         initLocale = Locale.forLanguageTag(preferences.getSpeechLanguageTag());
         initRate = preferences.getRate();
+        initPitch = preferences.getPitch();
+        initVolume = preferences.getVolume();
         initOfflineOnly = !preferences.permitsNetworkVoice();
         initializeSpeechEngine();
     }
 
     private void initializeSpeechEngine() {
-        speech.initialize(initEngineName, initLocale, initRate, initOfflineOnly, initVoiceName);
+        speech.initialize(initEngineName, initLocale, initRate, initOfflineOnly,
+                initVoiceName, initPitch, initVolume);
     }
 
     private void cancelInitRetry() {

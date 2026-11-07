@@ -127,6 +127,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         button(tools, R.string.a11yReaderControls, this::showControls);
         button(tools, R.string.a11yStopSpeech, this::stopSpeech);
         button(tools, R.string.a11yReaderSetup, this::openSettings);
+        button(tools, R.string.a11yTtsSettingsTitle, this::openTtsSettings);
         button(tools, R.string.a11yReaderSearch, this::openSearch);
         root.addView(tools);
         parent.addView(root, new ViewGroup.LayoutParams(ViewGroup.LayoutParams.MATCH_PARENT,
@@ -1532,6 +1533,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         speech.stop();
         activity.startActivity(new Intent(activity, ReaderSetupActivity.class));
+    }
+
+    private void openTtsSettings() {
+        root.cancelGesture();
+        speech.stop();
+        activity.startActivity(new Intent(activity, TtsSettingsActivity.class));
     }
 
     public boolean isEnabled() { return preferences.isEnabled(); }

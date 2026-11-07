@@ -111,6 +111,34 @@ public final class ReaderPreferences {
         return Math.max(0.2f, Math.min(3.0f, values.getFloat("rate", 1.0f)));
     }
 
+    public float getPitch() {
+        return Math.max(0.5f, Math.min(2.0f, values.getFloat("tts_pitch", 1.0f)));
+    }
+
+    public float getVolume() {
+        return Math.max(0.0f, Math.min(1.0f, values.getFloat("tts_volume", 1.0f)));
+    }
+
+    /** Commit every TTS setting together. A preview never changes gameplay. */
+    public void saveTtsSettings(boolean enabled, String engineName, String voiceName,
+                                String languageTag, boolean allowNetwork, float rate,
+                                float pitch, float volume) {
+        SharedPreferences.Editor editor = values.edit();
+        editor.putBoolean("auto_reader_default_20261107", true);
+        editor.putBoolean("enabled", enabled);
+        editor.putBoolean("network_voice_consent", allowNetwork);
+        editor.putFloat("rate", Math.max(0.2f, Math.min(3.0f, rate)));
+        editor.putFloat("tts_pitch", Math.max(0.5f, Math.min(2.0f, pitch)));
+        editor.putFloat("tts_volume", Math.max(0.0f, Math.min(1.0f, volume)));
+        if (engineName == null || engineName.isEmpty()) { editor.remove(SPEECH_ENGINE); }
+        else { editor.putString(SPEECH_ENGINE, engineName); }
+        if (voiceName == null || voiceName.isEmpty()) { editor.remove(SPEECH_VOICE); }
+        else { editor.putString(SPEECH_VOICE, voiceName); }
+        if (languageTag == null || languageTag.isEmpty()) { editor.remove(SPEECH_LANGUAGE); }
+        else { editor.putString(SPEECH_LANGUAGE, languageTag); }
+        editor.apply();
+    }
+
     // Optional sound/haptic cues (R21.2). Both default OFF: speech is
     // the primary channel and every cue duplicates a spoken signal, so
     // cues are an explicit opt-in in reader setup, never a surprise.

@@ -20,6 +20,8 @@ std::optional<semantic_intent> take();
 void clear();
 void publish( const std::string &json );
 void announce( const std::string &text, int priority );
+// Open app-owned speech controls from the Android SDL game thread.
+void open_tts_settings();
 // Sound/haptic cue channel (R21.2). The name is one of a small set of
 // internal ASCII literals ("blocked", "danger", "pickup",
 // "activity_done"); cues are only ever fired at engine points that

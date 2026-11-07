@@ -54,4 +54,32 @@
     <string name="a11ySpeechNetworkRequired">The selected voice needs internet. Choose an offline voice in Android settings, or explicitly allow a network voice for this test.</string>
     <string name="a11ySpeechFailed">Speech could not start or failed. Turn on TalkBack or choose another voice in Android settings, then try again.</string>
     <string name="a11ySettingsUnavailable">Android could not open settings. You can return to startup or open settings from your device.</string>
+
+    <!-- Dedicated TTS configuration; all values are saved together. -->
+    <string name="a11yTtsSettingsTitle">TTS settings</string>
+    <string name="a11yTtsEnable">Enable in-game TTS reader</string>
+    <string name="a11yTtsEngine">Speech engine</string>
+    <string name="a11yTtsLanguage">Reading language</string>
+    <string name="a11yTtsVoice">Voice</string>
+    <string name="a11yTtsRate">Speech rate</string>
+    <string name="a11yTtsPitch">Pitch</string>
+    <string name="a11yTtsVolume">Volume</string>
+    <string name="a11yTtsRateValue">Speech rate: %1$s times</string>
+    <string name="a11yTtsPitchValue">Pitch: %1$s times</string>
+    <string name="a11yTtsVolumeValue">Volume: %1$d percent</string>
+    <string name="a11yTtsAllowNetwork">Allow an online voice. Spoken text may be sent to the voice provider.</string>
+    <string name="a11yTtsLoading">Looking for installed voices...</string>
+    <string name="a11yTtsReady">Installed voices are available. Listen to a sample before saving.</string>
+    <string name="a11yTtsUnavailable">The selected voice is unavailable. Check the speech engine and language in Android settings.</string>
+    <string name="a11yTtsTestComplete">Sample finished. Choose Save to apply the settings.</string>
+    <string name="a11yTtsTestFirst">Listen to a successful sample before saving an enabled reader. To disable the reader, uncheck the top switch and save.</string>
+    <string name="a11yTtsSystemDefault">System default</string>
+    <string name="a11yTtsEngineChoice">Speech engine: %1$s</string>
+    <string name="a11yTtsLanguageChoice">Language: %1$s</string>
+    <string name="a11yTtsVoiceChoice">Voice: %1$s</string>
+    <string name="a11yTtsRestoreDefaults">Restore default voice settings</string>
+    <string name="a11yTtsCancel">Cancel, do not save</string>
+    <string name="a11yTtsSample">Listen to sample</string>
+    <string name="a11yTtsSave">Save</string>
+    <string name="a11yTtsVolumeTooLow">Volume is zero. Increase the volume before enabling spoken navigation.</string>
 </resources>

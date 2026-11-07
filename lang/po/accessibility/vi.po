@@ -3278,3 +3278,7 @@ msgstr "Nhóm kỹ năng trước"
 #: src/study_zone_ui.cpp
 msgid "Next skills"
 msgstr "Nhóm kỹ năng tiếp"
+
+msgctxt "Main Menu|Settings"
+msgid "TTS Settings"
+msgstr "Cài đặt TTS"

@@ -70,6 +70,9 @@
         <activity android:name="ReaderSetupActivity"
                   android:exported="false"
                   android:label="@string/a11yReaderSetup" />
+        <activity android:name="TtsSettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yTtsSettingsTitle" />
         <!-- Expose app's private data directory for backup without root -->
         <provider
             android:name=".CDDADocumentsProvider"

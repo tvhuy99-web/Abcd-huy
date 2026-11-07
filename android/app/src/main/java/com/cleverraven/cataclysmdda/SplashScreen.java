@@ -146,7 +146,8 @@ public class SplashScreen extends Activity {
             bootstrapSpeech.initialize(preferences.getSpeechEngineName(),
                     java.util.Locale.forLanguageTag(preferences.getSpeechLanguageTag()),
                     preferences.getRate(), !preferences.permitsNetworkVoice(),
-                    preferences.getSpeechVoiceName());
+                    preferences.getSpeechVoiceName(), preferences.getPitch(),
+                    preferences.getVolume());
             refreshBootstrapSpeechOnResume = false;
         }
     }
