@@ -7,6 +7,7 @@ import android.os.Looper;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
+import android.view.accessibility.AccessibilityNodeInfo;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -48,6 +49,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String search = "";
     private boolean onlyCommands;
     private String focus = "";
+    // One spoken/TalkBack level at a time, independent of the engine's
+    // visual expansion state. Parent IDs are supplied by semantic snapshots.
+    private String readerLayerParent = "";
+    private String pendingReaderLayer = "";
+    private boolean focusNewMenuRow;
     private boolean foreground;
     private boolean windowFocused;
     private boolean closed;
@@ -134,6 +140,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         button(pages, R.string.a11yNextPage, () -> navigate(PAGE_SIZE));
         root.addView(pages);
         LinearLayout tools = new LinearLayout(activity);
+        button(tools, R.string.a11yReaderCancel, this::onBackPressed);
         button(tools, R.string.a11yHubTitle, this::showComprehensiveMenu);
         button(tools, R.string.a11yReaderControls, this::showControls);
         button(tools, R.string.a11yStopSpeech, this::stopSpeech);
@@ -249,6 +256,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         speech.clearForLifecycle();
         documentReader.clear();
         snapshot = null;
+        readerLayerParent = "";
+        pendingReaderLayer = "";
+        focusNewMenuRow = false;
         editor = null;
         editorRequest = 0;
         formRequest = 0;
@@ -731,17 +741,62 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return 0;
     }
 
+    private static ReaderSnapshot.Node firstDirectChild(ReaderSnapshot data, String parent) {
+        for (ReaderSnapshot.Node node : data.nodes) {
+            if (parent.equals(node.parentId)) { return node; }
+        }
+        return null;
+    }
+
     private List<ReaderSnapshot.Node> visibleNodes() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot == null) { return result; }
         String query = search.toLowerCase(new Locale("vi", "VN"));
         for (ReaderSnapshot.Node node : snapshot.nodes) {
+            // Never mix a child's buttons into the parent's swipe sequence.
+            // The same filtered list powers accessibility buttons and TTS.
+            if (!readerLayerParent.equals(node.parentId)) { continue; }
             if ((!onlyCommands || "command".equals(node.role)) && (query.isEmpty()
                     || (node.label + " " + node.value).toLowerCase(new Locale("vi", "VN")).contains(query))) {
                 result.add(node);
             }
         }
         return result;
+    }
+
+    private boolean enterReaderLayer(ReaderSnapshot.Node parent) {
+        ReaderSnapshot.Node first = snapshot == null ? null
+                : firstDirectChild(snapshot, parent.id);
+        if (first == null) { return false; }
+        readerLayerParent = parent.id;
+        pendingReaderLayer = "";
+        focus = first.id;
+        root.cancelGesture();
+        focusNewMenuRow = true;
+        render();
+        feedback(parent.label + ". " + nodeText(first, false));
+        return true;
+    }
+
+    /** Close one child layer, or defer to its owning native modal. */
+    private boolean backReaderLayer() {
+        if (!readerLayerParent.isEmpty() && snapshot != null) {
+            ReaderSnapshot.Node parent = snapshot.find(readerLayerParent);
+            readerLayerParent = parent == null ? "" : parent.parentId;
+            pendingReaderLayer = "";
+            focus = parent == null ? snapshot.focus : parent.id;
+            root.cancelGesture();
+            focusNewMenuRow = true;
+            render();
+            readCurrent();
+            return true;
+        }
+        if (snapshot != null && "MAIN_MENU".equals(snapshot.category)
+                && (focus.startsWith("item:") || focus.startsWith("document:"))) {
+            send("cancel", "");
+            return true;
+        }
+        return false;
     }
 
     private void render() {
@@ -1163,13 +1218,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yCommandGroup) + ". " + node.label);
             return;
         }
-        // Tree parents expand and collapse through their dedicated intents,
-        // never through a gameplay activation (R02.1).
-        if (node.hasChildren && (node.actions.contains("expand")
-                || node.actions.contains("collapse"))) {
-            String action = node.expanded ? "collapse" : "expand";
-            if (node.actions.contains(action)) {
-                send(action, "");
+        // Enter the child list, not an interleaved parent+children tree.
+        // Native expansion remains validated by the game before entry.
+        if (node.hasChildren) {
+            if (node.expanded && enterReaderLayer(node)) { return; }
+            if (node.actions.contains("expand")) {
+                pendingReaderLayer = node.id;
+                send("expand", "");
                 return;
             }
         }
@@ -1780,8 +1835,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             root.cancelGesture();
             render();
             readCurrent();
+        } else if (backReaderLayer()) {
+            return;
         } else if (snapshot != null && snapshot.find("reader:coordinates") != null) {
             showComprehensiveMenu();
+        } else if (snapshot != null) {
+            // Cancel only the screen currently owning the reader snapshot.
+            send("cancel", "");
         } else {
             showControls();
         }
@@ -1844,7 +1904,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             case 2: detail(); break;
             case 3: if (usesTouchExploration()) { readCurrent(); } else { speech.repeat(); } break;
             case 4: stopSpeech(); break;
-            case 5: controls = false; root.cancelGesture(); render(); send("cancel", ""); break;
+            case 5:
+                controls = false;
+                root.cancelGesture();
+                if (!backReaderLayer()) {
+                    render();
+                    send("cancel", "");
+                }
+                break;
             case 6: openSettings(); break;
             case 7: feedback(activity.getString(R.string.a11yReaderGestureInstructions)); break;
             case 8: openSearch(); break;
