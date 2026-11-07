@@ -29,3 +29,4 @@ final class TwoFingerBackGesture {
                 event.getX(second) - startX[1],
                 event.getY(second) - startY[1], minimumDistance);
     }
+}
