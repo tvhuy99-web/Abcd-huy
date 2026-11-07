@@ -897,7 +897,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean handleCustomGesture(String gestureId) {
         if (!directWorldGesturesEnabled()) { return false; }
         String target = gestureBindings.targetFor(gestureId);
-        if (target == null) { return false; }
+        if (target == null || !target.startsWith("action:")) { return false; }
         // Assignments override the built-in gesture only in the live world.
         // Do not fall through to the default action on stale/unavailable nodes.
         executeShortcutTarget(target);

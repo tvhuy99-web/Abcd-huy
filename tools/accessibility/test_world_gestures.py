@@ -1,5 +1,4 @@
 """Source contracts for the direct four-way Android reader gesture design."""
-import re
 import unittest
 from pathlib import Path
 
@@ -7,10 +6,8 @@ ROOT = Path(__file__).resolve().parents[2]
 JAVA = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda"
 GESTURES = JAVA / "ReaderGestureSurface.java"
 CONTROLLER = JAVA / "GameReaderController.java"
-HUB = JAVA / "GameActionHub.java"
 WORLD = ROOT / "src/a11y_world.cpp"
 HANDLER = ROOT / "src/handle_action.cpp"
-ACTIONS = ROOT / "src/action.cpp"
 
 
 class WorldGestureContracts(unittest.TestCase):
@@ -55,26 +52,21 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("intent.node == \"reader:scan:north\"", handler)
         self.assertIn("a11y::announce_player_coordinates()", handler)
 
-    def test_sixteen_spoken_root_items(self):
-        src = HUB.read_text(encoding="utf-8")
-        group_titles = src.split(
-            "static final int[] TITLES = {", 1
-        )[1].split("};", 1)[0]
-        self.assertEqual(group_titles.count("R.string.a11yHub"), 16)
-        self.assertIn(
-            "GameActionHub.OPEN_ALL",
-            CONTROLLER.read_text(encoding="utf-8"),
-        )
-        self.assertIn("addCommandMatches(result, snapshot, query)", src)
+    def test_reader_hub_and_on_screen_controls_are_removed(self):
+        controller = CONTROLLER.read_text(encoding="utf-8")
+        self.assertFalse((JAVA / "GameActionHub.java").exists())
+        self.assertIn("android.graphics.Color.TRANSPARENT", controller)
+        self.assertNotIn("showComprehensiveMenu(", controller)
+        self.assertNotIn("showControls(", controller)
+        self.assertNotIn("button(pages,", controller)
+        self.assertNotIn("button(tools,", controller)
 
-    def test_curated_actions_exist_in_the_game(self):
-        src = HUB.read_text(encoding="utf-8")
-        ids = src.split("private static final String[][] ACTIONS = {", 1)[1]
-        ids = ids.split("private static String normalized", 1)[0]
-        named = set(re.findall(r'"([^"]+)"', ids))
-        action_source = ACTIONS.read_text(encoding="utf-8")
-        registered = set(re.findall(r'return "([^"]+)";', action_source))
-        self.assertFalse(named - registered, named - registered)
+    def test_direct_game_shortcuts_remain_without_the_hub(self):
+        controller = CONTROLLER.read_text(encoding="utf-8")
+        self.assertIn('if (target == null || !target.startsWith("action:"))', controller)
+        self.assertIn("executeShortcutTarget(target);", controller)
+        self.assertIn('String id = target.substring("action:".length());', controller)
+        self.assertIn('send("activate", "");', controller)
 
 
 if __name__ == "__main__":
