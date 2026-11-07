@@ -35,6 +35,13 @@ public final class ReaderPreferences {
 
     public ReaderPreferences(Context context) {
         values = context.getApplicationContext().getSharedPreferences("internal_reader", Context.MODE_PRIVATE);
+        // New accessibility builds start the reader automatically. Migrate old
+        // trial preferences exactly once, without overriding a later opt-out.
+        if (BuildConfig.FLAVOR.equals("accessibility")
+                && !values.getBoolean("auto_reader_default_20261107", false)) {
+            values.edit().putBoolean("auto_reader_default_20261107", true)
+                    .putBoolean("enabled", true).remove("heard_confirmation").apply();
+        }
         if (!trialPendingInMemory && (values.contains(LEGACY_GESTURE_TRIAL_PENDING)
                 || values.contains(LEGACY_GESTURE_TRIAL_DEADLINE)
                 || values.contains(TRIAL_HORIZONTAL_ACTION)
@@ -48,7 +55,7 @@ public final class ReaderPreferences {
     }
 
     public boolean isEnabled() {
-        return values.getBoolean("enabled", false) && values.getBoolean("heard_confirmation", false);
+        return values.getBoolean("enabled", BuildConfig.FLAVOR.equals("accessibility"));
     }
 
     public boolean permitsNetworkVoice() {
@@ -123,9 +130,9 @@ public final class ReaderPreferences {
         values.edit().putBoolean("haptic_cues", enabled).apply();
     }
 
-    // Only an explicit user confirmation, never an onDone callback, enables the reader.
+    // Optional verified voice selection can re-enable an explicitly disabled reader.
     public void confirmHeardAndEnable(boolean permitNetworkVoice, float rate) {
-        values.edit().putBoolean("heard_confirmation", true).putBoolean("enabled", true)
+        values.edit().putBoolean("enabled", true)
                 .putBoolean("network_voice_consent", permitNetworkVoice)
                 .putFloat("rate", Math.max(0.2f, Math.min(3.0f, rate))).apply();
     }

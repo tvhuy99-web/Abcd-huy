@@ -25,7 +25,7 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.Locale;
 
-/** Voice setup with TalkBack controls and a self-voicing path before enabling the reader. */
+/** Optional reader/voice settings, not a mandatory startup voice trial. */
 public final class ReaderSetupActivity extends Activity {
     public static final String EXTRA_DISABLE_SELF_VOICE =
             "com.cleverraven.cataclysmdda.extra.DISABLE_SETUP_SELF_VOICE";

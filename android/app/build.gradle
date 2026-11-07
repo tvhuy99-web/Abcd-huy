@@ -412,7 +412,7 @@ android {
             dimension "version"
             applicationIdSuffix ".accessibility"
             manifestPlaceholders = [documentsAuthority: 'com.cleverraven.cataclysmdda.accessibility.documents']
-            resValue "string", "app_name", "Cataclysm DDA - Thử trợ năng"
+            resValue "string", "app_name", "Cataclysm DDA - Trình đọc"
         }
     }
 

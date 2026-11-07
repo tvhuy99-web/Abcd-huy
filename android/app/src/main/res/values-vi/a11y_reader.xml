@@ -51,8 +51,8 @@
     <string name="a11yUnchecked">Chưa đánh dấu</string>
     <string name="a11ySelected">Đang chọn</string>
     <string name="a11yPosition">Mục %1$d trên %2$d</string>
-    <string name="a11yConfirmHeardEnable">Tôi đã nghe được câu thử. Bật trình đọc nội bộ đang phát triển.</string>
-    <string name="a11ySetupSelfVoiceInstructions">Điều khiển bằng lời đọc đã bật. Vuốt trái hoặc phải để chuyển mục, chạm hai lần để mở mục đang chọn, vuốt lên hoặc xuống để chỉnh thanh tốc độ hoặc cử chỉ đang chọn, và chạm hai ngón để dừng lời đọc. Cần nghe hết câu thử tiếng Việt rồi mới bật được trình đọc nội bộ.</string>
+    <string name="a11yConfirmHeardEnable">Lưu giọng đã nghe</string>
+    <string name="a11ySetupSelfVoiceInstructions">Điều khiển bằng lời đọc đã bật. Vuốt trái hoặc phải để chuyển mục, chạm hai lần để mở mục đang chọn, vuốt lên hoặc xuống để chỉnh thanh tốc độ hoặc cử chỉ đang chọn, và chạm hai ngón để dừng lời đọc. Trình đọc đã tự bật từ khi mở trò chơi. Chỉ cần nghe giọng khi muốn lưu lựa chọn giọng khác.</string>
     <string name="a11yGestureSettingsHeading">Thiết lập cử chỉ. Chế độ thuận tay trái đảo hướng duyệt menu; vuốt trong thế giới luôn giữ đúng hướng được gọi tên.</string>
     <string name="a11yGestureMappingHeading">Ánh xạ vuốt trong menu. Tùy chọn này không đổi hướng di chuyển trong thế giới. Chạm hai lần vẫn chọn mục, nhấn giữ vẫn đọc chi tiết, chạm hai ngón vẫn dừng lời. Phải giữ ít nhất một trục vuốt để duyệt.</string>
     <string name="a11yHorizontalSwipeAction">Vuốt ngang: %1$s</string>
@@ -107,7 +107,7 @@
     <string name="a11yRescueBack">Quay lại</string>
     <string name="a11yBootstrapNoSpace">Không còn đủ dung lượng trống để cài dữ liệu trò chơi. Hãy giải phóng dung lượng rồi thử lại. Dữ liệu trò chơi hiện có của bạn chưa bị thay đổi.</string>
     <string name="a11yDisableInternalReader">Tắt trình đọc nội bộ</string>
-    <string name="a11yReaderEnabledNotice">Đã bật trình đọc nội bộ. Bản đang phát triển này chưa hỗ trợ hết màn hình game. Giữ TalkBack sẵn sàng để phục hồi.</string>
+    <string name="a11yReaderEnabledNotice">Đã lưu lựa chọn giọng. Trình đọc nội bộ đang bật. Một số màn hình game vẫn cần bổ sung trợ năng; hãy giữ TalkBack làm phương án dự phòng.</string>
     <string name="a11yReaderDisabledNotice">Đã tắt trình đọc nội bộ. Các điều khiển game hiện có vẫn được chọn.</string>
     <string name="a11yDocContinue">Đọc tiếp tài liệu</string>
     <string name="a11yDocNextParagraph">Đoạn sau</string>

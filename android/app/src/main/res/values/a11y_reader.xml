@@ -51,8 +51,8 @@
     <string name="a11yUnchecked">Not checked</string>
     <string name="a11ySelected">Selected</string>
     <string name="a11yPosition">%1$d of %2$d</string>
-    <string name="a11yConfirmHeardEnable">I heard the sample. Enable the experimental internal reader.</string>
-    <string name="a11ySetupSelfVoiceInstructions">Built-in spoken navigation is active. Swipe left or right to move through the controls, double tap to activate the focused control, swipe up or down to adjust a focused rate or gesture setting, and tap with two fingers to stop speech. The Vietnamese sample must finish before you can enable the internal reader.</string>
+    <string name="a11yConfirmHeardEnable">Save the selected voice after listening</string>
+    <string name="a11ySetupSelfVoiceInstructions">Built-in spoken navigation is active. Swipe left or right to move through the controls, double tap to activate the focused control, swipe up or down to adjust a focused rate or gesture setting, and tap with two fingers to stop speech. The reader already starts automatically; listening to a voice sample is optional and only needed before saving a different voice.</string>
     <string name="a11yGestureSettingsHeading">Gesture settings. Left handed mode reverses menu browsing only. World swipes always keep their named direction.</string>
     <string name="a11yGestureMappingHeading">Menu swipe mapping. This never changes world movement. Double tap still selects, a long press still reads details, and a two finger tap still stops speech. At least one swipe axis must remain available for browsing.</string>
     <string name="a11yHorizontalSwipeAction">Horizontal swipe: %1$s</string>
@@ -107,7 +107,7 @@
     <string name="a11yRescueBack">Back</string>
     <string name="a11yBootstrapNoSpace">There is not enough free storage to install the game data. Free some space and retry. Your existing game data has not been changed.</string>
     <string name="a11yDisableInternalReader">Turn off the internal reader</string>
-    <string name="a11yReaderEnabledNotice">Internal reader enabled. This development version does not yet support every game screen. Keep TalkBack available for recovery.</string>
+    <string name="a11yReaderEnabledNotice">Voice selection saved. The internal reader is on. Some game screens still need accessibility support; keep TalkBack available for recovery.</string>
     <string name="a11yReaderDisabledNotice">Internal reader disabled. Existing game controls remain selected.</string>
     <string name="a11yDocContinue">Continue reading the document</string>
     <string name="a11yDocNextParagraph">Next paragraph</string>

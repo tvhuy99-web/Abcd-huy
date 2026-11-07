@@ -50,11 +50,9 @@ import com.cleverraven.cataclysmdda.CataclysmDDA_Helpers;
 public class SplashScreen extends Activity {
     private static final String TAG = "Splash";
     private static final int INSTALL_DIALOG_ID = 0;
-    private static final String STATE_READER_SETUP_OPENED = "reader_setup_opened";
     private ProgressDialog installDialog;
 
     private AlertDialog accessibilityServicesAlert;
-    private boolean readerSetupOpened;
     private boolean installationRunning;
     // The game Activity is launched exactly once per SplashScreen instance:
     // repeated triggers (resume, dialog buttons, the Start button) and a
@@ -186,7 +184,6 @@ public class SplashScreen extends Activity {
                         this::retryBootstrapVoice,
                         this::openTtsSettings,
                         () -> {
-                            readerSetupOpened = true;
                             startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
                         },
                         () -> {
@@ -432,20 +429,17 @@ public class SplashScreen extends Activity {
             if (shouldSelfVoiceBootstrap()) { bootstrapSurface.speakFocused(); }
             return;
         }
+        // The accessibility APK no longer requires a voice-trial screen.
+        // Android system TalkBack can only be enabled by the user.
+        if (BuildConfig.FLAVOR.equals("accessibility")) {
+            SplashScreen.this.installOrRun();
+            return;
+        }
         String service_names = CataclysmDDA_Helpers.getEnabledAccessibilityServiceNames(context);
-        boolean readerEnabled = new ReaderPreferences(this).isEnabled();
-        accessibilityServicesAlert.setMessage( String.format( getString(R.string.accessibilityServicesMessage), service_names ) );
-        if (!service_names.isEmpty() && !(readerSetupOpened && readerEnabled)) {
+        accessibilityServicesAlert.setMessage( String.format(
+                getString(R.string.accessibilityServicesMessage), service_names ) );
+        if (!service_names.isEmpty()) {
             accessibilityServicesAlert.show();
-        } else if (BuildConfig.FLAVOR.equals("accessibility") && !readerEnabled) {
-            if (!readerSetupOpened) {
-                // Start the self-voicing setup before C++ so a blind user does not
-                // need TalkBack just to enable the internal reader.
-                readerSetupOpened = true;
-                startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
-            } else {
-                accessibilityServicesAlert.show();
-            }
         } else {
             SplashScreen.this.installOrRun();
         }
@@ -517,9 +511,6 @@ public class SplashScreen extends Activity {
     protected void onCreate(Bundle savedInstanceState) {
         Log.e(TAG, "onCreate()");
         super.onCreate(savedInstanceState);
-        if (savedInstanceState != null) {
-            readerSetupOpened = savedInstanceState.getBoolean(STATE_READER_SETUP_OPENED);
-        }
         CataclysmDDA.applyStoredScreenOrientation(this);
 
         accessibilityServicesAlert = new AlertDialog.Builder(SplashScreen.this)
@@ -531,14 +522,6 @@ public class SplashScreen extends Activity {
                     return;
                 }
             })
-            .setNeutralButton(getString(R.string.a11yReaderSetup), new DialogInterface.OnClickListener() {
-                    public void onClick(DialogInterface dialog, int id) {
-                        readerSetupOpened = true;
-                        startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
-                        dialog.dismiss();
-                        return;
-                    }
-            })
             .setNegativeButton(getString(R.string.ignoreFalsePostives), new DialogInterface.OnClickListener() {
                     public void onClick(DialogInterface dialog, int id) {
                         CataclysmDDA_Helpers.saveAccessibilityServiceInfoFalsePositives(getApplicationContext());
@@ -546,12 +529,6 @@ public class SplashScreen extends Activity {
                         return;
                     }
             }).create();
-    }
-
-    @Override
-    protected void onSaveInstanceState(Bundle outState) {
-        outState.putBoolean(STATE_READER_SETUP_OPENED, readerSetupOpened);
-        super.onSaveInstanceState(outState);
     }
 
     @Override
