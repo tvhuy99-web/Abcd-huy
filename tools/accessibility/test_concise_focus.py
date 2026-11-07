@@ -5,8 +5,10 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[2]
-READER = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java"
-EDITOR = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderTextEditor.java"
+JAVA = ROOT / "android" / "app" / "src" / "main" / "java"
+JAVA = JAVA / "com" / "cleverraven" / "cataclysmdda"
+READER = JAVA / "GameReaderController.java"
+EDITOR = JAVA / "ReaderTextEditor.java"
 
 
 class ConciseFocusTest(unittest.TestCase):
@@ -35,7 +37,10 @@ class ConciseFocusTest(unittest.TestCase):
         self.assertIn("node.disabledReason", body)
 
     def test_manual_context_and_full_details_remain_available(self):
-        self.assertIn(": snapshot.title + \". \" + snapshot.summary", self.reader)
+        self.assertIn(
+            ": snapshot.title + \". \" + snapshot.summary",
+            self.reader,
+        )
         self.assertIn("feedback(nodeText(node, true));", self.reader)
 
     def test_editor_speaks_choice_and_position_only(self):
