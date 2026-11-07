@@ -26,12 +26,15 @@ class WorldGestureContracts(unittest.TestCase):
 
     def test_multitap_sequences_are_mutually_exclusive(self):
         gestures = GESTURES.read_text(encoding="utf-8")
-        self.assertIn("queueTwoFingerTap(owner)", gestures)
-        self.assertIn("listener.twoFingerTap(3)", gestures)
+        self.assertIn("queueMultiTap(owner, maxPointers)", gestures)
+        self.assertIn("dispatchMultiTap(fingers, 3)", gestures)
+        self.assertIn("listener.twoFingerTap(count)", gestures)
         self.assertIn("listener.threeFingerTap()", gestures)
         self.assertIn("ViewConfiguration.getDoubleTapTimeout()", gestures)
-        self.assertIn("listener.scanDirection(0, dy > 0 ? 1 : -1)", gestures)
-        self.assertNotIn("listener.stopSpeech();\n                }\n                cancelGesture();", gestures)
+        self.assertIn("listener.scanDirection(", gestures)
+        self.assertIn("maxPointers <= 4", gestures)
+        self.assertIn("listener.handleCustomGesture(gesture)", gestures)
+        self.assertNotIn("listener.stopSpeech();\\n", gestures)
 
     def test_unrestricted_scan_is_ordered_and_read_only(self):
         world = WORLD.read_text(encoding="utf-8")

@@ -25,3 +25,29 @@ Vuốt một ngón để duyệt, chạm hai lần để chọn, Quay lại đ�
 * Trên hệ thống bật TalkBack và khám phá bằng chạm, Android có thể giữ quyền điều khiển cử chỉ đa ngón; người dùng vẫn có nút giao diện có nhãn và nút Quay lại.
 * Quét 16 ô lấy từ bản đồ hiện đang nạp, không tự tạo dữ liệu ngoài vùng đã nạp; hiện các lượt quét 16 ô quanh nhân vật thông thường nằm trong vùng này.
 * “Việc có thể làm tại đây” là tập lệnh tương tác nhanh, game sẽ quyết định lệnh có khả dụng tại ô đang nhắm hay không.
+
+## Gán cử chỉ cho từng mục trong menu
+
+Khi đang ở menu tổng hợp, di chuyển đến bất kỳ mục nào và **nhấn giữ** để mở
+màn hình **Gán cử chỉ cho: tên mục**. Danh sách này cho phép duyệt, chọn và
+lưu một trong **33 cử chỉ**: bốn vuốt đơn, 12 chuỗi vuốt hai hướng,
+ba dạng chạm hai ngón, ba dạng chạm ba ngón, bốn vuốt ba ngón, bốn vuốt
+bốn ngón và ba dạng chạm bốn ngón.
+
+Nút **Khôi phục cử chỉ mặc định** loại bỏ gán tùy chỉnh của mục đang chọn.
+Nút **Hủy** đóng màn hình gán mà không lưu. Các cử chỉ đã gán được lưu trong
+SharedPreferences và sử dụng ở màn hình chơi thực, không áp dụng vào
+cử chỉ duyệt menu. Các lệnh chỉ được thực thi thông qua snapshot native đang
+hợp lệ. Lệnh không khả dụng được thông báo thay vì thực hiện nhầm.
+
+**Khi xung đột:** lệnh được gán mới nhất chiếm quyền sử dụng cử chỉ.
+Lệnh từng có gán tùy chỉnh ở cử chỉ đó tự mất gán và trở về cách hoạt động
+mặc định của game; không thực hiện hai lệnh trong cùng một cử chỉ.
+Khi một lệnh được chuyển sang cử chỉ mới, gán cũ của chính lệnh đó cũng
+được giải phóng. Đối với cử chỉ mặc định như vuốt lên để đi Bắc, gán mới
+sẽ ghi đè hành động mặc định đó khi đang trong thế giới; chọn khôi phục
+mặc định để trả lại chức năng đi Bắc.
+
+TalkBack có thể giữ quyền xử lý một số cử chỉ nhiều ngón. Trong trường hợp
+đó, người dùng vẫn có thể tương tác bằng nút màn hình có nhãn, nhưng cần
+kiểm thử thực tế trên từng thiết bị.
