@@ -23,7 +23,7 @@ class ConciseFocusTest(unittest.TestCase):
         )[0]
         self.assertIn("String spoken = nodeText(node, false);", body)
         self.assertIn("speech.focus(node.id, spoken);", body)
-        self.assertIn("status.announceForAccessibility(spoken);", body)
+        self.assertIn("root.announceForAccessibility(spoken);", body)
         self.assertNotIn("snapshot.title", body)
         self.assertNotIn("snapshot.summary", body)
 
@@ -32,13 +32,13 @@ class ConciseFocusTest(unittest.TestCase):
             "private static String formatRawNumber(", 1
         )[0]
         self.assertIn("if (includeDetail && node.selected)", body)
-        self.assertIn("activity.getString(R.string.a11yPosition", body)
+        self.assertRegex(body, r"activity\.getString\(\s*R\.string\.a11yPosition")
         self.assertIn("activity.getString(R.string.a11yChecked)", body)
         self.assertIn("node.disabledReason", body)
 
-    def test_manual_context_and_full_details_remain_available(self):
+    def test_screen_title_on_entry_and_full_details_remain_available(self):
         self.assertIn(
-            ": snapshot.title + \". \" + snapshot.summary",
+            'feedback(next.title + ". " + nodeText(next.find(focus), false));',
             self.reader,
         )
         self.assertIn("feedback(nodeText(node, true));", self.reader)
