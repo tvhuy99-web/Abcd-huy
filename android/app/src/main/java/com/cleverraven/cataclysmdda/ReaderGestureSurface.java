@@ -8,6 +8,9 @@ import android.view.MotionEvent;
 import android.view.ViewConfiguration;
 import android.widget.LinearLayout;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /** Owns each pointer sequence once. Native widgets retain normal TalkBack gestures. */
 public final class ReaderGestureSurface extends LinearLayout {
     public interface Listener {
@@ -27,6 +30,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         void scanDirection(int dx, int dy);
         void twoFingerTap(int count);
         void threeFingerTap();
+        boolean handleCustomGesture(String gestureId);
         void activate();
         void detail();
         void readCurrent();
@@ -37,8 +41,10 @@ public final class ReaderGestureSurface extends LinearLayout {
     private final GestureDetector detector;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable multiTapTimeout;
-    private int twoFingerTapCount;
+    private int multiTapCount;
+    private int multiTapFingers;
     private String multiTapOwner;
+    private final List<float[]> oneFingerPath = new ArrayList<>();
     private int maxPointers;
     private float multiStartX;
     private float multiStartY;
@@ -82,7 +88,8 @@ public final class ReaderGestureSurface extends LinearLayout {
 
             @Override
             public boolean onFling(MotionEvent start, MotionEvent end, float vx, float vy) {
-                if (start == null || !valid() || activateOnUp || longPressHandled) {
+                if (listener.directWorldGesturesEnabled() || start == null || !valid()
+                        || activateOnUp || longPressHandled) {
                     return true;
                 }
                 if (end.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
@@ -135,36 +142,100 @@ public final class ReaderGestureSurface extends LinearLayout {
             handler.removeCallbacks(multiTapTimeout);
             multiTapTimeout = null;
         }
-        twoFingerTapCount = 0;
+        multiTapCount = 0;
+        multiTapFingers = 0;
         multiTapOwner = null;
     }
 
-    /** Resolve one/two/three two-finger taps as one mutually exclusive sequence. */
-    private void queueTwoFingerTap(String tapOwner) {
-        if (twoFingerTapCount > 0 && !tapOwner.equals(multiTapOwner)) {
+    /** One/two/three taps are mutually exclusive, for 2/3/4 fingers. */
+    private void queueMultiTap(String tapOwner, int fingers) {
+        if (multiTapCount > 0 && (!tapOwner.equals(multiTapOwner)
+                || fingers != multiTapFingers)) {
             clearMultiTap();
         }
-        if (twoFingerTapCount == 0) { multiTapOwner = tapOwner; }
-        twoFingerTapCount++;
+        if (multiTapCount == 0) {
+            multiTapOwner = tapOwner;
+            multiTapFingers = fingers;
+        }
+        multiTapCount++;
         if (multiTapTimeout != null) {
             handler.removeCallbacks(multiTapTimeout);
             multiTapTimeout = null;
         }
-        if (twoFingerTapCount == 3) {
+        if (multiTapCount >= 3) {
             clearMultiTap();
-            if (listener.directWorldGesturesEnabled()) { listener.twoFingerTap(3); }
+            dispatchMultiTap(fingers, 3);
         } else {
             multiTapTimeout = () -> {
-                int count = twoFingerTapCount;
-                String expected = multiTapOwner;
+                int count = multiTapCount;
+                int countFingers = multiTapFingers;
+                String expectedOwner = multiTapOwner;
                 clearMultiTap();
-                if (expected != null && expected.equals(listener.gestureContext())
-                        && listener.directWorldGesturesEnabled()) {
-                    listener.twoFingerTap(count);
+                if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())) {
+                    dispatchMultiTap(countFingers, count);
                 }
             };
             handler.postDelayed(multiTapTimeout, ViewConfiguration.getDoubleTapTimeout());
         }
+    }
+
+    private void dispatchMultiTap(int fingers, int count) {
+        if (!listener.directWorldGesturesEnabled()) { return; }
+        String gesture = ReaderGestureBindings.idForTap(fingers, count);
+        if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
+        if (fingers == 2) {
+            listener.twoFingerTap(count);
+        } else if (fingers == 3 && count == 1) {
+            listener.threeFingerTap();
+        }
+    }
+
+    private static String cardinal(float dx, float dy, float minimum) {
+        if (Math.abs(dx) >= minimum && Math.abs(dx) >= 1.35f * Math.abs(dy)) {
+            return dx < 0 ? "left" : "right";
+        }
+        if (Math.abs(dy) >= minimum && Math.abs(dy) >= 1.35f * Math.abs(dx)) {
+            return dy < 0 ? "up" : "down";
+        }
+        return null;
+    }
+
+    /**
+     * Finds one clear change in direction, including out-and-back strokes.
+     * Both legs must pass the physical swipe threshold; diagonal drags never
+     * silently become a command, and straight swipes remain single-stroke.
+     */
+    static String identifyOneFingerSwipe(List<float[]> points, float distance) {
+        if (points.size() < 2) { return null; }
+        float[] start = points.get(0);
+        float[] end = points.get(points.size() - 1);
+        String first = null;
+        String second = null;
+        float best = 0.0f;
+        float legMin = distance * 0.85f;
+        for (int i = 1; i + 1 < points.size(); i++) {
+            float[] turn = points.get(i);
+            String leg1 = cardinal(turn[0] - start[0], turn[1] - start[1], legMin);
+            String leg2 = cardinal(end[0] - turn[0], end[1] - turn[1], legMin);
+            if (leg1 == null || leg2 == null || leg1.equals(leg2)) { continue; }
+            float a = (float) Math.hypot(turn[0] - start[0], turn[1] - start[1]);
+            float b = (float) Math.hypot(end[0] - turn[0], end[1] - turn[1]);
+            if (Math.min(a, b) > best) {
+                best = Math.min(a, b);
+                first = leg1;
+                second = leg2;
+            }
+        }
+        if (first != null) {
+            return ReaderGestureBindings.idForSwipe(1, first + "_" + second);
+        }
+        String single = cardinal(end[0] - start[0], end[1] - start[1], distance);
+        return single == null ? null : ReaderGestureBindings.idForSwipe(1, single);
+    }
+
+    private void recordOneFinger(float x, float y) {
+        if (oneFingerPath.size() >= 256) { return; }
+        oneFingerPath.add(new float[] { x, y });
     }
 
     @Override
@@ -185,6 +256,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             downTime = event.getEventTime();
             firstX = event.getX();
             firstY = event.getY();
+            oneFingerPath.clear();
+            recordOneFinger(firstX, firstY);
         } else if (action == MotionEvent.ACTION_CANCEL) {
             cancelGesture();
             detector.onTouchEvent(event);
@@ -197,7 +270,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             cancel.setAction(MotionEvent.ACTION_CANCEL);
             detector.onTouchEvent(cancel);
             cancel.recycle();
-            if (maxPointers > 3) { cancelled = true; }
+            if (maxPointers > 4) { cancelled = true; }
+            // Reset origin when the full finger count is reached.
             multiStartX = centroidX(event);
             multiStartY = centroidY(event);
             multiLastX = multiStartX;
@@ -216,26 +290,25 @@ public final class ReaderGestureSurface extends LinearLayout {
                         && listener.directWorldGesturesEnabled();
                 float dx = multiLastX - multiStartX;
                 float dy = multiLastY - multiStartY;
-                if (permitted && maxPointers == 2) {
-                    if (Math.max(Math.abs(dx), Math.abs(dy)) >= listener.swipeDistancePx()) {
+                float threshold = listener.swipeDistancePx();
+                if (permitted && maxPointers >= 2 && maxPointers <= 4) {
+                    String direction = cardinal(dx, dy, threshold);
+                    if (direction != null) {
                         clearMultiTap();
-                        // Only cardinal directions are accepted, never diagonals.
-                        if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
-                            listener.scanDirection(dx > 0 ? 1 : -1, 0);
-                        } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
-                            listener.scanDirection(0, dy > 0 ? 1 : -1);
+                        String gesture = ReaderGestureBindings.idForSwipe(maxPointers, direction);
+                        if (gesture != null && !listener.handleCustomGesture(gesture)
+                                && maxPointers == 2) {
+                            listener.scanDirection(dx > threshold ? 1 : dx < -threshold ? -1 : 0,
+                                    dy > threshold ? 1 : dy < -threshold ? -1 : 0);
                         }
+                    } else if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) {
+                        queueMultiTap(owner, maxPointers);
                     } else {
-                        queueTwoFingerTap(owner);
+                        clearMultiTap();
                     }
-                } else if (permitted && maxPointers == 3
-                        && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()) {
-                    clearMultiTap();
-                    listener.threeFingerTap();
                 } else {
                     clearMultiTap();
                 }
-                // Keep any pending two-finger tap series across pointer resets.
                 multiple = false;
                 cancelled = true;
                 owner = null;
@@ -243,16 +316,32 @@ public final class ReaderGestureSurface extends LinearLayout {
             }
             return true;
         }
+
+        if (action == MotionEvent.ACTION_MOVE && event.getPointerCount() == 1) {
+            for (int i = 0; i < event.getHistorySize(); i++) {
+                recordOneFinger(event.getHistoricalX(i), event.getHistoricalY(i));
+            }
+            recordOneFinger(event.getX(), event.getY());
+        }
         detector.onTouchEvent(event);
         boolean activatedByDoubleTap = false;
         if (action == MotionEvent.ACTION_UP && !swipeHandled && !activateOnUp
                 && !longPressHandled && valid()) {
-            float dx = event.getX() - firstX;
-            float dy = event.getY() - firstY;
+            recordOneFinger(event.getX(), event.getY());
             if (event.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
                 cancelGesture();
-            } else if (Math.max(Math.abs(dx), Math.abs(dy)) >= listener.swipeDistancePx()) {
-                handleSwipe(dx, dy);
+            } else if (listener.directWorldGesturesEnabled()) {
+                String gesture = identifyOneFingerSwipe(oneFingerPath, listener.swipeDistancePx());
+                if (gesture != null) {
+                    clearMultiTap();
+                    if (!listener.handleCustomGesture(gesture)
+                            && gesture.indexOf('_', "swipe_".length()) < 0) {
+                        handleSwipe(event.getX() - firstX, event.getY() - firstY);
+                    }
+                }
+            } else if (Math.max(Math.abs(event.getX() - firstX),
+                                 Math.abs(event.getY() - firstY)) >= listener.swipeDistancePx()) {
+                handleSwipe(event.getX() - firstX, event.getY() - firstY);
             }
         }
         if (action == MotionEvent.ACTION_UP && activateOnUp && valid()) {
@@ -316,5 +405,6 @@ public final class ReaderGestureSurface extends LinearLayout {
         owner = null;
         previousTapOwner = null;
         clearMultiTap();
+        oneFingerPath.clear();
     }
 }
