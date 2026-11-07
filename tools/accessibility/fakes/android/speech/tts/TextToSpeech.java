@@ -16,6 +16,11 @@ public final class TextToSpeech {
     public static final int QUEUE_FLUSH = 0;
     public static TextToSpeech latest;
 
+    public static final class Engine {
+        public static final String KEY_PARAM_VOLUME = "volume";
+        private Engine() { }
+    }
+
     /** Mirror of the real EngineInfo shape used by the voice probe (R06.1). */
     public static final class EngineInfo {
         public final String name;
@@ -40,6 +45,8 @@ public final class TextToSpeech {
     public boolean closed;
     public String token;
     public boolean networkVoice;
+    public float pitch = 1.0f;
+    public Object lastSpeakOptions;
     private Locale locale;
 
     public TextToSpeech(Context context, OnInitListener listener) {
@@ -92,6 +99,11 @@ public final class TextToSpeech {
         return SUCCESS;
     }
 
+    public int setPitch(float value) {
+        pitch = value;
+        return SUCCESS;
+    }
+
     public int setOnUtteranceProgressListener(UtteranceProgressListener listener) {
         progress = listener;
         return SUCCESS;
@@ -104,6 +116,7 @@ public final class TextToSpeech {
     public int speak(CharSequence text, int mode, Object params, String id) {
         speakCalls++;
         token = id;
+        lastSpeakOptions = params;
         return speakResult;
     }
 
