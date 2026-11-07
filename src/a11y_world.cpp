@@ -817,7 +817,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
 }
 
 // Deliberately bypass observe_tile() and its visibility/memory restrictions:
- // this explicit assistive scan reveals the live map, even behind walls.
+// this explicit assistive scan reveals the live map, even behind walls.
 void announce_linear_scan( const int dx, const int dy )
 {
     if( std::abs( dx ) + std::abs( dy ) != 1 ) {
