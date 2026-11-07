@@ -35,6 +35,8 @@ public class BootstrapSelfVoiceSurfaceTest {
                             @Override
                             public void stopSpeech() { }
                             @Override
+                            public void goBack() { }
+                            @Override
                             public boolean leftHandedNavigation() { return false; }
                             @Override
                             public float swipeDistancePx() { return 48; }
