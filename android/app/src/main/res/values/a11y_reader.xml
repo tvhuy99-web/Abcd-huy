@@ -192,4 +192,5 @@
     <string name="a11ySoundpackStorageUnavailable">The game files directory cannot be accessed.</string>
     <string name="a11ySoundpackFailed">Otopack could not be installed: %1$s. You may retry or start the game without it. Your saved games were not changed.</string>
     <string name="a11ySoundpackRetry">Try downloading again</string>
+    <string name="a11yGestureUnassigned">Gesture not assigned</string>
 </resources>

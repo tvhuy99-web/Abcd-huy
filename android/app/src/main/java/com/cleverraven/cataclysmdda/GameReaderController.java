@@ -1036,6 +1036,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return true;
     }
 
+    @Override
+    public void unassignedMultiGesture(String gestureId) {
+        if (directWorldGesturesEnabled()) {
+            feedback(activity.getString(R.string.a11yGestureUnassigned));
+        }
+    }
+
     private void executeShortcutTarget(String target) {
         // Remove shortcuts to the deleted hub, reader panel and voice setup.
         if (!target.startsWith("action:")) { return; }

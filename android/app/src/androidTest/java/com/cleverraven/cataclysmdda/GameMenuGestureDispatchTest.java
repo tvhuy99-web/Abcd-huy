@@ -28,6 +28,7 @@ public final class GameMenuGestureDispatchTest {
         int tripleFingerTaps;
         int fourFingerTaps;
         int fourFingerSwipes;
+        int unassignedGestures;
 
         @Override public boolean usesTouchExploration() { return false; }
         @Override public String gestureContext() { return playing ? "world" : "menu"; }
@@ -61,6 +62,9 @@ public final class GameMenuGestureDispatchTest {
             if ("tap_4_1".equals(id)) { fourFingerTaps++; return true; }
             if ("swipe_4_right".equals(id)) { fourFingerSwipes++; return true; }
             return false;
+        }
+        @Override public void unassignedMultiGesture(String id) {
+            unassignedGestures++;
         }
         @Override public void activate() { activations++; }
         @Override public void detail() { }
@@ -241,6 +245,28 @@ public final class GameMenuGestureDispatchTest {
                         MotionEvent.ACTION_MOVE, 4, 110);
                 endMulti(surface[0], 4, start, 110);
                 assertEquals(1, actions.fourFingerSwipes);
+            });
+        }
+    }
+
+    @Test
+    public void unassignedThreeFingerSwipeIsNotSilentlyDropped() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface, 3, start);
+                multiTouch(surface, start, start + 145,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+                endMulti(surface, 3, start, 110);
+                assertEquals(1, actions.unassignedGestures);
             });
         }
     }

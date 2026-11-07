@@ -47,6 +47,7 @@ class MultiFingerRecovery(unittest.TestCase):
         self.assertIn("queueWorldTap(event, owner)", self.surface)
         self.assertIn("listener.moveDirection(", self.surface)
         self.assertIn("listener.openActionMenu()", self.surface)
+        self.assertIn("listener.unassignedMultiGesture(gesture)", self.surface)
 
     def test_instrumented_cases_cover_three_four_and_false_positive(self):
         self.assertIn("threeFingerSystemCancelRecoversOneTapOnly", self.tests)
@@ -54,6 +55,8 @@ class MultiFingerRecovery(unittest.TestCase):
         self.assertIn("ACTION_CANCEL", self.tests)
         self.assertIn("ACTION_MOVE, 3, 100", self.tests)
         self.assertIn('"swipe_4_right"', self.tests)
+        self.assertIn("unassignedThreeFingerSwipeIsNotSilentlyDropped",
+                      self.tests)
 
 
 if __name__ == "__main__":

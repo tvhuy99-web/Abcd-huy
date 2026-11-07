@@ -38,6 +38,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         /** Three sequential single-finger taps open the native action menu. */
         void openActionMenu();
         boolean handleCustomGesture(String gestureId);
+        /** An otherwise valid 3/4-finger gesture has no bound action. */
+        default void unassignedMultiGesture(String gestureId) { }
         void activate();
         void detail();
         void readCurrent();
@@ -357,6 +359,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             listener.twoFingerTap(count);
         } else if (fingers == 3 && count == 1) {
             listener.threeFingerTap();
+        } else if (fingers >= 3) {
+            listener.unassignedMultiGesture(gesture);
         }
     }
 
@@ -542,7 +546,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                         } else {
                             String gesture = ReaderGestureBindings.idForSwipe(
                                     maxPointers, direction);
-                            if (gesture != null) { listener.handleCustomGesture(gesture); }
+                            if (gesture != null && !listener.handleCustomGesture(gesture)) {
+                                listener.unassignedMultiGesture(gesture);
+                            }
                         }
                     } else if (Math.max(Math.abs(dx), Math.abs(dy)) < threshold) {
                         queueMultiTap(owner, maxPointers);
