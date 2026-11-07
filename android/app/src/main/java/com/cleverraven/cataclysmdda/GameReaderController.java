@@ -41,12 +41,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Loading screens do not publish semantic snapshots. Keep their last
     // visible status available to repeat, even after the main menu clears.
     private String lastLoadingStatus = "";
-    private final Runnable loadingSilenceWarning = () -> {
-        if (!closed && foreground && windowFocused && preferences.isEnabled()
-                && snapshot == null && !lastLoadingStatus.isEmpty()) {
-            feedback(activity.getString(R.string.a11yLoadingStillWaiting));
-        }
-    };
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
     private String editorContext = "";
@@ -73,6 +67,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastEnabled;
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
+    private final Runnable loadingSilenceWarning = () -> {
+        if (!closed && foreground && windowFocused && preferences.isEnabled()
+                && snapshot == null && !lastLoadingStatus.isEmpty()) {
+            feedback(activity.getString(R.string.a11yLoadingStillWaiting));
+        }
+    };
+
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
