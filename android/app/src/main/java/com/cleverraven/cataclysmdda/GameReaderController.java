@@ -14,6 +14,7 @@ import android.widget.TextView;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -840,6 +841,65 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         send("focus", "");
         readCurrent();
     }
+
+    @Override
+    public boolean adjustFocusedSetting(int delta) {
+        if (editor != null || snapshot == null || delta == 0
+                || !foreground || !windowFocused || lastSuspended) { return false; }
+        ReaderSnapshot.Node node = snapshot.find(focus);
+        if (node == null || !node.enabled) { return false; }
+
+        // These are the same semantic choices used by game settings pages.
+        if ("choice".equals(node.fieldType) && node.actions.contains("select_choice")
+                && !node.choices.isEmpty()) {
+            int current = -1;
+            for (int i = 0; i < node.choices.size(); i++) {
+                if (node.choices.get(i).value.equals(node.effectiveRawValue())) {
+                    current = i;
+                    break;
+                }
+            }
+            int next = Math.max(0, Math.min(node.choices.size() - 1, current + delta));
+            if (next == current) { readCurrent(); }
+            else { send("select_choice", node.choices.get(next).value); }
+            return true;
+        }
+
+        // Only a declared numeric form range with a positive step may be
+        // adjusted. No guessing units, bounds or text-field semantics.
+        if (!("int".equals(node.fieldType) || "float".equals(node.fieldType))
+                || !node.actions.contains("set_value") || !node.hasFieldRange
+                || !(node.fieldStep > 0) || !Double.isFinite(node.fieldStep)
+                || !Double.isFinite(node.fieldMin) || !Double.isFinite(node.fieldMax)) {
+            return false;
+        }
+        try {
+            BigDecimal current = new BigDecimal(node.effectiveRawValue());
+            BigDecimal minimum = BigDecimal.valueOf(node.fieldMin);
+            BigDecimal maximum = BigDecimal.valueOf(node.fieldMax);
+            BigDecimal step = BigDecimal.valueOf(node.fieldStep);
+            BigDecimal candidate = current.add(step.multiply(BigDecimal.valueOf(delta)));
+            if (candidate.compareTo(minimum) < 0 || candidate.compareTo(maximum) > 0) {
+                readCurrent();
+                return true;
+            }
+            if ("int".equals(node.fieldType)) {
+                candidate = candidate.stripTrailingZeros();
+                if (candidate.scale() > 0) {
+                    // Never submit a fractional draft to an integer field.
+                    readCurrent();
+                    return true;
+                }
+            }
+            send("set_value", candidate.stripTrailingZeros().toPlainString());
+        } catch (NumberFormatException invalidValue) {
+            readCurrent();
+        }
+        return true;
+    }
+
+    @Override
+    public void goBack() { onBackPressed(); }
 
     @Override
     public boolean movementPracticeEnabled() {

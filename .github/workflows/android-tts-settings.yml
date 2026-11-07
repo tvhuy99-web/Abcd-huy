@@ -19,6 +19,7 @@ on:
       - 'lang/po/accessibility/vi.po'
       - 'tools/accessibility/test_tts_settings.py'
       - 'tools/accessibility/test_external_screen_gestures.py'
+      - 'tools/accessibility/test_game_menu_gestures.py'
   workflow_dispatch:
 
 permissions:
@@ -33,6 +34,7 @@ jobs:
           persist-credentials: false
       - run: python3 -m unittest discover -s tools/accessibility -p test_tts_settings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_external_screen_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_game_menu_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_nested_menu_navigation.py -v

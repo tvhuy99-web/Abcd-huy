@@ -22,6 +22,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         float swipeDistancePx();
         long swipeDurationLimitMs();
         void navigate(int delta);
+        /** Adjust a focused game setting, if it is a numeric or choice field. */
+        boolean adjustFocusedSetting(int delta);
+        /** Back out of a game menu without opening a secondary reader panel. */
+        void goBack();
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -57,6 +61,11 @@ public final class ReaderGestureSurface extends LinearLayout {
     private boolean activateOnUp;
     private boolean swipeHandled;
     private boolean longPressHandled;
+    private boolean ignoreUntilPointersReleased;
+    private final int[] backPointerIds = new int[2];
+    private final float[] backPointerStartX = new float[2];
+    private final float[] backPointerStartY = new float[2];
+    private int backPointerCount;
     private long downTime;
     private float firstX;
     private float firstY;
@@ -245,10 +254,18 @@ public final class ReaderGestureSurface extends LinearLayout {
             return super.dispatchTouchEvent(event);
         }
         int action = event.getActionMasked();
+        // After a handled two-finger Back swipe, consume the remaining UP.
+        if (ignoreUntilPointersReleased) {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                ignoreUntilPointersReleased = false;
+            }
+            return true;
+        }
         if (action == MotionEvent.ACTION_DOWN) {
             owner = listener.gestureContext();
             multiple = false;
             maxPointers = 1;
+            backPointerCount = 0;
             cancelled = false;
             activateOnUp = false;
             swipeHandled = false;
@@ -271,6 +288,16 @@ public final class ReaderGestureSurface extends LinearLayout {
             detector.onTouchEvent(cancel);
             cancel.recycle();
             if (maxPointers > 4) { cancelled = true; }
+            if (event.getPointerCount() == 2) {
+                backPointerCount = 2;
+                for (int i = 0; i < 2; i++) {
+                    backPointerIds[i] = event.getPointerId(i);
+                    backPointerStartX[i] = event.getX(i);
+                    backPointerStartY[i] = event.getY(i);
+                }
+            } else {
+                backPointerCount = 0;
+            }
             // Reset origin when the full finger count is reached.
             multiStartX = centroidX(event);
             multiStartY = centroidY(event);
@@ -278,6 +305,26 @@ public final class ReaderGestureSurface extends LinearLayout {
             multiLastY = multiStartY;
         }
         if (multiple) {
+            // Two fingers down means Back on menus/forms. In active gameplay
+            // it keeps its existing 16-tile scan action.
+            if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
+                    && !cancelled && owner != null && owner.equals(listener.gestureContext())
+                    && !listener.directWorldGesturesEnabled()
+                    && event.getEventTime() - downTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())
+                    && TwoFingerBackGesture.matches(event, backPointerIds,
+                            backPointerStartX, backPointerStartY, backPointerCount,
+                            listener.swipeDistancePx())) {
+                ignoreUntilPointersReleased = true;
+                multiple = false;
+                backPointerCount = 0;
+                cancelled = true;
+                owner = null;
+                previousTapOwner = null;
+                clearMultiTap();
+                listener.goBack();
+                return true;
+            }
             if ((action == MotionEvent.ACTION_MOVE || action == MotionEvent.ACTION_POINTER_UP)
                     && event.getPointerCount() == maxPointers) {
                 multiLastX = centroidX(event);
@@ -383,7 +430,11 @@ public final class ReaderGestureSurface extends LinearLayout {
             performMappedSwipeAction(listener.horizontalSwipeAction(),
                                      navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
         } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
-            performMappedSwipeAction(listener.verticalSwipeAction(), dy > 0 ? 1 : -1);
+            // For numeric/choice fields, vertical swipes change the value;
+            // on ordinary menu items, retain the configured vertical action.
+            if (!listener.adjustFocusedSetting(dy < 0 ? 1 : -1)) {
+                performMappedSwipeAction(listener.verticalSwipeAction(), dy > 0 ? 1 : -1);
+            }
         }
     }
 
@@ -412,5 +463,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         previousTapOwner = null;
         clearMultiTap();
         oneFingerPath.clear();
+        backPointerCount = 0;
+        ignoreUntilPointersReleased = false;
     }
 }
