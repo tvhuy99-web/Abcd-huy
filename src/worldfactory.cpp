@@ -1517,12 +1517,38 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             category.id = "mod:category:" + std::to_string( i );
             category.role = "tab";
             category.label = mod_tabs[i].second.translated();
-            category.selected = iCurrentTab == i;
+            category.selected = active_header == 0 && iCurrentTab == i;
             category.detail = _( "Activate to show the mods in this category." );
+            category.depth = 0;
+            category.expanded = iCurrentTab == i;
+            category.has_children = true;
             reader_targets.emplace( category.id, mod_reader_target{ true, false, i } );
             snapshot.nodes.push_back( std::move( category ) );
         }
 
+        // Native still paints both panes, but the reader navigates their
+        // choices as separate pages, never among the category tabs.
+        a11y::semantic_node active_tab;
+        active_tab.id = "mod:active-list";
+        active_tab.role = "tab";
+        active_tab.label = _( "Active mod load order" );
+        active_tab.selected = active_header == 1;
+        active_tab.depth = 0;
+        active_tab.expanded = true;
+        active_tab.has_children = true;
+        snapshot.nodes.push_back( std::move( active_tab ) );
+
+        a11y::semantic_node tools_tab;
+        tools_tab.id = "mod:tools";
+        tools_tab.role = "tab";
+        tools_tab.label = _( "Mod selection commands" );
+        tools_tab.depth = 0;
+        tools_tab.expanded = true;
+        tools_tab.has_children = true;
+        snapshot.nodes.push_back( std::move( tools_tab ) );
+
+        const std::string available_parent = "mod:category:" +
+                                             std::to_string( iCurrentTab );
         const auto mod_detail = [&]( const mod_id &id ) {
             if( !id.is_valid() ) {
                 return string_format( _( "This mod is missing: %s." ), id.str() );
@@ -1560,6 +1586,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         if( available_mods.empty() ) {
             a11y::semantic_node empty;
             empty.id = "mod:available-empty";
+            empty.parent_id = available_parent;
+            empty.depth = 1;
             empty.role = "document";
             empty.label = _( "Available mod list is empty" );
             empty.detail = all_tabs[iCurrentTab].mods_unfiltered.empty() ?
@@ -1571,6 +1599,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             const mod_id &id = available_mods[i];
             a11y::semantic_node node;
             node.id = "mod:available:" + id.str();
+            node.parent_id = available_parent;
+            node.depth = 1;
             node.role = "button";
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
             node.value = std::find( active_mod_order.begin(), active_mod_order.end(), id ) != active_mod_order.end() ?
@@ -1604,6 +1634,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         if( active_mod_order.empty() ) {
             a11y::semantic_node empty;
             empty.id = "mod:active-empty";
+            empty.parent_id = "mod:active-list";
+            empty.depth = 1;
             empty.role = "document";
             empty.label = _( "Active mod load order is empty" );
             empty.detail = _( "Activate a mod from the available list to add it." );
@@ -1613,6 +1645,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             const mod_id &id = active_mod_order[i];
             a11y::semantic_node node;
             node.id = "mod:active:" + id.str();
+            node.parent_id = "mod:active-list";
+            node.depth = 1;
             node.role = "button";
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
             node.value = string_format( _( "Load order position %1$lu of %2$lu" ), i + 1,
@@ -1627,6 +1661,8 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
 
         a11y::semantic_node filter;
         filter.id = "mod:filter";
+        filter.parent_id = "mod:tools";
+        filter.depth = 1;
         filter.role = "document";
         filter.label = _( "Current mod filter" );
         filter.detail = current_filter.empty() ? _( "No filter is active." ) : current_filter;
@@ -1634,7 +1670,20 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
 
         auto commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
+            node.parent_id = "mod:tools";
+            node.depth = 1;
             snapshot.nodes.push_back( std::move( node ) );
+        }
+        // Position/total for every node is local to its own level. Native
+        // validation rejects a child whose parent was not published.
+        std::unordered_map<std::string, int> totals;
+        for( const a11y::semantic_node &node : snapshot.nodes ) {
+            totals[node.parent_id]++;
+        }
+        std::unordered_map<std::string, int> seen;
+        for( a11y::semantic_node &node : snapshot.nodes ) {
+            node.position = ++seen[node.parent_id];
+            node.total = totals[node.parent_id];
         }
         snapshot.focus.clear();
         if( !reader_focus.empty() && std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
@@ -1642,17 +1691,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             snapshot.focus = reader_focus;
         }
         if( snapshot.focus.empty() ) {
-            if( active_header == 1 && !active_mod_order.empty() ) {
-                snapshot.focus = "mod:active:" + active_mod_order[cursel[1]].str();
-            } else if( !available_mods.empty() ) {
-                snapshot.focus = "mod:available:" + available_mods[cursel[0]].str();
-            } else if( !mod_tabs.empty() ) {
-                snapshot.focus = "mod:category:" + std::to_string( iCurrentTab );
-            }
-        }
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
-            snapshot.nodes[i].position = static_cast<int>( i + 1 );
-            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+            snapshot.focus = active_header == 1 ? "mod:active-list" :
+                             !mod_tabs.empty() ? "mod:category:" +
+                             std::to_string( iCurrentTab ) : "mod:tools";
         }
         reader->update( std::move( snapshot ) );
     };
