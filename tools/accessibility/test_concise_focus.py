@@ -23,7 +23,7 @@ class ConciseFocusTest(unittest.TestCase):
         )[0]
         self.assertIn("String spoken = nodeText(node, false);", body)
         self.assertIn("speech.focus(node.id, spoken);", body)
-        self.assertIn("root.announceForAccessibility(spoken);", body)
+        self.assertIn("announceAccessibility(spoken);", body)
         self.assertNotIn("snapshot.title", body)
         self.assertNotIn("snapshot.summary", body)
 

@@ -97,7 +97,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             public void onVoiceRecovered() {
                 if (closed) { return; }
                 status.setText(R.string.a11yReaderVoiceRecoveredDefault);
-                root.announceForAccessibility(
+                announceAccessibility(
                         activity.getString(R.string.a11yReaderVoiceRecoveredDefault));
             }
         });
@@ -172,7 +172,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || state == AndroidSpeech.State.MISSING_VOICE
                 || state == AndroidSpeech.State.NETWORK_REQUIRED) {
             status.setText(R.string.a11yReaderVoiceRecovery);
-            root.announceForAccessibility(activity.getString(R.string.a11yReaderVoiceRecovery));
+            announceAccessibility(activity.getString(R.string.a11yReaderVoiceRecovery));
         }
     }
 
@@ -591,7 +591,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         String statusText = activity.getString(R.string.a11yLoadingStatus, spokenMessage);
                 if (usesTouchExploration()) {
                     status.setText(statusText);
-                    root.announceForAccessibility(statusText);
+                    announceAccessibility(statusText);
                 } else {
                     speech.say("loading-progress", statusText,
                             ReaderSpeechQueue.INFORMATION, 30000);
@@ -603,7 +603,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? "announce_urgent" : "announce_info");
             if (usesTouchExploration()) {
                 status.setText(spokenMessage);
-                root.announceForAccessibility(spokenMessage);
+                announceAccessibility(spokenMessage);
             } else if (extendedScan) {
                 // Reading sixteen unrestricted map cells may outlive the
                 // eight-second event TTL; use the document-length channel.
@@ -1724,7 +1724,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (debugReport != null) {
             if (debugFocus == 0) {
                 if (usesTouchExploration()) {
-                    root.announceForAccessibility(debugReport);
+                    announceAccessibility(debugReport);
                 } else {
                     speech.say("debug-report", debugReport, ReaderSpeechQueue.LONG_TEXT);
                 }
@@ -1761,7 +1761,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         String spoken = nodeText(node, false);
         if (usesTouchExploration()) {
-            root.announceForAccessibility(spoken);
+            announceAccessibility(spoken);
         } else {
             speech.focus(node.id, spoken);
         }
@@ -1770,7 +1770,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void detail() {
         if (debugReport != null) {
-            if (usesTouchExploration()) { root.announceForAccessibility(debugReport); }
+            if (usesTouchExploration()) { announceAccessibility(debugReport); }
             else { speech.say("debug-detail", debugReport, ReaderSpeechQueue.LONG_TEXT); }
             return;
         }
@@ -1796,11 +1796,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
      */
 
 
+    private void announceAccessibility(String text) {
+        SessionDebugLog.event("ACCESSIBILITY_ANNOUNCE", "requested=" + text);
+        root.announceForAccessibility(text);
+    }
+
     private void feedback(String text) {
         if (!foreground || closed) { return; }
         if (usesTouchExploration()) {
             status.setText(text);
-            root.announceForAccessibility(text);
+            announceAccessibility(text);
         } else {
             speech.say("feedback", text, ReaderSpeechQueue.FOCUS);
         }

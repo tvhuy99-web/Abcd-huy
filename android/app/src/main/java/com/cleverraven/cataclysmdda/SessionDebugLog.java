@@ -200,7 +200,6 @@ public final class SessionDebugLog {
                 Log.e("SessionDebugLog", "Cannot clear active log", error);
             }
         }
-        event("CONTROL", "journal_cleared");
     }
 
     /**

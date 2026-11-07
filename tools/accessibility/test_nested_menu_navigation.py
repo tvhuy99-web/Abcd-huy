@@ -53,7 +53,7 @@ class NestedMenuNavigationTests(unittest.TestCase):
         code = self.controller
         self.assertIn("List<ReaderSnapshot.Node> filtered = visibleNodes();",
                       code)
-        self.assertIn("root.announceForAccessibility(spoken);", code)
+        self.assertIn("announceAccessibility(spoken);", code)
         self.assertIn("speech.focus(node.id, spoken);", code)
         self.assertNotIn("AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS", code)
         self.assertIn("feedback(next.title + \". \" + nodeText(", code)
