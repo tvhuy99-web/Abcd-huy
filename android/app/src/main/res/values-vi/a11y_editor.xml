@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="a11yEditorTitle">Sửa giá trị</string>
-    <string name="a11yEditorInstructions">Khi dùng TalkBack, sửa ô văn bản hoặc dùng các mục bàn phím. Khi không dùng TalkBack, vuốt qua các mục và chạm hai lần để dùng mục đó. Áp dụng chỉ đưa giá trị vào ô; bạn xác nhận hộp thoại game ở bước riêng. Nút Quay lại hủy lần sửa này.</string>
+    <string name="a11yEditorInstructions">Nhập hoặc sửa văn bản. Áp dụng chỉ chuyển giá trị vào ô; xác nhận riêng trong game. Quay lại để hủy.</string>
     <string name="a11yEditorValue">Giá trị hiện tại</string>
     <string name="a11yEditorReadValue">Đọc toàn bộ giá trị</string>
     <string name="a11yEditorLetters">Chọn chữ cái</string>
@@ -25,8 +25,8 @@
     <string name="a11yEditorStart">Đầu giá trị</string>
     <string name="a11yEditorDeleted">Đã xóa: %1$s</string>
     <string name="a11yEditorNoVowel">Trước hết hãy đặt con trỏ ngay sau một nguyên âm.</string>
-    <string name="a11yEditorApplied">Đã áp dụng giá trị. Bạn xác nhận hộp thoại game ở bước riêng.</string>
-    <string name="a11yEditorInvalid">Giá trị này không hợp lệ với ô nhập. Bản nháp vẫn còn trong trình soạn thảo.</string>
+    <string name="a11yEditorApplied">Đã áp dụng. Xác nhận riêng trong game.</string>
+    <string name="a11yEditorInvalid">Giá trị không hợp lệ, bản nháp còn nguyên.</string>
     <string name="a11yToneNone">Thanh ngang</string>
     <string name="a11yToneGrave">Dấu huyền</string>
     <string name="a11yToneAcute">Dấu sắc</string>
@@ -37,7 +37,7 @@
     <string name="a11yEditorStep">Bước nhảy: %1$s</string>
     <string name="a11yEditorIncreaseStep">Tăng một bước</string>
     <string name="a11yEditorDecreaseStep">Giảm một bước</string>
-    <string name="a11yEditorNotANumber">Hãy nhập một số. Bản nháp vẫn còn trong trình soạn thảo.</string>
-    <string name="a11yEditorOutOfRange">Giá trị phải từ %1$s đến %2$s. Bản nháp vẫn còn trong trình soạn thảo.</string>
-    <string name="a11yEditorStepMismatch">Giá trị phải thay đổi theo bước %1$s tính từ %2$s. Bản nháp vẫn còn trong trình soạn thảo.</string>
+    <string name="a11yEditorNotANumber">Hãy nhập số.</string>
+    <string name="a11yEditorOutOfRange">Giá trị phải từ %1$s đến %2$s.</string>
+    <string name="a11yEditorStepMismatch">Giá trị phải theo bước %1$s tính từ %2$s.</string>
 </resources>

@@ -834,9 +834,9 @@ void announce_linear_scan( const int dx, const int dy )
     }
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
-    const std::string direction = dy < 0 ? _( "North" ) : dy > 0 ? _( "South" ) :
-                                  dx < 0 ? _( "West" ) : _( "East" );
-    std::string spoken = string_format( _( "Scan %s, 16 tiles, nearest to farthest." ), direction );
+    // The swipe itself supplies the direction. Announce the observations
+    // immediately, without repeating the gesture or the 16-tile range.
+    std::string spoken;
     for( int distance = 1; distance <= 16; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
         std::string detail;
@@ -876,7 +876,10 @@ void announce_linear_scan( const int dx, const int dy )
                 }
             }
         }
-        spoken += " " + string_format( _( "Tile %1$d: %2$s." ), distance, detail );
+        if( !spoken.empty() ) {
+            spoken += " ";
+        }
+        spoken += string_format( _( "Tile %1$d: %2$s." ), distance, detail );
     }
     // Native calls never read game state off-thread. Android handles the
     // prefixed utterance as long-form TTS rather than a short event notice.

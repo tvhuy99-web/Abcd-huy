@@ -365,12 +365,16 @@ public class SplashScreen extends Activity {
     private void reportBootstrapProgress(int copied, int total) {
         if (bootstrapProgressText == null) { return; }
         int percent = total <= 0 ? 0 : (int) Math.max(0L, Math.min(100L, (long) copied * 100L / total));
-        int bucket = percent / 10;
+        // Only 25%, 50%, 75% and 100% change the live region and TTS.
+        // Updating the TextView every percent also makes TalkBack chatter.
+        int bucket = percent / 25;
         if (bucket > lastBootstrapProgressBucket) {
             lastBootstrapProgressBucket = bucket;
-            String progress = getString(R.string.a11yBootstrapProgress, percent, copied, total);
-            bootstrapProgressText.setText(progress);
-            speakBootstrap(progress);
+            if (bucket > 0) {
+                String progress = getString(R.string.a11yBootstrapProgress, bucket * 25);
+                bootstrapProgressText.setText(progress);
+                speakBootstrap(progress);
+            }
         }
     }
 

@@ -43,13 +43,13 @@
     <string name="a11ySpeechRateValue">Tốc độ đọc: %1$s lần tốc độ thường</string>
     <string name="a11yRetestAfterSettingsChange">Đã thay đổi thiết lập giọng. Hãy nghe giọng đang chọn trước khi lưu lựa chọn mới.</string>
     <string name="a11yReturnToStartup">Quay lại màn hình khởi động</string>
-    <string name="a11ySpeechNew">Trình đọc nội bộ tự bật khi mở trò chơi. Bạn có thể đổi giọng ở đây mà không cần bật trình đọc thủ công.</string>
-    <string name="a11ySpeechInitializing">Đang chuẩn bị giọng tiếng Việt. Có thể mất vài giây.</string>
-    <string name="a11ySpeechReady">Công cụ giọng đọc đã sẵn sàng. Bạn có thể nghe giọng đang chọn trước khi lưu.</string>
+    <string name="a11ySpeechNew">Bộ đọc tự bật. Có thể đổi giọng tại đây.</string>
+    <string name="a11ySpeechInitializing">Đang tải giọng.</string>
+    <string name="a11ySpeechReady">Giọng đã sẵn sàng.</string>
     <string name="a11ySpeechSample">Xin chào. Đây là câu thử giọng tiếng Việt của Cataclysm. Bạn có thể dừng lời đọc và quay lại bất cứ lúc nào.</string>
-    <string name="a11ySpeechPlaying">Đang phát giọng đã chọn.</string>
-    <string name="a11ySpeechFinished">Đã nghe xong giọng. Nếu không nghe thấy, hãy kiểm tra âm lượng và cài đặt giọng đọc Android.</string>
-    <string name="a11ySpeechStopped">Đã dừng lời đọc. Không thực hiện hành động trong game.</string>
+    <string name="a11ySpeechPlaying">Đang đọc thử.</string>
+    <string name="a11ySpeechFinished">Đã đọc xong.</string>
+    <string name="a11ySpeechStopped">Đã dừng đọc.</string>
     <string name="a11ySpeechMissingVietnamese">Công cụ hiện chọn chưa có giọng tiếng Việt dùng được. Hãy cài hoặc chọn giọng Việt trong cài đặt Android rồi thử lại.</string>
     <string name="a11ySpeechNetworkRequired">Giọng hiện chọn cần internet. Hãy chọn giọng ngoại tuyến trong cài đặt Android, hoặc chủ động cho phép giọng qua mạng trong lần thử này.</string>
     <string name="a11ySpeechFailed">Không thể bắt đầu hoặc đã gặp lỗi giọng đọc. Hãy bật TalkBack hoặc chọn giọng khác trong cài đặt Android rồi thử lại.</string>
@@ -68,10 +68,10 @@
     <string name="a11yTtsPitchValue">Độ cao: %1$s lần</string>
     <string name="a11yTtsVolumeValue">Âm lượng: %1$d phần trăm</string>
     <string name="a11yTtsAllowNetwork">Cho phép giọng cần mạng. Văn bản được đọc có thể được gửi đến nhà cung cấp giọng.</string>
-    <string name="a11yTtsLoading">Đang tìm giọng đọc đã cài...</string>
-    <string name="a11yTtsReady">Đã tìm thấy giọng đọc. Hãy nghe thử trước khi lưu.</string>
+    <string name="a11yTtsLoading">Đang tìm giọng.</string>
+    <string name="a11yTtsReady">Đã tìm thấy giọng. Nghe thử trước khi lưu.</string>
     <string name="a11yTtsUnavailable">Giọng đang chọn chưa dùng được. Hãy kiểm tra bộ máy và ngôn ngữ trong cài đặt Android.</string>
-    <string name="a11yTtsTestComplete">Đã nghe thử xong. Chọn Lưu để áp dụng.</string>
+    <string name="a11yTtsTestComplete">Đã nghe thử. Chọn Lưu.</string>
     <string name="a11yTtsTestFirst">Hãy nghe thử thành công trước khi lưu chế độ đọc đang bật. Muốn tắt đọc, bỏ chọn nút đầu tiên rồi lưu.</string>
     <string name="a11yTtsSystemDefault">Mặc định của hệ thống</string>
     <string name="a11yTtsEngineChoice">Bộ máy đọc: %1$s</string>
@@ -82,7 +82,7 @@
     <string name="a11yTtsSample">Nghe thử</string>
     <string name="a11yTtsSave">Lưu</string>
     <string name="a11yTtsVolumeTooLow">Âm lượng bằng không. Hãy tăng âm lượng trước khi bật đọc bằng lời nói.</string>
-    <string name="a11yTtsEnabledDraft">Đã bật TTS trong bản nháp. Hãy Nghe thử rồi Lưu để áp dụng.</string>
+    <string name="a11yTtsEnabledDraft">Đã chọn bật TTS. Nghe thử trước khi lưu.</string>
     <string name="a11yTtsDisableWarning">Đã tắt TTS trong bản nháp. Nếu Lưu, game sẽ ngừng đọc. Hãy giữ TalkBack để có thể bật lại.</string>
 
     <!-- Consolidated spoken gameplay hub. -->
@@ -148,11 +148,11 @@
     <string name="a11yBindDefault">Khôi phục cử chỉ mặc định</string>
     <string name="a11yBindCancel">Hủy</string>
     <string name="a11yBindSaved">Đã gán %1$s cho %2$s.</string>
-    <string name="a11yBindDisplaced">Lệnh trước đó %1$s đã trở về mặc định.</string>
-    <string name="a11yBindRestored">Đã khôi phục cử chỉ mặc định cho %1$s.</string>
+    <string name="a11yBindDisplaced">Lệnh %1$s đã về mặc định.</string>
+    <string name="a11yBindRestored">Đã khôi phục cử chỉ cho %1$s.</string>
     <string name="a11yBindCurrent">Đang gán: %1$s.</string>
     <string name="a11yBindGuide">Nhấn giữ một mục để gán cử chỉ.</string>
-    <string name="a11yBindUnavailable">Lệnh này hiện không khả dụng trên màn hình đang mở.</string>
+    <string name="a11yBindUnavailable">Lệnh không khả dụng.</string>
     <string name="a11yBindMenuTitle">Chọn cử chỉ</string>
     <string name="a11yBindTouchExploration">TalkBack của Android có thể chiếm một số cử chỉ nhiều ngón. Nếu cử chỉ không hoạt động, hãy dùng nút có nhãn trên màn hình.</string>
 </resources>

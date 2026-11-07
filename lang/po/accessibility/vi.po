@@ -35,7 +35,7 @@ msgid "Unknown tile."
 msgstr "Chưa biết ô này."
 
 msgid "Remembered, not currently visible: "
-msgstr "Chỉ còn trong trí nhớ, hiện không nhìn thấy: "
+msgstr "Đã nhớ: "
 
 msgid "Current tile"
 msgstr "Ô hiện tại"
@@ -48,11 +48,11 @@ msgstr "Tầng phía dưới"
 
 #, c-format
 msgid "Bleeding is worsening at %s."
-msgstr "Chảy máu ở %s đang nặng hơn."
+msgstr "%s chảy máu nặng hơn."
 
 #, c-format
 msgid "Bleeding stopped at %s."
-msgstr "Đã cầm máu ở %s."
+msgstr "%s hết chảy máu."
 
 #, c-format
 msgid "%s is broken."
@@ -60,22 +60,22 @@ msgstr "%s bị gãy."
 
 #, c-format
 msgid "%s is no longer broken."
-msgstr "%s đã hết gãy."
+msgstr "%s lành xương."
 
 #, c-format
 msgid "A bite was detected on %s."
-msgstr "Phát hiện vết cắn ở %s."
+msgstr "%s bị cắn."
 
 #, c-format
 msgid "An infection was detected in %s."
-msgstr "Phát hiện nhiễm trùng ở %s."
+msgstr "%s nhiễm trùng."
 
 #, c-format
 msgid "The infection cleared in %s."
-msgstr "Nhiễm trùng ở %s đã hết."
+msgstr "%s hết nhiễm trùng."
 
 msgid "No current warning"
-msgstr "Không có cảnh báo hiện tại"
+msgstr "Không có cảnh báo"
 
 msgid "Critically low"
 msgstr "Rất thấp"
@@ -150,15 +150,15 @@ msgid "Current route"
 msgstr "Tuyến hiện tại"
 
 msgid "No route is set."
-msgstr "Chưa đặt tuyến đường."
+msgstr "Chưa có tuyến."
 
 #, c-format
 msgid "Planned destination: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d."
-msgstr "Điểm đến đã đặt: %1$s. Tọa độ bản đồ lớn: X %2$d, Y %3$d, tầng %4$d."
+msgstr "Đích: %1$s, X %2$d, Y %3$d, Z %4$d."
 
 #, c-format
 msgid "Route map tiles: %1$d. Relative location: %2$s."
-msgstr "Số ô bản đồ trên tuyến: %1$d. Vị trí tương đối: %2$s."
+msgstr "Tuyến %1$d ô, %2$s."
 
 #, c-format
 msgid "Sleepiness: %s"
@@ -212,14 +212,14 @@ msgid "Special perception: %s"
 msgstr "Cảm nhận đặc biệt: %s"
 
 msgid "You sense something here."
-msgstr "Bạn cảm nhận được điều gì đó ở đây."
+msgstr "Có gì đó gần đây."
 
 msgid "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position."
 msgstr "Chỉ hiện dấu âm thanh mà game đã cho nghe. Dấu chỉ vị trí ước lượng, không tiết lộ vị trí thật của sinh vật."
 
 #, c-format
 msgid "Near this marker, you heard %s. The marker is approximate and may not be the sound source's position."
-msgstr "Gần dấu này, bạn đã nghe thấy %s. Dấu chỉ vị trí ước lượng và có thể không phải nơi phát ra âm thanh."
+msgstr "Nghe %s, vị trí ước lượng."
 
 #, c-format
 msgid "%1$s: %2$s"
@@ -238,7 +238,7 @@ msgid "Visible field"
 msgstr "Trường đang nhìn thấy"
 
 msgid "Visible obstacle"
-msgstr "Chướng ngại vật đang nhìn thấy"
+msgstr "Vật cản"
 
 msgid "Known route feature"
 msgstr "Lối đi đã biết"
@@ -265,16 +265,16 @@ msgid "Current activity"
 msgstr "Hoạt động hiện tại"
 
 msgid "Sleeping. The game will continue until you wake up."
-msgstr "Đang ngủ. Game sẽ tiếp tục cho đến khi bạn tỉnh dậy."
+msgstr "Đang ngủ."
 
 msgid "Ongoing activity."
-msgstr "Hoạt động đang diễn ra."
+msgstr "Đang thực hiện."
 
 msgid "Pause can request interruption; the game will ask before canceling."
 msgstr "Lệnh Tạm dừng có thể yêu cầu ngắt hoạt động; game sẽ hỏi trước khi hủy."
 
 msgid "Pause cannot interrupt this activity right now."
-msgstr "Hiện không thể dùng lệnh Tạm dừng để ngắt hoạt động này."
+msgstr "Không thể tạm dừng."
 
 msgid "Activity in progress"
 msgstr "Hoạt động đang diễn ra"
@@ -283,7 +283,7 @@ msgid "Automatic travel"
 msgstr "Tự động di chuyển"
 
 msgid "Travel is in progress."
-msgstr "Đang di chuyển theo tuyến đã đặt."
+msgstr "Đang đi theo tuyến."
 
 msgid "Interruptibility"
 msgstr "Khả năng ngắt"
@@ -317,10 +317,10 @@ msgstr "Đánh giá nhân vật"
 
 #, c-format
 msgid "Selected: %1$s. Available: %2$s."
-msgstr "Đã chọn: %1$s. Hiện có: %2$s."
+msgstr "Chọn %1$s, có %2$s."
 
 msgid "Each requirement group must be met. Within this group, choose one alternative:"
-msgstr "Cần đáp ứng từng nhóm yêu cầu. Trong nhóm này, chọn một phương án:"
+msgstr "Chọn một phương án cho nhóm này:"
 
 msgid "Available."
 msgstr "Đã có đủ."
@@ -349,7 +349,7 @@ msgid "Batch size"
 msgstr "Số lượng mỗi mẻ"
 
 msgid "Choose 1 to 50. Applying a quantity does not start crafting."
-msgstr "Chọn từ 1 đến 50. Áp dụng số lượng chưa bắt đầu chế tạo."
+msgstr "Số lượng 1 đến 50."
 
 msgid "Can craft"
 msgstr "Có thể chế tạo"
@@ -374,7 +374,7 @@ msgid "Construction details"
 msgstr "Chi tiết xây dựng"
 
 msgid "Requirements or location are missing."
-msgstr "Chưa đủ điều kiện hoặc chưa có vị trí phù hợp."
+msgstr "Thiếu điều kiện hoặc vị trí."
 
 msgid "Skills and materials are sufficient."
 msgstr "Đã đủ kỹ năng và vật liệu."
@@ -383,10 +383,10 @@ msgid "Skills or materials are missing."
 msgstr "Còn thiếu kỹ năng hoặc vật liệu."
 
 msgid "A nearby location meets the construction conditions."
-msgstr "Có vị trí lân cận đáp ứng điều kiện xây dựng."
+msgstr "Có vị trí xây dựng."
 
 msgid "No nearby location meets the construction conditions."
-msgstr "Chưa có vị trí lân cận đáp ứng điều kiện xây dựng."
+msgstr "Không có vị trí xây dựng."
 
 msgid "Read a direction, then activate it to choose. Reading does not act."
 msgstr "Đọc một hướng, sau đó kích hoạt để chọn hướng đó. Chỉ đọc chưa thực hiện hành động."
@@ -395,13 +395,13 @@ msgid "This location is valid for the selected construction."
 msgstr "Vị trí này phù hợp với công trình đã chọn."
 
 msgid "This location is not valid for the selected construction."
-msgstr "Vị trí này không phù hợp với công trình đã chọn."
+msgstr "Không thể xây ở đây."
 
 msgid "Buildable here"
 msgstr "Xây được tại đây"
 
 msgid "Ready (missing location)"
-msgstr "Đủ yêu cầu, còn thiếu vị trí"
+msgstr "Thiếu vị trí"
 
 msgid "Item info"
 msgstr "Thông tin vật phẩm"
@@ -434,14 +434,14 @@ msgstr "Đang bó nẹp. Chưa biết tiến độ liền xương."
 
 #, c-format
 msgid "Splinted. Mending indicator %d of 5."
-msgstr "Đang bó nẹp. Chỉ báo liền xương: %d trên 5 mức."
+msgstr "Bó nẹp, liền xương %d/5."
 
 msgid "Broken."
 msgstr "Bị gãy."
 
 #, c-format
 msgid "Health indicator: %d full segments of 5."
-msgstr "Chỉ báo sức khỏe: %d vạch đầy trên 5 vạch."
+msgstr "Sức khỏe %d/5."
 
 msgid "One additional half segment."
 msgstr "Có thêm nửa vạch."
@@ -497,19 +497,19 @@ msgstr "Chọn mục tiêu"
 
 #, c-format
 msgid "Range: %1$d. Targets in range: %2$d. "
-msgstr "Tầm ngắm: %1$d ô. Mục tiêu trong tầm: %2$d. "
+msgstr "Tầm %1$d, có %2$d mục tiêu."
 
 msgid "Ready to aim or confirm."
-msgstr "Có thể ngắm hoặc xác nhận."
+msgstr "Sẵn sàng."
 
 msgid "No valid target is selected."
-msgstr "Chưa chọn được mục tiêu hợp lệ."
+msgstr "Chưa có mục tiêu."
 
 msgid "No ammunition or this weapon cannot fire."
-msgstr "Hết đạn hoặc vũ khí không thể bắn."
+msgstr "Hết đạn hoặc không thể bắn."
 
 msgid "The current aim point is out of range."
-msgstr "Điểm ngắm hiện tại nằm ngoài tầm."
+msgstr "Ngoài tầm."
 
 msgid "Current aim point"
 msgstr "Điểm ngắm hiện tại"
@@ -527,7 +527,7 @@ msgid "Visible vehicle: %s"
 msgstr "Xe đang nhìn thấy: %s"
 
 msgid "No visible creature or vehicle is under the aim point."
-msgstr "Không có sinh vật hoặc phương tiện đang nhìn thấy tại điểm ngắm."
+msgstr "Không thấy mục tiêu."
 
 msgid "Creature"
 msgstr "Sinh vật"
@@ -536,7 +536,7 @@ msgid "Vehicle"
 msgstr "Xe"
 
 msgid "Cannot change target while the weapon has no ammunition."
-msgstr "Không thể đổi mục tiêu khi vũ khí đã hết đạn."
+msgstr "Hết đạn, không thể đổi mục tiêu."
 
 #, c-format
 msgid "Targetable entity %d"
@@ -672,13 +672,13 @@ msgid "Create world"
 msgstr "Tạo thế giới"
 
 msgid "Set a world name and options. Adjust each option, choose mods, then finish to create the world."
-msgstr "Đặt tên và chọn tùy chọn thế giới. Điều chỉnh từng mục, chọn mod rồi hoàn tất để tạo thế giới."
+msgstr "Đặt tên, chỉnh tùy chọn, chọn mod."
 
 msgid "World name"
 msgstr "Tên thế giới"
 
 msgid "Activate to edit the world name."
-msgstr "Kích hoạt để sửa tên thế giới."
+msgstr "Sửa tên thế giới."
 
 #, c-format
 msgid "Increase %s"
@@ -689,16 +689,16 @@ msgid "Decrease %s"
 msgstr "Giảm %s"
 
 msgid "This option is already at its highest value."
-msgstr "Tùy chọn này đã ở mức cao nhất."
+msgstr "Đã tối đa."
 
 msgid "This option is already at its lowest value."
-msgstr "Tùy chọn này đã ở mức thấp nhất."
+msgstr "Đã tối thiểu."
 
 msgid "Finish world setup"
 msgstr "Hoàn tất thiết lập thế giới"
 
 msgid "Review the name and settings, then confirm to create this world."
-msgstr "Kiểm tra tên và thiết lập, sau đó xác nhận để tạo thế giới này."
+msgstr "Kiểm tra rồi xác nhận tạo thế giới."
 
 msgid "Reset world settings"
 msgstr "Đặt lại thiết lập thế giới"
@@ -727,7 +727,7 @@ msgid_plural "%lu active mods"
 msgstr[0] "%lu mod đang bật"
 
 msgid "Choose which mods this world uses before creating it."
-msgstr "Chọn các mod thế giới sẽ dùng trước khi tạo."
+msgstr "Chọn mod."
 
 msgid "World mod selection"
 msgstr "Chọn mod thế giới"
@@ -751,7 +751,7 @@ msgid "Collapsed"
 msgstr "Đã thu gọn"
 
 msgid "The prerequisite for this option is not met."
-msgstr "Chưa đáp ứng điều kiện tiên quyết của tùy chọn này."
+msgstr "Chưa đủ điều kiện."
 
 #, c-format
 msgid "Previous value for %s"
@@ -791,7 +791,7 @@ msgid "No mods are available in this category."
 msgstr "Không có mod khả dụng trong nhóm này."
 
 msgid "No mods match the current filter."
-msgstr "Không có mod nào khớp bộ lọc hiện tại."
+msgstr "Không tìm thấy mod."
 
 msgid "Missing mod"
 msgstr "Thiếu mod"
@@ -825,13 +825,13 @@ msgid "This world has no active mods."
 msgstr "Thế giới này không bật mod nào."
 
 msgid "Activate to choose a name and configure a new world."
-msgstr "Kích hoạt để đặt tên và cấu hình thế giới mới."
+msgstr "Tạo thế giới mới."
 
 msgid "Activate to manage this world's settings."
-msgstr "Kích hoạt để quản lý thiết lập của thế giới này."
+msgstr "Cài đặt thế giới."
 
 msgid "This world has no character available to load."
-msgstr "Thế giới này không có nhân vật nào để tải."
+msgstr "Chưa có nhân vật."
 
 msgid "Current mod filter"
 msgstr "Bộ lọc mod hiện tại"
@@ -858,19 +858,19 @@ msgid "Your offer: %1$s item units, estimated value %2$s. NPC offer: %3$s item u
 msgstr "Phần hàng bạn đưa: %1$s đơn vị, giá ước tính %2$s. Phần hàng NPC đưa: %3$s đơn vị, giá ước tính %4$s. Số dư hiện tại: %5$s."
 
 msgid "Balance is acceptable to the trader."
-msgstr "Số dư nằm trong giới hạn chấp nhận của NPC."
+msgstr "Có thể giao dịch."
 
 msgid "Balance exceeds the trader's current limit."
-msgstr "Số dư vượt quá giới hạn hiện tại của NPC."
+msgstr "Vượt giới hạn giao dịch."
 
 msgid "Bank balance: %1$s. Trade adjustment: %2$s."
 msgstr "Số dư tài khoản: %1$s. Điều chỉnh giao dịch: %2$s."
 
 msgid "Current pane: your offer."
-msgstr "Ngăn hiện tại: hàng bạn đưa."
+msgstr "Hàng của bạn."
 
 msgid "Current pane: items offered by the NPC."
-msgstr "Ngăn hiện tại: hàng NPC đưa."
+msgstr "Hàng NPC."
 
 msgid "Your scores"
 msgstr "Thành tích của bạn"
@@ -1173,7 +1173,7 @@ msgid "Moved to another level."
 msgstr "Đã sang tầng khác."
 
 msgid "The last action's result could not be determined."
-msgstr "Không xác định được kết quả của hành động vừa rồi."
+msgstr "Chưa rõ kết quả."
 
 #, c-format
 msgid "Door: %s"
@@ -1238,7 +1238,7 @@ msgid "Returns the scan to your character."
 msgstr "Đưa vùng quét trở về nhân vật của bạn."
 
 msgid "Vehicle: %s"
-msgstr "Xe: %s"
+msgstr "Xe %s"
 
 msgid "Remote control"
 msgstr "Điều khiển từ xa"
@@ -1277,7 +1277,7 @@ msgid "Tanks and fuel stores"
 msgstr "Bình chứa và kho nhiên liệu"
 
 msgid "This part cannot be chosen for this action."
-msgstr "Không thể chọn bộ phận này cho thao tác hiện tại."
+msgstr "Không chọn được bộ phận này."
 
 msgid "Contents: %s"
 msgstr "Bên trong: %s"
@@ -1788,7 +1788,7 @@ msgid "Allows %1$s to study %2$s. Currently %3$s."
 msgstr "Cho phép %1$s học %2$s. Hiện tại: %3$s."
 
 msgid "Already assigned to this camp."
-msgstr "Đã được phân vào trại này."
+msgstr "Đã ở trại này."
 
 msgid ""
 "Also produces items from a byproduct group; the exact items are generated when the craft finishes."
@@ -1889,7 +1889,7 @@ msgstr "Sản phẩm phụ"
 
 #, c-format
 msgid "Camp: %1$s. Followers: %2$d."
-msgstr "Trại: %1$s. Người đi theo: %2$d."
+msgstr "%1$s, %2$d người."
 
 #, c-format
 msgid "Camp: %1$s. Workers stationed: %2$d."
@@ -2026,7 +2026,7 @@ msgid "Current layout"
 msgstr "Bố cục hiện tại"
 
 msgid "Currently on a companion mission."
-msgstr "Hiện đang làm nhiệm vụ đồng đội."
+msgstr "Đang làm nhiệm vụ."
 
 msgid "Cursor"
 msgstr "Con trỏ"
@@ -2153,8 +2153,7 @@ msgstr "Hoàn tất việc sửa tùy chọn kỹ năng của vùng học."
 #, c-format
 msgid ""
 "Firing mode: %1$s. Ammunition remaining: %2$d. Switching the firing mode or the ammunition is done with the separate switch mode and switch ammo commands in this same list."
-msgstr ""
-"Chế độ bắn: %1$s. Đạn còn lại: %2$d. Việc đổi chế độ bắn hoặc loại đạn được thực hiện bằng các lệnh đổi chế độ và đổi đạn riêng trong cùng danh sách này."
+msgstr "%1$s, còn %2$d đạn."
 
 #, c-format
 msgid ""
@@ -2413,13 +2412,13 @@ msgid "Movement mode"
 msgstr "Chế độ di chuyển"
 
 msgid "Moves only the aim point by one tile. This does not fire or spend a turn."
-msgstr "Chỉ dời điểm ngắm đi một ô. Việc này không bắn và không tốn lượt."
+msgstr "Dời điểm ngắm một ô."
 
 msgid "Moves only the aim point down one level. This does not fire or spend a turn."
-msgstr "Chỉ dời điểm ngắm xuống một tầng. Việc này không bắn và không tốn lượt."
+msgstr "Ngắm xuống một tầng."
 
 msgid "Moves only the aim point up one level. This does not fire or spend a turn."
-msgstr "Chỉ dời điểm ngắm lên một tầng. Việc này không bắn và không tốn lượt."
+msgstr "Ngắm lên một tầng."
 
 #, c-format
 msgid "Mutations: %1$s. %2$d active, %3$d passive."
@@ -2451,7 +2450,7 @@ msgid "No adjacent mines"
 msgstr "Không có mìn kề bên"
 
 msgid "No companion on this mission is ready to return yet."
-msgstr "Chưa có đồng đội nào trong nhiệm vụ này sẵn sàng trở về."
+msgstr "Chưa có đồng đội sẵn sàng."
 
 msgid "No companions."
 msgstr "Không có đồng đội."
@@ -2495,7 +2494,7 @@ msgid "No route was set: unable to find a path to the destination."
 msgstr "Chưa đặt được tuyến: không tìm được đường tới điểm đến."
 
 msgid "No trade took place. Nothing was exchanged."
-msgstr "Không có giao dịch nào diễn ra. Không có gì được trao đổi."
+msgstr "Không giao dịch."
 
 msgid "No zone is selected."
 msgstr "Chưa chọn vùng nào."
@@ -2717,7 +2716,7 @@ msgstr ""
 
 #, c-format
 msgid "Safe mode blocked the attack on %s."
-msgstr "Chế độ an toàn đã chặn đòn tấn công vào %s."
+msgstr "Chặn tấn công %s."
 
 #, c-format
 msgid "Safe mode is currently %1$s. %2$d global rule(s) and %3$d character rule(s)."
@@ -2999,7 +2998,7 @@ msgid "The weather overlay can only be changed while the player is outside."
 msgstr "Lớp phủ thời tiết chỉ thay đổi được khi người chơi ở ngoài trời."
 
 msgid "There are no plots ready for planting in this expansion."
-msgstr "Không có luống nào sẵn sàng để trồng trong khu mở rộng này."
+msgstr "Chưa có luống trồng."
 
 msgid "There are no plots that need plowing in this expansion."
 msgstr "Không có luống nào cần cày trong khu mở rộng này."
@@ -3011,7 +3010,7 @@ msgid "There are unsaved changes."
 msgstr "Có thay đổi chưa lưu."
 
 msgid "There is nothing ready to harvest in this expansion."
-msgstr "Không có gì sẵn sàng để thu hoạch trong khu mở rộng này."
+msgstr "Chưa có gì để thu hoạch."
 
 msgid ""
 "These are registered commands. Screen contents may require a dedicated reader. The game does not publish a cost for individual commands; some commands open a follow-up step, such as choosing a direction, target or item, on the next screen."
@@ -3305,14 +3304,14 @@ msgstr "Quét phía %s, 16 ô, từ gần đến xa."
 
 #, c-format
 msgid "Tile %1$d: %2$s."
-msgstr "Ô %1$d: %2$s."
+msgstr "Ô %1$d, %2$s."
 
 #, c-format
 msgid "Coordinates. X %1$d. Y %2$d. Z %3$d."
-msgstr "Tọa độ. X %1$d. Y %2$d. Tầng Z %3$d."
+msgstr "X %1$d, Y %2$d, Z %3$d."
 
 msgid "Outside loaded map"
-msgstr "Ngoài bản đồ đang nạp"
+msgstr "Ngoài bản đồ"
 
 msgid "Loading saved character."
 msgstr "Đang tải nhân vật đã lưu."
@@ -3329,3 +3328,9 @@ msgstr "Chơi ngay sẽ tạo NHÂN VẬT MỚI, không tải nhân vật cũ. M
 #, c-format
 msgid "Save loaded: %s."
 msgstr "Đã tải bản lưu: %s."
+
+msgid "Impassable"
+msgstr "Bị chặn"
+
+msgid "Trap: %s"
+msgstr "Bẫy %s"
