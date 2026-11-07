@@ -97,8 +97,11 @@ if (localProperties.getProperty('override_ndkVersion') != null) {
 def override_versionCode = getProperty("override_versionCode")
 if (localProperties.getProperty('override_versionCode') != null) {
     override_versionCode = localProperties.getProperty('override_versionCode')
-} else {
-    override_versionCode=Integer.valueOf(System.env.UPSTREAM_BUILD_NUMBER ?: 1)
+} else if (!gradle.startParameter.projectProperties.containsKey('override_versionCode')) {
+    // A command-line -Poverride_versionCode must take precedence over the
+    // release build's environment variable; never silently reset a signed
+    // upgrade APK to versionCode 1.
+    override_versionCode = Integer.valueOf(System.env.UPSTREAM_BUILD_NUMBER ?: override_versionCode)
 }
 
 println("Using [              njobs]: $njobs")
