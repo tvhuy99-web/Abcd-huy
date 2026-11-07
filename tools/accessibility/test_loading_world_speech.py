@@ -22,7 +22,8 @@ class LoadingWorldSpeech(unittest.TestCase):
         world = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
         self.assertIn("const bool is_play_now = sel2 == 3 || sel2 == 4;", menu)
         self.assertIn("Preparing a new world. Please wait.", menu)
-        self.assertIn("Loading world data. Please wait.", world)
+        self.assertIn("Loading saved character.", world)
+        self.assertIn("Preparing new character.", world)
         self.assertIn("Creating your character and starting the game.", world)
 
     def test_loading_is_spoken_without_snapshot_and_world_entry_is_explicit(self):
