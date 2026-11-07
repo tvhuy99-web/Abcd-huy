@@ -343,6 +343,15 @@ class flexbuffer_disk_cache
                                        *root_relative_source_path.begin() != std::filesystem::u8path( "achievements" ) &&
                                        *root_relative_source_path.begin() != std::filesystem::u8path( "templates" );
                 if( stale_game_data ) {
+#if defined(__ANDROID__)
+                    // APK upgrades can restore user mods and game assets with
+                    // new mtimes while leaving valid generated flexbuffers.
+                    // The cache is invalidated immediately below. Report the
+                    // rebuild to the debug log, never as a modal blocking
+                    // the screen reader before the main menu has loaded.
+                    DebugLog( D_WARNING, D_MAIN ) << "Regenerating stale Android JSON cache: " <<
+                                                  filepath_and_name;
+#else
                     if( get_option<bool>( "WARN_ON_MODIFIED" ) ) {
                         debugmsg( "Stale game data detected at %s, did you overwrite old files?  When updating the game you must install to a fresh folder, overwriting old files will cause errors.",
                                   filepath_and_name );
@@ -351,6 +360,7 @@ class flexbuffer_disk_cache
                         DebugLog( D_WARNING, D_MAIN ) << "Stale game data detected (error disabled by user): " <<
                                                       filepath_and_name;
                     }
+#endif
                 }
 #endif
                 // Cached flexbuffer on disk is out of date, remove it.
