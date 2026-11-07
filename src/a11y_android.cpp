@@ -22,6 +22,7 @@ std::atomic<bool> reader_suspended{ true };
 std::atomic<std::uint64_t> epoch{ 1 };
 std::mutex inbox_mutex;
 std::deque<semantic_intent> inbox;
+std::atomic<int> debug_prompt_response{ 0 };
 } // namespace
 
 bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
@@ -169,6 +170,91 @@ void announce( const std::string &text, const int priority )
 #endif
 }
 
+void present_debug_prompt( const std::string &report )
+{
+#if defined(__ANDROID__)
+    debug_prompt_response.store( 0, std::memory_order_release );
+    if( report.empty() ) {
+        return;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr ) {
+        return;
+    }
+    if( env->PushLocalFrame( 8 ) < 0 ) {
+        if( env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityDebugPrompt",
+                                             "(Ljava/lang/String;)V" );
+        if( method != nullptr ) {
+            std::u16string utf16;
+            for( const char32_t cp : utf8_to_utf32( report ) ) {
+                if( cp > 0x10ffff || ( cp >= 0xd800 && cp <= 0xdfff ) ) {
+                    utf16.push_back( 0xfffd );
+                } else if( cp <= 0xffff ) {
+                    utf16.push_back( static_cast<char16_t>( cp ) );
+                } else {
+                    utf16.push_back( static_cast<char16_t>( 0xd800 + ( ( cp - 0x10000 ) >> 10 ) ) );
+                    utf16.push_back( static_cast<char16_t>( 0xdc00 + ( ( cp - 0x10000 ) & 0x3ff ) ) );
+                }
+            }
+            jstring text = env->NewString( reinterpret_cast<const jchar *>( utf16.data() ),
+                                          static_cast<jsize>( utf16.size() ) );
+            if( text != nullptr ) {
+                env->CallVoidMethod( activity, method, text );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#else
+    ( void )report;
+#endif
+}
+
+int take_debug_prompt_response()
+{
+    return debug_prompt_response.exchange( 0, std::memory_order_acq_rel );
+}
+
+void dismiss_debug_prompt()
+{
+#if defined(__ANDROID__)
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr ) {
+        return;
+    }
+    if( env->PushLocalFrame( 4 ) < 0 ) {
+        if( env->ExceptionCheck() ) {
+            env->ExceptionClear();
+        }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityDebugPromptDismissed", "()V" );
+        if( method != nullptr ) {
+            env->CallVoidMethod( activity, method );
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#endif
+}
+
 void open_tts_settings()
 {
 #if defined(__ANDROID__)
@@ -294,6 +380,16 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReader(
     JNIEnv *, jclass, jboolean enable, jboolean suspend )
 {
     a11y::android::configure( enable == JNI_TRUE, suspend == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeDebugPromptResponse(
+    JNIEnv *, jclass, jint response )
+{
+    if( response >= 1 && response <= 3 ) {
+        a11y::android::debug_prompt_response.store( response, std::memory_order_release );
+        PushWakeEvent();
+    }
 }
 
 extern "C" JNIEXPORT jboolean JNICALL
