@@ -22,6 +22,11 @@ void publish( const std::string &json );
 void announce( const std::string &text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
+// Accessible recovery actions for SDL debug messages, even without an
+// active semantic snapshot. The game thread retains authority to continue.
+void present_debug_prompt( const std::string &report );
+int take_debug_prompt_response();
+void dismiss_debug_prompt();
 // Sound/haptic cue channel (R21.2). The name is one of a small set of
 // internal ASCII literals ("blocked", "danger", "pickup",
 // "activity_done"); cues are only ever fired at engine points that
