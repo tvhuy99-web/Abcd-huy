@@ -126,6 +126,28 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.onGameCue(name); }
     }
 
+    /**
+     * SDL debug messages have no semantic game nodes. They need an emergency
+     * reader panel even if the game menu never finished initializing.
+     */
+    public void onAccessibilityDebugPrompt(String report) {
+        runOnUiThread(() -> {
+            GameReaderController reader = readerController;
+            if (reader != null && !isFinishing() && !isDestroyed()) {
+                reader.showDebugPrompt(report);
+            }
+        });
+    }
+
+    public void onAccessibilityDebugPromptDismissed() {
+        runOnUiThread(() -> {
+            GameReaderController reader = readerController;
+            if (reader != null) { reader.dismissDebugPrompt(); }
+        });
+    }
+
+    static native void nativeDebugPromptResponse(int action);
+
     /** Open the Android voice configuration requested from the game menu. */
     public void onAccessibilityOpenTtsSettings() {
         runOnUiThread(() -> {
