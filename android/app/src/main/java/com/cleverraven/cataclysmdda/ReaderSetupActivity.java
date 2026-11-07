@@ -1223,6 +1223,7 @@ public final class ReaderSetupActivity extends Activity {
     private final class SelfVoicingSetupSurface extends ScrollView {
         private final GestureDetector gestures;
         private boolean multiplePointers;
+        private boolean ignoreUntilPointersReleased;
         private boolean activateOnDoubleTap;
         private boolean swipeHandled;
         private boolean multiplePointerMoved;
@@ -1300,6 +1301,12 @@ public final class ReaderSetupActivity extends Activity {
         public boolean dispatchTouchEvent(MotionEvent event) {
             if (usesSystemAccessibility()) { return super.dispatchTouchEvent(event); }
             int action = event.getActionMasked();
+            if (ignoreUntilPointersReleased) {
+                if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                    ignoreUntilPointersReleased = false;
+                }
+                return true;
+            }
             if (action == MotionEvent.ACTION_DOWN) {
                 multiplePointers = false;
                 pointerDownTime = event.getEventTime();
@@ -1324,6 +1331,19 @@ public final class ReaderSetupActivity extends Activity {
                 cancel.recycle();
             }
             if (multiplePointers) {
+                if (action == MotionEvent.ACTION_POINTER_UP && multiplePointerCount == 2
+                        && event.getEventTime() - pointerDownTime
+                                <= Math.max(1500L, selfVoiceSwipeDurationLimitMs())
+                        && TwoFingerBackGesture.matches(event, multiplePointerIds,
+                                multiplePointerDownX, multiplePointerDownY, multiplePointerCount,
+                                selfVoiceSwipeDistancePx())) {
+                    ignoreUntilPointersReleased = true;
+                    multiplePointers = false;
+                    multiplePointerCount = 0;
+                    previousTapFocus = -1;
+                    ReaderSetupActivity.this.onBackPressed();
+                    return true;
+                }
                 for (int i = 0; i < event.getPointerCount(); i++) {
                     int pointerId = event.getPointerId(i);
                     for (int saved = 0; saved < multiplePointerCount; saved++) {

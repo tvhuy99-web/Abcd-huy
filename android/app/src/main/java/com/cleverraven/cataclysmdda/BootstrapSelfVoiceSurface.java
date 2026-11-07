@@ -20,6 +20,8 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         boolean isActive();
         void speak(String id, String text);
         void stopSpeech();
+        /** Return from this outer Android screen without saving draft settings. */
+        void goBack();
         boolean leftHandedNavigation();
         float swipeDistancePx();
         long swipeDurationLimitMs();
@@ -32,6 +34,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     private int downFocus = -1;
     private int previousTapFocus = -1;
     private boolean multiplePointers;
+    private boolean ignoreUntilPointersReleased;
     private boolean activateOnDoubleTap;
     private boolean swipeHandled;
     private boolean multiplePointerMoved;
@@ -185,6 +188,14 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             return super.dispatchTouchEvent(event);
         }
         int action = event.getActionMasked();
+        // Consume the final finger-up after a two-finger Back gesture.
+        // Never reinterpret it as a one-finger swipe or click.
+        if (ignoreUntilPointersReleased) {
+            if (action == MotionEvent.ACTION_UP || action == MotionEvent.ACTION_CANCEL) {
+                ignoreUntilPointersReleased = false;
+            }
+            return true;
+        }
         if (action == MotionEvent.ACTION_DOWN) {
             touchGeneration = contentGeneration;
             multiplePointers = false;
@@ -217,6 +228,19 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
             cancel.recycle();
         }
         if (multiplePointers) {
+            if (action == MotionEvent.ACTION_POINTER_UP && pointerCount == 2
+                    && event.getEventTime() - pointerDownTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())
+                    && TwoFingerBackGesture.matches(event, pointerIds,
+                            pointerDownX, pointerDownY, pointerCount,
+                            listener.swipeDistancePx())) {
+                ignoreUntilPointersReleased = true;
+                multiplePointers = false;
+                pointerCount = 0;
+                previousTapFocus = -1;
+                listener.goBack();
+                return true;
+            }
             for (int i = 0; i < event.getPointerCount(); i++) {
                 for (int saved = 0; saved < pointerCount; saved++) {
                     if (pointerIds[saved] == event.getPointerId(i)
@@ -262,6 +286,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         swipeHandled = false;
         multiplePointerMoved = true;
         previousTapFocus = -1;
+        ignoreUntilPointersReleased = false;
         touchGeneration = contentGeneration;
     }
 }

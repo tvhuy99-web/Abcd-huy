@@ -72,6 +72,9 @@ public final class TtsSettingsActivity extends Activity {
             }
 
             @Override
+            public void goBack() { TtsSettingsActivity.this.finish(); }
+
+            @Override
             public boolean leftHandedNavigation() {
                 return new ReaderPreferences(TtsSettingsActivity.this).isLeftHandedNavigation();
             }

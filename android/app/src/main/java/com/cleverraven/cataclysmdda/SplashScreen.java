@@ -62,6 +62,7 @@ public class SplashScreen extends Activity {
     private RescueAudioPlayer rescuePlayer;
     private boolean rescueScreenShown;
     private BootstrapSelfVoiceSurface bootstrapSurface;
+    private Runnable bootstrapBackAction;
     private TextView bootstrapProgressText;
     private String pendingBootstrapSpeech;
     private long bootstrapUtteranceSequence;
@@ -276,6 +277,17 @@ public class SplashScreen extends Activity {
             }
         }
         showBootstrapContent(content);
+        // Match the screen's explicit Back button when one is present.
+        bootstrapBackAction = SplashScreen.this::finish;
+        if (labels != null && actions != null) {
+            for (int i = 0; i < Math.min(labels.length, actions.length); i++) {
+                if (labels[i] == R.string.a11yBootstrapBackToSettings
+                        || labels[i] == R.string.a11yRescueBack) {
+                    bootstrapBackAction = actions[i];
+                    break;
+                }
+            }
+        }
     }
 
     private void showBootstrapProgress(String title) {
@@ -306,6 +318,9 @@ public class SplashScreen extends Activity {
 
             @Override
             public void speak(String id, String text) { speakBootstrap(text); }
+
+            @Override
+            public void goBack() { SplashScreen.this.onBackPressed(); }
 
             @Override
             public void stopSpeech() {
@@ -475,7 +490,16 @@ public class SplashScreen extends Activity {
     @Override
     public void onBackPressed() {
         if (shouldSelfVoiceBootstrap() && bootstrapSurface != null) {
-            speakBootstrap(getString(R.string.a11yBootstrapBackHint));
+            // Do not interrupt an in-progress game-data installation.
+            if (installationRunning) {
+                speakBootstrap(getString(R.string.a11yBootstrapPreparing));
+                return;
+            }
+            if (bootstrapBackAction != null) {
+                bootstrapBackAction.run();
+            } else {
+                finish();
+            }
             return;
         }
         super.onBackPressed();
@@ -743,6 +767,7 @@ public class SplashScreen extends Activity {
             exit.setOnClickListener(view -> SplashScreen.this.finish());
             content.addView(exit);
             showBootstrapContent(content);
+            bootstrapBackAction = SplashScreen.this::finish;
         }
 
         private void showBootstrapHelp() {
