@@ -23,6 +23,7 @@
 #include "creature_tracker.h"
 #include "display.h"
 #include "effect.h"
+#include "field.h"
 #include "game.h"
 #include "input_context.h"
 #include "item.h"
