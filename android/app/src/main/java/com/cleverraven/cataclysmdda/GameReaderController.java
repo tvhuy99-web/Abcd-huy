@@ -17,6 +17,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.concurrent.atomic.AtomicLong;
@@ -54,6 +55,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
     private boolean focusNewMenuRow;
+    // A native modal may temporarily cover a parent screen. Frame identity
+    // survives that push/pop, so return to the last visited item, not item 1.
+    private final LinkedHashMap<String, String> savedScreenFocus = new LinkedHashMap<>();
     private boolean foreground;
     private boolean windowFocused;
     private boolean closed;
@@ -489,6 +493,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 != next.nodes.get(0).id.startsWith("tab:"));
                 String previous = focus;
                 ReaderSnapshot previousSnapshot = snapshot;
+                if (changedContext) {
+                    rememberScreenFocus(previousSnapshot, previous);
+                }
                 snapshot = next;
                 speech.setContext(next.contextKey());
                 boolean enteredTreeLayer = false;
@@ -521,7 +528,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (selectionChanged) {
                     focus = selectedItemFocus;
                 } else if (changedContext) {
-                    focus = next.find(next.focus) != null ? next.focus
+                    String remembered = savedScreenFocus.get(nativeScreenKey(next));
+                    focus = remembered != null && next.find(remembered) != null
+                            ? remembered : next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (next.find(focus) == null) {
                     // A vanished item returns to its closest surviving
@@ -785,6 +794,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
         }
         return 0;
+    }
+
+    private static String nativeScreenKey(ReaderSnapshot data) {
+        return data.session + ":" + data.frame;
+    }
+
+    private void rememberScreenFocus(ReaderSnapshot data, String nodeId) {
+        if (data == null || data.find(nodeId) == null) { return; }
+        String key = nativeScreenKey(data);
+        savedScreenFocus.remove(key);
+        savedScreenFocus.put(key, nodeId);
+        if (savedScreenFocus.size() > 64) {
+            savedScreenFocus.remove(savedScreenFocus.keySet().iterator().next());
+        }
     }
 
     private static ReaderSnapshot.Node firstDirectChild(ReaderSnapshot data, String parent) {
