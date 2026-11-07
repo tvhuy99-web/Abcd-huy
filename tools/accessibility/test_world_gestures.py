@@ -52,20 +52,23 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("intent.node == \"reader:scan:north\"", handler)
         self.assertIn("a11y::announce_player_coordinates()", handler)
 
-    def test_reader_hub_and_on_screen_controls_are_removed(self):
+    def test_reader_hub_is_on_demand_without_the_old_dashboard(self):
         controller = CONTROLLER.read_text(encoding="utf-8")
-        self.assertFalse((JAVA / "GameActionHub.java").exists())
+        self.assertTrue((JAVA / "GameActionHub.java").exists())
         self.assertIn("android.graphics.Color.TRANSPARENT", controller)
-        self.assertNotIn("showComprehensiveMenu(", controller)
-        self.assertNotIn("showControls(", controller)
+        self.assertIn("public void showComprehensiveMenu()", controller)
+        self.assertIn("private void renderHub()", controller)
+        self.assertIn("else if (comprehensiveMenu)", controller)
+        self.assertIn("root.setVisibility(View.GONE);", controller)
         self.assertNotIn("button(pages,", controller)
         self.assertNotIn("button(tools,", controller)
 
-    def test_direct_game_shortcuts_remain_without_the_hub(self):
+    def test_direct_shortcuts_include_the_restored_hub(self):
         controller = CONTROLLER.read_text(encoding="utf-8")
-        self.assertIn('if (target == null || !target.startsWith("action:"))', controller)
+        self.assertIn("if (target == null) { return false; }", controller)
         self.assertIn("executeShortcutTarget(target);", controller)
         self.assertIn('String id = target.substring("action:".length());', controller)
+        self.assertIn('target.startsWith("hub:group:")', controller)
         self.assertIn('send("activate", "");', controller)
 
 

@@ -1,6 +1,7 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
+import android.content.Intent;
 import android.os.Handler;
 import android.os.Looper;
 import android.view.View;
@@ -26,6 +27,7 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class GameReaderController implements AutoCloseable, ReaderGestureSurface.Listener {
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
+    private static final int HUB_PAGE_SIZE = 30;
     private final CataclysmDDA activity;
     private final ReaderPreferences preferences;
     private final ReaderGestureBindings gestureBindings;
@@ -48,6 +50,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String formContext = "";
     private long formRequest;
     private String focus = "";
+    // Only the requested comprehensive menu appears as an Android overlay;
+    // routine gameplay keeps the transparent, dashboard-free surface.
+    private boolean comprehensiveMenu;
+    private int hubSection = GameActionHub.ROOT;
+    private int hubIndex;
+    private int hubRootIndex;
+    private String hubQuery = "";
+    private boolean choosingGesture;
+    private GameActionHub.Entry bindingItem;
+    private int gestureChoice;
     // Only rendered when SDL is showing a native debug message.
     private String debugReport;
     private int debugFocus;
@@ -284,6 +296,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 if (object.optBoolean("inactive")) {
+                    comprehensiveMenu = false;
+                    choosingGesture = false;
+                    bindingItem = null;
                     snapshot = null;
                     lastLoadingStatus = "";
                                 editor = null;
@@ -506,6 +521,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot.Node previousTile = previousSnapshot == null ? null
                         : previousSnapshot.find("world:here");
                 boolean worldView = nextTile != null;
+                if (comprehensiveMenu) {
+                    if (!worldView) {
+                        // A native modal supersedes the action hub; never
+                        // keep stale commands over a different game screen.
+                        comprehensiveMenu = false;
+                        choosingGesture = false;
+                        bindingItem = null;
+                    } else {
+                        render();
+                        return;
+                    }
+                }
                 // Routine steps are silent, including context refreshes. A
                 // newly encountered noteworthy obstacle, trap, creature or
                 // landmark is announced briefly without the tile preamble.
@@ -852,6 +879,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (editor != null) {
             root.setBackgroundColor(0xff161616);
             rows.addView(editor.getView());
+        } else if (comprehensiveMenu) {
+            root.setBackgroundColor(0xff161616);
+            renderHub();
         } else {
             root.setBackgroundColor(android.graphics.Color.TRANSPARENT);
         }
@@ -865,6 +895,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public String gestureContext() {
         if (debugReport != null) { return presentationEpoch + ":debug"; }
+        if (comprehensiveMenu) {
+            return presentationEpoch + ":hub:" + hubSection + ":" + choosingGesture
+                    + ":" + (bindingItem == null ? "" : bindingItem.shortcutTarget())
+                    + (editor == null ? "" : ":editor:" + editor.contextKey());
+        }
         return presentationEpoch + ":" + (snapshot == null ? "waiting"
                 : snapshot.contextKey() + ":" + snapshot.revision)
                 + (editor == null ? "" : ":editor:" + editor.contextKey());
@@ -904,6 +939,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { editor.navigate(delta); return; }
+        if (comprehensiveMenu) {
+            if (choosingGesture) {
+                gestureChoice = Math.max(0, Math.min(ReaderGestureBindings.IDS.length + 1,
+                        gestureChoice + delta));
+            } else {
+                List<GameActionHub.Entry> options = hubEntries();
+                if (options.isEmpty()) { return; }
+                hubIndex = Math.max(0, Math.min(options.size() - 1, hubIndex + delta));
+            }
+            render();
+            readCurrent();
+            return;
+        }
         if (snapshot == null || visibleNodes().isEmpty()) { return; }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         int selected = Math.max(0, Math.min(filtered.size() - 1, index() + delta));
@@ -915,7 +963,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean adjustFocusedSetting(int delta) {
-        if (debugReport != null) { return false; }
+        if (debugReport != null || comprehensiveMenu) { return false; }
         if (editor != null || snapshot == null || delta == 0
                 || !foreground || !windowFocused || lastSuspended) { return false; }
         ReaderSnapshot.Node node = snapshot.find(focus);
@@ -1012,7 +1060,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean directWorldGesturesEnabled() {
-        return debugReport == null && !closed && foreground && windowFocused && !lastSuspended && editor == null
+        return debugReport == null && !comprehensiveMenu && !closed && foreground
+                && windowFocused && !lastSuspended && editor == null
                 && snapshot != null && snapshot.find("world:here") != null
                 && snapshot.find("reader:coordinates") != null;
     }
@@ -1029,7 +1078,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean handleCustomGesture(String gestureId) {
         if (!directWorldGesturesEnabled()) { return false; }
         String target = gestureBindings.targetFor(gestureId);
-        if (target == null || !target.startsWith("action:")) { return false; }
+        if (target == null) { return false; }
         // Assignments override the built-in gesture only in the live world.
         // Do not fall through to the default action on stale/unavailable nodes.
         executeShortcutTarget(target);
@@ -1044,19 +1093,63 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void executeShortcutTarget(String target) {
-        // Remove shortcuts to the deleted hub, reader panel and voice setup.
-        if (!target.startsWith("action:")) { return; }
-        String id = target.substring("action:".length());
-        ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(id);
-        if (node == null || !node.enabled || (!node.actions.contains("activate")
-                && !"document".equals(node.role))) {
-            feedback(activity.getString(R.string.a11yBindUnavailable));
+        if (target.startsWith("action:")) {
+            String id = target.substring("action:".length());
+            ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(id);
+            if (node == null || !node.enabled || (!node.actions.contains("activate")
+                    && !"document".equals(node.role))) {
+                feedback(activity.getString(R.string.a11yBindUnavailable));
+                return;
+            }
+            String previous = focus;
+            focus = id;
+            activate();
+            focus = previous;
             return;
         }
-        String previous = focus;
-        focus = id;
-        activate();
-        focus = previous;
+        if (target.startsWith("hub:group:")) {
+            try {
+                int section = Integer.parseInt(target.substring("hub:group:".length()));
+                if (section > 0 && section < GameActionHub.TITLES.length) {
+                    openHubSection(section);
+                    return;
+                }
+            } catch (NumberFormatException ignored) {
+                // Unknown old custom binding: do not execute an unrelated command.
+            }
+        } else if ("hub:search".equals(target)) {
+            showComprehensiveMenu();
+            if (comprehensiveMenu) { searchHub(); }
+            return;
+        } else if ("hub:all".equals(target)) {
+            showComprehensiveMenu();
+            if (comprehensiveMenu) {
+                hubSection = GameActionHub.SEARCH;
+                hubQuery = "";
+                hubIndex = 0;
+                render();
+                readCurrent();
+            }
+            return;
+        } else if ("hub:tts".equals(target)) {
+            activity.onAccessibilityOpenTtsSettings();
+            return;
+        } else if ("hub:reader_setup".equals(target)) {
+            activity.startActivity(new Intent(activity, ReaderSetupActivity.class));
+            return;
+        }
+        feedback(activity.getString(R.string.a11yBindUnavailable));
+    }
+
+    private void openHubSection(int section) {
+        showComprehensiveMenu();
+        if (!comprehensiveMenu) { return; }
+        hubSection = section;
+        hubRootIndex = section;
+        hubIndex = 0;
+        root.cancelGesture();
+        render();
+        readCurrent();
     }
 
     @Override
@@ -1092,14 +1185,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void openActionMenu() {
-        // Use the game's semantic Actions list, never the deleted Android
-        // overlay, so command categories and their submenus remain readable.
-        if (!directWorldGesturesEnabled()) { return; }
-        if (snapshot.find("action_menu") == null) {
-            feedback(activity.getString(R.string.a11yBindUnavailable));
-            return;
-        }
-        requestLiveWorldCommand("action_menu");
+        // Two fingers, three taps: the approved 16-section action hub.
+        showComprehensiveMenu();
     }
 
     @Override
@@ -1126,6 +1213,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { editor.activate(); return; }
+        if (comprehensiveMenu) {
+            if (choosingGesture) { applyGestureChoice(); }
+            else { activateHub(); }
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
@@ -1296,6 +1388,297 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return 0;
     }
 
+
+    private List<GameActionHub.Entry> hubEntries() {
+        return GameActionHub.entries(activity, snapshot, hubSection, hubQuery);
+    }
+
+    private String hubSpoken(List<GameActionHub.Entry> entries, int selected) {
+        return entries.get(selected).label + ", "
+                + activity.getString(R.string.a11yPosition, selected + 1, entries.size());
+    }
+
+    private String gestureChoiceLabel(int index) {
+        if (index == ReaderGestureBindings.IDS.length) {
+            return activity.getString(R.string.a11yBindDefault);
+        }
+        if (index == ReaderGestureBindings.IDS.length + 1
+                || index < 0 || index >= ReaderGestureBindings.IDS.length) {
+            return activity.getString(R.string.a11yBindCancel);
+        }
+        return activity.getString(ReaderGestureBindings.LABELS[index]);
+    }
+
+    /** Only render this full-screen layer while the hub is explicitly open. */
+    private void renderHub() {
+        boolean binding = choosingGesture && bindingItem != null;
+        String heading = binding ? activity.getString(R.string.a11yBindTitle, bindingItem.label)
+                : hubSection == GameActionHub.ROOT
+                ? activity.getString(R.string.a11yHubTitle)
+                : activity.getString(GameActionHub.TITLES[hubSection]);
+        TextView titleView = new TextView(activity);
+        titleView.setText(heading);
+        titleView.setTextColor(0xffeeeeee);
+        titleView.setTextSize(20);
+        titleView.setPadding(12, 16, 12, 12);
+        titleView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        rows.addView(titleView);
+
+        List<GameActionHub.Entry> entries = binding ? null : hubEntries();
+        int count = binding ? ReaderGestureBindings.IDS.length + 2 : entries.size();
+        int selected = binding ? gestureChoice : hubIndex;
+        if (count == 0) {
+            TextView empty = new TextView(activity);
+            empty.setText(R.string.a11yHubEmpty);
+            empty.setTextColor(0xffeeeeee);
+            rows.addView(empty);
+            return;
+        }
+        selected = Math.max(0, Math.min(selected, count - 1));
+        if (binding) { gestureChoice = selected; }
+        else { hubIndex = selected; }
+        int start = (selected / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+        int end = Math.min(start + HUB_PAGE_SIZE, count);
+        if (start > 0) {
+            Button previous = new Button(activity);
+            previous.setText(R.string.a11yPreviousPage);
+            previous.setOnClickListener(view -> {
+                if (binding) { gestureChoice = start - 1; }
+                else { hubIndex = start - 1; }
+                render();
+                readCurrent();
+            });
+            rows.addView(previous);
+        }
+        for (int i = start; i < end; i++) {
+            final int index = i;
+            Button option = new Button(activity);
+            option.setText(binding ? gestureChoiceLabel(i) + ", "
+                    + activity.getString(R.string.a11yPosition, i + 1, count)
+                    : hubSpoken(entries, i));
+            option.setSelected(i == selected);
+            option.setOnClickListener(view -> {
+                if (!comprehensiveMenu) { return; }
+                if (binding && choosingGesture) {
+                    gestureChoice = index;
+                    applyGestureChoice();
+                } else if (!binding && !choosingGesture) {
+                    hubIndex = index;
+                    activateHub();
+                }
+            });
+            if (!binding) {
+                option.setOnLongClickListener(view -> {
+                    if (!comprehensiveMenu || choosingGesture) { return false; }
+                    hubIndex = index;
+                    showGestureChoices();
+                    return true;
+                });
+            }
+            option.setOnFocusChangeListener((view, focused) -> {
+                if (focused && comprehensiveMenu && !usesTouchExploration()) {
+                    if (binding) { gestureChoice = index; }
+                    else { hubIndex = index; }
+                    readCurrent();
+                }
+            });
+            rows.addView(option);
+        }
+        if (end < count) {
+            Button next = new Button(activity);
+            next.setText(R.string.a11yNextPage);
+            next.setOnClickListener(view -> {
+                if (binding) { gestureChoice = end; }
+                else { hubIndex = end; }
+                render();
+                readCurrent();
+            });
+            rows.addView(next);
+        }
+    }
+
+    /** A new opening always starts at search, the first of 16 categories. */
+    public void showComprehensiveMenu() {
+        if (comprehensiveMenu || debugReport != null || !directWorldGesturesEnabled()) {
+            return;
+        }
+        root.cancelGesture();
+        comprehensiveMenu = true;
+        choosingGesture = false;
+        bindingItem = null;
+        hubSection = GameActionHub.ROOT;
+        hubIndex = 0;
+        hubRootIndex = 0;
+        hubQuery = "";
+        speech.stop();
+        render();
+        feedback(activity.getString(R.string.a11yHubTitle) + ". "
+                + hubSpoken(hubEntries(), 0));
+    }
+
+    private void searchHub() {
+        if (!comprehensiveMenu || editor != null) { return; }
+        editor = new ReaderTextEditor(activity, hubQuery, false,
+                new ReaderTextEditor.Listener() {
+                    @Override public void speak(String text) { feedback(text); }
+                    @Override public void submit(String text) {
+                        hubQuery = text;
+                        hubSection = GameActionHub.SEARCH;
+                        hubIndex = 0;
+                        editor = null;
+                        root.cancelGesture();
+                        render();
+                        readCurrent();
+                    }
+                    @Override public void cancel() {
+                        editor = null;
+                        root.cancelGesture();
+                        render();
+                        readCurrent();
+                    }
+                });
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yHubSearch));
+    }
+
+    private void showGestureChoices() {
+        if (!comprehensiveMenu || choosingGesture) { return; }
+        List<GameActionHub.Entry> entries = hubEntries();
+        if (entries.isEmpty()) { return; }
+        hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
+        GameActionHub.Entry selected = entries.get(hubIndex);
+        String target = selected.shortcutTarget();
+        if (target == null) {
+            feedback(activity.getString(R.string.a11yBindUnavailable));
+            return;
+        }
+        bindingItem = selected;
+        choosingGesture = true;
+        String existing = gestureBindings.gestureFor(target);
+        gestureChoice = existing == null ? 0 : ReaderGestureBindings.indexOf(existing);
+        if (gestureChoice < 0) { gestureChoice = 0; }
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yBindTitle, selected.label) + ". "
+                + gestureChoiceLabel(gestureChoice) + ", "
+                + activity.getString(R.string.a11yPosition,
+                        gestureChoice + 1, ReaderGestureBindings.IDS.length + 2));
+    }
+
+    private String describeShortcutTarget(String target) {
+        if (target == null) { return ""; }
+        if (target.startsWith("action:")) {
+            ReaderSnapshot.Node node = snapshot == null ? null
+                    : snapshot.find(target.substring("action:".length()));
+            return node == null ? target.substring("action:".length()) : node.label;
+        }
+        if (target.startsWith("hub:group:")) {
+            try {
+                int section = Integer.parseInt(target.substring("hub:group:".length()));
+                if (section > 0 && section < GameActionHub.TITLES.length) {
+                    return activity.getString(GameActionHub.TITLES[section]);
+                }
+            } catch (NumberFormatException ignored) {
+                // Stale custom gesture target.
+            }
+        }
+        if ("hub:search".equals(target)) { return activity.getString(R.string.a11yHubSearch); }
+        if ("hub:all".equals(target)) { return activity.getString(R.string.a11yHubAllCommands); }
+        if ("hub:tts".equals(target)) { return activity.getString(R.string.a11yHubTts); }
+        if ("hub:reader_setup".equals(target)) {
+            return activity.getString(R.string.a11yHubReaderSetup);
+        }
+        return target;
+    }
+
+    private void applyGestureChoice() {
+        if (!choosingGesture || bindingItem == null) { return; }
+        GameActionHub.Entry entry = bindingItem;
+        String target = entry.shortcutTarget();
+        int chosen = gestureChoice;
+        if (chosen == ReaderGestureBindings.IDS.length + 1) {
+            choosingGesture = false;
+            bindingItem = null;
+            root.cancelGesture();
+            render();
+            readCurrent();
+            return;
+        }
+        String message;
+        if (chosen == ReaderGestureBindings.IDS.length) {
+            gestureBindings.restoreDefault(target);
+            message = activity.getString(R.string.a11yBindRestored, entry.label);
+        } else if (chosen >= 0 && chosen < ReaderGestureBindings.IDS.length) {
+            ReaderGestureBindings.Assignment result = gestureBindings.assign(
+                    ReaderGestureBindings.IDS[chosen], target);
+            message = activity.getString(R.string.a11yBindSaved,
+                    gestureChoiceLabel(chosen), entry.label);
+            if (result.displacedTarget != null) {
+                message += " " + activity.getString(R.string.a11yBindDisplaced,
+                        describeShortcutTarget(result.displacedTarget));
+            }
+        } else { return; }
+        choosingGesture = false;
+        bindingItem = null;
+        root.cancelGesture();
+        render();
+        feedback(message);
+    }
+
+    private void activateHub() {
+        if (!comprehensiveMenu || choosingGesture) { return; }
+        List<GameActionHub.Entry> entries = hubEntries();
+        if (entries.isEmpty()) { return; }
+        hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
+        GameActionHub.Entry item = entries.get(hubIndex);
+        switch (item.kind) {
+            case GameActionHub.OPEN_SEARCH:
+                hubRootIndex = 0;
+                searchHub();
+                return;
+            case GameActionHub.OPEN_GROUP:
+                hubRootIndex = hubIndex;
+                hubSection = item.group;
+                hubIndex = 0;
+                root.cancelGesture();
+                render();
+                readCurrent();
+                return;
+            case GameActionHub.OPEN_ALL:
+                hubSection = GameActionHub.SEARCH;
+                hubQuery = "";
+                hubIndex = 0;
+                root.cancelGesture();
+                render();
+                readCurrent();
+                return;
+            case GameActionHub.OPEN_TTS:
+                // Preserve the menu location across Android settings screens.
+                activity.onAccessibilityOpenTtsSettings();
+                return;
+            case GameActionHub.OPEN_READER_SETUP:
+                activity.startActivity(new Intent(activity, ReaderSetupActivity.class));
+                return;
+            case GameActionHub.EXECUTE:
+                ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(item.node);
+                if (node == null || !node.enabled || (!node.actions.contains("activate")
+                        && !"document".equals(node.role))) {
+                    feedback(node == null ? activity.getString(R.string.a11yReaderStale)
+                            : nodeText(node, true));
+                    return;
+                }
+                comprehensiveMenu = false;
+                root.cancelGesture();
+                focus = item.node;
+                render();
+                activate();
+                return;
+            default:
+                return;
+        }
+    }
+
     @Override
     public void readCurrent() {
         if (debugReport != null) {
@@ -1314,6 +1697,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { editor.readCurrent(); return; }
+        if (comprehensiveMenu) {
+            if (choosingGesture) {
+                feedback(gestureChoiceLabel(gestureChoice) + ", "
+                        + activity.getString(R.string.a11yPosition, gestureChoice + 1,
+                                ReaderGestureBindings.IDS.length + 2));
+            } else {
+                List<GameActionHub.Entry> items = hubEntries();
+                if (items.isEmpty()) { feedback(activity.getString(R.string.a11yHubEmpty)); }
+                else {
+                    hubIndex = Math.max(0, Math.min(hubIndex, items.size() - 1));
+                    feedback(hubSpoken(items, hubIndex));
+                }
+            }
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) {
             if (snapshot == null && !lastLoadingStatus.isEmpty()) {
@@ -1337,6 +1735,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { feedback(editor.valueDescription()); return; }
+        if (comprehensiveMenu) {
+            if (choosingGesture) { readCurrent(); }
+            else { showGestureChoices(); }
+            return;
+        }
         if (snapshot == null && !lastLoadingStatus.isEmpty()) {
             feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
             return;
@@ -1381,6 +1784,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (closed) { return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.back(); return; }
+        if (comprehensiveMenu) {
+            if (choosingGesture) {
+                choosingGesture = false;
+                bindingItem = null;
+            } else if (hubSection != GameActionHub.ROOT) {
+                hubSection = GameActionHub.ROOT;
+                hubIndex = hubRootIndex;
+            } else {
+                comprehensiveMenu = false;
+            }
+            root.cancelGesture();
+            render();
+            if (comprehensiveMenu) { readCurrent(); }
+            return;
+        }
         if (backReaderLayer()) { return; }
         if (snapshot != null) { send("cancel", ""); }
     }

@@ -43,14 +43,16 @@ class CustomGestureContracts(unittest.TestCase):
         restore = prefs.split("public void restoreGestureDefaults()", 1)[1]
         self.assertIn('remove("world_gesture_bindings_v1")', restore)
 
-    def test_game_shortcuts_dispatch_without_hidden_reader_menus(self):
+    def test_game_shortcuts_restore_the_comprehensive_menu(self):
         ctrl = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         surf = (JAVA / "ReaderGestureSurface.java").read_text(encoding="utf-8")
-        self.assertFalse((JAVA / "GameActionHub.java").exists())
-        self.assertNotIn("showGestureChoices()", ctrl)
-        self.assertNotIn("showComprehensiveMenu()", ctrl)
+        self.assertTrue((JAVA / "GameActionHub.java").exists())
+        self.assertIn("showGestureChoices()", ctrl)
+        self.assertIn("showComprehensiveMenu()", ctrl)
         self.assertNotIn("showControls()", ctrl)
-        self.assertIn('!target.startsWith("action:")', ctrl)
+        self.assertIn('if (target.startsWith("action:"))', ctrl)
+        self.assertIn('target.startsWith("hub:group:")', ctrl)
+        self.assertIn('"hub:search".equals(target)', ctrl)
         self.assertIn("listener.handleCustomGesture(gesture)", surf)
         self.assertIn('if (gesture == null || listener.handleCustomGesture(gesture))', surf)
 

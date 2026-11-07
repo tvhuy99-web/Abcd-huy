@@ -18,7 +18,7 @@ class QuietWorld(unittest.TestCase):
         self.assertNotIn("R.string.a11yEnteredWorld", ctrl)
         self.assertIn("String previous = focus;", ctrl)
 
-    def test_triple_tap_opens_native_action_list(self):
+    def test_triple_tap_opens_sixteen_group_action_hub(self):
         surface = (JAVA / "ReaderGestureSurface.java").read_text(
             encoding="utf-8")
         ctrl = (JAVA / "GameReaderController.java").read_text(
@@ -26,8 +26,10 @@ class QuietWorld(unittest.TestCase):
         self.assertIn("queueWorldTap(event, owner)", surface)
         self.assertIn("listener.openActionMenu();", surface)
         self.assertIn("listener.activate();", surface)
-        self.assertIn('requestLiveWorldCommand("action_menu");', ctrl)
-        self.assertNotIn("showComprehensiveMenu(", ctrl)
+        self.assertIn('if (count == 3) { openActionMenu(); return; }', ctrl)
+        self.assertIn("public void showComprehensiveMenu()", ctrl)
+        self.assertIn("showComprehensiveMenu();", ctrl)
+        self.assertNotIn('requestLiveWorldCommand("action_menu");', ctrl)
 
     def test_temporary_footstep_is_removed(self):
         engine = (ROOT / "src/handle_action.cpp").read_text(
