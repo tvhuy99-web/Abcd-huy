@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.accessibility.AccessibilityManager;
 import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
 import android.widget.TextView;
@@ -44,6 +45,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String formContext = "";
     private long formRequest;
     private String focus = "";
+    // Only rendered when SDL is showing a native debug message.
+    private String debugReport;
+    private int debugFocus;
+    private boolean debugResponsePending;
     // One spoken/TalkBack level at a time, independent of the engine's
     // visual expansion state. Parent IDs are supplied by semantic snapshots.
     private String readerLayerParent = "";
@@ -783,6 +788,29 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
+        if (debugReport != null) {
+            root.setBackgroundColor(0xff161616);
+            TextView report = new TextView(activity);
+            report.setText(activity.getString(R.string.a11yDebugPromptTitle) + "\n" + debugReport);
+            report.setTextColor(0xffeeeeee);
+            report.setTextSize(16);
+            report.setPadding(12, 12, 12, 18);
+            report.setContentDescription(report.getText());
+            rows.addView(report);
+            final int[] labels = {
+                R.string.a11yDebugPromptContinue,
+                R.string.a11yDebugPromptIgnore,
+                R.string.a11yDebugPromptCopy
+            };
+            for (int i = 0; i < labels.length; i++) {
+                final int action = i + 1;
+                Button button = new Button(activity);
+                button.setText(labels[i]);
+                button.setOnClickListener(v -> submitDebugResponse(action));
+                rows.addView(button);
+            }
+            return;
+        }
         // Native text entry is still needed for character names and game fields.
         if (editor != null) {
             root.setBackgroundColor(0xff161616);
@@ -799,6 +827,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public String gestureContext() {
+        if (debugReport != null) { return presentationEpoch + ":debug"; }
         return presentationEpoch + ":" + (snapshot == null ? "waiting"
                 : snapshot.contextKey() + ":" + snapshot.revision)
                 + (editor == null ? "" : ":editor:" + editor.contextKey());
@@ -832,6 +861,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void navigate(int delta) {
+        if (debugReport != null) {
+            debugFocus = Math.max(0, Math.min(3, debugFocus + delta));
+            readCurrent();
+            return;
+        }
         if (editor != null) { editor.navigate(delta); return; }
         if (snapshot == null || visibleNodes().isEmpty()) { return; }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
@@ -844,6 +878,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean adjustFocusedSetting(int delta) {
+        if (debugReport != null) { return false; }
         if (editor != null || snapshot == null || delta == 0
                 || !foreground || !windowFocused || lastSuspended) { return false; }
         ReaderSnapshot.Node node = snapshot.find(focus);
@@ -940,7 +975,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean directWorldGesturesEnabled() {
-        return !closed && foreground && windowFocused && !lastSuspended && editor == null
+        return debugReport == null && !closed && foreground && windowFocused && !lastSuspended && editor == null
                 && snapshot != null && snapshot.find("world:here") != null
                 && snapshot.find("reader:coordinates") != null;
     }
@@ -1027,6 +1062,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void activate() {
+        if (debugReport != null) {
+            if (debugFocus == 0) { readCurrent(); }
+            else { submitDebugResponse(debugFocus); }
+            return;
+        }
         if (editor != null) { editor.activate(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
@@ -1200,6 +1240,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void readCurrent() {
+        if (debugReport != null) {
+            if (debugFocus == 0) {
+                if (usesTouchExploration()) {
+                    root.announceForAccessibility(debugReport);
+                } else {
+                    speech.say("debug-report", debugReport, ReaderSpeechQueue.LONG_TEXT);
+                }
+            } else {
+                int label = debugFocus == 1 ? R.string.a11yDebugPromptContinue
+                        : debugFocus == 2 ? R.string.a11yDebugPromptIgnore
+                        : R.string.a11yDebugPromptCopy;
+                feedback(activity.getString(label));
+            }
+            return;
+        }
         if (editor != null) { editor.readCurrent(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
@@ -1213,6 +1268,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void detail() {
+        if (debugReport != null) {
+            if (usesTouchExploration()) { root.announceForAccessibility(debugReport); }
+            else { speech.say("debug-detail", debugReport, ReaderSpeechQueue.LONG_TEXT); }
+            return;
+        }
         if (editor != null) { feedback(editor.valueDescription()); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) { feedback(nodeText(node, true)); }
@@ -1252,9 +1312,53 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     public void onBackPressed() {
         if (closed) { return; }
+        if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.back(); return; }
         if (backReaderLayer()) { return; }
         if (snapshot != null) { send("cancel", ""); }
+    }
+
+    /**
+     * SDL error screens are independent of native game accessibility snapshots.
+     * Read a short introduction first; navigating to the report reads it all.
+     */
+    public void showDebugPrompt(String report) {
+        if (closed || report == null || report.isEmpty() || !preferences.isEnabled()) {
+            return;
+        }
+        debugReport = report;
+        debugFocus = 0;
+        debugResponsePending = false;
+        root.cancelGesture();
+        root.setVisibility(View.VISIBLE);
+        render();
+        String firstLine = report.split("\\n", 2)[0];
+        feedback(activity.getString(R.string.a11yDebugPromptTitle) + ". "
+                + firstLine + ". " + activity.getString(R.string.a11yDebugPromptInstructions));
+    }
+
+    private void submitDebugResponse(int action) {
+        if (debugReport == null || debugResponsePending || action < 1 || action > 3) {
+            return;
+        }
+        if (action != 3) { debugResponsePending = true; }
+        try {
+            CataclysmDDA.nativeDebugPromptResponse(action);
+            if (action == 3) { feedback(activity.getString(R.string.a11yDebugPromptCopied)); }
+        } catch (UnsatisfiedLinkError missing) {
+            debugResponsePending = false;
+            feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+        }
+    }
+
+    public void dismissDebugPrompt() {
+        if (debugReport == null) { return; }
+        debugReport = null;
+        debugResponsePending = false;
+        debugFocus = 0;
+        root.cancelGesture();
+        render();
+        readCurrent();
     }
 
     public boolean isEnabled() { return preferences.isEnabled(); }
