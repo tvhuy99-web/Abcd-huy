@@ -41,3 +41,16 @@ Việc TalkBack đưa tiêu điểm đến nút mới và phát âm đúng trên
 phải được thử thực tế với APK mới. Các giao diện chưa khai báo cây bằng
 `parentId` vẫn cần kiểm tra riêng; trình đọc không nên tự suy đoán một
 quan hệ cha-con không có trong dữ liệu do game cung cấp.
+
+## Chọn mod trong phần quản lý thế giới
+
+Màn hình mod vốn gửi danh sách danh mục, mod có thể dùng, mod đang kích hoạt
+và lệnh điều khiển vào chung một danh sách. Bản sửa cấp dữ liệu cha-con:
+danh mục hiện tại chứa mod có thể thêm, một mục riêng chứa danh sách mod
+đang hoạt động, và một mục riêng chứa các lệnh quản lý và thông tin bộ lọc.
+Chuyển sang một danh mục khác sẽ tự vào mục con đầu tiên sau khi game xác nhận
+đổi danh mục. Trình đọc sử dụng cùng quy tắc Back như các menu khác.
+
+Phần Tùy chọn đã có cấu trúc cây `parent_id` của trang, nhóm tùy chọn,
+trường và điều chỉnh giá trị. Trình đọc áp dụng cơ chế một cấp cho cấu trúc
+đó mà không sửa những lệnh thao tác/tương tác native của game.

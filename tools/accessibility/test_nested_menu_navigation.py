@@ -59,6 +59,28 @@ class NestedMenuNavigationTests(unittest.TestCase):
         self.assertIn("boolean nativeLayerChanged", code)
         self.assertIn("focus = next.find(next.focus)", code)
 
+    def test_world_mod_selection_is_also_hierarchical(self):
+        world = (ROOT / "src/worldfactory.cpp").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('active_tab.id = "mod:active-list";', world)
+        self.assertIn('tools_tab.id = "mod:tools";', world)
+        self.assertIn("empty.parent_id = available_parent;", world)
+        self.assertIn("node.parent_id = available_parent;", world)
+        self.assertIn('node.parent_id = "mod:active-list";', world)
+        self.assertIn('node.parent_id = "mod:tools";', world)
+        self.assertIn("node.total = totals[node.parent_id];", world)
+        self.assertIn("node.depth = 1;", world)
+        self.assertIn('if ("tab".equals(node.role)', self.controller)
+
+    def test_existing_options_pages_follow_tree_parent_links(self):
+        options = (ROOT / "src/options.cpp").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("row.parent_id = tree_root_published", options)
+        self.assertIn("row.parent_id = grouped ?", options)
+        self.assertIn("node.has_children = sibling_totals.count", options)
+
     def test_return_from_modal_restores_previous_item(self):
         code = self.controller
         self.assertIn("rememberScreenFocus(previousSnapshot, previous)", code)
