@@ -1,7 +1,19 @@
 name: Android accessibility baseline and candidate
 
 on:
-  # Coding phase: tests/builds run only after the full implementation is ready.
+  # Build the current integration branch into an installable, reproducibly
+  # signed ARM64 APK. Future pushes produce in-place updates with the same
+  # package name and the same checked-in accessibility testing certificate.
+  push:
+    branches:
+      - integration/reader-vietnamese-20261107
+    paths:
+      - '.github/workflows/android-accessibility.yml'
+      - 'android/**'
+      - 'src/**'
+      - 'lang/**'
+      - 'data/**'
+      - 'tools/accessibility/**'
   workflow_dispatch:
     inputs:
       compare_baseline:
@@ -91,7 +103,12 @@ jobs:
             task_signing_args=()
           else
             task_build_command=assembleAccessibilityDebug
-            task_signing_args=(-Paccessibility_test_signing=true)
+            # Never silently fall back to an ephemeral Android debug keystore.
+            # GitHub's workflow run number monotonically increases across
+            # pushes of this workflow. The base reserves space for older tests.
+            version_code=$((100000 + ${{ github.run_number }}))
+            task_signing_args=(-Paccessibility_test_signing=true
+                               "-Poverride_versionCode=${version_code}")
           fi
           bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
       - name: Verify APK contents and checksums
@@ -122,9 +139,31 @@ jobs:
                       expected = pathlib.Path('android/app/accessibility-test-cert.sha256').read_text().strip()
                       found = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)', signature)
                       if not found or found.group(1).lower() != expected:
-                          raise SystemExit('Candidate is not signed with the stable public accessibility test key')
-                  out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\n')
+                          raise SystemExit('Candidate is not signed with the stable accessibility test key')
+                      aapt = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/aapt'
+                      badging = subprocess.check_output([str(aapt), 'dump', 'badging', str(apk)], text=True)
+                      pkg = re.search(r"^package: name='([^']+)' versionCode='(\\d+)'", badging, re.M)
+                      expected_code = 100000 + int(os.environ['GITHUB_RUN_NUMBER'])
+                      if not pkg or pkg.group(1) != 'com.cleverraven.cataclysmdda.accessibility':
+                          raise SystemExit('APK package ID changed; it cannot update existing accessibility installs')
+                      if int(pkg.group(2)) != expected_code:
+                          raise SystemExit('Incorrect monotonically increasing versionCode')
+                      pathlib.Path('build-evidence/package.txt').write_text(
+                          f"package={pkg.group(1)}\\nversionCode={pkg.group(2)}\\n"
+                          f"certificate_sha256={expected}\\n", encoding='utf-8')
+                  out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\\n')
           PY
+      - name: Summarize stable test identity and artifact
+        if: success() && matrix.name == 'candidate'
+        run: |
+          {
+            echo '### Installable accessibility APK'
+            echo 'Package: `com.cleverraven.cataclysmdda.accessibility`'
+            echo 'Signing: checked-in stable accessibility testing keystore'
+            cat build-evidence/package.txt
+            cat build-evidence/SHA256SUMS
+            echo 'Download from workflow artifact: `android-arm64-candidate`'
+          } >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
