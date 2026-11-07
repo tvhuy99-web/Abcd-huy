@@ -478,20 +478,61 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         selectionChanged = true;
                     }
                 }
+                // Native menus may visually keep the parent tabs in place,
+                // but their semantic snapshot now publishes only the active
+                // layer. Switching between tab and child must use the new
+                // snapshot's first item rather than an unrelated old sibling.
+                boolean nativeLayerChanged = !changedContext
+                        && "MAIN_MENU".equals(next.category) && snapshot != null
+                        && !snapshot.nodes.isEmpty() && !next.nodes.isEmpty()
+                        && (snapshot.nodes.get(0).id.startsWith("tab:")
+                                != next.nodes.get(0).id.startsWith("tab:"));
                 String previous = focus;
                 ReaderSnapshot previousSnapshot = snapshot;
                 snapshot = next;
                 speech.setContext(next.contextKey());
-                if (selectionChanged) {
+                boolean enteredTreeLayer = false;
+                if (changedContext) {
+                    readerLayerParent = "";
+                    pendingReaderLayer = "";
+                } else if (!pendingReaderLayer.isEmpty()) {
+                    ReaderSnapshot.Node parent = next.find(pendingReaderLayer);
+                    ReaderSnapshot.Node child = parent == null ? null
+                            : firstDirectChild(next, parent.id);
+                    if (parent != null && parent.expanded && child != null) {
+                        readerLayerParent = parent.id;
+                        selectedItemFocus = child.id;
+                        selectionChanged = true;
+                        enteredTreeLayer = true;
+                    }
+                    pendingReaderLayer = "";
+                }
+                if (!readerLayerParent.isEmpty()) {
+                    ReaderSnapshot.Node currentParent = next.find(readerLayerParent);
+                    if (currentParent == null || !currentParent.expanded
+                            || firstDirectChild(next, readerLayerParent) == null) {
+                        readerLayerParent = currentParent == null ? ""
+                                : currentParent.parentId;
+                    }
+                }
+                if (nativeLayerChanged) {
+                    focus = next.find(next.focus) != null ? next.focus
+                            : next.nodes.get(0).id;
+                } else if (selectionChanged) {
                     focus = selectedItemFocus;
                 } else if (changedContext) {
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (next.find(focus) == null) {
-                    // Focus policy (R02.1): a vanished node lands on its
-                    // nearest surviving ancestor, then on the nearest
-                    // surviving sibling, and only then on the default.
+                    // A vanished item returns to its closest surviving
+                    // ancestor/sibling, never a stale native screen.
                     focus = resolveFocusFallback(previousSnapshot, previous, next);
+                }
+                ReaderSnapshot.Node currentFocus = next.find(focus);
+                if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
+                    // The engine may open a new tree branch directly, or
+                    // select a new child after a modal changes state.
+                    readerLayerParent = currentFocus.parentId;
                 }
                 if (changedContext) {
                     controls = false;
@@ -514,8 +555,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // the saved position is kept for a later visit.
                     documentReader.clear();
                 }
+                boolean enteredMenu = nativeLayerChanged || enteredTreeLayer
+                        || (changedContext && next.find("world:here") == null);
+                focusNewMenuRow = enteredMenu;
                 render();
-                if (selectionChanged) {
+                if (enteredMenu && next.find(focus) != null) {
+                    feedback(next.title + ". " + nodeText(next.find(focus), false));
+                } else if (selectionChanged) {
                     readCurrent();
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();
@@ -939,6 +985,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             });
             rows.addView(button);
             rowViews.add(button);
+            if (focusNewMenuRow && node.id.equals(focus)) {
+                focusNewMenuRow = false;
+                handler.post(() -> {
+                    if (!closed && snapshot == owner && node.id.equals(focus)
+                            && button.isAttachedToWindow() && usesTouchExploration()) {
+                        button.performAccessibilityAction(
+                                AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS, null);
+                    }
+                });
+            }
         }
     }
 
