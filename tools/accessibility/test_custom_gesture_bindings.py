@@ -54,7 +54,10 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn('target.startsWith("hub:group:")', ctrl)
         self.assertIn('"hub:search".equals(target)', ctrl)
         self.assertIn("listener.handleCustomGesture(gesture)", surf)
-        self.assertIn('if (gesture == null || listener.handleCustomGesture(gesture))', surf)
+        self.assertIn(
+            'if (gesture == null || listener.handleCustomGesture(gesture))',
+            surf,
+        )
 
     def test_complex_swipes_and_multi_finger_sequences(self):
         src = (JAVA / "ReaderGestureSurface.java").read_text(

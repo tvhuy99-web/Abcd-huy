@@ -25,7 +25,7 @@ class DebugPromptAccessibility(unittest.TestCase):
         self.assertIn("nativeDebugPromptResponse(int action);", activity)
         self.assertIn("onAccessibilityDebugPrompt(String report)", activity)
 
-    def test_controls_are_self_voiced_without_legacy_hub(self):
+    def test_debug_controls_override_the_on_demand_hub(self):
         reader = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         self.assertIn("public void showDebugPrompt(String report)", reader)
         self.assertIn('speech.say("debug-report", debugReport', reader)
@@ -33,7 +33,8 @@ class DebugPromptAccessibility(unittest.TestCase):
         self.assertIn("if (debugReport != null) { submitDebugResponse(1); return; }",
                       reader)
         self.assertIn("root.setVisibility(View.VISIBLE);", reader)
-        self.assertNotIn("showComprehensiveMenu(", reader)
+        self.assertIn("public void showComprehensiveMenu()", reader)
+        self.assertIn("if (debugReport != null)", reader)
         self.assertNotIn("showControls(", reader)
 
 

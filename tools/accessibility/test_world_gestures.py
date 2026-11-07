@@ -67,7 +67,10 @@ class WorldGestureContracts(unittest.TestCase):
         controller = CONTROLLER.read_text(encoding="utf-8")
         self.assertIn("if (target == null) { return false; }", controller)
         self.assertIn("executeShortcutTarget(target);", controller)
-        self.assertIn('String id = target.substring("action:".length());', controller)
+        self.assertIn(
+            'String id = target.substring("action:".length());',
+            controller,
+        )
         self.assertIn('target.startsWith("hub:group:")', controller)
         self.assertIn('send("activate", "");', controller)
 
