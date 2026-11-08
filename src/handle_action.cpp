@@ -2781,7 +2781,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_OPEN:
-            player_character.assign_activity( open_tile_activity_actor( std::nullopt ) );
+            // Preserve an object already chosen by the accessible interaction
+            // list (or gamepad). Otherwise the native activity prompts normally.
+            player_character.assign_activity( open_tile_activity_actor( mouse_target ) );
             break;
 
         case ACTION_CLOSE:
@@ -3512,7 +3514,28 @@ bool game::handle_action()
         }
 
         if( act == ACTION_INTERACT ) {
-            if( !mouse_target ) {
+            if( !mouse_target && a11y::enabled() ) {
+                // Show all actionable visible tiles, then native actions for
+                // the chosen tile. Merely browsing does not spend game time.
+                mouse_target = choose_accessible_nearby_target(
+                                   _( "Interact with nearby objects" ),
+                [&]( const tripoint_bub_ms &target ) {
+                    for( const action_id candidate : {
+                                ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
+                                ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
+                            } ) {
+                        if( can_interact_at( candidate, here, target ) ) {
+                            return true;
+                        }
+                    }
+                    return target == player_character.pos_bub() &&
+                           ( can_interact_at( ACTION_MOVE_UP, here, target ) ||
+                             can_interact_at( ACTION_MOVE_DOWN, here, target ) );
+                } );
+                if( !mouse_target ) {
+                    return false;
+                }
+            } else if( !mouse_target ) {
                 mouse_target = player_character.pos_bub();
             }
             act = handle_interact( here, *mouse_target );

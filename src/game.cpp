@@ -5528,7 +5528,16 @@ void game::examine( bool with_pickup )
     }
 
     std::optional<tripoint_bub_ms> examp;
-    if( with_pickup ) {
+    if( a11y::enabled() ) {
+        // The reader sees the complete nearby list first, rather than
+        // choosing an unlabelled direction. Original examine logic stays intact.
+        examp = choose_accessible_nearby_target(
+                    with_pickup ? _( "Examine or pick up nearby objects" )
+                    : _( "Examine nearby objects" ),
+        [&]( const tripoint_bub_ms &target ) {
+            return can_examine_at( here, target, with_pickup );
+        } );
+    } else if( with_pickup ) {
         // Examine and/or pick up items
         examp = choose_adjacent_highlight( here, _( "Examine terrain, furniture, or items where?" ),
                                            _( "There is nothing that can be examined nearby." ),

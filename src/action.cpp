@@ -1,6 +1,7 @@
 #include "action.h"
 
 #include <algorithm>
+#include <array>
 #include <climits>
 #include <istream>
 #include <iterator>
@@ -747,6 +748,55 @@ bool can_interact_at( action_id action, map &here, const tripoint_bub_ms &p )
     }
 }
 
+// Accessibility list: browse every currently visible, actionable adjacent tile
+// before selecting one. No action runs until a menu entry is activated.
+std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::string &title,
+        const std::function<bool( const tripoint_bub_ms & )> &allowed )
+{
+    static const std::array<tripoint_rel_ms, 9> offsets = {
+        tripoint_rel_ms( 0, 0, 0 ), tripoint_rel_ms( 0, -1, 0 ),
+        tripoint_rel_ms( 1, -1, 0 ), tripoint_rel_ms( 1, 0, 0 ),
+        tripoint_rel_ms( 1, 1, 0 ), tripoint_rel_ms( 0, 1, 0 ),
+        tripoint_rel_ms( -1, 1, 0 ), tripoint_rel_ms( -1, 0, 0 ),
+        tripoint_rel_ms( -1, -1, 0 )
+    };
+    const std::array<std::string, 9> directions = {
+        _( "Current tile" ), _( "North" ), _( "Northeast" ),
+        _( "East" ), _( "Southeast" ), _( "South" ),
+        _( "Southwest" ), _( "West" ), _( "Northwest" )
+    };
+
+    const tripoint_bub_ms origin = get_avatar().pos_bub( get_map() );
+    std::vector<tripoint_bub_ms> targets;
+    uilist menu;
+    menu.title = title;
+    menu.text = _( "Nearby objects. Choose an entry to interact; cancel to do nothing." );
+    for( std::size_t i = 0; i < offsets.size(); ++i ) {
+        const tripoint_bub_ms target = origin + offsets[i];
+        // Never list live hidden terrain or unseen creatures from the engine's
+        // interaction check. The perception layer owns visibility restrictions.
+        const a11y::tile_observation observed = a11y::observe_tile( target );
+        if( observed.source != a11y::observation_source::visible || !allowed( target ) ) {
+            continue;
+        }
+        const int index = static_cast<int>( targets.size() );
+        targets.push_back( target );
+        menu.addentry( index, true, -1, string_format( _( "%1$s: %2$s" ),
+                       directions[i], a11y::describe_tile( observed ) ) );
+    }
+    if( targets.empty() ) {
+        add_msg( m_info, _( "No visible objects here can be examined or interacted with." ) );
+        return std::nullopt;
+    }
+    menu.query();
+    if( menu.ret < 0 || static_cast<std::size_t>( menu.ret ) >= targets.size() ) {
+        return std::nullopt;
+    }
+    const tripoint_bub_ms chosen = targets[menu.ret];
+    // Revalidate after the user has browsed the menu; do not act on stale targets.
+    return allowed( chosen ) ? std::optional<tripoint_bub_ms>( chosen ) : std::nullopt;
+}
+
 action_id handle_interact( map &here, const tripoint_bub_ms &pos )
 {
     const input_context ctxt = get_default_mode_input_context();
@@ -764,6 +814,10 @@ action_id handle_interact( map &here, const tripoint_bub_ms &pos )
     };
 
     for( action_id act : check_actions ) {
+        if( ( act == ACTION_MOVE_UP || act == ACTION_MOVE_DOWN ) &&
+            pos != get_avatar().pos_bub( here ) ) {
+            continue; // Stairs are used from the player's tile, not a neighbor.
+        }
         if( can_interact_at( act, here, pos ) ) {
             valid_actions.push_back( act );
         }

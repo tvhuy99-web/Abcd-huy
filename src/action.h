@@ -620,6 +620,11 @@ action_id handle_action_menu( map &here );
  * @param pos The tile to perform actions on.
  * @returns action_id ID of action requested by user, or ACTION_NULL.
  */
+// Spoken 3x3 object chooser, used by examine and the accessible interact hub.
+std::optional<tripoint_bub_ms> choose_accessible_nearby_target(
+    const std::string &title,
+    const std::function<bool( const tripoint_bub_ms & )> &allowed );
+
 action_id handle_interact( map &here, const tripoint_bub_ms &pos );
 
 /**
