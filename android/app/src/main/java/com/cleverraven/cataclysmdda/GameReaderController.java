@@ -33,6 +33,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final CataclysmDDA activity;
     private final ReaderPreferences preferences;
     private final ReaderGestureBindings gestureBindings;
+    private final ReaderFavorites favorites;
     private final ReaderSpeechQueue speech;
     private final ReaderCuePlayer cues;
     private final AccessibilityManager accessibility;
@@ -94,6 +95,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean choosingGesture;
     private GameActionHub.Entry bindingItem;
     private int gestureChoice;
+    // A long press opens these two accessible actions before gesture setup.
+    private boolean choosingHubAction;
+    private GameActionHub.Entry hubActionItem;
+    private int hubActionChoice;
     // Only rendered when SDL is showing a native debug message.
     private String debugReport;
     private int debugFocus;
@@ -118,6 +123,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         this.activity = activity;
         preferences = new ReaderPreferences(activity);
         gestureBindings = new ReaderGestureBindings(activity);
+        favorites = new ReaderFavorites(activity);
         accessibility = (AccessibilityManager) activity.getSystemService(Context.ACCESSIBILITY_SERVICE);
         speech = new ReaderSpeechQueue(activity, new ReaderSpeechQueue.Listener() {
             @Override
@@ -341,6 +347,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     comprehensiveMenu = false;
                     choosingGesture = false;
                     bindingItem = null;
+                    choosingHubAction = false;
+                    hubActionItem = null;
                     snapshot = null;
                     lastLoadingStatus = "";
                                 editor = null;
@@ -574,6 +582,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         comprehensiveMenu = false;
                         choosingGesture = false;
                         bindingItem = null;
+                        choosingHubAction = false;
+                        hubActionItem = null;
                     } else {
                         render();
                         return;
@@ -964,7 +974,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (debugReport != null) { return presentationEpoch + ":debug"; }
         if (comprehensiveMenu) {
             return presentationEpoch + ":hub:" + hubSection + ":" + choosingGesture
+                    + ":" + choosingHubAction
                     + ":" + (bindingItem == null ? "" : bindingItem.shortcutTarget())
+                    + ":" + (hubActionItem == null ? "" : hubActionItem.shortcutTarget())
                     + (editor == null ? "" : ":editor:" + editor.contextKey());
         }
         return presentationEpoch + ":" + (snapshot == null ? "waiting"
@@ -1009,7 +1021,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { editor.navigate(delta); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture) {
+            if (choosingHubAction) {
+                hubActionChoice = Math.max(0, Math.min(1, hubActionChoice + delta));
+            } else if (choosingGesture) {
                 gestureChoice = Math.max(0, Math.min(ReaderGestureBindings.IDS.length + 1,
                         gestureChoice + delta));
             } else {
@@ -1192,6 +1206,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openHubSection(GameActionHub.DIRECTIONS);
             hubRootIndex = 3;
             return;
+        } else if ("hub:favorites".equals(target)) {
+            openHubSection(GameActionHub.FAVORITES);
+            hubRootIndex = 0;
+            return;
         } else if ("hub:search".equals(target)) {
             showComprehensiveMenu();
             if (comprehensiveMenu) { searchHub(); }
@@ -1294,7 +1312,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { editor.activate(); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture) { applyGestureChoice(); }
+            if (choosingHubAction) { applyHubActionChoice(); }
+            else if (choosingGesture) { applyGestureChoice(); }
             else { activateHub(); }
             return;
         }
@@ -1490,7 +1509,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
 
     private List<GameActionHub.Entry> hubEntries() {
-        return GameActionHub.entries(activity, snapshot, hubSection, hubQuery);
+        return GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
+    }
+
+    private String hubActionLabel(int choice) {
+        if (choice == 0) { return activity.getString(R.string.a11yHubGestureOption); }
+        String target = hubActionItem == null ? null : hubActionItem.shortcutTarget();
+        return activity.getString(target != null && favorites.contains(target)
+                ? R.string.a11yHubRemoveFavorite : R.string.a11yHubAddFavorite);
     }
 
     private String hubSpoken(List<GameActionHub.Entry> entries, int selected) {
@@ -1512,11 +1538,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     /** Only render this full-screen layer while the hub is explicitly open. */
     private void renderHub() {
         boolean binding = choosingGesture && bindingItem != null;
-        String heading = binding ? activity.getString(R.string.a11yBindTitle, bindingItem.label)
+        String heading = choosingHubAction && hubActionItem != null
+                ? activity.getString(R.string.a11yHubActionMenu, hubActionItem.label)
+                : binding ? activity.getString(R.string.a11yBindTitle, bindingItem.label)
                 : hubSection == GameActionHub.ROOT
                 ? activity.getString(R.string.a11yHubTitle)
                 : hubSection == GameActionHub.DIRECTIONS
                 ? activity.getString(R.string.a11yHubChooseDirection)
+                : hubSection == GameActionHub.FAVORITES
+                ? activity.getString(R.string.a11yHubFavorites)
                 : activity.getString(GameActionHub.TITLES[hubSection]);
         TextView titleView = new TextView(activity);
         titleView.setText(heading);
@@ -1526,18 +1556,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         titleView.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         rows.addView(titleView);
 
-        List<GameActionHub.Entry> entries = binding ? null : hubEntries();
-        int count = binding ? ReaderGestureBindings.IDS.length + 2 : entries.size();
-        int selected = binding ? gestureChoice : hubIndex;
+        List<GameActionHub.Entry> entries = binding || choosingHubAction ? null : hubEntries();
+        int count = choosingHubAction ? 2
+                : binding ? ReaderGestureBindings.IDS.length + 2 : entries.size();
+        int selected = choosingHubAction ? hubActionChoice : binding ? gestureChoice : hubIndex;
         if (count == 0) {
             TextView empty = new TextView(activity);
-            empty.setText(R.string.a11yHubEmpty);
+            empty.setText(hubSection == GameActionHub.FAVORITES
+                    ? R.string.a11yHubFavoritesEmpty : R.string.a11yHubEmpty);
             empty.setTextColor(0xffeeeeee);
             rows.addView(empty);
             return;
         }
         selected = Math.max(0, Math.min(selected, count - 1));
-        if (binding) { gestureChoice = selected; }
+        if (choosingHubAction) { hubActionChoice = selected; }
+        else if (binding) { gestureChoice = selected; }
         else { hubIndex = selected; }
         int start = (selected / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
         int end = Math.min(start + HUB_PAGE_SIZE, count);
@@ -1545,7 +1578,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             Button previous = new Button(activity);
             previous.setText(R.string.a11yPreviousPage);
             previous.setOnClickListener(view -> {
-                if (binding) { gestureChoice = start - 1; }
+                if (choosingHubAction) { hubActionChoice = start - 1; }
+                else if (binding) { gestureChoice = start - 1; }
                 else { hubIndex = start - 1; }
                 render();
                 readCurrent();
@@ -1555,13 +1589,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         for (int i = start; i < end; i++) {
             final int index = i;
             Button option = new Button(activity);
-            option.setText(binding ? gestureChoiceLabel(i) + ", "
+            option.setText(choosingHubAction ? hubActionLabel(i) + ", "
+                    + activity.getString(R.string.a11yPosition, i + 1, count)
+                    : binding ? gestureChoiceLabel(i) + ", "
                     + activity.getString(R.string.a11yPosition, i + 1, count)
                     : hubSpoken(entries, i));
             option.setSelected(i == selected);
             option.setOnClickListener(view -> {
                 if (!comprehensiveMenu) { return; }
-                if (binding && choosingGesture) {
+                if (choosingHubAction) {
+                    hubActionChoice = index;
+                    applyHubActionChoice();
+                } else if (binding && choosingGesture) {
                     gestureChoice = index;
                     applyGestureChoice();
                 } else if (!binding && !choosingGesture) {
@@ -1569,17 +1608,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     activateHub();
                 }
             });
-            if (!binding) {
+            if (!binding && !choosingHubAction) {
                 option.setOnLongClickListener(view -> {
-                    if (!comprehensiveMenu || choosingGesture) { return false; }
+                    if (!comprehensiveMenu || choosingGesture || choosingHubAction) { return false; }
                     hubIndex = index;
-                    showGestureChoices();
+                    showHubActionChoices();
                     return true;
                 });
             }
             option.setOnFocusChangeListener((view, focused) -> {
                 if (focused && comprehensiveMenu && !usesTouchExploration()) {
-                    if (binding) { gestureChoice = index; }
+                    if (choosingHubAction) { hubActionChoice = index; }
+                    else if (binding) { gestureChoice = index; }
                     else { hubIndex = index; }
                     readCurrent();
                 }
@@ -1590,7 +1630,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             Button next = new Button(activity);
             next.setText(R.string.a11yNextPage);
             next.setOnClickListener(view -> {
-                if (binding) { gestureChoice = end; }
+                if (choosingHubAction) { hubActionChoice = end; }
+                else if (binding) { gestureChoice = end; }
                 else { hubIndex = end; }
                 render();
                 readCurrent();
@@ -1599,7 +1640,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** A new opening always starts at search, the first of 16 categories. */
+    /** Opening the menu starts at Favorites; Search is the last root entry. */
     public void showComprehensiveMenu() {
         if (comprehensiveMenu || debugReport != null || !directWorldGesturesEnabled()) {
             return;
@@ -1608,6 +1649,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         comprehensiveMenu = true;
         choosingGesture = false;
         bindingItem = null;
+        choosingHubAction = false;
+        hubActionItem = null;
         hubSection = GameActionHub.ROOT;
         hubIndex = 0;
         hubRootIndex = 0;
@@ -1644,8 +1687,64 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         feedback(activity.getString(R.string.a11yHubSearch));
     }
 
+    private void showHubActionChoices() {
+        if (!comprehensiveMenu || choosingGesture || choosingHubAction) { return; }
+        List<GameActionHub.Entry> entries = hubEntries();
+        if (entries.isEmpty()) { return; }
+        hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
+        GameActionHub.Entry entry = entries.get(hubIndex);
+        if (entry.shortcutTarget() == null) {
+            feedback(activity.getString(R.string.a11yBindUnavailable));
+            return;
+        }
+        hubActionItem = entry;
+        choosingHubAction = true;
+        hubActionChoice = 0;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yHubActionMenu, entry.label) + ". "
+                + hubActionLabel(0) + ", "
+                + activity.getString(R.string.a11yPosition, 1, 2));
+    }
+
+    private void applyHubActionChoice() {
+        if (!choosingHubAction || hubActionItem == null) { return; }
+        GameActionHub.Entry entry = hubActionItem;
+        String target = entry.shortcutTarget();
+        int choice = hubActionChoice;
+        choosingHubAction = false;
+        hubActionItem = null;
+        if (choice == 0) {
+            showGestureChoices();
+            return;
+        }
+        if (target == null || "hub:favorites".equals(target)) {
+            feedback(activity.getString(R.string.a11yBindUnavailable));
+            render();
+            return;
+        }
+        String label = entry.label;
+        // Strip the non-interactive availability suffix from saved favorites.
+        String unavailable = " (" + activity.getString(R.string.a11yHubFavoriteUnavailable) + ")";
+        if (label.endsWith(unavailable)) {
+            label = label.substring(0, label.length() - unavailable.length());
+        }
+        String message;
+        if (favorites.contains(target)) {
+            favorites.remove(target);
+            message = activity.getString(R.string.a11yHubFavoriteRemoved, label);
+        } else if (favorites.add(target, label)) {
+            message = activity.getString(R.string.a11yHubFavoriteAdded, label);
+        } else {
+            message = activity.getString(R.string.a11yHubFavoritesFull);
+        }
+        root.cancelGesture();
+        render();
+        feedback(message);
+    }
+
     private void showGestureChoices() {
-        if (!comprehensiveMenu || choosingGesture) { return; }
+        if (!comprehensiveMenu || choosingGesture || choosingHubAction) { return; }
         List<GameActionHub.Entry> entries = hubEntries();
         if (entries.isEmpty()) { return; }
         hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
@@ -1687,6 +1786,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("hub:directions".equals(target)) {
             return activity.getString(R.string.a11yHubChooseDirection);
+        }
+        if ("hub:favorites".equals(target)) {
+            return activity.getString(R.string.a11yHubFavorites);
         }
         if ("hub:search".equals(target)) { return activity.getString(R.string.a11yHubSearch); }
         if ("hub:all".equals(target)) { return activity.getString(R.string.a11yHubAllCommands); }
@@ -1732,15 +1834,25 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void activateHub() {
-        if (!comprehensiveMenu || choosingGesture) { return; }
+        if (!comprehensiveMenu || choosingGesture || choosingHubAction) { return; }
         List<GameActionHub.Entry> entries = hubEntries();
         if (entries.isEmpty()) { return; }
         hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
         GameActionHub.Entry item = entries.get(hubIndex);
         switch (item.kind) {
             case GameActionHub.OPEN_SEARCH:
-                hubRootIndex = 0;
+                if (hubSection == GameActionHub.ROOT) {
+                    hubRootIndex = GameActionHub.TITLES.length;
+                }
                 searchHub();
+                return;
+            case GameActionHub.OPEN_FAVORITES:
+                hubRootIndex = 0;
+                hubSection = GameActionHub.FAVORITES;
+                hubIndex = 0;
+                root.cancelGesture();
+                render();
+                readCurrent();
                 return;
             case GameActionHub.OPEN_GROUP:
                 hubRootIndex = hubIndex;
@@ -1777,7 +1889,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (node == null || !node.enabled || (!node.actions.contains("activate")
                         && !"document".equals(node.role)
                         && !"world:here".equals(node.id))) {
-                    feedback(node == null ? activity.getString(R.string.a11yReaderStale)
+                    feedback(node == null ? activity.getString(R.string.a11yHubFavoriteUnavailable)
                             : nodeText(node, true));
                     return;
                 }
@@ -1811,7 +1923,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { editor.readCurrent(); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture) {
+            if (choosingHubAction) {
+                feedback(hubActionLabel(hubActionChoice) + ", "
+                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
+            } else if (choosingGesture) {
                 feedback(gestureChoiceLabel(gestureChoice) + ", "
                         + activity.getString(R.string.a11yPosition, gestureChoice + 1,
                                 ReaderGestureBindings.IDS.length + 2));
@@ -1849,8 +1964,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { feedback(editor.valueDescription()); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture) { readCurrent(); }
-            else { showGestureChoices(); }
+            if (choosingGesture || choosingHubAction) { readCurrent(); }
+            else { showHubActionChoices(); }
             return;
         }
         if (snapshot == null && !lastLoadingStatus.isEmpty()) {
@@ -1912,7 +2027,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.back(); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture) {
+            if (choosingHubAction) {
+                choosingHubAction = false;
+                hubActionItem = null;
+            } else if (choosingGesture) {
                 choosingGesture = false;
                 bindingItem = null;
             } else if (hubSection == GameActionHub.DIRECTIONS) {

@@ -24,8 +24,10 @@ final class GameActionHub {
     static final int OPEN_READER_SETUP = 5;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
-    // Nested menu, not a seventeenth root category.
+    static final int OPEN_FAVORITES = 8;
+    // Keep native group numbers stable for existing saved gesture targets.
     static final int DIRECTIONS = 16;
+    static final int FAVORITES = 17;
 
     static final class Entry {
         final String label;
@@ -49,13 +51,15 @@ final class GameActionHub {
                 case OPEN_TTS: return "hub:tts";
                 case OPEN_READER_SETUP: return "hub:reader_setup";
                 case OPEN_DIRECTIONS: return "hub:directions";
+                case OPEN_FAVORITES: return "hub:favorites";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
                 default: return null;
             }
         }
     }
 
-    // Root index zero is search. Groups 1..15 are the requested sections.
+    // Group IDs 1..15 and SEARCH=0 remain stable for saved shortcuts.
+    // The root *display order* is Favorites, groups 1..15, then Search.
     static final int[] TITLES = {
             R.string.a11yHubSearch,
             R.string.a11yHubNearby,
@@ -163,12 +167,64 @@ final class GameActionHub {
         }
     }
 
-    static List<Entry> entries(Context context, ReaderSnapshot snapshot, int section, String query) {
+    private static Entry fromFavorite(Context context, ReaderSnapshot snapshot,
+                                      ReaderFavorites.Favorite favorite) {
+        String target = favorite.target;
+        if (target.startsWith("action:")) {
+            String action = target.substring("action:".length());
+            ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(action);
+            // Preserve saved favorites outside the context where they were
+            // selected. Do not claim that an absent command is executable.
+            String label = node == null ? favorite.label : node.label;
+            if (node == null || !node.enabled || (!node.actions.contains("activate")
+                    && !"document".equals(node.role))) {
+                label += " (" + context.getString(R.string.a11yHubFavoriteUnavailable) + ")";
+            }
+            return new Entry(label, action, EXECUTE, 0);
+        }
+        if (target.startsWith("hub:group:")) {
+            try {
+                int group = Integer.parseInt(target.substring("hub:group:".length()));
+                if (group > 0 && group < TITLES.length) {
+                    return new Entry(context.getString(TITLES[group]), "", OPEN_GROUP, group);
+                }
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        switch (target) {
+            case "hub:search":
+                return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
+            case "hub:all":
+                return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
+            case "hub:tts":
+                return new Entry(context.getString(R.string.a11yHubTts), "", OPEN_TTS, 0);
+            case "hub:reader_setup":
+                return new Entry(context.getString(R.string.a11yHubReaderSetup), "", OPEN_READER_SETUP, 0);
+            case "hub:directions":
+                return new Entry(context.getString(R.string.a11yHubChooseDirection), "",
+                        OPEN_DIRECTIONS, 0);
+            default:
+                return null;
+        }
+    }
+
+    static List<Entry> entries(Context context, ReaderSnapshot snapshot, int section,
+                               String query, ReaderFavorites favorites) {
         List<Entry> result = new ArrayList<>();
         if (section == ROOT) {
-            for (int i = 0; i < TITLES.length; i++) {
-                result.add(new Entry(context.getString(TITLES[i]), "",
-                        i == 0 ? OPEN_SEARCH : OPEN_GROUP, i));
+            result.add(new Entry(context.getString(R.string.a11yHubFavorites),
+                    "", OPEN_FAVORITES, FAVORITES));
+            for (int i = 1; i < TITLES.length; i++) {
+                result.add(new Entry(context.getString(TITLES[i]), "", OPEN_GROUP, i));
+            }
+            result.add(new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH));
+            return result;
+        }
+        if (section == FAVORITES) {
+            for (ReaderFavorites.Favorite favorite : favorites.items()) {
+                Entry entry = fromFavorite(context, snapshot, favorite);
+                if (entry != null) { result.add(entry); }
             }
             return result;
         }

@@ -86,6 +86,16 @@
     <string name="a11yTtsDisableWarning">TTS is off in this draft. Saving will silence the in-game reader. Keep TalkBack available to enable it again.</string>
 
     <!-- Consolidated spoken gameplay hub. -->
+    <string name="a11yHubFavorites">Favorites</string>
+    <string name="a11yHubFavoritesEmpty">No favorites yet. Long press a command and choose Add to favorites.</string>
+    <string name="a11yHubActionMenu">Options for %1$s</string>
+    <string name="a11yHubGestureOption">Gestures</string>
+    <string name="a11yHubAddFavorite">Add to favorites</string>
+    <string name="a11yHubRemoveFavorite">Remove from favorites</string>
+    <string name="a11yHubFavoriteAdded">Added to favorites: %1$s.</string>
+    <string name="a11yHubFavoriteRemoved">Removed from favorites: %1$s.</string>
+    <string name="a11yHubFavoritesFull">Favorites list is full.</string>
+    <string name="a11yHubFavoriteUnavailable">Unavailable on this screen</string>
     <string name="a11yHubSearch">Search commands</string>
     <string name="a11yHubNearby">Actions available here</string>
     <string name="a11yHubExplore">Explore and maps</string>
