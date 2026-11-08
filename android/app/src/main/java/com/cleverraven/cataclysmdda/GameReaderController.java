@@ -1932,7 +1932,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 ReaderGestureBindings.IDS.length + 2));
             } else {
                 List<GameActionHub.Entry> items = hubEntries();
-                if (items.isEmpty()) { feedback(activity.getString(R.string.a11yHubEmpty)); }
+                if (items.isEmpty()) {
+                    feedback(activity.getString(hubSection == GameActionHub.FAVORITES
+                            ? R.string.a11yHubFavoritesEmpty : R.string.a11yHubEmpty));
+                }
                 else {
                     hubIndex = Math.max(0, Math.min(hubIndex, items.size() - 1));
                     feedback(hubSpoken(items, hubIndex));
