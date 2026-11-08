@@ -765,10 +765,15 @@ static int creature_select_menu( const std::vector<Creature *> &talker_list,
         std::vector<tripoint_bub_ms> locations;
         nmenu.text = prompt;
         for( const Creature *elem : talker_list ) {
-            if( elem->is_npc() ) {
-                nmenu.addentry( -1, true, MENU_AUTOASSIGN, elem->as_npc()->name_and_activity() );
+            const std::string name = elem->is_npc() ? elem->as_npc()->name_and_activity() :
+                                     elem->disp_name();
+            if( a11y::enabled() ) {
+                nmenu.addentry( -1, true, MENU_AUTOASSIGN,
+                                _( "%1$s, %2$s, %3$d tiles away" ), name,
+                                direction_name( direction_from( get_avatar().pos_bub(), elem->pos_bub() ) ),
+                                rl_dist( get_avatar().pos_bub(), elem->pos_bub() ) );
             } else {
-                nmenu.addentry( -1, true, MENU_AUTOASSIGN, elem->disp_name() );
+                nmenu.addentry( -1, true, MENU_AUTOASSIGN, name );
             }
             locations.emplace_back( elem->pos_bub() );
         }

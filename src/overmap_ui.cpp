@@ -2149,14 +2149,18 @@ static bool try_travel_to_destination( avatar &player_character, const tripoint_
         } else {
             popupmsg = _( "Auto travel requires source and destination on same Z level:" );
         }
-        string_input_popup pop;
-        const std::string ok = _( "OK" );
-        pop
-        .title( popupmsg )
-        .width( ok.length() )
-        .text( ok )
-        .only_digits( false )
-        .query();
+        if( a11y::enabled() ) {
+            add_msg( m_info, "%s", popupmsg );
+        } else {
+            string_input_popup pop;
+            const std::string ok = _( "OK" );
+            pop
+            .title( popupmsg )
+            .width( ok.length() )
+            .text( ok )
+            .only_digits( false )
+            .query();
+        }
         return false;
     }
 
@@ -2821,15 +2825,20 @@ static tripoint_abs_omt display()
                 player_character.omt_path.swap( path );
             }
             if( path.empty() && curs != player_character.pos_abs_omt() ) {
-                // No route could be planned and any previous route was just
-                // cleared. State the engine's reason instead of failing
-                // silently (R13.3), mirroring the travel attempt's feedback.
+                // Failure feedback is nonmodal for readers; starting travel
+                // still goes through the existing confirmation.
+                std::string reason;
                 if( curs.z() != player_character.posz() ) {
-                    popup( _( "No route was set: auto travel requires source and destination on the same Z level." ) );
+                    reason = _( "No route was set: auto travel requires source and destination on the same Z level." );
                 } else if( overmap_buffer.seen( curs ) == om_vision_level::unseen ) {
-                    popup( _( "No route was set: the destination tile is unexplored." ) );
+                    reason = _( "No route was set: the destination tile is unexplored." );
                 } else {
-                    popup( _( "No route was set: unable to find a path to the destination." ) );
+                    reason = _( "No route was set: unable to find a path to the destination." );
+                }
+                if( a11y::enabled() ) {
+                    add_msg( m_info, "%s", reason );
+                } else {
+                    popup( reason );
                 }
             }
             if( same_path_selected && !player_character.omt_path.empty() ) {
