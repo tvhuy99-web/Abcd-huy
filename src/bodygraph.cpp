@@ -7,6 +7,9 @@
 #include <set>
 #include <tuple>
 
+#include "a11y_body.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "bodypart.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -626,8 +629,69 @@ void bodygraph_display::display()
     prepare_partlist();
     prepare_infolist();
 
+    // The graphic is still drawn normally; the reader gets a complete
+    // navigable list and the currently highlighted part's real details.
+    a11y::screen_scope reader( &ctxt, "body-status",
+    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < partlist.size(); ++i ) {
+            if( intent.node != "body:part:" + std::to_string( i ) ) {
+                continue;
+            }
+            if( intent.action != "focus" && intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            sel_part = static_cast<int>( i );
+            prepare_infolist();
+            if( intent.action == "activate" &&
+                !std::get<2>( partlist[i] )->nested_graph.is_null() ) {
+                return "CONFIRM";
+            }
+            return "TIMEOUT";
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     bool done = false;
     while( !done ) {
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                                    ctxt, _( "Body status" ) );
+            snapshot.summary = _( "Body parts in a list. Select a part to hear its condition. "
+                                  "Browsing never treats wounds." );
+            for( std::size_t i = 0; i < partlist.size(); ++i ) {
+                const part_tuple &part = partlist[i];
+                const bodypart_id &parent = std::get<0>( part );
+                a11y::semantic_node node;
+                node.id = "body:part:" + std::to_string( i );
+                node.role = "listitem";
+                node.actions = { "focus", "activate" };
+                node.label = std::get<1>( part ) ?
+                             std::get<1>( part )->name.translated() : parent->name.translated();
+                if( std::get<3>( part ) ) {
+                    node.value = a11y::limb_health_description( *u, parent );
+                    if( static_cast<int>( i ) == sel_part ) {
+                        for( const std::string &line : info_txt ) {
+                            if( line != "--" ) {
+                                node.detail += remove_color_tags( line ) + "\n";
+                            }
+                        }
+                    }
+                } else {
+                    node.value = _( "Body part absent." );
+                }
+                if( !std::get<2>( part )->nested_graph.is_null() ) {
+                    node.detail += "\n" + std::string( _( "Open detailed body-part view." ) );
+                }
+                node.selected = static_cast<int>( i ) == sel_part;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( partlist.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            reader.update( std::move( snapshot ) );
+        }
         ui_manager::redraw();
         std::string action = ctxt.handle_input();
         if( action == "QUIT" || ( action == "LEFT" && id != bodygraph_full_body ) ) {

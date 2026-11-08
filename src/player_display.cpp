@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "addiction.h"
+#include "a11y_body.h"
 #include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -62,6 +63,9 @@
 #include "weather.h"
 
 static const bionic_id bio_cqb( "bio_cqb" );
+static const efftype_id effect_a11y_bleed( "bleed" );
+static const efftype_id effect_a11y_infected( "infected" );
+static const efftype_id effect_a11y_bite( "bite" );
 
 static const skill_id skill_bashing( "bashing" );
 static const skill_id skill_cutting( "cutting" );
@@ -1578,6 +1582,40 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         }
         snapshot.nodes.push_back( std::move( node ) );
     }
+    // Readable health overview before navigating all the character tabs.
+    std::string quick = string_format( _( "Hunger: %s" ),
+                                      display::hunger_text_color( you ).first ) + ". " +
+                        string_format( _( "Thirst: %s" ),
+                                       display::thirst_text_color( you ).first ) + ". " +
+                        string_format( _( "Sleepiness: %s" ),
+                                       display::sleepiness_text_color( you ).first ) + ". " +
+                        string_format( _( "Pain: %s" ),
+                                       display::pain_text_color( you ).first ) + ". " +
+                        string_format( _( "Weariness: %s" ),
+                                       display::weariness_text_color( you ).first );
+    int warnings = 0;
+    for( const bodypart_id &part : you.get_all_body_parts( get_body_part_flags::sorted ) ) {
+        std::string condition;
+        if( you.has_effect( effect_a11y_infected, part ) ) {
+            condition = _( "Infected" );
+        } else if( you.has_effect( effect_a11y_bleed, part ) ) {
+            condition = _( "Bleeding" );
+        } else if( you.is_limb_broken( part ) ) {
+            condition = _( "Broken" );
+        } else if( you.has_effect( effect_a11y_bite, part ) ) {
+            condition = _( "Bitten" );
+        }
+        if( !condition.empty() ) {
+            quick += "\n" + string_format( _( "%1$s: %2$s. %3$s" ),
+                       body_part_name( part ), condition,
+                       a11y::limb_health_description( you, part ) );
+            ++warnings;
+        }
+    }
+    if( warnings == 0 ) {
+        quick += "\n" + std::string( _( "No urgent body-part warnings detected." ) );
+    }
+    a11y::append_document( snapshot, "pd:quick-health", _( "Quick health summary" ), quick );
     const auto stat_text = []( const std::string & name, const int current, const int base ) {
         return current == base ? string_format( _( "%1$s: %2$d" ), name, current )
                : string_format( _( "%1$s: %2$d (base %3$d)" ), name, current, base );

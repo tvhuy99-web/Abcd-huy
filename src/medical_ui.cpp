@@ -185,6 +185,11 @@ bool medical_ui::execute()
                 continue;
             }
             if( you->pick_wound_fix( bp ) ) {
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Treatment selected for %s. "
+                                         "Follow the game's treatment progress and result messages." ),
+                             body_part_name( bp ) );
+                }
                 return true;
             }
         }
@@ -775,6 +780,43 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
 {
     auto snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
     snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
+    // Urgent conditions are announced before the full limb list. A status
+    // estimate must never expose exact hit points or bypass treatment checks.
+    const auto urgency = [this]( const bodypart_id &part ) {
+        if( you->has_effect( effect_infected, part ) ) {
+            return 5;
+        }
+        if( you->has_effect( effect_bleed, part ) ) {
+            return 4;
+        }
+        if( you->is_limb_broken( part ) ) {
+            return 3;
+        }
+        if( you->has_effect( effect_bite, part ) ) {
+            return 2;
+        }
+        return you->has_wounds( part.id() ) ? 1 : 0;
+    };
+    std::vector<bodypart_id> urgent_first = you->get_all_body_parts( get_body_part_flags::sorted );
+    std::stable_sort( urgent_first.begin(), urgent_first.end(),
+    [&]( const bodypart_id &a, const bodypart_id &b ) {
+        return urgency( a ) > urgency( b );
+    } );
+    int attention_count = 0;
+    for( const bodypart_id &part : urgent_first ) {
+        if( urgency( part ) == 0 ) {
+            break;
+        }
+        ++attention_count;
+        snapshot.summary += "\n" + string_format( _( "Needs attention: %1$s. %2$s" ),
+                            body_part_name( part ), a11y::limb_health_description( *you, part ) );
+    }
+    if( attention_count == 0 ) {
+        snapshot.summary += "\n" + std::string( _( "No reported wounds need attention." ) );
+    } else {
+        snapshot.summary += "\n" + std::string(
+                                _( "Select a limb to see treatments; inspecting alone does not treat it." ) );
+    }
     for( const auto &tab : { std::make_pair( "medical:tab:limbs", _( "Limbs" ) ),
                             std::make_pair( "medical:tab:summary", _( "Summary" ) ) } ) {
         a11y::semantic_node node;
@@ -796,12 +838,16 @@ a11y::semantic_snapshot medical_ui::reader_snapshot() const
                             { "condition", _( "Condition" ), "" },
                             { "flags", _( "Status" ), "" } };
     snapshot.tables.push_back( limbs_table );
-    const auto parts = you->get_all_body_parts( get_body_part_flags::sorted );
+    const auto &parts = urgent_first;
     for( std::size_t i = 0; i < parts.size(); ++i ) {
         const bodypart_id &part = parts[i];
         a11y::semantic_node node;
         node.id = "medical:limb:" + part.id().str();
         node.label = body_part_name( part );
+        const int priority = urgency( part );
+        if( priority >= 3 ) {
+            node.label = string_format( _( "Priority injury: %s" ), node.label );
+        }
         const std::string condition = a11y::limb_health_description( *you, part );
         node.value = condition;
         std::string flags;
