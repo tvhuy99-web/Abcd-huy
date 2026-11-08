@@ -37,12 +37,13 @@ class LoadProfileDetailsTest(unittest.TestCase):
         self.assertIn("detect_ms=", self.recipe)
 
     def test_mapgen_phases_and_bounded_slowest_group(self):
-        for stage in (
-            "oter_setup", "oter_parameters", "nested_setup",
-            "update_setup", "nested_parameters", "update_parameters",
-            "total"
-        ):
+        for stage in ("oter_setup", "oter_parameters", "total"):
             self.assertIn("step=" + stage, self.mapgen)
+        for stage in (
+            "nested_setup", "update_setup",
+            "nested_parameters", "update_parameters"
+        ):
+            self.assertIn('profile_groups( "' + stage + '"', self.mapgen)
         self.assertIn("slowest_group=", self.mapgen)
         self.assertIn("step=oter_setup_progress", self.mapgen)
         self.assertIn("functions=", self.mapgen)
