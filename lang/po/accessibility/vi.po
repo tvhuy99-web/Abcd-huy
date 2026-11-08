@@ -3395,7 +3395,7 @@ msgstr "Chọn một mục để tự đi đến đó. Game tránh ô nguy hiể
 msgid "Terrain or furniture"
 msgstr "Địa hình hoặc nội thất"
 
-, c-format
+#, c-format
 msgid "%1$d tiles away. %2$s."
 msgstr "Cách %1$d ô. %2$s."
 
@@ -3414,7 +3414,7 @@ msgstr "Chọn hướng nhìn lén. Nhìn lén sẽ tốn thời gian."
 msgid "Weather unknown"
 msgstr "Không biết thời tiết."
 
-, c-format
+#, c-format
 msgid "Weather: %s"
 msgstr "Thời tiết: %s"
 
