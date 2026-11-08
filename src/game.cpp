@@ -5,6 +5,9 @@
 #include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "map_memory.h"
+#if defined(__ANDROID__)
+#include "mapgen.h"
+#endif
 
 #include <algorithm>
 #include <bitset>
@@ -700,6 +703,8 @@ void game::setup( bool loading_saved_character )
 #endif
     a11y::replace_game_session();
 #if defined(__ANDROID__)
+    set_android_deferred_oter_mapgen_setup( loading_saved_character );
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_MAPGEN_LAZY enabled=" << loading_saved_character;
     // Requested Android accessibility fast path. Persist the enabled
     // setting even for installations that previously stored false.
     // Runtime JSON schema validation and load failures still throw.

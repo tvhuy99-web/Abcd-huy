@@ -3,6 +3,9 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#if defined(__ANDROID__)
+#include <chrono>
+#endif
 #include <cstdio>
 #include <iterator>
 #include <limits>
@@ -875,7 +878,8 @@ void Item_factory::register_cached_uses( const itype &obj )
     }
 }
 
-void Item_factory::finalize_post( itype &obj )
+void Item_factory::finalize_post( itype &obj,
+                                  const repair_materials_by_tool &materials_by_tool )
 {
     erase_if( obj.item_tags, [&]( const flag_id & f ) {
         if( !f.is_valid() ) {
@@ -917,24 +921,16 @@ void Item_factory::finalize_post( itype &obj )
         }
     }
 
-    // for each item iterate through potential repair tools
-    for( const auto &tool : repair_tools ) {
-
-        // check if item can be repaired with any of the actions?
-        for( const auto &act : repair_actions ) {
-            const use_function *func = find_template_list_const( tool )->get().get_use( act );
-            if( func == nullptr ) {
-                continue;
-            }
-
-            // tool has a possible repair action, check if the materials are compatible
-            const auto &opts = dynamic_cast<const repair_item_actor *>( func->get_actor_ptr() )->materials;
-            if( std::any_of( obj.repairs_with.begin(),
-            obj.repairs_with.end(), [&opts]( const material_id & m ) {
-            return opts.count( m ) > 0;
-            } ) ) {
-                obj.repair.insert( tool );
-            }
+    // A repair tool's supported materials depend on its use actor, not the
+    // target item. Build this lookup once for all items instead of repeatedly
+    // resolving actors for every item / tool / action combination.
+    for( const auto &tool_and_materials : materials_by_tool ) {
+        const auto &allowed = tool_and_materials.second;
+        if( std::any_of( obj.repairs_with.begin(), obj.repairs_with.end(),
+        [&allowed]( const material_id & material ) {
+        return allowed.count( material ) > 0;
+        } ) ) {
+            obj.repair.insert( tool_and_materials.first );
         }
     }
 
@@ -1610,6 +1606,9 @@ void Item_factory::finalize_post_armor( itype &obj )
 
 void Item_factory::finalize()
 {
+#if defined(__ANDROID__)
+    const auto finalize_started = std::chrono::steady_clock::now();
+#endif
 
     finalize_item_blacklist();
 
@@ -1621,15 +1620,42 @@ void Item_factory::finalize()
         register_cached_uses( e );
     }
 
-    for( const itype &e : item_factory.get_all() ) {
-        finalize_post( const_cast<itype &>( e ) );
+    repair_materials_by_tool materials_by_tool;
+    for( const itype_id &tool : repair_tools ) {
+        const itype &tool_template = find_template_list_const( tool )->get();
+        std::set<material_id> &allowed = materials_by_tool[tool];
+        for( const auto &act : repair_actions ) {
+            const use_function *func = tool_template.get_use( act );
+            if( func == nullptr ) {
+                continue;
+            }
+            const auto &opts = dynamic_cast<const repair_item_actor *>(
+                                   func->get_actor_ptr() )->materials;
+            allowed.insert( opts.begin(), opts.end() );
+        }
     }
+#if defined(__ANDROID__)
+    const auto repair_index_ready = std::chrono::steady_clock::now();
+#endif
+    for( const itype &e : item_factory.get_all() ) {
+        finalize_post( const_cast<itype &>( e ), materials_by_tool );
+    }
+#if defined(__ANDROID__)
+    const auto item_post_ready = std::chrono::steady_clock::now();
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=items repairs_index_ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  repair_index_ready - finalize_started ).count() <<
+                              " finalize_post_ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  item_post_ready - repair_index_ready ).count() <<
+                              " repair_tools=" << repair_tools.size();
+#endif
 
     // We may actually have some runtimes here - ones loaded from saved game
     // TODO: support for runtimes that repair
     for( auto &e : m_runtimes ) {
         finalize_pre( *e.second );
-        finalize_post( *e.second );
+        finalize_post( *e.second, materials_by_tool );
     }
 
     // for each item register all (non-obsolete) potential recipes

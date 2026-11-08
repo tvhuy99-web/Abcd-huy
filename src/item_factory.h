@@ -353,8 +353,9 @@ class Item_factory
         void finalize_pre( itype &obj );
         /** Registers the item as having repair actions (if it has any). */
         void register_cached_uses( const itype &obj );
+        using repair_materials_by_tool = std::map<itype_id, std::set<material_id>>;
         /** Applies part of finalization that depends on other items. */
-        void finalize_post( itype &obj );
+        void finalize_post( itype &obj, const repair_materials_by_tool &materials_by_tool );
 
         void finalize_post_armor( itype &obj );
 

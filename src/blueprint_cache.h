@@ -3,6 +3,7 @@
 #define CATA_SRC_BLUEPRINT_CACHE_H
 
 #if defined(__ANDROID__)
+#include <cstdint>
 #include <filesystem>
 #include <string>
 #include <vector>
@@ -15,6 +16,7 @@ void begin( const std::filesystem::path &file, const std::string &version,
             const std::vector<std::string> &mods,
             const std::filesystem::path &world_options );
 void record_source( const std::filesystem::path &file );
+void record_json_timing( std::uint64_t parse_us, std::uint64_t load_us );
 void finish_sources();
 const std::vector<build_reqs> *find( const std::string &recipe_id );
 void store( const std::string &recipe_id, std::vector<build_reqs> values );

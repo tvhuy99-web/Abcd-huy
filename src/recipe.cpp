@@ -87,6 +87,9 @@ struct cache_state {
     bool ready = false;
     bool dirty = false;
     std::size_t source_files = 0;
+    std::uint64_t hash_us = 0;
+    std::uint64_t json_parse_us = 0;
+    std::uint64_t json_load_us = 0;
     std::size_t hits = 0;
     std::size_t misses = 0;
 };
@@ -281,12 +284,22 @@ void clear()
     state() = cache_state{};
 }
 
+void record_json_timing( std::uint64_t parse_us, std::uint64_t load_us )
+{
+    cache_state &cache = state();
+    if( cache.active ) {
+        cache.json_parse_us += parse_us;
+        cache.json_load_us += load_us;
+    }
+}
+
 void record_source( const std::filesystem::path &file )
 {
     cache_state &cache = state();
     if( !cache.active || !cache.usable ) {
         return;
     }
+    const auto hash_started = std::chrono::steady_clock::now();
     mix_text( cache.signature, file.generic_string() );
     std::ifstream stream( file, std::ios::binary );
     if( !stream ) {
@@ -301,6 +314,8 @@ void record_source( const std::filesystem::path &file )
         cache.usable = false;
     }
     ++cache.source_files;
+    cache.hash_us += std::chrono::duration_cast<std::chrono::microseconds>(
+                         std::chrono::steady_clock::now() - hash_started ).count();
 }
 
 void begin( const std::filesystem::path &file, const std::string &version,
@@ -334,6 +349,11 @@ void finish_sources()
         return;
     }
     cache.ready = true;
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=json parse_ms=" <<
+                              cache.json_parse_us / 1000 << " load_ms=" <<
+                              cache.json_load_us / 1000 << " hash_ms=" <<
+                              cache.hash_us / 1000 << " source_files=" <<
+                              cache.source_files;
     if( !cache.usable ) {
         DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=bypass reason=source_unreadable";
         return;
