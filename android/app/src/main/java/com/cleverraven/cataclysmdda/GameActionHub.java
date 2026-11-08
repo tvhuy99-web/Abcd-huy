@@ -99,7 +99,7 @@ final class GameActionHub {
                     "butcher", "chat", "peek" },
             { "inventory", "advinv", "pickup", "pickup_all", "drop", "drop_adj",
                     "compare", "organize", "apply", "apply_wielded", "item_action_menu",
-                    "insert", "unload_container", "listitems", "listitems" },
+                    "insert", "unload_container", "listitems" },
             { "eat", "open_consume", "sleep", "wait", "medical", "bodystatus",
                     "workout", "apply", "player_data" },
             { "wear", "take_off", "wield", "sort_armor", "mend", "compare", "reload_item",

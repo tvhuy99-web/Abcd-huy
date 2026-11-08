@@ -3488,3 +3488,132 @@ msgstr "Tổng số món đã đánh dấu để nhặt: %d."
 #, c-format
 msgid "Available for processing: %1$d corpses, %2$d disassembly groups, %3$d cutting groups. Check each menu option for estimated time."
 msgstr "Có %1$d xác, %2$d nhóm đồ tháo dỡ, %3$d nhóm đồ cắt. Đọc từng lựa chọn để biết thời gian dự kiến."
+
+#, c-format
+msgid "Weight: %1$s. Volume: %2$s."
+msgstr "Trọng lượng: %1$s. Thể tích: %2$s."
+
+msgid "Currently wielded."
+msgstr "Đang cầm trên tay."
+
+msgid "Currently worn."
+msgstr "Đang mặc trên người."
+
+msgid "Favorite item."
+msgstr "Vật phẩm yêu thích."
+
+#, c-format
+msgid "Inventory shortcut: %c."
+msgstr "Phím tắt trong hành trang: %c."
+
+msgid "Select two items to compare. Each selected item is announced before the comparison opens."
+msgstr "Chọn hai món đồ để so sánh. Mỗi món được đọc trước khi hiện thông số so sánh."
+
+msgid "Choose items and quantities to put in the selected container. The game checks capacity before inserting."
+msgstr "Chọn đồ và số lượng để cất vào vật chứa. Game kiểm tra sức chứa trước khi cất."
+
+msgid "Choose items and quantities to drop. The chosen destination is announced before the drop activity begins."
+msgstr "Chọn đồ và số lượng để thả. Game đọc vị trí trước khi bắt đầu thả."
+
+#, c-format
+msgid "Items marked for insertion: %d."
+msgstr "Số món đánh dấu để cất: %d."
+
+#, c-format
+msgid "Items marked for dropping: %d."
+msgstr "Số món đánh dấu để thả: %d."
+
+msgid "Move the selected item from source to destination. First choose an amount; the game checks space and ownership."
+msgstr "Chuyển món đã chọn từ nguồn đến đích. Hãy chọn số lượng; game sẽ kiểm tra chỗ chứa và quyền sở hữu."
+
+msgid "Move one item from the source pane to the destination pane."
+msgstr "Chuyển một món từ nơi lấy đến nơi đặt."
+
+msgid "Move a stack or all selected items to the destination. The game checks whether each transfer is possible."
+msgstr "Chuyển nhóm đồ hoặc toàn bộ đồ đã chọn đến đích. Game sẽ kiểm tra từng lần chuyển."
+
+msgid "Switch source and destination panes without moving items."
+msgstr "Đổi nơi lấy và nơi đặt, không chuyển đồ."
+
+msgid "Close advanced inventory without starting another transfer."
+msgstr "Đóng quản lý hành trang nâng cao, không bắt đầu chuyển thêm đồ."
+
+#, c-format
+msgid "Transfer requested: %1$d of %2$s, from %3$s to %4$s."
+msgstr "Đã yêu cầu chuyển %1$d %2$s từ %3$s tới %4$s."
+
+msgid "Compare two items"
+msgstr "So sánh hai vật phẩm"
+
+#, c-format
+msgid "Comparing %1$s with %2$s."
+msgstr "Đang so sánh %1$s với %2$s."
+
+#, c-format
+msgid "First item: %s"
+msgstr "Vật phẩm thứ nhất: %s"
+
+#, c-format
+msgid "Second item: %s"
+msgstr "Vật phẩm thứ hai: %s"
+
+#, c-format
+msgid "Inventory shortcut cleared for %s."
+msgstr "Đã xóa phím tắt của %s."
+
+#, c-format
+msgid "Inventory shortcut for %1$s: %2$c."
+msgstr "Phím tắt của %1$s là %2$c."
+
+#, c-format
+msgid "Selected container: %s. Choose items and quantities to insert."
+msgstr "Đã chọn vật chứa: %s. Hãy chọn đồ và số lượng để cất."
+
+#, c-format
+msgid "Unloading %1$d item stacks onto %2$s. Favorite items and liquids remain in their containers."
+msgstr "Đang lấy %1$d nhóm đồ ra tại %2$s. Đồ yêu thích và chất lỏng được để lại trong vật chứa."
+
+#, c-format
+msgid "Dropping %1$d items at %2$s. The game will confirm each move when it completes."
+msgstr "Đã yêu cầu thả %1$d món tại %2$s. Game sẽ thông báo khi thực hiện xong."
+
+msgid "Browse carried items. Select an item for its original action menu. Browsing never uses or drops an item."
+msgstr "Duyệt đồ đang mang. Chọn một món để mở menu hành động. Chỉ duyệt sẽ không dùng hay thả đồ."
+
+msgid "Transfer items between a source and destination. Review both panes and the amount before moving."
+msgstr "Chuyển đồ giữa nơi lấy và nơi đặt. Xem kỹ hai nơi và số lượng trước khi chuyển."
+
+msgid "Choose items and amounts, then choose or confirm the destination. Only the game activity moves them."
+msgstr "Chọn đồ và số lượng, rồi chọn hoặc xác nhận nơi đặt. Chỉ hành động game mới chuyển đồ."
+
+msgid "Choose two items. Each side will be read separately with its full item statistics."
+msgstr "Chọn hai món đồ. Từng bên được đọc riêng với đầy đủ thông số."
+
+msgid "Assign or clear inventory shortcut letters. This does not move items."
+msgstr "Đặt hoặc xóa phím tắt của đồ trong hành trang. Lệnh này không chuyển đồ."
+
+msgid "Use a selected or wielded item. Its effects and resource costs depend on that item."
+msgstr "Dùng món đã chọn hoặc đang cầm. Tác dụng và tài nguyên tiêu hao tùy vật phẩm."
+
+msgid "Browse available item actions, with their original requirements and disabled choices."
+msgstr "Duyệt hành động của vật phẩm, có thông tin điều kiện và những lựa chọn không khả dụng."
+
+msgid "Select a container and items to put inside. The game checks capacity before inserting."
+msgstr "Chọn vật chứa và đồ cần cất. Game kiểm tra sức chứa trước khi cất."
+
+msgid "Take eligible contents out of containers and drop them at a chosen nearby tile."
+msgstr "Lấy những món phù hợp ra khỏi vật chứa và thả xuống ô gần đó."
+
+msgid "Choose a usable item action. The list announces each action, its item and any resource requirements before activation."
+msgstr "Chọn hành động vật phẩm. Danh sách đọc tên hành động, món đồ và điều kiện tài nguyên trước khi dùng."
+
+#, c-format
+msgid "Using %1$s: %2$s."
+msgstr "Đang sử dụng %1$s: %2$s."
+
+#, c-format
+msgid "Using held item: %s."
+msgstr "Đang dùng món đang cầm: %s."
+
+msgid "No item is currently held."
+msgstr "Hiện không cầm vật phẩm nào."

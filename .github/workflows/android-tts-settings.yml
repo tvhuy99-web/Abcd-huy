@@ -18,6 +18,10 @@ on:
       - 'src/action.cpp'
       - 'src/action.h'
       - 'src/inventory_ui.cpp'
+      - 'src/advanced_inv.cpp'
+      - 'src/game_inventory.cpp'
+      - 'src/item_action.cpp'
+      - 'tools/accessibility/test_hub_inventory.py'
       - 'tools/accessibility/test_world_gestures.py'
       - 'tools/accessibility/test_custom_gesture_bindings.py'
       - 'tools/accessibility/test_comprehensive_hub_restore.py'
@@ -67,6 +71,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_nearby_accessible_navigation.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_hub_movement.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_hub_interactions.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_hub_inventory.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_comprehensive_hub_restore.py -v

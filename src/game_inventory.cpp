@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
