@@ -29,7 +29,10 @@ class LoadingWorldSpeech(unittest.TestCase):
     def test_loading_is_spoken_without_snapshot_and_world_entry_is_explicit(self):
         reader = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         self.assertIn('message.startsWith("A11Y_LOADING:")', reader)
-        self.assertIn("(snapshot == null && !loading)", reader)
+        # World commands temporarily invalidate snapshots. New ordinary
+        # messages must be buffered, while loading announcements remain live.
+        self.assertIn("if (snapshot == null && !loading) {", reader)
+        self.assertIn("replayBufferedGameMessages();", reader)
         self.assertIn("lastLoadingStatus = spokenMessage;", reader)
         self.assertNotIn("loadingSilenceWarning", reader)
         self.assertIn("lastLoadingStatus = \"\";", reader)

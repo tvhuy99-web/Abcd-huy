@@ -1,6 +1,7 @@
 #include "init.h"
 
 #include <algorithm>
+#include <chrono>
 #include <cstddef>
 #include <filesystem>
 #include <memory>
@@ -941,8 +942,17 @@ void DynamicDataLoader::finalize_loaded_data()
     };
 
     for( const named_entry &e : entries ) {
+#if defined(__ANDROID__)
+        const auto started = std::chrono::steady_clock::now();
+#endif
         loading_ui::show( _( "Finalizing" ), e.first );
         e.second();
+#if defined(__ANDROID__)
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - started ).count();
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=finalize name=" << e.first <<
+                                  " ms=" << ms;
+#endif
     }
 
     if( !get_option<bool>( "SKIP_VERIFICATION" ) ) {
@@ -1053,7 +1063,16 @@ void DynamicDataLoader::check_consistency()
     };
 
     for( const named_entry &e : entries ) {
+#if defined(__ANDROID__)
+        const auto started = std::chrono::steady_clock::now();
+#endif
         loading_ui::show( _( "Verifying" ), e.first );
         e.second();
+#if defined(__ANDROID__)
+        const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                            std::chrono::steady_clock::now() - started ).count();
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_GROUP phase=verify name=" << e.first <<
+                                  " ms=" << ms;
+#endif
     }
 }

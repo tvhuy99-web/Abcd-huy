@@ -555,11 +555,24 @@ void game::load_world_modfiles()
     load_packs( _( "Loading files" ), mods );
 
     // Load additional mods from that world-specific folder
+#if defined(__ANDROID__)
+    const auto custom_started = std::chrono::steady_clock::now();
+#endif
     load_mod_data_from_dir( PATH_INFO::world_base_save_path() / "mods", "custom" );
     load_mod_interaction_data_from_dir( PATH_INFO::world_base_save_path() / "mods" /
                                         "mod_interactions", "custom" );
-
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=custom_world_mods ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - custom_started ).count();
+    const auto finalize_started = std::chrono::steady_clock::now();
+#endif
     DynamicDataLoader::get_instance().finalize_loaded_data();
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=finalize_and_verify ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - finalize_started ).count();
+#endif
 }
 
 void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs )
@@ -575,7 +588,16 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
             check_plural = check_plural_t::none;
         }
         cata_timer pack_timer( string_format( "%s pack load time:", mod->name() ) );
+#if defined(__ANDROID__)
+        const auto pack_started = std::chrono::steady_clock::now();
+#endif
         load_mod_data_from_dir( mod->path, mod.str() );
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=content id=" << mod.str() <<
+                                  " version=" << mod->version << " ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - pack_started ).count();
+#endif
     }
     cata_timer::print_stats();
 
@@ -584,7 +606,16 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
             continue;
         }
         loading_ui::show( msg, mod->name() );
+#if defined(__ANDROID__)
+        const auto interaction_started = std::chrono::steady_clock::now();
+#endif
         load_mod_interaction_data_from_dir( mod->path / "mod_interactions", mod.str() );
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=interaction id=" << mod.str() <<
+                                  " version=" << mod->version << " ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - interaction_started ).count();
+#endif
     }
 }
 

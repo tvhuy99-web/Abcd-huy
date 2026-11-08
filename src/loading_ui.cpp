@@ -58,6 +58,7 @@ struct ui_state {
 #if defined(__ANDROID__)
     std::string last_spoken_loading_status;
     std::chrono::steady_clock::time_point last_spoken_loading_at{};
+    std::chrono::steady_clock::time_point last_display_refresh_at{};
 #endif
 };
 } // namespace
@@ -306,6 +307,20 @@ void loading_ui::show( const std::string &context, const std::string &step )
     }
 #endif
     drain_renderer_recovery();
+#if defined(__ANDROID__)
+    // Finalization may advance dozens of tiny steps in one frame. Do not
+    // re-upload the same loading display for every step on mobile GPUs;
+    // still process input/cancellation and announce changed progress.
+    const auto render_at = std::chrono::steady_clock::now();
+    if( gLUI && gLUI->last_display_refresh_at.time_since_epoch().count() != 0 &&
+        render_at - gLUI->last_display_refresh_at < std::chrono::milliseconds( 120 ) ) {
+        inp_mngr.pump_events();
+        return;
+    }
+    if( gLUI ) {
+        gLUI->last_display_refresh_at = render_at;
+    }
+#endif
     ui_manager::redraw();
     refresh_display();
     inp_mngr.pump_events();

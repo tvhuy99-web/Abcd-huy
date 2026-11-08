@@ -110,6 +110,7 @@
 #include "field_type.h"
 #include "filesystem.h"
 #include "flag.h"
+#include "flexbuffer_cache.h"
 #include "flexbuffer_json-inl.h"
 #include "flexbuffer_json.h"
 #include "flood_fill.h"
@@ -691,8 +692,20 @@ void game::setup( bool loading_saved_character )
 {
 #if defined(__ANDROID__)
     const auto setup_started_at = std::chrono::steady_clock::now();
+    const flexbuffer_cache_stats cache_before = flexbuffer_cache::statistics();
 #endif
     a11y::replace_game_session();
+#if defined(__ANDROID__)
+    // Requested Android accessibility fast path. Persist the enabled
+    // setting even for installations that previously stored false.
+    // Runtime JSON schema validation and load failures still throw.
+    if( !get_option<bool>( "SKIP_VERIFICATION" ) ) {
+        get_options().get_option( "SKIP_VERIFICATION" ).setValue( std::string( "true" ) );
+        get_options().save();
+    }
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_FASTPATH skip_verification=" <<
+                              get_option<bool>( "SKIP_VERIFICATION" );
+#endif
     new_game = true;
     if( a11y::android::enabled() && !a11y::android::suspended() ) {
         a11y::android::announce( "A11Y_LOADING:" +
@@ -725,6 +738,11 @@ void game::setup( bool loading_saved_character )
     load_world_modfiles();
 #if defined(__ANDROID__)
     const auto mods_loaded_at = std::chrono::steady_clock::now();
+    const flexbuffer_cache_stats cache_after = flexbuffer_cache::statistics();
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_JSON_CACHE hits=" <<
+                              ( cache_after.hits - cache_before.hits ) <<
+                              " misses=" << ( cache_after.misses - cache_before.misses ) <<
+                              " writes=" << ( cache_after.writes - cache_before.writes );
     DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=" <<
                               ( loading_saved_character ? "resume" : "new" ) <<
                               " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(

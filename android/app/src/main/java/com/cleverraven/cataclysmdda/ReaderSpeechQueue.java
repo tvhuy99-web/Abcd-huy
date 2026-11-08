@@ -17,6 +17,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public static final int LONG_TEXT = 0;
     public static final int INFORMATION = 1;
     public static final int FOCUS = 2;
+    // Ordinary *new* game messages should interrupt stale focus speech;
+    // informational loading progress remains lower priority. The existing
+    // queue de-duplicates repeats and bounds the backlog.
+    public static final int GAME_EVENT = FOCUS;
     public static final int URGENT = 3;
 
     public interface Listener {

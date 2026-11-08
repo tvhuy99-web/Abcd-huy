@@ -18,6 +18,7 @@ import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.math.BigDecimal;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -40,6 +41,37 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final LinearLayout rows;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final LinkedHashMap<Long, Long> pendingIntentTimes = new LinkedHashMap<>();
+    // Native actions invalidate their snapshot briefly. Messages arriving in
+    // this gap must be read after the next snapshot instead of disappearing.
+    private static final int MAX_BUFFERED_MESSAGES = 8;
+    private final ArrayDeque<BufferedGameMessage> pendingGameMessages =
+            new ArrayDeque<>();
+
+    private static final class BufferedGameMessage {
+        final String text;
+        final int priority;
+        final long created;
+
+        BufferedGameMessage(String text, int priority) {
+            this.text = text;
+            this.priority = priority;
+            created = SystemClock.elapsedRealtime();
+        }
+    }
+
+    private void replayBufferedGameMessages() {
+        while (!pendingGameMessages.isEmpty()) {
+            BufferedGameMessage buffered = pendingGameMessages.removeFirst();
+            if (SystemClock.elapsedRealtime() - buffered.created < 15000) {
+                // The new screen context must be set before speech is sent:
+                // setContext() deliberately cancels the previous context.
+                announceGameMessage(buffered.text, buffered.priority);
+            } else {
+                SessionDebugLog.event("GAME_MESSAGE_DROPPED", "reason=expired"
+                        + " text=" + buffered.text);
+            }
+        }
+    }
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
     private ReaderSnapshot snapshot;
     // Loading screens do not publish semantic snapshots. Keep their last
@@ -205,6 +237,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // retry, so nothing queued or repeatable from this foreground
         // session can be spoken after a later resume.
         speech.clearForLifecycle();
+        pendingGameMessages.clear();
         documentReader.clear();
         snapshot = null;
         lastLoadingStatus = "";
@@ -227,6 +260,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // repeatable speech from before it must not resume playing
             // when focus returns; the republished snapshot speaks fresh.
             speech.clearForLifecycle();
+            pendingGameMessages.clear();
         }
         updateNativeState(false);
     }
@@ -458,7 +492,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 snapshot = next;
                 lastLoadingStatus = "";
-                        speech.setContext(next.contextKey());
+                speech.setContext(next.contextKey());
+                replayBufferedGameMessages();
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
                     readerLayerParent = "";
@@ -580,8 +615,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         handler.post(() -> {
-            if (closed || !foreground || !windowFocused || !preferences.isEnabled()
-                    || (snapshot == null && !loading)) {
+            if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
+                return;
+            }
+            if (snapshot == null && !loading) {
+                // An action intentionally publishes an inactive snapshot
+                // while the native command executes. In the supplied log,
+                // "Nothing to open here" arrived in exactly this gap.
+                if (pendingGameMessages.size() >= MAX_BUFFERED_MESSAGES) {
+                    BufferedGameMessage discarded = pendingGameMessages.removeFirst();
+                    SessionDebugLog.event("GAME_MESSAGE_DROPPED",
+                            "reason=overflow text=" + discarded.text);
+                }
+                pendingGameMessages.addLast(new BufferedGameMessage(message, priority));
+                SessionDebugLog.event("GAME_MESSAGE_BUFFERED", "text=" + message);
                 return;
             }
             if (loading) {
@@ -610,13 +657,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 speech.say("world-scan:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
                         spokenMessage, ReaderSpeechQueue.LONG_TEXT);
             } else {
-                // Information messages live 8 s in the queue (R21.1):
-                // long enough to be heard in a quiet moment, short
-                // enough that a burst of turn messages cannot still be
-                // describing an old turn half a minute later. Urgent
-                // warnings keep the standard 15 s life.
+                // Every new game message has priority over currently
+                // focused text: waiting behind navigation speech and an
+                // eight-second TTL previously silenced ordinary messages
+                // such as "Nothing to open here." Urgent events still win.
+                final int messageLevel = level == ReaderSpeechQueue.URGENT
+                        ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.GAME_EVENT;
+                SessionDebugLog.event("GAME_MESSAGE_POLICY", "priority=" + messageLevel
+                        + " text=" + message);
                 speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message,
-                        level, level == ReaderSpeechQueue.URGENT ? 15000 : 8000);
+                        messageLevel, 15000);
                 ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
             }
         });
@@ -1904,6 +1954,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         presentationEpoch++;
         root.cancelGesture();
         documentReader.clear();
+        pendingGameMessages.clear();
         cues.close();
         speech.close();
         if (accessibility != null) {
