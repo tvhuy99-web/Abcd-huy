@@ -1459,7 +1459,15 @@ static void wait()
         }
 
     } else {
-        // Waiting
+        // Announce the real option selected in the native waiting menu.
+        if( a11y::enabled() ) {
+            for( const uilist_entry &entry : as_m.entries ) {
+                if( entry.retval == as_m.ret && !entry.txt.empty() ) {
+                    add_msg( m_info, _( "Waiting: %s" ), entry.txt );
+                    break;
+                }
+            }
+        }
         activity_id actType;
         if( as_m.ret == 13 ) {
             player_character.assign_activity( wait_weather_activity_actor() );
@@ -2523,6 +2531,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_PAUSE:
             if( check_safe_mode_allowed() ) {
                 player_character.pause();
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Stood still for one turn." ) );
+                }
             }
             break;
 
@@ -2597,6 +2608,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     act = player_character.get_next_auto_move_direction();
                     const point_rel_ms dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( dest_next == point_rel_ms::zero ) {
+                        if( a11y::enabled() ) {
+                            add_msg( m_info, _( "No route in that direction." ) );
+                        }
                         add_msg_debug( debugmode::DF_ACTIVITY,
                                        "auto_move: get_next returned zero, aborting.  pos=(%d,%d)",
                                        player_character.pos_bub().x(), player_character.pos_bub().y() );
@@ -3085,6 +3099,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_TOGGLE_AUTO_TRAVEL_MODE:
             auto_travel_mode = !auto_travel_mode;
             add_msg( m_info, auto_travel_mode ? _( "Auto travel mode ON!" ) : _( "Auto travel mode OFF!" ) );
+            if( a11y::enabled() && auto_travel_mode ) {
+                add_msg( m_info, _( "Choose a direction to follow a path. No destination is selected." ) );
+            }
             break;
 
         case ACTION_TOGGLE_SAFEMODE:

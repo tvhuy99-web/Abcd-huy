@@ -15,6 +15,7 @@
 #include <utility>
 
 #include "a11y_outcome.h"
+#include "a11y_runtime.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar_action.h"
@@ -1330,7 +1331,12 @@ bool avatar::is_waiting_to_change_mode_mode()
 void avatar::set_desired_movement_mode( const move_mode_id &new_mode )
 {
     if( can_switch_to( new_mode ) ) {
-        add_msg( new_mode->prepare_message( get_steed_type() ) );
+        if( a11y::enabled() ) {
+            add_msg( _( "Selected movement: %s. Takes effect on your next action." ),
+                     new_mode->name() );
+        } else {
+            add_msg( new_mode->prepare_message( get_steed_type() ) );
+        }
         desired_move_mode = new_mode;
     } else {
         add_msg( new_mode->change_message( false, get_steed_type() ) );

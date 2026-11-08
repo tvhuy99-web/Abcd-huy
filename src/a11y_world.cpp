@@ -29,6 +29,7 @@
 #include "item.h"
 #include "map.h"
 #include "messages.h"
+#include "move_mode.h"
 #include "output.h"
 #include "options.h"
 #include "point.h"
@@ -825,7 +826,27 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     && !viewer.has_destination_activity()
                                     && !viewer.has_effect( effect_sleep );
     auto commands = command_snapshot( context, result.title );
-    for( auto &node : commands.nodes ) { result.nodes.push_back( std::move( node ) ); }
+    const std::string active_mode = viewer.current_movement_mode()->name();
+    const std::string chosen_mode = viewer.get_desired_move_mode()->name();
+    for( auto &node : commands.nodes ) {
+        if( node.id == "cycle_move" || node.id == "cycle_move_reverse" ||
+            node.id == "reset_move" || node.id == "open_movement" ||
+            node.id == "toggle_run" || node.id == "toggle_crouch" ||
+            node.id == "toggle_prone" ) {
+            // Queued mode and active stance are not necessarily the same.
+            node.label += string_format( _( " (selected: %s)" ), chosen_mode );
+            node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
+                                         active_mode, chosen_mode );
+        } else if( node.id == "auto_travel_mode" ) {
+            const bool auto_on = g && g->auto_travel_mode;
+            node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
+            node.detail = _( "When on, directional movement may follow a longer path. "
+                             "It does not select a destination." );
+        } else if( node.id == "pause" && !viewer.activity ) {
+            node.label = _( "Stand still for one turn" );
+        }
+        result.nodes.push_back( std::move( node ) );
+    }
     return result;
 }
 
