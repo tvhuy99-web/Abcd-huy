@@ -1607,7 +1607,7 @@ static void sleep()
                     display::sleepiness_text_color( player_character ).first,
                     display::thirst_text_color( player_character ).first,
                     display::pain_text_color( player_character ).first,
-                    here.name( p ) ) << std::endl;
+                    here.tername( p ) ) << std::endl;
         data << _( "Sleeping advances game time. You cannot issue ordinary commands until you wake; "
                    "scheduled events and world changes may occur." );
     }
@@ -2134,7 +2134,7 @@ static void cast_spell( bool recast_spell = false )
         // require a second confirmation; native cast checks still apply.
         add_msg( m_info, _( "Repeat %1$s. Cost %2$s %3$s. Time %4$s." ),
                  sp.name(), sp.energy_cost_string( player_character ),
-                 sp.energy_string(), moves_to_string( sp.casting_time( player_character ) ) );
+                 sp.energy_string(), to_string( time_duration::from_moves( sp.casting_time( player_character ) ) ) );
     }
     player_character.magic->last_spell = sp.id();
     player_character.cast_spell( sp, false, std::nullopt );

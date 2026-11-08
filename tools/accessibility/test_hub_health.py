@@ -61,7 +61,7 @@ class HealthHubTest(unittest.TestCase):
 
     def test_sleep_and_wait_feedback_only_on_real_actions(self):
         self.assertIn("Before sleep. Sleepiness:", self.handle)
-        self.assertIn("here.name( p )", self.handle)
+        self.assertIn("here.tername( p )", self.handle)
         self.assertIn("const bool was_asleep = has_effect( effect_sleep )",
                       self.avatar)
         self.assertIn("if( was_asleep && a11y::enabled() )", self.avatar)

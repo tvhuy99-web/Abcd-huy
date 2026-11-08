@@ -46,7 +46,7 @@ class CombatHubTest(unittest.TestCase):
         self.assertIn("No previous spell to repeat.", body)
         self.assertIn("sp.energy_cost_string(", body)
         self.assertIn("sp.casting_time(", body)
-        self.assertIn("moves_to_string(", body)
+        self.assertIn("time_duration::from_moves(", body)
         self.assertIn("player_character.cast_spell(", body)
         self.assertNotIn("query_yn(", body)
 

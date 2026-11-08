@@ -16,6 +16,7 @@
 #include "line.h"
 #include "input_context.h"
 #include "map.h"
+#include "messages.h"
 #include "options.h"
 #include "output.h"
 #include "overmap_ui.h"
