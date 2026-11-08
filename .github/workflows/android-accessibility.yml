@@ -1,12 +1,13 @@
 name: Android accessibility baseline and candidate
 
 on:
-  # Build the current integration branch into an installable, reproducibly
-  # signed ARM64 APK. Future pushes produce in-place updates with the same
+  # Build the accessibility integration and the character-cache test branch
+  # into reproducibly signed ARM64 APKs. Future pushes use the same
   # package name and the same checked-in accessibility testing certificate.
   push:
     branches:
       - integration/reader-vietnamese-20261107
+      - perf/character-blueprint-cache-20261108
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'
