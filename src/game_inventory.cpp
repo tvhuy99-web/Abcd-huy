@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "basecamp.h"
 #include "bionics.h"
@@ -2716,6 +2718,24 @@ cataimgui::bounds game_menus::inv::compare_item_menu::get_bounds()
 
 bool game_menus::inv::compare_item_menu::show()
 {
+    a11y::screen_scope reader( &ctxt, "item-compare",
+    [&]( const a11y::semantic_intent &intent ) {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    if( a11y::enabled() ) {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                                            ctxt, _( "Compare two items" ) );
+        snapshot.summary = string_format( _( "Comparing %1$s with %2$s." ),
+                                          first.tname(), second.tname() );
+        a11y::append_document( snapshot, "compare:first",
+                               string_format( _( "First item: %s" ), first.tname() ),
+                               format_item_info( first_info, second_info ) );
+        a11y::append_document( snapshot, "compare:second",
+                               string_format( _( "Second item: %s" ), second.tname() ),
+                               format_item_info( second_info, first_info ) );
+        snapshot.focus = "compare:first";
+        reader.update( std::move( snapshot ) );
+    }
     while( true ) {
         ui_manager::redraw();
 
@@ -2789,6 +2809,9 @@ void game_menus::inv::reassign_letter( item &it )
             break;
         } else if( invlet == ' ' ) {
             you.reassign_item( it, 0 );
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "Inventory shortcut cleared for %s." ), it.tname() );
+            }
             const std::string auto_setting = get_option<std::string>( "AUTO_INV_ASSIGN" );
             if( auto_setting == "enabled" || ( auto_setting == "favorites" && it.is_favorite ) ) {
                 popup_getkey(
@@ -2798,6 +2821,10 @@ void game_menus::inv::reassign_letter( item &it )
             break;
         } else if( inv_chars.valid( invlet ) ) {
             you.reassign_item( it, invlet );
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "Inventory shortcut for %1$s: %2$c." ),
+                         it.tname(), invlet );
+            }
             break;
         } else {
             popup( _( "Invalid inventory letter." ) );

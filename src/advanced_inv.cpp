@@ -1763,6 +1763,13 @@ bool advanced_inventory::action_move_item( advanced_inv_listitem *sitem,
         exit = true;
     }
 
+    // The activity may still be pending. Never claim it already completed.
+    if( exit && a11y::enabled() ) {
+        add_msg( m_info, _( "Transfer requested: %1$d of %2$s, from %3$s to %4$s." ),
+                 amount_to_move, it_copy.tname(),
+                 remove_color_tags( squares[srcarea].name ),
+                 remove_color_tags( squares[destarea].name ) );
+    }
     // if dest was AIM_ALL then we used query_destination and should undo that
     if( restore_area ) {
         dpane.restore_area();
@@ -2033,6 +2040,26 @@ class advanced_inventory::reader_session
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context,
                                                  _( "Advanced inventory" ) );
             std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+            for( a11y::semantic_node &command : commands ) {
+                std::string effect;
+                if( command.id == "MOVE_VARIABLE_ITEM" ) {
+                    effect = _( "Move the selected item from source to destination. "
+                                "First choose an amount; the game checks space and ownership." );
+                } else if( command.id == "MOVE_SINGLE_ITEM" ) {
+                    effect = _( "Move one item from the source pane to the destination pane." );
+                } else if( command.id == "MOVE_ITEM_STACK" ||
+                           command.id == "MOVE_ALL_ITEMS" ) {
+                    effect = _( "Move a stack or all selected items to the destination. "
+                                "The game checks whether each transfer is possible." );
+                } else if( command.id == "TOGGLE_TAB" ) {
+                    effect = _( "Switch source and destination panes without moving items." );
+                } else if( command.id == "QUIT" ) {
+                    effect = _( "Close advanced inventory without starting another transfer." );
+                }
+                if( !effect.empty() ) {
+                    command.detail = effect + " " + command.detail;
+                }
+            }
             snapshot.nodes.clear();
             snapshot.summary = string_format( _( "Source: %1$s. Destination: %2$s." ),
                                               pane_area_name( owner.src ),

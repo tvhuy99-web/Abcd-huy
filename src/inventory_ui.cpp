@@ -3590,6 +3590,9 @@ class inventory_selector::reader_session
             const trade_preset *trade_pricing =
                 dynamic_cast<const trade_preset *>( &owner.preset );
             const bool pickup_mode = dynamic_cast<const pickup_selector *>( &owner ) != nullptr;
+            const bool drop_mode = dynamic_cast<const inventory_drop_selector *>( &owner ) != nullptr;
+            const bool insert_mode = dynamic_cast<const inventory_insert_selector *>( &owner ) != nullptr;
+            const bool compare_mode = dynamic_cast<const inventory_compare_selector *>( &owner ) != nullptr;
             if( dynamic_cast<const trade_selector *>( &owner ) != nullptr ) {
                 for( a11y::semantic_node &command : snapshot.nodes ) {
                     std::string effect;
@@ -3637,6 +3640,16 @@ class inventory_selector::reader_session
                 snapshot.summary += "\n" + std::string(
                     _( "Choose items and quantities, then confirm to pick them up. "
                        "Browsing never picks items up." ) );
+            } else if( compare_mode ) {
+                snapshot.summary += "\n" + std::string(
+                    _( "Select two items to compare. Each selected item is announced "
+                       "before the comparison opens." ) );
+            } else if( drop_mode ) {
+                snapshot.summary += "\n" + std::string( insert_mode ?
+                    _( "Choose items and quantities to put in the selected container. "
+                       "The game checks capacity before inserting." ) :
+                    _( "Choose items and quantities to drop. The chosen destination "
+                       "is announced before the drop activity begins." ) );
             }
             for( const std::string &line : owner.get_stats() ) {
                 snapshot.summary += "\n" + remove_color_tags( line );
@@ -3695,6 +3708,24 @@ class inventory_selector::reader_session
                                                std::to_string( entry->chosen_count ),
                                                std::to_string( entry->get_available_count() ) );
                     node.detail = location.describe( &owner.u );
+                    // Physical characteristics and equipment state for every
+                    // inventory screen, without changing its selection rules.
+                    node.detail += "\n" + string_format(
+                                       _( "Weight: %1$s. Volume: %2$s." ),
+                                       weight_to_string( location->weight() ),
+                                       vol_to_string( location->volume() ) );
+                    if( owner.u.is_wielding( *location ) ) {
+                        node.detail += "\n" + std::string( _( "Currently wielded." ) );
+                    } else if( owner.u.is_worn( *location ) ) {
+                        node.detail += "\n" + std::string( _( "Currently worn." ) );
+                    }
+                    if( location->is_favorite ) {
+                        node.detail += "\n" + std::string( _( "Favorite item." ) );
+                    }
+                    if( location->invlet != 0 ) {
+                        node.detail += "\n" + string_format(
+                                           _( "Inventory shortcut: %c." ), location->invlet );
+                    }
                     if( pickup_mode ) {
                         node.label += string_format( _( ", located: %s" ),
                                                     remove_color_tags( location.describe( &owner.u ) ) );
@@ -3793,13 +3824,15 @@ class inventory_selector::reader_session
                     published.push_back( { entry, location } );
                 }
             }
-            if( pickup_mode ) {
+            if( pickup_mode || drop_mode ) {
                 int total_selected = 0;
                 for( const published_row &row : published ) {
                     total_selected += row.entry->chosen_count;
                 }
                 snapshot.summary += "\n" + string_format(
-                                        _( "Total items marked for pickup: %d." ), total_selected );
+                    pickup_mode ? _( "Total items marked for pickup: %d." ) :
+                    insert_mode ? _( "Items marked for insertion: %d." ) :
+                    _( "Items marked for dropping: %d." ), total_selected );
             }
             // R09.2 tree (R02.1): a row's parent is the published row of its
             // parent_item(), matched by item_location identity across every
