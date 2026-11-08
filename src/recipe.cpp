@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <array>
 #include <cmath>
+#include <cstdint>
+#include <filesystem>
+#include <fstream>
+#include <limits>
 #include <initializer_list>
 #include <memory>
 #include <numeric>
@@ -11,6 +15,7 @@
 #include <sstream>
 #include <unordered_map>
 
+#include "blueprint_cache.h"
 #include "bonuses.h"
 #include "cached_options.h"
 #include "calendar.h"
@@ -56,6 +61,382 @@
 #include "units.h"
 #include "value_ptr.h"
 #include "visitable.h"
+
+#if defined(__ANDROID__)
+
+// Only raw, derived blueprint material requirements are cached. Never store
+// game objects, item instances, pointers, or the character save itself.
+namespace blueprint_cache
+{
+namespace
+{
+constexpr std::uint64_t fnv_seed = 14695981039346656037ULL;
+constexpr std::uint64_t fnv_prime = 1099511628211ULL;
+constexpr std::size_t max_file = 64 * 1024 * 1024;
+constexpr std::uint64_t max_recipes = 20000;
+constexpr std::uint64_t max_variants = 50000;
+constexpr std::uint64_t max_items = 2048;
+constexpr std::uint64_t max_text = 2048;
+
+struct cache_state {
+    std::filesystem::path path;
+    std::uint64_t signature = fnv_seed;
+    std::map<std::string, std::vector<build_reqs>> entries;
+    bool active = false;
+    bool usable = true;
+    bool ready = false;
+    bool dirty = false;
+    std::size_t source_files = 0;
+    std::size_t hits = 0;
+    std::size_t misses = 0;
+};
+
+cache_state &state()
+{
+    static cache_state cache;
+    return cache;
+}
+
+void mix( std::uint64_t &hash, const char *data, std::size_t size )
+{
+    for( std::size_t i = 0; i < size; ++i ) {
+        hash = ( hash ^ static_cast<unsigned char>( data[i] ) ) * fnv_prime;
+    }
+}
+
+void mix_text( std::uint64_t &hash, const std::string &s )
+{
+    mix( hash, s.data(), s.size() );
+    const char separator = '\0';
+    mix( hash, &separator, 1 );
+}
+
+void put( std::string &data, std::uint64_t value, int length )
+{
+    for( int i = 0; i < length; ++i, value >>= 8 ) {
+        data.push_back( static_cast<char>( value & 255 ) );
+    }
+}
+
+bool get( const std::string &data, std::size_t &offset,
+          std::size_t end, std::uint64_t &value, int length )
+{
+    if( offset > end || static_cast<std::size_t>( length ) > end - offset ) {
+        return false;
+    }
+    value = 0;
+    for( int i = 0; i < length; ++i ) {
+        value |= static_cast<std::uint64_t>(
+                     static_cast<unsigned char>( data[offset++] ) ) << ( 8 * i );
+    }
+    return true;
+}
+
+void put_string( std::string &data, const std::string &s )
+{
+    put( data, s.size(), 4 );
+    data += s;
+}
+
+bool get_string( const std::string &data, std::size_t &offset, std::size_t end,
+                 std::string &s )
+{
+    std::uint64_t size = 0;
+    if( !get( data, offset, end, size, 4 ) || size > max_text ||
+        offset > end || size > end - offset ) {
+        return false;
+    }
+    s.assign( data, offset, static_cast<std::size_t>( size ) );
+    offset += static_cast<std::size_t>( size );
+    return true;
+}
+
+bool decode( const std::string &data, std::uint64_t signature,
+             std::map<std::string, std::vector<build_reqs>> &output )
+{
+    if( data.size() < 5 + 4 + 8 + 4 + 8 || data.compare( 0, 5, "CBPC1" ) ) {
+        return false;
+    }
+    const std::size_t end = data.size() - 8;
+    std::size_t tail = end;
+    std::uint64_t recorded_checksum = 0;
+    if( !get( data, tail, data.size(), recorded_checksum, 8 ) ) {
+        return false;
+    }
+    std::uint64_t checksum = fnv_seed;
+    mix( checksum, data.data(), end );
+    if( recorded_checksum != checksum ) {
+        return false;
+    }
+    std::size_t at = 5;
+    std::uint64_t version = 0;
+    std::uint64_t recorded_signature = 0;
+    std::uint64_t recipes = 0;
+    if( !get( data, at, end, version, 4 ) || version != 1 ||
+        !get( data, at, end, recorded_signature, 8 ) ||
+        recorded_signature != signature ||
+        !get( data, at, end, recipes, 4 ) || recipes > max_recipes ) {
+        return false;
+    }
+    for( std::uint64_t i = 0; i < recipes; ++i ) {
+        std::string name;
+        std::uint64_t variants = 0;
+        if( !get_string( data, at, end, name ) || name.empty() ||
+            !get( data, at, end, variants, 4 ) || variants > max_variants ) {
+            return false;
+        }
+        std::vector<build_reqs> requirements;
+        requirements.reserve( static_cast<std::size_t>( variants ) );
+        for( std::uint64_t j = 0; j < variants; ++j ) {
+            build_reqs req;
+            std::uint64_t time = 0;
+            if( !get( data, at, end, time, 4 ) ||
+                time > static_cast<std::uint64_t>( std::numeric_limits<int>::max() ) ) {
+                return false;
+            }
+            req.time = static_cast<int>( time );
+            for( int kind = 0; kind < 2; ++kind ) {
+                std::uint64_t count = 0;
+                if( !get( data, at, end, count, 4 ) || count > max_items ) {
+                    return false;
+                }
+                for( std::uint64_t k = 0; k < count; ++k ) {
+                    std::string id;
+                    std::uint64_t number = 0;
+                    if( !get_string( data, at, end, id ) || id.empty() ||
+                        !get( data, at, end, number, 4 ) ||
+                        number > static_cast<std::uint64_t>( std::numeric_limits<int>::max() ) ) {
+                        return false;
+                    }
+                    if( kind == 0 ) {
+                        if( !req.skills.emplace( skill_id( id ), static_cast<int>( number ) ).second ) {
+                            return false;
+                        }
+                    } else if( !req.raw_reqs.emplace( requirement_id( id ),
+                                                     static_cast<int>( number ) ).second ) {
+                        return false;
+                    }
+                }
+            }
+            requirements.emplace_back( std::move( req ) );
+        }
+        if( !output.emplace( std::move( name ), std::move( requirements ) ).second ) {
+            return false;
+        }
+    }
+    return at == end;
+}
+
+bool encode( const cache_state &cache, std::string &data )
+{
+    if( cache.entries.size() > max_recipes ) {
+        return false;
+    }
+    data = "CBPC1";
+    put( data, 1, 4 );
+    put( data, cache.signature, 8 );
+    put( data, cache.entries.size(), 4 );
+    for( const auto &record : cache.entries ) {
+        if( record.first.empty() || record.first.size() > max_text ||
+            record.second.size() > max_variants ) {
+            return false;
+        }
+        put_string( data, record.first );
+        put( data, record.second.size(), 4 );
+        for( const build_reqs &req : record.second ) {
+            if( req.time < 0 || req.skills.size() > max_items || req.raw_reqs.size() > max_items ) {
+                return false;
+            }
+            put( data, req.time, 4 );
+            put( data, req.skills.size(), 4 );
+            for( const auto &p : req.skills ) {
+                if( p.second < 0 || p.first.str().size() > max_text ) {
+                    return false;
+                }
+                put_string( data, p.first.str() );
+                put( data, p.second, 4 );
+            }
+            put( data, req.raw_reqs.size(), 4 );
+            for( const auto &p : req.raw_reqs ) {
+                if( p.second < 0 || p.first.str().size() > max_text ) {
+                    return false;
+                }
+                put_string( data, p.first.str() );
+                put( data, p.second, 4 );
+            }
+            if( data.size() > max_file - 8 ) {
+                return false;
+            }
+        }
+    }
+    std::uint64_t checksum = fnv_seed;
+    mix( checksum, data.data(), data.size() );
+    put( data, checksum, 8 );
+    return data.size() <= max_file;
+}
+} // namespace
+
+void clear()
+{
+    state() = cache_state{};
+}
+
+void record_source( const std::filesystem::path &file )
+{
+    cache_state &cache = state();
+    if( !cache.active || !cache.usable ) {
+        return;
+    }
+    mix_text( cache.signature, file.generic_string() );
+    std::ifstream stream( file, std::ios::binary );
+    if( !stream ) {
+        cache.usable = false;
+        return;
+    }
+    std::array<char, 32768> chunk{};
+    while( stream.read( chunk.data(), chunk.size() ) || stream.gcount() > 0 ) {
+        mix( cache.signature, chunk.data(), static_cast<std::size_t>( stream.gcount() ) );
+    }
+    if( stream.bad() ) {
+        cache.usable = false;
+    }
+    ++cache.source_files;
+}
+
+void begin( const std::filesystem::path &file, const std::string &version,
+            const std::vector<std::string> &mods,
+            const std::filesystem::path &world_options )
+{
+    clear();
+    cache_state &cache = state();
+    cache.active = true;
+    cache.path = file;
+    mix_text( cache.signature, "character_blueprint_cache_v1" );
+    mix_text( cache.signature, version );
+    for( const std::string &mod : mods ) {
+        mix_text( cache.signature, mod );
+    }
+    std::error_code ec;
+    if( std::filesystem::exists( world_options, ec ) && !ec ) {
+        record_source( world_options );
+    } else {
+        mix_text( cache.signature, "no_world_options" );
+        if( ec ) {
+            cache.usable = false;
+        }
+    }
+}
+
+void finish_sources()
+{
+    cache_state &cache = state();
+    if( !cache.active || cache.ready ) {
+        return;
+    }
+    cache.ready = true;
+    if( !cache.usable ) {
+        DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=bypass reason=source_unreadable";
+        return;
+    }
+    std::ifstream stream( cache.path, std::ios::binary | std::ios::ate );
+    if( !stream ) {
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=miss reason=absent";
+        return;
+    }
+    const std::streamoff bytes = stream.tellg();
+    if( bytes <= 0 || bytes > static_cast<std::streamoff>( max_file ) ) {
+        DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=miss reason=invalid_size";
+        return;
+    }
+    std::string data( static_cast<std::size_t>( bytes ), '\0' );
+    stream.seekg( 0 );
+    if( !stream.read( data.data(), bytes ) ) {
+        DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=miss reason=read_failed";
+        return;
+    }
+    std::map<std::string, std::vector<build_reqs>> loaded;
+    if( !decode( data, cache.signature, loaded ) ) {
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=miss reason=stale_or_corrupt";
+        return;
+    }
+    cache.entries = std::move( loaded );
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=ready recipes=" <<
+                              cache.entries.size() << " sources=" << cache.source_files;
+}
+
+const std::vector<build_reqs> *find( const std::string &recipe_id )
+{
+    cache_state &cache = state();
+    if( !cache.active || !cache.ready || !cache.usable ) {
+        return nullptr;
+    }
+    auto it = cache.entries.find( recipe_id );
+    if( it == cache.entries.end() ) {
+        ++cache.misses;
+        return nullptr;
+    }
+    ++cache.hits;
+    return &it->second;
+}
+
+void store( const std::string &recipe_id, std::vector<build_reqs> values )
+{
+    cache_state &cache = state();
+    if( !cache.active || !cache.ready || !cache.usable ||
+        values.size() > max_variants ) {
+        return;
+    }
+    cache.entries[recipe_id] = std::move( values );
+    cache.dirty = true;
+}
+
+void persist()
+{
+    cache_state &cache = state();
+    if( !cache.active || !cache.ready || !cache.usable ) {
+        clear();
+        return;
+    }
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=summary hits=" <<
+                              cache.hits << " misses=" << cache.misses <<
+                              " recipes=" << cache.entries.size();
+    if( !cache.dirty ) {
+        clear();
+        return;
+    }
+    std::string bytes;
+    if( !encode( cache, bytes ) ) {
+        DebugLog( D_WARNING, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=not_written reason=limits";
+        clear();
+        return;
+    }
+    std::filesystem::path temp = cache.path;
+    temp += ".tmp";
+    bool ok = false;
+    {
+        std::ofstream stream( temp, std::ios::binary | std::ios::trunc );
+        if( stream ) {
+            stream.write( bytes.data(), bytes.size() );
+            stream.flush();
+            ok = stream.good();
+        }
+    }
+    std::error_code ec;
+    if( ok ) {
+        std::filesystem::rename( temp, cache.path, ec );
+        ok = !ec;
+    }
+    if( !ok ) {
+        std::filesystem::remove( temp, ec );
+    }
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_BLUEPRINT_CACHE status=" <<
+                              ( ok ? "written" : "write_failed" ) <<
+                              " bytes=" << bytes.size();
+    clear();
+}
+} // namespace blueprint_cache
+
+#endif // __ANDROID__
 
 static const itype_id itype_atomic_coffeepot( "atomic_coffeepot" );
 static const itype_id itype_hotplate( "hotplate" );
@@ -732,7 +1113,7 @@ void recipe_step::load( const JsonObject &jo, const std::string &recipe_name, in
 }
 
 static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
-    const update_mapgen_id &id,
+    const recipe_id &recipe_key, const update_mapgen_id &id,
     const std::map<std::string, std::map<std::string, translation>> &bp_params )
 {
     cata::value_ptr<parameterized_build_reqs> result = cata::make_value<parameterized_build_reqs>();
@@ -827,14 +1208,47 @@ static cata::value_ptr<parameterized_build_reqs> calculate_all_blueprint_reqs(
         }
     }
 
+#if defined(__ANDROID__)
+    std::size_t variants = 1;
+    for( const auto &options : option_lists ) {
+        if( options.empty() || variants > 50000 / options.size() ) {
+            variants = 0;
+            break;
+        }
+        variants *= options.size();
+    }
+    const std::vector<build_reqs> *cached = blueprint_cache::find( recipe_key.str() );
+    const bool reuse = cached && variants > 0 && cached->size() == variants;
+    std::vector<build_reqs> fresh;
+    if( !reuse && variants > 0 ) {
+        fresh.reserve( variants );
+    }
+    std::size_t index = 0;
+#else
+    static_cast<void>( recipe_key );
+#endif
     for( const std::vector<std::pair<std::string, cata_variant>> &chosen_params :
          cata::cartesian_product( option_lists ) ) {
-        result->reqs_by_parameters.emplace(
-            chosen_params,
-            get_build_reqs_for_furn_ter_ids(
-                get_changed_ids_from_update( id, mapgen_arguments{ chosen_params } ) ) );
+#if defined(__ANDROID__)
+        build_reqs req = reuse ? ( *cached )[index] :
+#else
+        build_reqs req =
+#endif
+                         get_build_reqs_for_furn_ter_ids(
+                             get_changed_ids_from_update( id, mapgen_arguments{ chosen_params } ) );
+#if defined(__ANDROID__)
+        if( !reuse && variants > 0 ) {
+            fresh.push_back( req );
+        }
+        ++index;
+#endif
+        result->reqs_by_parameters.emplace( chosen_params, std::move( req ) );
     }
-
+#if defined(__ANDROID__)
+    if( !reuse && variants > 0 && fresh.size() == variants ) {
+        blueprint_cache::store( recipe_key.str(), std::move( fresh ) );
+    }
+#endif
     return result;
 }
 
@@ -869,7 +1283,7 @@ static void finalize_nested_recipes( recipe &r )
 void recipe::finalize()
 {
     if( bp_autocalc ) {
-        bp_build_reqs = calculate_all_blueprint_reqs( blueprint, bp_parameter_names );
+        bp_build_reqs = calculate_all_blueprint_reqs( id, blueprint, bp_parameter_names );
     } else if( test_mode && check_blueprint_needs ) {
         check_blueprint_requirements();
     }

@@ -27,6 +27,7 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "blueprint_cache.h"
 #include "cata_path.h"
 #include "cata_scope_helpers.h"
 #include "cata_utility.h"
@@ -1379,9 +1380,22 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     world_generator->save_last_world_info();
     world_generator->set_active_world( world );
 
+#if defined(__ANDROID__)
+    std::vector<std::string> cache_mod_ids;
+    for( const mod_id &mod : world->active_mod_order ) {
+        cache_mod_ids.push_back( mod.str() );
+    }
+    blueprint_cache::begin( ( world->folder_path() /
+                             ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
+                            getVersionString(), cache_mod_ids,
+                            ( world->folder_path() / PATH_INFO::worldoptions() ).get_unrelative_path() );
+#endif
     try {
         g->setup( true );
     } catch( const std::exception &err ) {
+#if defined(__ANDROID__)
+        blueprint_cache::clear();
+#endif
         debugmsg( "Error: %s", err.what() );
         if( a11y::enabled() ) {
             // R20.1: a failed load must speak and must offer a way back.
@@ -1402,6 +1416,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         debugmsg( "Error: %s", err.what() );
     }
     if( loaded ) {
+#if defined(__ANDROID__)
+        blueprint_cache::persist();
+#endif
         cleanup.cancel();
         if( a11y::android::enabled() && !a11y::android::suspended() ) {
             a11y::android::announce( "A11Y_LOADING:" +
@@ -1410,6 +1427,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         return true;
     }
 
+#if defined(__ANDROID__)
+    blueprint_cache::clear();
+#endif
     if( a11y::enabled() ) {
         // game::load fails silently (or through debugmsg) for a damaged,
         // missing or incompatible character save. Name the save, state
