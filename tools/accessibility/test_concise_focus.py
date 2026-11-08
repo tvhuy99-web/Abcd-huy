@@ -38,10 +38,13 @@ class ConciseFocusTest(unittest.TestCase):
 
     def test_screen_title_on_entry_and_full_details_remain_available(self):
         self.assertIn(
-            'feedback(next.title + ". " + nodeText(next.find(focus), false));',
+            'feedback(introduction + ". " + nodeText(next.find(focus), false));',
             self.reader,
         )
-        self.assertIn("feedback(nodeText(node, true));", self.reader)
+        self.assertIn('introduction += ". " + next.summary.trim();',
+                      self.reader)
+        self.assertIn("String information = nodeText(node, true);", self.reader)
+        self.assertIn("feedback(information);", self.reader)
 
     def test_editor_speaks_choice_and_position_only(self):
         body = self.editor.split("public void readCurrent() {", 1)[1].split(

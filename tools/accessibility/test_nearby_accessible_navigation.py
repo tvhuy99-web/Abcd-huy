@@ -40,7 +40,10 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
                       self.menu)
         self.assertIn("lhs.distance < rhs.distance", self.menu)
         self.assertIn('"nearby:target:"', self.menu)
-        self.assertIn("entry.distance, relative_words", self.menu)
+        # Spoken direction includes the only distance phrase, but the
+        # underlying distance still drives nearest-first sorting.
+        self.assertIn("node.value = relative_words( entry.relative );",
+                      self.menu)
 
     def test_page_without_shrinking_radius_or_snapshot_overflow(self):
         self.assertIn("constexpr std::size_t page_size = 80;", self.menu)
