@@ -6895,6 +6895,10 @@ void game::insert_item()
         return;
     }
 
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "Selected container: %s. Choose items and quantities to insert." ),
+                 item_loc->tname() );
+    }
     game_menus::inv::insert_items( item_loc );
 }
 
@@ -6905,13 +6909,35 @@ void game::unload_container( const std::optional<tripoint_bub_ms> &p )
         pnt = choose_adjacent( _( "Unload where?" ) );
     }
     if( pnt ) {
-        u.drop( game_menus::inv::unload_container(), *pnt );
+        const drop_locations chosen = game_menus::inv::unload_container();
+        if( !chosen.empty() ) {
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "Unloading %1$d item stacks onto %2$s. "
+                                     "Favorite items and liquids remain in their containers." ),
+                         static_cast<int>( chosen.size() ),
+                         a11y::describe_tile( a11y::observe_tile( *pnt ) ) );
+            }
+            u.drop( chosen, *pnt );
+        }
     }
 }
 
 void game::drop_in_direction( const tripoint_bub_ms &pnt )
 {
-    u.drop( game_menus::inv::multidrop( u ), pnt );
+    const drop_locations chosen = game_menus::inv::multidrop( u );
+    if( chosen.empty() ) {
+        return;
+    }
+    if( a11y::enabled() ) {
+        int total_count = 0;
+        for( const drop_location &entry : chosen ) {
+            total_count += entry.second;
+        }
+        add_msg( m_info, _( "Dropping %1$d items at %2$s. The game will confirm "
+                             "each move when it completes." ),
+                 total_count, a11y::describe_tile( a11y::observe_tile( pnt ) ) );
+    }
+    u.drop( chosen, pnt );
 }
 
 // Used to set up the first Hotkey in the display set

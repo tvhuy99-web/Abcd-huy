@@ -862,6 +862,33 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         } else if( node.id == "butcher" ) {
             node.detail = _( "Process corpses or disassemble items on your current tile. "
                              "Requirements and time depend on the selected work." );
+        } else if( node.id == "inventory" ) {
+            node.detail = _( "Browse carried items. Select an item for its original action "
+                             "menu. Browsing never uses or drops an item." );
+        } else if( node.id == "advinv" ) {
+            node.detail = _( "Transfer items between a source and destination. "
+                             "Review both panes and the amount before moving." );
+        } else if( node.id == "drop" || node.id == "drop_adj" ) {
+            node.detail = _( "Choose items and amounts, then choose or confirm the "
+                             "destination. Only the game activity moves them." );
+        } else if( node.id == "compare" ) {
+            node.detail = _( "Choose two items. Each side will be read separately "
+                             "with its full item statistics." );
+        } else if( node.id == "organize" ) {
+            node.detail = _( "Assign or clear inventory shortcut letters. "
+                             "This does not move items." );
+        } else if( node.id == "apply" || node.id == "apply_wielded" ) {
+            node.detail = _( "Use a selected or wielded item. Its effects and "
+                             "resource costs depend on that item." );
+        } else if( node.id == "item_action_menu" ) {
+            node.detail = _( "Browse available item actions, with their original "
+                             "requirements and disabled choices." );
+        } else if( node.id == "insert" ) {
+            node.detail = _( "Select a container and items to put inside. "
+                             "The game checks capacity before inserting." );
+        } else if( node.id == "unload_container" ) {
+            node.detail = _( "Take eligible contents out of containers and drop "
+                             "them at a chosen nearby tile." );
         } else if( node.id == "pause" && !viewer.activity ) {
             node.label = _( "Stand still for one turn" );
         }

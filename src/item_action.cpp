@@ -12,6 +12,8 @@
 #include <utility>
 
 #include "avatar.h"
+#include "a11y_runtime.h"
+#include "messages.h"
 #include "character.h"
 #include "clone_ptr.h"
 #include "coordinates.h"
@@ -302,7 +304,10 @@ void game::item_action_menu( item_location loc )
 
     uilist kmenu;
     kmenu.desc_enabled = true;
-    kmenu.text = _( "Execute which action?" );
+    kmenu.text = a11y::enabled() ?
+                 _( "Choose a usable item action. The list announces each action, "
+                    "its item and any resource requirements before activation." ) :
+                 _( "Execute which action?" );
     kmenu.input_category = "ITEM_ACTIONS";
     input_context ctxt( "ITEM_ACTIONS", keyboard_mode::keycode );
     for( const std::pair<const item_action_id, item_action> &id : item_actions ) {
@@ -389,7 +394,9 @@ void game::item_action_menu( item_location loc )
 
     const item_action_id action = std::get<0>( menu_items[kmenu.ret] );
     item *it = iactions[action];
-
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "Using %1$s: %2$s." ), it->tname(), std::get<1>( menu_items[kmenu.ret] ) );
+    }
     u.invoke_item( it, action );
 }
 

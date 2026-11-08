@@ -2912,6 +2912,12 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_USE_WIELDED:
+            if( a11y::enabled() ) {
+                const item_location wielded = player_character.get_wielded_item();
+                add_msg( m_info, wielded ?
+                         string_format( _( "Using held item: %s." ), wielded->tname() ) :
+                         _( "No item is currently held." ) );
+            }
             player_character.use_wielded();
             break;
 
