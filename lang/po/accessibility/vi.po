@@ -3344,3 +3344,35 @@ msgstr "Cài đặt âm thanh"
 msgctxt "Main Menu"
 msgid "<D|d>ebug Log"
 msgstr "<N|n>hật ký gỡ lỗi"
+
+msgid "Nearby objects, nearest first"
+msgstr "Danh sách xung quanh, từ gần đến xa"
+
+msgid "Select an entry to walk toward it. The game avoids dangerous tiles and reports unreachable targets."
+msgstr "Chọn một mục để tự đi đến đó. Game tránh ô nguy hiểm và báo nếu không có đường."
+
+msgid "Terrain or furniture"
+msgstr "Địa hình hoặc nội thất"
+
+, c-format
+msgid "%1$d tiles away. %2$s."
+msgstr "Cách %1$d ô. %2$s."
+
+msgid "Activate to begin safe automatic travel toward this location."
+msgstr "Kích hoạt để tự đi đến vị trí này theo đường an toàn."
+
+msgid "Already at or next to the selected location."
+msgstr "Bạn đã ở tại hoặc cạnh vị trí đã chọn."
+
+msgid "Nothing visible nearby."
+msgstr "Không thấy gì ở gần."
+
+msgid "Choose a direction to peek. Peeking costs time."
+msgstr "Chọn hướng nhìn lén. Nhìn lén sẽ tốn thời gian."
+
+msgid "Weather unknown"
+msgstr "Không biết thời tiết."
+
+, c-format
+msgid "Weather: %s"
+msgstr "Thời tiết: %s"

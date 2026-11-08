@@ -127,7 +127,8 @@ final class GameActionHub {
                                 Set<String> seen) {
         if (!seen.add(id)) { return; }
         ReaderSnapshot.Node node = snapshot.find(id);
-        if (node != null && (node.actions.contains("activate") || "document".equals(node.role))) {
+        if (node != null && (node.actions.contains("activate")
+                || "document".equals(node.role) || "world:here".equals(id))) {
             result.add(new Entry(node.label, id, EXECUTE, 0));
         }
     }

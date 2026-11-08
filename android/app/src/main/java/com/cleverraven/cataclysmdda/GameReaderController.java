@@ -1344,7 +1344,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openEditor(node);
             return;
         }
-        if ("document".equals(node.role)) {
+        if ("document".equals(node.role) || "world:here".equals(node.id)) {
             // Long documents are read in paragraphs with a resumable
             // session position (R04.4), not as one whole-text utterance.
             speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
@@ -1753,7 +1753,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             case GameActionHub.EXECUTE:
                 ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(item.node);
                 if (node == null || !node.enabled || (!node.actions.contains("activate")
-                        && !"document".equals(node.role))) {
+                        && !"document".equals(node.role)
+                        && !"world:here".equals(node.id))) {
                     feedback(node == null ? activity.getString(R.string.a11yReaderStale)
                             : nodeText(node, true));
                     return;

@@ -5830,7 +5830,72 @@ void game::peek()
 {
     map &here = get_map();
 
-    const std::optional<tripoint_rel_ms> p = choose_direction( _( "Peek where?" ), true );
+    std::optional<tripoint_rel_ms> p;
+#if defined(__ANDROID__)
+    if( a11y::enabled() ) {
+        // The stock direction popup is visual only. Publish explicit
+        // directions so the reader can select peeking without guesswork.
+        input_context direction_input( "PEEK_DIRECTION" );
+        direction_input.register_action( "ANY_INPUT" );
+        direction_input.register_action( "CONFIRM" );
+        direction_input.register_action( "QUIT" );
+        const std::vector<std::pair<std::string, tripoint_rel_ms>> directions = {
+            { _( "North" ), tripoint_rel_ms( 0, -1, 0 ) },
+            { _( "Northeast" ), tripoint_rel_ms( 1, -1, 0 ) },
+            { _( "East" ), tripoint_rel_ms( 1, 0, 0 ) },
+            { _( "Southeast" ), tripoint_rel_ms( 1, 1, 0 ) },
+            { _( "South" ), tripoint_rel_ms( 0, 1, 0 ) },
+            { _( "Southwest" ), tripoint_rel_ms( -1, 1, 0 ) },
+            { _( "West" ), tripoint_rel_ms( -1, 0, 0 ) },
+            { _( "Northwest" ), tripoint_rel_ms( -1, -1, 0 ) },
+            { _( "Above" ), tripoint_rel_ms( 0, 0, 1 ) },
+            { _( "Below" ), tripoint_rel_ms( 0, 0, -1 ) }
+        };
+        a11y::screen_scope direction_reader( &direction_input, "peek-direction",
+        [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            for( std::size_t i = 0; i < directions.size(); ++i ) {
+                if( intent.node == "peek:direction:" + std::to_string( i ) ) {
+                    p = directions[i].second;
+                    return std::string( "CONFIRM" );
+                }
+            }
+            return std::nullopt;
+        } );
+        a11y::semantic_snapshot directions_snapshot;
+        directions_snapshot.title = _( "Peek where?" );
+        directions_snapshot.summary = _( "Choose a direction to peek. Peeking costs time." );
+        directions_snapshot.focus = "peek:direction:0";
+        for( std::size_t i = 0; i < directions.size(); ++i ) {
+            a11y::semantic_node node;
+            node.id = "peek:direction:" + std::to_string( i );
+            node.label = directions[i].first;
+            node.role = "button";
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( directions.size() );
+            directions_snapshot.nodes.push_back( std::move( node ) );
+        }
+        direction_reader.update( std::move( directions_snapshot ) );
+        while( true ) {
+            const std::string action = direction_input.handle_input();
+            if( action == "QUIT" ) {
+                return;
+            }
+            if( action == "CONFIRM" && p ) {
+                break;
+            }
+        }
+    } else {
+        p = choose_direction( _( "Peek where?" ), true );
+    }
+#else
+    p = choose_direction( _( "Peek where?" ), true );
+#endif
     if( !p ) {
         return;
     }

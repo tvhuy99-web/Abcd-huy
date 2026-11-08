@@ -2299,6 +2299,21 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     current.role = "document";
     current.label = _( "Map cursor" );
     current.value = overmap_tile_description( cursor );
+    // Read the weather layer in words, with exactly the same line-of-sight
+    // rule as the visual map. A remote tile whose sky is unknown must never
+    // expose hidden weather information through accessibility.
+    if( uistate.overmap_visible_weather || uistate.overmap_debug_weather ) {
+        const avatar &viewer = get_avatar();
+        const bool debug_vision = viewer.has_trait( trait_DEBUG_NIGHTVISION );
+        const int sight = debug_vision ? 100 :
+                          viewer.overmap_modified_sight_range( g->light_level( viewer.posz() ) );
+        const bool weather_visible = uistate.overmap_debug_weather ||
+                                     viewer.overmap_los( cursor, sight * 2 );
+        current.value += weather_visible ?
+                         ". " + string_format( _( "Weather: %s" ),
+                                               overmap_ui::get_weather_at_point( cursor )->name.translated() ) :
+                         ". " + std::string( _( "Weather unknown" ) );
+    }
     current.detail = snapshot.summary;
     // Link the mission screen to the map (R13.4): the visual map marks the
     // active objective's target tile; the reader states it in words. The
