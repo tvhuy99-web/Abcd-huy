@@ -1067,11 +1067,24 @@ static void haul()
         default:
             break;
     }
+    if( a11y::enabled() && menu.ret >= 0 && menu.ret != 9 ) {
+        add_msg( m_info, _( "Hauling: %1$s. Items: %2$d. Autohaul: %3$s." ),
+                 player_character.is_hauling() ? _( "on" ) : _( "off" ),
+                 static_cast<int>( player_character.haul_list.size() ),
+                 player_character.is_autohauling() ? _( "on" ) : _( "off" ) );
+    }
 }
 
 static void haul_toggle()
 {
-    get_avatar().toggle_hauling();
+    avatar &player = get_avatar();
+    player.toggle_hauling();
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "Hauling: %1$s. Items: %2$d. Autohaul: %3$s." ),
+                 player.is_hauling() ? _( "on" ) : _( "off" ),
+                 static_cast<int>( player.haul_list.size() ),
+                 player.is_autohauling() ? _( "on" ) : _( "off" ) );
+    }
 }
 
 static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
@@ -1102,7 +1115,15 @@ static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     avatar &player_character = get_avatar();
+    const std::string target_name = get_map().name( smashp );
     avatar::smash_result res = player_character.smash( smashp );
+    if( a11y::enabled() && res.did_smash ) {
+        if( res.success ) {
+            add_msg( m_info, _( "Destroyed %s." ), target_name );
+        } else if( res.can_smash ) {
+            add_msg( m_info, _( "Hit %s. It is still intact." ), target_name );
+        }
+    }
     if( res.did_smash && !res.success && res.can_smash &&
         query_yn( _( "Keep smashing until destroyed?" ) ) ) {
         player_character.assign_activity( bash_activity_actor( smashp ) );

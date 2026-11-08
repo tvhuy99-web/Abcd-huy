@@ -3417,3 +3417,74 @@ msgstr "Không biết thời tiết."
 , c-format
 msgid "Weather: %s"
 msgstr "Thời tiết: %s"
+
+msgid "No visible objects here can be examined or interacted with."
+msgstr "Không có đối tượng nhìn thấy nào ở gần để kiểm tra hoặc tương tác."
+
+msgid "Nearby objects. Choose an entry to interact; cancel to do nothing."
+msgstr "Các đối tượng ở gần. Chọn mục để tương tác, hoặc hủy để bỏ qua."
+
+msgid "Examine or pick up nearby objects"
+msgstr "Kiểm tra hoặc nhặt đồ ở gần"
+
+msgid "Examine nearby objects"
+msgstr "Kiểm tra các đối tượng ở gần"
+
+msgid "Interact with nearby objects"
+msgstr "Tương tác với các đối tượng ở gần"
+
+#, c-format
+msgid "Hauling: %1$s. Items: %2$d. Autohaul: %3$s."
+msgstr "Kéo đồ: %1$s. Số món: %2$d. Tự kéo: %3$s."
+
+#, c-format
+msgid "Destroyed %s."
+msgstr "Đã phá hủy %s."
+
+#, c-format
+msgid "Hit %s. It is still intact."
+msgstr "Đã đập %s nhưng vật vẫn chưa bị phá hủy."
+
+msgid "Hauling: on"
+msgstr "Đang kéo đồ: bật"
+
+msgid "Hauling: off"
+msgstr "Đang kéo đồ: tắt"
+
+#, c-format
+msgid "Items selected: %1$d. Autohaul: %2$s."
+msgstr "Đã chọn %1$d món để kéo. Tự kéo: %2$s."
+
+msgid "Opens a spoken list of visible, nearby objects. Browse freely; selecting an object uses the original game action."
+msgstr "Mở danh sách những đối tượng nhìn thấy ở gần. Duyệt không gây hành động, chọn mục mới thực hiện lệnh gốc."
+
+msgid "Choose a target, then listen for the result. The action may spend time or damage property."
+msgstr "Chọn mục tiêu rồi nghe kết quả. Hành động có thể tốn lượt hoặc làm hỏng tài sản."
+
+msgid "Choose one tile, mark the items and quantities, then confirm."
+msgstr "Chọn một ô, đánh dấu đồ và số lượng rồi xác nhận."
+
+msgid "Mark items from your tile and all eight neighboring tiles, then confirm. Browsing does not pick anything up."
+msgstr "Chọn đồ ở ô đang đứng và tám ô xung quanh rồi xác nhận. Chỉ duyệt danh sách không nhặt đồ."
+
+msgid "Process corpses or disassemble items on your current tile. Requirements and time depend on the selected work."
+msgstr "Xử lý xác hoặc tháo dỡ đồ trên ô hiện tại. Dụng cụ và thời gian phụ thuộc công việc."
+
+msgid "Choose items and quantities, then confirm to pick them up. Browsing never picks items up."
+msgstr "Chọn đồ và số lượng rồi xác nhận nhặt. Duyệt danh sách không nhặt đồ."
+
+#, c-format
+msgid ", located: %s"
+msgstr ", vị trí: %s"
+
+#, c-format
+msgid "Weight: %1$s grams. Volume: %2$s milliliters."
+msgstr "Trọng lượng: %1$s gam. Thể tích: %2$s mi-li-lít."
+
+#, c-format
+msgid "Total items marked for pickup: %d."
+msgstr "Tổng số món đã đánh dấu để nhặt: %d."
+
+#, c-format
+msgid "Available for processing: %1$d corpses, %2$d disassembly groups, %3$d cutting groups. Check each menu option for estimated time."
+msgstr "Có %1$d xác, %2$d nhóm đồ tháo dỡ, %3$d nhóm đồ cắt. Đọc từng lựa chọn để biết thời gian dự kiến."

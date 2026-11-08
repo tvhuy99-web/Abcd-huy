@@ -842,6 +842,26 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
             node.detail = _( "When on, directional movement may follow a longer path. "
                              "It does not select a destination." );
+        } else if( node.id == "haul" || node.id == "haul_toggle" ) {
+            node.label = viewer.is_hauling() ? _( "Hauling: on" ) : _( "Hauling: off" );
+            node.detail = string_format( _( "Items selected: %1$d. Autohaul: %2$s." ),
+                                          static_cast<int>( viewer.haul_list.size() ),
+                                          viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
+        } else if( node.id == "interact" || node.id == "examine" ||
+                   node.id == "examine_and_pickup" ) {
+            node.detail = _( "Opens a spoken list of visible, nearby objects. "
+                             "Browse freely; selecting an object uses the original game action." );
+        } else if( node.id == "open" || node.id == "close" || node.id == "smash" ) {
+            node.detail = _( "Choose a target, then listen for the result. "
+                             "The action may spend time or damage property." );
+        } else if( node.id == "pickup" ) {
+            node.detail = _( "Choose one tile, mark the items and quantities, then confirm." );
+        } else if( node.id == "pickup_all" ) {
+            node.detail = _( "Mark items from your tile and all eight neighboring tiles, "
+                             "then confirm. Browsing does not pick anything up." );
+        } else if( node.id == "butcher" ) {
+            node.detail = _( "Process corpses or disassemble items on your current tile. "
+                             "Requirements and time depend on the selected work." );
         } else if( node.id == "pause" && !viewer.activity ) {
             node.label = _( "Stand still for one turn" );
         }

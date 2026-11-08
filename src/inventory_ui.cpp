@@ -3589,6 +3589,7 @@ class inventory_selector::reader_session
             // effect first and keeps the key description after it.
             const trade_preset *trade_pricing =
                 dynamic_cast<const trade_preset *>( &owner.preset );
+            const bool pickup_mode = dynamic_cast<const pickup_selector *>( &owner ) != nullptr;
             if( dynamic_cast<const trade_selector *>( &owner ) != nullptr ) {
                 for( a11y::semantic_node &command : snapshot.nodes ) {
                     std::string effect;
@@ -3632,6 +3633,11 @@ class inventory_selector::reader_session
                 }
             }
             snapshot.summary = remove_color_tags( owner.get_accessibility_summary() );
+            if( pickup_mode ) {
+                snapshot.summary += "\n" + std::string(
+                    _( "Choose items and quantities, then confirm to pick them up. "
+                       "Browsing never picks items up." ) );
+            }
             for( const std::string &line : owner.get_stats() ) {
                 snapshot.summary += "\n" + remove_color_tags( line );
             }
@@ -3689,6 +3695,14 @@ class inventory_selector::reader_session
                                                std::to_string( entry->chosen_count ),
                                                std::to_string( entry->get_available_count() ) );
                     node.detail = location.describe( &owner.u );
+                    if( pickup_mode ) {
+                        node.label += string_format( _( ", located: %s" ),
+                                                    remove_color_tags( location.describe( &owner.u ) ) );
+                        node.detail += "\n" + string_format(
+                                           _( "Weight: %1$s grams. Volume: %2$s milliliters." ),
+                                           std::to_string( units::to_gram( location->weight() ) ),
+                                           std::to_string( units::to_milliliter( location->volume() ) ) );
+                    }
                     // R09.1: describe() names only the immediate container
                     // ("inside X"), so same-named stacks nested in different
                     // containers are told apart by this shortened chain of
@@ -3778,6 +3792,14 @@ class inventory_selector::reader_session
                     rows.push_back( std::move( node ) );
                     published.push_back( { entry, location } );
                 }
+            }
+            if( pickup_mode ) {
+                int total_selected = 0;
+                for( const published_row &row : published ) {
+                    total_selected += row.entry->chosen_count;
+                }
+                snapshot.summary += "\n" + string_format(
+                                        _( "Total items marked for pickup: %d." ), total_selected );
             }
             // R09.2 tree (R02.1): a row's parent is the published row of its
             // parent_item(), matched by item_location identity across every

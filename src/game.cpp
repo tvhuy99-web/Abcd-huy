@@ -7152,6 +7152,14 @@ void game::butcher( const std::optional<tripoint_bub_ms> &p )
     // Generate the indexed stacks so we can display them nicely
     const auto disassembly_stacks = generate_butcher_stack_display( disassembles );
     const auto salvage_stacks = generate_butcher_stack_display( salvageables );
+    if( a11y::enabled() ) {
+        add_msg( m_info,
+                 _( "Available for processing: %1$d corpses, %2$d disassembly groups, "
+                    "%3$d cutting groups. Check each menu option for estimated time." ),
+                 static_cast<int>( corpses.size() ),
+                 static_cast<int>( disassembly_stacks.size() ),
+                 static_cast<int>( salvage_stacks.size() ) );
+    }
     // Always ask before cutting up/disassembly, but not before butchery
     size_t ret = 0;
     if( !corpses.empty() || !disassembles.empty() || !salvageables.empty() ) {
