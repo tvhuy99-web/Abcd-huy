@@ -13,6 +13,7 @@
 #include "action.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "a11y_world.h"
 #include "activity_actor_definitions.h"
