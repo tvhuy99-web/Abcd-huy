@@ -28,17 +28,25 @@ class EquipmentHubTest(unittest.TestCase):
         self.assertIn("Fault: %s.", self.character)
 
     def test_reload_identifies_actual_selected_ammunition_and_completion(self):
-        reload = self.game.split("void game::reload( item_location &loc", 1)[1].split(
+        reload = self.game.split(
+            "void game::reload( item_location &loc", 1
+        )[1].split(
             "class reload_selector_preset", 1)[0]
         self.assertIn("opt.ammo->tname()", reload)
         self.assertIn("Preparing to reload", reload)
-        self.assertIn("reload_activity_actor( std::move( opt ), extra_moves )", reload)
+        self.assertIn(
+            "reload_activity_actor( std::move( opt ), extra_moves )", reload
+        )
         self.assertIn("else if( finished && a11y::enabled() )", self.activity)
         self.assertIn("Reload complete:", self.activity)
 
     def test_armor_reader_announces_real_reordering_only(self):
-        self.assertIn("const bool changed_layer = selected != leftListIndex;", self.armor)
-        self.assertIn("worn.splice( to, worn, tmp_worn[selected] );", self.armor)
+        self.assertIn(
+            "const bool changed_layer = selected != leftListIndex;", self.armor
+        )
+        self.assertIn(
+            "worn.splice( to, worn, tmp_worn[selected] );", self.armor
+        )
         self.assertIn("if( changed_layer && a11y::enabled() )", self.armor)
         self.assertIn("Armor layer changed:", self.armor)
 
