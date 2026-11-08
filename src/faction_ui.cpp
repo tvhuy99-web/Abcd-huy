@@ -35,6 +35,7 @@
 #include "line.h"
 #include "localized_comparator.h"
 #include "map.h"
+#include "messages.h"
 #include "mission_companion.h"
 #include "mod_manager.h"
 #include "mtype.h"
@@ -281,7 +282,13 @@ bool faction_ui::execute()
                         return true;
                     }
                 } else {
-                    popup( string_format( _( "You cannot contact %s right now." ), picked_follower->get_name() ) );
+                    if( a11y::enabled() ) {
+                        add_msg( m_info, _( "You cannot contact %s right now." ),
+                                 picked_follower->get_name() );
+                    } else {
+                        popup( string_format( _( "You cannot contact %s right now." ),
+                                              picked_follower->get_name() ) );
+                    }
                 }
             }
             if( selected_tab == tab_mode::TAB_MYFACTION && picked_camp != nullptr ) {
@@ -1010,6 +1017,9 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
         row.role = "listitem";
         row.label = remove_color_tags( label );
         row.detail = remove_color_tags( detail );
+        if( id.rfind( "faction:follower:", 0 ) == 0 ) {
+            row.value = row.detail;
+        }
         row.selected = selected;
         row.position = position;
         row.total = total;
@@ -1072,9 +1082,20 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
             const int selected_index = selected == followers.end() ? -1 :
                                        static_cast<int>( std::distance( followers.begin(), selected ) );
             for( std::size_t i = 0; i < followers.size(); ++i ) {
-                append_list_row( "faction:follower:" + std::to_string( i ), followers[i]->get_name(), "",
-                                 selected_index == static_cast<int>( i ), static_cast<int>( i + 1 ),
-                                 static_cast<int>( followers.size() ) );
+                const npc &follower = *followers[i];
+                std::string contact;
+                if( follower.has_companion_mission() ) {
+                    contact = _( "On a companion mission. Use Contact to recall." );
+                } else if( can_contact( get_avatar(), follower ) ) {
+                    contact = _( "Within interaction range. Activate to talk." );
+                } else if( can_radio_contact( get_avatar(), follower ) == radio_contact_result::YES ) {
+                    contact = _( "Within radio range. Activate to talk." );
+                } else {
+                    contact = _( "Out of contact range." );
+                }
+                append_list_row( "faction:follower:" + std::to_string( i ), follower.get_name(),
+                                 contact, selected_index == static_cast<int>( i ),
+                                 static_cast<int>( i + 1 ), static_cast<int>( followers.size() ) );
             }
             if( selected_index >= 0 ) {
                 npc &follower = *followers[selected_index];
@@ -1351,6 +1372,20 @@ std::optional<std::string> faction_ui::reader_intent( const a11y::semantic_inten
                 if( intent.node == "faction:follower:" + std::to_string( i ) ) {
                     picked_follower = followers[i];
                     s = cataimgui::scroll::begin;
+                    if( intent.action == "activate" ) {
+                        // Recall from a mission must be an explicit Contact action.
+                        if( picked_follower->has_companion_mission() ) {
+                            add_msg( m_info, _( "%s is on a companion mission. Use Contact to recall." ),
+                                     picked_follower->get_name() );
+                        } else if( can_contact( get_avatar(), *picked_follower ) ||
+                                   can_radio_contact( get_avatar(), *picked_follower ) ==
+                                   radio_contact_result::YES ) {
+                            return "CONFIRM";
+                        } else {
+                            add_msg( m_info, _( "Cannot contact %s now." ),
+                                     picked_follower->get_name() );
+                        }
+                    }
                     return "TIMEOUT";
                 }
             }
@@ -1440,14 +1475,30 @@ void faction_ui::draw_controls()
 void faction_ui::radio_the_faction()
 {
     if( !has_radio( get_avatar() ) ) {
-        popup( _( "You do not have a radio to contact anyone." ) );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "You do not have a radio to contact anyone." ) );
+        } else {
+            popup( _( "You do not have a radio to contact anyone." ) );
+        }
         return;
     }
 
     std::vector<npc *> applicable_repres = get_known_faction_radio_representative( picked_faction );
 
     if( applicable_repres.empty() ) {
-        popup( string_format( _( "You do not know anyone you can contact." ) ) );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "You do not know anyone you can contact." ) );
+        } else {
+            popup( string_format( _( "You do not know anyone you can contact." ) ) );
+        }
+        return;
+    }
+    if( a11y::enabled() && applicable_repres.size() == 1 &&
+        can_radio_contact( get_avatar(), *applicable_repres.front() ) ==
+        radio_contact_result::YES ) {
+        npc *contact = applicable_repres.front();
+        get_avatar().talk_to( get_talker_for( contact ), true, false, false,
+                              contact->chatbin.talk_radio );
         return;
     }
 

@@ -21,6 +21,7 @@
 #include "imgui/imgui.h"
 #include "input_context.h"
 #include "line.h"
+#include "messages.h"
 #include "mission.h"
 #include "npc.h"
 #include "faction.h"
@@ -394,7 +395,7 @@ a11y::semantic_snapshot mission_ui_impl::reader_snapshot( const input_context &c
             const units::length actual_distance = omt_distance * 24_meter;
             const std::string distance = string_format( _( "%1$d tiles (%2$s) %3$s" ),
                                            omt_distance, length_to_string_approx( actual_distance ),
-                                           direction_arrow( direction_from( pos.xy(), loc.xy() ) ) );
+                                           direction_name( direction_from( pos.xy(), loc.xy() ) ) );
             result += ". " + std::string( _( "Distance:" ) ) + " " + distance;
         }
         return result;
@@ -622,6 +623,11 @@ std::optional<std::string> mission_ui_impl::reader_intent( const a11y::semantic_
                 if( intent.node == mission_prefix + std::to_string( i ) ) {
                     selected_mission = static_cast<int>( i );
                     reader_selection_changed = true;
+                    if( intent.action == "activate" && selected_tab == mission_ui_tab_enum::ACTIVE ) {
+                        get_avatar().set_active_mission( *missions[i] );
+                        add_msg( m_info, _( "Now tracking mission: %s. Travel has not started." ),
+                                 missions[i]->name() );
+                    }
                     return "TIMEOUT";
                 }
             }
@@ -634,6 +640,11 @@ std::optional<std::string> mission_ui_impl::reader_intent( const a11y::semantic_
                 if( intent.node == poi_prefix + std::to_string( i ) ) {
                     selected_mission = static_cast<int>( i );
                     reader_selection_changed = true;
+                    if( intent.action == "activate" ) {
+                        get_avatar().set_active_point_of_interest( points[i] );
+                        add_msg( m_info, _( "Now tracking point of interest: %s. Travel has not started." ),
+                                 points[i].text );
+                    }
                     return "TIMEOUT";
                 }
             }

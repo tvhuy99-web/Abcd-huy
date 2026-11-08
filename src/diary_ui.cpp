@@ -16,6 +16,7 @@
 #include "cursesdef.h"
 #include "diary.h"
 #include "input_context.h"
+#include "messages.h"
 #include "output.h"
 #include "point.h"
 #include "scores_ui.h"
@@ -527,6 +528,9 @@ void diary::show_diary_ui( diary *c_diary )
             c_diary->new_page();
             selected[window_mode::PAGE_WIN] = c_diary->pages.size() - 1;
             currwin = window_mode::PAGE_WIN;
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "New diary page created. Select Edit entry text to write." ) );
+            }
         } else if( action == "VIEW_SCORES" ) {
             show_scores_ui();
         } else if( action == "DELETE PAGE" ) {
