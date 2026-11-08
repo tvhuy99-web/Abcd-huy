@@ -3617,3 +3617,92 @@ msgstr "Đang dùng món đang cầm: %s."
 
 msgid "No item is currently held."
 msgstr "Hiện không cầm vật phẩm nào."
+
+msgid "Body parts in a list. Select a part to hear its condition. Browsing never treats wounds."
+msgstr "Các bộ phận cơ thể được liệt kê. Chọn bộ phận để nghe tình trạng. Chỉ duyệt không chữa thương."
+
+msgid "Body part absent."
+msgstr "Không có bộ phận cơ thể này."
+
+msgid "Open detailed body-part view."
+msgstr "Mở thông tin chi tiết của bộ phận cơ thể."
+
+#, c-format
+msgid "Needs attention: %1$s. %2$s"
+msgstr "Cần chú ý: %1$s. %2$s"
+
+msgid "No reported wounds need attention."
+msgstr "Không có vết thương nào được ghi nhận cần chú ý."
+
+msgid "Select a limb to see treatments; inspecting alone does not treat it."
+msgstr "Chọn bộ phận để xem cách điều trị. Chỉ kiểm tra không tự chữa thương."
+
+#, c-format
+msgid "Priority injury: %s"
+msgstr "Thương tích ưu tiên: %s"
+
+#, c-format
+msgid "Treatment selected for %s. Follow the game's treatment progress and result messages."
+msgstr "Đã chọn điều trị cho %s. Theo dõi tiến trình và kết quả do game thông báo."
+
+msgid "Infected"
+msgstr "Nhiễm trùng"
+
+msgid "Bleeding"
+msgstr "Chảy máu"
+
+msgid "Broken"
+msgstr "Gãy xương"
+
+msgid "Bitten"
+msgstr "Bị cắn"
+
+#, c-format
+msgid "%1$s: %2$s. %3$s"
+msgstr "%1$s: %2$s. %3$s"
+
+msgid "No urgent body-part warnings detected."
+msgstr "Chưa phát hiện cảnh báo nghiêm trọng ở các bộ phận cơ thể."
+
+msgid "Quick health summary"
+msgstr "Tóm tắt sức khỏe nhanh"
+
+#, c-format
+msgid "Estimated energy: %d kilocalories."
+msgstr "Năng lượng ước tính: %d kilocalo."
+
+msgid "Spoiled item: consumption may be unsafe."
+msgstr "Vật phẩm đã hỏng, dùng có thể nguy hiểm."
+
+msgid "This item is nearing spoilage."
+msgstr "Vật phẩm này sắp hỏng."
+
+#, c-format
+msgid "Consumption warning: %s"
+msgstr "Cảnh báo khi dùng: %s"
+
+#, c-format
+msgid "Consumable entries in this list: %d. Review each item before consuming it."
+msgstr "Danh sách có %d lựa chọn ăn uống hoặc dùng thuốc. Hãy kiểm tra kỹ trước khi dùng."
+
+#, c-format
+msgid "Before sleep. Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. Location: %4$s."
+msgstr "Trước khi ngủ. Buồn ngủ: %1$s. Khát: %2$s. Đau: %3$s. Vị trí: %4$s."
+
+msgid "Light uses the least stamina; high intensity is the most tiring. Choose a level, then enter the number of minutes. Cancel either step to avoid exercising."
+msgstr "Tập nhẹ ít tốn sức nhất, cường độ cao mệt nhất. Chọn mức độ rồi nhập số phút. Hủy ở bất kỳ bước nào để không tập."
+
+#, c-format
+msgid "Workout started: intensity %1$d of 4, duration %2$d minutes. Watch for thirst and exhaustion."
+msgstr "Đã bắt đầu tập mức %1$d trên 4, trong %2$d phút. Chú ý khát và kiệt sức."
+
+#, c-format
+msgid "Awake at %1$s. Sleepiness: %2$s. Thirst: %3$s. Check your health summary for changes during sleep."
+msgstr "Đã tỉnh lúc %1$s. Buồn ngủ: %2$s. Khát: %3$s. Xem tóm tắt sức khỏe để biết thay đổi sau khi ngủ."
+
+#, c-format
+msgid "Waiting: about %s remaining."
+msgstr "Đang chờ, còn khoảng %s."
+
+msgid "Waiting interrupted. Check your surroundings."
+msgstr "Đã ngừng chờ giữa chừng. Hãy kiểm tra xung quanh."
