@@ -1512,32 +1512,58 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
     g->add_draw_callback( draw_preview );
 
     const tripoint_bub_ms &loc = player_character.pos_bub();
-    const std::optional<tripoint_bub_ms> pnt_ = choose_adjacent(
-                loc, _( "Construct where?" ),
-                /*allow_vertical=*/false, /*timeout=*/get_option<int>( "BLINK_SPEED" ),
-    [&]( const input_context & ctxt, const std::string & action ) {
-        if( action == "TIMEOUT" ) {
-            blink = !blink;
-        } else {
-            blink = true;
+    std::optional<tripoint_bub_ms> pnt_;
+    if( a11y::enabled() ) {
+        // The construction preview already evaluated engine legality.
+        // Let the reader choose a valid direction in one activation instead
+        // of exploring invalid tiles with a visual-only cursor.
+        if( valid.empty() ) {
+            add_msg( m_info, _( "No adjacent location is valid for this construction." ) );
+            return;
         }
-        if( action == "MOUSE_MOVE" ) {
-            const std::optional<tripoint_bub_ms> mouse_pos_raw = ctxt.get_coordinates(
-                        g->w_terrain, g->ter_view_p.raw().xy(), true );
-            if( mouse_pos_raw.has_value() && mouse_pos_raw->z() == loc.z()
-                && mouse_pos_raw->x() >= loc.x() - 1 && mouse_pos_raw->x() <= loc.x() + 1
-                && mouse_pos_raw->y() >= loc.y() - 1 && mouse_pos_raw->y() <= loc.y() + 1 ) {
-                mouse_pos = *mouse_pos_raw;
+        uilist directions;
+        directions.text = _( "Construct where?" );
+        std::vector<tripoint_bub_ms> valid_positions;
+        for( const auto &entry : valid ) {
+            const int index = static_cast<int>( valid_positions.size() );
+            valid_positions.push_back( entry.first );
+            directions.addentry( index, true, MENU_AUTOASSIGN, _( "%1$s: %2$s" ),
+                                 direction_name( direction_from( loc, entry.first ) ),
+                                 entry.second->group->name() );
+        }
+        directions.query();
+        if( directions.ret >= 0 &&
+            static_cast<std::size_t>( directions.ret ) < valid_positions.size() ) {
+            pnt_ = valid_positions[directions.ret];
+        }
+    } else {
+        pnt_ = choose_adjacent(
+                    loc, _( "Construct where?" ),
+                    /*allow_vertical=*/false, /*timeout=*/get_option<int>( "BLINK_SPEED" ),
+        [&]( const input_context & ctxt, const std::string & action ) {
+            if( action == "TIMEOUT" ) {
+                blink = !blink;
             } else {
-                mouse_pos = std::nullopt;
+                blink = true;
             }
+            if( action == "MOUSE_MOVE" ) {
+                const std::optional<tripoint_bub_ms> mouse_pos_raw = ctxt.get_coordinates(
+                            g->w_terrain, g->ter_view_p.raw().xy(), true );
+                if( mouse_pos_raw.has_value() && mouse_pos_raw->z() == loc.z()
+                    && mouse_pos_raw->x() >= loc.x() - 1 && mouse_pos_raw->x() <= loc.x() + 1
+                    && mouse_pos_raw->y() >= loc.y() - 1 && mouse_pos_raw->y() <= loc.y() + 1 ) {
+                    mouse_pos = *mouse_pos_raw;
+                } else {
+                    mouse_pos = std::nullopt;
+                }
+            }
+            g->invalidate_main_ui_adaptor();
+            return std::pair<bool, std::optional<tripoint_bub_ms>>( false, std::nullopt );
+        }, [&]( const tripoint_bub_ms &target ) {
+            return valid.count( target ) ? _( "This location is valid for the selected construction." ) :
+                   _( "This location is not valid for the selected construction." );
+        } );
         }
-        g->invalidate_main_ui_adaptor();
-        return std::pair<bool, std::optional<tripoint_bub_ms>>( false, std::nullopt );
-    }, [&]( const tripoint_bub_ms &target ) {
-        return valid.count( target ) ? _( "This location is valid for the selected construction." ) :
-               _( "This location is not valid for the selected construction." );
-    } );
     if( !pnt_ ) {
         return;
     }

@@ -816,7 +816,10 @@ void zone_manager_ui::display_zone_manager()
                 if( default_name.empty() ) {
                     default_name = mgr.get_name_from_type( id );
                 }
-                const auto maybe_name = mgr.query_name( default_name );
+                // Reader mode accepts the suggested name immediately;
+                // it remains editable in the existing zone detail menu.
+                const std::optional<std::string> maybe_name = a11y::enabled() ?
+                        std::optional<std::string>( default_name ) : mgr.query_name( default_name );
                 if( !maybe_name.has_value() ) {
                     break;
                 }
@@ -837,6 +840,9 @@ void zone_manager_ui::display_zone_manager()
                 mgr.add( name, id, get_player_character().get_faction()->id, false, true,
                          position->first, position->second, options );
 
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Zone created: %s. Save changes when leaving." ), name );
+                }
                 zones = get_zones();
                 active_index = zone_cnt - 1;
 
@@ -873,7 +879,10 @@ void zone_manager_ui::display_zone_manager()
                 if( default_name.empty() ) {
                     default_name = mgr.get_name_from_type( id );
                 }
-                const auto maybe_name = mgr.query_name( default_name );
+                // Reader mode accepts the suggested name immediately;
+                // it remains editable in the existing zone detail menu.
+                const std::optional<std::string> maybe_name = a11y::enabled() ?
+                        std::optional<std::string>( default_name ) : mgr.query_name( default_name );
                 if( !maybe_name.has_value() ) {
                     break;
                 }
@@ -888,6 +897,9 @@ void zone_manager_ui::display_zone_manager()
                 //add a zone that is relative to the avatar position
                 mgr.add( name, id, get_player_character().get_faction()->id, false, true,
                          position->first, position->second, options );
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Zone created: %s. Save changes when leaving." ), name );
+                }
                 zones = get_zones();
                 active_index = zone_cnt - 1;
 

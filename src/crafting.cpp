@@ -1,5 +1,7 @@
 #include "crafting.h"
 
+#include "a11y_runtime.h"
+
 #include <algorithm>
 #include <climits>
 #include <cmath>
@@ -452,8 +454,16 @@ void Character::craft( const std::optional<tripoint_bub_ms> &loc, const recipe_i
 void Character::recraft( const std::optional<tripoint_bub_ms> &loc )
 {
     if( lastrecipe.str().empty() ) {
-        popup( _( "Craft something first" ) );
+        if( is_avatar() && a11y::enabled() ) {
+            add_msg_if_player( m_info, _( "No previous recipe to repeat." ) );
+        } else {
+            popup( _( "Craft something first" ) );
+        }
     } else if( making_would_work( lastrecipe, last_batch ) ) {
+        if( is_avatar() && a11y::enabled() ) {
+            add_msg_if_player( m_info, _( "Repeat crafting %1$s, batch %2$d." ),
+                               lastrecipe->result_name(), last_batch );
+        }
         last_craft->execute( loc );
     }
 }
@@ -465,6 +475,10 @@ void Character::long_craft( const std::optional<tripoint_bub_ms> &loc,
     const auto [crafter, rec] = select_crafter_and_crafting_recipe( batch_size, goto_recipe, this );
     if( rec ) {
         if( crafting_allowed( *crafter, *rec ) ) {
+            if( crafter->is_avatar() && a11y::enabled() ) {
+                add_msg( m_info, _( "Continuous crafting: %1$s, batch %2$d. Stops when unable to continue." ),
+                         rec->result_name(), batch_size );
+            }
             crafter->make_all_craft( rec->ident(), batch_size, loc );
         }
     }
@@ -482,7 +496,11 @@ bool Character::making_would_work( const recipe_id &id_to_make, int batch_size )
             std::string buffer = _( "You can no longer make that craft!" );
             buffer += "\n";
             buffer += making.simple_requirements().list_missing();
-            popup( buffer, PF_NONE );
+            if( a11y::enabled() ) {
+                add_msg_if_player( m_info, "%s", buffer );
+            } else {
+                popup( buffer, PF_NONE );
+            }
         } else {
             add_msg_if_npc( _( "<npcname> can no longer make that craft!" ) );
         }

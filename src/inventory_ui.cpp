@@ -3773,7 +3773,15 @@ class inventory_selector::reader_session
                         }
                     }
                     for( std::size_t i = 1; i < cells.size(); ++i ) {
-                        if( trade_pricing != nullptr && i == 1 ) {
+                        if( owner.title == _( "Disassemble item" ) && i == 1 ) {
+                            node.detail += "\n" + string_format(
+                                               _( "Potential recovered materials: %s" ),
+                                               cells[i].empty() ? _( "None listed" ) :
+                                               remove_color_tags( cells[i] ) );
+                        } else if( owner.title == _( "Disassemble item" ) && i == 2 ) {
+                            node.detail += "\n" + string_format( _( "Disassembly time: %s" ),
+                                                                 remove_color_tags( cells[i] ) );
+                        } else if( trade_pricing != nullptr && i == 1 ) {
                             // R14.2: the trade preset's only appended cell
                             // is its "Unit price" column (index 1, right
                             // after the caption at index 0). The generic

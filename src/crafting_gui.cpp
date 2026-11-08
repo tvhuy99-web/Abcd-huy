@@ -2555,6 +2555,14 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         if( uistate.favorite_recipes.count( rec.ident() ) ) {
             node.value += ". " + std::string( _( "Favorite" ) );
         }
+        if( node.selected && !rec.is_nested() ) {
+            // One short estimate on the focused row. Full materials, skills,
+            // conditions and byproducts remain separate reader documents.
+            const int expected_turns = crafter->expected_time_to_craft( rec, manual_batch ) /
+                                       to_moves<int>( 1_turns );
+            node.value += ". " + string_format( _( "Estimated time: %s" ),
+                                               approx_craft_time( expected_turns ) );
+        }
         if( node.selected ) {
             snapshot.focus = node.id;
         }
