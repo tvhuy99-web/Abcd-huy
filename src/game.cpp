@@ -5315,11 +5315,47 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
             add_msg( _( "No vehicle controls found." ) );
             return;
         } else if( num_valid_controls > 1 ) {
-            const std::optional<tripoint_bub_ms> temp = choose_adjacent( _( "Control vehicle where?" ) );
-            if( !temp ) {
-                return;
+            if( a11y::enabled() ) {
+                std::vector<tripoint_bub_ms> candidate_positions;
+                uilist choices;
+                choices.title = _( "Choose vehicle controls" );
+                for( const tripoint_bub_ms &candidate : here.points_in_radius( u.pos_bub(), 1 ) ) {
+                    const optional_vpart_position found = here.veh_at( candidate );
+                    if( !found || !found->part_with_feature( "CONTROLS", true ) ) {
+                        continue;
+                    }
+                    // Do not narrate vehicle parts hidden from the player.
+                    if( a11y::observe_tile( candidate ).source !=
+                        a11y::observation_source::visible ) {
+                        continue;
+                    }
+                    candidate_positions.push_back( candidate );
+                    choices.addentry( static_cast<int>( candidate_positions.size() - 1 ), true,
+                                      MENU_AUTOASSIGN,
+                                      string_format( _( "%1$s, %2$s" ), found->vehicle().name,
+                                                     direction_name( direction_from( u.pos_bub(), candidate ) ) ) );
+                }
+                if( candidate_positions.empty() ) {
+                    add_msg( m_info, _( "No visible vehicle controls nearby." ) );
+                    return;
+                }
+                if( candidate_positions.size() == 1 ) {
+                    vehicle_position = candidate_positions.front();
+                } else {
+                    choices.query();
+                    if( choices.ret < 0 ||
+                        choices.ret >= static_cast<int>( candidate_positions.size() ) ) {
+                        return;
+                    }
+                    vehicle_position = candidate_positions[choices.ret];
+                }
+            } else {
+                const std::optional<tripoint_bub_ms> temp = choose_adjacent( _( "Control vehicle where?" ) );
+                if( !temp ) {
+                    return;
+                }
+                vehicle_position = *temp;
             }
-            vehicle_position = temp.value();
             const optional_vpart_position vp = here.veh_at( *vehicle_position );
             if( vp ) {
                 vehicle_controls = vp.value().part_with_feature( "CONTROLS", true );
@@ -9609,7 +9645,12 @@ std::optional<tripoint_bub_ms> game::point_selection_menu( const std::vector<tri
         const std::string &up_or_down = up ? _( "Climb up %s (%s)" ) : _( "Climb down %s (%s)" );
         // TODO: Inform player what is on said tile
         // But don't just print terrain name (in many cases it will be "open air")
-        pmenu.addentry( num++, true, MENU_AUTOASSIGN, string_format( up_or_down, dir_name, dir_arrow ) );
+        if( a11y::enabled() ) {
+            pmenu.addentry( num++, true, MENU_AUTOASSIGN,
+                            string_format( up ? _( "Climb up %s" ) : _( "Climb down %s" ), dir_name ) );
+        } else {
+            pmenu.addentry( num++, true, MENU_AUTOASSIGN, string_format( up_or_down, dir_name, dir_arrow ) );
+        }
     }
 
     pmenu.query();

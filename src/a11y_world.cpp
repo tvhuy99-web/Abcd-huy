@@ -842,6 +842,22 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
             node.detail = _( "When on, directional movement may follow a longer path. "
                              "It does not select a destination." );
+        } else if( node.id == "grab" ) {
+            if( viewer.get_grab_type() != object_type::NONE ) {
+                const tripoint_bub_ms grabbed = viewer.pos_bub() + viewer.grab_point;
+                std::string held_name;
+                if( const optional_vpart_position vp = get_map().veh_at( grabbed ) ) {
+                    held_name = vp->vehicle().name;
+                } else if( get_map().has_furn( grabbed ) ) {
+                    held_name = get_map().furnname( grabbed );
+                }
+                node.label = held_name.empty() ? _( "Release held object" ) :
+                             string_format( _( "Release %s" ), held_name );
+                node.detail = _( "Release the held object. No movement or extra confirmation." );
+            } else {
+                node.detail = _( "Choose a visible movable object by name and direction. "
+                                 "Selecting it grabs it immediately." );
+            }
         } else if( node.id == "haul" || node.id == "haul_toggle" ) {
             node.label = viewer.is_hauling() ? _( "Hauling: on" ) : _( "Hauling: off" );
             node.detail = string_format( _( "Items selected: %1$d. Autohaul: %2$s." ),

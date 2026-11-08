@@ -869,7 +869,45 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     std::optional<tripoint_bub_ms> grabp_ = p;
-    if( !grabp_ ) {
+    if( !grabp_ && a11y::enabled() ) {
+        std::vector<tripoint_bub_ms> candidates;
+        uilist menu;
+        menu.title = _( "Choose an object to grab" );
+        for( const tripoint_bub_ms &target : here.points_in_radius( you.pos_bub(), 1 ) ) {
+            if( target == you.pos_bub() ||
+                a11y::observe_tile( target ).source != a11y::observation_source::visible ) {
+                continue;
+            }
+            std::string name;
+            if( const optional_vpart_position vp = here.veh_at( target ) ) {
+                if( !vp.part_with_feature( VPFLAG_WALL_MOUNTED, false ) ) {
+                    name = vp->vehicle().name;
+                }
+            } else if( here.has_furn( target ) && here.furn( target ).obj().is_movable() ) {
+                name = here.furnname( target );
+            }
+            if( name.empty() ) {
+                continue;
+            }
+            candidates.push_back( target );
+            menu.addentry( static_cast<int>( candidates.size() - 1 ), true, MENU_AUTOASSIGN,
+                           string_format( _( "%1$s, %2$s" ), name,
+                                          direction_name( direction_from( you.pos_bub(), target ) ) ) );
+        }
+        if( candidates.empty() ) {
+            add_msg( m_info, _( "No visible movable furniture or vehicle nearby." ) );
+            return;
+        }
+        if( candidates.size() == 1 ) {
+            grabp_ = candidates.front();
+        } else {
+            menu.query();
+            if( menu.ret < 0 || menu.ret >= static_cast<int>( candidates.size() ) ) {
+                return;
+            }
+            grabp_ = candidates[menu.ret];
+        }
+    } else if( !grabp_ ) {
         grabp_ = choose_adjacent( _( "Grab where?" ) );
     }
     if( !grabp_ ) {
@@ -2745,6 +2783,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             }
             break;
         case ACTION_MOVE_DOWN: {
+            const int initial_level = player_character.posz();
             if( player_character.is_mounted() ) {
                 auto *mon = player_character.mounted_creature.get();
                 if( !mon->has_flag( mon_flag_RIDEABLE_MECH ) ) {
@@ -2791,6 +2830,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
                         // If player selected direction, climb down there, and exit from the whole ACTION_MOVE_DOWN case
                         climb_down( *pnt );
+                        if( a11y::enabled() && player_character.posz() != initial_level ) {
+                            add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+                        }
                         break;
                     }
                 }
@@ -2799,10 +2841,14 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 // In any case, attempt a descend
                 vertical_move( -1, u.has_flag( json_flag_PHASE_MOVEMENT ) );
             }
+            if( a11y::enabled() && player_character.posz() != initial_level ) {
+                add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+            }
             break;
         }
 
-        case ACTION_MOVE_UP:
+        case ACTION_MOVE_UP: {
+            const int initial_level = player_character.posz();
             if( player_character.is_mounted() ) {
                 auto *mon = player_character.mounted_creature.get();
                 if( !mon->has_flag( mon_flag_RIDEABLE_MECH ) ) {
@@ -2818,7 +2864,11 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     pldrive( tripoint_rel_ms::above );
                 }
             }
+            if( a11y::enabled() && player_character.posz() != initial_level ) {
+                add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+            }
             break;
+        }
 
         case ACTION_OPEN:
             // Preserve an object already chosen by the accessible interaction
@@ -3170,9 +3220,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
         case ACTION_TOGGLE_AUTO_TRAVEL_MODE:
             auto_travel_mode = !auto_travel_mode;
-            add_msg( m_info, auto_travel_mode ? _( "Auto travel mode ON!" ) : _( "Auto travel mode OFF!" ) );
-            if( a11y::enabled() && auto_travel_mode ) {
-                add_msg( m_info, _( "Choose a direction to follow a path. No destination is selected." ) );
+            if( a11y::enabled() ) {
+                add_msg( m_info, auto_travel_mode
+                         ? _( "Auto travel on. Choose a direction to find a path." )
+                         : _( "Auto travel off." ) );
+            } else {
+                add_msg( m_info, auto_travel_mode ? _( "Auto travel mode ON!" ) :
+                         _( "Auto travel mode OFF!" ) );
             }
             break;
 
