@@ -42,7 +42,9 @@ class HubMovementTest(unittest.TestCase):
         self.assertIn("viewer.current_movement_mode()->name()", self.world)
         self.assertIn("viewer.get_desired_move_mode()->name()", self.world)
         self.assertIn("Now: %1$s. Selected: %2$s.", self.world)
-        self.assertIn("Selected movement: %s. Takes effect on your next action.", self.avatar)
+        self.assertIn(
+            "Selected movement: %s. Takes effect on your next action.",
+            self.avatar)
         self.assertIn("action_outcome_kind::stance_changed", self.outcome)
 
     def test_auto_route_and_wait_feedback(self):
@@ -57,7 +59,8 @@ class HubMovementTest(unittest.TestCase):
 
     def test_direction_strings_localized(self):
         for filename in ("values", "values-vi"):
-            xml = (ROOT / f"android/app/src/main/res/{filename}/strings.xml").read_text("utf-8")
+            xml = (ROOT / "android/app/src/main/res" /
+                   filename / "strings.xml").read_text("utf-8")
             for key in ("a11yHubChooseDirection", "a11yHubMoveNorth",
                         "a11yHubMoveNortheast", "a11yHubMoveEast",
                         "a11yHubMoveSoutheast", "a11yHubMoveSouth",
