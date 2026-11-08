@@ -1,5 +1,4 @@
 """Behavioral structure checks for favorites and two-choice long-press actions."""
-import re
 import unittest
 from pathlib import Path
 
