@@ -1,0 +1,110 @@
+name: Android TTS settings validation
+
+on:
+  pull_request:
+    paths:
+      - 'android/app/src/main/**'
+      - 'android/app/src/androidTest/**'
+      - 'src/main_menu.cpp'
+      - 'src/game.cpp'
+      - 'src/bodygraph.cpp'
+      - 'src/medical_ui.cpp'
+      - 'src/player_display.cpp'
+      - 'src/game_inventory.cpp'
+      - 'src/activity_actor.cpp'
+      - 'src/activity_actor_definitions.h'
+      - 'src/avatar.cpp'
+      - 'src/loading_ui.cpp'
+      - 'src/worldfactory.cpp'
+      - 'src/options.cpp'
+      - 'src/a11y_android.cpp'
+      - 'src/a11y_android.h'
+      - 'src/a11y_world.h'
+      - 'src/a11y_world.cpp'
+      - 'src/handle_action.cpp'
+      - 'src/action.cpp'
+      - 'src/action.h'
+      - 'src/inventory_ui.cpp'
+      - 'src/advanced_inv.cpp'
+      - 'src/game_inventory.cpp'
+      - 'src/item_action.cpp'
+      - 'tools/accessibility/test_hub_inventory.py'
+      - 'tools/accessibility/test_hub_health.py'
+      - 'tools/accessibility/test_world_gestures.py'
+      - 'tools/accessibility/test_custom_gesture_bindings.py'
+      - 'tools/accessibility/test_comprehensive_hub_restore.py'
+      - 'tools/accessibility/test_session_debug_log.py'
+      - 'tools/accessibility/test_nested_menu_navigation.py'
+      - 'lang/po/accessibility/vi.po'
+      - 'tools/accessibility/test_tts_settings.py'
+      - 'tools/accessibility/test_sound_settings.py'
+      - 'tools/accessibility/test_external_screen_gestures.py'
+      - 'tools/accessibility/test_game_menu_gestures.py'
+      - 'tools/accessibility/test_multifinger_recovery.py'
+      - 'tools/accessibility/test_save_load_distinction.py'
+      - 'tools/accessibility/test_android_debug_prompt.py'
+      - 'tools/accessibility/test_quiet_world_gestures.py'
+      - 'tools/accessibility/test_otopack_on_demand.py'
+      - 'android/app/src/main/java/com/cleverraven/cataclysmdda/OptionalSoundpackInstaller.java'
+      - 'tools/accessibility/test_loading_world_speech.py'
+      - 'tools/accessibility/test_recent_messages_and_load_timing.py'
+      - 'tools/accessibility/test_fastload_immediate_announcements.py'
+      - 'tools/accessibility/test_nearby_accessible_navigation.py'
+      - 'tools/accessibility/test_hub_movement.py'
+      - 'tools/accessibility/test_hub_interactions.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  tts-source:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - run: python3 -m unittest discover -s tools/accessibility -p test_tts_settings.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_sound_settings.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_external_screen_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_game_menu_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_multifinger_recovery.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_save_load_distinction.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_android_debug_prompt.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_quiet_world_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_otopack_on_demand.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_loading_world_speech.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_recent_messages_and_load_timing.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_fastload_immediate_announcements.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_nearby_accessible_navigation.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_hub_movement.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_hub_interactions.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_hub_inventory.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_hub_health.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_comprehensive_hub_restore.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_session_debug_log.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_nested_menu_navigation.py -v
+  android-java:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
+          log-accepted-android-sdk-licenses: false
+      - name: Compile app and Android instrumentation test Java
+        run: |
+          bash android/gradlew -p android --no-daemon --console=plain \
+            -PEXCLUDE_NATIVE_LIBS -Plocalize=false \
+            -Pabi_arm_32=false -Pabi_arm_64=false -Pabi_x86_64=true \
+            compileAccessibilityDebugJavaWithJavac \
+            compileAccessibilityDebugAndroidTestJavaWithJavac

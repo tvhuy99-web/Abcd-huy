@@ -1,0 +1,72 @@
+[
+  {
+    "path": "android/app/src/main/res/raw/a11y_cue_blocked.wav",
+    "bytes": 8420,
+    "sha256": "95abab940d640ea854d37c98308dc87886311186051c6e45f0ccdd73cd57fa03",
+    "duration_seconds": 0.189932,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_cue_danger.wav",
+    "bytes": 9744,
+    "sha256": "21fc8d72d9c6063e46c96da165abb1a81eef5ea5c6ea05c30ebe01ff81939514",
+    "duration_seconds": 0.219955,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_cue_done.wav",
+    "bytes": 10626,
+    "sha256": "bc17e20f3dcfa20876f2f8bfa0a9fcc3105909b6b175b8b45c7598a227bca76f",
+    "duration_seconds": 0.239955,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_cue_pickup.wav",
+    "bytes": 3572,
+    "sha256": "30bc0ac5395d39363a7055636055ed4682548cbf0a2ef488b0d30ea15495d473",
+    "duration_seconds": 0.08,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_install_failed.mp3",
+    "bytes": 97402,
+    "sha256": "dbdfab88d88c33e161dadafb5f37a5e7c7e3a64f2536c9830981b0112adfe44a",
+    "duration_seconds": 16.195918,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_no_space.mp3",
+    "bytes": 99910,
+    "sha256": "3b72055139527d2da1e5aeada49eebe597660927dec723b78b6b461fdd8d87ec",
+    "duration_seconds": 16.613878,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_retrying.mp3",
+    "bytes": 24050,
+    "sha256": "90337045c74cbb3738f284be697fbd008319048571c1ced377a709ba121bd7eb",
+    "duration_seconds": 3.970612,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_setup_failed.mp3",
+    "bytes": 107747,
+    "sha256": "c204a3727bf06c4ada9035348539507bb7cb7cd67cc5f3a6378207fff0caf126",
+    "duration_seconds": 17.92,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_tts_failed.mp3",
+    "bytes": 150535,
+    "sha256": "e2982638fed65585dcc6b7c15d9f7239e3af9a011fc787c9f2791c468efea7a6",
+    "duration_seconds": 25.051429,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  },
+  {
+    "path": "android/app/src/main/res/raw/a11y_rescue_welcome.mp3",
+    "bytes": 68406,
+    "sha256": "c7ccb72c60ce39bdce5ffdd7d706b888f9d66fe6f1bec303c30dcb56fd6043ac",
+    "duration_seconds": 11.363265,
+    "source": "User attachment cdda-a11y-audio-missing.zip"
+  }
+]

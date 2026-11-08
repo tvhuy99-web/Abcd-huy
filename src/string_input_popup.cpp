@@ -1,4 +1,7 @@
 #include "string_input_popup.h"
+#include "a11y_runtime.h"
+#include "a11y_android.h"
+#include "a11y_text.h"
 
 #include <cctype>
 #include <climits>
@@ -419,6 +422,39 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
 
     _canceled = false;
     _confirmed = false;
+    std::unique_ptr<a11y::screen_scope> reader;
+    if( !draw_only ) {
+        reader = std::make_unique<a11y::screen_scope>( ctxt, "STRING_INPUT",
+        [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+            if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
+                return "TEXT.QUIT";
+            }
+            if( intent.node == "confirm" && intent.action == "activate" ) {
+                return "TEXT.CONFIRM";
+            }
+            if( intent.node == "text" && intent.action == "set_text" ) {
+                const utf8_wrapper replacement( intent.value );
+                bool valid = _max_length <= 0 || replacement.display_width() <= static_cast<std::size_t>( _max_length );
+                for( const char32_t cp : utf8_to_utf32( intent.value ) ) {
+                    if( _only_digits ? !( cp == '-' || ( cp >= '0' && cp <= '9' ) ) : mk_wcwidth( cp ) < 0 ) {
+                        valid = false;
+                    }
+                }
+                if( !valid ) {
+                    a11y::android::status( "invalid_value", &intent );
+                    return std::nullopt;
+                }
+                ret = replacement;
+                _text = ret.str();
+                _position = ret.length();
+                edit = utf8_wrapper();
+                ctxt->set_edittext( std::string() );
+                a11y::android::status( "text_applied", &intent );
+                return "TIMEOUT";
+            }
+            return std::nullopt;
+        } );
+    }
     do {
         if( _text_changed ) {
             ret = utf8_wrapper( _text );
@@ -466,6 +502,10 @@ const std::string &string_input_popup::query_string( const bool loop, const bool
             return _text;
         }
 
+        if( reader ) {
+            reader->update( a11y::text_snapshot( remove_color_tags( _title ),
+                            remove_color_tags( _description ), ret.str(), _only_digits ) );
+        }
         const std::string action = ctxt->handle_input();
         const input_event ev = ctxt->get_raw_input();
         ch = ev.type == input_event_t::keyboard_char ? ev.get_first_input() : 0;

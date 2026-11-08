@@ -22,6 +22,9 @@
 #include <vector>
 
 #include "achievement.h"
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "auto_pickup.h"
@@ -762,10 +765,15 @@ static int creature_select_menu( const std::vector<Creature *> &talker_list,
         std::vector<tripoint_bub_ms> locations;
         nmenu.text = prompt;
         for( const Creature *elem : talker_list ) {
-            if( elem->is_npc() ) {
-                nmenu.addentry( -1, true, MENU_AUTOASSIGN, elem->as_npc()->name_and_activity() );
+            const std::string name = elem->is_npc() ? elem->as_npc()->name_and_activity() :
+                                     elem->disp_name();
+            if( a11y::enabled() ) {
+                nmenu.addentry( -1, true, MENU_AUTOASSIGN,
+                                _( "%1$s, %2$s, %3$d tiles away" ), name,
+                                direction_name( direction_from( get_avatar().pos_bub(), elem->pos_bub() ) ),
+                                rl_dist( get_avatar().pos_bub(), elem->pos_bub() ) );
             } else {
-                nmenu.addentry( -1, true, MENU_AUTOASSIGN, elem->disp_name() );
+                nmenu.addentry( -1, true, MENU_AUTOASSIGN, name );
             }
             locations.emplace_back( elem->pos_bub() );
         }
@@ -2932,6 +2940,121 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
 
     // Re-init everytime we get here (new topic, new selections, don't try to preserve old selection)
     d_img.sel_response = 0;
+    const auto response_enabled = [this]( const size_t index ) {
+        return debug_mode || index >= response_condition_exists.size() ||
+               !response_condition_exists[index] ||
+               ( index < response_condition_eval.size() && response_condition_eval[index] );
+    };
+    a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent &intent ) ->
+    std::optional<std::string> {
+        if( intent.node == "dialogue:history" && intent.action == "focus" ) {
+            return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
+        }
+        const std::string response_prefix = "dialogue:response:";
+        if( intent.node.rfind( response_prefix, 0 ) == 0 &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            for( size_t index = 0; index < response_lines.size(); ++index ) {
+                if( intent.node != response_prefix + std::to_string( index ) ) {
+                    continue;
+                }
+                d_img.sel_response = static_cast<int>( index );
+                if( intent.action == "focus" ) {
+                    return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
+                }
+                if( response_enabled( index ) ) {
+                    return std::string( "CONFIRM" );
+                }
+                return std::nullopt;
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) {
+            return;
+        }
+        a11y::semantic_snapshot snapshot;
+        // The sidebar draws speaker_name() in large type for sighted
+        // players (dialogue_imgui.cpp draw_dialogue_sidebar); publish the
+        // same name in the title so the reader hears who is speaking.
+        // speaker_name() already covers every case the UI shows: the
+        // remote name for radio/intercom/computer conversations, the
+        // beta talker's display name otherwise, and "" (plain title)
+        // when this is not a conversation.
+        const std::string speaker = speaker_name( d_img );
+        snapshot.title = speaker.empty() ? _( "Dialogue" )
+                         : string_format( _( "Dialogue: %s" ), speaker );
+        snapshot.summary = remove_color_tags( challenge );
+        snapshot.focus = "dialogue:response:" + std::to_string( d_img.sel_response );
+
+        // Read the history fresh on every publish instead of capturing it
+        // once before the input loop: the text is the document node's
+        // whole content, and a stale capture could outlive later
+        // add_to_history() calls within this topic's lifetime.
+        const std::string history_text = d_img.get_accessibility_history();
+        if( !history_text.empty() ) {
+            // Document pattern (a11y::append_document, as in
+            // mission_companion.cpp "companion:details"): the full
+            // verbatim history travels in detail with no length cap in
+            // validate_snapshot, and the Java presenter reads document
+            // nodes paragraph by paragraph (R04.4) instead of as one
+            // utterance. Keep the node's original intent surface: focus
+            // only -- opening/reading the document is a presenter action,
+            // never a gameplay activation.
+            a11y::append_document( snapshot, "dialogue:history",
+                                   _( "Conversation history" ), history_text );
+            snapshot.nodes.back().actions = { "focus" };
+        }
+
+        for( size_t index = 0; index < response_lines.size(); ++index ) {
+            const talk_data &response = response_lines[index];
+            a11y::semantic_node node;
+            node.id = "dialogue:response:" + std::to_string( index );
+            node.role = "button";
+            node.label = remove_color_tags( response.text );
+            node.enabled = response_enabled( index );
+            if( !node.enabled ) {
+                // The original UI never spells out the failed condition
+                // itself: create_option_line() only appends the authored
+                // show_reason (already part of the label above when the
+                // response is shown anyway) or, for a failed option with
+                // an explanation, replaces the line with that explanation
+                // (also the label). Keep the generic reason rather than
+                // inventing a specific one the engine does not publish.
+                node.disabled_reason = _( "This response is unavailable because its condition is not met." );
+            }
+            // Trial type and chance are already in the label, from the
+            // same create_option_line() text the sighted UI draws
+            // ("[PERSUADE 42%] ...", "[Skill 2/5] ..."). What the label
+            // cannot carry is the consequence colouring: hostile is drawn
+            // red and helpless light red, and choosing either makes this
+            // same function ask query_yn() before applying the response.
+            // Give the reader the same warning in words, from the same
+            // get_consequences() data, before the choice is made.
+            if( index < responses.size() ) {
+                const std::set<dialogue_consequence> consequences =
+                    responses[index].get_consequences( *this );
+                if( consequences.count( dialogue_consequence::hostile ) > 0 ) {
+                    node.detail = _( "Warning: this response may provoke an attack. The game will ask for confirmation before it takes effect." );
+                } else if( consequences.count( dialogue_consequence::helpless ) > 0 ) {
+                    node.detail = _( "Warning: this response may leave you helpless. The game will ask for confirmation before it takes effect." );
+                }
+            }
+            node.selected = d_img.sel_response == static_cast<int>( index );
+            node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( size_t index = 0; index < snapshot.nodes.size(); ++index ) {
+            snapshot.nodes[index].position = static_cast<int>( index + 1 );
+            snapshot.nodes[index].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader.update( std::move( snapshot ) );
+    };
     size_t response_ind = response_hotkeys.size();
     bool okay;
     do {
@@ -2943,6 +3066,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             }
             // For reasons unclear to me, we must manually invalidate and redraw the windows here, or else they will stack up.
             ui_manager::invalidate_all_ui_adaptors();
+            update_reader();
             ui_manager::redraw();
             action = ctxt.handle_input();
 
@@ -2959,7 +3083,8 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             }
 
             input_event evt = ctxt.get_raw_input();
-            if( evt.type == input_event_t::error || evt.type == input_event_t::timeout ) {
+            if( ( evt.type == input_event_t::error || evt.type == input_event_t::timeout ) &&
+                !ctxt.was_accessibility_action() ) {
                 continue;
             }
             if( action == "HELP_KEYBINDINGS" ) {

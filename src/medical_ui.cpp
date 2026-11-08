@@ -12,6 +12,10 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_body.h"
+#include "a11y_input.h"
+#include "a11y_requirements.h"
+#include "a11y_runtime.h"
 #include "avatar_action.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -91,6 +95,8 @@ class medical_ui : public cataimgui::window
         };
 
         bool execute();
+        a11y::semantic_snapshot reader_snapshot() const;
+        std::optional<std::string> reader_intent( const a11y::semantic_intent &intent );
         std::string get_limb_effects( const bodypart_id &part ) const;
         std::string get_limb_wounds( const bodypart_id &part ) const;
         std::string get_limb_scores_and_modifiers( const bodypart_id &part ) const;
@@ -158,8 +164,14 @@ bool medical_ui::execute()
     ctxt.register_action( "HELP_KEYBINDINGS" );
     ctxt.set_timeout( 16 );
 
+    a11y::screen_scope reader( &ctxt, "medical",
+    [this]( const a11y::semantic_intent &intent ) { return reader_intent( intent ); } );
+
     while( true ) {
         ui_manager::redraw_invalidated();
+        if( a11y::enabled() ) {
+            reader.update( reader_snapshot() );
+        }
         last_action = ctxt.handle_input();
         if( last_action == "QUIT" || !get_is_open() ) {
             break;
@@ -168,7 +180,20 @@ bool medical_ui::execute()
         // creating a new window within main loop of draw_controls() causes destructor to destroy wrong window
         // so moved here, outside of draw_controls()
         if( last_action == "CONFIRM" ) {
+            if( !you->has_part( bp ) ) {
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "No body part is selected." ) );
+                } else {
+                    popup( _( "No body part is selected." ) );
+                }
+                continue;
+            }
             if( you->pick_wound_fix( bp ) ) {
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Treatment selected for %s. "
+                                         "Follow the game's treatment progress and result messages." ),
+                             body_part_name( bp ) );
+                }
                 return true;
             }
         }
@@ -220,7 +245,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
         const nc_color bleeding_color = colorize_bleeding_intensity( bleed_intensity );
         description += string_format( "[ %s ] - %s\n",
                                       colorize( bleed_effect.get_speed_name(), bleeding_color ),
-                                      string_format( bleed_effect.disp_short_desc(), body_part_name( bp.id() ) ) );
+                                      string_format( bleed_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
     // BITTEN block
@@ -228,7 +253,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
         const effect bite_effect = you->get_effect( effect_bite, part );
         description += string_format( "[ %s ] - %s\n",
                                       colorize( bite_effect.get_speed_name(), c_yellow ),
-                                      string_format( bite_effect.disp_short_desc(), body_part_name( bp.id() ) ) );
+                                      string_format( bite_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
     // INFECTED block
@@ -236,7 +261,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
         const effect infected_effect = you->get_effect( effect_infected, part );
         description += string_format( "[ %s ] - %s\n",
                                       colorize( infected_effect.get_speed_name(), c_pink ),
-                                      string_format( infected_effect.disp_short_desc(), body_part_name( bp.id() ) ) );
+                                      string_format( infected_effect.disp_short_desc(), body_part_name( part.id() ) ) );
     }
 
     // rest of effects
@@ -245,7 +270,7 @@ std::string medical_ui::get_limb_effects( const bodypart_id &part ) const
             eff.get_id() != effect_bite &&
             eff.get_id() != effect_infected ) {
             description += string_format( "[ %s ] - %s\n", colorize( eff.get_speed_name(), c_bold ),
-                                          string_format( eff.disp_short_desc(), body_part_name( bp.id() ) ) );
+                                          string_format( eff.disp_short_desc(), body_part_name( part.id() ) ) );
         }
     }
 
@@ -362,6 +387,37 @@ static std::string hp_feeling( const float cur_hp_pcnt )
     } else {
         return colorize( _( "Good" ), c_green );
     }
+}
+
+std::string a11y::limb_health_description( const Character &who, const bodypart_id &part )
+{
+    const bool no_feeling = who.has_flag( json_flag_PAIN_IMMUNE );
+    if( who.worn_with_flag( flag_SPLINT, part ) ) {
+        if( no_feeling ) {
+            return _( "Splinted. Mending progress is unknown." );
+        }
+        const effect &mending = who.get_effect( effect_mending, part );
+        const int percent = mending.is_null() || mending.get_max_duration() <= 0_turns ? 0 :
+                            100 * mending.get_duration() / mending.get_max_duration();
+        return string_format( _( "Splinted. Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
+    }
+    if( who.is_limb_broken( part ) ) {
+        return _( "Broken." );
+    }
+    const int maximum = who.get_part_hp_max( part );
+    const int current = who.get_part_hp_cur( part );
+    if( no_feeling ) {
+        return remove_color_tags( hp_feeling( maximum > 0 ? current / static_cast<float>( maximum ) : 0 ) );
+    }
+    const std::string bar = get_hp_bar( current, maximum, false ).first;
+    const int full = static_cast<int>( std::count( bar.begin(), bar.end(), '|' ) );
+    std::string result = string_format( _( "Health indicator: %d full segments of 5." ), full );
+    if( bar.find( '\\' ) != std::string::npos ) {
+        result += " " + std::string( _( "One additional half segment." ) );
+    } else if( bar.find( ':' ) != std::string::npos ) {
+        result += " " + std::string( _( "Less than half a segment remains." ) );
+    }
+    return result;
 }
 
 std::string medical_ui::get_modified_limb_name( const bodypart_id &part ) const
@@ -672,6 +728,10 @@ void medical_ui::draw_controls()
 
     const std::vector<bodypart_id> bodyparts = you->get_all_body_parts( get_body_part_flags::sorted );
     size_t num_entries = bodyparts.size();
+    if( num_entries == 0 ) {
+        summary_tab();
+        return;
+    }
     const int last_entry = num_entries == 0 ? 0 : ( static_cast<int>( num_entries ) - 1 );
 
     // initialize selected_limb either from already set bp, or from zero if not set
@@ -720,6 +780,160 @@ void medical_ui::draw_controls()
     }
 }
 
+a11y::semantic_snapshot medical_ui::reader_snapshot() const
+{
+    auto snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
+    snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
+    // Urgent conditions are announced before the full limb list. A status
+    // estimate must never expose exact hit points or bypass treatment checks.
+    const auto urgency = [this]( const bodypart_id &part ) {
+        if( you->has_effect( effect_infected, part ) ) {
+            return 5;
+        }
+        if( you->has_effect( effect_bleed, part ) ) {
+            return 4;
+        }
+        if( you->is_limb_broken( part ) ) {
+            return 3;
+        }
+        if( you->has_effect( effect_bite, part ) ) {
+            return 2;
+        }
+        return you->has_wounds( part.id() ) ? 1 : 0;
+    };
+    std::vector<bodypart_id> urgent_first = you->get_all_body_parts( get_body_part_flags::sorted );
+    std::stable_sort( urgent_first.begin(), urgent_first.end(),
+    [&]( const bodypart_id &a, const bodypart_id &b ) {
+        return urgency( a ) > urgency( b );
+    } );
+    int attention_count = 0;
+    for( const bodypart_id &part : urgent_first ) {
+        if( urgency( part ) == 0 ) {
+            break;
+        }
+        ++attention_count;
+        snapshot.summary += "\n" + string_format( _( "Needs attention: %1$s. %2$s" ),
+                            body_part_name( part ), a11y::limb_health_description( *you, part ) );
+    }
+    if( attention_count == 0 ) {
+        snapshot.summary += "\n" + std::string( _( "No reported wounds need attention." ) );
+    } else {
+        snapshot.summary += "\n" + std::string(
+                                _( "Select a limb to see treatments; inspecting alone does not treat it." ) );
+    }
+    for( const auto &tab : { std::make_pair( "medical:tab:limbs", _( "Limbs" ) ),
+                            std::make_pair( "medical:tab:summary", _( "Summary" ) ) } ) {
+        a11y::semantic_node node;
+        node.id = tab.first;
+        node.role = "tab";
+        node.label = tab.second;
+        node.selected = ( selected_tab == medical_tab_mode::TAB_LIMBS ) ==
+                        ( node.id == "medical:tab:limbs" );
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    // Table contract (R02.2): limbs form one table whose columns are
+    // declared once here. Condition text follows the medical knowledge
+    // policy (coarse descriptions, never exact hit points), and cells are
+    // presentation only -- selecting a row still uses the row node's own
+    // focus/activate path in reader_intent, never a per-cell action.
+    a11y::semantic_table limbs_table;
+    limbs_table.id = "medical:limbs";
+    limbs_table.columns = { { "part", _( "Body part" ), "" },
+                            { "condition", _( "Condition" ), "" },
+                            { "flags", _( "Status" ), "" } };
+    snapshot.tables.push_back( limbs_table );
+    const auto &parts = urgent_first;
+    for( std::size_t i = 0; i < parts.size(); ++i ) {
+        const bodypart_id &part = parts[i];
+        a11y::semantic_node node;
+        node.id = "medical:limb:" + part.id().str();
+        node.label = body_part_name( part );
+        const int priority = urgency( part );
+        if( priority >= 3 ) {
+            node.label = string_format( _( "Priority injury: %s" ), node.label );
+        }
+        const std::string condition = a11y::limb_health_description( *you, part );
+        node.value = condition;
+        std::string flags;
+        const auto append_flag = [&flags]( const std::string &flag ) {
+            if( !flags.empty() ) {
+                flags += ", ";
+            }
+            flags += flag;
+        };
+        if( you->has_effect( effect_bleed, part ) ) {
+            node.value += " " + std::string( _( "BLEEDING" ) );
+            append_flag( _( "BLEEDING" ) );
+        }
+        if( you->has_effect( effect_bite, part ) ) {
+            node.value += " " + std::string( _( "BITTEN" ) );
+            append_flag( _( "BITTEN" ) );
+        }
+        if( you->has_effect( effect_infected, part ) ) {
+            node.value += " " + std::string( _( "SEPTIC" ) );
+            append_flag( _( "SEPTIC" ) );
+        }
+        if( you->has_wounds( part.id() ) ) {
+            node.value += " " + std::string( _( "WOUNDED" ) );
+            append_flag( _( "WOUNDED" ) );
+        }
+        node.table_id = "medical:limbs";
+        node.row_index = static_cast<int>( i );
+        node.cells = { { "part", node.label, "", "" },
+                       { "condition", condition, "", "" },
+                       { "flags", flags, "", "" } };
+        node.detail = remove_color_tags( get_limb_effects( part ) + "\n" +
+                                        get_limb_wounds( part ) + "\n" + get_limb_scores_and_modifiers( part ) );
+        node.selected = bp == part;
+        node.position = i + 1;
+        node.total = parts.size();
+        if( node.selected && selected_tab == medical_tab_mode::TAB_LIMBS ) {
+            snapshot.focus = node.id;
+        }
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    std::string summary = draw_speed_summary( *you ) + "\n" + draw_stats_summary( *you );
+    const diag_value *weighing = you->maybe_get_value( "last_weighting_time" );
+    if( weighing ) {
+        const std::string weight = string_format( "%.0f %s", convert_weight(
+                                      units::from_kilogram( you->get_value( "last_weighting_weight_kg" ).dbl() ) ),
+                                      weight_units() );
+        summary += "\n" + std::string( _( "Weight" ) ) + ": " + weight + ". " +
+                   string_format( _( "last weighed %s ago." ),
+                                  to_string_approx( calendar::turn - time_point( weighing->dbl() ) ) );
+    } else {
+        summary += "\n" + std::string( _( "You do not remember the last time you weighed yourself." ) );
+    }
+    a11y::append_document( snapshot, "medical:summary", _( "Summary" ), summary );
+    if( selected_tab == medical_tab_mode::TAB_SUMMARY ) {
+        snapshot.focus = "medical:summary";
+    }
+    return snapshot;
+}
+
+std::optional<std::string> medical_ui::reader_intent( const a11y::semantic_intent &intent )
+{
+    if( intent.action == "activate" &&
+        ( intent.node == "medical:tab:limbs" || intent.node == "medical:tab:summary" ) ) {
+        selected_tab = intent.node == "medical:tab:limbs" ? medical_tab_mode::TAB_LIMBS :
+                       medical_tab_mode::TAB_SUMMARY;
+        s = cataimgui::scroll::begin;
+        return "TIMEOUT";
+    }
+    for( const bodypart_id &part : you->get_all_body_parts( get_body_part_flags::sorted ) ) {
+        if( intent.node == "medical:limb:" + part.id().str() &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            bp = part;
+            selected_tab = medical_tab_mode::TAB_LIMBS;
+            s = cataimgui::scroll::begin;
+            // Inspection never starts treatment. The original wound menu and
+            // its skill/proficiency/material checks run only on activation.
+            return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+        }
+    }
+    return a11y::registered_intent( ctxt, intent );
+}
+
 namespace
 {
 struct healing_option {
@@ -732,6 +946,13 @@ struct healing_option {
 
 bool Character::pick_wound_fix( const bodypart_id &bp_id )
 {
+    const auto report_treatment_issue = [this]( const std::string &message ) {
+        if( is_avatar() && a11y::enabled() ) {
+            add_msg_if_player( m_info, "%s", message );
+        } else {
+            popup( message );
+        }
+    };
     std::vector<healing_option> healing_options;
     const temp_crafting_inventory &inv = crafting_inventory();
 
@@ -802,18 +1023,18 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         if( bp->get_wounds().empty() ) {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
                 // should be popup, but popup() crashes this message, for some reason
-                popup( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
                 return false;
             } else {
-                popup( string_format( _( "The %s doesn't have any wounds to treat." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any wounds to treat." ), body_part_name( bp_id ) ) );
                 return false;
             }
         } else {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
-                popup( string_format( _( "The %s damage cannot be repaired." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s damage cannot be repaired." ), body_part_name( bp_id ) ) );
                 return false;
             } else {
-                popup( string_format( _( "The %s wounds cannot be treated." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s wounds cannot be treated." ), body_part_name( bp_id ) ) );
                 return false;
             }
         }
@@ -879,7 +1100,23 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         for( const std::string &line : comps ) {
             descr += line + "\n";
         }
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot requirements;
+            a11y::append_requirements( requirements, "treatment", reqs, *this, inv, is_crafting_component, 1 );
+            for( const auto &node : requirements.nodes ) {
+                descr += "\n" + node.label + "\n" + node.detail;
+            }
+            for( const wound_proficiency &prof : fix.proficiencies ) {
+                if( !has_proficiency( prof.prof ) ) {
+                    descr += "\n" + string_format( prof.is_mandatory ?
+                                                    _( "Missing required proficiency: %s" ) :
+                                                    _( "Missing optional proficiency: %s" ), prof.prof->name() );
+                }
+            }
+        }
         menu.addentry_desc( -1, true, -1, fix.get_name(), colorize( descr, col ) );
+        menu.entries.back().a11y_value = opt.doable ? _( "Treatment requirements are met." ) :
+                                          _( "Treatment requirements are not met." );
 
     }
 

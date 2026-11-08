@@ -4127,8 +4127,9 @@ class wait_activity_actor : public activity_actor
             initial_wait_time( initial_wait_time ) {};
 
         void start( player_activity &act, Character & ) override;
-        void do_turn( player_activity &, Character & ) override {};
+        void do_turn( player_activity &act, Character &who ) override;
         void finish( player_activity &act, Character &who ) override;
+        void canceled( player_activity &act, Character &who ) override;
 
         const activity_id &get_type() const override {
             static const activity_id ACT_WAIT( "ACT_WAIT" );

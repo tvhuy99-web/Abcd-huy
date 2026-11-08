@@ -109,7 +109,8 @@ std::vector<std::string> recipe_info(
     const recipe &recp, const availability &avail,
     Character &guy, std::string_view qry_comps,
     int batch_size, int fold_width, const nc_color &color,
-    const std::vector<Character *> &crafting_group );
+    const std::vector<Character *> &crafting_group,
+    const std::map<itype_id, int> *display_byproducts = nullptr );
 
 // Builds the description text for practice recipes.
 // Safe to call on non-practice recipes (returns just the base description).

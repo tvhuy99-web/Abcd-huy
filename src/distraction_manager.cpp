@@ -1,13 +1,18 @@
 #include "distraction_manager.h"
 
+#include <optional>
 #include <string>
+#include <utility>
 #include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "input_context.h"
 #include "output.h"
 #include "point.h"
+#include "string_formatter.h"
 #include "translations.h"
 #include "ui_helpers.h"
 #include "ui_manager.h"
@@ -77,6 +82,22 @@ void distraction_manager_gui::show()
     ctxt.register_leftright();
     ctxt.register_navigate_ui_list();
 
+    // Publish the exact toggles and descriptions displayed by this UI.
+    // Focus only moves the cursor; activating a row uses the original CONFIRM path.
+    a11y::screen_scope reader( &ctxt, "distraction-manager",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        for( int i = 0; i < number_of_distractions; ++i ) {
+            if( intent.node == "distraction:item:" + std::to_string( i ) ) {
+                if( intent.action == "focus" || intent.action == "activate" ) {
+                    currentLine = i;
+                    return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+                }
+                return std::nullopt;
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         // Draw border
         draw_border( w_border, BORDER_COLOR, _( "Distractions manager" ) );
@@ -133,6 +154,28 @@ void distraction_manager_gui::show()
 
     while( true ) {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                    ctxt, _( "Distractions manager" ) );
+            snapshot.summary = _( "Select a condition to enable or disable interruption. "
+                                  "Toggle all affects every condition." );
+            for( int i = 0; i < number_of_distractions; ++i ) {
+                const configurable_distraction &item = get_configurable_distractions()[i];
+                a11y::semantic_node node;
+                node.id = "distraction:item:" + std::to_string( i );
+                node.role = "checkbox";
+                node.label = _( item.name.c_str() );
+                node.value = *item.state ? _( "Enabled" ) : _( "Disabled" );
+                node.detail = _( item.description.c_str() );
+                node.checked = *item.state;
+                node.selected = i == currentLine;
+                node.position = i + 1;
+                node.total = number_of_distractions;
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            snapshot.focus = "distraction:item:" + std::to_string( currentLine );
+            reader.update( std::move( snapshot ) );
+        }
 
         const std::string action = ctxt.handle_input();
 
@@ -162,6 +205,12 @@ void distraction_manager_gui::show()
                 uistate.distraction_oxygen = toggle_state;
                 uistate.distraction_withdrawal = toggle_state;
                 uistate.distraction_craft_step_complete = toggle_state;
+            }
+            if( a11y::enabled() ) {
+                const configurable_distraction &item = get_configurable_distractions()[currentLine];
+                a11y::announce_game_message( string_format( _( "%1$s: %2$s." ),
+                                              _( item.name.c_str() ),
+                                              *item.state ? _( "Enabled" ) : _( "Disabled" ) ), false );
             }
         }
     }

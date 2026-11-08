@@ -157,6 +157,18 @@ class veh_interact
 
         std::unique_ptr<install_info_t> install_info;
 
+        // Reader adapter session (R15.1/R15.2), defined in veh_interact.cpp.
+        // It publishes the vehicle panes for the screen reader and keeps the
+        // reader's list positions in sync with the loops below.
+        class reader_session;
+
+        std::unique_ptr<reader_session> reader;
+
+        // Position within need_repair of the part do_repair is showing.
+        // A member (not a do_repair local) so the reader session can keep
+        // it in sync when the reader browses the repair list.
+        int repair_pos = 0;
+
         struct remove_info_t;
 
         std::unique_ptr<remove_info_t> remove_info;

@@ -14,6 +14,9 @@
 
 #include "action.h"
 #include "activity_actor_definitions.h"
+#include "a11y_input.h"
+#include "a11y_requirements.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "build_reqs.h"
 #include "calendar.h"
@@ -974,6 +977,23 @@ construction_id construction_menu( const bool blueprint )
                 con_preview, mouse_pos, blink );
     g->add_draw_callback( draw_preview );
 
+    a11y::screen_scope reader( &ctxt, "construction",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        for( std::size_t i = 0; i < constructs.size(); ++i ) {
+            if( intent.node == "construction:group:" + constructs[i].str() &&
+                ( intent.action == "focus" || intent.action == "activate" ) ) {
+                if( select != static_cast<int>( i ) ) {
+                    select = i;
+                    update_info = true;
+                }
+                return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    std::string reader_detail_key;
+    std::vector<a11y::semantic_node> reader_documents;
+
     do {
         if( update_cat ) {
             update_cat = false;
@@ -1065,6 +1085,105 @@ construction_id construction_menu( const bool blueprint )
 
         g->invalidate_main_ui_adaptor();
         ui_manager::redraw();
+
+        if( a11y::enabled() ) {
+            auto snapshot = a11y::command_snapshot( ctxt, _( "Construction" ) );
+            snapshot.summary = construct_cat[tabindex].name();
+            snapshot.summary += ". " + std::string( filter_mode == 0 ? _( "All" ) :
+                                  filter_mode == 1 ? _( "Ready (missing location)" ) : _( "Buildable here" ) );
+            if( !filter.empty() ) {
+                snapshot.summary += ". " + string_format( _( "Filter: %s" ), filter );
+            }
+            std::vector<a11y::semantic_node> rows;
+            for( std::size_t i = 0; i < constructs.size(); ++i ) {
+                a11y::semantic_node node;
+                node.id = "construction:group:" + constructs[i].str();
+                node.label = constructs[i]->name();
+                node.position = i + 1;
+                node.total = constructs.size();
+                node.selected = static_cast<int>( i ) == select;
+                node.value = blueprint ? _( "Blueprint" ) :
+                             player_can_build( player_character, total_inv, constructs[i] ) ?
+                             _( "Buildable here" ) : _( "Requirements or location are missing." );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                rows.push_back( std::move( node ) );
+            }
+            rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
+                         std::make_move_iterator( snapshot.nodes.end() ) );
+            snapshot.nodes = std::move( rows );
+            if( select >= 0 && static_cast<std::size_t>( select ) < constructs.size() ) {
+                std::string description;
+                for( const std::string &line : full_construct_buffer ) {
+                    description += line + "\n";
+                }
+                a11y::append_document( snapshot, "construction:details", _( "Construction details" ), description );
+                // Valid placement directions (R12.4): con_preview is the
+                // engine's own preview for the selected group -- a point is
+                // present only when can_construct and player_can_build both
+                // pass there -- so publishing its directions states engine
+                // validity, never hidden tile data. The specific reason a
+                // chosen invalid direction fails stays with
+                // place_construction's explain_failure messages.
+                std::string placement;
+                if( blueprint ) {
+                    placement = _( "Blueprint mode: choosing a construction records it for the zone; nothing is placed." );
+                } else if( con_preview.empty() ) {
+                    placement = _( "No adjacent location is currently valid for the selected construction." );
+                } else {
+                    for( const auto &entry : con_preview ) {
+                        placement += string_format( _( "%1$s: valid for %2$s.\n" ),
+                                                    direction_name( direction_from( player_character.pos_bub(),
+                                                                    entry.first ) ),
+                                                    entry.second->group->name() );
+                    }
+                }
+                a11y::append_document( snapshot, "construction:placement", _( "Placement" ), placement );
+                const std::string key = constructs[select].str() + ":" + std::to_string( filter_mode ) +
+                                        ":" + std::to_string( detail::get_current_language_version() );
+                if( key != reader_detail_key ) {
+                    reader_detail_key = key;
+                    a11y::semantic_snapshot documents;
+                    std::size_t stage = 0;
+                    for( const construction *con : constructions_by_group( constructs[select] ) ) {
+                        ++stage;
+                        const bool resources = player_can_build( player_character, total_inv, *con, true );
+                        const bool location = can_construct( *con );
+                        if( ( filter_mode == 1 && !( resources && !location ) ) ||
+                            ( filter_mode == 2 && !( resources && location ) ) ) {
+                            continue;
+                        }
+                        const std::string prefix = "construction:stage:" + std::to_string( stage );
+                        std::string state = ( resources ? _( "Skills and materials are sufficient." ) :
+                                              _( "Skills or materials are missing." ) ) +
+                                            std::string( "\n" ) + ( location ?
+                                                    _( "A nearby location meets the construction conditions." ) :
+                                                    _( "No nearby location meets the construction conditions." ) );
+                        // Stage facts the visual panel shows (time, required
+                        // skills, annotation) in words, not only via the
+                        // details buffer.
+                        state += "\n" + string_format( _( "Time to complete: %s" ),
+                                                       to_string( time_duration::from_moves( con->time ) ) );
+                        for( const auto &skill : con->required_skills ) {
+                            state += "\n" + string_format( _( "Required skill: %1$s, level %2$d; you have %3$d." ),
+                                                           skill.first.obj().name(), skill.second,
+                                                           static_cast<int>( player_character.get_skill_level( skill.first ) ) );
+                        }
+                        if( !con->pre_note.empty() ) {
+                            state += "\n" + remove_color_tags( con->pre_note.translated() );
+                        }
+                        a11y::append_document( documents, prefix, string_format( _( "Stage/Variant #%d: " ), stage ),
+                                               state );
+                        a11y::append_requirements( documents, prefix, *con->requirements, player_character,
+                                                   total_inv, is_crafting_component, 1 );
+                    }
+                    reader_documents = std::move( documents.nodes );
+                }
+                snapshot.nodes.insert( snapshot.nodes.end(), reader_documents.begin(), reader_documents.end() );
+            }
+            reader.update( std::move( snapshot ) );
+        }
 
         const std::string action = ctxt.handle_input();
         const int recmax = static_cast<int>( constructs.size() );
@@ -1393,29 +1512,58 @@ void place_construction( std::vector<construction_group_str_id> const &groups )
     g->add_draw_callback( draw_preview );
 
     const tripoint_bub_ms &loc = player_character.pos_bub();
-    const std::optional<tripoint_bub_ms> pnt_ = choose_adjacent(
-                loc, _( "Construct where?" ),
-                /*allow_vertical=*/false, /*timeout=*/get_option<int>( "BLINK_SPEED" ),
-    [&]( const input_context & ctxt, const std::string & action ) {
-        if( action == "TIMEOUT" ) {
-            blink = !blink;
-        } else {
-            blink = true;
+    std::optional<tripoint_bub_ms> pnt_;
+    if( a11y::enabled() ) {
+        // The construction preview already evaluated engine legality.
+        // Let the reader choose a valid direction in one activation instead
+        // of exploring invalid tiles with a visual-only cursor.
+        if( valid.empty() ) {
+            add_msg( m_info, _( "No adjacent location is valid for this construction." ) );
+            return;
         }
-        if( action == "MOUSE_MOVE" ) {
-            const std::optional<tripoint_bub_ms> mouse_pos_raw = ctxt.get_coordinates(
-                        g->w_terrain, g->ter_view_p.raw().xy(), true );
-            if( mouse_pos_raw.has_value() && mouse_pos_raw->z() == loc.z()
-                && mouse_pos_raw->x() >= loc.x() - 1 && mouse_pos_raw->x() <= loc.x() + 1
-                && mouse_pos_raw->y() >= loc.y() - 1 && mouse_pos_raw->y() <= loc.y() + 1 ) {
-                mouse_pos = *mouse_pos_raw;
+        uilist directions;
+        directions.text = _( "Construct where?" );
+        std::vector<tripoint_bub_ms> valid_positions;
+        for( const auto &entry : valid ) {
+            const int index = static_cast<int>( valid_positions.size() );
+            valid_positions.push_back( entry.first );
+            directions.addentry( index, true, MENU_AUTOASSIGN, _( "%1$s: %2$s" ),
+                                 direction_name( direction_from( loc, entry.first ) ),
+                                 entry.second->group->name() );
+        }
+        directions.query();
+        if( directions.ret >= 0 &&
+            static_cast<std::size_t>( directions.ret ) < valid_positions.size() ) {
+            pnt_ = valid_positions[directions.ret];
+        }
+    } else {
+        pnt_ = choose_adjacent(
+                    loc, _( "Construct where?" ),
+                    /*allow_vertical=*/false, /*timeout=*/get_option<int>( "BLINK_SPEED" ),
+        [&]( const input_context & ctxt, const std::string & action ) {
+            if( action == "TIMEOUT" ) {
+                blink = !blink;
             } else {
-                mouse_pos = std::nullopt;
+                blink = true;
             }
+            if( action == "MOUSE_MOVE" ) {
+                const std::optional<tripoint_bub_ms> mouse_pos_raw = ctxt.get_coordinates(
+                            g->w_terrain, g->ter_view_p.raw().xy(), true );
+                if( mouse_pos_raw.has_value() && mouse_pos_raw->z() == loc.z()
+                    && mouse_pos_raw->x() >= loc.x() - 1 && mouse_pos_raw->x() <= loc.x() + 1
+                    && mouse_pos_raw->y() >= loc.y() - 1 && mouse_pos_raw->y() <= loc.y() + 1 ) {
+                    mouse_pos = *mouse_pos_raw;
+                } else {
+                    mouse_pos = std::nullopt;
+                }
+            }
+            g->invalidate_main_ui_adaptor();
+            return std::pair<bool, std::optional<tripoint_bub_ms>>( false, std::nullopt );
+        }, [&]( const tripoint_bub_ms &target ) {
+            return valid.count( target ) ? _( "This location is valid for the selected construction." ) :
+                   _( "This location is not valid for the selected construction." );
+        } );
         }
-        g->invalidate_main_ui_adaptor();
-        return std::pair<bool, std::optional<tripoint_bub_ms>>( false, std::nullopt );
-    } );
     if( !pnt_ ) {
         return;
     }

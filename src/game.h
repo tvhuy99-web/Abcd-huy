@@ -249,7 +249,8 @@ class game
         /** Loads dynamic data from the folder if it is part of a subdirectory that is named after a currently loaded mod_id.  May throw. */
         void load_mod_interaction_data_from_dir( const cata_path &path, const std::string &src );
     public:
-        void setup();
+        /** Initializes data for either a new character or an existing save. */
+        void setup( bool loading_saved_character = false );
         /** Saving and loading functions. */
         void serialize_json( std::ostream &fout ); // for save
         void unserialize( std::istream &fin, const cata_path &path ); // for load

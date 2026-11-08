@@ -1,11 +1,15 @@
 #include "iuse_software_minesweeper.h"
 
+#include <algorithm>
 #include <array>
 #include <functional>
 #include <optional>
 #include <string>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "catacharset.h"
 #include "color.h"
 #include "coordinates.h"
@@ -170,6 +174,245 @@ int minesweeper_game::start_game()
 
     bool started = false;
     bool boom = false;
+
+    // Reader adapter: this minigame draws its board by hand, so without
+    // its own adapter the input context would only get the generic
+    // command fallback, which never publishes the board itself.
+    //
+    // KNOWLEDGE BOUNDARY (hard): mLevel is hidden data. A cell node may
+    // only publish what the player can already see on screen: a seen
+    // cell publishes its true adjacent-mine count, a flagged cell
+    // publishes "Flagged" and a covered cell publishes "Covered". The
+    // snapshot builder reads mLevel for a cell only when that cell is
+    // seen, or when boom is true -- after a loss the engine itself
+    // reveals the whole board (reveal_all() plus the '*' drawing in
+    // the redraw callback), so a mine may then be published as "Mine",
+    // exactly as drawn. No cell is ever described as safe, and no
+    // hidden mine is ever located or counted per position. The cell
+    // text helper below is the single place where this gate lives; the
+    // summary's cursor description reuses it, so there is no second
+    // path around it. Flag/revealed counts come from mLevelReveal
+    // (player-visible state) and the total mine count is iBombs, the
+    // public parameter of the chosen difficulty.
+    //
+    // The handler never reveals or flags a cell itself: "activate" on
+    // a cell only moves the cursor onto it and returns CONFIRM, and
+    // the "flag" action only moves the cursor and returns FLAG, so the
+    // loop below applies them through the original code, exactly like
+    // a keypress. "focus" only moves the cursor and returns TIMEOUT.
+    a11y::screen_scope reader( &ctxt, "minesweeper",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node.rfind( "mine:cell:", 0 ) == 0 &&
+            ( intent.action == "focus" || intent.action == "activate" ||
+              intent.action == "flag" ) ) {
+            // Node IDs are "mine:cell:<x>:<y>", built by the snapshot
+            // builder below. The coordinates are re-validated against
+            // the live board at intent time; nothing is trusted from
+            // the published snapshot.
+            const std::size_t prefix_len = std::string( "mine:cell:" ).size();
+            const std::size_t colon = intent.node.find( ':', prefix_len );
+            if( colon == std::string::npos ) {
+                return std::nullopt;
+            }
+            // Digit-by-digit parse: a malformed ID from the reader is
+            // rejected, never an exception on the game thread.
+            const auto parse_coord = []( const std::string & text, int &out ) {
+                if( text.empty() || text.size() > 6 ) {
+                    return false;
+                }
+                int value = 0;
+                for( const char ch : text ) {
+                    if( ch < '0' || ch > '9' ) {
+                        return false;
+                    }
+                    value = value * 10 + ( ch - '0' );
+                }
+                out = value;
+                return true;
+            };
+            int x = 0;
+            int y = 0;
+            if( !parse_coord( intent.node.substr( prefix_len, colon - prefix_len ), x ) ||
+                !parse_coord( intent.node.substr( colon + 1 ), y ) ||
+                x >= level.x || y >= level.y ) {
+                return std::nullopt;
+            }
+            iPlayerX = x;
+            iPlayerY = y;
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "flag" ) {
+                return std::string( "FLAG" );
+            }
+            return std::string( "CONFIRM" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt,
+                                           _( "Minesweeper" ) );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        if( !started ) {
+            // The difficulty menu (uilist) and the custom-size prompts
+            // (string_input_popup) run inside new_level() and already
+            // have their own shared adapters; until a board exists this
+            // screen publishes only its commands.
+            snapshot.summary = _( "Choose a difficulty to start." );
+            snapshot.nodes = std::move( commands );
+            for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+                snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+                snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+            }
+            return snapshot;
+        }
+
+        // Sparse-map lookups that never insert: cells the engine has
+        // not touched yet are simply unknown / not mines here.
+        const auto reveal_at = [&]( const int x, const int y ) {
+            const auto row_it = mLevelReveal.find( y );
+            if( row_it != mLevelReveal.end() ) {
+                const auto cell_it = row_it->second.find( x );
+                if( cell_it != row_it->second.end() ) {
+                    return cell_it->second;
+                }
+            }
+            return unknown;
+        };
+        const auto level_at = [&]( const int x, const int y ) {
+            const auto row_it = mLevel.find( y );
+            if( row_it != mLevel.end() ) {
+                const auto cell_it = row_it->second.find( x );
+                if( cell_it != row_it->second.end() ) {
+                    return cell_it->second;
+                }
+            }
+            return 0;
+        };
+
+        // The knowledge boundary, in one place (see the comment above):
+        // mLevel is consulted only for a seen cell, or after boom, when
+        // the engine has already revealed the whole board on screen.
+        const auto cell_value_text = [&]( const int x, const int y ) -> std::string {
+            const reveal cell_reveal = reveal_at( x, y );
+            if( cell_reveal == seen ) {
+                const int num = level_at( x, y );
+                if( num == bomb ) {
+                    return _( "Mine" );
+                }
+                if( num == 0 ) {
+                    return _( "No adjacent mines" );
+                }
+                return std::to_string( num );
+            }
+            if( boom && level_at( x, y ) == bomb ) {
+                return _( "Mine" );
+            }
+            if( cell_reveal == flag ) {
+                return _( "Flagged" );
+            }
+            return _( "Covered" );
+        };
+
+        int flag_count = 0;
+        int revealed_count = 0;
+        for( int y = 0; y < level.y; ++y ) {
+            for( int x = 0; x < level.x; ++x ) {
+                if( reveal_at( x, y ) == flag ) {
+                    ++flag_count;
+                } else if( reveal_at( x, y ) == seen ) {
+                    ++revealed_count;
+                }
+            }
+        }
+        const int total_cells = level.x * level.y;
+
+        // Board-size guard: with the default FULL_SCREEN_WIDTH (80) and
+        // FULL_SCREEN_HEIGHT (24, or 25 on an odd-height terminal) the
+        // largest Custom board is (80 - 4) by (25 - 4) = 1596 cells at
+        // most, and Expert is 30 by 16 = 480 cells, both far below the
+        // snapshot limit. Should a board
+        // ever grow past the budget anyway, publish only a window
+        // around the cursor (which is therefore always published) and
+        // say so in the summary, instead of letting the snapshot be
+        // rejected for exceeding a11y::max_snapshot_nodes.
+        constexpr std::size_t node_budget = a11y::max_snapshot_nodes - 96;
+        const std::size_t overhead = commands.size() + 1; // + the rules document
+        const bool windowed = static_cast<std::size_t>( total_cells ) + overhead > node_budget;
+        int win_x0 = 0;
+        int win_y0 = 0;
+        int win_x1 = level.x - 1;
+        int win_y1 = level.y - 1;
+        if( windowed ) {
+            int radius = 30;
+            while( radius > 5 ) {
+                win_x0 = std::max( 0, iPlayerX - radius );
+                win_x1 = std::min( level.x - 1, iPlayerX + radius );
+                win_y0 = std::max( 0, iPlayerY - radius );
+                win_y1 = std::min( level.y - 1, iPlayerY + radius );
+                const std::size_t window_cells = static_cast<std::size_t>( win_x1 - win_x0 + 1 ) *
+                                                 static_cast<std::size_t>( win_y1 - win_y0 + 1 );
+                if( window_cells + overhead <= node_budget ) {
+                    break;
+                }
+                radius -= 5;
+            }
+        }
+
+        snapshot.summary = string_format(
+                               _( "Minesweeper board: %1$d columns by %2$d rows. "
+                                  "Mines: %3$d. Flags placed: %4$d. "
+                                  "Cells revealed: %5$d of %6$d. "
+                                  "Cursor: row %7$d, column %8$d: %9$s." ),
+                               level.x, level.y, iBombs, flag_count, revealed_count,
+                               total_cells, iPlayerY + 1, iPlayerX + 1,
+                               cell_value_text( iPlayerX, iPlayerY ) );
+        if( windowed ) {
+            snapshot.summary += " " + string_format(
+                                      _( "The board is too large to list in full; only the "
+                                         "area around the cursor is listed: rows %1$d to "
+                                         "%2$d, columns %3$d to %4$d." ),
+                                      win_y0 + 1, win_y1 + 1, win_x0 + 1, win_x1 + 1 );
+        }
+
+        a11y::append_document( snapshot, "mine:rules", _( "Minesweeper rules" ),
+                               _( "Reveal every cell that does not hide a mine to win; "
+                                  "revealing a mine loses the game. The number on a "
+                                  "revealed cell counts the mines in the eight "
+                                  "neighboring cells. Activate a covered cell to reveal "
+                                  "it. Use the flag action on a covered cell to place a "
+                                  "flag where you believe a mine is hidden, or to remove "
+                                  "a flag you placed; a flag only records your suspicion "
+                                  "and never changes what is hidden." ) );
+
+        for( int y = win_y0; y <= win_y1; ++y ) {
+            for( int x = win_x0; x <= win_x1; ++x ) {
+                a11y::semantic_node cell;
+                cell.id = string_format( "mine:cell:%d:%d", x, y );
+                cell.label = string_format( _( "Row %d, column %d" ), y + 1, x + 1 );
+                cell.value = cell_value_text( x, y );
+                cell.selected = x == iPlayerX && y == iPlayerY;
+                cell.actions = { "focus", "activate", "flag" };
+                if( cell.selected ) {
+                    snapshot.focus = cell.id;
+                }
+                snapshot.nodes.push_back( std::move( cell ) );
+            }
+        }
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( w_minesweeper_border );
         draw_border( w_minesweeper_border );
@@ -300,6 +543,9 @@ int minesweeper_game::start_game()
             action = "QUIT";
         } else {
             ui_manager::redraw();
+            if( a11y::enabled() ) {
+                reader.update( make_reader_snapshot() );
+            }
             action = ctxt.handle_input();
         }
 

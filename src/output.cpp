@@ -17,6 +17,9 @@
 #include <string>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_imgui.h"
 #include "cata_utility.h"
@@ -481,9 +484,29 @@ void scrollable_text( const std::function<catacurses::window()> &init_window,
         wnoutrefresh( w );
     } );
 
+    // R20.4: this generic text screen had no reader adapter at all, yet
+    // it is how the post-game NPC and faction epilogues are shown (and
+    // several help texts). Publish the full text as a document plus the
+    // screen's own registered commands, so the reader can read it and
+    // leave with CONFIRM/QUIT instead of being stuck on a visual-only
+    // screen. Focus observation never scrolls the visual page; the
+    // registered commands drive the original loop below.
+    a11y::screen_scope reader( &ctxt, "SCROLLABLE_TEXT",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     std::string action;
     do {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+            a11y::append_document( snapshot, "scrollable:body", title, text );
+            if( !text.empty() ) {
+                snapshot.focus = "scrollable:body";
+            }
+            reader.update( std::move( snapshot ) );
+        }
 
         action = ctxt.handle_input();
         if( action == "UP" || action == "SCROLL_UP" || action == "DOWN" || action == "SCROLL_DOWN" ) {
@@ -836,7 +859,7 @@ int border_helper::border_connection::as_curses_line() const
 bool query_yn( const std::string &text )
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "ANDROID_NATIVE_UI" ) ) {
+    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && !a11y::enabled() ) {
         JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
         jobject activity = ( jobject )GetAndroidActivity();
         jclass clazz( env->GetObjectClass( activity ) );
@@ -949,7 +972,7 @@ PopupFlags popup_flag_from_string( const std::string &str )
 int popup( const std::string &text, PopupFlags flags )
 {
 #if defined(__ANDROID__)
-    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && flags == PF_NONE ) {
+    if( get_option<bool>( "ANDROID_NATIVE_UI" ) && flags == PF_NONE && !a11y::enabled() ) {
         JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
         jobject activity = ( jobject )GetAndroidActivity();
         jclass clazz( env->GetObjectClass( activity ) );
@@ -990,6 +1013,28 @@ int popup( const std::string &text, PopupFlags flags )
     } else {
         return UNKNOWN_UNICODE;
     }
+}
+
+int choose_key_from_user( const std::string &message, const std::string &allowed_keys,
+                          const int clear_key )
+{
+    if( !a11y::enabled() ) {
+        return popup( message, PF_GET_KEY );
+    }
+
+    uilist keys;
+    keys.title = _( "Choose a key" );
+    keys.text = message;
+    for( const char character : allowed_keys ) {
+        const int key = static_cast<unsigned char>( character );
+        const input_event event( key, input_event_t::keyboard_char );
+        keys.addentry( key, true, -1, event.long_description() );
+    }
+    if( clear_key >= 0 ) {
+        keys.addentry( clear_key, true, -1, _( "Clear current key" ) );
+    }
+    keys.query();
+    return keys.ret == UILIST_CANCEL ? KEY_ESCAPE : keys.ret;
 }
 
 //note that passing in iteminfo instances with sType == "DESCRIPTION" does special things

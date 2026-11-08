@@ -4,8 +4,12 @@
 #include <functional>
 #include <iosfwd>
 #include <iterator>
+#include <optional>
 #include <string>
+#include <utility>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_utility.h"
 #include "color.h"
 #include "cursesdef.h"
@@ -340,6 +344,36 @@ void auto_note_manager_gui::show()
         ctxt.register_action( "CHANGE_MAPEXTRA_CHARACTER" );
     }
 
+    // Keep one reader row per discovered map extra in the active tab.
+    // Browsing only changes the highlighted row; activation goes through
+    // the native CONFIRM action and the existing save/discard prompt.
+    a11y::screen_scope reader( &ctxt, "auto-notes-manager",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node == "autonotes:enabled" ) {
+            return intent.action == "activate" ? "SWITCH_AUTO_NOTE_OPTION" : "TIMEOUT";
+        }
+        if( intent.node == "autonotes:tab:character" ||
+            intent.node == "autonotes:tab:global" ) {
+            if( intent.action == "activate" ) {
+                bCharacter = intent.node == "autonotes:tab:character";
+                currentLine = 0;
+                startPosition = 0;
+            }
+            return "TIMEOUT";
+        }
+        const std::vector<map_extra_id> &shown = bCharacter ? char_displayCache : global_displayCache;
+        for( std::size_t i = 0; i < shown.size(); ++i ) {
+            if( intent.node == "autonotes:item:" + std::to_string( i ) ) {
+                if( intent.action == "focus" || intent.action == "activate" ) {
+                    currentLine = static_cast<int>( i );
+                    return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+                }
+                return std::nullopt;
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         // == Draw border
         draw_border( w_border, BORDER_COLOR, _( "Auto notes manager" ) );
@@ -467,6 +501,58 @@ void auto_note_manager_gui::show()
 
     while( true ) {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                    ctxt, _( "Auto notes manager" ) );
+            const bool globally_enabled = get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" );
+            const std::vector<map_extra_id> &shown = bCharacter ? char_displayCache : global_displayCache;
+            const auto &entries = bCharacter ? char_mapExtraCache : global_mapExtraCache;
+            const auto &symbols = bCharacter ? char_custom_symbol_cache : global_custom_symbol_cache;
+            snapshot.summary = string_format( _( "%1$s tab. %2$d discovered map extras. "
+                                                  "Automatic map-extra notes: %3$s." ),
+                                              bCharacter ? _( "Character" ) : _( "Global" ),
+                                              static_cast<int>( shown.size() ),
+                                              globally_enabled ? _( "Enabled" ) : _( "Disabled" ) );
+            a11y::semantic_node enabled;
+            enabled.id = "autonotes:enabled";
+            enabled.role = "checkbox";
+            enabled.label = _( "Automatic map-extra notes" );
+            enabled.value = globally_enabled ? _( "Enabled" ) : _( "Disabled" );
+            enabled.checked = globally_enabled;
+            snapshot.nodes.push_back( std::move( enabled ) );
+            for( int tab = 0; tab < 2; ++tab ) {
+                a11y::semantic_node node;
+                node.id = tab == 0 ? "autonotes:tab:character" : "autonotes:tab:global";
+                node.role = "tab";
+                node.label = tab == 0 ? _( "Character" ) : _( "Global" );
+                node.selected = bCharacter == ( tab == 0 );
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            for( std::size_t i = 0; i < shown.size(); ++i ) {
+                const auto &entry = entries.at( shown[i] );
+                const auto symbol = symbols.find( shown[i] );
+                const std::string marker = symbol == symbols.end() ?
+                                           entry.first.get_symbol() : symbol->second.get_symbol_string();
+                a11y::semantic_node node;
+                node.id = "autonotes:item:" + std::to_string( i );
+                node.role = "checkbox";
+                node.label = entry.first.name();
+                node.value = entry.second ? _( "Enabled" ) : _( "Disabled" );
+                node.detail = string_format( _( "Map note symbol: %s." ), marker );
+                if( !globally_enabled ) {
+                    node.detail += " ";
+                    node.detail += _( "Automatic map-extra notes are currently off." );
+                }
+                node.checked = entry.second;
+                node.selected = static_cast<int>( i ) == currentLine;
+                node.position = static_cast<int>( i + 1 );
+                node.total = static_cast<int>( shown.size() );
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            snapshot.focus = shown.empty() ? "autonotes:enabled" :
+                             "autonotes:item:" + std::to_string( currentLine );
+            reader.update( std::move( snapshot ) );
+        }
 
         const std::string action = ctxt.handle_input();
 
@@ -474,10 +560,18 @@ void auto_note_manager_gui::show()
         if( action == "SWITCH_AUTO_NOTE_OPTION" ) {
             get_options().get_option( "AUTO_NOTES_MAP_EXTRAS" ).setNext();
             get_options().save();
+            if( a11y::enabled() ) {
+                a11y::announce_game_message(
+                    get_option<bool>( "AUTO_NOTES_MAP_EXTRAS" ) ?
+                    _( "Automatic map-extra notes enabled." ) :
+                    _( "Automatic map-extra notes disabled." ), false );
+            }
         } else if( action == "QUIT" ) {
             break;
         } else if( action == "NEXT_TAB" ) {
             bCharacter = !bCharacter;
+            currentLine = 0;
+            startPosition = 0;
         }
 
         if( bCharacter ? char_emptyMode : global_emptyMode ) {
@@ -548,6 +642,13 @@ void auto_note_manager_gui::show()
         } else if( action == "CONFIRM" ) {
             entry.second = !entry.second;
             ( bCharacter ? charwasChanged : globalwasChanged ) = true;
+        }
+        if( a11y::enabled() && ( action == "CONFIRM" ||
+                                  action == "ENABLE_MAPEXTRA_NOTE" ||
+                                  action == "DISABLE_MAPEXTRA_NOTE" ) ) {
+            a11y::announce_game_message( string_format( _( "%1$s: %2$s." ),
+                                          entry.first.name(),
+                                          entry.second ? _( "Enabled" ) : _( "Disabled" ) ), false );
         }
     }
 

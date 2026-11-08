@@ -26,6 +26,7 @@
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_item_handling.h"
+#include "a11y_runtime.h"
 #include "advanced_inv.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -7060,7 +7061,22 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     workout_query.desc_enabled = true;
     workout_query.text =
         _( "Physical effort determines workout efficiency, but also rate of exhaustion." );
+    if( who.is_avatar() && a11y::enabled() ) {
+        workout_query.text += "\n" + std::string(
+                                  _( "Light uses the least stamina; high intensity is the most tiring. "
+                                     "Choose a level, then enter the number of minutes. "
+                                     "Cancel either step to avoid exercising." ) );
+    }
+    static int reader_last_intensity = 0;
+    static int reader_last_duration = 0;
     workout_query.title = _( "Choose training intensity:" );
+    // Session-local shortcut: no extra duration entry for the previous preset.
+    if( who.is_avatar() && a11y::enabled() && reader_last_intensity > 0 &&
+        reader_last_duration > 0 ) {
+        workout_query.addentry( 5, true, MENU_AUTOASSIGN,
+                                _( "Repeat last workout: intensity %1$d of 4, %2$d minutes" ),
+                                reader_last_intensity, reader_last_duration );
+    }
     workout_query.addentry_desc( 1, true, 'l', pgettext( "training intensity", "Light" ),
                                  _( "Light exercise comparable in intensity to walking, but more focused and methodical." ) );
     workout_query.addentry_desc( 2, true, 'm', pgettext( "training intensity", "Moderate" ),
@@ -7070,7 +7086,11 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     workout_query.addentry_desc( 4, true, 'h', pgettext( "training intensity", "High" ),
                                  _( "High intensity exercise with maximum effort and full power.  Exhausting in the long run." ) );
     workout_query.query();
-    switch( workout_query.ret ) {
+    const bool repeat_previous = who.is_avatar() && a11y::enabled() &&
+                                 workout_query.ret == 5 &&
+                                 reader_last_intensity > 0 && reader_last_duration > 0;
+    const int selected_intensity = repeat_previous ? reader_last_intensity : workout_query.ret;
+    switch( selected_intensity ) {
         case UILIST_CANCEL:
             act.set_to_null();
             act_id = activity_id::NULL_ID();
@@ -7093,10 +7113,16 @@ void workout_activity_actor::start( player_activity &act, Character &who )
             intensity_modifier = 1;
             break;
     }
-    int length = 0;
-    query_int( length, false, _( "Train for how long (minutes): " ) );
+    int length = repeat_previous ? reader_last_duration : 0;
+    if( !repeat_previous ) {
+        query_int( length, false, _( "Train for how long (minutes): " ) );
+    }
     if( length > 0 ) {
         duration = length * 1_minutes;
+        if( who.is_avatar() && a11y::enabled() ) {
+            reader_last_intensity = intensity_modifier;
+            reader_last_duration = length;
+        }
     } else {
         act_id = activity_id::NULL_ID();
         act.set_to_null();
@@ -7104,12 +7130,19 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     }
     act.moves_total = to_moves<int>( duration );
     act.moves_left = act.moves_total;
+    if( who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_info,
+                               _( "Workout started: intensity %1$d of 4, duration %2$d minutes. "
+                                  "Watch for thirst and exhaustion." ), intensity_modifier, length );
+    }
     if( who.male ) {
         sfx::play_activity_sound( "plmove", "sleepiness_m_med", sfx::get_heard_volume( location ) );
     } else {
         sfx::play_activity_sound( "plmove", "sleepiness_f_med", sfx::get_heard_volume( location ) );
     }
-    who.add_msg_if_player( _( "You start your workout session." ) );
+    if( !who.is_avatar() || !a11y::enabled() ) {
+        who.add_msg_if_player( _( "You start your workout session." ) );
+    }
 }
 
 void workout_activity_actor::do_turn( player_activity &act, Character &who )
@@ -8337,6 +8370,11 @@ void reload_activity_actor::reload_msg( Character &who, bool finished )
             !ammo_uses_speedloader_clip ) {
 
             add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+        } else if( finished && a11y::enabled() ) {
+            // Most gun reloads previously produced only a sound at finish.
+            // Report completion after ammunition has actually been moved.
+            add_msg( m_neutral, _( "Reload complete: %1$s with %2$s." ),
+                     reloadable_name, ammo_name );
         }
         make_reload_sound( who, reloadable );
     } else if( reloadable.is_watertight_container() ) {
@@ -13850,10 +13888,29 @@ void wait_activity_actor::start( player_activity &act, Character & )
     act.moves_left = act.moves_total;
 }
 
+void wait_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    // Long waits expose progress without flooding speech on every game tick.
+    // The engine still owns interruption, danger and activity completion.
+    if( who.is_avatar() && a11y::enabled() && act.moves_left > 0 &&
+        calendar::once_every( 5_minutes ) ) {
+        const int turns_left = act.moves_left / to_moves<int>( 1_turns );
+        who.add_msg_if_player( m_info, _( "Waiting: about %s remaining." ),
+                               to_string( time_duration::from_turns( turns_left ) ) );
+    }
+}
+
 void wait_activity_actor::finish( player_activity &act, Character &who )
 {
     who.add_msg_if_player( _( "You finish waiting." ) );
     act.set_to_null();
+}
+
+void wait_activity_actor::canceled( player_activity &, Character &who )
+{
+    if( who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_warning, _( "Waiting interrupted. Check your surroundings." ) );
+    }
 }
 
 void wait_activity_actor::serialize( JsonOut &jsout ) const

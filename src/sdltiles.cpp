@@ -1,5 +1,7 @@
 #include "cursesdef.h" // IWYU pragma: associated
 #include "sdltiles.h" // IWYU pragma: associated
+#include "a11y_runtime.h"
+#include "a11y_android.h"
 
 #include "cata_shader.h"
 #include "cuboid_rectangle.h"
@@ -5843,6 +5845,9 @@ static void CheckMessages()
         env->DeleteLocalRef( clazz );
     }
 
+    // The semantic reader owns touch input. Do not run a previous joystick,
+    // shortcut or hold timer while a semantic/native screen is active.
+    if( !a11y::enabled() ) {
     // Copy the current input context
     input_context *new_input_context = input_context::input_context_stack.back();
     // a context pushed before its actions are registered, as at the start of a game
@@ -5864,10 +5869,12 @@ static void CheckMessages()
         ui_manager::redraw_invalidated();
     }
 
+    } // legacy context ownership
     bool is_default_mode = touch_input_context.get_category() == "DEFAULTMODE";
     quick_shortcuts_t &qsl = quick_shortcuts_map[get_quick_shortcut_name(
                                  touch_input_context.get_category() )];
 
+    if( !a11y::enabled() ) {
     // Don't do this logic if we already need an update, otherwise we're likely to overload the game with too much input on hold repeat events
     if( !needupdate ) {
 
@@ -6124,9 +6131,25 @@ static void CheckMessages()
             needupdate = true;
         }
     }
+    } else {
+        finger_down_time = 0;
+        last_tap_time = 0;
+        ac_back_down_time = 0;
+        is_quick_shortcut_touch = false;
+    }
 #endif
 
     last_input = input_event();
+
+#if defined(__ANDROID__)
+    static std::uint64_t last_reader_epoch = 0;
+    const std::uint64_t reader_epoch = a11y::android::lifecycle_epoch();
+    if( reader_epoch != last_reader_epoch ) {
+        last_reader_epoch = reader_epoch;
+        // Release an input wait entered before Java enabled/changed the reader.
+        last_input.type = input_event_t::timeout;
+    }
+#endif
 
     using cata::options::mouse;
 
@@ -6134,6 +6157,17 @@ static void CheckMessages()
     int imgui_buf_h = 0;
     get_display_buffer_dims( &imgui_buf_w, &imgui_buf_h );
     while( SDL_PollEvent( &ev ) ) {
+#if defined(__ANDROID__)
+        // Consume reader-owned pointers before ImGui and every legacy touch
+        // branch. Keyboard/IME, resize and lifecycle events still run normally.
+        if( a11y::enabled() && ( ev.type == CATA_FINGERDOWN ||
+                                ev.type == CATA_FINGERMOTION || ev.type == CATA_FINGERUP ||
+                                ev.type == CATA_FINGERCANCELED || ev.type == CATA_MOUSEBUTTONDOWN ||
+                                ev.type == CATA_MOUSEBUTTONUP || ev.type == CATA_MOUSEMOTION ||
+                                ev.type == CATA_MOUSEWHEEL ) ) {
+            continue;
+        }
+#endif
         // Build a display_buffer-coord copy for ImGui and gameplay
         // consumers. The raw `ev` stays in window coordinates so android
         // shortcut and joystick hit-tests see the same domain SDL emitted.

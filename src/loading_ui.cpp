@@ -1,5 +1,10 @@
 #include "loading_ui.h"
 
+#if defined(__ANDROID__)
+#include <chrono>
+#include "a11y_android.h"
+#endif
+
 #include "cached_options.h"
 #include "input.h"
 #include "options.h"
@@ -50,6 +55,11 @@ struct ui_state {
     std::string tip;
     std::string context;
     std::string step;
+#if defined(__ANDROID__)
+    std::string last_spoken_loading_status;
+    std::chrono::steady_clock::time_point last_spoken_loading_at{};
+    std::chrono::steady_clock::time_point last_display_refresh_at{};
+#endif
 };
 } // namespace
 
@@ -261,7 +271,56 @@ void loading_ui::show( const std::string &context, const std::string &step )
         return;
     }
     update_state( context, step );
+#if defined(__ANDROID__)
+    // This ImGui loading screen has no input_context or semantic snapshot.
+    // Its spoken progress must therefore bypass snapshot-dependent game events.
+    // Rate limiting prevents rapid recipe/mod updates from flooding the TTS
+    // queue, while recurring updates distinguish loading from a silent hang.
+    if( a11y::android::enabled() && !a11y::android::suspended() && gLUI ) {
+        std::string state = remove_color_tags( context );
+        const std::string stage = remove_color_tags( step );
+        if( !stage.empty() ) {
+            if( !state.empty() ) {
+                state += ". ";
+            }
+            state += stage;
+        }
+        const auto now = std::chrono::steady_clock::now();
+        const auto elapsed = now - gLUI->last_spoken_loading_at;
+        const bool first = gLUI->last_spoken_loading_status.empty();
+        const bool changed = state != gLUI->last_spoken_loading_status;
+        if( !state.empty() &&
+            ( first ||
+              ( changed && elapsed >= std::chrono::seconds( 8 ) ) ||
+              elapsed >= std::chrono::seconds( 30 ) ) ) {
+            std::string message = state;
+            // The turquoise gameplay hint is visible on the loading screen.
+            // Speak it once at first presentation, not on each progress update.
+            if( first && !gLUI->tip.empty() ) {
+                message += ". ";
+                message += remove_color_tags( gLUI->tip );
+            }
+            a11y::android::announce( "A11Y_LOADING:" + message, 1 );
+            gLUI->last_spoken_loading_status = state;
+            gLUI->last_spoken_loading_at = now;
+        }
+    }
+#endif
     drain_renderer_recovery();
+#if defined(__ANDROID__)
+    // Finalization may advance dozens of tiny steps in one frame. Do not
+    // re-upload the same loading display for every step on mobile GPUs;
+    // still process input/cancellation and announce changed progress.
+    const auto render_at = std::chrono::steady_clock::now();
+    if( gLUI && gLUI->last_display_refresh_at.time_since_epoch().count() != 0 &&
+        render_at - gLUI->last_display_refresh_at < std::chrono::milliseconds( 120 ) ) {
+        inp_mngr.pump_events();
+        return;
+    }
+    if( gLUI ) {
+        gLUI->last_display_refresh_at = render_at;
+    }
+#endif
     ui_manager::redraw();
     refresh_display();
     inp_mngr.pump_events();

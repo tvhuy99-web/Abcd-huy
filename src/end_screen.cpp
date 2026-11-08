@@ -1,7 +1,12 @@
 #include <imgui/imgui.h>
 #include <algorithm>
 #include <memory>
+#include <optional>
+#include <utility>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "ascii_art.h"
 #include "cata_imgui.h"
@@ -61,12 +66,39 @@ const std::vector<end_screen> &end_screen::get_all()
 void end_screen_data::draw_end_screen_ui( bool actually_dead )
 {
     input_context ctxt;
-    ctxt.register_action( "TEXT.CONFIRM" );
+    ctxt.register_action( "TEXT.CONFIRM", to_translation( "Continue" ) );
     ctxt.set_timeout( 50 );
     end_screen_ui_impl p_impl;
+    a11y::screen_scope reader( &ctxt, "end_screen",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.action == "set_text" && intent.node == "end:last_words" ) {
+            p_impl.text = intent.value;
+            return "TIMEOUT";
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
 
     while( true ) {
         ui_manager::redraw_invalidated();
+        if( a11y::enabled() ) {
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "The End" ) );
+            snapshot.summary = p_impl.accessibility_description;
+            a11y::append_document( snapshot, "end:details", _( "End-screen details" ),
+                                   p_impl.accessibility_description );
+            if( !p_impl.accessibility_last_words_label.empty() ) {
+                a11y::semantic_node last_words;
+                last_words.id = "end:last_words";
+                last_words.role = "text";
+                last_words.label = p_impl.accessibility_last_words_label;
+                last_words.value = p_impl.text;
+                last_words.actions = { "focus", "set_text" };
+                snapshot.nodes.push_back( std::move( last_words ) );
+            }
+            if( !snapshot.nodes.empty() ) {
+                snapshot.focus = "end:details";
+            }
+            reader.update( std::move( snapshot ) );
+        }
         std::string action = ctxt.handle_input();
         if( action == "TEXT.CONFIRM" || !p_impl.get_is_open() ) {
             break;
@@ -105,6 +137,14 @@ void end_screen_ui_impl::draw_controls()
             }
             break;
         }
+    }
+
+    accessibility_description = _( "This character's run has ended." );
+    accessibility_last_words_label = input_label.empty() ? std::string() : _( input_label );
+    for( const std::pair<std::pair<int, int>, std::string> &info : added_info ) {
+        std::string translated_info = _( info.second );
+        parse_tags( translated_info, u, u );
+        accessibility_description += "\n" + remove_color_tags( translated_info );
     }
 
     if( art.is_valid() ) {

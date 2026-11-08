@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_FLEXBUFFER_CACHE_H
 #define CATA_SRC_FLEXBUFFER_CACHE_H
 
+#include <cstdint>
 #include <filesystem>
 #include <iosfwd>
 #include <memory>
@@ -47,6 +48,12 @@ struct parsed_flexbuffer {
 class flexbuffer_disk_cache;
 struct flexbuffer_storage;
 
+struct flexbuffer_cache_stats {
+    std::uint64_t hits = 0;
+    std::uint64_t misses = 0;
+    std::uint64_t writes = 0;
+};
+
 class flexbuffer_cache
 {
         using shared_flexbuffer = std::shared_ptr<parsed_flexbuffer>;
@@ -63,6 +70,7 @@ class flexbuffer_cache
                                            size_t offset = 0 ) noexcept( false ) ;
 
         static shared_flexbuffer parse_buffer( std::string buffer ) noexcept( false );
+        static flexbuffer_cache_stats statistics();
 
     private:
         flexbuffer_cache( flexbuffer_cache && ) noexcept = default;

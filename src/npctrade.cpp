@@ -24,9 +24,11 @@
 #include "item_contents.h"
 #include "item_location.h"
 #include "item_pocket.h"
+#include "messages.h"
 #include "npc.h"
 #include "npc_opinion.h"
 #include "npctrade_utils.h"
+#include "output.h"
 #include "pocket_type.h"
 #include "ret_val.h"
 #include "skill.h"
@@ -347,6 +349,43 @@ bool npc_trading::trade( npc &np, int cost, const std::string &deal )
             update_npc_owed( np, trade_result.balance, trade_result.value_you );
             player_character.practice( skill_speech, trade_result.value_you / 10000 );
         }
+
+        // R14.2: announce the completed exchange in the message log, the
+        // channel the reader speaks after this screen closes. Every number
+        // comes from trade_result itself or from state already updated
+        // above (the trader's remembered balance and the player's cash);
+        // nothing is recomputed here. This runs on every trade() path
+        // (plain trade, mission reward, pay-for-service), and in each of
+        // them the announced values are the ones just applied.
+        add_msg( _( "Trade completed. You gave items worth %s and received items worth %s." ),
+                 format_money( trade_result.value_you ),
+                 format_money( trade_result.value_trader ) );
+        if( !np.will_exchange_items_freely() ) {
+            if( trade_result.delta_bank > 0 ) {
+                add_msg( _( "You paid %s from your bank account. Your cash is now %s." ),
+                         format_money( trade_result.delta_bank ),
+                         format_money( player_character.cash ) );
+            } else if( trade_result.delta_bank < 0 ) {
+                add_msg( _( "You received %s into your bank account. Your cash is now %s." ),
+                         format_money( -trade_result.delta_bank ),
+                         format_money( player_character.cash ) );
+            }
+            if( np.op_of_u.owed > 0 ) {
+                add_msg( _( "%s now owes you %s." ), np.get_name(),
+                         format_money( np.op_of_u.owed ) );
+            } else if( np.op_of_u.owed < 0 ) {
+                add_msg( _( "You now owe %s %s." ), np.get_name(),
+                         format_money( -np.op_of_u.owed ) );
+            } else {
+                add_msg( _( "Neither side owes anything after this trade." ) );
+            }
+        }
+    } else {
+        // R14.2: leaving the trade screen without a completed exchange
+        // (cancel, or a refusal already explained by the confirmation
+        // popup in trade_ui::_confirm_trade) used to be silent. State
+        // only what is true on every such path: nothing changed hands.
+        add_msg( _( "No trade took place. Nothing was exchanged." ) );
     }
     return trade_result.traded ;
 }

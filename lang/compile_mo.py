@@ -19,8 +19,20 @@ def main() -> int:
 
     output.parent.mkdir(parents=True, exist_ok=True)
     with opener(source, "rb") as catalog:
-        subprocess.run([msgfmt, "-f", "-o", str(output), "-"],
-                       input=catalog.read(), check=True)
+        content = catalog.read()
+    # Small, reviewed accessibility additions stay in plaintext while the
+    # large upstream Vietnamese catalog remains compressed. Merge by gettext
+    # identity, not by replacing English words at runtime.
+    language = source.name.split(".", 1)[0]
+    overlay = source.parent / "accessibility" / (language + ".po")
+    if overlay.is_file():
+        executable = Path(msgfmt)
+        msgcat_name = "msgcat.exe" if executable.suffix == ".exe" else "msgcat"
+        msgcat = str(executable.with_name(msgcat_name)) if executable.parent != Path(".") else msgcat_name
+        content = subprocess.run([msgcat, "--use-first", str(overlay), "-"],
+                                 input=content, stdout=subprocess.PIPE, check=True).stdout
+    subprocess.run([msgfmt, "-f", "-o", str(output), "-"],
+                   input=content, check=True)
     return 0
 
 

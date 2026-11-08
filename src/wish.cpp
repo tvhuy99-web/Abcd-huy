@@ -14,6 +14,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_semantics.h"
 #include "bionics.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -170,7 +171,11 @@ class wish_mutate_callback: public uilist_callback
                 desc_scroll = cataimgui::scroll::page_down;
                 return true;
             }
-            if( event.get_first_input() == 't' && you->has_trait( vTraits[ entnum ] ) ) {
+            if( action == "WISH_TOGGLE_SELECTED_MUTATION" || event.get_first_input() == 't' ) {
+                if( you == nullptr || entnum < 0 || entnum >= static_cast<int>( vTraits.size() ) ||
+                    !you->has_trait( vTraits[ entnum ] ) ) {
+                    return action == "WISH_TOGGLE_SELECTED_MUTATION";
+                }
                 if( !you->has_base_trait( vTraits[ entnum ] ) ) {
                     you->unset_mutation( vTraits[ entnum ] );
                 }
@@ -182,7 +187,7 @@ class wish_mutate_callback: public uilist_callback
                                                      menu->text_color;
                 menu->entries[ entnum ].extratxt.txt = you->has_base_trait( vTraits[ entnum ] ) ? "T" : "";
                 return true;
-            } else if( event.get_first_input() == 'a' ) {
+            } else if( action == "WISH_SHOW_ACTIVE_MUTATIONS" || event.get_first_input() == 'a' ) {
                 only_active = !only_active;
 
                 for( size_t i = 0; i < vTraits.size(); i++ ) {
@@ -194,6 +199,24 @@ class wish_mutate_callback: public uilist_callback
                 return true;
             }
             return false;
+        }
+
+        void describe_accessibility_action( const std::string &action, const int entnum,
+                                            a11y::semantic_node &node ) const override {
+            if( action == "WISH_TOGGLE_SELECTED_MUTATION" ) {
+                const bool active = you != nullptr && entnum >= 0 &&
+                                    entnum < static_cast<int>( vTraits.size() ) &&
+                                    you->has_trait( vTraits[entnum] );
+                node.role = "checkbox";
+                node.checked = active;
+                node.enabled = active;
+                if( !active ) {
+                    node.disabled_reason = _( "The selected mutation is not currently active." );
+                }
+            } else if( action == "WISH_SHOW_ACTIVE_MUTATIONS" ) {
+                node.role = "checkbox";
+                node.checked = only_active;
+            }
         }
 
         float desired_extra_space_right( ) override {
@@ -287,6 +310,8 @@ void debug_menu::wishmutate( Character *you )
     uilist wmenu;
     wmenu.input_category = "WISH_ITEM";
     wmenu.additional_actions = {
+        { "WISH_TOGGLE_SELECTED_MUTATION", to_translation( "Toggle selected mutation" ) },
+        { "WISH_SHOW_ACTIVE_MUTATIONS", to_translation( "Show active mutations only" ) },
         { "SCROLL_DESC_UP", translation() },
         { "SCROLL_DESC_DOWN", translation() },
     };
@@ -710,23 +735,45 @@ class wish_monster_callback: public uilist_callback
                 desc_scroll = cataimgui::scroll::page_down;
                 return true;
             }
-            if( event.get_first_input() == 'f' ) {
+            if( action == "WISH_TOGGLE_FRIENDLY" || event.get_first_input() == 'f' ) {
                 friendly = !friendly;
                 // Force tmp monster regen
                 lastent = -2;
                 // Tell menu we handled keypress
                 return true;
-            } else if( event.get_first_input() == 'i' ) {
+            } else if( action == "WISH_INCREASE_GROUP" || event.get_first_input() == 'i' ) {
                 group++;
                 return true;
-            } else if( event.get_first_input() == 'h' ) {
+            } else if( action == "WISH_TOGGLE_HALLUCINATION" || event.get_first_input() == 'h' ) {
                 hallucination = !hallucination;
                 return true;
-            } else if( event.get_first_input() == 'd' && group != 0 ) {
+            } else if( ( action == "WISH_DECREASE_GROUP" || event.get_first_input() == 'd' ) && group != 0 ) {
                 group--;
                 return true;
             }
             return false;
+        }
+
+        void describe_accessibility_action( const std::string &action, int,
+                                            a11y::semantic_node &node ) const override {
+            if( action == "WISH_TOGGLE_FRIENDLY" ) {
+                node.role = "checkbox";
+                node.checked = friendly;
+            } else if( action == "WISH_TOGGLE_HALLUCINATION" ) {
+                node.role = "checkbox";
+                node.checked = hallucination;
+            } else if( action == "WISH_MONSTER_GROUP_SIZE" ) {
+                node.role = "status";
+                node.label = _( "Monster spawn count" );
+                node.value = std::to_string( group );
+                node.detail = _( "Number of monsters to create for the selected type." );
+                node.actions = { "focus" };
+            } else if( action == "WISH_DECREASE_GROUP" ) {
+                node.enabled = group > 0;
+                if( !node.enabled ) {
+                    node.disabled_reason = _( "The spawn count is already zero." );
+                }
+            }
         }
 
         float desired_extra_space_right( ) override {
@@ -854,6 +901,13 @@ void debug_menu::wishmonstergroup_mon_selection( mongroup &group )
     setup_wishmonster( new_mon_selection, mtypes );
     wish_monster_callback cb( mtypes );
     new_mon_selection.callback = &cb;
+    new_mon_selection.additional_actions = {
+        { "WISH_TOGGLE_FRIENDLY", to_translation( "Toggle friendly" ) },
+        { "WISH_INCREASE_GROUP", to_translation( "Increase spawn count" ) },
+        { "WISH_DECREASE_GROUP", to_translation( "Decrease spawn count" ) },
+        { "WISH_TOGGLE_HALLUCINATION", to_translation( "Toggle hallucination" ) },
+        { "WISH_MONSTER_GROUP_SIZE", to_translation( "Monster spawn count" ) },
+    };
     new_mon_selection.query();
     int &selected = new_mon_selection.ret;
     if( selected < 0 || static_cast<size_t>( selected ) >= mtypes.size() ) {
@@ -880,6 +934,11 @@ void debug_menu::wishmonster( const std::optional<tripoint_bub_ms> &p )
     uilist wmenu;
     wmenu.input_category = "WISH_ITEM";
     wmenu.additional_actions = {
+        { "WISH_TOGGLE_FRIENDLY", to_translation( "Toggle friendly" ) },
+        { "WISH_INCREASE_GROUP", to_translation( "Increase spawn count" ) },
+        { "WISH_DECREASE_GROUP", to_translation( "Decrease spawn count" ) },
+        { "WISH_TOGGLE_HALLUCINATION", to_translation( "Toggle hallucination" ) },
+        { "WISH_MONSTER_GROUP_SIZE", to_translation( "Monster spawn count" ) },
         { "SCROLL_DESC_UP", translation() },
         { "SCROLL_DESC_DOWN", translation() },
     };
@@ -1062,12 +1121,35 @@ class wish_item_callback: public uilist_callback
             if( action == "SCROLL_DESC_DOWN" ) {
                 desc_scroll = cataimgui::scroll::page_down;
             }
-            if( cur_key == KEY_LEFT || cur_key == KEY_RIGHT ) {
+            if( action == "WISH_REFRESH_PREVIEW_SNIPPET" || cur_key == KEY_LEFT || cur_key == KEY_RIGHT ) {
                 // For Renew snippet_id.
                 renew_snippet = true;
                 return true;
             }
             return false;
+        }
+
+        void describe_accessibility_action( const std::string &action, const int selected,
+                                            a11y::semantic_node &node ) const override {
+            if( action == "CONTAINER" ) {
+                node.role = "checkbox";
+                node.checked = incontainer;
+            } else if( action == "EVERYTHING" ) {
+                node.role = "checkbox";
+                node.checked = spawn_everything;
+            } else if( action == "SNIPPET" || action == "WISH_REFRESH_PREVIEW_SNIPPET" ) {
+                const bool has_snippets = selected >= 0 &&
+                                          selected < static_cast<int>( standard_itype_ids.size() ) &&
+                                          !standard_itype_ids[selected]->snippet_category.empty();
+                node.enabled = has_snippets;
+                if( !has_snippets ) {
+                    node.disabled_reason = _( "The selected item has no text snippets." );
+                }
+                if( action == "SNIPPET" ) {
+                    node.role = "checkbox";
+                    node.checked = chosen_snippet_id.first == selected;
+                }
+            }
         }
 
         float desired_extra_space_right( ) override {
@@ -1186,10 +1268,11 @@ void debug_menu::wishitem( Character *you, const tripoint_bub_ms &pos )
     uilist wmenu;
     wmenu.input_category = "WISH_ITEM";
     wmenu.additional_actions = {
-        { "CONTAINER", translation() },
-        { "FLAG", translation() },
-        { "EVERYTHING", translation() },
-        { "SNIPPET", translation() },
+        { "CONTAINER", to_translation( "Place item in a container" ) },
+        { "FLAG", to_translation( "Edit item flags" ) },
+        { "EVERYTHING", to_translation( "Create all charges" ) },
+        { "SNIPPET", to_translation( "Choose item text" ) },
+        { "WISH_REFRESH_PREVIEW_SNIPPET", to_translation( "Refresh the sample item text" ) },
         { "SCROLL_DESC_UP", translation() },
         { "SCROLL_DESC_DOWN", translation() },
     };

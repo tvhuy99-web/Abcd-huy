@@ -9,6 +9,7 @@
 #include <vector>
 
 #include "activity_tracker.h"
+#include "a11y_body.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -1325,6 +1326,14 @@ bodypart_id Character::body_window( const std::string &menu_header,
             }
         }
         bmenu.addentry_desc( i, e.allowed, MENU_AUTOASSIGN, msg, desc );
+        // Reader value for this row (R10.2): the entry text contains the
+        // visual HP bar, whose characters mean nothing spoken aloud. The
+        // value carries the medical knowledge-policy description of the
+        // same part -- feelings when pain-immune, coarse segments
+        // otherwise, never exact hit points -- matching the medical
+        // screen. The entry description (bleeding/bandage/bite/infection
+        // detail and expected effect) is already text and is read as-is.
+        bmenu.entries.back().a11y_value = a11y::limb_health_description( *this, bp );
     }
 
     if( !is_valid_choice ) { // no body part can be chosen for this item/effect

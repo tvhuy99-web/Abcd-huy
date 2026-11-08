@@ -1,0 +1,3544 @@
+{
+  "schema_version": 1,
+  "muc_ke_hoach": "R01.2 + R01.3 (REMAINING-CODE-PLAN.vi.md ban 2.0)",
+  "commit_nen": "894345fa1a76c9710d88716be5034f77eecebd23",
+  "ngay": "2026-10-23",
+  "nguon_doi_chieu": [
+    "doc/accessibility/PLAN.vi.md (muc 11 va 15.4 - danh sach T01-T64 nam o day, khong phai TESTING.vi.md)",
+    "doc/accessibility/COVERAGE.md (30 nhom be mat)",
+    "doc/accessibility/IMPLEMENTATION.vi.md",
+    "doc/accessibility/STATUS.md",
+    "doc/accessibility/SCOPE-MANIFEST-2026-10-23.vi.md",
+    "tools/accessibility/inventory.py (chay tai HEAD, output chi dung lam dem cu phap)"
+  ],
+  "quy_uoc": {
+    "trang_thai_viet": {
+      "da-viet-cho-kiem-thu": "Co bang chung file/ham adapter that trong nguon hien tai dap ung duong di chinh cua hanh trinh; chua build/test. Khong dong nghia nghiem thu.",
+      "chua-viet": "Chua co adapter rieng cho hanh trinh, hoac nhanh bat buoc cua hanh trinh chua co; viec huong menu/fallback dung chung duoc ghi ro trong adapter va khong tu no nang trang thai.",
+      "chua-kiem-ke": "Chua phan loai duoc - muc tieu bang 0 trong pham vi da ghim cua dot nay (xem phan_loai_diem_dau_vao)."
+    },
+    "trang_thai_kiem_thu": "Moi hanh trinh deu 'chua-thu' o giai doan 1; kiem thu thuoc giai doan 2 (T01-T64 va bai bo sung TX) va nghiem thu may that o giai doan 3.",
+    "test_bo_sung": "Hanh trinh ngoai T01-T64 duoc gan ma TX-*; danh sach TX chinh thuc chot o R22.3.",
+    "pham_vi_rieng": "Cong cu phat trien (debug/editmap/wish) la pham vi rieng theo R01.4: khong phai tinh nang choi nhung moi duong hien ra phai co nhan gioi han va duong thoat."
+  },
+  "tong_quan": {
+    "so_nhom_be_mat_coverage": 30,
+    "so_hanh_trinh": 115,
+    "theo_trang_thai_viet": {
+      "da-viet-cho-kiem-thu": 110,
+      "chua-viet": 5
+    },
+    "tat_ca_deu": "chua-thu (giai doan 1 khong chay kiem thu)"
+  },
+  "hanh_trinh": [
+    {
+      "id": "cai-dat-du-lieu-lan-dau",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Cai/nang du lieu lan dau va tien do khoi dong",
+      "duong_vao": "Mo app (SplashScreen la activity launcher)",
+      "truong_va_tham_so": "Trang thai cai dat, phan tram tien do theo moc 10%, loi thieu dung luong/sao chep",
+      "xac_nhan_va_huy": "Thu lai hoac thoat o man loi",
+      "ket_qua": "Vao duoc man canh bao/thiet lap tro nang; khong bao san sang som",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "SplashScreen.java (bootstrapSpeech, ensureBootstrapSpeech, ProgressDialog, dialog loi)",
+        "BootstrapSelfVoiceSurface.java"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T01",
+        "T05"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R06.4: tiến độ vẫn đọc theo mốc 10%; luồng cài nay qua staging/journal/rollback (hành trình cai-dat-staging-rollback đã viết). Lỗi hết dung lượng có thông điệp và clip riêng (a11yBootstrapNoSpace, CLIP_NO_SPACE).",
+      "fixtures": []
+    },
+    {
+      "id": "cai-dat-staging-rollback",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Cai/nang du lieu co staging, journal va rollback",
+      "duong_vao": "Cai dat bi loi/kill giua chung roi mo lai app",
+      "truong_va_tham_so": "Trang thai staging, ban dang do, loi ghi/giai nen",
+      "xac_nhan_va_huy": "Thu lai tu ban staging hoac quay ban on dinh cu",
+      "ket_qua": "Khong bao game san sang khi du lieu chua hoan tat; khong hong du lieu cu",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "SplashScreen.java (InstallProgramTask: staging .reader_install_staging, journal install_journal.txt, rollback .reader_install_rollback, kiểm chứng số tệp/tổng byte, recoverInterruptedInstall)",
+        "doc/accessibility/R06-VOICE-BOOT.vi.md muc 4"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T05",
+        "T53"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Đã viết ở commit R06: staging + journal + rollback + khôi phục khi bị kill giữa hoán đổi; pref installed chỉ ghi sau COMMITTED. Chưa kiểm thử (T05, T53 ở giai đoạn 2).",
+      "fixtures": [
+        "F-15"
+      ]
+    },
+    {
+      "id": "chon-va-cai-giong-doc",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Thieu giong Viet: huong dan chon/cai giong va quay lai",
+      "duong_vao": "Man thiet lap tro nang khi TTS thieu giong Viet",
+      "truong_va_tham_so": "Trang thai giong, nut mo cai dat giong cua he thong",
+      "xac_nhan_va_huy": "Mo cai dat he thong roi quay lai bang duong tro ve cua app",
+      "ket_qua": "Tiep tuc duoc thiet lap hoac thoat; khong im lang, khong lap hop thoai vo han",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "ReaderSetupActivity.java (mo cai dat giong, fallback khi may khong nhan action giong doc)",
+        "AndroidSpeech.java (kiem tra giong that khop locale, khong fallback tham)"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T03"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R06.1 bổ sung: chọn engine/voice/ngôn ngữ theo nháp tại ReaderSetupActivity, nhãn offline/mạng, mẫu thử đóng băng lựa chọn, chỉ ghi sau xác nhận (xem R06-VOICE-BOOT.vi.md mục 1). Đường phục hồi khi thiếu giọng nay còn có clip cứu hộ đóng gói (hành trình am-cuu-ho-khong-phu-thuoc-tts).",
+      "fixtures": []
+    },
+    {
+      "id": "am-cuu-ho-khong-phu-thuoc-tts",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Am cuu ho tieng Viet dong goi khi TTS loi/thieu giong",
+      "duong_vao": "Trang thai TTS loi o SplashScreen/setup",
+      "truong_va_tham_so": "Cac lenh nghe duoc: thu lai, chon nguon doc, mo cai dat, quay lai",
+      "xac_nhan_va_huy": "Chon lenh cuu ho bang thao tac mot ngon",
+      "ket_qua": "Thoat khoi trang thai ket ma khong can TTS dang loi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "RescueAudioPlayer.java",
+        "android/app/src/main/res/raw/a11y_rescue_*.mp3 (6 clip, ffprobe 3,9–25,0s)",
+        "SplashScreen.java (showBootstrapRescueScreen, showBootstrapInstallationError)",
+        "ReaderSetupActivity.java (playRescueClipOnce, nút a11yRescueHelp)",
+        "doc/accessibility/R06-RESCUE-AUDIO-ASSETS.vi.md"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T03",
+        "T04"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Đã viết ở commit R06. Asset là giọng eSpeak NG (edge-tts/Microsoft không sinh được trong môi trường này - xem tài liệu asset); độ rõ phải nghiệm thu máy thật ở giai đoạn 2/3. CLIP_WELCOME có asset nhưng chưa nối luồng phát.",
+      "fixtures": []
+    },
+    {
+      "id": "thu-giong-va-bat-bo-doc",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Thu giong, chinh toc do 0,5-3,0 va xac nhan bat bo doc",
+      "duong_vao": "ReaderSetupActivity tu Splash/man canh bao tro nang",
+      "truong_va_tham_so": "Toc do doc, cau mau, trang thai nghe het cau thu",
+      "xac_nhan_va_huy": "Xac nhan sau khi nghe het mau; huy tra cau hinh cu",
+      "ket_qua": "Bo doc bat/tat dung lua chon da luu",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "ReaderSetupActivity.java",
+        "ReaderPreferences.java (isEnabled = enabled && heard_confirmation)",
+        "ReaderSpeechQueue.java",
+        "AndroidSpeech.java"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T04"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chua kiem thu TTS that; chon engine/voice la hanh trinh rieng chua viet.",
+      "fixtures": []
+    },
+    {
+      "id": "chon-engine-va-voice",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Chon engine/voice/ngon ngu doc, thu theo nhap roi luu",
+      "duong_vao": "Man thiet lap giong",
+      "truong_va_tham_so": "Danh sach engine/voice, co che offline/mang, lua chon nhap",
+      "xac_nhan_va_huy": "Thu giong theo nhap, xac nhan luu hoac huy ve gia tri da luu",
+      "ket_qua": "Khong tu chap nhan giong mang; voice bi mat co duong phuc hoi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "ReaderSetupActivity.java (truong ban nhap R06.1 :61-75; 3 nut chon ngon ngu/engine/giong :135-152; muc Voice selection :791+, cycleVoiceEngine :876; nut thu giong dong bang ban nhap da test :245-257; nut xac nhan 'heard' moi goi preferences.saveSpeechSelection :274-282; invalidateSampleForChangedSettings :1368)",
+        "AndroidSpeech.java (EngineOption :33; VoiceOption :49 gom networkRequired; probeVoices :77; initialize(engineName, language, rate, offlineOnly, voiceName) :205; findVoice :300)",
+        "ReaderPreferences.java:65-95 (khoa speech_engine/speech_voice/speech_language, saveSpeechSelection/clearSpeechSelection)"
+      ],
+      "muc_phu_trach": [
+        "R06"
+      ],
+      "test_ids": [
+        "T03",
+        "T04",
+        "T56"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R06.1 (commit 3c8e6f8c): bo chon engine/voice/ngon ngu doc trong ReaderSetupActivity theo co che nhap-then-xac-nhan: doi lua chon chi sua ban nhap; nut thu giong doc mau bang dung gia tri ban nhap da dong bang; chi khi nguoi dung xac nhan da nghe duoc moi ghi preference qua saveSpeechSelection; doi ban nhap sau khi thu thi huy hieu luc mau thu (invalidateSampleForChangedSettings) nen ban nhap chua thu khong bao gio duoc luu. Dong nay truoc R23 ghi chua-viet do chua lat trang thai sau R06.",
+      "fixtures": []
+    },
+    {
+      "id": "bat-tat-bo-doc-va-phoi-hop-talkback",
+      "nhom_be_mat": "Khoi dong Java",
+      "ten": "Bat/tat bo doc noi bo va phoi hop TalkBack/touch exploration",
+      "duong_vao": "ReaderSetupActivity; trang thai touch exploration doi giua phien",
+      "truong_va_tham_so": "Trang thai bo doc, che do doc noi bo/announce qua TalkBack",
+      "xac_nhan_va_huy": "Bat/tat co xac nhan; tat bo doc tra quyen cho bo doc he thong",
+      "ket_qua": "Khong phat TTS noi bo khi dang announce qua TalkBack; khong khoa duong phuc hoi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "GameReaderController.java (usesTouchExploration, announceGameMessage, onSpeechHealth)",
+        "ReaderPreferences.java",
+        "src/a11y_runtime.cpp (a11y::enabled)"
+      ],
+      "muc_phu_trach": [
+        "R05",
+        "R06"
+      ],
+      "test_ids": [
+        "T06",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chinh sach chi tiet o SCOPE-MANIFEST muc 6.",
+      "fixtures": []
+    },
+    {
+      "id": "menu-chinh-duyet-chon",
+      "nhom_be_mat": "Menu chinh",
+      "ten": "Duyet va chon muc o menu chinh",
+      "duong_vao": "Man menu chinh sau khoi dong",
+      "truong_va_tham_so": "Tab, muc con, so ban luu co the tai cua the gioi",
+      "xac_nhan_va_huy": "Chon rieng khoi duyet; Back ve tang truoc",
+      "ket_qua": "Vao dung nhanh da chon; khong tu tai game khi chi duyet",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp:709 screen_scope MAIN_MENU",
+        "src/main_menu.cpp snapshot :749-807"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T01",
+        "T02"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Context MAIN_MENU khai bao bang member initializer (main_menu.h:21) - diem cong cu do sot, da phan loai o muc diem dau vao.",
+      "fixtures": []
+    },
+    {
+      "id": "menu-chinh-tiep-tuc-va-tai",
+      "nhom_be_mat": "Menu chinh",
+      "ten": "Tiep tuc/tai game tu menu chinh",
+      "duong_vao": "Muc tai/tiep tuc o menu chinh",
+      "truong_va_tham_so": "Danh sach the gioi/ban luu (di qua hanh trinh chon the gioi)",
+      "xac_nhan_va_huy": "Xac nhan tai rieng; huy ve menu",
+      "ket_qua": "Vao dung nhan vat/the gioi da chon",
+      "quyen_biet": "Tri thuc cua nhan vat duoc tai thay the hoan toan, khong giu du lieu nhan vat cu",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp (scope MAIN_MENU)",
+        "src/worldfactory.cpp scope world-selection",
+        "src/game_io.cpp a11y::replace_game_session"
+      ],
+      "muc_phu_trach": [
+        "R07",
+        "R20"
+      ],
+      "test_ids": [
+        "T28",
+        "T53"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Loi ban luu la hanh trinh rieng chua viet (nhom Luu/tai).",
+      "fixtures": [
+        "F-15"
+      ]
+    },
+    {
+      "id": "menu-chinh-tai-lieu",
+      "nhom_be_mat": "Menu chinh",
+      "ten": "Doc tai lieu/van ban o menu chinh",
+      "duong_vao": "Muc tai lieu trong menu chinh",
+      "truong_va_tham_so": "Noi dung dai theo doan",
+      "xac_nhan_va_huy": "Doc tiep/quay lai; thoat ve menu",
+      "ket_qua": "Khong doc lai toan van sau canh bao ngat",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp (tai lieu trong snapshot menu chinh, theo IMPLEMENTATION.vi.md)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T16"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Đọc dài đầy đủ nay có phiên tài liệu R04.4 (đoạn/đọc tiếp/bookmark/tìm trong tài liệu) qua ReaderDocumentReader; trạng thái này ghi cả phần đã nối trong menu chính.",
+      "fixtures": []
+    },
+    {
+      "id": "canh-bao-realtime-khi-vao-game",
+      "nhom_be_mat": "Menu chinh",
+      "ten": "Canh bao va lua chon realtime khi vao game/tai/tutorial",
+      "duong_vao": "Cac diem vao game, tai save, tutorial khi TURN_DURATION > 0.005 va bo doc bat",
+      "truong_va_tham_so": "Gia tri TURN_DURATION, canh bao thoi gian troi theo thoi gian thuc",
+      "xac_nhan_va_huy": "YES giu realtime / NO tat va luu / QUIT thoat (mac dinh focus QUIT)",
+      "ket_qua": "Khong tu doi luat choi am tham; lua chon duoc luu neu chon NO",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp:84 confirm_realtime_progression_for_accessibility (goi tai cac diem vao game/tai/tutorial)",
+        "src/options.cpp TURN_DURATION mac dinh 0.0"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T08"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Pham vi chuan la theo luot; realtime la lua chon chu dong cua nguoi choi (SCOPE-MANIFEST muc 5). R07.4 da xac minh ca 3 callsite (tutorial, new_character_tab, load_game) bao phu moi duong vao game qua menu, gom quickload va CLI --world di qua load_game; ham API game::load(string) khong qua rao nhung khong co caller trong luong menu.",
+      "fixtures": []
+    },
+    {
+      "id": "chon-the-gioi",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Chon the gioi va thay so ban luu",
+      "duong_vao": "Menu chinh > chon the gioi",
+      "truong_va_tham_so": "Ten the gioi, so ban luu co the tai tren moi trang",
+      "xac_nhan_va_huy": "Chon tach khoi xac nhan vao; huy ve menu",
+      "ket_qua": "Vao dung the gioi da xac nhan",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/worldfactory.cpp scope world-selection :642"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T28"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": [
+        "F-15"
+      ]
+    },
+    {
+      "id": "tao-the-gioi-co-ban",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Tao the gioi co ban (ten, muc tuy chon, hoan tat/dat lai/ngau nhien)",
+      "duong_vao": "Luồng tao the gioi trong worldfactory",
+      "truong_va_tham_so": "Ten, muc tuy chon, lenh tang/giam, nut hoan tat/dat lai/ngau nhien",
+      "xac_nhan_va_huy": "Hoan tat rieng; huy khong tao the gioi",
+      "ket_qua": "The gioi moi xuat hien trong danh sach voi dung cau hinh",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/worldfactory.cpp scope world-generation :1862",
+        "src/worldfactory.cpp show_worldgen_advanced (valid_worldname) + make_new_world (popup loi ghi tep khi reader bat)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T01",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07.1: luong sao chep (advanced) nay cung qua valid_worldname nhu luong co ban (truoc day ten trung/khong hop le di thang toi add_world va that bai am tham); loi ghi tep khi tao world co popup thong bao khi reader bat (make_new_world sau add_world that bai). Doi ten world da ton tai khong co trong UI that - chi co tao moi va sao chep sang ten moi.",
+      "fixtures": []
+    },
+    {
+      "id": "tuy-chon-nang-cao-cua-the-gioi",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Tuy chon nang cao cua the gioi (tab/nhom/gia tri/dieu kien)",
+      "duong_vao": "Man tuy chon nang cao khi tao/sao chep the gioi",
+      "truong_va_tham_so": "Tab, nhom, gia tri, mo ta, dieu kien, lenh chinh",
+      "xac_nhan_va_huy": "Ap dung/huy theo UI goc",
+      "ket_qua": "Gia tri da ap dung dung; huy tra gia tri cu",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/worldfactory.cpp (tuy chon nang cao trong scope tao the gioi)",
+        "src/options.cpp:3566 scope world-options"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T17",
+        "T18"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Form co mien/ loi truong day du thuoc R02/R04.",
+      "fixtures": []
+    },
+    {
+      "id": "chon-mod-khi-tao-the-gioi",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Chon mod khi tao/sao chep the gioi (nhom, mo ta, xung dot, thu tu nap)",
+      "duong_vao": "Bo chon mod trong luong tao the gioi",
+      "truong_va_tham_so": "Mod kha dung/dang bat, nhom, mo ta, xung dot, thu tu nap",
+      "xac_nhan_va_huy": "Bat/tat va doi thu tu qua action goc; huy ve cau hinh truoc",
+      "ket_qua": "Thu tu nap luu vao <world>/mods.json dung thu tu da chon",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/worldfactory.cpp scope mod-selection :1441",
+        "src/mod_manager.cpp (save_mods_list/load_mods_list)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Thu tu nap va mac dinh dev:default ghi o SCOPE-MANIFEST muc 4; danh sach mod phat hanh chua ghim. R07.1 bo sung: detail cua mod co them nhom (category) va xung dot do chinh mod khai bao; mod co loi cay phu thuoc nay bi disabled kem van ban loi cua cay phu thuoc thay vi try_add tu choi am tham.",
+      "fixtures": []
+    },
+    {
+      "id": "xem-mod-cua-the-gioi-hien-co",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Xem mod va thu tu nap cua the gioi hien co (chi doc)",
+      "duong_vao": "Man xem mod cua world dang co",
+      "truong_va_tham_so": "Mo ta mod, thu tu nap",
+      "xac_nhan_va_huy": "Chi duyet; thoat ve man truoc",
+      "ket_qua": "Khong sua cau hinh khi chi xem",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/worldfactory.cpp scope active-world-mods :1015"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07.1: detail cua mod dang chon nay co them nhom, xung dot do mod khai bao va xung dot voi danh sach dang nap, ngang voi man chon mod.",
+      "fixtures": []
+    },
+    {
+      "id": "doi-ten-the-gioi",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Doi ten the gioi",
+      "duong_vao": "Danh sach the gioi",
+      "truong_va_tham_so": "Ten hien tai, o nhap ten moi",
+      "xac_nhan_va_huy": "Xac nhan doi ten; huy giu ten cu",
+      "ket_qua": "Ten moi hien dung; khong mat ban luu",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "chua-co",
+      "bang_chung": [],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "chua-viet",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07 da ra toan bo nguon quan ly world: doi ten mot the gioi DA TON TAI khong co trong UI that - world_generator_ui.cpp chi co dat ten cho the gioi moi/sao (query_world_name :302-312, dung trong make_new_world :419) va khong co ham rename nao; cac thao tac tren the gioi da co trong main_menu.cpp chi gom xoa (da viet o dong xoa-the-gioi-va-xac-nhan), reset va chon de choi. Ten the gioi cung la ten thu muc luu, game khong cung cap luong doi ten. Giu trang thai chua-viet vi khong ton tai luong UI de noi adapter; neu ban game sau them rename thi mo lai dong nay.",
+      "fixtures": []
+    },
+    {
+      "id": "sao-chep-the-gioi",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Sao chep the gioi (sao cai dat sang the gioi moi)",
+      "duong_vao": "Menu chinh -> muc con cua the gioi -> 'Copy World Settings' (main_menu.cpp:558, world_tab case 1 :1541-1543)",
+      "truong_va_tham_so": "The gioi nguon dang chon; ten the gioi moi va tuy chon/mod o man worldgen nang cao sau khi sao (adapter worldgen cua R07)",
+      "xac_nhan_va_huy": "Xac nhan o cac buoc worldgen tao the gioi moi; huy thi khong tao gi",
+      "ket_qua": "Mot the gioi moi duoc tao voi ten kem hau to '_copy', WORLD_OPTIONS va thu tu mod sao tu the gioi nguon; ban luu cua the gioi nguon khong duoc sao va khong thay doi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat (chi sao cai dat, khong sao trang thai the gioi da choi)",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp (muc 'Copy World Settings' :558; world_tab case 1 :1541-1543 goi make_new_world(true, worldname))",
+        "src/worldfactory.cpp (make_new_world(bool, world_to_copy) :181; WORLD::COPY_WORLD :100-106 chi sao ten+WORLD_OPTIONS+active_mod_order+is_compressed, world_saves cua the gioi dich trong)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Dinh chinh bang chung o R23 (ban dau trich sai tep world_generator_ui.cpp khong ton tai): co che sao chep duy nhat cua game la 'Copy World Settings' - tao the gioi MOI sao cai dat (tuy chon + thu tu mod) tu mot the gioi co san qua WORLD::COPY_WORLD, roi di tiep qua worldgen nang cao de dat ten/chinh sua (adapter worldgen cua R07 da phu duong nay). Nhan ban mot the gioi kem ban luu (clone ca save) KHONG ton tai trong UI that. Dong nay duoc dinh nghia lai theo co che that nay va lat da-viet; khong nham voi sao chep ban luu (nhom Luu/tai/sao luu).",
+      "fixtures": []
+    },
+    {
+      "id": "xoa-the-gioi-va-xac-nhan",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Xoa the gioi kem xac nhan pha huy",
+      "duong_vao": "Danh sach the gioi",
+      "truong_va_tham_so": "Ten the gioi, so ban luu se mat",
+      "xac_nhan_va_huy": "Xac nhan pha huy rieng, mac dinh an toan la huy",
+      "ket_qua": "Xoa dung the gioi da chon; huy khong xoa gi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp confirm_world_removal_for_reader (xac nhan rieng khi reader bat: ten world, so save se mat, hau qua, mac dinh No)",
+        "src/main_menu.cpp world_tab case 4/5 (Delete/Reset dung xac nhan rieng + popup ket qua sau khi xoa/dat lai; case 3 thong bao ket qua bat/tat nen save)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T57"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07.1 da noi: chuoi generic MAIN_MENU -> uilist Manage world -> query_yn van dung cho nguoi dung khong bat reader; khi reader bat, xac nhan neu ro ten world + so save + hau qua va co popup ket qua. Reset world dung chung co che.",
+      "fixtures": []
+    },
+    {
+      "id": "cai-thay-du-lieu-mod",
+      "nhom_be_mat": "The gioi/mod",
+      "ten": "Cai dat/thay du lieu mod cho the gioi",
+      "duong_vao": "Quan ly mod cua the gioi",
+      "truong_va_tham_so": "Nguon du lieu mod, loi du lieu",
+      "xac_nhan_va_huy": "Xac nhan cai; huy giu du lieu cu",
+      "ket_qua": "Loi du lieu co ket qua nghe duoc, khong vao game voi du lieu hong",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "chua-co",
+      "bang_chung": [],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "chua-viet",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07 da ra toan bo nguon quan ly world/mod: KHONG co luong UI trong game cho cai/thay du lieu mod (worldfactory/main_menu/mod_manager_ui khong co ham nao) - du lieu mod duoc nap tu tep ngoai game. Loi du lieu mod khi chon mod da duoc xu ly o hanh trinh chon-mod-khi-tao-the-gioi (R07.1). Hanh trinh nay giu chua-viet vi khong ton tai luong UI de noi adapter.",
+      "fixtures": []
+    },
+    {
+      "id": "tao-nhan-vat-cac-tab",
+      "nhom_be_mat": "Tao nhan vat",
+      "ten": "Tao nhan vat qua tat ca tab (kich ban/nghe/nen tang/thuoc tinh/ky nang/dac tinh)",
+      "duong_vao": "Menu chinh > nhan vat moi",
+      "truong_va_tham_so": "Chi phi diem, xung dot, dieu kien, gia tri hien tai cua tung lua chon",
+      "xac_nhan_va_huy": "Chon qua action goc; quay tab sua lua chon; huy khong mat nhap vo y",
+      "ket_qua": "Nhan vat tao dung lua chon; tong ket khop du lieu da chon",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/newcharacter.cpp:3186 scope CHARACTER_CREATION",
+        "src/newcharacter.cpp entry.a11y_value/a11y_disabled_reason/a11y_checked :2621-2706"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T17",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07.2 da doi chieu tung tab theo UI that (7 tab) va bo sung metadata thieu: scenario co chi phi diem + khoa CITY_START khi thanh pho tat; profession/background co bionic/phep trong desc; stats co mo ta muc + mien + diem con lai; traits co bionic chan dang disabled kem ly do va ghi chu trait bi khoa; skills co a11y_value cap do tach phan nghe/nen tang + diem ky nang con lai. Khong co tab chon bionic/phep rieng trong UI that - bionic/phep la thuoc tinh kem theo nghe/nen tang.",
+      "fixtures": []
+    },
+    {
+      "id": "nhap-ten-nhan-vat",
+      "nhom_be_mat": "Tao nhan vat",
+      "ten": "Nhap/sua ten nhan vat tieng Viet va ten ngau nhien",
+      "duong_vao": "Tab ten trong tao nhan vat; ten ngau nhien do game sinh",
+      "truong_va_tham_so": "Ten nhap, ten ngau nhien co the sua",
+      "xac_nhan_va_huy": "Ap dung ten; huy tra ten truoc",
+      "ket_qua": "Ten luu dung grapheme/ dau; khong hong encoding",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/string_input_popup.cpp:425 scope STRING_INPUT",
+        "ReaderTextEditor.java (ban phim Viet mot ngon/IME)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T17"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chuoi nhap di qua adapter popup dung chung - xem hanh trinh nhap-van-ban-tieng-viet.",
+      "fixtures": []
+    },
+    {
+      "id": "tong-ket-nhan-vat-truoc-bat-dau",
+      "nhom_be_mat": "Tao nhan vat",
+      "ten": "Tong ket nhan vat truoc khi bat dau",
+      "duong_vao": "Tab tong ket cua tao nhan vat",
+      "truong_va_tham_so": "Ten, gioi tinh, ngoai hinh, kich ban/nghe/nen tang, diem con lai, thuoc tinh, ky nang, dac tinh + diem, xung dot, bionic can, proficiency, phep, nhiem vu, ngay/dia diem/xe bat dau",
+      "xac_nhan_va_huy": "Quay lai tab de sua; xac nhan bat dau rieng",
+      "ket_qua": "Vao game dung tong ket da nghe",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/newcharacter.cpp append_character_reader_summary :2923"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "mau-nhan-vat-luu-tai-xoa",
+      "nhom_be_mat": "Tao nhan vat",
+      "ten": "Luu/tai/xoa mau (template) nhan vat",
+      "duong_vao": "Luồng mau trong tao nhan vat",
+      "truong_va_tham_so": "Danh sach mau, ten mau",
+      "xac_nhan_va_huy": "Luu/tai co xac nhan; xoa co xac nhan rieng",
+      "ket_qua": "Khong mat nhap khi loi luong xay ra",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp new_character_tab (uilist chon mau qua adapter dung chung R04; query_popup LOAD/DELETE/CANCEL qua scope Dialog; xoa co query_yn xac nhan, popup loi va tu R07 popup ket qua khi reader bat)",
+        "src/newcharacter.cpp SAVE_TEMPLATE + query_for_template_name (scope STRING_INPUT rieng cho ten mau) va avatar::create nhanh TEMPLATE (tu R07: loi tai mau co popup khi reader bat thay vi chi debugmsg)",
+        "src/newcharacter.cpp avatar::create tu dong luu mau Last Character sau khi tao xong khong huy"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R07.3 da doi chieu: luu mau nam trong creator (SAVE_TEMPLATE), tai/xoa nam o menu chinh (khong co xoa mau trong creator theo ma that); ten mau bi gioi han ky tu ten tep o query_for_template_name, con loi tai mau (file hong/mat) truoc day chi debugmsg nay da co popup khi reader bat.",
+      "fixtures": []
+    },
+    {
+      "id": "chon-diem-bat-dau",
+      "nhom_be_mat": "Tao nhan vat",
+      "ten": "Chon thanh pho/vi tri/xe bat dau trong tao nhan vat",
+      "duong_vao": "Cac lua chon bat dau o tab kich ban/dia diem",
+      "truong_va_tham_so": "Lua chon hien tai va dieu kien cua tung lua chon",
+      "xac_nhan_va_huy": "Chon qua action goc; huy ve tab",
+      "ket_qua": "Bat dau dung vi tri/xe da chon",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/newcharacter.cpp (cac dong chon nam trong scope CHARACTER_CREATION, goi action goc)"
+      ],
+      "muc_phu_trach": [
+        "R07"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "IMPLEMENTATION.vi.md ghi lua chon thanh pho chua kiem chung du lieu - do la chua kiem thu, khong phai chua viet. R07.2 lam ro theo ma that: xe bat dau KHONG chon duoc trong creator (suy ra tu kich ban/nghe, nen khong co adapter chon xe); tong ket nay ghi ro nguon xe (from scenario/profession). Thanh pho chi chon duoc khi option SELECT_STARTING_CITY bat; vi tri bi kich ban khoa thi vang mat khoi danh sach (loai tru, khong co disabled kem ly do).",
+      "fixtures": []
+    },
+    {
+      "id": "menu-danh-sach-loc-va-category",
+      "nhom_be_mat": "Menu chung",
+      "ten": "Menu danh sach dung chung: loc, category, tab, tong tap loc, muc rong/khong dung duoc",
+      "duong_vao": "Bat ky man dung uilist",
+      "truong_va_tham_so": "Muc, vi tri/tong theo tap loc, trang thai disabled + ly do, filter hien tai",
+      "xac_nhan_va_huy": "Chon tra dung retval logic (khong dung chi so sau loc); xoa loc khoi phuc danh sach",
+      "ket_qua": "Man con nhan dung gia tri logic da chon",
+      "quyen_biet": "Theo man con",
+      "adapter": "rieng (adapter dung chung)",
+      "bang_chung": [
+        "src/uilist.cpp:889 create_reader_scope, :924 update_reader",
+        "src/uilist.h:78-80 truong a11y_* cua uilist_entry",
+        "src/input_popup.cpp:347 scope STRING_INPUT cho filter"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T09",
+        "T13",
+        "T14",
+        "T15"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Adapter dùng chung; R04.1 bổ sung node category theo tên, node filter (chuỗi + đếm đã lọc/tổng), xóa lọc tại chỗ, node rỗng tường minh và summary tập con - các man con chỉ qua menu này thì trạng thái hành trình riêng của chúng vẫn đánh giá theo nội dung màn.",
+      "fixtures": []
+    },
+    {
+      "id": "menu-chon-nhieu-va-checkbox",
+      "nhom_be_mat": "Menu chung",
+      "ten": "Menu chon nhieu/checkbox/radio qua uilist",
+      "duong_vao": "Man uilist co muc danh dau",
+      "truong_va_tham_so": "Trang thai checked, gia tri, ly do disabled cua tung muc",
+      "xac_nhan_va_huy": "Toggle tach khoi xac nhan; xac nhan rieng",
+      "ket_qua": "Trang thai chon dung khi chot; huy khong doi trang thai goc",
+      "quyen_biet": "Theo man con",
+      "adapter": "rieng (adapter dung chung)",
+      "bang_chung": [
+        "src/uilist.cpp (metadata a11y_checked)",
+        "src/uilist.h:243 uilist_callback::describe_accessibility_action"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T31"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R04.1 đối chiếu: a11y_checked là trạng thái publish; việc lật chọn do vòng lặp sở hữu màn quyết định (tạo nhân vật tự diễn giải CONFIRM rồi dựng lại checked) - adapter dùng chung không tự đổi ngữ nghĩa CONFIRM. Số lượng không thuộc uilist, đi qua popup số (hành trình nhap-so-va-so-luong).",
+      "fixtures": [
+        "F-03"
+      ]
+    },
+    {
+      "id": "danh-sach-lenh-theo-ngu-canh",
+      "nhom_be_mat": "Menu chung",
+      "ten": "Danh sach lenh da dang ky cua man hien tai (fallback ngu canh)",
+      "duong_vao": "Man chua bi adapter rieng bind",
+      "truong_va_tham_so": "Danh sach action da dang ky cua input_context hien tai",
+      "xac_nhan_va_huy": "Goi lenh qua intent da dang ky; thoat ve man",
+      "ket_qua": "Lenh chay dung ngu canh; noi dung man khong tu dong duoc doc boi fallback nay",
+      "quyen_biet": "Theo man con",
+      "adapter": "rieng (adapter dung chung)",
+      "bang_chung": [
+        "src/input_context.cpp:488-545 input_context::handle_input (screen_scope dung chung, command_snapshot)",
+        "GameReaderController.java showControls"
+      ],
+      "muc_phu_trach": [
+        "R03",
+        "R04"
+      ],
+      "test_ids": [
+        "T59",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Fallback nội dung; R04.3 đã gộp builder về a11y::command_snapshot duy nhất (có nhóm + detail phím gán). Không được tính fallback này là adapter nội dung của bất kỳ màn nào.",
+      "fixtures": []
+    },
+    {
+      "id": "trung-tam-lenh-day-du",
+      "nhom_be_mat": "Menu chung",
+      "ten": "Trung tam lenh day du: nhom, mo ta tac dong/chi phi, dieu kien/ly do vo hieu, tham so, tro giup",
+      "duong_vao": "Trung tam lenh (Tat ca lenh)",
+      "truong_va_tham_so": "Nhom lenh, tac dong, chi phi, dieu kien, tham so",
+      "xac_nhan_va_huy": "Duyet lenh tach khoi goi lenh; goi co xac nhan khi can",
+      "ket_qua": "Nguoi dung tim duoc moi chuc nang thuoc pham vi tu trung tam nay",
+      "quyen_biet": "Theo ngu canh",
+      "adapter": "rieng (adapter dung chung)",
+      "bang_chung": [
+        "src/a11y_input.cpp command_snapshot (nhóm tường minh + detail phím gán, R04.3)",
+        "src/input_context.cpp handle_input (fallback dùng chung command_snapshot + registered_intent)",
+        "GameReaderController.java (tiêu đề nhóm chỉ đọc; All commands lọc role command gồm cả tiêu đề nhóm)"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T59"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R04.3 đã nối: nhóm/mô tả phím gán/điều kiện vắng mặt-theo-đăng ký; nguồn không có chi phí/tham số từng lệnh nên trung tâm nói rõ thay vì hiển thị suy đoán (xem R04-SHARED-UI.vi.md mục 3). R23.1: truong adapter sua tu 'chua-co' thanh 'rieng (adapter dung chung)' cho khop bang chung - ham dung day du la a11y::command_snapshot dinh nghia o src/a11y_input.cpp (khai bao src/a11y_input.h:10), duoc goi tu input_context::handle_input (src/input_context.cpp:510) va man keybindings (:1421).",
+      "fixtures": []
+    },
+    {
+      "id": "luyen-tap-cu-chi",
+      "nhom_be_mat": "Menu chung",
+      "ten": "Luyen tap cu chi: duyet/chon/doc/huy va tam huong trong ngu canh doc lap",
+      "duong_vao": "Man the gioi (can world:here); vao bai luyen tam huong tu Reader controls trong GameReaderController; thu anh xa cu chi bat dau tu ReaderSetupActivity",
+      "truong_va_tham_so": "Huong da dem du, tien do, cau hinh thu 45 giay (dong ho don dieu sau R00)",
+      "xac_nhan_va_huy": "Thoat/hoc lai bat ky luc nao; het han tra cau hinh da xac nhan",
+      "ket_qua": "Khong gui lenh gameplay nao tu bai luyen",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (Java)",
+      "bang_chung": [
+        "GameReaderController.java (bai luyen tam huong: beginMovementPractice/practiceMovementDirection, khong gui intent gameplay)",
+        "ReaderGestureSurface.java (phan vung 8 huong, re nhanh practice -> worldMovementEnabled -> anh xa menu)",
+        "ReaderPreferences.java (trial 45 giay dung elapsedRealtime trong bo nho - R00.3, ra soat lai o R05)",
+        "ReaderSetupActivity.java (bat dau trial anh xa cu chi, khoi phuc mac dinh cu chi)",
+        "doc/accessibility/R05-GESTURES.vi.md (bang chung R05.1-R05.4)"
+      ],
+      "muc_phu_trach": [
+        "R05"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T50",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Hoan vi tam huong la mo rong cua R05.4: R05 da truy vet yeu cau (PLAN.vi.md goc, tai lieu repo, goi GnollHack tham khao) va khong tim thay yeu cau nao ngoai cau dieu kien trong ke hoach con lai - quyet dinh HOAN co truy vet tai R05-GESTURES.vi.md muc 4.2, khong tinh vao hanh trinh nay. Bai luyen can man the gioi vi nhan huong lay tu node lenh cua snapshot.",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "popup-thong-bao-va-yes-no",
+      "nhom_be_mat": "Popup/nhap",
+      "ten": "Popup thong bao va hoi Yes/No/Quit",
+      "duong_vao": "query_yn/query_ynq/popup khap game (hanh dong pha huy, xac nhan hoat dong...)",
+      "truong_va_tham_so": "Noi dung hoi, cac lua chon, lua chon mac dinh an toan",
+      "xac_nhan_va_huy": "Tra loi rieng; huy/Back tra ket qua huy cua UI goc",
+      "ket_qua": "Khong nhay sang AlertDialog Java khi bo doc bat; ket qua dung y dinh",
+      "quyen_biet": "Theo ngu canh",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/popup.cpp:322 screen_scope theo category",
+        "src/output.cpp query_yn/query_ynq (gate !a11y::enabled cho NativeUI)"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T09",
+        "T15"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "So call site query_yn la hang tram nhung hoi tu ve popup.cpp/NativeUI - phan loai o muc diem hoi tu, xem muc diem dau vao.",
+      "fixtures": []
+    },
+    {
+      "id": "nhap-van-ban-tieng-viet",
+      "nhom_be_mat": "Popup/nhap",
+      "ten": "Nhap van ban tieng Viet (ten, ghi chu, tim kiem) qua trinh sua cua bo doc",
+      "duong_vao": "string_input_popup/input_popup khap game",
+      "truong_va_tham_so": "Van ban nhap, gioi han ky tu, loi gia tri",
+      "xac_nhan_va_huy": "Ap dung tra text qua intent set_text co token; huy tra noi dung goc",
+      "ket_qua": "Chuoi luu dung grapheme/dau; khong xoa nua ky tu",
+      "quyen_biet": "Theo ngu canh",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/string_input_popup.cpp:425 scope STRING_INPUT, :506 a11y::text_snapshot",
+        "src/input_popup.cpp:347 scope STRING_INPUT",
+        "ReaderTextEditor.java",
+        "GameReaderController.java openEditor/openSearch (noi set_text qua JNI vao a11y::poll_input)"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T17",
+        "T18"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chuoi da dong: node set_text (C++) -> editor (Java) -> nativeReaderIntent -> handler cua scope dang mo.",
+      "fixtures": []
+    },
+    {
+      "id": "nhap-so-va-so-luong",
+      "nhom_be_mat": "Popup/nhap",
+      "ten": "Nhap so/so luong co mien va loi tai truong",
+      "duong_vao": "input_popup NUMBER_INPUT; o so luong trong cac selector",
+      "truong_va_tham_so": "Gia tri nhap, min/max neu UI goc cong bo",
+      "xac_nhan_va_huy": "Ap dung; nhap sai duoc bao va sua duoc, huy tra gia tri cu",
+      "ket_qua": "Gia tri ngoai mien bi tu choi tai game thread",
+      "quyen_biet": "Theo ngu canh",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/input_popup.cpp:449 scope NUMBER_INPUT + truyền step_size vào text_snapshot",
+        "src/a11y_text.h (node số mang field_type/fieldStep)",
+        "ReaderTextEditor.java (miền/bước, tăng giảm bước, kiểm tra trước khi nộp)",
+        "GameReaderController.java openFormEditor/openEditor (truyền miền/bước của node)"
+      ],
+      "muc_phu_trach": [
+        "R02",
+        "R04"
+      ],
+      "test_ids": [
+        "T18",
+        "T31"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R04.2 đã nối trường form có miền/bước/lỗi theo hợp đồng R02.3 vào editor; popup số cổ điển vốn không có min/max trong UI game, chỉ có bước - ghi rõ không bịa miền.",
+      "fixtures": [
+        "F-03"
+      ]
+    },
+    {
+      "id": "nhap-toa-do",
+      "nhom_be_mat": "Popup/nhap",
+      "ten": "Nhap/chon toa do qua input_popup",
+      "duong_vao": "query_coordinate trong input_popup (vd chon diem, toa do vung)",
+      "truong_va_tham_so": "Toa do nhap, gia tri hien tai",
+      "xac_nhan_va_huy": "Ap dung; huy tra toa do cu",
+      "ket_qua": "Toa do dung dinh dang game chap nhan",
+      "quyen_biet": "Chi toa do nhan vat duoc biet/duoc UI goc cho phep",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/input_popup.cpp (query_coordinate cung file voi hai scope STRING_INPUT/NUMBER_INPUT)"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chua doi chieu rieng tung nhanh toa do (overmap/vung) - cac nhanh do co hanh trinh rieng o nhom lien quan.",
+      "fixtures": []
+    },
+    {
+      "id": "popup-chon-va-tien-do",
+      "nhom_be_mat": "Popup/nhap",
+      "ten": "Popup chon nhieu muc va popup tien do/thong bao dai",
+      "duong_vao": "query_popup tuy chon; popup tien do cua hoat dong",
+      "truong_va_tham_so": "Danh sach tuy chon, trang thai tien do",
+      "xac_nhan_va_huy": "Chon/huy dung retval goc",
+      "ket_qua": "Khong chan man bang hop thoai khong doc duoc",
+      "quyen_biet": "Theo ngu canh",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/popup.cpp:322 screen_scope + node option :339-353"
+      ],
+      "muc_phu_trach": [
+        "R04"
+      ],
+      "test_ids": [
+        "T16"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "doc-o-hien-tai-va-xung-quanh",
+      "nhom_be_mat": "Ban do cuc bo",
+      "ten": "Doc o hien tai va xung quanh (dia hinh/do dac/vat pham/sinh vat theo truong)",
+      "duong_vao": "Man the gioi (DEFAULTMODE)",
+      "truong_va_tham_so": "Tung thuoc tinh cua o kem nguon thay/nho/nghe/cam nhan",
+      "xac_nhan_va_huy": "Chi quan sat, khong tieu luot/moves/RNG",
+      "ket_qua": "Thong tin khop quyen biet cua nhan vat",
+      "quyen_biet": "Theo tung thuoc tinh: thay/nho/nghe/cam nhan dac biet; khong doc song qua memory",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/a11y_world.h world_snapshot",
+        "src/a11y_perception.h observe_tile/describe_tile",
+        "src/handle_action.cpp:298"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T19",
+        "T21",
+        "T22",
+        "T23",
+        "T24"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": [
+        "F-01"
+      ]
+    },
+    {
+      "id": "quet-ban-do-va-bo-loc",
+      "nhom_be_mat": "Ban do cuc bo",
+      "ten": "Quet ban do voi bo loc da biet/dang chu y/dau am thanh",
+      "duong_vao": "Lenh quet trong man the gioi",
+      "truong_va_tham_so": "Bo loc all/known/noteworthy/heard, nhom thong tin va thu tu uu tien",
+      "xac_nhan_va_huy": "Doi bo loc; thoat quet ve man the gioi",
+      "ket_qua": "Ket qua chi gom o duoc phep biet; dau am thanh noi ro la gan dung",
+      "quyen_biet": "Chi tri thuc da biet + cam nhan hop le",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/handle_action.cpp world_scan_filter :338-344",
+        "src/a11y_world.cpp (bo loc va sap xep nhom thong tin)"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T26",
+        "T29",
+        "T30"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": [
+        "F-01"
+      ]
+    },
+    {
+      "id": "quet-memory-tang-khac",
+      "nhom_be_mat": "Ban do cuc bo",
+      "ten": "Quet tri nho o cac tang lan can (chi tu memory)",
+      "duong_vao": "Tuy chon quet theo do sau tang trong man the gioi",
+      "truong_va_tham_so": "Tang duoc chon, o nho duoc",
+      "xac_nhan_va_huy": "Chi quan sat; huy ve quet tang hien tai",
+      "ket_qua": "Tang khac chi doc tu memory, khong doc song",
+      "quyen_biet": "Chi memory cua nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/a11y_world.cpp (quet doc tuy chon chi dung memory, theo IMPLEMENTATION.vi.md)"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T27",
+        "T29"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "cam-nhan-dac-biet",
+      "nhom_be_mat": "Ban do cuc bo",
+      "ten": "Cam nhan dac biet (mui/nhiet/dien tu...) theo mo ta game cho phep",
+      "duong_vao": "Man the gioi khi nhan vat co cam nhan dac biet",
+      "truong_va_tham_so": "Mo ta cam nhan theo game, vung gan dung",
+      "xac_nhan_va_huy": "Chi quan sat",
+      "ket_qua": "Khong tang do chinh xac vuot quyen biet",
+      "quyen_biet": "Theo cam nhan hop le cua nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/a11y_perception.cpp",
+        "src/a11y_world.cpp"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T23",
+        "T30"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": [
+        "F-01"
+      ]
+    },
+    {
+      "id": "tham-do-bang-con-tro",
+      "nhom_be_mat": "Ban do cuc bo",
+      "ten": "Tham do bang con tro doc lap: nhieu huong/tang, recenter, nhay toi doi tuong da biet",
+      "duong_vao": "Che do nhin/tham do (LOOK) va con tro tham do",
+      "truong_va_tham_so": "Vi tri con tro, o dich da biet",
+      "xac_nhan_va_huy": "Di chuyen con tro tach khoi avatar; thoat tra camera ve nhan vat",
+      "ket_qua": "Avatar khong di theo con tro; khong tieu luot",
+      "quyen_biet": "Chi doi tuong da biet",
+      "adapter": "chua-co",
+      "bang_chung": [
+        "src/handle_action.cpp (LOOK di qua scope DEFAULTMODE hien co, chua co adapter con tro rieng)"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T29"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R08.1: con tro reader-local trong world_snapshot (explore:enter/dir/up/down/recenter/exit/jump toi da 24 muc noteworthy quanh avatar), intent bi chan truoc registered_intent nen khong ton moves/thoi gian/RNG; cursor gan lifecycle epoch, doi phien/nhan vat tu xoa; khac tang chi doc memory.",
+      "fixtures": []
+    },
+    {
+      "id": "di-chuyen-tam-huong-va-vuot",
+      "nhom_be_mat": "Di chuyen/hanh dong",
+      "ten": "Di chuyen tam huong (ke ca vuot di chuyen nhanh khi engine cho phep) va thay doi tu the/tang",
+      "duong_vao": "Man the gioi; vuot qua ReaderGestureSurface khi snapshot cho phep",
+      "truong_va_tham_so": "Huong, tu the, cau thang/tang dich",
+      "xac_nhan_va_huy": "Vuot chi gui action khi co quyen engine (swipe_movement_allowed sau R00); huy giua chung khong sinh buoc muon",
+      "ket_qua": "Buoc di dung huong ban do; khong doi theo xoay man hinh",
+      "quyen_biet": "Ket qua chi tu su kien engine that",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/handle_action.cpp scope DEFAULTMODE :302",
+        "src/a11y_world.cpp:466 swipe_movement_allowed (R00)",
+        "GameReaderController.java worldMovementEnabled/moveDirection"
+      ],
+      "muc_phu_trach": [
+        "R00",
+        "R05",
+        "R08"
+      ],
+      "test_ids": [
+        "T10",
+        "T19",
+        "T20"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Cờ engine chan ca remote/deathcam/modal (R00.2); phan biet lai/remote o nhom Phuong tien chua viet.",
+      "fixtures": []
+    },
+    {
+      "id": "ket-qua-hanh-dong-tai-diem-engine",
+      "nhom_be_mat": "Di chuyen/hanh dong",
+      "ten": "Ket qua hep tai diem engine xu ly buoc di/tuong tac (di/mo/danh/bi chan/doi tu the)",
+      "duong_vao": "handle_action/avatar_action/do_turn",
+      "truong_va_tham_so": "Loai ket qua that cua tung hanh dong",
+      "xac_nhan_va_huy": "Khong co xac nhan rieng - day la phan hoi sau hanh dong",
+      "ket_qua": "Khong suy ket qua tu toa do khong doi",
+      "quyen_biet": "Chi ket qua nhan vat biet",
+      "adapter": "chua-co",
+      "bang_chung": [],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T20"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R08.3: kenh a11y_outcome ghi tai nhanh engine that (avatar_action::move mo cua/bi chan theo thu tu creature->obstacle_name/danh; melee boc bool; vertical_move guard, peek khong ghi; avatar::set_movement_mode doi tu the), cong bo qua node world:last_outcome, khong suy blocked tu toa do khong doi (khong doi + khong record tuong minh = undetermined). Reset khi replace_game_session.",
+      "fixtures": []
+    },
+    {
+      "id": "tuong-tac-huong-ke",
+      "nhom_be_mat": "Di chuyen/hanh dong",
+      "ten": "Chon huong/o ke (choose_direction/choose_adjacent) cho tuong tac va cong trinh",
+      "duong_vao": "Cac lenh can huong: mo cua, examine, dat cong trinh...",
+      "truong_va_tham_so": "O ke theo perception, trang thai hop le chi o nhin thay",
+      "xac_nhan_va_huy": "Chon huong; huy tra lenh goc",
+      "ket_qua": "Tuong tac dung doi tuong/huong da chon",
+      "quyen_biet": "Chi o nhan vat nhin thay/duoc biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/action.cpp:1184 scope adjacent-direction",
+        "src/action.h"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T20",
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Chua co quan sat khac tang cho nhanh nay (IMPLEMENTATION.vi.md).",
+      "fixtures": []
+    },
+    {
+      "id": "hoat-dong-dang-chay-va-canh-bao",
+      "nhom_be_mat": "Di chuyen/hanh dong",
+      "ten": "Hoat dong dang chay: tien do, canh bao realtime/thoi gian troi, scope cho rieng",
+      "duong_vao": "do_turn khi nhan vat dang hoat dong (ngu/doi/che tao...)",
+      "truong_va_tham_so": "Tien do, kha nang ngat, canh bao thoi gian tiep tuc troi o che do tuong ung",
+      "xac_nhan_va_huy": "Huy hoat dong qua lenh goc; dung tieng doc khong bi coi la huy",
+      "ket_qua": "Trang thai hoat dong dung thuc te sau ngat/huy",
+      "quyen_biet": "Theo nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/do_turn.cpp:275/288 scope activity + a11y::activity_snapshot"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T37"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.3 bo sung node tien do tho activity:progress, phan hoi ket qua huy that (do_turn cong bo khi cancel_activity_query tra true) va ghi ro engine khong luu ly do ngat (ly do chi co trong query phan tam tai thoi diem quyet dinh, adapter popup cong bo).",
+      "fixtures": []
+    },
+    {
+      "id": "keo-day-leo-boi-len-xuong",
+      "nhom_be_mat": "Di chuyen/hanh dong",
+      "ten": "Keo/day, leo, boi, len/xuong va tuong tac cong tac/cua/lua/chat long theo huong",
+      "duong_vao": "Cac lenh tuong tac moi truong trong DEFAULTMODE",
+      "truong_va_tham_so": "Huong/o dich, doi tuong tuong tac",
+      "xac_nhan_va_huy": "Chon huong/o qua adapter huong ke; huy ve man the gioi",
+      "ket_qua": "Ket qua dung logic goc",
+      "quyen_biet": "Chi doi tuong duoc biet",
+      "adapter": "chua-co",
+      "bang_chung": [
+        "src/action.cpp (adapter huong ke dung chung - khong phai adapter rieng cho tung bien the)"
+      ],
+      "muc_phu_trach": [
+        "R08"
+      ],
+      "test_ids": [
+        "T20"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R08.4: ra bang chung UI that — chon huong cho open/close/examine/smash/grab qua choose_direction (action.cpp) da co screen_scope doc tung o dich bang observe_tile; climb-down qua point_selection_menu (uilist adapter dung chung); boi chay trong avatar_action::move (game.cpp:4324/avatar_action:534) nen ket qua qua kenh outcome; len/xuong qua vertical_move co guard outcome; keo/haul la lenh registered + di chuyen qua move. Khong con bien the nao thieu adapter rieng can thiet.",
+      "fixtures": []
+    },
+    {
+      "id": "hanh-trang-chon-va-hanh-dong",
+      "nhom_be_mat": "Hanh trang",
+      "ten": "Mo hanh trang, chon vat pham va mo menu hanh dong (dung/cam/mac/coi/examine/nap-thao)",
+      "duong_vao": "Lenh hanh trang / nhan vat",
+      "truong_va_tham_so": "Vat pham, so luong chon/hien co, trang thai, ly do tu choi, vi tri trong danh sach",
+      "xac_nhan_va_huy": "Hanh dong qua action goc cua inventory_selector; dong tung tang bang huy",
+      "ket_qua": "Khong mat do do nham focus khi danh sach doi",
+      "quyen_biet": "Chi vat pham nhan vat co/duoc biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/inventory_ui.cpp:3563 scope inventory, snapshot :3577",
+        "src/inventory_ui.cpp:3499 get_accessibility_summary / src/inventory_ui.h:953"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [
+        "T09",
+        "T31",
+        "T33"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R09.1 da ra soat: favorite/filter la lenh context duoc command_snapshot publish va focus dat highlight truoc nen dung muc; compare qua hai luot compare selector + item info; nap/thao qua menu hanh dong vat pham (uilist, adapter chung R04). R09.2 them cay pockets va chuoi vat chua trong detail de phan biet trung ten.",
+      "fixtures": [
+        "F-03"
+      ]
+    },
+    {
+      "id": "chon-so-luong-va-chia-stack",
+      "nhom_be_mat": "Hanh trang",
+      "ten": "Chon so luong/ mot phan stack khi nhat/dung/bo",
+      "duong_vao": "Luong so luong cua inventory_selector va popup so",
+      "truong_va_tham_so": "So luong chon, tong hien co",
+      "xac_nhan_va_huy": "Tang/giam/nhap so; xac nhan; huy tra so luong goc",
+      "ket_qua": "Tong dung sau khi chot; khong chon nham do filter",
+      "quyen_biet": "Theo vat pham",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/inventory_ui.cpp (so luong trong snapshot hanh trang)",
+        "src/input_popup.cpp scope NUMBER_INPUT"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [
+        "T31"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R09.1: phien multi-select (TOGGLE_ENTRY, tru compare) co form so luong R02: set_value ghi nhap, apply moi dat chosen_count qua inventory_multiselector::toggle_entry(entry, count) sau khi tra lai entry theo location va kep mien 0..available. Chia/gop stack theo so luong nay; popup so cua luong CONFIRM giu nguyen.",
+      "fixtures": [
+        "F-03"
+      ]
+    },
+    {
+      "id": "thong-tin-vat-pham",
+      "nhom_be_mat": "Hanh trang",
+      "ten": "Doc thong tin vat pham (item info) dang tai lieu",
+      "duong_vao": "Examine vat pham tu hanh trang/danh sach",
+      "truong_va_tham_so": "item_info_data day du gom du lieu so sanh UI nhan",
+      "xac_nhan_va_huy": "Doc theo doan/thuoc tinh; quay lai danh sach",
+      "ket_qua": "Khong bien moi o bang thanh hanh dong gameplay",
+      "quyen_biet": "Theo UI goc cong bo",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/ui_iteminfo.cpp (a11y::)",
+        "src/a11y_document.h"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [
+        "T16"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Cau truc bang cua item info chua nghiem thu (R02).",
+      "fixtures": []
+    },
+    {
+      "id": "cay-tui-va-vat-chua",
+      "nhom_be_mat": "Hanh trang",
+      "ten": "Cay vat chua/pocket: xem va cat/lay do trong tui long nhau",
+      "duong_vao": "Hanh trang voi vat pham co pockets",
+      "truong_va_tham_so": "Cay nguon/dich, do trong tui, gioi han, ly do tu choi",
+      "xac_nhan_va_huy": "Mo/thu gon cay; chuyen qua selector co so luong; huy ve cay",
+      "ket_qua": "Khong lo contents cua container dong ma game khong cho biet",
+      "quyen_biet": "Chi contents game cho phep biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/inventory_ui.cpp reader_session::update (cay R02 tu parent_item, node pocket) va handle (pocket: focus -> TIMEOUT)",
+        "src/item_location.h has_parent/parent_item; src/item_pocket.h sealed/remaining_volume/remaining_weight"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [
+        "T32"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R09.2: cay dung quan he parent_item that, cha khong publish thi giu phang; pocket sealed chi bao da niem phong, khong dem/liet ke contents. Cat/lay do trong tui di qua cac hang cua selector nhu truoc.",
+      "fixtures": [
+        "F-02"
+      ]
+    },
+    {
+      "id": "so-sanh-vat-pham",
+      "nhom_be_mat": "Hanh trang",
+      "ten": "So sanh vat pham (compare) trong hanh trang",
+      "duong_vao": "Che do so sanh cua inventory_selector",
+      "truong_va_tham_so": "Thuoc tinh hai phia, chenh lech",
+      "xac_nhan_va_huy": "Bat/tat muc so sanh; thoat ve danh sach",
+      "ket_qua": "So sanh dung du lieu UI nhan",
+      "quyen_biet": "Theo UI goc",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/inventory_ui.cpp (noi so sanh qua action goc, theo IMPLEMENTATION.vi.md hang Hanh trang)"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Trinh bay bang so sanh day du thuoc R02.2.",
+      "fixtures": []
+    },
+    {
+      "id": "kho-nang-cao-hai-phia",
+      "nhom_be_mat": "Kho nang cao",
+      "ten": "Advanced inventory: chuyen do giua hai phia (nguon/dich, vi tri, tong khoi luong/the tich)",
+      "duong_vao": "Lenh kho nang cao",
+      "truong_va_tham_so": "Pane dang thao tac, nguon/dich, tong khoi luong/the tich, so luong",
+      "xac_nhan_va_huy": "Chuyen mot/nhieu; doi phia; huy",
+      "ket_qua": "Khong nham cot hoac tong; tra lai suc chua/quyen so huu khi chot",
+      "quyen_biet": "Theo vat pham va vi tri nhan vat biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/advanced_inv.cpp advanced_inventory::reader_session (update/handle), noi vao display() truoc handle_input",
+        "src/advanced_inv.h khai bao lop reader_session long trong advanced_inventory"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [
+        "T34"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R09.3: adapter moi. Publish node pane nguon/dich (vi tri o dat/xe, tong volume/weight, max_size, container dang xem), node vat pham cua pane nguon binding theo item_location; activate tra MOVE_VARIABLE_ITEM de engine hoi so luong va tra lai suc chua/quyen so huu khi chot; activate node pane tra TOGGLE_TAB.",
+      "fixtures": [
+        "F-03"
+      ]
+    },
+    {
+      "id": "lop-mac-va-thu-tu",
+      "nhom_be_mat": "Kho nang cao",
+      "ten": "Lop mac (armor layers): thu tu, phu co the, encumbrance",
+      "duong_vao": "Man sap xep lop mac (SORT_ARMOR)",
+      "truong_va_tham_so": "Lop, vi tri phu, encumbrance",
+      "xac_nhan_va_huy": "Move/toggle/select phan biet voi hanh dong tieu luot",
+      "ket_qua": "Thu tu mac dung sau khi chot",
+      "quyen_biet": "Theo trang bi nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/armor_layers.cpp armor_layers_reader trong outfit::sort_armor (update truoc handle_input, handle tra MOVE_ARMOR/TIMEOUT)"
+      ],
+      "muc_phu_trach": [
+        "R09"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R09.4: adapter moi. Node tab theo phan co the, node tung vat dang mac (lop/phu/encumbrance/trang thai nhac) binding theo iterator std::list, node trang thai encumbrance theo phan qua Character::encumb; canh bao va query_yn goc giu nguyen vi action tra ve vong lap goc. Cam/mac/coi/di chuyen qua cac lenh EQUIP_ARMOR/EQUIP_ARMOR_HERE/REMOVE_ARMOR trong node lenh; chon vat chua dich khi cat do thuoc hanh trinh hanh trang.",
+      "fixtures": []
+    },
+    {
+      "id": "y-te-va-dieu-tri",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "Y te: bo phan, vet thuong/hieu ung, chon dieu tri va vat tu",
+      "duong_vao": "Man y te (medical_ui)",
+      "truong_va_tham_so": "Bo phan co dinh danh, suc khoe theo vach/cam nhan, hieu ung, dieu kien dieu tri bang chu",
+      "xac_nhan_va_huy": "Chon bo phan/vat tu qua duong goc; huy ve danh sach bo phan",
+      "ket_qua": "Ket qua dieu tri sau hoat dong duoc nghe",
+      "quyen_biet": "Theo UI y te cong bo, khong thay bang HP song chua biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/medical_ui.cpp:167 scope medical, reader_snapshot :774, reader_intent :836",
+        "src/a11y_body.h limb_health_description"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T36"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.2 ra soat: adapter y te (bang chi R02, requirements snapshot khi chon dieu tri, a11y_value doable) giu nguyen; canh bao/hieu qua truoc dieu tri nam o requirements + menu goc, ket qua sau hoat dong qua log/outcome. Chua thu dieu tri tren save that (giai doan 2/3).",
+      "fixtures": [
+        "F-04"
+      ]
+    },
+    {
+      "id": "man-trang-thai-nhan-vat",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "Man trang thai nhan vat day du (thuoc tinh/ky nang/hieu ung/nhu cau qua player_display)",
+      "duong_vao": "Man thong tin nhan vat (PLAYER_INFO)",
+      "truong_va_tham_so": "Thuoc tinh, hieu ung, morale, nhu cau",
+      "xac_nhan_va_huy": "Chi duyet; thoat ve game",
+      "ket_qua": "Gia tri khong chi truyen qua mau",
+      "quyen_biet": "Theo UI goc",
+      "adapter": "rieng (player_display)",
+      "bang_chung": [
+        "src/player_display.cpp player_display_reader_snapshot + screen_scope trong Character::disp_info (R10.1): tab, stats, nhu cau (doi/khat/buon ngu/dau/nhiet bang loi/morale so cong bo/weariness), bang encumbrance+nhiet tung bo phan, effects lay dung cap ten/mo ta cua tab EFFECTS, speed + move cost",
+        "src/display.cpp temp_text_color/morale (so tong in o man morale), src/morale.cpp display",
+        "src/morale.cpp player_morale::display + screen_scope 'morale' (R10.1): nguon morale theo ten + % dong gop, tong co dau, focus trend - dung du kien man in, khong thoi luong nguon (du lieu private va man khong cong bo)"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T38"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.1: adapter man trang thai va man con morale da viet; khong cong bo HP/so noi bo - moi du kien la du kien man nay/man phu cong bo. Phan ky nang/bionics/traits chi co node tab (chi tiet o R17/R19).",
+      "fixtures": []
+    },
+    {
+      "id": "canh-bao-nguong-sinh-ton",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "Canh bao tu dong khi vuot nguong doi/khat/buon ngu/dau/suc ben",
+      "duong_vao": "Vong cho ban do (do_turn/handle_action)",
+      "truong_va_tham_so": "Muc thay doi, baseline theo phien/load",
+      "xac_nhan_va_huy": "Khong can xac nhan; doc lai qua log",
+      "ket_qua": "Khong doc kep voi log; reset baseline khi load/doi phien",
+      "quyen_biet": "Theo trang thai nhan vat biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/handle_action.cpp a11y::announce_status_changes",
+        "src/a11y_world.cpp monitored_status/record_status_alert/status_alert_history (R10.4)"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T38"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.4: them nhiet (ca hai phia lanh/nong), morale, weariness - cac kenh khong co log; nguong ro, cooldown 30 phut gio game cho muc vo scalar (muc te hon/muc khan cap bo qua cooldown), lich su 20 canh bao gan nhat trong phien cong bo qua node world:alert_history; baseline + lich su reset qua reset_status_monitor trong replace_game_session/lifecycle (epoch R08).",
+      "fixtures": []
+    },
+    {
+      "id": "an-uong-co-ban",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "An/uong va dung thuoc qua hanh trang (chuoi co ban)",
+      "duong_vao": "Hanh dong dung/an/uong tu hanh trang",
+      "truong_va_tham_so": "Vat pham, canh bao game cong bo, dieu kien",
+      "xac_nhan_va_huy": "Xac nhan dung; huy khong tieu thu",
+      "ket_qua": "Ket qua sau hoat dong duoc nghe qua log/trang thai",
+      "quyen_biet": "Theo vat pham va canh bao game cho biet",
+      "adapter": "rieng (qua adapter hanh trang + popup)",
+      "bang_chung": [
+        "src/inventory_ui.cpp (hanh dong dung qua action goc)",
+        "src/popup.cpp (hop thoai canh bao)"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T35"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.2 ra soat (gom ca bao cao chi doc): chon mon qua selector R09 (denial can_eat cua preset), canh bao will_eat gom mot query_yn o dau activity (khong co canh bao nghien/hieu qua trong engine - khong bia), ket qua qua log; body_window cua heal_actor co a11y_value bang limb_health_description (R10.2).",
+      "fixtures": []
+    },
+    {
+      "id": "chuoi-chat-long-va-container",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "Chon container va do/chuyen/dung chat long",
+      "duong_vao": "Luong consume/liquid transfer",
+      "truong_va_tham_so": "Container nguon/dich, luong chat long, dieu kien",
+      "xac_nhan_va_huy": "Chon container rieng; xac nhan chuyen; huy giu nguyen",
+      "ket_qua": "Luong sau chuyen dung; canh bao dung",
+      "quyen_biet": "Theo container nhan vat biet/co",
+      "adapter": "dung chung (uilist R04 + selector R09)",
+      "bang_chung": [
+        "src/handle_liquid.cpp get_liquid_target + select_liquid_target (uilist, adapter dung chung uilist R04)",
+        "src/game_inventory.cpp game_menus::inv::container_for + liquid_inventory_selector_preset (selector R09, denial/capacity theo preset)",
+        "src/handle_liquid.cpp handle_vehicle_target -> veh_interact::select_part (overview do hoa, chua co adapter: thuoc R15)"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T35"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.2: chuoi container/dat/keg qua menu dung chung va selector; engine khong co buoc chon luong (rot toi suc chua) nen khong thieu lua chon; nhanh chon binh chua xe (tank) qua veh_interact overview chua co adapter, de lai cho R15 - khong tinh la da phu nhanh do. R15.2 bo sung: nhanh chon binh xe qua veh_interact::select_part nay da co adapter (mode select_part cua reader_session) - xem hanh trinh lap-sua-thao-bo-phan-xe.",
+      "fixtures": []
+    },
+    {
+      "id": "ngu-doi-doc-va-hoat-dong-dai",
+      "nhom_be_mat": "Y te/trang thai",
+      "ten": "Ngu/doi/doc sach va hoat dong dai: tien do, ngat, tiep tuc/huy",
+      "duong_vao": "Lenh ngu/doi; doc qua hanh dong dung sach; hoat dong qua scope activity",
+      "truong_va_tham_so": "Tien do tiet che, ly do bi ngat, canh bao thoi gian troi",
+      "xac_nhan_va_huy": "Huy qua lenh goc va nghe ket qua huy that; tiep tuc khi game cho phep",
+      "ket_qua": "Dung tieng khong bi coi la huy hoat dong",
+      "quyen_biet": "Theo nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/do_turn.cpp:275/288 scope activity + a11y::activity_snapshot",
+        "src/a11y_world.cpp activity_snapshot (activity:progress R10.3, canh bao realtime)"
+      ],
+      "muc_phu_trach": [
+        "R10"
+      ],
+      "test_ids": [
+        "T37"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R10.3: activity_snapshot them node tien do tho (activity:progress, buoc 10% tu moves_total/moves_left - cung so % engine cong bo trong get_progress_message) de snapshot chi doi toi da 10 lan; huy qua intent cancel rieng -> pause -> game::cancel_activity_query (engine hoi va huy that); ly do ngat di qua query distraction/log da cong bo; dung tieng doc khong huy hoat dong (kenh doc doc lap voi input huy).",
+      "fixtures": []
+    },
+    {
+      "id": "nghe-thong-bao-moi",
+      "nhom_be_mat": "Thong bao",
+      "ten": "Nghe thong bao game moi theo uu tien (bad/warning/critical) va coalescing/cooldown",
+      "duong_vao": "Player log moi trong phien choi",
+      "truong_va_tham_so": "Noi dung, muc uu tien, trung lap",
+      "xac_nhan_va_huy": "Dung/doc lai qua hang loi; canh bao ngat co the doc tiep doan con lai",
+      "ket_qua": "Khong doc lai tai lieu man cu sau canh bao",
+      "quyen_biet": "Chi thong bao game gui cho nguoi choi",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/messages.cpp:440 a11y::announce_game_message",
+        "GameReaderController.java announceGameMessage (TTL 8 giay thuong/15 giay khan, dem chan doan)",
+        "ReaderSpeechQueue.java (uu tien, gop trung cua so 4 giay, het han, MAX_PENDING=8 — R21.1)"
+      ],
+      "muc_phu_trach": [
+        "R21"
+      ],
+      "test_ids": [
+        "T16",
+        "T38",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R21.1: hang loi bo sung gop cau trung + TTL rieng cho thong bao game + bo dem chan doan; coalescing/cooldown phia engine (3 luot, mau cooldown) giu nguyen. Chua thu tai cao/audio that.",
+      "fixtures": []
+    },
+    {
+      "id": "lich-su-thong-bao",
+      "nhom_be_mat": "Thong bao",
+      "ten": "Mo lich su thong bao va doc lai theo thu tu",
+      "duong_vao": "Man lich su message log",
+      "truong_va_tham_so": "Thong bao cu theo thu tu, vi tri doc",
+      "xac_nhan_va_huy": "Doc tiep/quay doan; thoat ve game",
+      "ket_qua": "Khong doc kep khi redraw",
+      "quyen_biet": "Chi thong bao da gui",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/messages.cpp dialog::reader_update (R21: moi thong bao mot doan cach dong trong, gioi han cong bo 500 thong bao moi nhat kem so dem da hien/tong trong tom tat; thu tu va bo loc van la cua dialog)",
+        "src/messages.cpp:948 scope MESSAGE_LOG + command_snapshot (them o R20 muc chong ket, giu nguyen)",
+        "ReaderDocumentReader.java open()/tim kiem: vi tri doc giu qua redraw va qua canh bao; noi dung doi duoi cung khoa (loc doi) duoc tach lai dung vi tri"
+      ],
+      "muc_phu_trach": [
+        "R21"
+      ],
+      "test_ids": [
+        "T38"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R21.4 da viet hanh trinh day du: doc theo thu tu dialog bang tai lieu tung-thong-bao-mot-doan, doc tiep tu vi tri da luu (khong doc lai tu dau sau canh bao/resume; redraw giong het khong cong bo lai nho dedupe snapshot phia C++), tim kiem bang tim-kiem tai lieu, loc bang lenh FILTER goc cua dialog; lich su engine gioi han boi tuy chon MESSAGE_LIMIT (tuy chon mac dinh 255, trang thai on dinh giu 256). Chua kiem thu tren may that.",
+      "fixtures": []
+    },
+    {
+      "id": "can-chien-va-vo-thuat",
+      "nhom_be_mat": "Chien dau",
+      "ten": "Can chien/reach/vo thuat: chon dich, kieu danh, rut lui, safe mode",
+      "duong_vao": "Lệnh danh can chien trong DEFAULTMODE; MELEE_STYLE_PICKER",
+      "truong_va_tham_so": "Trang thai muc tieu nhan vat biet, kieu danh",
+      "xac_nhan_va_huy": "Xac nhan danh rieng; huy doi muc tieu",
+      "ket_qua": "Ket qua danh/truot duoc nghe theo log/engine",
+      "quyen_biet": "Khong lo HP bi mat hoac ten ke an",
+      "adapter": "rieng (outcome) + dung chung (uilist/target_ui)",
+      "bang_chung": [
+        "src/avatar_action.cpp:469 outcome safe_mode_blocked tai nhanh safe mode chan don; outcome attacked san co tu R08.3",
+        "src/a11y_world.cpp player_status: trang thai Safe mode On/Off/Stop trong detail world:status",
+        "src/character.cpp:8401 pick_style dung uilist (adapter dung chung R04); src/ranged.cpp mode_reach dung target_ui"
+      ],
+      "muc_phu_trach": [
+        "R11"
+      ],
+      "test_ids": [
+        "T39"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R11.1: melee/reach da phu qua outcome + target_ui; style qua uilist dung chung (desc trong detail). Chua chac: noi dung cua so ma-details ImGui chua co screen_scope; nhanh displace/CANNOT_MOVE chi co fallback outcome undetermined.",
+      "fixtures": [
+        "F-05"
+      ]
+    },
+    {
+      "id": "nham-muc-tieu-danh-sach",
+      "nhom_be_mat": "Chien dau",
+      "ten": "Duyet muc tieu ban xa theo danh sach (huong/khoang cach/diem ngam), chon diem khong tu FIRE",
+      "duong_vao": "Che do nham (ranged targeting)",
+      "truong_va_tham_so": "Sinh vat/phuong tien game cho ngam theo tri thuc hien tai, huong/khoang cach, trang thai diem ngam",
+      "xac_nhan_va_huy": "Chon hang chi di chuyen diem ngam; FIRE/xac nhan bang lenh goc rieng; huy thoat nham",
+      "ket_qua": "So dan va luot khong doi chi vi duyet",
+      "quyen_biet": "Chi muc tieu nhan vat biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/ranged.cpp:3020 scope targeting, target_ui::reader_snapshot :3201"
+      ],
+      "muc_phu_trach": [
+        "R11"
+      ],
+      "test_ids": [
+        "T40",
+        "T41"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R11.2 bo sung: summary/cursor cong bo mode nham va chenh tang; mode Fire cong bo steadiness (calc_steadiness, dung so panel goc in) va sight dispersion qua node target:cursor; node target:weapon cong bo gun mode va so dan.",
+      "fixtures": [
+        "F-05"
+      ]
+    },
+    {
+      "id": "nham-o-trong-tang-va-aoe",
+      "nhom_be_mat": "Chien dau",
+      "ten": "Chon o trong/tang, tam/che khuat/duong ban va mo ta footprint AOE",
+      "duong_vao": "Che do nham mo rong",
+      "truong_va_tham_so": "O trong, tang, LOS, footprint, nguy co dong minh da biet",
+      "xac_nhan_va_huy": "Sua/huy rieng cho tung tham so",
+      "ket_qua": "Khong dua thuc the an vao tong so/cue",
+      "quyen_biet": "Chi du lieu game cong khai",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/ranged.cpp reader_snapshot: node target:move:<dx>:<dy>/target:level:up/down + handler A11Y_INTERNAL_MOVE_CURSOR chi set_cursor_pos",
+        "src/ranged.cpp reader_snapshot: node target:aoe tu spell_aoe cua engine, dong minh da biet qua cong pl_sees"
+      ],
+      "muc_phu_trach": [
+        "R11"
+      ],
+      "test_ids": [
+        "T40",
+        "T42"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R11.2/R11.4: chon o trong bang dời con tro tung o (khong FIRE, khong ton luot); AOE chi cho mode Spell noi engine tu tinh footprint; vu khi no AOE khong co footprint san trong target_ui - chua cong bo, ghi ro trong R11-COMBAT.vi.md.",
+      "fixtures": [
+        "F-05"
+      ]
+    },
+    {
+      "id": "che-do-ban-dan-nap-nem-turret",
+      "nhom_be_mat": "Chien dau",
+      "ten": "Fire mode, loai dan, reload/unload, nem va turret kem xac nhan muc tieu trung lap/dong doi",
+      "duong_vao": "Cac lenh vu khi trong che do nham/hanh trang",
+      "truong_va_tham_so": "Che do ban, loai dan, so dan",
+      "xac_nhan_va_huy": "Revalidate muc tieu/dan khi chot; xac nhan rieng cho muc tieu nhay cam",
+      "ket_qua": "Ket qua ban/nap/nem dung engine",
+      "quyen_biet": "Theo muc tieu biet",
+      "adapter": "rieng + dung chung",
+      "bang_chung": [
+        "src/ranged.cpp: node target:weapon, lenh SWITCH_MODE/SWITCH_AMMO, confirm_non_enemy_target/prompt_friendlies_in_lof o nhanh FIRE",
+        "src/handle_action.cpp:2402-2417 ACTION_RELOAD_*/ACTION_UNLOAD qua selector/menu dung chung; mode_throw/mode_turret_manual dung target_ui"
+      ],
+      "muc_phu_trach": [
+        "R11"
+      ],
+      "test_ids": [
+        "T41"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R11.3: revalidate tai chot qua dispatcher R03 + rebuild targets truoc publish + dst_critter tinh lai o set_cursor_pos; danh sach rong co cau rieng, >256 co node tran cong bo hai so.",
+      "fixtures": [
+        "F-05"
+      ]
+    },
+    {
+      "id": "che-tao-cong-thuc",
+      "nhom_be_mat": "Che tao/xay",
+      "ten": "Che tao: danh sach cong thuc/nhom, favorite, me 1-50, craftability",
+      "duong_vao": "Man che tao (CRAFTING)",
+      "truong_va_tham_so": "Cong thuc, nhom, trang thai lam duoc, yeu cau tom tat",
+      "xac_nhan_va_huy": "Chon cong thuc/me qua intent goc; huy ve danh sach",
+      "ket_qua": "Bat dau che tao dung cong thuc/me da chon",
+      "quyen_biet": "Theo cong thuc nhan vat biet/hoc duoc",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/crafting_gui.cpp:3176 scope crafting, reader_snapshot :2530, reader_intent :2656"
+      ],
+      "muc_phu_trach": [
+        "R12"
+      ],
+      "test_ids": [
+        "T43"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "yeu-cau-va-nhom-lua-chon-che-tao",
+      "nhom_be_mat": "Che tao/xay",
+      "ten": "Doc yeu cau chi tiet va cac nhom lua chon dung cu/nguyen lieu khi che tao",
+      "duong_vao": "Chi tiet cong thuc trong man che tao",
+      "truong_va_tham_so": "Ky nang/dac tinh, nhom lua chon, cong doan, chi phi, tong tai nguyen dung chung",
+      "xac_nhan_va_huy": "Chon trong nhom qua selector cua man che tao; huy tra cong thuc",
+      "ket_qua": "Khong suy du tai nguyen tu tung nhom rieng le",
+      "quyen_biet": "Theo yeu cau game cong bo",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/crafting_gui.cpp reader_snapshot + src/a11y_requirements.h append_requirements",
+        "src/a11y_requirements.h append_requirements (them Shared total)",
+        "src/crafting_gui.cpp reader_snapshot (craft:conditions, craft:byproducts)"
+      ],
+      "muc_phu_trach": [
+        "R12"
+      ],
+      "test_ids": [
+        "T43"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R12: da dong - tong tai nguyen dung chung (tai lieu Shared total dung deduped can_make_with_inventory), selector chon thanh phan/dung cu qua uilist R04 sau khi menu dong (craft_command::execute), xac nhan bat dau la cong can_start_craft + query tinh huong trong craft_command; xem R12-CRAFTING-CONSTRUCTION.vi.md muc 1-2.",
+      "fixtures": []
+    },
+    {
+      "id": "xay-dung-cong-trinh",
+      "nhom_be_mat": "Che tao/xay",
+      "ten": "Xay dung: nhom, bien the/cong doan, vi tri, yeu cau, trang thai o",
+      "duong_vao": "Man xay dung (CONSTRUCTION)",
+      "truong_va_tham_so": "Cong trinh, giai doan, yeu cau, trang thai vi tri",
+      "xac_nhan_va_huy": "CONFIRM/dat qua logic goc; huy khong dat",
+      "ket_qua": "Khong mo ta dieu kien o an bang du lieu song",
+      "quyen_biet": "Chi dieu kien o nhan vat biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/construction.cpp:980 scope construction, append_document/append_requirements :1121-1144",
+        "src/construction.cpp snapshot (construction:placement, stage time/skills)",
+        "src/construction.cpp:1453 place_construction + src/action.cpp choose_adjacent scope adjacent-direction"
+      ],
+      "muc_phu_trach": [
+        "R12"
+      ],
+      "test_ids": [
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R12.4: them tai lieu construction:placement (huong hop le tu con_preview cua engine) va thoi gian/ky nang/pre_note theo giai doan; chon o qua scope adjacent-direction (hint theo quyen thay), xac nhan lanh tho phe warn_player_maybe_anger_local_faction trong duong CONFIRM. Marker partial_con chua co cong bo ngu nghia rieng trong snapshot the gioi - diem mo ghi tai R12-CRAFTING-CONSTRUCTION.vi.md muc 4.",
+      "fixtures": []
+    },
+    {
+      "id": "sua-chua-va-thao-ra",
+      "nhom_be_mat": "Che tao/xay",
+      "ten": "Sua do, thao ra/disassembly va repair qua iuse/repair actors",
+      "duong_vao": "Hanh dong sua/thao tren vat pham",
+      "truong_va_tham_so": "Yeu cau, rui ro da biet, vat tu, muc tieu",
+      "xac_nhan_va_huy": "Xac nhan sua/thao; huy giu vat pham",
+      "ket_qua": "Ket qua that sau hoat dong",
+      "quyen_biet": "Theo rui ro game cong bo",
+      "adapter": "dung chung (selector R09 + uilist R04 + popup R03/R04)",
+      "bang_chung": [
+        "src/game_inventory.cpp:2395 inv::repair + repair_inventory_preset :2304 (cot MATERIALS/SUCCESS/DAMAGE/DIFFICULTY qua detail selector R09)",
+        "src/activity_handlers.cpp:329 repeat_menu uilist (text = title chua charges/vat tu/skill/success%/damage%) + :441 repair_item_finish",
+        "src/game_inventory.cpp:691 inv::disassemble + disassemble_inventory_preset :634 (YIELD/TIME, get_denial tu can_disassemble)",
+        "src/crafting.cpp:5310 Character::disassemble (query_yn favorite/worn/chu so huu phe, query_disassemble_quantity qua number popup dung chung)",
+        "doc/accessibility/R12-CRAFTING-CONSTRUCTION.vi.md muc 3"
+      ],
+      "muc_phu_trach": [
+        "R12"
+      ],
+      "test_ids": [
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R12.3: khong co adapter rieng - toan chuoi di qua adapter dung chung da co (selector/uilist/popup), da doi chieu tung nhanh gom gun_repair va mend ke can. Ket qua that qua message log (R08) va tien do activity (R10).",
+      "fixtures": []
+    },
+    {
+      "id": "overmap-con-tro-va-o-ke-can",
+      "nhom_be_mat": "Ban do lon",
+      "ten": "Overmap: con tro, o ke can theo muc da kham pha, toa do/tang con tro",
+      "duong_vao": "Man ban do lon (OVERMAP)",
+      "truong_va_tham_so": "Toa do/tang con tro, o ke theo tri nho kham pha",
+      "xac_nhan_va_huy": "Di chuyen con tro chi quan sat; thoat ve game",
+      "ket_qua": "Do chinh xac toa do theo quyen biet",
+      "quyen_biet": "Theo muc kham pha cua nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/overmap_ui.cpp:2451 scope overmap, reader_snapshot :2229",
+        "src/overmap_ui.cpp overmap_tile_description (R13.1): ten o kem muc tam nhin vague/outlines/details dung nguyen cau cua thanh ben game; o unexplored khong doc ten",
+        "src/overmap_ui.cpp reader_snapshot (R13.1): node document overmap:legend giai nghia bang loi + cac lenh TOGGLE_* thanh checkbox co trang thai that tu uistate; TOGGLE_OVERMAP_WEATHER khoa khi nhan vat o trong nha, TOGGLE_LAND_USE_CODES khoa ngoai debug"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [
+        "T45"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R13.1: do chinh xac ten o theo muc seen cua engine (full/details/outlines/vague/unseen); toa do con tro la ban ghi cua chinh nhan vat nen doc chinh xac. Tang z da co LEVEL_UP/LEVEL_DOWN kem ly do khoa o bien.",
+      "fixtures": []
+    },
+    {
+      "id": "overmap-ghi-chu-va-nguy-hiem",
+      "nhom_be_mat": "Ban do lon",
+      "ten": "Tao/xem/sua/xoa ghi chu va danh dau nguy hiem tren overmap",
+      "duong_vao": "Lenh ghi chu trong overmap",
+      "truong_va_tham_so": "Ten/noi dung/bieu tuong co loi tuong duong, toa do, khoang cach",
+      "xac_nhan_va_huy": "Xac nhan xoa rieng; chon ghi chu chi dua con tro, khong tu travel",
+      "ket_qua": "Focus quay dung ghi chu sau sua/xoa",
+      "quyen_biet": "Theo diem nhan vat biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/overmap_ui.cpp (ghi chu/vung nguy hiem trong snapshot va mo ta action, theo IMPLEMENTATION.vi.md G6)",
+        "src/overmap_ui.cpp create_note/create_point_of_interest: string_input_popup (scope STRING_INPUT cua R04, identifier map_note) - form sua dung trinh nhap dung chung, mo ta cu phap GLYPH:/COLOR; bang loi trong popup",
+        "src/overmap_ui.cpp note_symbol_description (R13.2): tuong duong loi cho bieu tuong + mau ghi chu, dung o mo ta o con tro, a11y_value danh sach ghi chu va detail cua map_notes_callback",
+        "src/overmap_ui.cpp: xoa ghi chu qua query_yn o ca ba duong (lenh DELETE_NOTE, xoa trong danh sach, sua thanh rong); ban kinh nguy hiem qua query_int 0-20 (scope NUMBER_INPUT)"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R13.2 da doi chieu: tao/sua ghi chu va diem quan tam cung mot form nhap dung chung; huy trong form tra ghi chu cu nguyen ven. Focus sau sua/xoa: danh sach ghi chu tu lam moi va man overmap publish lai snapshot moi pass - khong con focus vao ghi chu da xoa.",
+      "fixtures": []
+    },
+    {
+      "id": "overmap-tuyen-va-travel",
+      "nhom_be_mat": "Ban do lon",
+      "ten": "Lap tuyen, chon diem, bat dau travel va huy",
+      "duong_vao": "Lenh tuyen/travel trong overmap",
+      "truong_va_tham_so": "Diem den, vi tri tuong doi, do dai tuyen, ly do khong the di",
+      "xac_nhan_va_huy": "Chon diem khong tu khoi hanh; khoi hanh la lenh rieng; huy tuyen rieng",
+      "ket_qua": "Dung nguy hiem theo logic goc duoc bao",
+      "quyen_biet": "Theo vi tri da biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/overmap_ui.cpp (lenh travel/ghi chu co mo ta tac dong/trang thai kha dung, theo IMPLEMENTATION.vi.md G6)",
+        "src/overmap_ui.cpp try_travel_to_destination: popup ly do khong tim thay duong/khac tang z + query_yn xac nhan khoi hanh rieng (ke ca bien the qua can, trong xe nhung khong lai, va lai xe) truoc khi gan ACT_TRAVELLING/autodrive",
+        "src/overmap_ui.cpp nhanh CHOOSE_DESTINATION (R13.3): khi khong lap duoc tuyen thi popup ly do dung du kien engine (khac tang z / o dich chua kham pha / khong co duong) thay vi im lang xoa tuyen cu; chon o cua chinh minh chi xoa tuyen, khong popup",
+        "src/overmap_ui.cpp reader_snapshot node overmap:route (R13.3): noi ro thay tuyen/xoa tuyen va focus chi dua con tro"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [
+        "T45"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R13.3 da doi chieu: dung nguy hiem khi travel la logic hoat dong/safe mode goc (xem R10.3/R11.1), khong viet lai o overmap. Huy travel sau khi da khoi hanh = ngat hoat dong (R10.3); huy tuyen truoc khoi hanh = chon o cua chinh minh hoac chon tuyen khac.",
+      "fixtures": []
+    },
+    {
+      "id": "overmap-tim-kiem",
+      "nhom_be_mat": "Ban do lon",
+      "ten": "Tim kiem dia diem tren overmap va duyet ket qua",
+      "duong_vao": "Lenh tim kiem trong overmap",
+      "truong_va_tham_so": "Ket qua hien hanh, thu tu, toa do, khoang cach/huong",
+      "xac_nhan_va_huy": "Chon ket qua chi chuyen con tro; huy ve overmap",
+      "ket_qua": "Khong lo dia diem chua biet",
+      "quyen_biet": "Theo ket qua game cho phep",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/overmap_ui.cpp:1628 scope overmap_search + snapshot :1688",
+        "src/overmap_ui.cpp search() (R13.1): ca ba nhanh ket qua - khong co ket qua: popup 'No results found within %d tiles' (popup co screen_scope, src/popup.cpp) va o lai ban do; co ket qua: NEXT_TAB/PREV_TAB duyet, CONFIRM chi dua con tro toi ket qua, QUIT tra con tro ve vi tri truoc tim; tu khoa rong/huy: o lai ban do, con tro nguyen ven"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [
+        "T45"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R13.1: tim kiem chi khop ten o o muc seen != unseen va ghi chu do nhan vat tao tai tang con tro - khong lo dia diem chua biet; ket qua sap theo khoang cach tang dan tu con tro.",
+      "fixtures": []
+    },
+    {
+      "id": "lich-va-chinh-thoi-gian",
+      "nhom_be_mat": "Ban do lon",
+      "ten": "Lich: doc gia tri thoi gian, tang/giam/dat lai va ly do gioi han do chinh xac",
+      "duong_vao": "Man lich (calendar_ui)",
+      "truong_va_tham_so": "Gia tri lich, nut tang/giam/dat lai, truong do chinh xac cao bi khoa + ly do",
+      "xac_nhan_va_huy": "Chinh qua action goc; huy tra gia tri cu",
+      "ket_qua": "Gia tri sau chinh dung",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (qua menu chung + callback rieng)",
+      "bang_chung": [
+        "src/calendar_ui.cpp:34 calendar_accessibility_callback : public uilist_callback (gan smenu.callback :122, a11y_disabled_reason :149)"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Khong co screen_scope rieng cho lich - adapter la callback lam giau uilist; ghi ro de khong tinh nham la adapter rieng day du.",
+      "fixtures": []
+    },
+    {
+      "id": "hoi-thoai-npc",
+      "nhom_be_mat": "NPC/thuong mai",
+      "ten": "Hoi thoai NPC: nguoi noi, cau tra loi/dieu kien, lich su dai",
+      "duong_vao": "Bat dau hoi thoai (DIALOGUE)",
+      "truong_va_tham_so": "Nguoi noi, noi dung, cau tra loi kem dieu kien/trang thai, lich su",
+      "xac_nhan_va_huy": "Chon cau tra loi qua intent; xac nhan tac dong lon rieng",
+      "ket_qua": "Khong chon nham cau qua callback cu",
+      "quyen_biet": "Theo dieu kien game cong bo",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/npctalk.cpp:2943 scope dialogue + node history :2977",
+        "src/dialogue_imgui.cpp:394 get_accessibility_history",
+        "src/npctalk.cpp dialogue::opt_imgui update_reader (R14.1): title kem ten nguoi noi tu speaker_name(d_img) - cung du kien thanh ben ve ten chu lon, gom ca remote/computer",
+        "src/npctalk.cpp: node detail canh bao hau qua hostile/helpless tu responses[index].get_consequences - tuong duong loi cua mau do UI goc, khop query_yn engine hoi sau khi chon",
+        "src/dialogue_imgui.cpp get_accessibility_history (R14.1): giu dong trong tach luot thanh doan tai lieu; npctalk dung a11y::append_document cho node history, doc tuoi moi lan publish",
+        "src/dialogue_imgui.cpp (R14.1): loi tam biet khi ket thuc hoi thoai nay cung duoc announce_game_message (truoc day chi qua npc::say - am thanh, khong vao log/snapshot)"
+      ],
+      "muc_phu_trach": [
+        "R14"
+      ],
+      "test_ids": [
+        "T47"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Topic/response sinh dong tu JSON - phan loai theo co che o muc diem dau vao (lop constructor dong). R14.1 da doi chieu: trial/ti le va show_reason/failure_explanation da nam trong chinh text create_option_line = label; UI goc khong cong bo ly do dieu kien cu the hon nen disabled_reason giu cau chung, khong bia. Chon nham qua callback cu: da chung minh an toan qua cong R03 + handler doi chieu danh sach hien hanh + scope moi khi doi topic (xem R14-NPC-TRADE-CAMP.vi.md).",
+      "fixtures": []
+    },
+    {
+      "id": "giao-dich-hai-phia",
+      "nhom_be_mat": "NPC/thuong mai",
+      "ten": "Giao dich hai phia: gia/don vi/tong, so du/tin dung/no, gioi han, pane dang thao tac",
+      "duong_vao": "Man giao dich (trade)",
+      "truong_va_tham_so": "Luong tung mon, gia uoc tinh hai phia, so du ngan hang/tin dung/no, gioi han chap nhan",
+      "xac_nhan_va_huy": "Chot trao doi bang lenh goc rieng; huy khong trao doi",
+      "ket_qua": "Ket qua tu choi/thanh cong duoc nghe",
+      "quyen_biet": "Theo gia tri UI giao dich cong bo",
+      "adapter": "rieng (qua adapter hanh trang - trade_selector)",
+      "bang_chung": [
+        "src/trade_ui.cpp build_accessibility_summary :238, trade_selector::get_accessibility_summary :271",
+        "src/inventory_ui.cpp (snapshot pane giao dich)",
+        "src/trade_ui.h/.cpp (R14.2): trade_preset::unit_price boc dung trading_price ma cot Unit price hien thi; get_denial dung chung accessor",
+        "src/inventory_ui.cpp reader_session::update hook trade_selector (R14.2): bang trade:items (cot item/unit_price, cells co compare = cent tho), detail gan nhan 'Unit price: ...', mo ta tac dong cho 5 lenh pane SWITCH_LISTS/AUTO_BALANCE/BANK_BALANCE/CONFIRM/QUIT",
+        "src/npctrade.cpp npc_trading::trade (R14.2): sau khi ap dung that, add_msg cong bo gia tri hai phia tu trade_result, delta_bank + cash sau cung, so du owed sau cung; duong khong chot: 'No trade took place. Nothing was exchanged.'"
+      ],
+      "muc_phu_trach": [
+        "R14"
+      ],
+      "test_ids": [
+        "T47"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R14.2 da doi chieu: so luong/chia stack qua form R09 (nhap -> apply -> toggle_entry) va get_available_count/set_chosen_count; tong tinh lai qua toggle_entry -> on_toggle -> recalc_values_cpane tren moi thay doi, summary dung lai moi vong execute(); max_credit_extended khong doc truoc (chi o popup tu choi cua _confirm_trade nhu UI goc); denial cua preset chay nguyen qua cache_denial -> disabled_reason.",
+      "fixtures": []
+    },
+    {
+      "id": "nhiem-vu-danh-sach-va-chi-tiet",
+      "nhom_be_mat": "Nhiem vu/trai",
+      "ten": "Nhiem vu: bon tab, hang va chi tiet (han/phan thuong/dieu kien/muc tieu hien hanh, vi tri)",
+      "duong_vao": "Man nhiem vu (MISSION_UI)",
+      "truong_va_tham_so": "Tab active/completed/failed/points of interest, mo ta, nguoi giao, phe, toa do/khoang cach, han/ket qua",
+      "xac_nhan_va_huy": "Doi tab/hang dong bo UI; xac nhan/xoa diem qua action goc",
+      "ket_qua": "Theo doi dung nhiem vu da chon",
+      "quyen_biet": "Theo thong tin nhiem vu duoc biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/mission_ui.cpp:147 scope missions, mission_ui_impl::reader_snapshot :333",
+        "src/mission_ui.cpp reader_snapshot (R13.4): detail cho lenh CONFIRM (chi doi muc tieu theo doi, khong nhan/tra nhiem vu, khong khoi hanh) va DELETE_POINT_OF_INTEREST (noi ro game xoa ngay, khong hoi xac nhan)",
+        "src/overmap_ui.cpp reader_snapshot (R13.4): o con tro trung muc tieu hien hanh (get_active_mission_target) duoc cong bo la o dich cua muc tieu - lien ket vi tri nhiem vu voi overmap",
+        "src/mission_ui.cpp reader_snapshot: han + thoi gian con lai (chinh xac khi co dong ho, gan dung khi khong), nhan/tra ket qua o tab COMPLETED/FAILED kem moc thoi gian, phan thuong/dieu kien trong mo ta da parse (parsed_description_for)"
+      ],
+      "muc_phu_trach": [
+        "R13"
+      ],
+      "test_ids": [
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R13.4 da doi chieu: nhan/tra nhiem vu dien ra o hoi thoai NPC (R14), man nhiem vu chi theo doi/uu tien muc tieu va xem ket qua - dung pham vi UI that. Toa do dich nhiem vu la thong tin game cap cho nguoi choi (dau dich luon ve tren ban do) nen doc chinh xac; khoang cach/huong chi doc khi you_know_where_you_are(). Dieu kien/ket qua tung loai nhiem vu chua kiem thu (giai doan 2).",
+      "fixtures": []
+    },
+    {
+      "id": "giao-viec-va-tra-dong-doi",
+      "nhom_be_mat": "Nhiem vu/trai",
+      "ten": "Giao viec/tra dong doi va tab nhiem vu trai (companion missions)",
+      "duong_vao": "Giao dien companion missions",
+      "truong_va_tham_so": "Lua chon, chi tiet, trang thai duoc phep, ETA/trang thai",
+      "xac_nhan_va_huy": "Giao/tra qua action goc; huy ve danh sach",
+      "ket_qua": "Nguoi mat lien he/doi danh sach duoc xu ly khong chon nham",
+      "quyen_biet": "Theo kha nang biet/lien he duoc",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/mission_companion.cpp:1061 scope companion_missions, snapshot :840",
+        "src/mission_companion.cpp display_and_choose_opts (R14.3): summary kem ten trai (find_camp + camp_name) hoac ten NPC diem giao viec (tham so point_name moi)",
+        "src/mission_companion.cpp handler companion_missions (R14.3): activate chi tra CONFIRM khi entry duoc activate chinh la entry dang chon (nguyen tu nhu uilist); doi tab ep revision qua reader_list_changed; chan index danh sach rong",
+        "src/mission_companion.cpp make_reader_snapshot (R14.3): entry return bi khoa co cau ly do tuong minh truoc roster; companion_choose dat a11y_disabled_reason cho thieu ky nang",
+        "src/faction_camp.cpp get_available_missions_by_dir (R14.4): entry start bi khoa nay noi ly do - cong su da co nguoi lam (append_workers_in_progress), survey expansion khong co vi tri, plant bi lanh (can_plant.c_str cua engine), crafting du 3 nguoi thanh entry khoa kem ly do thay vi bien mat"
+      ],
+      "muc_phu_trach": [
+        "R14"
+      ],
+      "test_ids": [
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Day la giao dien giao viec; loi trai xay dung/hau can la hanh trinh rieng. R14.3: ETA/trang thai/nguoi thuc hien da nam trong entry.text (Time/Profit/Danger, roster [DONE]/[X left]/Positions/Time) va duoc publish qua detail + tai lieu companion:details; cac buoc chon nguoi (companion_choose/choose_return/individual_mission) deu qua uilist dung chung R04.",
+      "fixtures": [
+        "F-08"
+      ]
+    },
+    {
+      "id": "trai-xay-dung-va-hau-can",
+      "nhom_be_mat": "Nhiem vu/trai",
+      "ten": "Trai: cong viec/vung/nguon luc/nguoi/thoi gian va moi menu con cua faction_camp",
+      "duong_vao": "Menu trai trong faction_camp",
+      "truong_va_tham_so": "Cong viec, nguon luc, nguoi, dieu kien, ket qua",
+      "xac_nhan_va_huy": "Chay viec co chu y; khong tu khoi chay khi duyet",
+      "ket_qua": "Ket qua chuoi hau can duoc nghe day du",
+      "quyen_biet": "Theo trai va NPC duoc biet",
+      "adapter": "rieng (2 man tu ve) + dung-chung (uilist/popup/selector)",
+      "bang_chung": [
+        "src/faction_camp.cpp worker_assignment_ui (R14.4): adapter screen_scope 'faction-camp-workers' moi - node theo character_id, tra lai tai luc intent, dong bo selection + cur_npc, detail trang thai phan trai/dang lam companion mission",
+        "src/faction_camp.cpp job_assignment_ui (R14.4): adapter 'faction-camp-jobs' moi - detail moi cu dan la nguyen bang 'verb : priority' cua pane goc; kich hoat qua CONFIRM goc -> menu uu tien (uilist) -> query_int",
+        "src/faction_camp.cpp (R14.4): player_eats_meal entry co desc chi phi kcal + kcal dang tru; choose_new_leader entry co desc la chinh giai thich cua query_yn; start_crafting choose_crafter co a11y_disabled_reason rieng + text noi mon che/me; recruit_return khoa Increase/Decrease Food tai tran/san kem ly do; entry Camp_Abandon them canh bao he qua; start_farm_op het ket thuc lang le khi 0 o",
+        "src/faction_camp.cpp kiem ke (R14.4): moi popup/query_yn qua scope query_popup, query_int qua string_input_popup, add_msg qua messages.cpp, selector qua R09, choose_components qua uilist R12 - bang kiem ke day du trong R14-NPC-TRADE-CAMP.vi.md",
+        "src/overmap_ui.cpp reader_snapshot (R14.4): summary nay noi ca overmap_data.message - tieu chi/tam chon o cua choose_point (cut logs/hide site/fortifications/survey)"
+      ],
+      "muc_phu_trach": [
+        "R14"
+      ],
+      "test_ids": [
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R14.4 da viet: hai man tu ve duy nhat cua faction_camp co adapter rieng; cac menu con con lai di qua adapter dung chung da chung minh. Diem mo zone_manager_ui (tao zone khi set_sort_points) da duoc R16 dong bang adapter zone-manager + look-around (xem hanh trinh tao-vung-hai-goc). Khong tinh tab phe/giao viec thay cho toan luong trai.",
+      "fixtures": [
+        "F-08"
+      ]
+    },
+    {
+      "id": "phe-va-nguoi-theo",
+      "nhom_be_mat": "Phe/nguoi theo",
+      "ten": "Phe va nguoi theo: bon tab, danh sach trai/nguoi theo/nhom/sinh vat, chi tiet phe/sinh vat",
+      "duong_vao": "Man phe (FACTIONS)",
+      "truong_va_tham_so": "Tab, danh sach, thong tin trai, nhiem vu/ETA/trang thai/suc khoe/ky nang nguoi theo, kha nang lien he",
+      "xac_nhan_va_huy": "Lenh chi hien khi phu hop; xac nhan rieng",
+      "ket_qua": "Chi tiet dung doi tuong da chon",
+      "quyen_biet": "Theo sinh vat/phe da biet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/faction_ui.cpp:253 scope faction, faction_ui::reader_snapshot :971, reader_intent :1327"
+      ],
+      "muc_phu_trach": [
+        "R14"
+      ],
+      "test_ids": [
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": [
+        "F-08"
+      ]
+    },
+    {
+      "id": "so-do-xe-va-bo-phan",
+      "nhom_be_mat": "Phuong tien",
+      "ten": "So do xe dang cay/bang: o xe, vi tri tuong doi, nhom chuc nang, ten/tinh trang bo phan",
+      "duong_vao": "Man tuong tac xe (veh_interact)",
+      "truong_va_tham_so": "O/part, ket noi, tinh trang",
+      "xac_nhan_va_huy": "Duyet o/part khong tu sua hoac di chuyen xe",
+      "ket_qua": "Du lieu dung xe hien tai; tra lai xe/part khi chot thao tac",
+      "quyen_biet": "Theo xe nhan vat thay/biet",
+      "adapter": "rieng (veh_interact::reader_session, scope \"vehicle-interact\")",
+      "bang_chung": [
+        "src/veh_interact.cpp veh_interact::reader_session (viết mới R15.1): summary từ đúng các giá trị display_stats in (tên, total_durability_text, mass, cargo used/total, safe/top speed, % từng nhiên liệu qua fuel_left/fuel_capacity), node vehicle:cursor + vehicle:here:* (bản sao dữ kiện print_part_list/print_vparts_descs), cây vehicle:tile:* -> vehicle:part:* gom theo ô mount, detail gồm nhóm chức năng của overview + tình trạng bằng lời theo cùng thang count_durability + dữ kiện từng nhóm (động cơ/bình/pin/lò/tháp pháo/ghế) sao từ các callback details của calc_overview",
+        "src/veh_interact.h: reader_session + repair_pos la thanh vien de dong bo vi tri doc"
+      ],
+      "muc_phu_trach": [
+        "R15"
+      ],
+      "test_ids": [
+        "T49"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R15.1 da dong: focus/activate tren node part/o chi doi con tro goc (dung cong thuc overview() dung de dong bo con tro), khong bat dau task va khong di chuyen xe. Tinh trang tung part von chi la ky hieu mau -> tu dinh tinh theo cung phan so hu hong va cung thang tu count_durability cong bo cho toan xe. Vi tri tuong doi theo khung xe (+x la phia truoc, +y la ben phai, goc la part 0 - xem vehicle.h).",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "lap-sua-thao-bo-phan-xe",
+      "nhom_be_mat": "Phuong tien",
+      "ten": "Lap/sua/thao/thay bo phan xe: vi tri, phu thuoc, dung cu/linh kien, thoi gian, ket qua",
+      "duong_vao": "Luong veh_interact lap/sua",
+      "truong_va_tham_so": "Bo phan, vi tri, yeu cau, thoi gian",
+      "xac_nhan_va_huy": "Xac nhan rieng; huy khong thay doi xe",
+      "ket_qua": "Ket qua that sau hoat dong",
+      "quyen_biet": "Theo yeu cau game cong bo",
+      "adapter": "rieng (veh_interact::reader_session cac mode install/repair/remove/select_part)",
+      "bang_chung": [
+        "src/veh_interact.cpp reader_session mode install: node ung vien theo tab_vparts, node dang chon mang detail = msg ma update_part_requirements da tinh (yeu cau ky nang/dung cu/vat tu/thoi gian + ly do khong lap duoc) va enabled dung co can_install cua vong lap; intent tai tra ung vien theo con tro vpart_info trong tab_vparts hien hanh, activate tra CONFIRM de vong lap goc tu kiem tra lai",
+        "src/veh_interact.cpp reader_session mode repair/remove: repair_pos va remove_info->pos la diem dong bo; remove tinh can_remove_part cho tung part (luu/khoi phuc msg) de cong bo disabled_reason dung ly do engine; cac mode select_part (mend/refill/siphon/assign_crew/select_part tinh) dung overview_pos + CONFIRM cua vong overview() goc",
+        "Ket qua that: assign_activity (vehicle_activity_actor) va cac query_yn tinh huong (bay duoc/unfoldable) giu nguyen cua engine"
+      ],
+      "muc_phu_trach": [
+        "R15"
+      ],
+      "test_ids": [
+        "T49"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R15.2 da dong, gom ca nhanh binh chua xe cua R10: veh_interact::select_part (handle_liquid handle_vehicle_target, loc nuoc trong tank) chay qua overview() nen duoc mode select_part phu; nhieu tank khop thi mo UI chon, dung 1 tank thi engine tu chon khong mo UI. Thap phao co detail rieng: ammo + trang thai tung ngan multimag qua turret_query/multimag_display_state nhu callback overview ve.",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "cargo-xe",
+      "nhom_be_mat": "Phuong tien",
+      "ten": "Cay cargo theo bo phan/vat chua/mon; nhien lieu/pin/suc chua UI biet; chuyen vat pham",
+      "duong_vao": "Kho cua xe qua veh_interact/vehicle_use",
+      "truong_va_tham_so": "Cay cargo, luong nhien lieu/pin, suc chua",
+      "xac_nhan_va_huy": "Chuyen qua adapter hanh trang R09; huy ve cay",
+      "ket_qua": "Khong chi doc ten kho",
+      "quyen_biet": "Theo kho nhan vat biet/truy cap duoc",
+      "adapter": "rieng (reader_cargo_data trong veh_interact) + dung chung (advanced inventory R09 cho chuyen do)",
+      "bang_chung": [
+        "src/veh_interact.cpp reader_cargo_data: moi part VPFLAG_CARGO cong bo stored/max volume + danh sach mon (toi da 8 ten hien thi + so mon con lai dem dung) tu vehicle_stack cua chinh part",
+        "src/advanced_inv.cpp reader_session (R09) da phu pane xe: advanced_inv_area dung co in_vehicle tren pane (khong co AIM_VEHICLE), pane_node cong bo \"Vehicle storage.\" + tong volume/weight gom ca xe; chuyen do qua MOVE_VARIABLE_ITEM cua engine",
+        "Quyen biet: khong co co che che giau cargo/nhien lieu khi examine truc tiep (kiem chung R15: game::examine -> interact_with khong check is_inside/khoa/chu cho du lieu; cong duy nhat la handle_potential_theft cho HANH DONG thay doi)"
+      ],
+      "muc_phu_trach": [
+        "R15"
+      ],
+      "test_ids": [
+        "T49"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R15.3 da dong: veh_interact goc khong co lenh mo cargo (chi in tong volume o stats) nen cay cargo nam trong detail cua part cargo tai man veh_interact; chuyen do that giua nguoi/dat/xe dung adapter kho nang cao R09. Nhien lieu/pin: % tong theo loai o summary + chi tiet tung binh/pin o detail cua part.",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "lai-xe-remote-va-cruise",
+      "nhom_be_mat": "Phuong tien",
+      "ten": "Len/xuong xe, no/tat may, lai/phanh/toc do/huong, cruise va remote",
+      "duong_vao": "Che do lai xe; remote control",
+      "truong_va_tham_so": "Toc do, huong, trang thai dong co, mode lai/remote",
+      "xac_nhan_va_huy": "Khoa cu chi di bo khoi lenh tang ga; cong bo mode rieng",
+      "ket_qua": "Khong tang ga vo y bang vuot di bo",
+      "quyen_biet": "Theo trang thai xe biet",
+      "adapter": "dung chung (menu veh_menu/uilist R04 + lenh di chuyen the gioi) + rieng (trang thai lai trong player_status, form smart controller)",
+      "bang_chung": [
+        "src/vehicle_use.cpp build_interact_menu qua veh_menu (bo uilist - adapter dung chung R04): Examine vehicle, no/tat may, Stop driving/Let go of controls, Pull handbrake, Control individual engines, turret modes, Smart controller settings, Stop controlling (remote)",
+        "src/game.cpp game::control_vehicle: vao lai qua start_engines/controlling_vehicle; src/handle_action.cpp: cac action di chuyen dinh tuyen rcdrive (remote_controlling + radiocontrol/bio_remote) hoac pldrive (has_vehicle_control, gom ca remoteveh) - dung cac intent di chuyen ma bo doc gui tu snapshot the gioi",
+        "src/a11y_world.cpp player_status (R15.4): khoi xe mo rong - ten xe, mode Driving/Remote control, azimuth, cruise text (target < current), % nhien lieu, % pin, muc gang suc dong co bang loi theo cung thang mau cua display.cpp",
+        "src/smart_controller_ui.cpp: adapter form R02 cho nguong smart controller (enabled bool, battery_lo [5,90] buoc 5, battery_hi [10,95] buoc 5, depends_on hai chieu, nhap -> apply ghi qua dung references + coupling cua slider goc)",
+        "Khong co truong cruise_on rieng trong nguon nay: cruise_velocity la toc do dich ma pldrive tu dieu chinh bang chinh lenh tang/giam toc; trang thai cong bo la cruise text cua HUD"
+      ],
+      "muc_phu_trach": [
+        "R15"
+      ],
+      "test_ids": [
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R15.4 da dong: vuot di bo khong bao gio thanh ga - engine dat swipe_movement_allowed=false khi lai/remote (R00) va Java worldMovementEnabled() false thi vuot roi ve cac anh xa dieu huong cua nguoi dung (navigate/detail/read - khong lenh nao gui intent gameplay); lai chu dong chi qua kich hoat lenh huong. Trang thai lai doc duoc bat cu luc nao qua world:status. Smart controller viet truc tiep nhu UI goc (khong qua trung gian luu tru rieng).",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "smart-controller",
+      "nhom_be_mat": "Dieu khien dong co",
+      "ten": "Smart engine controller: dieu chinh nguong va huy",
+      "duong_vao": "Man smart_controller_ui (SMART_ENGINE_CONTROLLER)",
+      "truong_va_tham_so": "Nguong, gia tri hien tai, mien gia tri",
+      "xac_nhan_va_huy": "Dieu chinh qua form co mien; huy tra gia tri cu",
+      "ket_qua": "Gia tri ap dung dung",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/smart_controller_ui.cpp (a11y::screen_scope 'smart-engine-controller' trong smart_controller_ui::control kem handler: smart:enabled :169, smart:battery_lo/smart:battery_hi :196-197, smart:manual :229; snapshot: node smart:enabled :255 checkbox bool, threshold_node battery_lo :297-300 (5-90, buoc 5), battery_hi :307 (10-95, buoc 5), depends_on hai chieu; include a11y_input.h + a11y_runtime.h)"
+      ],
+      "muc_phu_trach": [
+        "R15"
+      ],
+      "test_ids": [
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R15 (commit 07ad736b): da co adapter rieng - form R02 day du cho smart controller: bat/tat, nguong pin thap (5-90, buoc 5), nguong pin cao (10-95, buoc 5), phu thuoc cheo hai nguong va nut Manual; set_value/select_choice chi ghi ban nhap, apply moi ghi qua chinh cac reference settings voi clamp boi 5 va coupling nhu nhanh LEFT/RIGHT cua man goc; activate tren Enabled tra CONFIRM (bat/tat ngay nhu phim goc). Dong nay truoc R23 ghi chua-viet do chua lat trang thai sau R15.",
+      "fixtures": [
+        "F-06"
+      ]
+    },
+    {
+      "id": "tao-vung-hai-goc",
+      "nhom_be_mat": "Vung/tu dong hoa",
+      "ten": "Tao vung bang vi tri hien tai/con tro/toa do: hai goc/tang, pham vi/kich thuoc/loai truoc xac nhan",
+      "duong_vao": "Trinh quan ly vung (ZONES_MANAGER)",
+      "truong_va_tham_so": "Hai goc, tang, kich thuoc, loai vung",
+      "xac_nhan_va_huy": "Xac nhan tao sau khi nghe pham vi; huy khong tao",
+      "ket_qua": "Giu dung gioi han tao vung cua game",
+      "quyen_biet": "Theo gioi han UI goc cho phep",
+      "adapter": "rieng (zone-manager + look-around) + dung-chung (uilist/popup nhap)",
+      "bang_chung": [
+        "src/zone_manager_ui.cpp display_zone_manager (R16.1): adapter screen_scope \"zone-manager\" - bang zones:list (R02) voi hang theo binding (ten/loai/start/end) tra lai tai luc intent; detail hang cong bo hai goc, kich thuoc, loai, options descriptions",
+        "src/game.cpp game::look_around (R16.1): adapter screen_scope \"look-around\" - node look:cursor (vi tri tuong doi + describe_tile theo quyen biet: observe_tile cung tang, observe_memory_tile khac tang), node look:selection cong bo pham vi/kich thuoc/so tang truoc khi xac nhan goc thu hai; di chuyen con tro la cac action huong goc",
+        "Luon tao: mgr.query_type (uilist R04) -> zone_options::query_at_creation (uilist/popup dung chung; study zone qua cua so study_zone_ui co adapter rieng R16.3) -> mgr.query_name (string_input_popup_imgui, adapter input_popup R04) -> query_position/query_personal_position qua look_around",
+        "src/zone_manager_ui.cpp (truoc R16: 0 a11y::; input_context ZONES_MANAGER :216, uilist as_m :668)"
+      ],
+      "muc_phu_trach": [
+        "R16"
+      ],
+      "test_ids": [
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R16.1 da viet: gioi han tao vung cua game giu nguyen (mgr.add qua luong goc; hai goc chon bang con tro look_around cua chinh game). Duong vao tu trai (faction_camp set_sort_points) va tu xe (vehicle_use) di qua cung display_zone_manager nen duoc phu chung.",
+      "fixtures": [
+        "F-07"
+      ]
+    },
+    {
+      "id": "quan-ly-va-chay-vung",
+      "nhom_be_mat": "Vung/tu dong hoa",
+      "ten": "Xem/doi ten/sua/xoa/bat-tat/thu tu vung va thuc thi/tam dung/ket qua tac vu vung",
+      "duong_vao": "Trinh quan ly vung",
+      "truong_va_tham_so": "Vung, nguon/dich, dieu kien tac vu",
+      "xac_nhan_va_huy": "Chay tac vu co chu y; khong tu khoi chay khi duyet",
+      "ket_qua": "Ket qua tac vu duoc nghe",
+      "quyen_biet": "Theo vung da tao",
+      "adapter": "rieng (zone-manager) + dung-chung (uilist sua)",
+      "bang_chung": [
+        "src/zone_manager_ui.cpp display_zone_manager (R16.2): focus hang chi doi active_index (khong chay gi), activate tra CONFIRM mo uilist sua goc (Edit name/type/options/position + Move position qua look_around is_moving_zone co node look:selection)",
+        "src/zone_manager_ui.cpp (R16.2): REMOVE_ZONE bi chan boi xac nhan rieng zone:remove:confirm; ENABLE_ZONE/DISABLE_ZONE/TOGGLE_ZONE_DISPLAY/MOVE_ZONE_UP/MOVE_ZONE_DOWN/SHOW_ALL_ZONES (node checkbox phan anh show_all_zones) di qua registered_intent toi vong lap goc; thay doi chi luu khi query_yn \"Save changes?\" luc thoat",
+        "Thuc thi tac vu vung: multi_zone_activity_actor (src/activity_actor.cpp) chay nhu activity thuong - tien do/huy/ket qua qua co che R10; man quan ly vung khong co lenh chay tac vu trong UI goc"
+      ],
+      "muc_phu_trach": [
+        "R16"
+      ],
+      "test_ids": [
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R16.2 da viet: duyet khong tu khoi chay tac vu (focus/activate chi doi lua chon hoac mo menu sua goc). Nguon/dich/dieu kien tac vu cua tung loai vung doc qua get_descriptions trong detail hang.",
+      "fixtures": [
+        "F-07"
+      ]
+    },
+    {
+      "id": "study-zone",
+      "nhom_be_mat": "Vung/tu dong hoa",
+      "ten": "Study Zone: cau hinh theo loai vung bang form/bang (truong/don vi/gioi han, ap dung/huy, truoc/sau)",
+      "duong_vao": "Man study_zone_ui (STUDY_ZONE_UI)",
+      "truong_va_tham_so": "Truong cau hinh, don vi, gioi han",
+      "xac_nhan_va_huy": "Ap dung/huy theo form R02",
+      "ket_qua": "Du lieu truoc/sau ro rang",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (study-zone)",
+      "bang_chung": [
+        "src/study_zone_ui.cpp study_zone_window::execute (R16.3): adapter screen_scope \"study-zone\" - bang study:skills khai bao mot lan (cot skill + mot cot moi NPC), node cha moi ky nang mang cells Allowed/Not allowed, node con checkbox dang truong bool R02 (select_choice ghi nhap, apply ghi qua dung logic insert/erase cua draw_skill_row, activate doi ngay nhu click ImGui, cancel_draft bo nhap)",
+        "src/study_zone_ui.cpp (R16.3): study:check_all/study:clear_all chay vong lap footer goc tren toan bo all_skills (bo doc khong co tap loc cua o loc ImGui; detail ghi ro pham vi); study:done tra CONFIRM nhu nut Done",
+        "Kho that duy nhat: npc_skill_preferences cua study_zone_options (src/clzones.cpp) - adapter sua truc tiep tren ban tham chieu do, preferences_changed dat nhu duong ImGui"
+      ],
+      "muc_phu_trach": [
+        "R16"
+      ],
+      "test_ids": [
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R16.3 da viet: du lieu truoc/sau doc qua applied_value/checked cua tung o va detail so NPC duoc phep cua moi ky nang. Gioi han validate R02 (16 cot/bang, 4096 node) co the cham khi NPC > 15 hoac tong o qua lon - de giai doan 2 chot nguong/phuong an phan trang.",
+      "fixtures": [
+        "F-07"
+      ]
+    },
+    {
+      "id": "bionics",
+      "nhom_be_mat": "Bionics/dot bien/phep",
+      "ten": "Bionics: chu dong/bi dong, nguon dien/chi phi/trang thai, kich hoat va phau thuat",
+      "duong_vao": "Man bionics (BIONICS)",
+      "truong_va_tham_so": "Danh sach, chi phi, dieu kien, vat tu/rui ro phau thuat da biet",
+      "xac_nhan_va_huy": "Kich hoat/phau thuat co xac nhan; huy an toan",
+      "ket_qua": "Ket qua that sau kich hoat/phau thuat",
+      "quyen_biet": "Theo rui ro game cong bo",
+      "adapter": "rieng (man bionics) + dung-chung (uilist/popup/inventory selector cho phau thuat)",
+      "bang_chung": [
+        "src/bionics_ui.cpp power_bionics: screen_scope 'bionics' + make_reader_snapshot (tab/entry node, label = build_bionic_powerdesc_string, detail = draw_description); helper bionic_fuel_string/bionic_power_string tach tu draw_bionics_titlebar",
+        "src/bionics_ui.cpp handler: entry activate chi dat cursor + tra CONFIRM ve vong lap goc (menu vu khi long, choose_key_from_user dung chung o REASSIGNING)",
+        "Phau thuat: src/iexamine.cpp autodoc (uilist + inv::install_bionic), src/game_inventory.cpp bionic_install_preset cot FAILURE CHANCE, src/bionics.cpp can_install_bionics/can_uninstall_bionic query_yn % that bai qua popup dung chung",
+        "NPC phau thuat: src/npctalk_funcs.cpp bionic_install_common/bionic_remove_common (preset surgeon FAILURE CHANCE + query_yn SEVERE damage)",
+        "Tu lap item CBM: src/iuse_actor.cpp install_bionic_actor — nhanh tu lap trong src/bionics.cpp:2481-2484 return som, UI goc khong cong bo % rui ro o luong nay cho bat ky ai"
+      ],
+      "muc_phu_trach": [
+        "R17"
+      ],
+      "test_ids": [
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R17.1: adapter man bionics viet moi; cac luong lap/thao/phau thuat di qua be mat dung chung da co adapter, rui ro engine cong bo (FAILURE CHANCE, query_yn %) deu toi bo doc. Ngoai le bang chung: luong tu lap CBM khong co % rui ro o bat ky dau trong UI goc (nhanh return som), khong bia so de bu.",
+      "fixtures": [
+        "F-05",
+        "F-09"
+      ]
+    },
+    {
+      "id": "dot-bien",
+      "nhom_be_mat": "Bionics/dot bien/phep",
+      "ten": "Dot bien: nhom/dieu kien/trang thai/chi phi, dung/tat va phan hoi",
+      "duong_vao": "Man mutations (MUTATIONS)",
+      "truong_va_tham_so": "Nhom, trang thai, chi phi",
+      "xac_nhan_va_huy": "Dung/tat co xac nhan khi nguy hiem; huy giu trang thai",
+      "ket_qua": "Phan hoi dung sau kich hoat",
+      "quyen_biet": "Theo dieu kien game cong bo",
+      "adapter": "rieng (man mutations)",
+      "bang_chung": [
+        "src/mutation_ui.cpp power_mutations: screen_scope 'mutations' + make_reader_snapshot (tab/entry node; label sao nguyen van hang ve: phim + ten + cost/cooldown + ' - Active'; detail = mutation_desc + ghi chu purifier + trang thai noi bang loi)",
+        "src/mutation_ui.cpp handler: focus chi dat cursor/examine nhu UP/DOWN; activate tra CONFIRM ve vong lap goc (kich hoat/tat/gan phim/an sprite theo menu_mode)",
+        "Khong co UI that: Character::mutate/mutate_category/mutate_towards (src/mutation.cpp), giac mo get_category_dream, try_crossing_threshold — chi su kien/log; mutation_selector va purify_smart la uilist dung chung da co adapter"
+      ],
+      "muc_phu_trach": [
+        "R17"
+      ],
+      "test_ids": [
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R17.2: adapter toan man mutations (helper gan phim khong con la bang chung duy nhat). Phan vai voi player_display: man nay la quan ly, player_display tab Traits la hien thi trang thai; cung nguon mutation_desc nen khong mau thuan. UI goc phan biet trait goc/nhan them chi bang sac mau — khong co chu nen bo doc khong noi (ghi nhan).",
+      "fixtures": [
+        "F-05",
+        "F-09"
+      ]
+    },
+    {
+      "id": "phep-va-kha-nang",
+      "nhom_be_mat": "Bionics/dot bien/phep",
+      "ten": "Phep/kha nang: level/cost/tam/yeu cau, chon o/muc tieu/AOE, hoc/chuan bi/dung va ket qua",
+      "duong_vao": "Menu phep (SPELL_MENU) va luong hoc phep",
+      "truong_va_tham_so": "Chi phi, tam, yeu cau",
+      "xac_nhan_va_huy": "Dung bo chon muc tieu R11; xac nhan rieng",
+      "ket_qua": "Khong lo noi dung chua duoc cap",
+      "quyen_biet": "Theo phep nhan vat biet/hoc duoc",
+      "adapter": "dung-chung (uilist SPELL_MENU + spellbook) + rieng (du lieu entry/callback trong magic.cpp; selector nham R11)",
+      "bang_chung": [
+        "src/magic.cpp select_spell: entry.desc = spell_reader_info (sao dung display_spell_info: lop/mo ta/level/fail % qua colorized_fail_percent/difficulty/energy/time/targets/range/AOE/damage/components), a11y_value favorite+hotkey, a11y_disabled_reason = spell_reader_disabled_reason (chi ly do engine so huu)",
+        "src/magic.cpp spellcasting_callback::describe_accessibility_action (CAST_IGNORE checkbox, SCROLL_FAVORITE, CHOOSE_INVLET qua choose_key_from_user dung chung)",
+        "src/magic.cpp spellbook_callback::refresh nap entry.desc = spellbook_reader_info (sao draw_spellbook_info) cho menu hoc phep cua learn_spell_actor (src/iuse_actor.cpp)",
+        "Thi trien: Character::cast_spell (src/handle_action.cpp) -> spellcasting_activity_actor::finish (src/activity_actor.cpp) -> spell::select_target -> target_handler::mode_spell/target_ui (src/ranged.cpp, adapter R11 gom target:aoe co cong pl_sees)"
+      ],
+      "muc_phu_trach": [
+        "R17"
+      ],
+      "test_ids": [
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R17.3: menu phep/spellbook/nham muc tieu da co du lieu doc duoc. CANH BAO bang chung: tai HEAD, dispatch ACTION_CAST_SPELL trong src/handle_action.cpp:2437-2443 goi game::cast_spell() nhung ham nay khong co khai bao/dinh nghia o bat ky dau trong cay va select_spell khong co caller (grep toan cay xac nhan) — loi co san cua cay nen, khong do R17; can giai quyet truoc khi T52 chay duoc dau-cuoi o giai doan 2.",
+      "fixtures": [
+        "F-05",
+        "F-09"
+      ]
+    },
+    {
+      "id": "gan-phim-kha-nang",
+      "nhom_be_mat": "Bionics/dot bien/phep",
+      "ten": "Gan doi phim cho phep/bionics/dot bien bang danh sach ky tu hop le",
+      "duong_vao": "Luong doi phim trong magic/bionics_ui/mutation_ui khi bo doc bat",
+      "truong_va_tham_so": "Danh sach ky tu hop le, phim hien tai, va cham",
+      "xac_nhan_va_huy": "Chon ky tu; huy giu gia tri cu; xoa phim la lua chon rieng",
+      "ket_qua": "Phim moi luu dung; khong can phim cung",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (diem noi dung chung)",
+      "bang_chung": [
+        "src/input_context.cpp + src/output.cpp (co che chon ky tu dung chung, theo IMPLEMENTATION.vi.md hang Gan phim)"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [
+        "T59"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Day la helper gan phim, khong phai adapter cac man kha nang.",
+      "fixtures": []
+    },
+    {
+      "id": "ky-nang-va-proficiency",
+      "nhom_be_mat": "Ky nang/kien thuc",
+      "ten": "Ky nang/proficiency: tien do va dieu kien dang nghe duoc thay bieu do/thanh/mau",
+      "duong_vao": "Man ky nang va proficiency (PROFICIENCY_WINDOW)",
+      "truong_va_tham_so": "Tien do, dieu kien, cap",
+      "xac_nhan_va_huy": "Chi duyet; thoat ve game",
+      "ket_qua": "Khong suy kien thuc an",
+      "quyen_biet": "Theo UI goc cong bo",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/proficiency_ui.cpp prof_window::reader_snapshot/reader_intent/reader_select + screen_scope trong run() (R19.1): bang proficiency:list (name/status/progress %/time/category), tai lieu proficiency:details, tab category, filter dung chung qua action FILTER goc",
+        "src/player_display.cpp player_display_reader_snapshot (R19.1): bang pd:skills (cap/knowledgeExperience/dodge/trang thai bang loi), bang pd:proficiencies; src/skill_ui.cpp chi la helper get_HeaderSkills, khong co man rieng (bang chung grep: 0 input_context)"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-ky-nang-proficiency"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Khong co test rieng trong T01-T64 - da gan bai bo sung.",
+      "fixtures": []
+    },
+    {
+      "id": "doc-sach-va-hoc",
+      "nhom_be_mat": "Ky nang/kien thuc",
+      "ten": "Doc sach de hoc: yeu cau doc, hoc cong thuc/ky nang, tien do va ngat/tiep tuc",
+      "duong_vao": "Dung sach tu hanh trang; man yeu cau doc",
+      "truong_va_tham_so": "Yeu cau, cong thuc/ky nang se hoc, tien do",
+      "xac_nhan_va_huy": "Bat dau doc qua hoat dong; huy nghe ket qua huy that",
+      "ket_qua": "Noi dung hoc duoc dung sau hoat dong",
+      "quyen_biet": "Theo sach nhan vat co/biet",
+      "adapter": "dung chung (hanh trang + uilist yeu cau doc trong avatar::read + activity R10)",
+      "bang_chung": [
+        "src/inventory_ui.cpp (screen_scope 'inventory' :3563; detail dong = location.describe :3691) va src/character.cpp:8155 (used.is_book -> u->read)",
+        "src/avatar.cpp (avatar::read :497 - menu uilist qua adapter dung chung R04: tieu de 'Reading %s (can train %s from %d to %d)' :634, muc Read once/Read until you gain a level, ly do khong doc duoc qua get_book_reader/fail_messages)",
+        "src/avatar.cpp:762 (assign_activity(read_activity_actor)) + adapter activity dung chung R10 (a11y_world.cpp activity_snapshot :804)",
+        "src/activity_actor.cpp (read_activity_actor::get_progress_message :2609; finish -> 'You finish reading.' :2581, hoc ky nang/cong thuc qua player_read)",
+        "src/study_zone_ui.cpp (adapter study-zone cua R16; handle_study_zone_resume src/activity_actor.cpp:2110 noi lai ACT_MULTIPLE_STUDY)"
+      ],
+      "muc_phu_trach": [
+        "R10",
+        "R19"
+      ],
+      "test_ids": [
+        "T37"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Lat o R23.1 theo dung chuan da ap cho cac hanh trinh dung-chung khac (an-uong-co-ban, sua-chua-va-thao-ra): duong chinh du cac chang - chon sach trong hanh trang, man yeu cau doc la uilist cua avatar::read cong bo ky nang co the huan luyen tu muc nao toi muc nao, cac muc doc va ly do tu choi tuong minh; doc dien ra nhu activity co tien do/ngat cua R10; ket qua qua thong diep hoan thanh va man kien thuc R19. Hai thieu sot trinh bay con lai, ghi ro: (1) chua co truong cau truc yeu cau cua tung sach (req INT/ky nang, danh sach cong thuc, time_to_read) ngay tai chi tiet hanh trang truoc khi Use - chung chi xuat hien o man yeu cau doc sau khi chon doc, hoac qua add_msg khi khong du dieu kien; (2) ket qua hoc chua co node rieng cho activity doc (chi qua log + man kien thuc).",
+      "fixtures": []
+    },
+    {
+      "id": "may-tinh-trong-game",
+      "nhom_be_mat": "May tinh trong game",
+      "ten": "May tinh trong game: lua chon/van ban/trang thai va nhanh YESNOQUIT/phim tho",
+      "duong_vao": "computer_session",
+      "truong_va_tham_so": "Menu may tinh sinh tu du lieu, ket qua lenh",
+      "xac_nhan_va_huy": "Truy van khong tu chay lenh may tinh; nhap/xac nhan/huy rieng",
+      "ket_qua": "Khong tu tiet lo du lieu may tinh chua duoc phep",
+      "quyen_biet": "Theo du lieu nhan vat duoc cap truy cap",
+      "adapter": "rieng (computer-query/computer-continue + tai lieu terminal) + dung-chung (uilist menu chinh)",
+      "bang_chung": [
+        "src/computer_session.cpp terminal_text() + append_document 'computer:text' (van ban terminal tu member lines)",
+        "src/computer_session.cpp query_ynq: screen_scope 'computer-query' bound &ctxt, summary = dung cau hoi da format, handler registered_intent (YES/NO/QUIT)",
+        "src/computer_session.cpp query_any_impl: khi bo doc bat, poll input_context COMPUTER_CONTINUE (ANY_INPUT/CONFIRM) voi node computer:continue + tai lieu; tat thi giu wait_for_any_key goc",
+        "src/computer_session.cpp use(): entry_desc 'Password required.' cho option co security/alerts (dung chuoi use() tu in); can_activate khong co chu ly do trong engine nen khong dat a11y_disabled_reason",
+        "src/computer_session.cpp action_list_mutations wmenu: addentry_desc tu mutation_branch (desc/replacements/cancels)"
+      ],
+      "muc_phu_trach": [
+        "R17"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-may-tinh"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R17.4: van ban terminal, YESNOQUIT va phim tho deu cong bo duoc; truy van khong tu chay lenh. Khoang trong con lai co bang chung: action_srcf_seal in 3 dong roi khong qua query nao, reset_terminal xoa lines — hai dong dau mat voi bo doc (dong thu ba trung add_msg). wmenu retval -1 cua engine can xac minh o giai doan 2.",
+      "fixtures": [
+        "F-09"
+      ]
+    },
+    {
+      "id": "nhat-ky",
+      "nhom_be_mat": "Nhat ky/diem/ket thuc",
+      "ten": "Nhat ky: pane trang/thay doi/noi dung, sua trang bang trinh nhap cua bo doc, tao/xoa/xuat",
+      "duong_vao": "Man nhat ky (DIARY)",
+      "truong_va_tham_so": "Trang, noi dung, thay doi",
+      "xac_nhan_va_huy": "Sua qua ReaderTextEditor; lenh tao/xoa/xuat trong danh sach lenh",
+      "ket_qua": "Noi dung luu dung sau sua",
+      "quyen_biet": "Theo nhat ky cua nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/diary_ui.cpp:297 scope diary, snapshot :210, sua text qua a11y::android::status :320-326"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T58"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Xac nhan/xu ly nhat ky can ra tiep o R20.4.",
+      "fixtures": []
+    },
+    {
+      "id": "diem-va-thanh-tich",
+      "nhom_be_mat": "Nhat ky/diem/ket thuc",
+      "ten": "Diem sau ket thuc: tab, thanh tich/quy tac/diem, tong ha guc, nhat ky tuong niem dang cay doc dai",
+      "duong_vao": "Man diem (SCORES_UI)",
+      "truong_va_tham_so": "Tab, diem, thanh tich, tuong niem",
+      "xac_nhan_va_huy": "Doi tab dung trang thai UI goc; doc dai theo doan",
+      "ket_qua": "Khong ket o man diem",
+      "quyen_biet": "Theo ket qua cua phien",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/scores_ui.cpp:129 scope scores, scores_ui_impl::reader_snapshot :304"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T58"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "man-ket-thuc-va-loi-cuoi",
+      "nhom_be_mat": "Nhat ky/diem/ket thuc",
+      "ten": "Man ket thuc: noi dung bo sung dang hien thi va nhap loi cuoi",
+      "duong_vao": "end_screen khi nhan vat chet/ket thuc",
+      "truong_va_tham_so": "Noi dung ket thuc, o loi cuoi",
+      "xac_nhan_va_huy": "Nhap loi cuoi bang trinh sua bo doc; buoc tiep/ve menu hop le",
+      "ket_qua": "Khong mac ket o man ket thuc",
+      "quyen_biet": "Theo phien vua ket thuc",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/end_screen.cpp:72 scope end_screen, accessibility_description/accessibility_last_words_label (end_screen.h:29-30, dien :142-147)"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T58"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Nghi huu la hanh trinh rieng o nhom Luu/tai/vong doi (R20.4).",
+      "fixtures": []
+    },
+    {
+      "id": "deathcam",
+      "nhom_be_mat": "Nhat ky/diem/ket thuc",
+      "ten": "Deathcam: bao che do va quet theo tam camera thay vi quanh nhan vat",
+      "duong_vao": "Sau tu vong, che do death camera",
+      "truong_va_tham_so": "Tam camera, o quanh tam camera",
+      "xac_nhan_va_huy": "Di chuyen/quet camera qua lenh goc; thoat ve man ket thuc/menu",
+      "ket_qua": "Vuot di chuyen nhanh bi chan o che do nay (R00)",
+      "quyen_biet": "Theo view camera chet",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/a11y_world.cpp:295-308 world_snapshot(camera_offset) - 'Death camera center'",
+        "src/a11y_world.cpp:466 swipe_movement_allowed = false khi co camera_offset"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T58"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Bang chung tim lai duoc bang grep truc tiep trong dot R01 nay (kiem ke C chua dinh vi duoc symbol).",
+      "fixtures": []
+    },
+    {
+      "id": "tuy-chon-game",
+      "nhom_be_mat": "Cau hinh",
+      "ten": "Tuy chon game/Android: tab/nhom/gia tri/mo ta, chinh tang/giam, draft/ap dung/huy/dat lai",
+      "duong_vao": "Man tuy chon (OPTIONS va world-options)",
+      "truong_va_tham_so": "Tab, nhom, hang, gia tri, mo ta, lenh chinh",
+      "xac_nhan_va_huy": "Chinh qua intent goc; huy tra gia tri cu",
+      "ket_qua": "Gia tri ap dung dung sau xac nhan",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/options.cpp:3566 scope OPTIONS/world-options + snapshot tab/trang/hang/adjustment :3626-3747"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [
+        "T02",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Form co mien/loi day du thuoc R02/R19.4.",
+      "fixtures": []
+    },
+    {
+      "id": "safemode-va-auto-pickup",
+      "nhom_be_mat": "Cau hinh",
+      "ten": "Safe Mode va auto-pickup: bang quy tac co dieu kien/uu tien/nguon, them/sua/xoa/kiem quy tac/dat lai",
+      "duong_vao": "safemode_ui (SAFEMODE) va auto_pickup (AUTO_PICKUP, AUTO_PICKUP_TEST, vung kiem thu quy tac)",
+      "truong_va_tham_so": "Quy tac, dieu kien, ket qua khop tu du lieu UI goc",
+      "xac_nhan_va_huy": "Them/sua/xoa qua form/bang R02; kiem quy tac nghe ket qua",
+      "ket_qua": "Khong tu chay quy tac khi duyet",
+      "quyen_biet": "Theo du lieu UI goc",
+      "adapter": "rieng (safe-mode-manager, auto-pickup-manager + 2 man test)",
+      "bang_chung": [
+        "src/safemode_ui.cpp safemode::show (R16.4): adapter screen_scope \"safe-mode-manager\" - node tab Global/Character, bang safemode:rules 6 cot dung ban ve goc (attitude/distance \"---\" dung dieu kien goc), 7 truong R02 cho hang dang chon (rule text ghi qua wildcard_trim_rule, attitude choice, proximity int 0..MAX_VIEW_DISTANCE, list, category, mode, active bool) ghi tren global_rules/character_rules that; REMOVE_RULE hai buoc qua safemode:remove:confirm; summary cong bo g->safe_mode on/off",
+        "src/safemode_ui.cpp safemode::test_pattern (R16.4): adapter \"safe-mode-test\" - summary la dung buf \"%d monster(s) match\", node tai lieu cho tung mtype khop, note \"Lists monsters regardless of their attitude.\"",
+        "src/auto_pickup.cpp user_interface::show (R16.4): adapter screen_scope \"auto-pickup-manager\" - node tab theo tabs, bang autopickup:rules (rule/Inc-Exc/Active), 3 truong R02 (rule text - nhap rong bi tu choi bang field_error dung quy tac goc, exclude choice, active bool) ghi tren tabs[i].new_rules; node lenh SWITCH_AUTO_PICKUP_OPTION thanh checkbox phan anh option AUTO_PICKUP; REMOVE_RULE hai buoc qua autopickup:remove:confirm; phu ca man NPC (npc_settings dung chung user_interface)",
+        "src/auto_pickup.cpp rule::test_pattern (R16.4): adapter \"auto-pickup-test\" - summary la dung buf \"%d item(s) match\", node tai lieu cho tung itype khop, note \"Won't display content or suffix matches\"",
+        "Kho quy tac: safemode luu qua save_global/save_character vao tep luu; auto-pickup chi chot new_rules vao rule_list that khi query_yn \"Save changes?\" dong y roi save_global/save_character - adapter khong tao kho song song"
+      ],
+      "muc_phu_trach": [
+        "R16"
+      ],
+      "test_ids": [
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R16.4 da viet: ket qua khop khi kiem quy tac doc tu chinh du lieu UI goc liet ke (toan bo mtype/itype trong du lieu game). Dat lai (reset) = duong thoat khong luu cua chinh hai man (khoi phuc ban sao cu / bo new_rules), khong co nut reset rieng trong UI goc.",
+      "fixtures": [
+        "F-07"
+      ]
+    },
+    {
+      "id": "panels-va-mau-sac",
+      "nhom_be_mat": "Cau hinh",
+      "ten": "Panels/color/layout: cau hinh bang dieu khien va mau (thong tin khong chi bang mau)",
+      "duong_vao": "panels.cpp (PANEL_MGMT) va color.cpp (COLORS)",
+      "truong_va_tham_so": "Bang, mau, bo cuc",
+      "xac_nhan_va_huy": "Chinh/huy theo form dung chung",
+      "ket_qua": "Thay doi hien thi khong pha duong doc",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/panels.cpp panel_manager::show_adm (R19.4): screen_scope PANEL_MGMT, node panel checkbox On/Off bang loi + thu tu/width/height/mo ta widget, node layout, intent activate/move tra ve vong lap goc",
+        "src/color.cpp color_manager::show_gui (R19.4): bang colors:entries tu name_color_map, node con Normal/Invert/Remove, intent tra CONFIRM/REMOVE_CUSTOM/LOAD_* ve vong lap goc; UI that qua ACTION_COLOR va main_menu Settings > Colors"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "",
+      "fixtures": []
+    },
+    {
+      "id": "minigame-kitten",
+      "nhom_be_mat": "Minigame thiet bi",
+      "ten": "Robot tim kitten (iuse_software_kitten)",
+      "duong_vao": "Item phan mem chay Robot tim kitten (context IUSE_SOFTWARE_KITTEN)",
+      "truong_va_tham_so": "Luat nghe duoc, trang thai ban choi/con tro, o/trang thai/lang gieng hop le",
+      "xac_nhan_va_huy": "Phim ngu nghia rieng; khoi dong lai/huy/ket qua; scope rieng khong nhan cu chi the gioi",
+      "ket_qua": "Ket qua thang/thua/diem theo luat goc",
+      "quyen_biet": "Chi thong tin ban choi da lo/duoc biet",
+      "adapter": "rieng (screen_scope \"robot-finds-kitten\")",
+      "bang_chung": [
+        "src/iuse_software_kitten.cpp: screen_scope robot-finds-kitten + make_reader_snapshot theo ui_state; input_context thanh vien dang ky mot lan",
+        "src/iuse_software_kitten.h: thanh vien input_context ctxt"
+      ],
+      "muc_phu_trach": [
+        "R18"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-kitten"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Node vat the chi focus va handler tra nullopt cho focus nen duyet khong lam mat thong diep bogus; danh tinh kitten khong bao gio cong bo.",
+      "fixtures": [
+        "F-10"
+      ]
+    },
+    {
+      "id": "minigame-lightson",
+      "nhom_be_mat": "Minigame thiet bi",
+      "ten": "Lights On (iuse_software_lightson)",
+      "duong_vao": "Item phan mem chay Lights On (context LIGHTSON)",
+      "truong_va_tham_so": "Luat nghe duoc, trang thai ban choi/con tro, o/trang thai/lang gieng hop le",
+      "xac_nhan_va_huy": "Phim ngu nghia rieng; khoi dong lai/huy/ket qua; scope rieng khong nhan cu chi the gioi",
+      "ket_qua": "Ket qua thang/thua/diem theo luat goc",
+      "quyen_biet": "Chi thong tin ban choi da lo/duoc biet",
+      "adapter": "rieng (screen_scope \"lightson\")",
+      "bang_chung": [
+        "src/iuse_software_lightson.cpp: screen_scope lightson trong start_game; node lights:cell:<x>:<y>, focus chi doi position, activate tra TOGGLE_SPACE"
+      ],
+      "muc_phu_trach": [
+        "R18"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-lightson"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Toan ban la tri thuc cong khai, khong co du lieu an.",
+      "fixtures": [
+        "F-13"
+      ]
+    },
+    {
+      "id": "minigame-minesweeper",
+      "nhom_be_mat": "Minigame thiet bi",
+      "ten": "Minesweeper (iuse_software_minesweeper)",
+      "duong_vao": "Item phan mem chay Minesweeper (context MINESWEEPER)",
+      "truong_va_tham_so": "Luat nghe duoc, trang thai ban choi/con tro, o/trang thai/lang gieng hop le",
+      "xac_nhan_va_huy": "Phim ngu nghia rieng; khoi dong lai/huy/ket qua; scope rieng khong nhan cu chi the gioi",
+      "ket_qua": "Ket qua thang/thua/diem theo luat goc",
+      "quyen_biet": "Chi thong tin ban choi da lo/duoc biet",
+      "adapter": "rieng (screen_scope \"minesweeper\")",
+      "bang_chung": [
+        "src/iuse_software_minesweeper.cpp: screen_scope minesweeper trong start_game; cell_value_text la cong tri thuc duy nhat (seen moi doc mLevel; boom moi cong bo Mine); node mine:cell:<x>:<y> co action flag rieng"
+      ],
+      "muc_phu_trach": [
+        "R18"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-minesweeper"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Ban Custom qua lon thi chi cong bo cua so quanh con tro va noi ro trong summary (tran max_snapshot_nodes).",
+      "fixtures": [
+        "F-11"
+      ]
+    },
+    {
+      "id": "minigame-snake",
+      "nhom_be_mat": "Minigame thiet bi",
+      "ten": "Snake (iuse_software_snake) - tro realtime",
+      "duong_vao": "Item phan mem chay Snake (context SNAKE)",
+      "truong_va_tham_so": "Luat nghe duoc, trang thai ban choi/con tro, o/trang thai/lang gieng hop le",
+      "xac_nhan_va_huy": "Phim ngu nghia rieng; khoi dong lai/huy/ket qua; scope rieng khong nhan cu chi the gioi",
+      "ket_qua": "Ket qua thang/thua/diem theo luat goc",
+      "quyen_biet": "Chi thong tin ban choi da lo/duoc biet",
+      "adapter": "rieng (screen_scope \"snake\")",
+      "bang_chung": [
+        "src/iuse_software_snake.cpp: screen_scope snake song xuyen vong chinh va vong game-over; khi a11y::enabled() vong chinh dung handle_input() khong timeout thay cho handle_input(iGameSpeed)"
+      ],
+      "muc_phu_trach": [
+        "R18"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-snake"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "CHINH SACH THOI GIAN THUC: bo doc bat = ran cho lenh huong tung buoc (theo luot), luat/diem/tang truong khong doi; cau chinh sach cong bo trong summary va tai lieu luat. Focus khong inject action (nullopt) nen duyet khong lam ran buoc.",
+      "fixtures": [
+        "F-14"
+      ]
+    },
+    {
+      "id": "minigame-sokoban",
+      "nhom_be_mat": "Minigame thiet bi",
+      "ten": "Sokoban (iuse_software_sokoban)",
+      "duong_vao": "Item phan mem chay Sokoban (context SOKOBAN)",
+      "truong_va_tham_so": "Luat nghe duoc, trang thai ban choi/con tro, o/trang thai/lang gieng hop le",
+      "xac_nhan_va_huy": "Phim ngu nghia rieng; khoi dong lai/huy/ket qua; scope rieng khong nhan cu chi the gioi",
+      "ket_qua": "Ket qua thang/thua/diem theo luat goc",
+      "quyen_biet": "Chi thong tin ban choi da lo/duoc biet",
+      "adapter": "rieng (screen_scope \"sokoban\")",
+      "bang_chung": [
+        "src/iuse_software_sokoban.cpp: screen_scope sokoban trong start_game; node soko:player, soko:package:<n>, tai lieu soko:board; doc mLevel bang find"
+      ],
+      "muc_phu_trach": [
+        "R18"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-sokoban"
+      ],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Tu vung o ke co them \"you\"/\"you, on a goal\" khi o ke cua kien chua nguoi choi.",
+      "fixtures": [
+        "F-12"
+      ]
+    },
+    {
+      "id": "tro-giup-va-tim-lenh",
+      "nhom_be_mat": "Tro giup/phim",
+      "ten": "Tro giup: tim theo chu de/lenh, giai thich dieu khien, duong quay lai",
+      "duong_vao": "Man tro giup (help.cpp)",
+      "truong_va_tham_so": "Chu de, noi dung dai",
+      "xac_nhan_va_huy": "Tim/mo chu de; quay lai dung diem roi",
+      "ket_qua": "Phan screen_reader cu cua help phai ra lai voi bo doc noi bo, khong mac dinh tuong duong",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/help.cpp help_window::show (R19.2): screen_scope 'help', bang help:topics (Topic/Status Read-Unread/Hotkey), truong loc trinh bay help:filter, tai lieu help:document qua append_document tu translated_paragraphs, node nav prev/back/next tra action goc",
+        "Ra soat screen_reader cu (help.cpp, option SCREEN_READER_MODE): chi doi cach ve cho bo doc ngoai (tien to '(read)', bo khung/trang tri, footer chu) - khong cong bo du lieu/dieu huong, khong tuong duong bo doc noi bo; giu nguyen, adapter khong gate theo option nay"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [
+        "T59"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Hien chi co fallback danh sach lenh cua input_context - khong phai adapter tro giup.",
+      "fixtures": []
+    },
+    {
+      "id": "gan-phim-keybinding",
+      "nhom_be_mat": "Tro giup/phim",
+      "ten": "Keybinding: danh muc, gan/xoa/va cham/mac dinh/luu/huy, dung duoc khi khong co phim cung",
+      "duong_vao": "Man gan phim (HELP_KEYBINDINGS) va cac luong doi phim",
+      "truong_va_tham_so": "Danh muc lenh, phim hien tai",
+      "xac_nhan_va_huy": "Chon ky tu tu danh sach hop le; huy giu cu; xoa la lua chon rieng",
+      "ket_qua": "Va cham duoc bao; luu dung",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng (diem noi dung chung)",
+      "bang_chung": [
+        "src/input_context.cpp input_context::display_menu (R19.3): screen_scope HELP_KEYBINDINGS, bang keybindings:actions tu kb_menu.filtered_registered_actions (ten/phim/pham vi rang buoc/tuy bien), node mode + truong loc trinh bay; activate hang dat highlight_row_index va tra SELECT de dispatch goc chay action_remove/reset/add",
+        "src/input_context.cpp action_add nhanh a11y (R19.3): moi lua chon ky tu kem mo ta xung dot tinh bang get_conflicts + quy chieu context (local cua man nay / global default / ca hai); canh bao phim thiet yeu la chinh sach bo doc (hai lan activate), node keybindings:reset_all la thao tac to hop phia bo doc vi engine khong co reset-all"
+      ],
+      "muc_phu_trach": [
+        "R19"
+      ],
+      "test_ids": [
+        "T59"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "Doi va cham va moi mode chua kiem chung (IMPLEMENTATION.vi.md).",
+      "fixtures": []
+    },
+    {
+      "id": "luu-tai-xoa-ban-luu",
+      "nhom_be_mat": "Luu/tai/sao luu",
+      "ten": "Luu/tai/xoa ban luu cho nhieu world/nhan vat: ten/thoi diem/chi tiet dung",
+      "duong_vao": "Menu chinh va chon the gioi",
+      "truong_va_tham_so": "Danh sach save, ten/thoi diem",
+      "xac_nhan_va_huy": "Xoa co xac nhan rieng; tai thay phien va xoa snapshot/ tri thuc nhan vat cu (replace_game_session)",
+      "ket_qua": "Khong tu ghi de khi xu ly loi",
+      "quyen_biet": "Tri thuc thuoc nhan vat duoc tai",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/game.cpp:688 va src/game_io.cpp:325 a11y::replace_game_session",
+        "src/worldfactory.cpp scope world-selection",
+        "src/main_menu.cpp scope MAIN_MENU",
+        "src/main_menu.cpp:1326 get_save_last_saved_text (a11y_value: world + thoi luong choi tu tep .pt + Last saved tu mtime tep .sav)",
+        "src/main_menu.cpp:1370 delete_character_save_files + query_popup LOAD_DELETE_CANCEL:1473 (xoa save don - R20.1; LOAD la xac nhan tai rieng, DELETE qua query_yn rieng; xoa do giu entry + popup)"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T28",
+        "T53"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R20.1 bo sung: chi tiet save (thoi diem/dung du kien) va xoa tung save don. Loi ban luu la hanh trinh rieng, nay da viet (R20.1).",
+      "fixtures": [
+        "F-15"
+      ]
+    },
+    {
+      "id": "backup-export-import",
+      "nhom_be_mat": "Luu/tai/sao luu",
+      "ten": "Backup/export/import/restore qua DocumentsProvider/file picker",
+      "duong_vao": "CDDADocumentsProvider va file picker cua Android",
+      "truong_va_tham_so": "Ten tep, quyen truy cap, trung ten, thieu dung luong, loi staging",
+      "xac_nhan_va_huy": "Chuyen quyen doc he thong co huong dan va duong tro ve",
+      "ket_qua": "Khong mat ban luu goc khi import loi",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "android/.../ReaderBackupArchive.java (lop moi: exportTo/stageImport/restoreStagedImport/recoverInterruptedSwap; manifest + journal BACKUP_SWAPPING/BACKUP_COMMITTED nhu mau R06)",
+        "android/.../ReaderSetupActivity.java (muc Backup: 5 nut a11y_backup_*; huong dan noi truoc khi mo picker SAF, hai buoc tuong minh)",
+        "android/.../CDDADocumentsProvider.java (giu nguyen: goc externalFilesDir, FLAG_SUPPORTS_CREATE, openDocument/createDocument/deleteDocument; luong tro nang dung SAF doc lap)"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T57"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R20.2 da viet: staging + kiem chung (manifest khop so tep/byte, chan ../ va cay ngoai backup nhu data/gfx/lang) truoc khi thay the; restore khong mac dinh de (nut xac nhan rieng, cung instance); loi deu noi duoc va bao du lieu cu nguyen ven. Gioi han: khong co JNI dong bang ghi cua engine khi import/export - diem mo ghi trong R20-SAVE-LIFECYCLE-ENDINGS.vi.md.",
+      "fixtures": []
+    },
+    {
+      "id": "loi-ban-luu-va-phuc-hoi",
+      "nhom_be_mat": "Luu/tai/sao luu",
+      "ten": "Ban luu loi: phan hoi va duong phuc hoi khong ghi de, khong dat lai du lieu nguoi choi",
+      "duong_vao": "Tai save loi/hong",
+      "truong_va_tham_so": "Nguyen nhan loi game cong bo, lua chon phuc hoi",
+      "xac_nhan_va_huy": "Chon phuc hoi/ve menu; khong tu xoa save",
+      "ket_qua": "Du lieu nguoi choi duoc bao toan toi da theo logic goc",
+      "quyen_biet": "Khong lien quan tri thuc nhan vat",
+      "adapter": "rieng",
+      "bang_chung": [
+        "src/main_menu.cpp load_game: ca setup() nem ngoai le lan load() tra false/nem deu popup (khi reader bat) neu ten save/world, khang dinh save khong bi thay doi/ghi de/xoa, duong ve menu/danh sach",
+        "src/handle_action.cpp:2655 ACTION_SAVE that bai -> popup; src/game_io.cpp:915 quicksave() kiem ket qua save(), that bai popup"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T57"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R20.1 da viet. Nguyen nhan loi chi gop (hong/thieu/khong tuong thich) vi engine tra false/debugmsg, khong co ma loi phan biet.",
+      "fixtures": []
+    },
+    {
+      "id": "nghi-huu-va-hau-game",
+      "nhom_be_mat": "Luu/tai/sao luu",
+      "ten": "Nghi huu nhan vat va cac man hau game: chap nhan tu vong/nghi huu, xu ly the gioi, tro menu",
+      "duong_vao": "Luồng nghi huu va hau game (deathcam/diary/scores/end screen da co adapter)",
+      "truong_va_tham_so": "Lua chon nghi huu, hau qua xu ly the gioi",
+      "xac_nhan_va_huy": "Moi man hau game co huy hoac buoc tiep hop le",
+      "ket_qua": "Khong mac ket sau nghi huu",
+      "quyen_biet": "Theo phien",
+      "adapter": "dung-chung",
+      "bang_chung": [
+        "Khong ton tai luong retirement rieng: tuong duong that la lenh SUICIDE \"Abandon character\" (keybindings.json), dang ky DEFAULTMODE (src/game.cpp:2678), hai query_yn roi vao cung chuoi hau game",
+        "src/output.cpp:494 scope SCROLLABLE_TEXT (epilogue NPC/faction sau chet - truoc day 0 diem a11y, ket hoan toan)",
+        "src/messages.cpp:889,948 scope MESSAGE_LOG cho Messages::dialog ma death_screen() goi truoc nhat ky/diem",
+        "src/do_turn.cpp:154 announce sau move_save_to_graveyard + write_memorial_file; :204-217 popup ket qua xoa/reset world sau ket thuc"
+      ],
+      "muc_phu_trach": [
+        "R20"
+      ],
+      "test_ids": [
+        "T58"
+      ],
+      "test_bo_sung": [],
+      "trang_thai_viet": "da-viet-cho-kiem-thu",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "R20.4 da viet. Deathcam/end_screen/diary/scores giu nguyen theo bang chung cu (da du). MESSAGE_LOG o day la muc chong ket cho chuoi hau game; hanh trinh lich su thong bao day du da viet o R21 (xem hanh trinh lich-su-thong-bao).",
+      "fixtures": []
+    },
+    {
+      "id": "debug-menu-va-console",
+      "nhom_be_mat": "Cong cu phat trien",
+      "ten": "Debug menu/console va DEBUG_MSG (pham vi rieng)",
+      "duong_vao": "Menu debug (DEBUG_MSG, debug console ImGui)",
+      "truong_va_tham_so": "Noi dung debug",
+      "xac_nhan_va_huy": "Phai co nhan gioi han pham vi va duong thoat khi hien thi",
+      "ket_qua": "Khong quang ba la tinh nang choi",
+      "quyen_biet": "Pham vi phat trien",
+      "adapter": "chua-co",
+      "bang_chung": [
+        "src/debug_menu.cpp (0 a11y)",
+        "src/debug_console.cpp (135 diem ImGui, 0 a11y)",
+        "src/debug.cpp:407 vong lap inp_mngr.get_input_event doc lap - bypass handle_input"
+      ],
+      "muc_phu_trach": [
+        "R01",
+        "R03"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-debug-menu"
+      ],
+      "trang_thai_viet": "chua-viet",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "PHAM VI RIENG (khong phai tinh nang choi): van phai co nhan + duong thoat theo R01.4 vi duong nay hien ra cho nguoi dung.",
+      "fixtures": []
+    },
+    {
+      "id": "editmap",
+      "nhom_be_mat": "Cong cu phat trien",
+      "ten": "Trinh sua ban do editmap (pham vi rieng)",
+      "duong_vao": "editmap (EDITMAP, EDITMAP_RETARGET)",
+      "truong_va_tham_so": "Du lieu sua ban do",
+      "xac_nhan_va_huy": "Nhan gioi han va duong thoat",
+      "ket_qua": "Khong quang ba la tinh nang choi",
+      "quyen_biet": "Pham vi phat trien",
+      "adapter": "chua-co",
+      "bang_chung": [
+        "src/editmap.cpp (0 a11y; context qua menu->input_category bien dong)"
+      ],
+      "muc_phu_trach": [
+        "R01",
+        "R19"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-editmap"
+      ],
+      "trang_thai_viet": "chua-viet",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "PHAM VI RIENG nhu debug-menu-va-console.",
+      "fixtures": []
+    },
+    {
+      "id": "wish-menu",
+      "nhom_be_mat": "Cong cu phat trien",
+      "ten": "Wish menu (pham vi rieng): chon vat pham/sinh vat de wish",
+      "duong_vao": "wish.cpp (WISH_ITEM va cac uilist wish)",
+      "truong_va_tham_so": "Danh sach wish, trang thai bo sung qua callback",
+      "xac_nhan_va_huy": "Nhan gioi han va duong thoat; chon qua uilist dung chung",
+      "ket_qua": "Khong quang ba la tinh nang choi",
+      "quyen_biet": "Pham vi phat trien",
+      "adapter": "chua-co (co callback bo tro)",
+      "bang_chung": [
+        "src/wish.cpp describe_accessibility_action :205,:758,:1133 (lam giau node cho uilist, khong co screen_scope rieng)"
+      ],
+      "muc_phu_trach": [
+        "R01",
+        "R19"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-wish"
+      ],
+      "trang_thai_viet": "chua-viet",
+      "trang_thai_kiem_thu": "chua-thu",
+      "ghi_chu": "PHAM VI RIENG; co callback bo tro nhung chua co adapter man rieng.",
+      "fixtures": []
+    }
+  ],
+  "phan_loai_diem_dau_vao": {
+    "cong_cu": {
+      "ten": "tools/accessibility/inventory.py",
+      "ket_luan_an_toan": "Chi quet nguon (doc src/*.cpp, src/*.h khong de quy va android java de quy; subprocess duy nhat la git rev-parse HEAD); khong import/chay test, khong nap ma game. Da doc ma truoc khi chay.",
+      "chay_tai_commit": "894345fa1a76c9710d88716be5034f77eecebd23",
+      "dem_cu_phap": {
+        "tep_quet": 982,
+        "registered_action": 1133,
+        "input_context_bieu_thuc": 87,
+        "imgui_call": 300,
+        "legacy_input": 15,
+        "manual_key": 12,
+        "native_dialog": 10
+      },
+      "canh_bao": "Day la dem cu phap gom ca nhanh compile-time khong chay tren cau hinh dich; khong phai so man/so tinh nang va khong duoc dung lam chung nhan phu hay phan tram hoan thanh. Cong cu tu khai dieu nay trong docstring va truong limitations."
+    },
+    "cac_lop": [
+      {
+        "lop": "A-adapter-rieng",
+        "mo_ta": "Diem cho co screen_scope/reader_snapshot rieng kem node ngu nghia (uilist, popup, input_popup, string_input_popup, cac man da noi trong bang hanh trinh). Intent vao qua a11y::poll_input tai input_context.cpp:539.",
+        "trang_thai": "da phan loai"
+      },
+      {
+        "lop": "B-adapter-dung-chung",
+        "mo_ta": "Diem cho chi dua vao fallback cua input_context::handle_input (input_context.cpp:488-545): scope dung chung gom danh sach lenh da dang ky; kem summary tu ghi noi dung man co the can bo doc rieng. Gom phan lon context literal chua co adapter rieng va context theo bien category cua uilist/popup.",
+        "trang_thai": "da phan loai"
+      },
+      {
+        "lop": "C-bypass-chua-noi",
+        "mo_ta": "Vong lap doc lap ne ca handle_input: src/debug.cpp:407 (DEBUG_MSG), src/animation.cpp:579 (bo qua animation), gamepad (src/sdl_gamepad.cpp, handle_action.cpp:2843, cata_tiles.cpp:1623, sdltiles.cpp:6760), quick-shortcut touch bar/touch joystick trong sdltiles (chi bi chan mot phan o su kien pointer :6163-6171), imgui_demo (ShowDemoWindow).",
+        "trang_thai": "da phan loai - chua noi a11y, viec cua R03/R18/R19 va nhom cong cu phat trien"
+      },
+      {
+        "lop": "D-backend-khong-android",
+        "mo_ta": "getch/wgetch trong src/ncurses_def.cpp (11/15 legacy_input) la backend curses, khong phai duong Android/SDL cua pham vi nay.",
+        "trang_thai": "da phan loai - ngoai pham vi Android"
+      },
+      {
+        "lop": "E-be-mat-java",
+        "mo_ta": "Dialog native Android (NativeUI.java: popup/queryYN/singleChoiceList - bi gate !a11y::enabled() o ca 3 caller C++; khi bo doc tat la widget Android chuan do TalkBack doc) va cac be mat Java rieng: SplashScreen, ReaderSetupActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, ReaderTextEditor, CDDADocumentsProvider (file picker SAF).",
+        "trang_thai": "da phan loai"
+      },
+      {
+        "lop": "F-constructor-dong",
+        "mo_ta": "Diem sinh dong luc chay, khong dem duoc bang cu phap: register_action dong (24 manual_review: popup opt.action, uilist additional_action, item_action id, ranged type.action...), Item_factory iuse actors (~40 actor + use_action JSON), activity_actor deserialize map, DynamicDataLoader (188 loader trong init.cpp), talk topic/response JSON, recipe/computer data, hotkey dong cua uilist_entry va callback key() cua man con. Phan loai theo co che hoi tu: man con mo ra thuoc lop nao thi diem dong thuoc lop do.",
+        "trang_thai": "da phan loai theo co che; so man runtime that khong suy ra duoc tu dem cu phap"
+      }
+    ],
+    "diem_bo_sung_ngoai_cong_cu": [
+      "MAIN_MENU: context khai bao bang member initializer main_menu.h:21 - regex cua inventory.py khong bat dang khoi tao thanh vien.",
+      "STUDY_ZONE_UI: context gan bang phep gan study_zone_ui.cpp:46 (ctxt = input_context(...)) - ngoai mau khai bao cua cong cu.",
+      "15 thanh vien 'input_context ctxt;' tran trong header (debug_console.h, faction_ui.h, game_inventory.h, help.h, input_popup.h, inventory_ui.h, recipe_dictionary.h, smart_controller_ui.h, surroundings_menu.h, trade_ui.h, ui_extended_description.h, ui_iteminfo.h, veh_appliance.h, veh_shape.h...) - category gan muon luc chay.",
+      "Context theo bien input_category cua uilist (wish WISH_ITEM, overmap OVERMAP_NOTES, editmap, npctalk category, popup category) - cong cu ghi value la ten bien, khong phai ten context that.",
+      "register_action dong (24 diem manual_review) - action chi biet o runtime.",
+      "Toan bo SDL event loop (sdltiles.cpp CheckMessages/SDL_PollEvent/get_input_event), gamepad, quick-shortcut bar va touch joystick - khong mau nao bat duoc; bo doc chi chan su kien pointer truoc ImGui/touch legacy.",
+      "Call site query_yn/query_ynq/query_int/popup (hang tram) - khong chua mau do; hoi tu ve popup.cpp/NativeUI nen muc noi quyet dinh o hai diem hoi tu do.",
+      "Be mat Java ngoai dialog: ReaderSetupActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, CataclysmDDA (gan reader + Back + JNI), ReaderTextEditor, CDDADocumentsProvider.",
+      "Constructor/factory dong: item_factory iuse actors, activity_actor deserialize, DynamicDataLoader (188 loader), talk topic JSON, du lieu recipe/computer.",
+      "Widget ImGui ngoai mau do (RadioButton/Combo/ListBox/TreeNode/MenuItem/Drag*, wrapper cata_imgui::action_button/draw_filter) va cac cataimgui::window subclass la don vi man that nhung cong cu chi dem call roi rac; tang khung cata_imgui.cpp/.h co 0 a11y.",
+      "Dinh nghia ham bi cong cu dem nhu call site (input_context.cpp:229,234 va input_context.h:249,260 la declaration/definition cua register_action) - nhieu cu phap da ghi nhan."
+    ],
+    "input_context_literal": [
+      {
+        "ten": "ADVANCED_INVENTORY",
+        "nhom": "Kho nang cao",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "AUTO_PICKUP",
+        "nhom": "Cau hinh",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "AUTO_PICKUP_TEST",
+        "nhom": "Cau hinh (vung kiem thu quy tac)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "BIONICS",
+        "nhom": "Bionics/dot bien/phep",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "BLOOD_TEST_RESULTS",
+        "nhom": "Y te/trang thai",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "COLORS",
+        "nhom": "Cau hinh",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "CONSTRUCTION",
+        "nhom": "Che tao/xay",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "CRAFTING",
+        "nhom": "Che tao/xay",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DEBUG_MSG",
+        "nhom": "Cong cu phat trien (pham vi rieng)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DEBUG_SPELLS",
+        "nhom": "Cong cu phat trien (pham vi rieng)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DEFAULT",
+        "nhom": "Nen dung chung",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DEFAULTMODE",
+        "nhom": "Di chuyen/hanh dong",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DIALOGUE",
+        "nhom": "NPC/thuong mai",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DIARY",
+        "nhom": "Nhat ky/diem/ket thuc",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "DISP_NPCS",
+        "nhom": "NPC/thuong mai (hien NPC - qua menu chung)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "EDITMAP",
+        "nhom": "Cong cu phat trien (pham vi rieng)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "EDITMAP_RETARGET",
+        "nhom": "Cong cu phat trien (pham vi rieng)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "EGET_DIRECTION",
+        "nhom": "Di chuyen/hanh dong (chon huong)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "FACTIONS",
+        "nhom": "Phe/nguoi theo",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "FACTION_MANAGER",
+        "nhom": "Phe/nguoi theo",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "HELP_KEYBINDINGS",
+        "nhom": "Tro giup/phim",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "INSERT_TABLE",
+        "nhom": "Popup/nhap (bang chen - dong)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "ITEM_ACTIONS",
+        "nhom": "Hanh trang (dong - lop F)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "IUSE_SOFTWARE_KITTEN",
+        "nhom": "Minigame thiet bi",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "LIGHTSON",
+        "nhom": "Minigame thiet bi",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "LOOK",
+        "nhom": "Ban do cuc bo",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MA_DETAILS_UI",
+        "nhom": "Chien dau (chi tiet vo thuat - qua menu chung)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MELEE_STYLE_PICKER",
+        "nhom": "Chien dau",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MINESWEEPER",
+        "nhom": "Minigame thiet bi",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MISSION_UI",
+        "nhom": "Nhiem vu/trai",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MODMANAGER_DIALOG",
+        "nhom": "The gioi/mod",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MORALE",
+        "nhom": "Y te/trang thai",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MUTATIONS",
+        "nhom": "Bionics/dot bien/phep",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "OPTIONS",
+        "nhom": "Cau hinh",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "OVERMAP",
+        "nhom": "Ban do lon",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "OVERMAP_EDITOR",
+        "nhom": "Cong cu phat trien (pham vi rieng)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "PANEL_MGMT",
+        "nhom": "Cau hinh",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "PICK_WORLD_DIALOG",
+        "nhom": "The gioi/mod",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "PLAYER_INFO",
+        "nhom": "Y te/trang thai",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SAFEMODE",
+        "nhom": "Cau hinh",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SAFEMODE_TEST",
+        "nhom": "Cau hinh (vung kiem thu quy tac)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SCORES_UI",
+        "nhom": "Nhat ky/diem/ket thuc",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SCROLLABLE_TEXT",
+        "nhom": "Popup/nhap (van ban cuon - qua adapter tai lieu)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SNAKE",
+        "nhom": "Minigame thiet bi",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SOKOBAN",
+        "nhom": "Minigame thiet bi",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SORT_ARMOR",
+        "nhom": "Kho nang cao",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "SPELL_MENU",
+        "nhom": "Bionics/dot bien/phep",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "STRING_INPUT",
+        "nhom": "Popup/nhap",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "VENDING_MACHINE",
+        "nhom": "NPC/thuong mai (may ban hang - qua menu chung)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "WAIT_FOR_ANY_KEY",
+        "nhom": "Popup/nhap (wait_for_any_key - lop C mot phan)",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "WORLDGEN_CONFIRM_DIALOG",
+        "nhom": "The gioi/mod",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "YESNOQUIT",
+        "nhom": "May tinh trong game / popup",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "ZONES_MANAGER",
+        "nhom": "Vung/tu dong hoa",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "default",
+        "nhom": "Nen dung chung",
+        "nguon": "inventory.py (literal)"
+      },
+      {
+        "ten": "MAIN_MENU",
+        "nhom": "Menu chinh (bo sung thu cong - cong cu sot)",
+        "nguon": "bo sung thu cong (main_menu.h:21)"
+      },
+      {
+        "ten": "STUDY_ZONE_UI",
+        "nhom": "Vung/tu dong hoa (bo sung thu cong - cong cu sot)",
+        "nguon": "bo sung thu cong (study_zone_ui.cpp:46)"
+      },
+      {
+        "ten": "COMPUTER_CONTINUE",
+        "nhom": "May tinh trong game",
+        "nguon": "bo sung R23.2 (context them o R17 trong src/computer_session.cpp:1813, screen_scope 'computer-continue' rieng - lop A)"
+      }
+    ],
+    "chua_phan_loai": 0,
+    "ly_do_con_lai": "So man runtime that do JSON/mod/constructor dong sinh ra khong dem duoc tu nguon tinh; cac diem do da duoc phan loai theo co che hoi tu (lop F) thay vi tung man. Khi danh sach mod phat hanh duoc ghim (SCOPE-MANIFEST muc 8), phai mo lai phan loai nay cho noi dung cua cac mod duoc ghim."
+  },
+  "doi_chieu_R23": {
+    "commit_ung_vien": "bc4f807c853e16909199578c4d68218ae50415b4",
+    "ngay": "2026-10-23",
+    "phuong_phap": "Doi chieu tung dong bang doc ma/grep tai commit ung vien, theo ban day du cua hai kiem toan doc lap: 4 dong cu duoc lat/sua theo bang chung (chon-engine-va-voice, smart-controller, sao-chep-the-gioi - dinh nghia lai theo co che Copy World Settings that, doc-sach-va-hoc - lat theo chuan adapter dung chung), 1 truong adapter sua (trung-tam-lenh-day-du), 1 dong lam ro bang chung giu chua-viet (doi-ten-the-gioi), bo sung context COMPUTER_CONTINUE vao danh sach literal phan loai dau vao. Khong build/test.",
+    "so_hanh_trinh": 115,
+    "da_viet_cho_kiem_thu": 110,
+    "chua_viet": 5
+  }
+}

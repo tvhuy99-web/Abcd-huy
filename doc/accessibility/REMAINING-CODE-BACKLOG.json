@@ -1,0 +1,2853 @@
+{
+  "schema_version": 1,
+  "nguon_ke_hoach": "REMAINING-CODE-PLAN.vi.md bản 2.0 (mục 4), đối chiếu PLAN.vi.md",
+  "commit_nen": "894345fa1a76c9710d88716be5034f77eecebd23",
+  "ngay": "2026-10-23",
+  "quy_uoc_trang_thai": {
+    "ke-hoach": "Chưa bắt đầu viết.",
+    "da-viet-cho-kiem-thu": "Mã/tài liệu đã viết và có bằng chứng nguồn; chưa build/test (giai đoạn 1). Không đồng nghĩa hoàn thành hay nghiệm thu."
+  },
+  "tong_dau_viec": 96,
+  "items": [
+    {
+      "id": "R00.1",
+      "muc": "R00",
+      "tieu_de_muc": "Hòa giải nguồn, bảo toàn thay đổi cục bộ",
+      "noi_dung": "so sánh ba phía từng tệp local với `f40dcdd` và `ad5ecf0`; ghi quyết định giữ/thay/ghép cho từng hunk, không áp dụng toàn patch cũ lên nguồn mới.",
+      "phu_thuoc": [],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T28",
+        "T50",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R00 894345fa1a76 (xem doc/accessibility/RECOVERY-RECONCILIATION-2026-10-23.vi.md). Điều kiện mở lại: khi bản sao local chưa commit (phía thứ ba) xuất hiện, phải đối chiếu từng hunk cho 8 tệp đã liệt kê trong tài liệu R00 trước khi coi là đóng hoàn toàn."
+    },
+    {
+      "id": "R00.2",
+      "muc": "R00",
+      "tieu_de_muc": "Hòa giải nguồn, bảo toàn thay đổi cục bộ",
+      "noi_dung": "giữ cờ cho phép vuốt di chuyển xuyên C++ → JSON → Java; bổ sung điều kiện cho đi bộ, đủ hướng, lái/remote, deathcam và trạng thái editor/modal/hoạt động.",
+      "phu_thuoc": [],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T28",
+        "T50",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R00 894345fa1a76 (xem doc/accessibility/RECOVERY-RECONCILIATION-2026-10-23.vi.md). Điều kiện mở lại: khi bản sao local chưa commit (phía thứ ba) xuất hiện, phải đối chiếu từng hunk cho 8 tệp đã liệt kê trong tài liệu R00 trước khi coi là đóng hoàn toàn."
+    },
+    {
+      "id": "R00.3",
+      "muc": "R00",
+      "tieu_de_muc": "Hòa giải nguồn, bảo toàn thay đổi cục bộ",
+      "noi_dung": "hòa giải hai phiên bản bài luyện cử chỉ, controller, chuỗi Việt/Anh và action focus/activate; tránh trùng preference, hai bài tập cạnh tranh hoặc quay lùi adapter mới.",
+      "phu_thuoc": [],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T28",
+        "T50",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R00 894345fa1a76 (xem doc/accessibility/RECOVERY-RECONCILIATION-2026-10-23.vi.md). Điều kiện mở lại: khi bản sao local chưa commit (phía thứ ba) xuất hiện, phải đối chiếu từng hunk cho 8 tệp đã liệt kê trong tài liệu R00 trước khi coi là đóng hoàn toàn."
+    },
+    {
+      "id": "R00.4",
+      "muc": "R00",
+      "tieu_de_muc": "Hòa giải nguồn, bảo toàn thay đổi cục bộ",
+      "noi_dung": "chốt commit tích hợp mới, ghi nguồn từng phần; giữ các xóa local như quyết định riêng, không đưa xóa asset vào thay đổi trợ năng nếu chưa rõ mục đích.",
+      "phu_thuoc": [],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T28",
+        "T50",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R00 894345fa1a76 (xem doc/accessibility/RECOVERY-RECONCILIATION-2026-10-23.vi.md). Điều kiện mở lại: khi bản sao local chưa commit (phía thứ ba) xuất hiện, phải đối chiếu từng hunk cho 8 tệp đã liệt kê trong tài liệu R00 trước khi coi là đóng hoàn toàn."
+    },
+    {
+      "id": "R01.1",
+      "muc": "R01",
+      "tieu_de_muc": "Đóng phạm vi và sổ hành trình",
+      "noi_dung": "ghi manifest commit game/nội dung, mods và thứ tự nạp, ngôn ngữ, flavor/ABI/API, chế độ lượt/realtime và cách đọc; SDK trong repo chỉ là cấu hình build, chưa phải dải máy đã chứng nhận.",
+      "phu_thuoc": [
+        "R00"
+      ],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T08",
+        "T59",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-bo-sung (bài riêng cho từng luồng ngoài T01-T64, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm của đợt R01 này: SCOPE-MANIFEST-2026-10-23.vi.md, JOURNEY-LEDGER.json/.vi.md, REMAINING-CODE-BACKLOG.json. Chỉ là bằng chứng nguồn giai đoạn 1; chưa kiểm thử."
+    },
+    {
+      "id": "R01.2",
+      "muc": "R01",
+      "tieu_de_muc": "Đóng phạm vi và sổ hành trình",
+      "noi_dung": "phân loại từng điểm input, raw-key, ImGui, dialog Java và constructor động theo luồng thực; bổ sung các điểm mà công cụ dò cú pháp bỏ sót.",
+      "phu_thuoc": [
+        "R00"
+      ],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T08",
+        "T59",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-bo-sung (bài riêng cho từng luồng ngoài T01-T64, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm của đợt R01 này: SCOPE-MANIFEST-2026-10-23.vi.md, JOURNEY-LEDGER.json/.vi.md, REMAINING-CODE-BACKLOG.json. Chỉ là bằng chứng nguồn giai đoạn 1; chưa kiểm thử."
+    },
+    {
+      "id": "R01.3",
+      "muc": "R01",
+      "tieu_de_muc": "Đóng phạm vi và sổ hành trình",
+      "noi_dung": "tạo hồ sơ từng hành trình với đường vào, trường, tham số, xác nhận/hủy, kết quả, tri thức, adapter dùng chung/riêng, file/hàm và test ID; ghi riêng chưa kiểm kê/chưa viết/đã viết/chưa thử.",
+      "phu_thuoc": [
+        "R00"
+      ],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T08",
+        "T59",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-bo-sung (bài riêng cho từng luồng ngoài T01-T64, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm của đợt R01 này: SCOPE-MANIFEST-2026-10-23.vi.md, JOURNEY-LEDGER.json/.vi.md, REMAINING-CODE-BACKLOG.json. Chỉ là bằng chứng nguồn giai đoạn 1; chưa kiểm thử."
+    },
+    {
+      "id": "R01.4",
+      "muc": "R01",
+      "tieu_de_muc": "Đóng phạm vi và sổ hành trình",
+      "noi_dung": "giữ toàn bộ hệ thống gameplay bắt buộc trong ma trận; công cụ debug/editor có thể tách phạm vi nhưng mọi đường hiện ra vẫn phải có nhãn và đường thoát; nội dung/mod thay đổi thì mở lại đối soát.",
+      "phu_thuoc": [
+        "R00"
+      ],
+      "cong": [
+        "G0"
+      ],
+      "test_ids": [
+        "T08",
+        "T59",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-bo-sung (bài riêng cho từng luồng ngoài T01-T64, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm của đợt R01 này: SCOPE-MANIFEST-2026-10-23.vi.md, JOURNEY-LEDGER.json/.vi.md, REMAINING-CODE-BACKLOG.json. Chỉ là bằng chứng nguồn giai đoạn 1; chưa kiểm thử."
+    },
+    {
+      "id": "R02.1",
+      "muc": "R02",
+      "tieu_de_muc": "Hợp đồng bảng, cây và biểu mẫu",
+      "noi_dung": "thêm cây với parent ID, độ sâu, có con/mở/thu gọn, thứ tự và tổng của tập hiện hành; xác định ID logic và chính sách focus khi cha bị thu hoặc mục bị xóa.",
+      "phu_thuoc": [
+        "R01"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T49",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm đợt R02: trường cây parentId/depth/hasChildren/expanded + position/total theo tập anh em trong a11y_semantics (serialize C++ và parse/validate Java nhất quán), chính sách focus ở GameReaderController.resolveFocusFallback (cha gần nhất còn tồn tại, rồi node kề cùng cha, rồi mặc định). Mẫu cây: Options page/group/option/adjustment với intent expand/collapse/open_tree riêng, không qua activate gameplay. Bằng chứng: R02-CONTRACTS.vi.md. Chưa build/test; test ID sẽ chạy ở giai đoạn 2 như cột test_ids."
+    },
+    {
+      "id": "R02.2",
+      "muc": "R02",
+      "tieu_de_muc": "Hợp đồng bảng, cây và biểu mẫu",
+      "noi_dung": "thêm bảng với ID cột/header, ô và đơn vị/giá trị so sánh; truy cập theo hàng hoặc thuộc tính, không biến mỗi ô thành hành động gameplay.",
+      "phu_thuoc": [
+        "R01"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T49",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm đợt R02: bảng khai báo một lần ở snapshot (tables: id, columns id/header/unit), node hàng có tableId/rowIndex/cells (column/value/unit/compare); Java validate tham chiếu bảng/cột và render đọc ô dưới header cột; ô không mang hành động riêng. Mẫu bảng: Medical limbs (cột part/condition/flags; condition theo chính sách tri thức y tế thô, không lộ HP chính xác). Bằng chứng: R02-CONTRACTS.vi.md. Chưa build/test."
+    },
+    {
+      "id": "R02.3",
+      "muc": "R02",
+      "tieu_de_muc": "Hợp đồng bảng, cây và biểu mẫu",
+      "noi_dung": "thêm trường form: kiểu, miền số/bước, lựa chọn, giá trị nháp/đã áp dụng, lỗi và ràng buộc giữa trường; ý định riêng cho đặt giá trị, chọn, mở cây, xác nhận và hủy.",
+      "phu_thuoc": [
+        "R01"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T49",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm đợt R02: trường form fieldType bool/int/float/choice/text, appliedValue dạng thô, miền fieldMin/fieldMax/fieldStep, choices, draftValue tách khỏi giá trị đã áp dụng, fieldError, dependsOn; intent riêng set_value/select_choice/open_tree/apply/cancel_draft; Java có nút Apply/Discard khi có nháp, editor nhập nháp cho số/text, chuyển lựa chọn/bật-tắt chỉ ghi nháp. Mẫu form: Options (cOpt thêm getNumericMin/Max/Step; nháp giữ trong state của màn Options, apply mới setValue). Bằng chứng: R02-CONTRACTS.vi.md. Chưa build/test."
+    },
+    {
+      "id": "R02.4",
+      "muc": "R02",
+      "tieu_de_muc": "Hợp đồng bảng, cây và biểu mẫu",
+      "noi_dung": "nối serialize/parse/validate/render, khả năng tương thích có chủ ý, giới hạn kích thước/phân trang; từ chối ID trùng, cây vòng/cha không hợp lệ và tham số ngoài miền tại game thread.",
+      "phu_thuoc": [
+        "R01"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T49",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sản phẩm đợt R02: a11y::validate_snapshot và validate_intent_value chạy ở game thread (screen_scope::update và poll_input), từ chối ID trùng, cây vòng/cha không tồn tại/con của nút đã thu gọn, bảng/cột chưa khai báo, hàng trùng, tham số ngoài miền/bước/lựa chọn — mã lý do ổn định nội bộ, biên nhận invalid_value/unsupported đọc được phía Java; ReaderSnapshot Java validate cùng quy tắc. Tương thích snapshot cũ bằng mặc định an toàn (không có tables = không có bảng, depth -1 = node phẳng, trường form vắng = không phải trường). Giới hạn 4096 node, 16 bảng, 16 cột, 16 ô, 128 lựa chọn, độ sâu cây 16; render Java phân trang 30 mục sẵn có. Chưa build/test."
+    },
+    {
+      "id": "R03.1",
+      "muc": "R03",
+      "tieu_de_muc": "Dispatcher, quyền đầu vào và modal",
+      "noi_dung": "kiểm quyền theo session/frame/generation/revision/request và action/giá trị trước khi thực thi; tra lại đối tượng hiện tại và điều kiện engine ngay lúc nhận.",
+      "phu_thuoc": [
+        "R02"
+      ],
+      "cong": [
+        "G2",
+        "G7"
+      ],
+      "test_ids": [
+        "T06",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R03 (xem doc/accessibility/R03-DISPATCHER.vi.md mục 1-2). Cổng kiểm quyền duy nhất ở a11y::poll_input: token session/frame/generation, revision, mốc request đơn điệu từng màn, tra lại node/action trong snapshot đang hiệu lực tại game thread, validate miền form của R02. Mới: cổng giá trị (chỉ set_text/set_value/select_choice được mang value; đã rà toàn bộ handler - 8 điểm đọc intent.value đều sau guard của 3 action này), cancel nêu tên node không có trong snapshot bị loại, focus mất node bị loại im lặng thay vì biên nhận stale. Chưa build/test; test ID chạy ở giai đoạn 2."
+    },
+    {
+      "id": "R03.2",
+      "muc": "R03",
+      "tieu_de_muc": "Dispatcher, quyền đầu vào và modal",
+      "noi_dung": "đóng mọi đường input kép, tap dư, pointer cancel, phím giả và callback quá hạn; đổi scope xóa hàng input cũ, Back/hủy chỉ tác động đúng chủ sở hữu.",
+      "phu_thuoc": [
+        "R02"
+      ],
+      "cong": [
+        "G2",
+        "G7"
+      ],
+      "test_ids": [
+        "T06",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R03 (R03-DISPATCHER.vi.md mục 3-4). Bằng chứng đường kép đã đóng: sdltiles nuốt pointer khi reader bật trước ImGui/touch legacy; ReaderGestureSurface sở hữu mỗi chuỗi pointer một lần; chốt submit editor ở controller cộng chốt editor!=null mới; receive() loại theo presentationEpoch/closed; StartGameRunnable của SplashScreen có chốt mở-một-lần và kiểm isFinishing/isDestroyed; đổi scope/scope đóng xoá mailbox, intent cũ chết ở cổng token/revision; Back phía Java chỉ tác động lớp bộ đọc trên cùng, cancel xuống engine là lệnh tường minh. Chưa build/test."
+    },
+    {
+      "id": "R03.3",
+      "muc": "R03",
+      "tieu_de_muc": "Dispatcher, quyền đầu vào và modal",
+      "noi_dung": "nối adapter khi bật reader giữa màn đã mở, kể cả builder chỉ dựng một lần; modal lồng, popup Java/ImGui và nhánh native trả về sớm phải có đường nhận/hủy/kết quả.",
+      "phu_thuoc": [
+        "R02"
+      ],
+      "cong": [
+        "G2",
+        "G7"
+      ],
+      "test_ids": [
+        "T06",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R03 (R03-DISPATCHER.vi.md mục 3, 5). Cơ chế: screen_scope::update lưu snapshot khi chưa kích hoạt được; a11y::activate_pending_scopes(owner) chạy ở đầu poll_input và đầu đường cài scope của input_context::handle_input (trước scope dùng chung) để màn đang mở nhận adapter tại chỗ. Đã rà 31 nơi tạo scope: 2 one-shot thật (popup.cpp, ui_iteminfo.cpp) đều poll qua handle_input của owner nên được bao phủ. Modal: stack chỉ publish/poll màn trên cùng; màn bị lộ khi modal đóng được tăng revision trước khi publish lại (xử lý ghi chú treo từ R00). Chưa build/test."
+    },
+    {
+      "id": "R03.4",
+      "muc": "R03",
+      "tieu_de_muc": "Dispatcher, quyền đầu vào và modal",
+      "noi_dung": "giữ backend không Android và build-list nguồn mới; định nghĩa suspend/resume, mất focus/TalkBack/cài đặt hệ thống, lỗi TTS và tạo lại Activity mà không phát lệnh muộn.",
+      "phu_thuoc": [
+        "R02"
+      ],
+      "cong": [
+        "G2",
+        "G7"
+      ],
+      "test_ids": [
+        "T06",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T62"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R03 (R03-DISPATCHER.vi.md mục 6). Suspend/resume: configure tăng epoch + xoá mailbox; synchronize_lifecycle ép ranh giới generation, đặt lại mốc request từng màn (kèm lý do an toàn trong tài liệu) và publish lại màn hiện tại; phía Java bổ sung chốt closed tường minh cho send/onResume/onWindowFocusChanged/onBackPressed. Không có tệp nguồn mới nên build-list không đổi (cả hai CMake đều GLOB src/*.cpp); backend không Android giữ nguyên đường no-op. Chưa build/test."
+    },
+    {
+      "id": "R04.1",
+      "muc": "R04",
+      "tieu_de_muc": "Menu, form, nhập và trung tâm lệnh dùng chung",
+      "noi_dung": "hoàn thiện filter/category/tab, tổng tập lọc, empty/disabled, multi-select và số lượng; giữ đúng `retval`, không dùng chỉ số sau lọc thay giá trị logic.",
+      "phu_thuoc": [
+        "R03"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T33",
+        "T38",
+        "T59",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R04 (xem R04-SHARED-UI.vi.md mục 1). uilist publish node category (role tab, chọn theo tên, handler đặt thẳng current_category+filterlist), node filter (chuỗi lọc + đếm đã lọc/tổng gốc, mở popup lọc sẵn có) và filter:clear, node empty tường minh và focus không còn treo entry:-1; summary nói tập con/category/filter. Đường activate giữ nguyên chỉ số gốc -> retval (đã rà soát chứng minh đúng, không sửa). Sửa bẫy lẫn chỉ số: uilist::set_selected đồng bộ fselected, bỏ scrollby(abs) ở helper tạo nhân vật. Multi-select: adapter publish checked; toggle do vòng lặp sở hữu màn (tiền lệ tạo nhân vật) - không đổi ngữ nghĩa CONFIRM dùng chung. Số lượng không phải tính năng uilist: đi qua popup số của màn con (R04.2). Chưa build/test; test ID chạy ở giai đoạn 2."
+    },
+    {
+      "id": "R04.2",
+      "muc": "R04",
+      "tieu_de_muc": "Menu, form, nhập và trung tâm lệnh dùng chung",
+      "noi_dung": "nối checkbox/radio/slider/số/text theo R02, lỗi tại trường, áp dụng/hủy/đặt lại và draft; nhập Việt/grapheme/IME/paste, min/max/bước và bảo toàn cú pháp tìm kiếm.",
+      "phu_thuoc": [
+        "R03"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T33",
+        "T38",
+        "T59",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R04 (xem R04-SHARED-UI.vi.md mục 2). Hợp đồng form R02 được nối vào ReaderTextEditor: constructor nhận miền/bước; đọc giá trị kèm miền/bước; nút tăng/giảm một bước; kiểm tra trước khi nộp khớp check_field_value của engine (không phải số/ngoài miền/sai bước) với chuỗi lỗi riêng Anh/Việt; openFormEditor truyền miền/bước của node, openEditor truyền bước của popup số. Phía C++: text_snapshot publish field_type int/float + fieldStep cho node số, serialize phát fieldStep cả khi không có miền, number_input_popup truyền step_size thật. Popup số cổ điển không có min/max trong UI game - ghi rõ không bịa. Nhập Việt/grapheme/IME/paste đã đúng từ trước (rà soát), thêm cờ NO_SUGGESTIONS để IME không tự sửa chuỗi; chuỗi tìm vẫn lưu nguyên văn, chỉ hạ chữ thường khi so khớp. Chưa build/test."
+    },
+    {
+      "id": "R04.3",
+      "muc": "R04",
+      "tieu_de_muc": "Menu, form, nhập và trung tâm lệnh dùng chung",
+      "noi_dung": "trung tâm lệnh có nhóm, mô tả tác động/chi phí, điều kiện/lý do vô hiệu, tham số và trợ giúp; phân biệt duyệt lệnh với gọi lệnh, không coi danh sách action ID là hoàn thiện.",
+      "phu_thuoc": [
+        "R03"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T33",
+        "T38",
+        "T59",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R04 (xem R04-SHARED-UI.vi.md mục 3). a11y::command_snapshot là builder lệnh duy nhất (fallback trong input_context::handle_input đã bỏ bản sao nội tuyến và dùng chung, handler cũng dùng a11y::registered_intent - hết lệch TEXT.QUIT): lệnh được nhóm bằng bảng tường minh 6 nhóm + nhóm 'Các lệnh khác' (mọi lệnh đăng ký đều xuất hiện, không giấu), node tiêu đề nhóm chỉ focus; detail của lệnh = mô tả phím đã gán lấy từ get_desc (dữ kiện thật duy nhất), adapter riêng vẫn ghi đè detail/enabled/disabled_reason như tiền lệ overmap. Summary của trung tâm nói rõ game không công bố chi phí từng lệnh và lệnh có thể mở bước tiếp theo ở màn kế. Java: kích hoạt tiêu đề nhóm chỉ đọc, không gửi intent; duyệt (focus/detail) tách gọi (activate) như cũ. Không có dữ kiện chi phí/tham số trong nguồn - không hiển thị suy đoán. Chưa build/test."
+    },
+    {
+      "id": "R04.4",
+      "muc": "R04",
+      "tieu_de_muc": "Menu, form, nhập và trung tâm lệnh dùng chung",
+      "noi_dung": "tài liệu dài có từng thuộc tính/đoạn, đọc tiếp/quay đoạn/câu cuối/đánh vần, bookmark theo phiên và lịch sử tìm kiếm; cảnh báo ngắt không tự đọc lại toàn văn.",
+      "phu_thuoc": [
+        "R03"
+      ],
+      "cong": [
+        "G2"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T31",
+        "T33",
+        "T38",
+        "T59",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R04 (xem R04-SHARED-UI.vi.md mục 4). Lớp mới ReaderDocumentReader (Java): tách đoạn theo dòng trống/câu cho đoạn dài, vị trí đọc theo phiên (context+node), đọc tiếp/đoạn sau/trước, đọc lại câu cuối, đánh vần theo grapheme (giới hạn 120), bookmark theo phiên, tìm trong tài liệu + lịch sử tìm kiếm theo phiên. ReaderSpeechQueue thêm CompletionListener (finished/interrupted theo key) - cảnh báo chen vào chỉ đánh dấu ngắt, Đọc tiếp phát lại đúng đoạn bị ngắt, không đọc lại toàn văn và không tự phát lại. Mười điều khiển tài liệu nối vào Reader controls khi có phiên tài liệu mở. Phía C++ không đổi (a11y_document giữ nguyên). Chưa build/test."
+    },
+    {
+      "id": "R05.1",
+      "muc": "R05",
+      "tieu_de_muc": "Cử chỉ, luyện tập và cứu hộ",
+      "noi_dung": "giữ gán hai trục và mặc định 45 giây; thay deadline bằng thời gian đơn điệu, lưu riêng cấu hình đã xác nhận; restart/reboot/hết hạn/TalkBack trả cấu hình đã xác nhận.",
+      "phu_thuoc": [
+        "R04"
+      ],
+      "cong": [
+        "G1",
+        "G2"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T50",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở R05 (xem R05-GESTURES.vi.md mục 1): bản chất đã đạt tại R00.3, R05 rà soát lại bằng đường mã, không sửa. Gán hai trục + mặc định 45 giây giữ nguyên; deadline elapsedRealtime trong bộ nhớ tiến trình, không lưu deadline; cấu hình đã xác nhận lưu riêng. Điểm rà kỹ: ứng viên trial ghi ngay trước process chết bị constructor dọn (không có trial sống trong bộ nhớ mà đĩa còn khóa trial thì xóa hết) nên restart/reboot/process chết/hết hạn/TalkBack bật đều trả cấu hình đã xác nhận. Chưa build/test; test ID chạy ở giai đoạn 2."
+    },
+    {
+      "id": "R05.2",
+      "muc": "R05",
+      "tieu_de_muc": "Cử chỉ, luyện tập và cứu hộ",
+      "noi_dung": "đóng bài tập duyệt/chọn/đọc/hủy/tám hướng trong ngữ cảnh độc lập, không gửi gameplay; đọc từng hướng và tiến độ, có đường thoát hoặc học lại.",
+      "phu_thuoc": [
+        "R04"
+      ],
+      "cong": [
+        "G1",
+        "G2"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T50",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 2). Bài luyện tám hướng trong GameReaderController: phân vùng 8 hướng, đọc tên hướng + tiến độ X/8 (Anh/Việt), không gọi send() ở bất kỳ nhánh nào, thoát bằng chạm hai lần/Back không đổi cấu hình thật; kỹ năng duyệt/chọn/đọc/hủy nằm ở cơ chế cử chỉ chung + trial ánh xạ ở Setup và được trợ giúp mô tả đủ. Bổ sung ở R05: chuỗi hướng dẫn bài luyện (Anh + Việt) nói rõ thoát bất cứ lúc nào và vào lại đếm lại từ đầu (đường học lại). Giới hạn giữ nguyên có ghi nhận: bài luyện cần màn thế giới vì nhãn hướng lấy từ node lệnh của snapshot. Chưa build/test."
+    },
+    {
+      "id": "R05.3",
+      "muc": "R05",
+      "tieu_de_muc": "Cử chỉ, luyện tập và cứu hộ",
+      "noi_dung": "chuyển di chuyển nhanh qua quyền engine ở R00/R03; hủy gesture khi đổi chế độ; định nghĩa hướng bản đồ/isometric và không dùng cử chỉ đi bộ cho tăng ga hoặc remote.",
+      "phu_thuoc": [
+        "R04"
+      ],
+      "cong": [
+        "G1",
+        "G2"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T50",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 3). Quyền engine đã nối ở R00.2/R03, R05 rà soát lại: thứ tự rẽ nhánh cứng practice -> worldMovementEnabled (cờ engine chỉ đi bộ + preference + đủ 8 node hướng) -> ánh xạ menu; moveDirection kiểm lại trước khi gửi. Bổ sung ở R05: hủy cử chỉ tường minh khi đổi ngữ cảnh màn (nhánh changedContext của receive()), khi rời Reader controls (performControl case 0/5) và khi Back đóng controls - trước đây các điểm này chỉ dựa vào owner-check của bề mặt. Hướng cử chỉ định nghĩa theo tọa độ bản đồ (vuốt lên = bắc), tileset isometric chỉ là trình bày cho người sáng (cata_tiles/get_movement_action_from_delta với iso_rotate) và không áp lên đường bộ đọc - không quay 45 độ. Cử chỉ đi bộ không có lối nào tới tăng ga/remote: bề mặt chỉ có moveDirection bị cờ engine chặn cả lái xe và hai khóa remote. Chưa build/test."
+    },
+    {
+      "id": "R05.4",
+      "muc": "R05",
+      "tieu_de_muc": "Cử chỉ, luyện tập và cứu hộ",
+      "noi_dung": "cung cấp trợ giúp một ngón, tôi đang ở đâu, dừng/đọc lại/hủy/khôi phục; nếu giữ yêu cầu đổi tám hướng thì thêm bảng hoán vị hợp lệ và vùng thử riêng trên cùng cơ chế, không viết một hệ preference thứ hai.",
+      "phu_thuoc": [
+        "R04"
+      ],
+      "cong": [
+        "G1",
+        "G2"
+      ],
+      "test_ids": [
+        "T07",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T19",
+        "T50",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 4). Cứu hộ một ngón đã có và được rà soát bằng đường mã: Reader controls (nút thường/Back) chứa trợ giúp (case 7), tôi đang ở đâu (case 1), đọc lại (case 3), dừng đọc (case 4 + nút Stop speech + chạm hai ngón thay thế lẫn nhau), hủy (case 5, intent cancel qua cửa R03), khôi phục mặc định cử chỉ qua case 6 -> ReaderSetupActivity (nút thường trong danh sách tự đọc của Setup gọi restoreGestureDefaults); thoát cấu hình lỗi không cần cử chỉ khó (trial tự hoàn sau 45 giây/TalkBack bật, practice thoát bằng Back). Hoán vị tám hướng: QUYẾT ĐỊNH HOÃN có truy vết - rà soát kế hoạch gốc PLAN.vi.md (dòng 230/232/T19), IMPLEMENTATION/COVERAGE/STATUS, sổ hành trình và gói GnollHack tham khảo đều không có yêu cầu hoán vị nào ngoài câu điều kiện trong chính kế hoạch còn lại; không viết bảng hoán vị, không hệ preference thứ hai, giữ cơ chế hai trục. Mở lại R05.4 khi có yêu cầu truy vết được (kể cả từ bản local còn thiếu của R00). Chưa build/test."
+    },
+    {
+      "id": "R06.1",
+      "muc": "R06",
+      "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
+      "noi_dung": "thêm bộ chọn engine/voice/ngôn ngữ, dữ liệu offline/network, thử giọng theo lựa chọn nháp rồi xác nhận/lưu; giữ thanh tốc độ đang có và không tự chấp nhận giọng mạng.",
+      "phu_thuoc": [
+        "R05"
+      ],
+      "cong": [
+        "G1"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T08",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 1). Bộ chọn engine/voice/ngôn ngữ ở ReaderSetupActivity làm việc trên bản NHÁP (probe bằng AndroidSpeech.probeVoices - instance dò ngắn hạn, luôn shutdown, không phát tiếng); nhãn giọng ghi rõ offline hay cần mạng (VoiceOption.networkRequired + chuỗi a11yVoiceOfflineData/a11yVoiceNetworkData Anh+Việt); nghe mẫu bằng đúng bộ nháp đã đóng băng (testedEngine/Voice/Language), đổi nháp là vô hiệu mẫu qua invalidateSampleForChangedSettings; chỉ nút xác nhận sau mẫu mới ghi ReaderPreferences.saveSpeechSelection + confirmHeardAndEnable. Giọng mạng không bao giờ tự chấp nhận: cờ offlineOnly vẫn suy từ network_voice_consent ở mọi điểm khởi tạo (queue, Splash, Setup). Thanh tốc độ 0,5–3,0 giữ nguyên. Chưa build/test."
+    },
+    {
+      "id": "R06.2",
+      "muc": "R06",
+      "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
+      "noi_dung": "nối health/timeout/retry có giới hạn, đổi engine/voice bị mất và phục hồi sau binder/process; thống nhất chủ sở hữu backend, không tạo TTS mỗi câu hoặc giữ Activity cũ.",
+      "phu_thuoc": [
+        "R05"
+      ],
+      "cong": [
+        "G1"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T08",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 2). AndroidSpeech giữ timeout khởi tạo 8s và timeout bắt đầu phát 6s; thêm trạng thái MISSING_VOICE và khởi tạo theo tên giọng. ReaderSpeechQueue: thử lại FAILED tối đa 2 lần (+1s, +3s) rồi mới báo lỗi; giọng đã lưu bị mất thì rơi về giọng mặc định đúng một lần, xóa lựa chọn cũ khỏi preferences và báo qua Listener.onVoiceRecovered (GameReaderController hiện thông báo). Ba chủ sở hữu backend giữ nguyên theo vòng đời (Splash/Setup/queue trong Controller - mỗi nơi một instance, đóng ở onDestroy/close, context là application ở AndroidSpeech); probe dò giọng là instance tạm không phát tiếng. Fakes ở tools/accessibility đã mở rộng (Voice.getName, TextToSpeech.getEngines/getVoices/getDefaultEngine/setVoice/EngineInfo) để bài host T-speech biên dịch được ở giai đoạn 2 - chưa chạy. Chưa build/test."
+    },
+    {
+      "id": "R06.3",
+      "muc": "R06",
+      "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
+      "noi_dung": "thêm đường cứu hộ bằng âm Việt đóng gói, không phụ thuộc TTS đang lỗi; điều khiển retry/chọn nguồn đọc/cài đặt/quay lại bằng thao tác nghe được; không giả định app tự điều khiển được màn cài đặt Android.",
+      "phu_thuoc": [
+        "R05"
+      ],
+      "cong": [
+        "G1"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T08",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Mã đã viết, asset ĐÃ có thật ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 3 và R06-RESCUE-AUDIO-ASSETS.vi.md). RescueAudioPlayer phát MP3 đóng gói qua MediaPlayer, không qua TTS. 6 clip tiếng Việt thật, đo bằng ffprobe (3,9–25,0 giây). Nguồn giọng NÓI THẬT: edge-tts/giọng Microsoft KHÔNG sinh được trong môi trường này (SSL lỗi khi nối trực tiếp, treo qua proxy) nên asset hiện tại là giọng eSpeak NG (vi, ngoại tuyến) - nghe máy móc, phải nghiệm thu độ rõ ở giai đoạn 2/3 và có thể thay tệp cùng tên khi có giọng tự nhiên. Màn cứu hộ Splash có 5 nút thường đúng thứ tự clip mô tả (nghe lại/thử lại giọng/cài đặt giọng/thiết lập bộ đọc/quay lại); lỗi cài đặt phát clip riêng (kèm biến thể hết dung lượng); Setup phát clip riêng và có nút nghe hướng dẫn cứu hộ. CLIP_WELCOME có asset nhưng CHƯA nối luồng phát - ghi mở, không tính là đã dùng. Chưa build/test."
+    },
+    {
+      "id": "R06.4",
+      "muc": "R06",
+      "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
+      "noi_dung": "cài/nâng dữ liệu bằng staging, kiểm tra hoàn tất rồi chuyển đổi, journal/rollback sau lỗi hoặc kill; đọc thiếu dung lượng/chép/giải nén, retry và thoát mà không báo game sẵn sàng sớm.",
+      "phu_thuoc": [
+        "R05"
+      ],
+      "cong": [
+        "G1"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T08",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 4). InstallProgramTask viết lại: đo tổng byte thật bằng cách stream assets, kiểm tra dung lượng trống (usable >= tổng đo + 32MB dự phòng) trước khi đụng vào dữ liệu; copy vào cây staging (.reader_install_staging), kiểm chứng trên đĩa (số tệp + tổng byte khớp cả ba nguồn đếm), journal ở bộ nhớ trong (STAGING/STAGED/SWAPPING/COMMITTED, fsync), hoán đổi bằng rename (live cũ đỗ ở .reader_install_rollback), khôi phục nội dung custom theo đúng luật preserve cũ (font, thư mục custom dưới data/sound|mods|gfx không có trong APK, user-default-mods.json), chỉ ghi pref 'installed' SAU commit; chết giữa chừng khi SWAPPING được installOrRun phát hiện và task khôi phục rollback trước khi làm tiếp. Lỗi phân loại no_space/copy/verify/swap, màn lỗi bootstrap có thử lại/cài đặt/thoát + clip cứu hộ. Chưa build/test."
+    },
+    {
+      "id": "R07.1",
+      "muc": "R07",
+      "tieu_de_muc": "Thế giới, mod và toàn bộ tạo nhân vật",
+      "noi_dung": "đóng tạo/chọn/đổi tên/sao chép/xóa world, danh sách save và xác nhận phá hủy; mod/phụ thuộc/xung đột/thứ tự/tùy chọn và lỗi dữ liệu có kết quả nghe được.",
+      "phu_thuoc": [
+        "R06"
+      ],
+      "cong": [
+        "G3",
+        "G4"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T28",
+        "T31",
+        "T35",
+        "T53",
+        "T57",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết (xem R07-WORLD-CHARACTER.vi.md): xác nhận phá hủy riêng cho Delete/Reset world (tên world, số save, hậu quả, kết quả); kết quả toggle nén save; luồng sao chép qua valid_worldname; lỗi ghi tệp tạo world có thông báo khi reader bật; detail mod có category + xung đột khai báo; mod lỗi cây phụ thuộc bị disabled kèm lý do; màn xem mod của world hiện có ngang bằng detail. Đổi tên world đã tồn tại không có trong UI thật (chỉ tạo mới/sao chép sang tên mới). Chưa kiểm thử."
+    },
+    {
+      "id": "R07.2",
+      "muc": "R07",
+      "tieu_de_muc": "Thế giới, mod và toàn bộ tạo nhân vật",
+      "noi_dung": "rà mọi tab nhân vật, chi phí/điểm/xung đột/điều kiện, nghề/nền tảng/kịch bản/proficiency/bionic/phép/vị trí/xe bắt đầu; giữ chi tiết đã có, thêm dữ liệu còn thiếu theo UI thực.",
+      "phu_thuoc": [
+        "R06"
+      ],
+      "cong": [
+        "G3",
+        "G4"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T28",
+        "T31",
+        "T35",
+        "T53",
+        "T57",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết: đối chiếu đủ 7 tab theo UI thật và bổ sung metadata (chi phí điểm kịch bản, khóa CITY_START, bionic/phép của nghề/nền tảng trong desc, mô tả mức + miền + điểm còn lại cho thuộc tính, bionic chặn trait thành disabled có lý do + ghi chú trait bị khóa, giá trị cấp kỹ năng tách bonus + điểm kỹ năng còn lại, proficiency đã biết và nhãn nguồn xe ở tổng kết). Không có tab chọn bionic/phép riêng trong UI thật. Chưa kiểm thử."
+    },
+    {
+      "id": "R07.3",
+      "muc": "R07",
+      "tieu_de_muc": "Thế giới, mod và toàn bộ tạo nhân vật",
+      "noi_dung": "tên Việt/tên ngẫu nhiên có thể sửa, mẫu lưu/tải/xóa, summary cuối, quay tab sửa lựa chọn và hủy; luồng lỗi không làm mất draft vô ý.",
+      "phu_thuoc": [
+        "R06"
+      ],
+      "cong": [
+        "G3",
+        "G4"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T28",
+        "T31",
+        "T35",
+        "T53",
+        "T57",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết: đối chiếu đủ lưu mẫu (SAVE_TEMPLATE + tên qua STRING_INPUT), tải/xóa mẫu ở menu chính (uilist + LOAD/DELETE/CANCEL + query_yn), thông báo kết quả xóa mẫu và lỗi tải mẫu khi reader bật; tên nhân vật sửa được sau ngẫu nhiên qua editor dùng chung, không có rào cản ký tự tiếng Việt ngoài trần 50 byte của engine. Hủy tạo có xác nhận query_yn sẵn có; bản nháp là avatar toàn cục, caller reset khi hủy. Chưa kiểm thử."
+    },
+    {
+      "id": "R07.4",
+      "muc": "R07",
+      "tieu_de_muc": "Thế giới, mod và toàn bộ tạo nhân vật",
+      "noi_dung": "nối chuỗi tạo → vào game → đi/mở cửa/nhặt/ăn/uống → trạng thái → lưu/thoát/tải, và quyết định realtime theo ý người chơi; không tự đổi luật hoặc option âm thầm.",
+      "phu_thuoc": [
+        "R06"
+      ],
+      "cong": [
+        "G3",
+        "G4"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T28",
+        "T31",
+        "T35",
+        "T53",
+        "T57",
+        "T64"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết/đã xác minh chuỗi: tạo -> start_game -> scope world DEFAULTMODE -> lưu/thoát/tải qua các adapter đã có; rào realtime đủ 3 callsite phủ mọi đường vào game qua menu (gồm quickload, CLI). Điểm chờ 'Please wait' khi setup/start_game không publish snapshot (ghi nhận, thuộc vòng đời R20 nếu cần xử lý). Đi/mở cửa/nhặt/ăn/uống chuyên sâu thuộc R08/R09. Chưa kiểm thử."
+    },
+    {
+      "id": "R08.1",
+      "muc": "R08",
+      "tieu_de_muc": "Thăm dò, tri thức và kết quả hành động",
+      "noi_dung": "thăm dò con trỏ nhiều hướng/tầng, recenter, lọc/nhảy theo đối tượng đã biết; gắn nguồn thấy/nhớ/nghe/cảm nhận/chưa biết cho từng thuộc tính, không đọc sống qua memory.",
+      "phu_thuoc": [
+        "R07"
+      ],
+      "cong": [
+        "G4"
+      ],
+      "test_ids": [
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T35",
+        "T44",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R08.2",
+      "muc": "R08",
+      "tieu_de_muc": "Thăm dò, tri thức và kết quả hành động",
+      "noi_dung": "giữ bộ lọc/quét memory/special perception đã có; bổ sung chi tiết hợp lệ của cửa/địa hình/item/xe/nguy cơ và vùng âm gần đúng; không tăng độ chính xác vượt quyền biết.",
+      "phu_thuoc": [
+        "R07"
+      ],
+      "cong": [
+        "G4"
+      ],
+      "test_ids": [
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T35",
+        "T44",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R08.3",
+      "muc": "R08",
+      "tieu_de_muc": "Thăm dò, tri thức và kết quả hành động",
+      "noi_dung": "thêm kết quả hẹp tại điểm engine xử lý bước đi/tương tác: đi, mở, đánh, bị chặn, đổi tư thế hoặc chưa xác định; phản hồi sau sự kiện thật, không suy từ tọa độ không đổi.",
+      "phu_thuoc": [
+        "R07"
+      ],
+      "cong": [
+        "G4"
+      ],
+      "test_ids": [
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T35",
+        "T44",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R08.4",
+      "muc": "R08",
+      "tieu_de_muc": "Thăm dò, tri thức và kết quả hành động",
+      "noi_dung": "đóng kéo/đẩy/leo/bơi/lên xuống, chọn hướng/ô và tương tác công tắc/cửa/lửa/chất lỏng; tách con trỏ quan sát khỏi điều khiển avatar/xe/camera và xóa dữ liệu theo nhân vật.",
+      "phu_thuoc": [
+        "R07"
+      ],
+      "cong": [
+        "G4"
+      ],
+      "test_ids": [
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T35",
+        "T44",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R09.1",
+      "muc": "R09",
+      "tieu_de_muc": "Hành trang, túi, kho hai phía và lớp mặc",
+      "noi_dung": "giữ selector/số lượng/disabled đã có; đóng multi-select, chia/gộp stack, favorite/filter/sort/compare, nạp/tháo và trường hợp vật phẩm biến mất hoặc trùng tên.",
+      "phu_thuoc": [
+        "R08"
+      ],
+      "cong": [
+        "G4",
+        "G5"
+      ],
+      "test_ids": [
+        "T18",
+        "T24",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T41",
+        "T47",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Selector giu nguyen binding theo item_location; form so luong R02 cho phien multi-select (set_value nhap -> apply qua inventory_multiselector::toggle_entry, tra lai entry khi chot); favorite/filter/compare/nap-thao da ra soat la toi duoc qua lenh context/menu chung; detail them chuoi vat chua de phan biet trung ten."
+    },
+    {
+      "id": "R09.2",
+      "muc": "R09",
+      "tieu_de_muc": "Hành trang, túi, kho hai phía và lớp mặc",
+      "noi_dung": "dựng cây vật chứa/pocket với nguồn/đích, khả năng truy cập, đồ trong túi, giới hạn và lý do từ chối; chỉ mô tả contents khi game cho phép biết, không lộ container đóng.",
+      "phu_thuoc": [
+        "R08"
+      ],
+      "cong": [
+        "G4",
+        "G5"
+      ],
+      "test_ids": [
+        "T18",
+        "T24",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T41",
+        "T47",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Cay vat chua/pocket bang hop dong cay R02 tu parent_item that; node pocket chi bao gioi han/con trong/co han che, pocket sealed khong lo contents; cat/lay qua hang selector."
+    },
+    {
+      "id": "R09.3",
+      "muc": "R09",
+      "tieu_de_muc": "Hành trang, túi, kho hai phía và lớp mặc",
+      "noi_dung": "adapter advanced inventory có pane đang thao tác, nguồn/đích, vị trí, tổng khối lượng/thể tích, số lượng, chuyển một/nhiều và hủy; tra lại sức chứa/quyền sở hữu khi chốt.",
+      "phu_thuoc": [
+        "R08"
+      ],
+      "cong": [
+        "G4",
+        "G5"
+      ],
+      "test_ids": [
+        "T18",
+        "T24",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T41",
+        "T47",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Adapter advanced_inventory::reader_session moi: pane nguon/dich, vi tri, tong hai phia, chuyen qua MOVE_VARIABLE_ITEM/MOVE_SINGLE_ITEM/MOVE_ITEM_STACK/MOVE_ALL_ITEMS cua engine, tra lai suc chua/quyen so huu tai action_move_item khi chot."
+    },
+    {
+      "id": "R09.4",
+      "muc": "R09",
+      "tieu_de_muc": "Hành trang, túi, kho hai phía và lớp mặc",
+      "noi_dung": "lớp mặc/thứ tự/phủ cơ thể/encumbrance, cầm/mặc/cởi/dùng, lựa chọn vật chứa và cảnh báo gốc; các thao tác move/toggle/select phân biệt với hành động tiêu lượt.",
+      "phu_thuoc": [
+        "R08"
+      ],
+      "cong": [
+        "G4",
+        "G5"
+      ],
+      "test_ids": [
+        "T18",
+        "T24",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T41",
+        "T47",
+        "T50"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Adapter armor_layers_reader moi trong outfit::sort_armor: tab phan co the, thu tu lop mac, phu, encumbrance (Character::encumb), move/toggle/select qua MOVE_ARMOR phan biet voi equip/remove qua activity goc; canh bao goc giu nguyen."
+    },
+    {
+      "id": "R10.1",
+      "muc": "R10",
+      "tieu_de_muc": "Sức khỏe, sinh hoạt và hoạt động dài",
+      "noi_dung": "hoàn thiện trạng thái/cơ thể/effect/nhiệt/morale/nhu cầu/thuốc, đơn vị và điều kiện đã biết; giữ mô tả sức khỏe theo UI, không thay bằng HP hay cân nặng sống chưa được biết.",
+      "phu_thuoc": [
+        "R09"
+      ],
+      "cong": [
+        "G4",
+        "G7"
+      ],
+      "test_ids": [
+        "T16",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T53",
+        "T54",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Adapter man trang thai player_display (tab/stats/nhu cau/bang encumbrance-nhiet theo temp_conv/effects/speed) + man con morale (nguon theo % dong gop, tong co dau) + trang thai the gioi them nhiet/morale/weariness/effects; du kien chi lay tu UI cong bo, khong HP song. Xem R10-HEALTH-ACTIVITY.vi.md."
+    },
+    {
+      "id": "R10.2",
+      "muc": "R10",
+      "tieu_de_muc": "Sức khỏe, sinh hoạt và hoạt động dài",
+      "noi_dung": "đóng ăn/uống/chọn container/chuyển chất lỏng/thuốc/băng bó, bộ phận, vật tư, hiệu quả/điều kiện/cảnh báo và kết quả sau hoạt động.",
+      "phu_thuoc": [
+        "R09"
+      ],
+      "cong": [
+        "G4",
+        "G7"
+      ],
+      "test_ids": [
+        "T16",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T53",
+        "T54",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "An/uong qua selector R09 + consume_activity_actor (canh bao la dialog cua actor, adapter popup dung chung); chat long qua uilist R04 + container_for selector R09; thuoc/bang bo qua pick_wound_fix voi requirements snapshot. Nhanh chon tank xe con thuoc R15."
+    },
+    {
+      "id": "R10.3",
+      "muc": "R10",
+      "tieu_de_muc": "Sức khỏe, sinh hoạt và hoạt động dài",
+      "noi_dung": "đọc/học/ngủ/đợi/hoạt động có tiến độ tiết chế, lý do bị ngắt, tiếp tục/hủy và kết quả hủy thật; cảnh báo thời gian tiếp tục trôi trong mode tương ứng.",
+      "phu_thuoc": [
+        "R09"
+      ],
+      "cong": [
+        "G4",
+        "G7"
+      ],
+      "test_ids": [
+        "T16",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T53",
+        "T54",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "activity_snapshot them tien do tho 10% (activity:progress); huy = intent cancel rieng -> cancel_activity_query cua engine; canh bao realtime/thoi gian troi giu nguyen; dung tieng doc khong bao gio huy hoat dong."
+    },
+    {
+      "id": "R10.4",
+      "muc": "R10",
+      "tieu_de_muc": "Sức khỏe, sinh hoạt và hoạt động dài",
+      "noi_dung": "mở rộng cảnh báo có ngưỡng, chống lặp và lịch sử cho trạng thái/nguy cơ chưa có log; reset baseline khi load/đổi phiên và gộp với log để không đọc kép.",
+      "phu_thuoc": [
+        "R09"
+      ],
+      "cong": [
+        "G4",
+        "G7"
+      ],
+      "test_ids": [
+        "T16",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T53",
+        "T54",
+        "T60"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Monitor them nhiet hai phia, morale, weariness; cooldown 30 phut gio game/muc, lich su 20 canh bao trong phien (node world:alert_history), reset cung lifecycle epoch/replace_game_session; canh bao la cau chuyen trang thai rieng, khong lap nguyen van dong log."
+    },
+    {
+      "id": "R11.1",
+      "muc": "R11",
+      "tieu_de_muc": "Chiến đấu, nhắm ô/tầng và vùng ảnh hưởng",
+      "noi_dung": "đóng melee/reach/võ thuật/đổi mục tiêu/rút lui và safe mode; đọc trạng thái/kết quả nhân vật biết, không đọc HP bí mật hoặc tên kẻ ẩn.",
+      "phu_thuoc": [
+        "R10"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T20",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Melee outcome san co tu R08.3 (attacked tai avatar_action::move); R11 them outcome safe_mode_blocked tai dung nhanh engine chan don trung lap + cong bo trang thai safe mode trong world:status; chon style vo thuat qua adapter uilist dung chung R04 (mo ta style trong detail, SHOW_DESCRIPTION thanh node lenh); reach qua target_ui chung. Chua chac: noi dung cua so ma-details (ImGui, khong screen_scope) va cac nhanh displace/CANNOT_MOVE moi co fallback undetermined, chua co outcome tuong minh rieng."
+    },
+    {
+      "id": "R11.2",
+      "muc": "R11",
+      "tieu_de_muc": "Chiến đấu, nhắm ô/tầng và vùng ảnh hưởng",
+      "noi_dung": "mở rộng chọn mục tiêu hiện có bằng chọn ô trống/tầng, tầm/che khuất/aim/đường bắn; giữ engine là thẩm quyền khả năng tấn công, focus/chọn điểm không FIRE.",
+      "phu_thuoc": [
+        "R10"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T20",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Mo rong target_ui::reader_snapshot/run: node dieu khien con tro target:move:<dx>:<dy> + target:level:up/down (chi khi fov_3d_z_range>0) qua action noi bo A11Y_INTERNAL_MOVE_CURSOR (whitelist delta cung, khong parse tu intent) chi goi set_cursor_pos - khong the FIRE; cursor cong bo mode nham, chenh tang, steadiness + sight dispersion cho mode Fire (dung du kien panel goc in)."
+    },
+    {
+      "id": "R11.3",
+      "muc": "R11",
+      "tieu_de_muc": "Chiến đấu, nhắm ô/tầng và vùng ảnh hưởng",
+      "noi_dung": "đóng fire mode/loại đạn/reload/unload/ném/turret và xác nhận mục tiêu trung lập/đồng đội; revalidate mục tiêu/đạn khi chốt và xử lý danh sách rỗng/>256 hàng.",
+      "phu_thuoc": [
+        "R10"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T20",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Fire mode/dan qua node target:weapon (gun mode tname + ammo_remaining) va lenh SWITCH_MODE/SWITCH_AMMO trong cung snapshot; SWITCH_AMMO khong du dan thoat ExitCode::Reload sang UI nap (selector R09); reload/unload la action o handle_action qua selector/menu dung chung; nem va turret thu cong qua target_ui mode Throw/TurretManual dung chung adapter; xac nhan trung lap/dong doi la query_yn cua engine (confirm_non_enemy_target + prompt_friendlies_in_lof) o nhanh FIRE, intent activate cua reader chi gui lenh FIRE goc; tai luc chot dispatcher R03 tra lai node/action trong snapshot hieu luc, vong nham rebuild targets truoc publish va dst_critter tinh lai o set_cursor_pos; danh sach rong co cau 'There are no targets', danh sach >256 co node tran cong bo ca hai so day du."
+    },
+    {
+      "id": "R11.4",
+      "muc": "R11",
+      "tieu_de_muc": "Chiến đấu, nhắm ô/tầng và vùng ảnh hưởng",
+      "noi_dung": "mô tả footprint/AOE theo dữ liệu game công khai, hướng/tầng và nguy cơ đồng minh đã biết; cho sửa/hủy riêng, không đưa thực thể ẩn vào tổng số/cue.",
+      "phu_thuoc": [
+        "R10"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T20",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Node target:aoe (mode Spell): footprint tu spell_aoe engine da tinh (so o, shape, aoe_string, huong toi tam vung, khoang tang), canh bao in_aoe cho chinh nguoi cast, dong minh DA BIET chi dem/ke ten sinh vat pl_sees co thai do FRIENDLY hoac NPC khong hostile - sinh vat khong thay duoc khong vao bat ky con so nao; khong co dong minh da biet thi ghi ro khong dam bao an toan tuyet doi. Sua diem nham/huy rieng qua cac node con tro va lenh QUIT goc."
+    },
+    {
+      "id": "R12.1",
+      "muc": "R12",
+      "tieu_de_muc": "Chế tạo, sửa chữa, xây và tháo",
+      "noi_dung": "giữ recipe/batch/yêu cầu; bổ sung công thức lồng/nhóm/filter/favorite, ánh sáng/crafter/điều kiện và tổng tài nguyên dùng chung, không suy đủ từ từng nhóm riêng lẻ.",
+      "phu_thuoc": [
+        "R11"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T21",
+        "T24",
+        "T31",
+        "T32",
+        "T37",
+        "T43",
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R12): giu recipe/batch/favorite/nested; them Shared total bang deduped can_make_with_inventory + tong theo loai cho nhom don lua chon; tai lieu craft:conditions (cong can_start_craft: anh sang/crafter/qua so luong). Tong root+step khong cong gop vi cac step chay tuan tu voi kho thay doi."
+    },
+    {
+      "id": "R12.2",
+      "muc": "R12",
+      "tieu_de_muc": "Chế tạo, sửa chữa, xây và tháo",
+      "noi_dung": "chọn nguyên liệu/dụng cụ thay thế và đồ chứa bằng selector có số lượng; xác nhận tiêu hao/bắt đầu, gián đoạn/tiếp tục, byproduct/kết quả thật mà không tạo preview ngẫu nhiên mới.",
+      "phu_thuoc": [
+        "R11"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T21",
+        "T24",
+        "T31",
+        "T32",
+        "T37",
+        "T43",
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R12): chon alternative/thanh phan/dung cu qua uilist R04 trong craft_command::execute (entry co can/co), vat chua qua query_yn eligible containers; xac nhan tieu hao la cac query tinh huong cua engine; byproduct xac dinh cong bo tu du lieu cong thuc (craft:byproducts), ket qua that qua hoan thanh activity/log - khong tung preview moi."
+    },
+    {
+      "id": "R12.3",
+      "muc": "R12",
+      "tieu_de_muc": "Chế tạo, sửa chữa, xây và tháo",
+      "noi_dung": "đóng sửa đồ/tháo rã/disassembly/repair, yêu cầu/rủi ro đã biết, vật tư, mục tiêu và kết quả; tận dụng selector chung, nối modal riêng còn thiếu.",
+      "phu_thuoc": [
+        "R11"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T21",
+        "T24",
+        "T31",
+        "T32",
+        "T37",
+        "T43",
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R12): sua/thao khong can adapter rieng - selector R09 (preset repair/disassemble co day du cot rui ro/yield + denial), repeat_menu uilist R04, query_yn/number popup dung chung; da ra ca gun_repair va mend. Ket qua qua log/activity."
+    },
+    {
+      "id": "R12.4",
+      "muc": "R12",
+      "tieu_de_muc": "Chế tạo, sửa chữa, xây và tháo",
+      "noi_dung": "công trình/blueprint/giai đoạn/vị trí/hướng, ô hợp lệ/không hợp lệ và xác nhận phe phái; khởi công/hủy/hoàn thành vẫn qua logic gốc, không mô tả điều kiện ô ẩn bằng dữ liệu sống.",
+      "phu_thuoc": [
+        "R11"
+      ],
+      "cong": [
+        "G5"
+      ],
+      "test_ids": [
+        "T21",
+        "T24",
+        "T31",
+        "T32",
+        "T37",
+        "T43",
+        "T44"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R12): construction:placement tu con_preview engine, giai doan co thoi gian/ky nang yeu cau/pre_note + Shared total; xac nhan lanh tho phe la query cua engine trong CONFIRM; khoi cong/hoan thanh qua ACT_BUILD goc. Diem mo: marker partial_con chua cong bo ngu nghia trong snapshot the gioi."
+    },
+    {
+      "id": "R13.1",
+      "muc": "R13",
+      "tieu_de_muc": "Bản đồ lớn, tuyến, ghi chú và nhiệm vụ",
+      "noi_dung": "giữ con trỏ/tuyến/note/search đã có; đóng tầng/legend/filter và từng nhánh kết quả tìm kiếm; nêu rõ độ chính xác tọa độ/vị trí theo quyền biết.",
+      "phu_thuoc": [
+        "R12"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T25",
+        "T28",
+        "T29",
+        "T30",
+        "T45",
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở R13: mức tầm nhìn trong overmap_tile_description, node legend bằng lời, checkbox trạng thái thật cho các lệnh TOGGLE_*, khóa weather trong nhà/land-use ngoài debug, cả ba nhánh kết quả tìm kiếm đã đối chiếu (có kết quả/không có/hủy) — xem doc/accessibility/R13-OVERMAP-MISSIONS.vi.md."
+    },
+    {
+      "id": "R13.2",
+      "muc": "R13",
+      "tieu_de_muc": "Bản đồ lớn, tuyến, ghi chú và nhiệm vụ",
+      "noi_dung": "tạo/xem/sửa/xóa ghi chú, vùng nguy hiểm và điểm quan tâm; form tên/nội dung/biểu tượng có lời tương đương, xác nhận xóa và quay đúng focus.",
+      "phu_thuoc": [
+        "R12"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T25",
+        "T28",
+        "T29",
+        "T30",
+        "T45",
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở R13: ghi chú + điểm quan tâm dùng form nhập dùng chung R04; note_symbol_description cho tương đương lời của biểu tượng/màu ở cả ba bề mặt đọc; xác nhận xóa query_yn ở mọi đường, bán kính nguy hiểm query_int 0–20 — xem R13-OVERMAP-MISSIONS.vi.md."
+    },
+    {
+      "id": "R13.3",
+      "muc": "R13",
+      "tieu_de_muc": "Bản đồ lớn, tuyến, ghi chú và nhiệm vụ",
+      "noi_dung": "lập tuyến/chọn điểm/khởi hành/hủy, lý do không thể đi và dừng nguy hiểm gốc; duyệt tuyến chỉ quan sát, chọn điểm không tự khởi hành.",
+      "phu_thuoc": [
+        "R12"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T25",
+        "T28",
+        "T29",
+        "T30",
+        "T45",
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở R13: popup lý do không lập được tuyến ở CHOOSE_DESTINATION (khác tầng/chưa khám phá/không có đường), node tuyến nói rõ thay/xóa tuyến, khởi hành vẫn là query_yn riêng của try_travel_to_destination, dừng nguy hiểm giữ logic gốc — xem R13-OVERMAP-MISSIONS.vi.md."
+    },
+    {
+      "id": "R13.4",
+      "muc": "R13",
+      "tieu_de_muc": "Bản đồ lớn, tuyến, ghi chú và nhiệm vụ",
+      "noi_dung": "đóng nhận/theo dõi/đổi mục tiêu/nộp/thất bại nhiệm vụ, hạn/phần thưởng/điều kiện/kết quả được biết và liên kết vị trí; giữ adapter mission/calendar đã có.",
+      "phu_thuoc": [
+        "R12"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T25",
+        "T28",
+        "T29",
+        "T30",
+        "T45",
+        "T46"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đóng ở R13: detail tác động thật cho CONFIRM/DELETE_POINT_OF_INTEREST ở màn nhiệm vụ, liên kết ô đích mục tiêu trên overmap, hạn/phần thưởng/kết quả ở mức game công bố; nhận/trả nhiệm vụ thuộc hội thoại NPC (R14) — xem R13-OVERMAP-MISSIONS.vi.md."
+    },
+    {
+      "id": "R14.1",
+      "muc": "R14",
+      "tieu_de_muc": "NPC, giao dịch, đồng đội và trại",
+      "noi_dung": "giữ câu trả lời/điều kiện/lịch sử; đóng người nói/nội dung dài/đổi phản hồi/xác nhận tác động và danh sách thay đổi mà không chọn nhầm câu qua callback cũ.",
+      "phu_thuoc": [
+        "R13"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T46",
+        "T47",
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R14): title snapshot kem ten nguoi noi (speaker_name); history thanh tai lieu append_document doc tuoi moi publish, giu tach luot; detail canh bao hostile/helpless tu get_consequences; loi tam biet duoc announce qua kenh messages. Dieu kien: trial/show_reason da trong label tu create_option_line, UI goc khong cong bo ly do cu the hon nen giu cau chung. Chon nham: chung minh an toan qua R03 - xem R14-NPC-TRADE-CAMP.vi.md."
+    },
+    {
+      "id": "R14.2",
+      "muc": "R14",
+      "tieu_de_muc": "NPC, giao dịch, đồng đội và trại",
+      "noi_dung": "giao dịch hai phía có lượng từng món, giá/đơn vị/tổng/nợ/tín dụng/giới hạn, tiền và chia stack; quyết định trao đổi riêng, nghe kết quả bị từ chối/thành công.",
+      "phu_thuoc": [
+        "R13"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T46",
+        "T47",
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R14): bang trade:items + cells gia/don vi tu trade_preset::unit_price (dung trading_price cua cot goc); mo ta tac dong rieng cho 5 lenh pane; trade() cong bo ket qua that tu trade_result (hai phia, ngan hang, no sau cung) va cau khong-trao-doi khi huy. Tong tinh lai qua recalc_values_cpane moi thay doi; so luong/chia stack qua form R09."
+    },
+    {
+      "id": "R14.3",
+      "muc": "R14",
+      "tieu_de_muc": "NPC, giao dịch, đồng đội và trại",
+      "noi_dung": "ra lệnh đồng đội, trang bị/liên hệ/khả năng biết được, giao việc/trả người, ETA và trạng thái; xử lý người mất liên hệ/đổi danh sách/không đủ điều kiện.",
+      "phu_thuoc": [
+        "R13"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T46",
+        "T47",
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R14): summary diem giao viec kem ten trai/NPC; va lo hong chon nham that - activate chi xac nhan entry dang chon, doi tab ep revision, chan danh sach rong; entry return bi khoa co ly do tuong minh; companion_choose co a11y_disabled_reason ky nang. ETA/trang thai lay tu entry.text cua engine, khong bia so."
+    },
+    {
+      "id": "R14.4",
+      "muc": "R14",
+      "tieu_de_muc": "NPC, giao dịch, đồng đội và trại",
+      "noi_dung": "trại có công việc/vùng/nguồn lực/người/thời gian/điều kiện và kết quả, mọi menu con thực tế; không bỏ qua xây trại hoặc chuỗi hậu cần bằng cách chỉ hỗ trợ tab phe.",
+      "phu_thuoc": [
+        "R13"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T46",
+        "T47",
+        "T48"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R14): kiem ke toan bo diem UI cua faction_camp; adapter rieng cho worker_assignment_ui va job_assignment_ui (hai man tu ve); bo sung du kien quyet dinh tai menu (kcal an, giai thich chon thu linh, ly do chon nguoi che, tran de nghi tuyen, canh bao bo trai, popup 0 o nong nghiep); overmap publish message chon o. Con mo: zone_manager_ui thuoc R16. Xem R14-NPC-TRADE-CAMP.vi.md."
+    },
+    {
+      "id": "R15.1",
+      "muc": "R15",
+      "tieu_de_muc": "Xe, sơ đồ bộ phận, cargo và lái/remote",
+      "noi_dung": "dựng sơ đồ dạng cây/bảng theo ô xe/vị trí tương đối/nhóm chức năng, tên bộ phận/tình trạng và kết nối; duyệt ô/part không tự sửa hoặc di chuyển xe.",
+      "phu_thuoc": [
+        "R14"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T32",
+        "T33",
+        "T34",
+        "T44",
+        "T49",
+        "T50",
+        "T54"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: veh_interact::reader_session (src/veh_interact.cpp/.h) - summary tu cac gia tri display_stats in, cay tile->part theo o mount voi vi tri tuong doi trong khung xe, tinh trang bang loi theo thang count_durability, du kien tung nhom chuc nang sao tu callback overview. Duyet chi doi con tro goc."
+    },
+    {
+      "id": "R15.2",
+      "muc": "R15",
+      "tieu_de_muc": "Xe, sơ đồ bộ phận, cargo và lái/remote",
+      "noi_dung": "lắp/sửa/tháo/thay bộ phận, vị trí, phụ thuộc, dụng cụ/linh kiện, thời gian và kết quả; tra lại xe/part khi chốt vì cấu trúc có thể đổi.",
+      "phu_thuoc": [
+        "R14"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T32",
+        "T33",
+        "T34",
+        "T44",
+        "T49",
+        "T50",
+        "T54"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: cac mode install/repair/remove/select_part cua reader_session; ung vien lap mang yeu cau day du tu update_part_requirements (msg) + co can_install; remove cong bo disabled_reason tu can_remove_part; select_part tinh (nhanh binh xe cua R10, loc nuoc, siphon, mend, assign_crew) qua overview_pos + CONFIRM goc; moi intent tai tra part/ung vien theo ban ghi song tai thoi diem nhan."
+    },
+    {
+      "id": "R15.3",
+      "muc": "R15",
+      "tieu_de_muc": "Xe, sơ đồ bộ phận, cargo và lái/remote",
+      "noi_dung": "cây cargo theo từng bộ phận/vật chứa/món, lượng nhiên liệu/pin/sức chứa mà UI được biết; chuyển vật phẩm qua adapter R09, không chỉ đọc tên kho.",
+      "phu_thuoc": [
+        "R14"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T32",
+        "T33",
+        "T34",
+        "T44",
+        "T49",
+        "T50",
+        "T54"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: reader_cargo_data cong bo tung part cargo (volume da dung/tong + danh sach mon dem dung) trong man veh_interact; chuyen do that qua pane xe cua kho nang cao R09 (co in_vehicle, MOVE_VARIABLE_ITEM); nhien lieu/pin theo % tong o summary + chi tiet tung binh/pin."
+    },
+    {
+      "id": "R15.4",
+      "muc": "R15",
+      "tieu_de_muc": "Xe, sơ đồ bộ phận, cargo và lái/remote",
+      "noi_dung": "lên/xuống, nổ/tắt máy, lái/phanh/tốc độ/hướng, cruise/remote và ngưỡng smart controller bằng form có miền; công bố mode riêng và khóa cử chỉ đi bộ khỏi các lệnh tăng ga.",
+      "phu_thuoc": [
+        "R14"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T32",
+        "T33",
+        "T34",
+        "T44",
+        "T49",
+        "T50",
+        "T54"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: trang thai lai mo rong trong player_status (ten xe, mode Driving/Remote control, azimuth, cruise text, % nhien lieu/pin, strain bang loi); menu dieu khien xe qua veh_menu/uilist dung chung; vao lai qua game::control_vehicle goc; lai bang intent huong ma handle_action dinh tuyen pldrive/rcdrive; form R02 cho nguong smart controller (smart_controller_ui) voi mien/buoc/coupling dung cua slider goc; vuot di bo bi khoa khoi ga o ca lop engine (R00) lan Java."
+    },
+    {
+      "id": "R16.1",
+      "muc": "R16",
+      "tieu_de_muc": "Vùng, tự động hóa và quy tắc",
+      "noi_dung": "tạo vùng bằng vị trí hiện tại/con trỏ/tọa độ, chọn hai góc/tầng, đọc phạm vi/kích thước/loại trước khi xác nhận; giữ đúng giới hạn tạo vùng của game.",
+      "phu_thuoc": [
+        "R15"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T14",
+        "T18",
+        "T20",
+        "T31",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R16): adapter screen_scope \"zone-manager\" trong zone_manager_ui::display_zone_manager (bang zones:list R02, hang co cells ten/loai/trang thai/personal/vehicle/huong/khoang cach/hien thi, detail gom hai goc + kich thuoc + mo ta options); tao vung di qua query_type (uilist R04) -> options query_at_creation -> query_name (popup R04) -> chon hai goc bang adapter \"look-around\" moi trong game::look_around (con tro + mo ta o theo quyen biet R08, node look:selection cong bo pham vi/kich thuoc truoc khi xac nhan goc hai). Xem R16-ZONES-RULES.vi.md."
+    },
+    {
+      "id": "R16.2",
+      "muc": "R16",
+      "tieu_de_muc": "Vùng, tự động hóa và quy tắc",
+      "noi_dung": "xem/đổi tên/sửa/xóa/bật/tắt/thứ tự vùng, nguồn/đích/điều kiện tác vụ; đóng thực thi/tạm dừng/kết quả tác vụ mà không tự khởi chạy khi duyệt.",
+      "phu_thuoc": [
+        "R15"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T14",
+        "T18",
+        "T20",
+        "T31",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R16): cung adapter zone-manager - focus hang chi doi active_index, activate tra CONFIRM mo menu sua uilist goc (doi ten/loai/options/vi tri + di chuyen vi tri qua look_around is_moving_zone); REMOVE_ZONE qua node xac nhan rieng zone:remove:confirm (binding tra lai tai luc intent); bat/tat + thu tu qua cac lenh goc ENABLE/DISABLE/MOVE_ZONE_UP/DOWN di qua registered_intent. Tac vu vung thuc thi bang multi-zone activity (ngoai man quan ly, da phu boi R10); duyet trong man quan ly khong bao gio khoi chay tac vu. Xem R16-ZONES-RULES.vi.md."
+    },
+    {
+      "id": "R16.3",
+      "muc": "R16",
+      "tieu_de_muc": "Vùng, tự động hóa và quy tắc",
+      "noi_dung": "Study Zone và cấu hình theo loại vùng dùng form/bảng R02, đọc trường/đơn vị/giới hạn/điều kiện, áp dụng/hủy và dữ liệu trước/sau.",
+      "phu_thuoc": [
+        "R15"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T14",
+        "T18",
+        "T20",
+        "T31",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R16): adapter screen_scope \"study-zone\" trong study_zone_ui.cpp - bang study:skills (hang ky nang, cot moi NPC), node con checkbox dang truong bool R02 cho tung cap (ky nang, NPC) voi nhap/apply/cancel_draft/activate, ghi thang vao npc_skill_preferences (kho that cua study_zone_options); Check All/Clear All tren toan bo ky nang (bo doc khong co bo loc ImGui); cac tuy chon theo loai vung khac doc qua get_descriptions trong detail hang vung va sua qua query() dung chung. Xem R16-ZONES-RULES.vi.md."
+    },
+    {
+      "id": "R16.4",
+      "muc": "R16",
+      "tieu_de_muc": "Vùng, tự động hóa và quy tắc",
+      "noi_dung": "bảng Safe Mode/auto-pickup và bộ lọc có điều kiện/ưu tiên/nguồn, thêm/sửa/xóa/kiểm quy tắc/đặt lại; cho nghe kết quả khớp bằng dữ liệu mà UI gốc cung cấp.",
+      "phu_thuoc": [
+        "R15"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T14",
+        "T18",
+        "T20",
+        "T31",
+        "T51"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R16): adapter \"safe-mode-manager\" + \"safe-mode-test\" trong safemode_ui.cpp (bang safemode:rules 6 cot goc, 7 truong R02 cho hang dang chon, REMOVE_RULE hai buoc) ghi tren global_rules/character_rules that cua safemode; adapter \"auto-pickup-manager\" + \"auto-pickup-test\" trong auto_pickup.cpp (bang autopickup:rules, 3 truong R02, node checkbox cho option AUTO_PICKUP, REMOVE_RULE hai buoc) ghi tren new_rules - ban lam viec ma man goc chi chot vao kho that khi dong y \"Save changes?\". Man test cong bo dung du lieu UI goc (mtype/item factory). Xem R16-ZONES-RULES.vi.md."
+    },
+    {
+      "id": "R17.1",
+      "muc": "R17",
+      "tieu_de_muc": "Bionics, đột biến, phép và máy tính",
+      "noi_dung": "bionics có chủ động/bị động/nguồn điện/chi phí/trạng thái/điều kiện, kích hoạt và phẫu thuật với vật tư/rủi ro đã biết, xác nhận/hủy/kết quả.",
+      "phu_thuoc": [
+        "R16"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T16",
+        "T17",
+        "T18",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [
+        "TX-may-tinh",
+        "TX-phau-thuat"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R17.2",
+      "muc": "R17",
+      "tieu_de_muc": "Bionics, đột biến, phép và máy tính",
+      "noi_dung": "mutation có nhóm/điều kiện/trạng thái/chi phí, dùng/tắt/đổi phím và phản hồi; helper gán phím đã có không được tính là adapter toàn màn.",
+      "phu_thuoc": [
+        "R16"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T16",
+        "T17",
+        "T18",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [
+        "TX-may-tinh",
+        "TX-phau-thuat"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R17.3",
+      "muc": "R17",
+      "tieu_de_muc": "Bionics, đột biến, phép và máy tính",
+      "noi_dung": "phép/khả năng có level/cost/tầm/yêu cầu/chọn ô hoặc mục tiêu/AOE, học/chuẩn bị/dùng và kết quả; dùng bộ chọn R11, không làm lộ nội dung chưa được cấp.",
+      "phu_thuoc": [
+        "R16"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T16",
+        "T17",
+        "T18",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [
+        "TX-may-tinh",
+        "TX-phau-thuat"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R17.4",
+      "muc": "R17",
+      "tieu_de_muc": "Bionics, đột biến, phép và máy tính",
+      "noi_dung": "máy tính trong game có màn lựa chọn/văn bản/trạng thái và các nhánh YESNOQUIT/phím thô, nhập/xác nhận/hủy; truy vấn không tự chạy lệnh máy tính.",
+      "phu_thuoc": [
+        "R16"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [
+        "T16",
+        "T17",
+        "T18",
+        "T40",
+        "T41",
+        "T42",
+        "T52"
+      ],
+      "test_bo_sung": [
+        "TX-may-tinh",
+        "TX-phau-thuat"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R18.1",
+      "muc": "R18",
+      "tieu_de_muc": "Minigame và màn điều khiển riêng",
+      "noi_dung": "mỗi trò có luật nghe được, trạng thái, bàn chơi/con trỏ, phím ngữ nghĩa, khởi động lại/hủy/kết quả; scope riêng không nhận cử chỉ thế giới.",
+      "phu_thuoc": [
+        "R17"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-kitten",
+        "TX-minigame-lightson",
+        "TX-minigame-minesweeper",
+        "TX-minigame-snake",
+        "TX-minigame-sokoban"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Ca 5 tro hien dien (kitten, lightson, minesweeper, snake, sokoban) deu co screen_scope rieng gan dung input_context cua tro; scope khong set swipe_movement_allowed nen khong nhan cu chi the gioi. Moi tro co tai lieu luat, trang thai/con tro, khoi dong lai/huy qua lenh goc, ket qua qua popup/log goc."
+    },
+    {
+      "id": "R18.2",
+      "muc": "R18",
+      "tieu_de_muc": "Minigame và màn điều khiển riêng",
+      "noi_dung": "Minesweeper/Lights On xuất ô/trạng thái/láng giềng hợp lệ; chỉ đọc số đã lộ/cờ và công tắc được biết, không lộ mìn hoặc lời giải.",
+      "phu_thuoc": [
+        "R17"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-kitten",
+        "TX-minigame-lightson",
+        "TX-minigame-minesweeper",
+        "TX-minigame-snake",
+        "TX-minigame-sokoban"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Minesweeper: cong tri thuc nam mot cho trong cell_value_text — chi o seen moi doc so that, o flag/unknown chi \"Flagged\"/\"Covered\"; chi khi boom (engine da lo toan ban) moi cong bo \"Mine\". Lights On khong co thong tin an, cong bo toan ban."
+    },
+    {
+      "id": "R18.3",
+      "muc": "R18",
+      "tieu_de_muc": "Minigame và màn điều khiển riêng",
+      "noi_dung": "Sokoban/Kitten mô tả vị trí/vật cản/vật thể và thao tác theo luật, không dùng giả định “mọi vật trên sàn đều chặn đường”; chạm duyệt không đi nhân vật.",
+      "phu_thuoc": [
+        "R17"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-kitten",
+        "TX-minigame-lightson",
+        "TX-minigame-minesweeper",
+        "TX-minigame-snake",
+        "TX-minigame-sokoban"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Sokoban: node nguoi choi + tung kien (vi tri, tren dich hay chua, 4 o ke) va tai lieu ban/dich; doc mLevel chi bang find, khong operator[]. Kitten: 21 vat cong bo cung mot khuon (ky tu + ten mau + vi tri), danh so theo thu tu quet ban, node chi focus — khong lo kitten, khong tu di toi."
+    },
+    {
+      "id": "R18.4",
+      "muc": "R18",
+      "tieu_de_muc": "Minigame và màn điều khiển riêng",
+      "noi_dung": "Snake/trò realtime có chính sách đọc/cue và điều khiển đáp ứng thời gian; không tự làm chậm hoặc đổi luật mà không công bố. Nếu chưa chơi được thì mục này còn mở, không gọi là hoàn thiện.",
+      "phu_thuoc": [
+        "R17"
+      ],
+      "cong": [
+        "G6"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [
+        "TX-minigame-kitten",
+        "TX-minigame-lightson",
+        "TX-minigame-minesweeper",
+        "TX-minigame-snake",
+        "TX-minigame-sokoban"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Snake: chinh sach thoi gian THUC cong khai — khi bo doc bat, vong chinh dung handle_input() khong timeout (ran cho lenh huong tung buoc) thay cho handle_input(iGameSpeed); luat ran/diem/tang truong khong doi; cau chinh sach nam trong summary moi snapshot va tai lieu luat. Focus tren node huong/qua tra nullopt (khong inject action) nen duyet node khong lam ran buoc. Trang thai: da viet theo chinh sach nay; nghiem thu choi that TX-minigame-snake o giai doan 2/3 quyet dinh giu hay mo lai."
+    },
+    {
+      "id": "R19.1",
+      "muc": "R19",
+      "tieu_de_muc": "Kiến thức, trợ giúp và mọi cấu hình còn lại",
+      "noi_dung": "kỹ năng/proficiency/sách/công thức đã học, tiến độ và điều kiện theo UI; chuyển biểu đồ/thanh/màu thành thuộc tính nghe được, không suy kiến thức ẩn.",
+      "phu_thuoc": [
+        "R18"
+      ],
+      "cong": [
+        "G6",
+        "G8"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T38",
+        "T59",
+        "T62 và bài riêng từng trang"
+      ],
+      "test_bo_sung": [
+        "TX-rieng-tung-trang (bài riêng từng trang cấu hình/trợ giúp, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R19.2",
+      "muc": "R19",
+      "tieu_de_muc": "Kiến thức, trợ giúp và mọi cấu hình còn lại",
+      "noi_dung": "trợ giúp tìm theo chủ đề/lệnh, giải thích điều khiển và đường quay lại; phần screen_reader cũ của help được rà lại với bộ đọc nội bộ, không mặc định tương đương.",
+      "phu_thuoc": [
+        "R18"
+      ],
+      "cong": [
+        "G6",
+        "G8"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T38",
+        "T59",
+        "T62 và bài riêng từng trang"
+      ],
+      "test_bo_sung": [
+        "TX-rieng-tung-trang (bài riêng từng trang cấu hình/trợ giúp, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R19.3",
+      "muc": "R19",
+      "tieu_de_muc": "Kiến thức, trợ giúp và mọi cấu hình còn lại",
+      "noi_dung": "keybinding/shortcut có danh mục, gán/xóa/va chạm/mặc định/lưu/hủy, hoạt động cả khi không có phím cứng; giữ helper chọn ký tự đã có.",
+      "phu_thuoc": [
+        "R18"
+      ],
+      "cong": [
+        "G6",
+        "G8"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T38",
+        "T59",
+        "T62 và bài riêng từng trang"
+      ],
+      "test_bo_sung": [
+        "TX-rieng-tung-trang (bài riêng từng trang cấu hình/trợ giúp, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R19.4",
+      "muc": "R19",
+      "tieu_de_muc": "Kiến thức, trợ giúp và mọi cấu hình còn lại",
+      "noi_dung": "hoàn thiện options Android/game, panels/color/layout và mọi tab điều kiện, giá trị/miền/mô tả/draft/apply/cancel/reset; màn xuất hiện do mod hoặc cấu hình vẫn được kiểm kê.",
+      "phu_thuoc": [
+        "R18"
+      ],
+      "cong": [
+        "G6",
+        "G8"
+      ],
+      "test_ids": [
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T38",
+        "T59",
+        "T62 và bài riêng từng trang"
+      ],
+      "test_bo_sung": [
+        "TX-rieng-tung-trang (bài riêng từng trang cấu hình/trợ giúp, định danh ở R22)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": ""
+    },
+    {
+      "id": "R20.1",
+      "muc": "R20",
+      "tieu_de_muc": "Lưu, phục hồi, vòng đời và kết thúc",
+      "noi_dung": "nhiều world/nhân vật/save, tên/thời điểm/chi tiết đúng; lưu/tải/xóa/xác nhận/lỗi bản lưu, không tự ghi đè khi xử lý lỗi và không giữ tri thức từ nhân vật cũ.",
+      "phu_thuoc": [
+        "R19"
+      ],
+      "cong": [
+        "G7"
+      ],
+      "test_ids": [
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: chi tiet save (world/thoi luong choi/Last saved) trong danh sach tai; xoa tung save don hai buoc (LOAD_DELETE_CANCEL + query_yn) khong xoa achievements/memorial; loi tai popup co phuc hoi, khong ghi de/xoa; luu/quicksave that bai het im lang. Ro tri thuc khi load kiem chung da du qua replace_game_session."
+    },
+    {
+      "id": "R20.2",
+      "muc": "R20",
+      "tieu_de_muc": "Lưu, phục hồi, vòng đời và kết thúc",
+      "noi_dung": "backup/export/import/restore qua DocumentsProvider/file picker, quyền truy cập, tên trùng, thiếu dung lượng, staging và lỗi; chuyển quyền đọc hệ thống có chỉ dẫn và đường trở về.",
+      "phu_thuoc": [
+        "R19"
+      ],
+      "cong": [
+        "G7"
+      ],
+      "test_ids": [
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: ReaderBackupArchive (staging + manifest kiem chung so tep/byte + journal swap/rollback nhu R06, chan cay ngoai backup) + UI ReaderSetupActivity voi huong dan noi truoc picker SAF hai buoc, restore xac nhan rieng khong mac dinh de. CDDADocumentsProvider giu nguyen. Gioi han: khong JNI dong bang ghi engine - diem mo giai doan 2."
+    },
+    {
+      "id": "R20.3",
+      "muc": "R20",
+      "tieu_de_muc": "Lưu, phục hồi, vòng đời và kết thúc",
+      "noi_dung": "process death/relaunch, Activity recreate/khóa/cuộc gọi/mất audio focus/xoay, cập nhật APK giữ save/config; không khôi phục lệnh hoặc xác nhận đang chờ từ phiên cũ.",
+      "phu_thuoc": [
+        "R19"
+      ],
+      "cong": [
+        "G7"
+      ],
+      "test_ids": [
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Kiem chung phia Java: closed latch + presentationEpoch + onPause xoa trang thai cho (R03) da du; va lo hong ReaderSpeechQueue.stop() giu last utterance/context -> them clearForLifecycle() noi vao onPause/mat focus. Xac nhan giong/save khong song qua recreate (setSaveEnabled(false), savedInstanceState khong chua lenh). APK upgrade giu save: swap cai dat R06 chi cham data/gfx/lang."
+    },
+    {
+      "id": "R20.4",
+      "muc": "R20",
+      "tieu_de_muc": "Lưu, phục hồi, vòng đời và kết thúc",
+      "noi_dung": "giữ adapter deathcam/nhật ký/điểm đã có, đóng chấp nhận tử vong/nghỉ hưu/lời cuối/xuất/xóa/xử lý thế giới/trở menu; mọi màn hậu game có hủy hoặc bước tiếp hợp lệ.",
+      "phu_thuoc": [
+        "R19"
+      ],
+      "cong": [
+        "G7"
+      ],
+      "test_ids": [
+        "T28",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet: scope SCROLLABLE_TEXT (epilogue sau chet, truoc day ket hoan toan) + scope MESSAGE_LOG muc chong ket; announce graveyard/memorial va popup ket qua xoa/reset world sau ket thuc (do_turn). Deathcam/end_screen loi cuoi/diary/scores kiem chung da du, giu nguyen. Nghi huu: khong co luong rieng - tuong duong that la lenh Abandon character (SUICIDE) hai query_yn vao cung chuoi hau game."
+    },
+    {
+      "id": "R21.1",
+      "muc": "R21",
+      "tieu_de_muc": "Lời đọc, âm hiệu, tiếng Việt và chẩn đoán",
+      "noi_dung": "rà ưu tiên cảnh báo/focus/kết quả, coalescing/cooldown/hết hạn, bookmark/đọc tiếp và giới hạn queue; không tự đọc lại tài liệu màn cũ sau cảnh báo hoặc resume.",
+      "phu_thuoc": [
+        "R20"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [
+        "T16",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T38",
+        "T54",
+        "T55",
+        "T56",
+        "T60",
+        "T61",
+        "T62",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R21): ReaderSpeechQueue — uu tien URGENT/Thong tin/Focus giu nguyen; them gop cau trung (cung noi dung dang doc/dang cho o muc >=, hoac da bat dau trong cua so 4 giay; URGENT khong bi cua so chan), TTL theo loai (thong bao game thuong 8 giay, khan 15 giay, focus 2 giay, man hinh 15 giay), gioi han MAX_PENDING=8 voi dem day-hang; ReaderDocumentReader sua 2 loi (sau clear() khong doc lai duoc cung tai lieu; noi dung doi duoi cung khoa van doc ban cu) — vi tri doc duoc giu qua canh bao va resume, khong doc lai tu dau."
+    },
+    {
+      "id": "R21.2",
+      "muc": "R21",
+      "tieu_de_muc": "Lời đọc, âm hiệu, tiếng Việt và chẩn đoán",
+      "noi_dung": "audio focus, loa/mono/tai nghe/Bluetooth, cue/rung tùy chọn có lời tương đương, âm lượng/hướng/lỗi phát; cue cũng tuân quyền biết, không che cảnh báo bằng nhạc.",
+      "phu_thuoc": [
+        "R20"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [
+        "T16",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T38",
+        "T54",
+        "T55",
+        "T56",
+        "T60",
+        "T61",
+        "T62",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R21): kenh cue C++ a11y::android::cue (danh sach trang 4 ten) -> CataclysmDDA.onAccessibilityCue -> GameReaderController.onGameCue -> ReaderCuePlayer (SoundPool + Vibrator, cooldown tung cue, audio focus tam thoi MAY_DUCK chi quanh cue; TTS focus van thuoc tien trinh engine TTS nhu R20 da neu). Diem kich: outcome blocked/safe_mode_blocked, announce khan cap (danger), activity ACT_PICKUP xong + activity dai >= 1000 moves (player_activity do_turn), bien nhan tu choi (Java). Mac dinh TAT ca hai kenh, bat rieng trong ReaderSetupActivity kem phat mau; loi phat -> noi bang loi mot lan/phien (a11yCueUnavailable) + dem chan doan. Moi cue trung khop mot tin hieu da noi bang loi tai cung diem engine nen khong lo them thong tin."
+    },
+    {
+      "id": "R21.3",
+      "muc": "R21",
+      "tieu_de_muc": "Lời đọc, âm hiệu, tiếng Việt và chẩn đoán",
+      "noi_dung": "hoàn thiện chuỗi Việt/Anh, đơn vị/hướng/số nhiều/dấu và thuật ngữ, fallback tên gốc/đánh vần; thêm nguồn vào quy trình đóng gói dịch mà chưa chạy build trong giai đoạn này.",
+      "phu_thuoc": [
+        "R20"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [
+        "T16",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T38",
+        "T54",
+        "T55",
+        "T56",
+        "T60",
+        "T61",
+        "T62",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R21): 487 msgid bo sung vao lang/po/accessibility/vi.po (485 chuoi R07-R20 thieu ca hai catalog + 2 chuoi lich su thong bao moi cua R21.4); overlay gio co 928 msgid khong ke header. Thong nhat thuat ngu (xe, phep; bang thuat ngu trong tai lieu R21 muc 3); ten mau ghi chu da co san dich trong catalog chinh, 4 chuoi khung R13 da vao overlay; fallback: ten chua dich van noi nguyen van + dieu khien doc 'Danh van muc hien tai' (ReaderDocumentReader.spellText, grapheme tieng Viet). Dong goi: lang/Makefile + compile_mo.py msgcat --use-first (overlay thang); caveat tien quyet CMake ghi trong tai lieu R21."
+    },
+    {
+      "id": "R21.4",
+      "muc": "R21",
+      "tieu_de_muc": "Lời đọc, âm hiệu, tiếng Việt và chẩn đoán",
+      "noi_dung": "log chẩn đoán có giới hạn và không thu save cá nhân mặc định, context/request/status/queue/độ trễ, xuất báo cáo nghe được; chuẩn bị đo hiệu năng và chế độ ít hình, chỉ tối ưu sâu sau phép đo ở giai đoạn 2.",
+      "phu_thuoc": [
+        "R20"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [
+        "T16",
+        "T22",
+        "T23",
+        "T24",
+        "T30",
+        "T38",
+        "T54",
+        "T55",
+        "T56",
+        "T60",
+        "T61",
+        "T62",
+        "T63"
+      ],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Da viet (R21): ReaderDiagnostics (singleton theo tien trinh, vong 200 su kien ma noi bo + bo dem, bao cao doc toi da 30 su kien; KHONG chua noi dung cau doc/ten save) + thong ke hang loi va do tre enqueue->start do tai su kien STARTED (chi do, khong tuyen bo nguong); bao cao doc duoc tu ReaderSetupActivity. Lich su thong bao day du: messages.cpp reader_update — moi thong bao mot doan, gioi han cong bo 500 moi nhat kem so dem trong tom tat, loc giu nguyen cua dialog; tim kiem qua tim-kiem tai lieu. Chuan bi do hieu nang/che do it hinh: danh sach tuy chon do hoa chi-hien-thi trong tai lieu R21 muc 4 — khong doi mac dinh nao."
+    },
+    {
+      "id": "R22.1",
+      "muc": "R22",
+      "tieu_de_muc": "Chuẩn bị fixture, bài kiểm thử và tài liệu bàn giao",
+      "noi_dung": "viết fixture/scenario/save tái tạo được cho tri thức giống nhau-bí mật khác nhau, cây túi, kho, vết thương, chiến đấu, xe, vùng, trại, ability và minigame; không dùng save cá nhân làm điều kiện.",
+      "phu_thuoc": [
+        "R21"
+      ],
+      "cong": [
+        "G0",
+        "G8"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48",
+        "T49",
+        "T50",
+        "T51",
+        "T52",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T59",
+        "T60",
+        "T61",
+        "T62",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-* (toàn bộ bài bổ sung TX định danh trong JOURNEY-LEDGER)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết fixture F-01..F-15: builder C++ trong tests/a11y_fixtures.h/.cpp (F-01..F-09, F-15 phần trong tiến trình) và đặc tả bàn xác định cho minigame F-10..F-14 trong tools/accessibility/fixtures/FIXTURES.vi.md. Chưa biên dịch, chưa chạy."
+    },
+    {
+      "id": "R22.2",
+      "muc": "R22",
+      "tieu_de_muc": "Chuẩn bị fixture, bài kiểm thử và tài liệu bàn giao",
+      "noi_dung": "hoàn thiện bài có giá trị cho schema/Unicode/token/input/quyền biết, tích hợp gameplay và lỗi TTS/vòng đời; ghi oracle trạng thái game, không chỉ assertion tên hàm hoặc chuỗi nguồn.",
+      "phu_thuoc": [
+        "R21"
+      ],
+      "cong": [
+        "G0",
+        "G8"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48",
+        "T49",
+        "T50",
+        "T51",
+        "T52",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T59",
+        "T60",
+        "T61",
+        "T62",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-* (toàn bộ bài bổ sung TX định danh trong JOURNEY-LEDGER)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết bài host: tests/a11y_schema_test.cpp (hợp đồng R02), tests/a11y_unicode_test.cpp (UTF-8 Việt qua snapshot_json), tests/a11y_knowledge_test.cpp (ranh giới tri thức F-01, thuần khiết truy vấn, cô lập vòng đời F-15); oracle là trạng thái/hành vi, không assertion tên hàm. Chưa chạy."
+    },
+    {
+      "id": "R22.3",
+      "muc": "R22",
+      "tieu_de_muc": "Chuẩn bị fixture, bài kiểm thử và tài liệu bàn giao",
+      "noi_dung": "mở rộng T01–T64 bằng bài riêng cho form/bảng/cây, engine/voice/cứu hộ, smart controller/Study Zone/quy tắc, máy tính, từng minigame và trại; gán fixture và loại máy/cấu hình cho từng bài.",
+      "phu_thuoc": [
+        "R21"
+      ],
+      "cong": [
+        "G0",
+        "G8"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48",
+        "T49",
+        "T50",
+        "T51",
+        "T52",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T59",
+        "T60",
+        "T61",
+        "T62",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-* (toàn bộ bài bổ sung TX định danh trong JOURNEY-LEDGER)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "TESTING.vi.md viết lại thành danh mục đầy đủ: T01–T64 đủ tiền điều kiện/fixture/bước/oracle/môi trường + 32 bài TX-01..TX-32 (gồm TX-20 Snake theo lượt, TX-21 điểm đứt cast_spell) + bảng ánh xạ TX với sổ. Tất cả chưa chạy, chưa có PASS mới."
+    },
+    {
+      "id": "R22.4",
+      "muc": "R22",
+      "tieu_de_muc": "Chuẩn bị fixture, bài kiểm thử và tài liệu bàn giao",
+      "noi_dung": "viết hướng dẫn nghe từ người mới, lệnh/cử chỉ/phục hồi/backup, mẫu báo lỗi và hồ sơ candidate/checksum/signing/upgrade; đánh dấu tài liệu APK thử giọng cũ là lịch sử để không lẫn mã mới.",
+      "phu_thuoc": [
+        "R21"
+      ],
+      "cong": [
+        "G0",
+        "G8"
+      ],
+      "test_ids": [
+        "T01",
+        "T02",
+        "T03",
+        "T04",
+        "T05",
+        "T06",
+        "T07",
+        "T08",
+        "T09",
+        "T10",
+        "T11",
+        "T12",
+        "T13",
+        "T14",
+        "T15",
+        "T16",
+        "T17",
+        "T18",
+        "T19",
+        "T20",
+        "T21",
+        "T22",
+        "T23",
+        "T24",
+        "T25",
+        "T26",
+        "T27",
+        "T28",
+        "T29",
+        "T30",
+        "T31",
+        "T32",
+        "T33",
+        "T34",
+        "T35",
+        "T36",
+        "T37",
+        "T38",
+        "T39",
+        "T40",
+        "T41",
+        "T42",
+        "T43",
+        "T44",
+        "T45",
+        "T46",
+        "T47",
+        "T48",
+        "T49",
+        "T50",
+        "T51",
+        "T52",
+        "T53",
+        "T54",
+        "T55",
+        "T56",
+        "T57",
+        "T58",
+        "T59",
+        "T60",
+        "T61",
+        "T62",
+        "T63",
+        "T64"
+      ],
+      "test_bo_sung": [
+        "TX-* (toàn bộ bài bổ sung TX định danh trong JOURNEY-LEDGER)"
+      ],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết USER-GUIDE.vi.md (hướng dẫn nghe), BUG-REPORT-TEMPLATE.vi.md, CANDIDATE-RECORD.vi.md (chỉ quy trình ghim/checksum/ký/nâng cấp, không số liệu); STATUS.md đã đánh dấu 4 đoạn lịch sử APK thử giọng đời đầu; nội dung thử giọng cũ giữ nguyên văn ở mục lịch sử cuối TESTING.vi.md."
+    },
+    {
+      "id": "R23.1",
+      "muc": "R23",
+      "tieu_de_muc": "Đóng giai đoạn viết mã và ghim ứng viên",
+      "noi_dung": "đối chiếu lại mọi hàng ma trận với đủ đường tìm/dữ liệu/tham số/xác nhận/hủy/kết quả/quyền biết; cập nhật file/hàm/commit của từng nhánh và mọi phần chưa viết.",
+      "phu_thuoc": [
+        "R00",
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã đối chiếu từng dòng sổ hành trình tại commit ứng viên bc4f807c theo bản đầy đủ của kiểm toán độc lập: 4 dòng cũ lật/sửa theo bằng chứng (chon-engine-va-voice, smart-controller, sao-chep-the-gioi — định nghĩa lại theo cơ chế Copy World Settings thật qua WORLD::COPY_WORLD, doc-sach-va-hoc — lật theo chuẩn adapter dùng chung), sửa trường adapter trung-tam-lenh-day-du, làm rõ doi-ten-the-gioi; JOURNEY-LEDGER.vi.md sinh lại từ JSON (115 dòng khớp tuyệt đối, thêm cột Fixture). Số chốt từ dữ kiện: 110 đã viết, chờ kiểm thử / 5 chưa viết. Đính chính: bằng chứng sao-chep ban đầu trích sai tệp không tồn tại (world_generator_ui.cpp), đã thay bằng main_menu.cpp/worldfactory.cpp đã kiểm chứng trực tiếp."
+    },
+    {
+      "id": "R23.2",
+      "muc": "R23",
+      "tieu_de_muc": "Đóng giai đoạn viết mã và ghim ứng viên",
+      "noi_dung": "loại TODO/stub/fallback chặn dùng trong phạm vi; rà đường input chưa phân loại, nguồn mới từ mod/config và các xung đột còn treo; mở lại mục liên quan nếu còn thiếu.",
+      "phu_thuoc": [
+        "R00",
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Quét TODO/stub/fallback chặn dùng trong phạm vi trợ năng (313 hit trên 104 tệp đã chạm, phân loại đầy đủ): 0 điểm chặn dùng — các hit thuộc phạm vi đều là ghi chú chất lượng trình bày hoặc cơ chế cố ý (fallback biên thông tin, kênh unsupported cho snapshot sai cấu trúc). Rà lại phân loại điểm đầu vào tại ứng viên: chưa phân loại về thực chất = 0; các register_action cộng thêm trong R00–R22 là action nội bộ trong context đã phân loại, cộng một context mới COMPUTER_CONTINUE (R17, screen_scope riêng lớp A) đã bổ sung vào danh sách literal trong sổ."
+    },
+    {
+      "id": "R23.3",
+      "muc": "R23",
+      "tieu_de_muc": "Đóng giai đoạn viết mã và ghim ứng viên",
+      "noi_dung": "ghim commit code/nội dung/manifest, lưu bản sao thay đổi, danh sách bài/fixture và chỗ cần chứng minh runtime; kiểm đủ file/resource/build-list bằng đọc nguồn, không gọi là biên dịch thành công.",
+      "phu_thuoc": [
+        "R00",
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã ghim ứng viên bc4f807c853e16909199578c4d68218ae50415b4 trong PHASE1-CANDIDATE-PIN.vi.md: manifest đối chiếu SCOPE-MANIFEST, kiểm danh sách nguồn/build bằng đọc nguồn — mọi hệ build (MSVC, CMake desktop, CMake JNI Android, Makefile, Gradle) đều nạp bằng wildcard/glob theo thư mục nên đủ mọi tệp nguồn mới, không cần sửa danh sách nào; Java nạp theo sourceSets đã cấu hình theo thư mục, không cần khai manifest mới. Danh sách bài T01–T64 + TX và fixture F-01..F-15 sẵn sàng. Đính chính cùng đợt R23: kết luận ban đầu rằng MSVC thiếu tệp là sai (dựa trên tên literal) — các project MSVC dùng wildcard theo chữ cái đầu nên a11y_outcome và mọi a11y_* đều đã được nạp; hồ sơ ghim và báo cáo đóng đã sửa theo bằng chứng trực tiếp. Không gọi đối chiếu nguồn là biên dịch thành công."
+    },
+    {
+      "id": "R23.4",
+      "muc": "R23",
+      "tieu_de_muc": "Đóng giai đoạn viết mã và ghim ứng viên",
+      "noi_dung": "bàn giao báo cáo kết thúc giai đoạn 1 với trạng thái đã viết/chờ kiểm thử cho từng hành trình và mọi ràng buộc còn tồn tại; sau đó mới bắt đầu giai đoạn 2 theo thứ tự ở phần 6.",
+      "phu_thuoc": [
+        "R00",
+        "R01",
+        "R02",
+        "R03",
+        "R04",
+        "R05",
+        "R06",
+        "R07",
+        "R08",
+        "R09",
+        "R10",
+        "R11",
+        "R12",
+        "R13",
+        "R14",
+        "R15",
+        "R16",
+        "R17",
+        "R18",
+        "R19",
+        "R20",
+        "R21",
+        "R22"
+      ],
+      "cong": [
+        "G8"
+      ],
+      "test_ids": [],
+      "test_bo_sung": [],
+      "trang_thai": "da-viet-cho-kiem-thu",
+      "ghi_chu": "Đã viết PHASE1-CLOSING-REPORT.vi.md: trạng thái theo 30 nhóm bề mặt, 6 hành trình chưa viết kèm lý do, toàn bộ ràng buộc còn tồn tại (cast_spell đứt ở cây nền, bản local thứ ba chưa có trong máy nên R00.1 còn điều kiện mở, Snake theo lượt chờ nghiệm thu, âm cứu hộ giọng eSpeak chờ thay giọng tự nhiên, khóa ký/dải máy/danh sách mod phát hành chưa ghim, danh sách MSVC, caveat .mo đường CMake, trần snapshot, các điểm mở theo bề mặt), đối chiếu điều kiện không-qua của kế hoạch và thứ tự bắt đầu giai đoạn 2 theo mục 6."
+    }
+  ]
+}

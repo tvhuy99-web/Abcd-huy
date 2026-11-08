@@ -6,10 +6,14 @@
 #include <deque>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <string>
 #include <type_traits>
 #include <unordered_set>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cached_options.h"
 #include "calendar.h"
 #include "catacharset.h"
@@ -171,22 +175,23 @@ class messages_impl
             return true;
         }
 
-        void add_msg_string( std::string &&msg ) {
-            add_msg_string( std::move( msg ), m_neutral, gmf_none );
+        std::optional<game_message> add_msg_string( std::string &&msg ) {
+            return add_msg_string( std::move( msg ), m_neutral, gmf_none );
         }
 
-        void add_msg_string( std::string &&msg, const game_message_params &params ) {
-            add_msg_string( std::move( msg ), params.type, params.flags );
+        std::optional<game_message> add_msg_string( std::string &&msg,
+                const game_message_params &params ) {
+            return add_msg_string( std::move( msg ), params.type, params.flags );
         }
 
-        void add_msg_string( std::string &&msg, game_message_type const type,
-                             const game_message_flags flags ) {
+        std::optional<game_message> add_msg_string( std::string &&msg,
+                game_message_type const type, const game_message_flags flags ) {
             if( msg.empty() || !active ) {
-                return;
+                return std::nullopt;
             }
 
             if( type == m_debug && !debug_mode ) {
-                return;
+                return std::nullopt;
             }
 
             modify_msg_with_exclamations( msg, type );
@@ -197,7 +202,7 @@ class messages_impl
             hide_message_in_cooldown( m );
 
             if( coalesce_messages( m ) ) {
-                return;
+                return std::nullopt;
             }
 
             unsigned int message_limit = get_option<int>( "MESSAGE_LIMIT" );
@@ -206,6 +211,10 @@ class messages_impl
             }
 
             messages.emplace_back( m );
+            if( m.cooldown_hidden ) {
+                return std::nullopt;
+            }
+            return m;
         }
 
         /** Check if the current message needs to be prevented (hidden) or not from being displayed in the side bar.
@@ -423,6 +432,16 @@ class messages_impl
 // Messages object.
 messages_impl player_messages;
 
+void announce_message( const std::optional<game_message> &message )
+{
+    if( !message || message->type == m_debug ) {
+        return;
+    }
+    const bool urgent = message->type == m_bad || message->type == m_warning ||
+                        message->type == m_critical;
+    a11y::announce_game_message( remove_color_tags( message->get_with_count() ), urgent );
+}
+
 bool message_exceeds_ttl( const game_message &message )
 {
     return message_ttl > 0 &&
@@ -463,12 +482,12 @@ void Messages::deserialize( const JsonObject &json )
 
 void Messages::add_msg( std::string msg )
 {
-    player_messages.add_msg_string( std::move( msg ) );
+    announce_message( player_messages.add_msg_string( std::move( msg ) ) );
 }
 
 void Messages::add_msg( const game_message_params &params, std::string msg )
 {
-    player_messages.add_msg_string( std::move( msg ), params );
+    announce_message( player_messages.add_msg_string( std::move( msg ), params ) );
 }
 
 void Messages::clear_messages()
@@ -533,6 +552,7 @@ class dialog
         void init( ui_adaptor &ui );
         void show();
         void input();
+        void reader_update( a11y::screen_scope &reader );
         void do_filter( const std::string &filter_str );
         static std::vector<std::string> filter_help_text( int width );
 
@@ -866,6 +886,83 @@ void Messages::dialog::input()
     }
 }
 
+void Messages::dialog::reader_update( a11y::screen_scope &reader )
+{
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Message log" ) );
+    // The messages the dialog currently displays, in its own display
+    // order and under its own filter: folded_filtered holds one entry
+    // per folded line, so keep the first line of each message and read
+    // the message itself (with the same relative time the dialog
+    // prints), never a folded fragment.
+    std::vector<std::string> entries;
+    std::unordered_set<size_t> seen;
+    for( const size_t folded_ind : folded_filtered ) {
+        const size_t msg_ind = folded_all[folded_ind].first;
+        if( !seen.insert( msg_ind ).second ) {
+            continue;
+        }
+        const game_message &msg = player_messages.history( static_cast<int>( msg_ind ) );
+        const std::string time_str = to_string_clipped( calendar::turn - msg.timestamp_in_turns,
+                                     clipped_align::right );
+        entries.push_back( time_str + " " + msg.get_with_count() );
+    }
+    // Publish at most the newest 500 of the filtered sequence (R21.4).
+    // The engine history itself is already bounded by the MESSAGE_LIMIT
+    // option (default 255), so this only bites for very large custom
+    // limits; the summary always speaks both counts and the filter is
+    // the way to narrow further. "Newest" is the end of the display
+    // sequence when the log grows downward (log_from_top) and its
+    // start otherwise.
+    static constexpr size_t max_published_messages = 500;
+    const size_t total = entries.size();
+    if( total > max_published_messages ) {
+        if( log_from_top ) {
+            entries.erase( entries.begin(),
+                           entries.end() - static_cast<std::ptrdiff_t>( max_published_messages ) );
+        } else {
+            entries.resize( max_published_messages );
+        }
+    }
+    std::string summary;
+    if( total > max_published_messages ) {
+        summary = string_format(
+                      _( "Showing the newest %1$d of %2$d messages. Older messages are not "
+                         "included; use the filter to narrow the list." ),
+                      static_cast<int>( entries.size() ), static_cast<int>( total ) );
+    } else {
+        summary = string_format( _( "%d messages." ), static_cast<int>( total ) );
+    }
+    if( !filter_str.empty() ) {
+        summary = string_format( _( "Filter: %s" ), remove_color_tags( filter_str ) )
+                  + " " + summary;
+    }
+    snapshot.summary = summary;
+    // One paragraph per message (blank-line separated) so the document
+    // reader navigates message by message and keeps its place across
+    // redraws; a single-newline join would collapse the whole history
+    // into one paragraph.
+    std::string text;
+    for( const std::string &entry : entries ) {
+        if( !text.empty() ) {
+            text += "\n\n";
+        }
+        text += entry;
+    }
+    if( text.empty() ) {
+        a11y::semantic_node empty;
+        empty.id = "messages:empty";
+        empty.role = "status";
+        empty.label = _( "No messages to show." );
+        empty.actions = { "focus" };
+        snapshot.nodes.push_back( std::move( empty ) );
+        snapshot.focus = "messages:empty";
+    } else {
+        a11y::append_document( snapshot, "messages:history", _( "Message history" ), text );
+        snapshot.focus = "messages:history";
+    }
+    reader.update( std::move( snapshot ) );
+}
+
 void Messages::dialog::run()
 {
     ui_adaptor ui;
@@ -877,8 +974,23 @@ void Messages::dialog::run()
         show();
     } );
 
+    // R20.4: this dialog is shown as part of the death sequence (and
+    // from the message-history command) but had no reader adapter, so
+    // the reader could neither read the log nor leave the screen.
+    // Publish it like other text screens: the log as a document plus
+    // the dialog's own commands (scroll/filter/quit) as command nodes.
+    // Filtering itself still goes through the existing filter popup
+    // and its own adapter.
+    a11y::screen_scope reader( &ctxt, "MESSAGE_LOG",
+    [this]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     while( !errored && !canceled ) {
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader_update( reader );
+        }
         input();
     }
 }

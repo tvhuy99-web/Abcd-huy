@@ -10,14 +10,15 @@ else ifneq ($(LANGUAGES),all)
 endif
 
 MO := $(patsubst %,$(MO_DIR)/%/LC_MESSAGES/cataclysm-dda.mo,$(PO))
+CATALOG_OVERLAYS := $(wildcard $(PO_DIR)/accessibility/*.po)
 
 all: $(MO)
 
-$(MO_DIR)/%/LC_MESSAGES/cataclysm-dda.mo: $(PO_DIR)/%.po
+$(MO_DIR)/%/LC_MESSAGES/cataclysm-dda.mo: $(PO_DIR)/%.po ../lang/compile_mo.py $(CATALOG_OVERLAYS)
 	mkdir -p $$(dirname $@)
-	msgfmt -f -o $@ $<
+	python3 ../lang/compile_mo.py $< $@
 
-$(MO_DIR)/%/LC_MESSAGES/cataclysm-dda.mo: $(PO_DIR)/%.po.gz ../lang/compile_mo.py
+$(MO_DIR)/%/LC_MESSAGES/cataclysm-dda.mo: $(PO_DIR)/%.po.gz ../lang/compile_mo.py $(CATALOG_OVERLAYS)
 	mkdir -p $$(dirname $@)
 	python3 ../lang/compile_mo.py $< $@
 

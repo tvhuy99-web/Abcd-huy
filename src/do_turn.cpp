@@ -17,6 +17,8 @@
 #include <vector>
 
 #include "action.h"
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_type.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -144,6 +146,15 @@ bool cleanup_at_end()
         g->write_memorial_file( g->stats().value_of( event_statistic_last_words )
                                 .get<cata_variant_type::string>() );
         get_memorial().clear();
+        if( a11y::enabled() ) {
+            // R20.4: exporting and removing the dead character's save is
+            // entirely automatic and was silent: the memorial file was
+            // written and the save moved to the graveyard folder with
+            // no spoken trace either happened.
+            a11y::announce_game_message(
+                _( "Your character's memorial file was written, and the character's save was moved to the graveyard folder." ),
+                false );
+        }
         std::vector<std::string> characters = g->list_active_saves();
         // remove current player from the active characters list, as they are dead
         std::vector<std::string>::iterator curchar = std::find( characters.begin(),
@@ -190,10 +201,21 @@ bool cleanup_at_end()
             }
 
             if( queryDelete || get_option<std::string>( "WORLD_END" ) == "delete" ) {
-                world_generator->delete_world( world_generator->active_world->world_name, true );
-
+                const std::string ended_world_name = world_generator->active_world->world_name;
+                world_generator->delete_world( ended_world_name, true );
+                if( a11y::enabled() ) {
+                    // R20.4: when the WORLD_END option deletes the world
+                    // automatically there was no spoken result at all;
+                    // name the outcome like the main-menu deletion does.
+                    popup( _( "World \"%s\" deleted." ), ended_world_name );
+                }
             } else if( queryReset || get_option<std::string>( "WORLD_END" ) == "reset" ) {
-                world_generator->delete_world( world_generator->active_world->world_name, false );
+                const std::string ended_world_name = world_generator->active_world->world_name;
+                world_generator->delete_world( ended_world_name, false );
+                if( a11y::enabled() ) {
+                    popup( _( "World \"%s\" reset. All of its saves were removed." ),
+                           ended_world_name );
+                }
             }
         } else if( get_option<std::string>( "WORLD_END" ) != "keep" ) {
             std::string tmpmessage;
@@ -231,9 +253,31 @@ bool cleanup_at_end()
 
 } // namespace turn_handler
 
+namespace
+{
+struct blocking_activity_reader_state {
+    std::unique_ptr<input_context> context;
+    std::unique_ptr<a11y::screen_scope> reader;
+};
+
+blocking_activity_reader_state &blocking_activity_reader()
+{
+    static blocking_activity_reader_state state;
+    return state;
+}
+} // namespace
+
+void close_blocking_activity_reader()
+{
+    blocking_activity_reader_state &state = blocking_activity_reader();
+    state.reader.reset();
+    state.context.reset();
+}
+
 void handle_key_blocking_activity()
 {
     if( test_mode ) {
+        close_blocking_activity_reader();
         return;
     }
     avatar &u = get_avatar();
@@ -241,12 +285,47 @@ void handle_key_blocking_activity()
             u.activity.id()->based_on() == based_on_type::NEITHER
             || u.activity.moves_left > 0 );
     if( has_unfinished_activity || u.has_destination() ) {
-        input_context ctxt = get_default_mode_input_context();
+        blocking_activity_reader_state &state = blocking_activity_reader();
+        if( !state.context ) {
+            state.context = std::make_unique<input_context>( get_default_mode_input_context() );
+        }
+        input_context &ctxt = *state.context;
+        if( a11y::enabled() ) {
+            if( !state.reader ) {
+                state.reader = std::make_unique<a11y::screen_scope>( &ctxt, "activity",
+                []( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+                    if( intent.action == "cancel" ) {
+                        const avatar &player = get_avatar();
+                        if( player.activity.is_interruptible_with_kb() || player.has_destination() ) {
+                            return "pause";
+                        }
+                    } else if( intent.action == "activate" ) {
+                        return intent.node;
+                    }
+                    return std::nullopt;
+                } );
+            }
+            state.reader->update( a11y::activity_snapshot( ctxt ) );
+        } else {
+            state.reader.reset();
+        }
         const std::string action = ctxt.handle_input( 0 );
         bool refresh = true;
         if( action == "pause" ) {
-            if( u.activity.is_interruptible_with_kb() ) {
-                g->cancel_activity_query( _( "Confirm:" ) );
+            if( u.activity.is_interruptible_with_kb() || u.has_destination() ) {
+                const bool canceled = g->cancel_activity_query( _( "Confirm:" ) );
+                if( canceled && a11y::enabled() ) {
+                    // Report the engine's actual result, not the request:
+                    // cancel_activity_query only returns true after it has
+                    // canceled the activity (and possibly resumed a backlog
+                    // one, which the next activity snapshot will describe).
+                    // Declining the query announces nothing here -- the
+                    // activity simply continues and its snapshot is
+                    // unchanged. This announcement is the completion of
+                    // the reader's separate cancel intent; merely stopping
+                    // speech never reaches this code path.
+                    a11y::announce_game_message( _( "The activity was canceled." ), false );
+                }
             }
         } else if( action == "zoom_in" ) {
             g->zoom_in();
@@ -258,7 +337,7 @@ void handle_key_blocking_activity()
             u.disp_info( true );
         } else if( action == "messages" ) {
             Messages::display_messages();
-        } else if( action == "DISPLAY_HELP" ) {
+        } else if( action == "help" || action == "DISPLAY_HELP" ) {
             help_window hw;
             hw.show();
         } else if( action != "HELP_KEYBINDINGS" ) {
@@ -269,6 +348,7 @@ void handle_key_blocking_activity()
             refresh_display();
         }
     } else {
+        close_blocking_activity_reader();
         refresh_display();
         inp_mngr.pump_events();
     }

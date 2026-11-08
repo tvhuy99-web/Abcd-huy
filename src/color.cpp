@@ -6,9 +6,12 @@
 #include <iterator>
 #include <map>
 #include <memory>
+#include <unordered_map>
 #include <utility>
 #include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_path.h"
 #include "cata_utility.h"
 #include "cursesdef.h"
@@ -871,12 +874,220 @@ void color_manager::show_gui()
     ctxt.register_action( "LOAD_TEMPLATE" );
     ctxt.register_action( "LOAD_BASE_COLORS" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+    ctxt.register_action( "A11Y_INTERNAL_COLOR_FOCUS" );
 
     std::map<std::string, color_struct> name_color_map;
 
     for( const auto &pr : name_map ) {
         name_color_map[pr.first] = color_array[pr.second];
     }
+
+    // Reader adapter (R19.4). The visual screen conveys each entry's
+    // custom replacement only by printing its name in that very color;
+    // the snapshot publishes the same working-copy data (name_color_map,
+    // the exact map the screen draws and edits) as words. Editing never
+    // uses a form field here: the replacement domain is every named
+    // color (well over the form contract's 128-choice limit), so an
+    // edit intent returns this screen's own CONFIRM / REMOVE_CUSTOM /
+    // LOAD_* actions and the original loop performs the change through
+    // its own uilist pickers, which carry their own reader adapters.
+    // Saving still happens only through the original exit path.
+    enum class reader_target_kind {
+        entry,
+        normal,
+        invert,
+        remove_normal,
+        remove_invert,
+        load_theme,
+        load_template,
+    };
+    struct reader_target {
+        reader_target_kind kind;
+        int line = 0;
+        int col = 1;
+    };
+    std::unordered_map<std::string, reader_target> reader_targets;
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "COLORS",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const auto target = reader_targets.find( intent.node );
+        if( target == reader_targets.end() ) {
+            return a11y::registered_intent( ctxt, intent );
+        }
+        const reader_target &selected = target->second;
+        if( intent.action == "focus" ) {
+            if( selected.kind != reader_target_kind::load_theme &&
+                selected.kind != reader_target_kind::load_template ) {
+                iCurrentLine = selected.line;
+                if( selected.kind == reader_target_kind::normal ||
+                    selected.kind == reader_target_kind::remove_normal ) {
+                    iCurrentCol = 1;
+                } else if( selected.kind == reader_target_kind::invert ||
+                           selected.kind == reader_target_kind::remove_invert ) {
+                    iCurrentCol = 2;
+                }
+            }
+            return std::string( "A11Y_INTERNAL_COLOR_FOCUS" );
+        }
+        if( intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        switch( selected.kind ) {
+            case reader_target_kind::load_theme:
+                return std::string( "LOAD_BASE_COLORS" );
+            case reader_target_kind::load_template:
+                return std::string( "LOAD_TEMPLATE" );
+            case reader_target_kind::entry:
+                iCurrentLine = selected.line;
+                return std::string( "CONFIRM" );
+            case reader_target_kind::normal:
+            case reader_target_kind::invert:
+                iCurrentLine = selected.line;
+                iCurrentCol = selected.col;
+                return std::string( "CONFIRM" );
+            case reader_target_kind::remove_normal:
+            case reader_target_kind::remove_invert:
+                iCurrentLine = selected.line;
+                iCurrentCol = selected.col;
+                return std::string( "REMOVE_CUSTOM" );
+        }
+        return std::nullopt;
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) {
+            return;
+        }
+        reader_targets.clear();
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Color manager" );
+        snapshot.summary = _( "Each entry names a game color, its custom normal replacement and its custom inverted replacement, or default when there is no custom replacement. Activate Normal or Invert to choose a replacement from the original list, or remove a custom replacement. Some color changes may require a restart. Changes are saved when you exit and confirm, as on the original screen." );
+        a11y::semantic_table colors_table;
+        colors_table.id = "colors:entries";
+        colors_table.columns = { { "name", _( "Color name" ), "" },
+                                 { "normal", _( "Normal" ), "" },
+                                 { "invert", _( "Invert" ), "" } };
+        snapshot.tables.push_back( colors_table );
+        int line = 0;
+        for( const auto &pr : name_color_map ) {
+            const color_struct &entry = pr.second;
+            const std::string normal_spoken = entry.name_custom.empty() ?
+                                              _( "default" ) : entry.name_custom;
+            const std::string invert_spoken = entry.name_invert_custom.empty() ?
+                                              _( "default" ) : entry.name_invert_custom;
+            const std::string row_id = "colors:entry:" + std::to_string( line );
+            std::vector<a11y::semantic_node> children;
+            for( const int col : { 1, 2 } ) {
+                const bool normal_col = col == 1;
+                a11y::semantic_node child;
+                child.id = row_id + ( normal_col ? ":normal" : ":invert" );
+                child.role = "button";
+                child.label = string_format( normal_col ?
+                                             _( "Normal color for %s" ) :
+                                             _( "Inverted color for %s" ),
+                                             pr.first );
+                child.value = normal_col ? normal_spoken : invert_spoken;
+                child.detail = _( "Activate to choose a custom replacement from the original list." );
+                child.selected = line == iCurrentLine && iCurrentCol == col;
+                child.parent_id = row_id;
+                child.depth = 1;
+                child.expanded = true;
+                child.actions = { "focus", "activate" };
+                reader_targets.emplace( child.id,
+                                        reader_target{ normal_col ? reader_target_kind::normal :
+                                                       reader_target_kind::invert, line, col } );
+                children.push_back( std::move( child ) );
+                const bool has_custom = normal_col ? !entry.name_custom.empty() :
+                                        !entry.name_invert_custom.empty();
+                if( has_custom ) {
+                    a11y::semantic_node remove;
+                    remove.id = row_id + ( normal_col ? ":remove_normal" : ":remove_invert" );
+                    remove.role = "button";
+                    remove.label = string_format( normal_col ?
+                                                  _( "Remove custom normal color for %s" ) :
+                                                  _( "Remove custom inverted color for %s" ),
+                                                  pr.first );
+                    remove.value = normal_col ? entry.name_custom :
+                                   entry.name_invert_custom;
+                    remove.detail = _( "Activate to remove this custom replacement and return to the default." );
+                    remove.parent_id = row_id;
+                    remove.depth = 1;
+                    remove.expanded = true;
+                    remove.actions = { "focus", "activate" };
+                    reader_targets.emplace( remove.id,
+                                            reader_target{ normal_col ? reader_target_kind::remove_normal :
+                                                           reader_target_kind::remove_invert, line, col } );
+                    children.push_back( std::move( remove ) );
+                }
+            }
+            a11y::semantic_node row;
+            row.id = row_id;
+            row.role = "button";
+            row.label = pr.first;
+            row.value = string_format( _( "Normal: %s. Invert: %s." ),
+                                       normal_spoken, invert_spoken );
+            row.detail = _( "Activate to edit the currently selected column, Normal or Invert." );
+            row.selected = line == iCurrentLine;
+            row.table_id = "colors:entries";
+            row.row_index = line;
+            row.cells = { { "name", pr.first, "", "" },
+                          { "normal", normal_spoken, "", "" },
+                          { "invert", invert_spoken, "", "" } };
+            row.depth = 0;
+            row.expanded = true;
+            row.has_children = true;
+            row.position = line + 1;
+            row.total = static_cast<int>( name_color_map.size() );
+            row.actions = { "focus", "activate" };
+            reader_targets.emplace( row_id,
+                                    reader_target{ reader_target_kind::entry, line, iCurrentCol } );
+            snapshot.nodes.push_back( std::move( row ) );
+            const int child_total = static_cast<int>( children.size() );
+            for( int c = 0; c < child_total; ++c ) {
+                children[c].position = c + 1;
+                children[c].total = child_total;
+                snapshot.nodes.push_back( std::move( children[c] ) );
+            }
+            line++;
+        }
+        for( const bool theme : { true, false } ) {
+            a11y::semantic_node node;
+            node.id = theme ? "colors:load_theme" : "colors:load_template";
+            node.role = "button";
+            node.label = theme ? _( "Load a color theme" ) : _( "Load template" );
+            node.detail = theme ?
+                          _( "Activate to choose a color theme from the original list. The chosen theme replaces the base colors file immediately, as on the original screen." ) :
+                          _( "Activate to choose a color template from the original list and load it into this screen." );
+            node.actions = { "focus", "activate" };
+            reader_targets.emplace( node.id,
+                                    reader_target{ theme ? reader_target_kind::load_theme :
+                                                   reader_target_kind::load_template, 0, 1 } );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.focus = "colors:entry:" + std::to_string( iCurrentLine ) +
+                         ( iCurrentCol == 2 ? ":invert" : ":normal" );
+        if( std::none_of( snapshot.nodes.begin(), snapshot.nodes.end(),
+        [&]( const a11y::semantic_node & node ) {
+        return node.id == snapshot.focus;
+        } ) ) {
+            snapshot.focus = snapshot.nodes.empty() ? std::string() :
+                             snapshot.nodes.front().id;
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            // Tree nodes keep their sibling position/total from above;
+            // flat nodes (load actions, commands) use whole-list
+            // numbering, as in the options builder.
+            if( snapshot.nodes[i].depth >= 0 ) {
+                continue;
+            }
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         draw_border( w_colors_border, BORDER_COLOR, _( "Color manager" ) );
@@ -941,12 +1152,16 @@ void color_manager::show_gui()
     } );
 
     while( true ) {
+        update_reader();
         ui_manager::redraw();
 
         const std::string action = ctxt.handle_input();
         const int recmax = iMaxColors;
         const int scroll_rate = recmax > 20 ? 10 : 3;
-        if( action == "QUIT" ) {
+        if( action == "A11Y_INTERNAL_COLOR_FOCUS" ) {
+            // Reader focus bookkeeping only; no color state changes
+            // beyond what the intent handler already applied.
+        } else if( action == "QUIT" ) {
             break;
         } else if( navigate_ui_list( action, iCurrentLine, scroll_rate, recmax, true ) ) {
         } else if( action == "LEFT" || action == "RIGHT" ) {

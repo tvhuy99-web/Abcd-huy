@@ -11,6 +11,11 @@
 #include <utility>
 
 #include "action.h"
+#include "a11y_android.h"
+#include "a11y_input.h"
+#include "a11y_perception.h"
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_actor_definitions.h"
 #include "advanced_inv.h"
 #include "auto_note.h"
@@ -35,6 +40,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "debug_menu.h"
+#include "display.h"
 #include "diary.h"
 #include "distraction_manager.h"
 #include "do_turn.h"
@@ -241,6 +247,7 @@ class user_turn
 
 input_context game::get_player_input( std::string &action )
 {
+    close_blocking_activity_reader();
     map &here = get_map();
 
     const tripoint_bub_ms pos = u.pos_bub( here );
@@ -276,6 +283,202 @@ input_context game::get_player_input( std::string &action )
     const visibility_variables &cache = here.get_visibility_variables_cache();
     const level_cache &map_cache = here.get_cache_ref( pos.z() );
     const auto &visibility_cache = map_cache.visibility_cache;
+    int reader_scan_radius = 1;
+    int reader_scan_depth = 1;
+    a11y::world_scan_filter reader_scan_filter = a11y::world_scan_filter::all;
+    // Explore-mode cursor (R08.1): a reader-local reading position relative
+    // to the avatar. It is bound to the lifecycle epoch in which it was
+    // opened so a leftover cursor can never leak into another session or
+    // character; make_reader_snapshot drops it when the epoch has moved on.
+    std::optional<tripoint_rel_ms> reader_explore_cursor;
+    std::uint64_t reader_explore_epoch = 0;
+    const auto make_reader_snapshot = [&]() {
+        if( reader_explore_cursor &&
+            a11y::android::lifecycle_epoch() != reader_explore_epoch ) {
+            reader_explore_cursor.reset();
+        }
+        std::optional<point> camera_offset;
+        if( uquit == QUIT_WATCH ) {
+            camera_offset.emplace( u.view_offset.x(), u.view_offset.y() );
+        }
+        return a11y::world_snapshot( ctxt, reader_scan_radius, reader_scan_depth,
+                                     reader_scan_filter, camera_offset,
+                                     reader_explore_cursor );
+    };
+    // Parse the "<dx>:<dy>" tail of an explore node id. Returns false on any
+    // malformed input instead of throwing into the intent handler.
+    const auto parse_reader_explore_pair = []( const std::string & text, int &dx, int &dy ) {
+        const std::size_t colon = text.find( ':' );
+        if( colon == std::string::npos ) {
+            return false;
+        }
+        try {
+            std::size_t used_x = 0;
+            std::size_t used_y = 0;
+            dx = std::stoi( text.substr( 0, colon ), &used_x );
+            dy = std::stoi( text.substr( colon + 1 ), &used_y );
+            return used_x == colon && used_y == text.size() - colon - 1;
+        } catch( const std::exception & ) {
+            return false;
+        }
+    };
+    std::unique_ptr<a11y::screen_scope> reader;
+    reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        // Multi-finger reads are verified against the live world snapshot.
+        // They never enqueue movement, consume moves, or change the turn.
+        if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
+            if( intent.node == "reader:scan:north" ) {
+                a11y::announce_linear_scan( 0, -1 );
+            } else if( intent.node == "reader:scan:south" ) {
+                a11y::announce_linear_scan( 0, 1 );
+            } else if( intent.node == "reader:scan:west" ) {
+                a11y::announce_linear_scan( -1, 0 );
+            } else if( intent.node == "reader:scan:east" ) {
+                a11y::announce_linear_scan( 1, 0 );
+            } else if( intent.node == "reader:coordinates" ) {
+                a11y::announce_player_coordinates();
+            }
+            return std::nullopt;
+        }
+        // Explore intents are reader-local: they only move the reading
+        // cursor and republish the snapshot. They are intercepted before
+        // registered_intent so an explore node can never fall through to
+        // the game engine, cost moves, or advance game time.
+        if( intent.action == "activate" && intent.node.rfind( "explore:", 0 ) == 0 ) {
+            bool changed = false;
+            if( intent.node == "explore:enter" ) {
+                if( !reader_explore_cursor ) {
+                    reader_explore_cursor = tripoint_rel_ms( 0, 0, 0 );
+                    reader_explore_epoch = a11y::android::lifecycle_epoch();
+                    changed = true;
+                }
+            } else if( intent.node == "explore:exit" ) {
+                if( reader_explore_cursor ) {
+                    reader_explore_cursor.reset();
+                    changed = true;
+                }
+            } else if( intent.node == "explore:recenter" ) {
+                if( reader_explore_cursor &&
+                    *reader_explore_cursor != tripoint_rel_ms( 0, 0, 0 ) ) {
+                    reader_explore_cursor = tripoint_rel_ms( 0, 0, 0 );
+                    changed = true;
+                }
+            } else if( intent.node == "explore:up" || intent.node == "explore:down" ) {
+                if( reader_explore_cursor ) {
+                    const int dz = intent.node == "explore:up" ? 1 : -1;
+                    const int z = std::clamp( reader_explore_cursor->z() + dz, -10, 10 );
+                    if( z != reader_explore_cursor->z() ) {
+                        reader_explore_cursor = tripoint_rel_ms( reader_explore_cursor->x(),
+                                                reader_explore_cursor->y(), z );
+                        changed = true;
+                    }
+                }
+            } else if( intent.node.rfind( "explore:dir:", 0 ) == 0 ) {
+                int dx = 0;
+                int dy = 0;
+                if( !parse_reader_explore_pair( intent.node.substr( 12 ), dx, dy ) ||
+                    dx < -1 || dx > 1 || dy < -1 || dy > 1 || ( dx == 0 && dy == 0 ) ) {
+                    a11y::android::status( "invalid_value", &intent );
+                    return std::nullopt;
+                }
+                if( reader_explore_cursor ) {
+                    const int x = std::clamp( reader_explore_cursor->x() + dx, -60, 60 );
+                    const int y = std::clamp( reader_explore_cursor->y() + dy, -60, 60 );
+                    if( x != reader_explore_cursor->x() || y != reader_explore_cursor->y() ) {
+                        reader_explore_cursor = tripoint_rel_ms( x, y, reader_explore_cursor->z() );
+                        changed = true;
+                    }
+                }
+            } else if( intent.node.rfind( "explore:jump:", 0 ) == 0 ) {
+                int dx = 0;
+                int dy = 0;
+                if( !parse_reader_explore_pair( intent.node.substr( 13 ), dx, dy ) ) {
+                    a11y::android::status( "invalid_value", &intent );
+                    return std::nullopt;
+                }
+                if( reader_explore_cursor ) {
+                    const tripoint_rel_ms target( std::clamp( dx, -60, 60 ),
+                                                  std::clamp( dy, -60, 60 ), 0 );
+                    if( target != *reader_explore_cursor ) {
+                        reader_explore_cursor = target;
+                        changed = true;
+                    }
+                }
+            }
+            // Any other explore:* node (for example the cursor document
+            // itself) is swallowed here as a no-op.
+            if( changed ) {
+                reader->update( make_reader_snapshot() );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "world:radius" && intent.action == "set_text" ) {
+            try {
+                std::size_t consumed = 0;
+                const int radius = std::stoi( intent.value, &consumed );
+                if( consumed != intent.value.size() || radius < 1 || radius > 16 ) {
+                    a11y::android::status( "invalid_value", &intent );
+                } else {
+                    reader_scan_radius = radius;
+                    a11y::android::status( "text_applied", &intent );
+                    reader->update( make_reader_snapshot() );
+                }
+            } catch( const std::exception & ) {
+                a11y::android::status( "invalid_value", &intent );
+            }
+            return std::nullopt;
+        }
+        if( intent.node == "world:depth" && intent.action == "set_text" ) {
+            try {
+                std::size_t consumed = 0;
+                const int depth = std::stoi( intent.value, &consumed );
+                if( consumed != intent.value.size() || depth < 0 || depth > 10 ) {
+                    a11y::android::status( "invalid_value", &intent );
+                } else {
+                    reader_scan_depth = depth;
+                    a11y::android::status( "text_applied", &intent );
+                    reader->update( make_reader_snapshot() );
+                }
+            } catch( const std::exception & ) {
+                a11y::android::status( "invalid_value", &intent );
+            }
+            return std::nullopt;
+        }
+        if( intent.action == "activate" ) {
+            if( intent.node == "world:filter:all" ) {
+                reader_scan_filter = a11y::world_scan_filter::all;
+            } else if( intent.node == "world:filter:known" ) {
+                reader_scan_filter = a11y::world_scan_filter::known;
+            } else if( intent.node == "world:filter:noteworthy" ) {
+                reader_scan_filter = a11y::world_scan_filter::noteworthy;
+            } else if( intent.node == "world:filter:heard" ) {
+                reader_scan_filter = a11y::world_scan_filter::heard;
+            } else {
+                return a11y::registered_intent( ctxt, intent );
+            }
+            reader->update( make_reader_snapshot() );
+            return std::nullopt;
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    std::uint64_t reader_snapshot_epoch = 0;
+    bool reader_snapshot_published = false;
+    const auto refresh_reader = [&]() {
+        if( a11y::enabled() ) {
+            const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
+            if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
+                reader->update( make_reader_snapshot() );
+                reader_snapshot_epoch = current_epoch;
+                reader_snapshot_published = true;
+            }
+        } else {
+            reader_snapshot_published = false;
+        }
+        // The scope is live here, so status transitions can be spoken without
+        // carrying a stale alert across a menu, background transition or turn.
+        a11y::announce_status_changes();
+    };
 #if defined(TILES)
     // Mark cata_tiles draw caches as dirty
     tilecontext->set_draw_cache_dirty();
@@ -342,6 +545,7 @@ input_context game::get_player_input( std::string &action )
 
         creature_tracker &creatures = get_creature_tracker();
         do {
+            refresh_reader();
             if( bWeatherEffect && get_option<bool>( "ANIMATION_RAIN" ) ) {
                 /*
                 Location to add rain drop animation bits! Since it refreshes w_terrain it can be added to the animation section easily
@@ -463,7 +667,11 @@ input_context game::get_player_input( std::string &action )
         ctxt.reset_timeout();
     } else {
         ctxt.set_timeout( 125 );
-        while( handle_mouseview( ctxt, action ) ) {
+        while( true ) {
+            refresh_reader();
+            if( !handle_mouseview( ctxt, action ) ) {
+                break;
+            }
             if( action == "TIMEOUT" && current_turn.has_timeout_elapsed() ) {
                 break;
             }
@@ -662,7 +870,45 @@ static void grab( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     std::optional<tripoint_bub_ms> grabp_ = p;
-    if( !grabp_ ) {
+    if( !grabp_ && a11y::enabled() ) {
+        std::vector<tripoint_bub_ms> candidates;
+        uilist menu;
+        menu.title = _( "Choose an object to grab" );
+        for( const tripoint_bub_ms &target : here.points_in_radius( you.pos_bub(), 1 ) ) {
+            if( target == you.pos_bub() ||
+                a11y::observe_tile( target ).source != a11y::observation_source::visible ) {
+                continue;
+            }
+            std::string name;
+            if( const optional_vpart_position vp = here.veh_at( target ) ) {
+                if( !vp.part_with_feature( VPFLAG_WALL_MOUNTED, false ) ) {
+                    name = vp->vehicle().name;
+                }
+            } else if( here.has_furn( target ) && here.furn( target ).obj().is_movable() ) {
+                name = here.furnname( target );
+            }
+            if( name.empty() ) {
+                continue;
+            }
+            candidates.push_back( target );
+            menu.addentry( static_cast<int>( candidates.size() - 1 ), true, MENU_AUTOASSIGN,
+                           string_format( _( "%1$s, %2$s" ), name,
+                                          direction_name( direction_from( you.pos_bub(), target ) ) ) );
+        }
+        if( candidates.empty() ) {
+            add_msg( m_info, _( "No visible movable furniture or vehicle nearby." ) );
+            return;
+        }
+        if( candidates.size() == 1 ) {
+            grabp_ = candidates.front();
+        } else {
+            menu.query();
+            if( menu.ret < 0 || menu.ret >= static_cast<int>( candidates.size() ) ) {
+                return;
+            }
+            grabp_ = candidates[menu.ret];
+        }
+    } else if( !grabp_ ) {
         grabp_ = choose_adjacent( _( "Grab where?" ) );
     }
     if( !grabp_ ) {
@@ -861,11 +1107,24 @@ static void haul()
         default:
             break;
     }
+    if( a11y::enabled() && menu.ret >= 0 && menu.ret != 9 ) {
+        add_msg( m_info, _( "Hauling: %1$s. Items: %2$d. Autohaul: %3$s." ),
+                 player_character.is_hauling() ? _( "on" ) : _( "off" ),
+                 static_cast<int>( player_character.haul_list.size() ),
+                 player_character.is_autohauling() ? _( "on" ) : _( "off" ) );
+    }
 }
 
 static void haul_toggle()
 {
-    get_avatar().toggle_hauling();
+    avatar &player = get_avatar();
+    player.toggle_hauling();
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "Hauling: %1$s. Items: %2$d. Autohaul: %3$s." ),
+                 player.is_hauling() ? _( "on" ) : _( "off" ),
+                 static_cast<int>( player.haul_list.size() ),
+                 player.is_autohauling() ? _( "on" ) : _( "off" ) );
+    }
 }
 
 static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
@@ -896,7 +1155,15 @@ static void smash( const std::optional<tripoint_bub_ms> &p = std::nullopt )
     }
 
     avatar &player_character = get_avatar();
+    const std::string target_name = get_map().name( smashp );
     avatar::smash_result res = player_character.smash( smashp );
+    if( a11y::enabled() && res.did_smash ) {
+        if( res.success ) {
+            add_msg( m_info, _( "Destroyed %s." ), target_name );
+        } else if( res.can_smash ) {
+            add_msg( m_info, _( "Hit %s. It is still intact." ), target_name );
+        }
+    }
     if( res.did_smash && !res.success && res.can_smash &&
         query_yn( _( "Keep smashing until destroyed?" ) ) ) {
         player_character.assign_activity( bash_activity_actor( smashp ) );
@@ -1231,6 +1498,9 @@ static void wait()
     as_m.text = has_watch ? string_format( _( "It's %s now.  " ),
                                            to_string_time_of_day( calendar::turn ) ) : "";
     as_m.text += setting_alarm ? _( "Set alarm for when?" ) : _( "Wait for how long?" );
+    if( !setting_alarm && a11y::enabled() ) {
+        as_m.text += "\n\n" + std::string( _( "Waiting advances game time. The world may change while you wait." ) );
+    }
     as_m.query(); /* calculate key and window variables, generate window, and loop until we get a valid answer */
 
     const auto dur_iter = durations.find( as_m.ret );
@@ -1250,7 +1520,15 @@ static void wait()
         }
 
     } else {
-        // Waiting
+        // Announce the real option selected in the native waiting menu.
+        if( a11y::enabled() ) {
+            for( const uilist_entry &entry : as_m.entries ) {
+                if( entry.retval == as_m.ret && !entry.txt.empty() ) {
+                    add_msg( m_info, _( "Waiting: %s" ), entry.txt );
+                    break;
+                }
+            }
+        }
         activity_id actType;
         if( as_m.ret == 13 ) {
             player_character.assign_activity( wait_weather_activity_actor() );
@@ -1357,6 +1635,22 @@ static void sleep()
         for( auto &a : active ) {
             data << "<color_red>" << a << "</color>" << std::endl;
         }
+    }
+    if( a11y::enabled() ) {
+        if( !active.empty() ) {
+            data << std::endl;
+        }
+        data << string_format(
+                    _( "Before sleep. Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
+                       "Location: %4$s." ),
+                    display::sleepiness_text_color( player_character ).first,
+                    display::thirst_text_color( player_character ).first,
+                    display::pain_text_color( player_character ).first,
+                    here.tername( p ) ) << std::endl;
+        data << _( "Sleeping advances game time. You cannot issue ordinary commands until you wake; "
+                   "scheduled events and world changes may occur." );
+    }
+    if( !active.empty() || a11y::enabled() ) {
         as_m.text = data.str();
     }
 
@@ -1859,7 +2153,11 @@ static void cast_spell( bool recast_spell = false )
     }
 
     if( recast_spell && player_character.magic->last_spell.is_null() ) {
-        popup( _( "Cast a spell first" ) );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "No previous spell to repeat." ) );
+        } else {
+            popup( _( "Cast a spell first" ) );
+        }
         return;
     }
 
@@ -1869,6 +2167,13 @@ static void cast_spell( bool recast_spell = false )
     // if no spell was selected
     if( sp.id().is_null() ) {
         return;
+    }
+    if( recast_spell && a11y::enabled() ) {
+        // Information only. Recasting remains a single action and does not
+        // require a second confirmation; native cast checks still apply.
+        add_msg( m_info, _( "Repeat %1$s. Cost %2$s %3$s. Time %4$s." ),
+                 sp.name(), sp.energy_cost_string( player_character ),
+                 sp.energy_string(), to_string( time_duration::from_moves( sp.casting_time( player_character ) ) ) );
     }
     player_character.magic->last_spell = sp.id();
     player_character.cast_spell( sp, false, std::nullopt );
@@ -2305,6 +2610,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_PAUSE:
             if( check_safe_mode_allowed() ) {
                 player_character.pause();
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Stood still for one turn." ) );
+                }
             }
             break;
 
@@ -2379,6 +2687,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     act = player_character.get_next_auto_move_direction();
                     const point_rel_ms dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
                     if( dest_next == point_rel_ms::zero ) {
+                        if( a11y::enabled() ) {
+                            add_msg( m_info, _( "No route in that direction." ) );
+                        }
                         add_msg_debug( debugmode::DF_ACTIVITY,
                                        "auto_move: get_next returned zero, aborting.  pos=(%d,%d)",
                                        player_character.pos_bub().x(), player_character.pos_bub().y() );
@@ -2473,6 +2784,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             }
             break;
         case ACTION_MOVE_DOWN: {
+            const int initial_level = player_character.posz();
             if( player_character.is_mounted() ) {
                 auto *mon = player_character.mounted_creature.get();
                 if( !mon->has_flag( mon_flag_RIDEABLE_MECH ) ) {
@@ -2519,6 +2831,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
                         // If player selected direction, climb down there, and exit from the whole ACTION_MOVE_DOWN case
                         climb_down( *pnt );
+                        if( a11y::enabled() && player_character.posz() != initial_level ) {
+                            add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+                        }
                         break;
                     }
                 }
@@ -2527,10 +2842,14 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 // In any case, attempt a descend
                 vertical_move( -1, u.has_flag( json_flag_PHASE_MOVEMENT ) );
             }
+            if( a11y::enabled() && player_character.posz() != initial_level ) {
+                add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+            }
             break;
         }
 
-        case ACTION_MOVE_UP:
+        case ACTION_MOVE_UP: {
+            const int initial_level = player_character.posz();
             if( player_character.is_mounted() ) {
                 auto *mon = player_character.mounted_creature.get();
                 if( !mon->has_flag( mon_flag_RIDEABLE_MECH ) ) {
@@ -2546,10 +2865,16 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     pldrive( tripoint_rel_ms::above );
                 }
             }
+            if( a11y::enabled() && player_character.posz() != initial_level ) {
+                add_msg( m_info, _( "Now on level %d." ), player_character.posz() );
+            }
             break;
+        }
 
         case ACTION_OPEN:
-            player_character.assign_activity( open_tile_activity_actor( std::nullopt ) );
+            // Preserve an object already chosen by the accessible interaction
+            // list (or gamepad). Otherwise the native activity prompts normally.
+            player_character.assign_activity( open_tile_activity_actor( mouse_target ) );
             break;
 
         case ACTION_CLOSE:
@@ -2657,6 +2982,12 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_USE_WIELDED:
+            if( a11y::enabled() ) {
+                const item_location wielded = player_character.get_wielded_item();
+                add_msg( m_info, wielded ?
+                         string_format( _( "Using held item: %s." ), wielded->tname() ) :
+                         _( "No item is currently held." ) );
+            }
             player_character.use_wielded();
             break;
 
@@ -2741,10 +3072,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_FIRE_BURST: {
-            if( weapon ) {
+            if( weapon && weapon->is_gun() && !weapon->is_gunmod() ) {
                 if( weapon->gun_set_mode( gun_mode_BURST ) || weapon->gun_set_mode( gun_mode_AUTO ) ) {
+                    if( a11y::enabled() ) {
+                        const gun_mode mode = weapon->gun_current_mode();
+                        add_msg( m_info, _( "Burst mode: %1$s, %2$d shots." ),
+                                 mode.tname(), mode.qty );
+                    }
                     avatar_action::fire_wielded_weapon( player_character );
+                } else if( a11y::enabled() ) {
+                    add_msg( m_info, _( "This gun has no burst or automatic firing mode." ) );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a gun to use burst fire." ) );
             }
             break;
         }
@@ -2753,9 +3093,20 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             if( weapon && weapon->is_gun() && !weapon->is_gunmod() ) {
                 if( weapon->gun_all_modes().size() > 1 ) {
                     weapon->gun_cycle_mode();
+                    if( a11y::enabled() ) {
+                        const gun_mode mode = weapon->gun_current_mode();
+                        if( mode.melee() ) {
+                            add_msg( m_info, _( "Attack mode: %s (melee)." ), mode.tname() );
+                        } else {
+                            add_msg( m_info, _( "Firing mode: %1$s, %2$d shots." ),
+                                     mode.tname(), mode.qty );
+                        }
+                    }
                 } else {
                     add_msg( m_info, _( "Your %s has only one firing mode." ), weapon->tname() );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a gun to change firing mode." ) );
             }
             break;
 
@@ -2777,7 +3128,11 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                         player_character.add_msg_if_player(
                             _( "You need to keep that ammo on you to select it as default ammo." ) );
                     }
+                } else if( a11y::enabled() ) {
+                    add_msg( m_info, _( "This weapon does not support a default ammo choice." ) );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a compatible gun to choose default ammunition." ) );
             }
             break;
 
@@ -2866,7 +3221,14 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
 
         case ACTION_TOGGLE_AUTO_TRAVEL_MODE:
             auto_travel_mode = !auto_travel_mode;
-            add_msg( m_info, auto_travel_mode ? _( "Auto travel mode ON!" ) : _( "Auto travel mode OFF!" ) );
+            if( a11y::enabled() ) {
+                add_msg( m_info, auto_travel_mode
+                         ? _( "Auto travel on. Choose a direction to find a path." )
+                         : _( "Auto travel off." ) );
+            } else {
+                add_msg( m_info, auto_travel_mode ? _( "Auto travel mode ON!" ) :
+                         _( "Auto travel mode OFF!" ) );
+            }
             break;
 
         case ACTION_TOGGLE_SAFEMODE:
@@ -2887,14 +3249,24 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_TOGGLE_AUTOSAFE: {
-            // Set Auto reactivate safe mode to x
-            set_next_option( "AUTOSAFEMODE" );
+            // Keep a single short outcome for reader users; set_next_option
+            // already speaks a verbose options string, so do not call both.
+            if( a11y::enabled() ) {
+                get_options().get_option( "AUTOSAFEMODE" ).setNext();
+                get_options().save();
+                add_msg( m_info, get_option<bool>( "AUTOSAFEMODE" ) ?
+                         _( "Automatic safe mode on." ) : _( "Automatic safe mode off." ) );
+            } else {
+                set_next_option( "AUTOSAFEMODE" );
+            }
             break;
         }
 
         case ACTION_IGNORE_ENEMY:
             if( safe_mode == SAFE_MODE_STOP ) {
-                add_msg( m_info, _( "Ignoring enemy!" ) );
+                add_msg( m_info, a11y::enabled() ?
+                         _( "Enemy warning ignored for now. Safe mode remains on." ) :
+                         _( "Ignoring enemy!" ) );
                 for( auto &elem : player_character.get_mon_visible().new_seen_mon ) {
                     monster &critter = *elem;
                     critter.ignoring = rl_dist( player_character.pos_bub(), critter.pos_bub() );
@@ -2908,6 +3280,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 }
                 player_character.remove_effect( effect_laserlocked );
                 safe_mode_warning_logged = false;
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "No active enemy warning to ignore." ) );
             }
             break;
 
@@ -2915,7 +3289,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             if( safe_mode == SAFE_MODE_STOP && !get_safemode().empty() ) {
                 get_safemode().add_rule( get_safemode().lastmon_whitelist, Creature::Attitude::ANY, 0,
                                          rule_state::WHITELISTED );
-                add_msg( m_info, _( "Creature whitelisted: %s" ), get_safemode().lastmon_whitelist );
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Whitelisted %s. Future warnings for this type may be skipped." ),
+                             get_safemode().lastmon_whitelist );
+                } else {
+                    add_msg( m_info, _( "Creature whitelisted: %s" ),
+                             get_safemode().lastmon_whitelist );
+                }
                 set_safe_mode( SAFE_MODE_ON );
                 mostseen = 0;
             } else {
@@ -2946,6 +3326,11 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     // Game refused to save because of unsupported game state. But we don't want to trap them here, so at least let give them the option.
                     player_character.set_moves( 0 );
                     uquit = QUIT_NOSAVED;
+                } else if( a11y::enabled() ) {
+                    // R20.1: a failed save otherwise ends in silence --
+                    // the confirmation dialog closes and nothing says the
+                    // game was not saved or that the player has not quit.
+                    popup( _( "The game could not be saved. You are still in the game; nothing was quit." ) );
                 }
             }
             break;
@@ -2955,6 +3340,12 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             return false;
 
         case ACTION_QUICKLOAD:
+            // Unlike Save and Quit, quickload can silently discard every
+            // change since the last save. Require spoken confirmation.
+            if( a11y::enabled() &&
+                !query_yn( _( "Reload the last save? Any progress not saved will be lost. Continue?" ) ) ) {
+                break;
+            }
             quickload();
             g->save_is_dirty = true;
             return false;
@@ -3272,7 +3663,28 @@ bool game::handle_action()
         }
 
         if( act == ACTION_INTERACT ) {
-            if( !mouse_target ) {
+            if( !mouse_target && a11y::enabled() ) {
+                // Show all actionable visible tiles, then native actions for
+                // the chosen tile. Merely browsing does not spend game time.
+                mouse_target = choose_accessible_nearby_target(
+                                   _( "Interact with nearby objects" ),
+                [&]( const tripoint_bub_ms &target ) {
+                    for( const action_id candidate : {
+                                ACTION_EXAMINE, ACTION_PICKUP, ACTION_OPEN,
+                                ACTION_CLOSE, ACTION_BUTCHER, ACTION_CHAT
+                            } ) {
+                        if( can_interact_at( candidate, here, target ) ) {
+                            return true;
+                        }
+                    }
+                    return target == player_character.pos_bub() &&
+                           ( can_interact_at( ACTION_MOVE_UP, here, target ) ||
+                             can_interact_at( ACTION_MOVE_DOWN, here, target ) );
+                } );
+                if( !mouse_target ) {
+                    return false;
+                }
+            } else if( !mouse_target ) {
                 mouse_target = player_character.pos_bub();
             }
             act = handle_interact( here, *mouse_target );
@@ -3367,6 +3779,14 @@ bool game::handle_action()
     }
 
     // This has no action unless we're in a special game mode.
+#if defined(__ANDROID__)
+    const auto diagnostic_action_started = std::chrono::steady_clock::now();
+    const std::string diagnostic_action_name = action_ident( act );
+    if( act != ACTION_TIMEOUT ) {
+        a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                         "start action=" + diagnostic_action_name );
+    }
+#endif
     gamemode->pre_action( act );
 
     int before_action_moves = player_character.get_moves();
@@ -3379,6 +3799,15 @@ bool game::handle_action()
     // actions allowed only while alive
     if( !player_character.is_dead_state() ) {
         if( !do_regular_action( act, player_character, mouse_target ) ) {
+#if defined(__ANDROID__)
+            if( act != ACTION_TIMEOUT ) {
+                const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                         std::chrono::steady_clock::now() - diagnostic_action_started ).count();
+                a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                                 "rejected action=" + diagnostic_action_name +
+                                                 " elapsed_ms=" + std::to_string( elapsed ) );
+            }
+#endif
             return false;
         }
     }
@@ -3396,5 +3825,14 @@ bool game::handle_action()
     dbg( D_INFO ) << string_format( "%s: [%d] %d - %d = %d", action_ident( act ),
                                     to_turn<int>( calendar::turn ), before_action_moves, player_character.movecounter,
                                     player_character.get_moves() );
+#if defined(__ANDROID__)
+    if( act != ACTION_TIMEOUT ) {
+        const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                 std::chrono::steady_clock::now() - diagnostic_action_started ).count();
+        a11y::android::diagnostic_event( "NATIVE_ACTION",
+                                         "finished action=" + diagnostic_action_name +
+                                         " elapsed_ms=" + std::to_string( elapsed ) );
+    }
+#endif
     return !player_character.is_dead_state();
 }

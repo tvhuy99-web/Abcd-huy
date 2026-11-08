@@ -51,6 +51,7 @@ class trade_selector : public inventory_drop_selector
         static constexpr char const *ACTION_TRADE_CANCEL = "QUIT";
 
     private:
+        std::string get_accessibility_summary() const override;
         trade_ui *_parent;
         shared_ptr_fast<ui_adaptor> _ui;
         input_context _ctxt_trade;
@@ -63,6 +64,11 @@ class trade_preset : public inventory_selector_preset
 
         bool is_shown( item_location const &loc ) const override;
         std::string get_denial( const item_location &loc ) const override;
+        /** Unit price (in cents) of a single unit of @p loc, from the same
+         * npc_trading::trading_price call the preset's "Unit price" column
+         * displays. The accessibility reader publishes this value per row
+         * (R14.2) so it is never recomputed from a second formula. */
+        int unit_price( const item_location &loc ) const;
         bool cat_sort_compare( const inventory_entry &lhs, const inventory_entry &rhs ) const override;
 
     private:
@@ -102,6 +108,7 @@ class trade_ui
         constexpr static int header_size = 5;
 
     private:
+        friend class trade_selector;
         constexpr static std::size_t npanes = 2;
         using panecont_t = std::array<std::unique_ptr<pane_t>, npanes>;
         using values_t = std::array<currency_t, npanes>;
@@ -113,6 +120,7 @@ class trade_ui
         trade_preset _upreset, _tpreset;
         panecont_t _panes;
         values_t _trade_values{};
+        std::array<std::size_t, npanes> _trade_unit_counts{};
         parties_t _parties;
         std::queue<event> _queue;
         panecont_t::size_type _cpane = 0;
@@ -129,6 +137,7 @@ class trade_ui
         void _process( event const &ev );
         bool _confirm_trade() const;
         void _draw_header();
+        std::string build_accessibility_summary( const pane_t &pane ) const;
 };
 
 #endif // CATA_SRC_TRADE_UI_H

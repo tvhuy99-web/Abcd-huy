@@ -4,6 +4,7 @@
 */
 
 #include "game.h"
+#include "a11y_runtime.h"
 
 #include <algorithm>
 #include <chrono>
@@ -309,8 +310,11 @@ bool game::load( const std::string &world )
 
     try {
         world_generator->set_active_world( wptr );
-        g->setup();
-        g->load( wptr->world_saves.front() );
+        g->setup( true );
+        // A failed character load must not be reported as a successful resume.
+        if( !g->load( wptr->world_saves.front() ) ) {
+            return false;
+        }
     } catch( const std::exception &err ) {
         debugmsg( "cannot load world '%s': %s", world, err.what() );
         return false;
@@ -321,6 +325,10 @@ bool game::load( const std::string &world )
 
 bool game::load( const save_t &name )
 {
+#if defined(__ANDROID__)
+    const auto load_started_at = std::chrono::steady_clock::now();
+#endif
+    a11y::replace_game_session();
     map &here = get_map();
 
     const cata_path worldpath = PATH_INFO::world_base_save_path();
@@ -493,7 +501,15 @@ bool game::load( const save_t &name )
 
     for( const named_entry &e : entries ) {
         loading_ui::show( _( "Loading the save…" ), e.first );
+#if defined(__ANDROID__)
+        const auto stage_started_at = std::chrono::steady_clock::now();
+#endif
         e.second();
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=" << e.first <<
+                                  " ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - stage_started_at ).count();
+#endif
         if( abort ) {
             loading_ui::done();
             return false;
@@ -501,6 +517,11 @@ bool game::load( const save_t &name )
     }
 
     loading_ui::done();
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=resume stage=save_total ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - load_started_at ).count();
+#endif
     return true;
 }
 
@@ -534,11 +555,24 @@ void game::load_world_modfiles()
     load_packs( _( "Loading files" ), mods );
 
     // Load additional mods from that world-specific folder
+#if defined(__ANDROID__)
+    const auto custom_started = std::chrono::steady_clock::now();
+#endif
     load_mod_data_from_dir( PATH_INFO::world_base_save_path() / "mods", "custom" );
     load_mod_interaction_data_from_dir( PATH_INFO::world_base_save_path() / "mods" /
                                         "mod_interactions", "custom" );
-
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=custom_world_mods ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - custom_started ).count();
+    const auto finalize_started = std::chrono::steady_clock::now();
+#endif
     DynamicDataLoader::get_instance().finalize_loaded_data();
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PHASE name=finalize_and_verify ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - finalize_started ).count();
+#endif
 }
 
 void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs )
@@ -554,7 +588,16 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
             check_plural = check_plural_t::none;
         }
         cata_timer pack_timer( string_format( "%s pack load time:", mod->name() ) );
+#if defined(__ANDROID__)
+        const auto pack_started = std::chrono::steady_clock::now();
+#endif
         load_mod_data_from_dir( mod->path, mod.str() );
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=content id=" << mod.str() <<
+                                  " version=" << mod->version << " ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - pack_started ).count();
+#endif
     }
     cata_timer::print_stats();
 
@@ -563,7 +606,16 @@ void game::load_packs( const std::string &msg, const std::vector<mod_id> &packs 
             continue;
         }
         loading_ui::show( msg, mod->name() );
+#if defined(__ANDROID__)
+        const auto interaction_started = std::chrono::steady_clock::now();
+#endif
         load_mod_interaction_data_from_dir( mod->path / "mod_interactions", mod.str() );
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_PACK phase=interaction id=" << mod.str() <<
+                                  " version=" << mod->version << " ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      std::chrono::steady_clock::now() - interaction_started ).count();
+#endif
     }
 }
 
@@ -905,7 +957,13 @@ void game::quicksave()
     time_t now = std::time( nullptr ); //timestamp for start of saving procedure
 
     //perform save
-    save();
+    if( !save() && a11y::enabled() ) {
+        // R20.1: quicksave (and autosave, which runs through here) used
+        // to fail silently apart from a debug message. The counters
+        // below still reset exactly as before; only the reader gets a
+        // spoken result.
+        ::popup( _( "Quicksave failed. The game was not saved." ) );
+    }
     //Now reset counters for autosaving, so we don't immediately autosave after a quicksave or autosave.
     moves_since_last_save = 0;
     last_save_timestamp = now;

@@ -410,6 +410,12 @@ class recipe
         std::map<itype_id, int> get_byproducts() const;
         bool in_byproducts( const itype_id &it ) const;
         bool has_byproducts() const;
+        // Raw legacy byproduct definitions, without expanding the
+        // byproduct item group (get_byproducts() rolls the group).
+        // Readers that must not generate items use these two accessors
+        // to describe byproducts deterministically.
+        const std::map<itype_id, int> &legacy_byproducts() const;
+        bool has_byproduct_group() const;
 
         int64_t batch_time( const Character &guy, int batch, float multiplier, size_t assistants,
                             const crafting_cost_context &ctx ) const;

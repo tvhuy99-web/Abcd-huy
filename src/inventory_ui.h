@@ -733,6 +733,11 @@ class inventory_selector
          */
         input_context ctxt;
 
+        // Lives only for an execute() call, never for the selector's entire
+        // lifetime: nested item dialogs must restore the previous reader frame.
+        class reader_session;
+        reader_session *active_reader = nullptr;
+
         const item_category *naturalize_category( const item_category &category,
                 const tripoint_bub_ms &pos );
 
@@ -945,6 +950,7 @@ class inventory_selector
         };
 
     protected:
+        virtual std::string get_accessibility_summary() const;
         size_t get_columns_width( const std::vector<inventory_column *> &columns ) const;
         /** @return Percentage of the window occupied by columns. */
         double get_columns_occupancy_ratio( size_t client_width ) const;

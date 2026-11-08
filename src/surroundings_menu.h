@@ -179,6 +179,11 @@ class surroundings_menu : public cataimgui::window
         cataimgui::bounds get_bounds() override;
 
     private:
+#if defined(__ANDROID__)
+        // A single near-to-far, paginated screen-reader list; ordinary
+        // visual tabs retain their existing behavior when the reader is off.
+        void execute_accessible();
+#endif
         void draw_item_tab();
         void draw_monster_tab();
         void draw_terfurn_tab();

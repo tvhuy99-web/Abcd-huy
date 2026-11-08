@@ -16,6 +16,9 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "basecamp.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -504,7 +507,7 @@ void talk_function::companion_mission( npc &p )
     } else {
         return;
     }
-    if( display_and_choose_opts( mission_key, omt_pos, role_id, title ) ) {
+    if( display_and_choose_opts( mission_key, omt_pos, role_id, title, p.get_name() ) ) {
         handle_outpost_mission( mission_key.cur_key, p );
     }
 }
@@ -774,7 +777,7 @@ void talk_function::commune_refuge_caravan( mission_data &mission_key, npc &p )
 
 bool talk_function::display_and_choose_opts(
     mission_data &mission_key, const tripoint_abs_omt &omt_pos, const std::string &role_id,
-    const std::string &title )
+    const std::string &title, const std::string &point_name )
 {
     if( mission_key.entries.empty() ) {
         popup( _( "There are no missions at this colony.  Press Spacebar…" ) );
@@ -832,6 +835,111 @@ bool talk_function::display_and_choose_opts(
         popup( _( "There are no missions at this colony.  Press Spacebar…" ) );
         return false;
     }
+
+    // Set whenever cur_key_list is rebuilt (tab switch by reader intent or
+    // by key) so the next reader update forces a new revision: entry node
+    // IDs are positional in cur_key_list, and a rebuilt list can publish
+    // identical text for a different logical mission (same precedents as
+    // uilist::update_reader). A content-only revision would leave an
+    // intent minted against the old list valid against the new one.
+    bool reader_list_changed = false;
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+        // Name the point this list belongs to, not just the tab/title:
+        // for a camp that is the camp name plus the expansion tab, for an
+        // outpost the title plus the NPC offering the missions. Without
+        // this the listener cannot tell two mission points apart (several
+        // outposts publish similarly named missions, and every camp tab
+        // is headed only by its expansion name).
+        std::string summary = remove_color_tags( name_mission_tabs( omt_pos, role_id, title,
+                               tab_mode ) );
+        if( role_id == role_id_faction_camp ) {
+            const std::optional<basecamp *> camp = overmap_buffer.find_camp( omt_pos.xy() );
+            if( camp ) {
+                summary = string_format( _( "%1$s: %2$s" ), ( *camp )->camp_name(), summary );
+            }
+        } else if( !point_name.empty() ) {
+            summary = string_format( _( "%1$s: %2$s" ), summary, point_name );
+        }
+        snapshot.summary = remove_color_tags( summary );
+
+        if( role_id == role_id_faction_camp ) {
+            for( int tab_index = base_camps::TAB_MAIN;
+                 tab_index <= base_camps::TAB_NW; ++tab_index ) {
+                const size_t entries_index = static_cast<size_t>( tab_index ) + 1;
+                const bool tab_available = tab_index == base_camps::TAB_MAIN ?
+                                           !mission_key.entries[0].empty() ||
+                                           !mission_key.entries[entries_index].empty() :
+                                           !mission_key.entries[entries_index].empty();
+                if( !tab_available ) {
+                    continue;
+                }
+                const auto direction = std::find_if( base_camps::all_directions.begin(),
+                base_camps::all_directions.end(), [&]( const auto &entry ) {
+                    return entry.second.tab_order == tab_index;
+                } );
+                if( direction == base_camps::all_directions.end() ) {
+                    continue;
+                }
+                a11y::semantic_node node;
+                node.id = "companion:tab:" + std::to_string( tab_index );
+                node.role = "tab";
+                node.label = direction->second.tab_title.translated();
+                node.selected = tab_mode == tab_index;
+                const bool selected_tab = node.selected;
+                node.position = tab_index + 1;
+                node.total = static_cast<int>( base_camps::all_directions.size() );
+                snapshot.nodes.push_back( std::move( node ) );
+                if( selected_tab ) {
+                    snapshot.focus = "companion:tab:" + std::to_string( tab_index );
+                }
+            }
+        }
+
+        const int total_entries = static_cast<int>( cur_key_list.size() );
+        for( size_t i = 0; i < cur_key_list.size(); ++i ) {
+            const mission_entry &entry = cur_key_list[i];
+            a11y::semantic_node node;
+            node.id = "companion:entry:" + std::to_string( i );
+            node.role = "listitem";
+            node.label = remove_color_tags( entry.name_display );
+            node.detail = remove_color_tags( entry.text );
+            node.selected = i == sel;
+            node.enabled = entry.possible;
+            if( !entry.possible ) {
+                node.disabled_reason = remove_color_tags( entry.text );
+                if( entry.id.ret ) {
+                    // A return entry's possible flag has exactly one
+                    // meaning in every builder (outpost rosters here,
+                    // update_time_left/update_time_fixed and crafting
+                    // returns in faction_camp): somebody on the mission
+                    // is ready to come back. The roster text below shows
+                    // each worker's elapsed/remaining time but never says
+                    // that in words, so state it before the roster.
+                    node.disabled_reason =
+                        std::string( _( "No companion on this mission is ready to return yet." ) )
+                        + "\n" + node.disabled_reason;
+                }
+            }
+            node.position = static_cast<int>( i + 1 );
+            node.total = total_entries;
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        if( sel < cur_key_list.size() ) {
+            a11y::append_document( snapshot, "companion:details",
+                                   remove_color_tags( mission_key.cur_key.name_display ),
+                                   mission_key.cur_key.text );
+            snapshot.focus = "companion:entry:" + std::to_string( sel );
+        }
+        if( sel < cur_key_list.size() && !cur_key_list[sel].possible ) {
+            snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+            []( const a11y::semantic_node &node ) {
+                return node.id == "CONFIRM";
+            } ), snapshot.nodes.end() );
+        }
+        return snapshot;
+    };
 
     size_t part_y = 0;
     size_t part_x = 0;
@@ -986,9 +1094,77 @@ bool talk_function::display_and_choose_opts(
         }
     } );
 
+    a11y::screen_scope reader( &ctxt, "companion_missions",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && role_id == role_id_faction_camp ) {
+            for( int tab_index = base_camps::TAB_MAIN;
+                 tab_index <= base_camps::TAB_NW; ++tab_index ) {
+                if( intent.node != "companion:tab:" + std::to_string( tab_index ) ) {
+                    continue;
+                }
+                const size_t entries_index = static_cast<size_t>( tab_index ) + 1;
+                const bool tab_available = tab_index == base_camps::TAB_MAIN ?
+                                           !mission_key.entries[0].empty() ||
+                                           !mission_key.entries[entries_index].empty() :
+                                           !mission_key.entries[entries_index].empty();
+                if( !tab_available ) {
+                    return std::nullopt;
+                }
+                tab_mode = static_cast<base_camps::tab_mode>( tab_index );
+                if( tab_mode == base_camps::TAB_MAIN ) {
+                    reset_cur_key_list();
+                } else {
+                    cur_key_list = mission_key.entries[entries_index];
+                }
+                if( cur_key_list.empty() ) {
+                    // tab_available above should make this unreachable;
+                    // never index an empty list on an external intent.
+                    return std::nullopt;
+                }
+                sel = 0;
+                info_offset = 0;
+                mission_key.cur_key = cur_key_list[sel];
+                reader_list_changed = true;
+                return "TIMEOUT";
+            }
+        }
+        if( intent.action == "focus" || intent.action == "activate" ) {
+            for( size_t i = 0; i < cur_key_list.size(); ++i ) {
+                if( intent.node == "companion:entry:" + std::to_string( i ) ) {
+                    // Entry IDs are positional in the current cur_key_list.
+                    // An activate only confirms the entry that is already
+                    // selected (the one the published snapshot marks
+                    // selected and focuses): it sets cur_key itself and
+                    // returns CONFIRM in the same intent, like
+                    // uilist::create_reader_scope. An activate naming any
+                    // other entry merely selects it, so an intent minted
+                    // against an older list (or a focus that has since
+                    // moved) can never execute a different mission than
+                    // the one the listener last heard selected; the
+                    // separate CONFIRM command likewise only ever acts
+                    // on the current selection.
+                    const bool already_selected = i == sel;
+                    sel = i;
+                    info_offset = 0;
+                    mission_key.cur_key = cur_key_list[sel];
+                    if( intent.action == "activate" && already_selected &&
+                        cur_key_list[sel].possible ) {
+                        return "CONFIRM";
+                    }
+                    return "TIMEOUT";
+                }
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
     while( true ) {
         mission_key.cur_key = cur_key_list[sel];
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot(), reader_list_changed );
+            reader_list_changed = false;
+        }
         const std::string action = ctxt.handle_input();
         const int recmax = static_cast<int>( cur_key_list.size() );
         const int scroll_rate = recmax > 20 ? 10 : 3;
@@ -1008,6 +1184,7 @@ bool talk_function::display_and_choose_opts(
         } else if( action == "NEXT_TAB" && role_id == role_id_faction_camp ) {
             sel = 0;
             info_offset = 0;
+            reader_list_changed = true;
 
             do {
                 if( tab_mode == base_camps::TAB_NW ) {
@@ -1021,6 +1198,7 @@ bool talk_function::display_and_choose_opts(
         } else if( action == "PREV_TAB" && role_id == role_id_faction_camp ) {
             sel = 0;
             info_offset = 0;
+            reader_list_changed = true;
 
             do {
                 if( tab_mode == base_camps::TAB_MAIN ) {
@@ -2603,6 +2781,33 @@ npc_ptr talk_function::companion_choose( const std::map<skill_id, int> &required
             }
         }
         uilist_entry npc_entry = uilist_entry( x, can_do, -1, npc_desc );
+        if( !can_do ) {
+            // The shared uilist reader (R04.1) otherwise gives a generic
+            // disabled reason for this entry. Name the actual unmet
+            // requirements, from the same required_skills data the label
+            // above prints as "skill have/need", so the listener hears
+            // why this companion cannot be sent instead of only that
+            // they cannot.
+            std::string unmet;
+            for( const std::pair<const skill_id, int> &skill_tested : required_skills ) {
+                if( skill_tested.second == 0 ||
+                    e->get_knowledge_level( skill_tested.first ) >= skill_tested.second ) {
+                    continue;
+                }
+                if( !unmet.empty() ) {
+                    unmet += ", ";
+                }
+                //~ %1$s: skill name, %2$d: companion skill level, %3$d: skill requirement
+                unmet += string_format( pgettext( "companion skill", "%1$s %2$d/%3$d" ),
+                                        skill_tested.first.obj().name(),
+                                        e->get_knowledge_level( skill_tested.first ),
+                                        skill_tested.second );
+            }
+            if( !unmet.empty() ) {
+                npc_entry.a11y_disabled_reason = string_format(
+                                                     _( "Not qualified: %s" ), unmet );
+            }
+        }
         npc_menu.push_back( npc_entry );
         x++;
     }

@@ -5,6 +5,9 @@
 #include <vector>
 
 #include "color.h"
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "input_enums.h"
 #include "translations.h"
 #include "ui_manager.h"
@@ -66,6 +69,19 @@ void iteminfo_window::execute()
     if( data.without_getch ) {
         ui_manager::redraw();
         return;
+    }
+
+    a11y::screen_scope reader( &ctxt, "item-info",
+    [this]( const a11y::semantic_intent &intent ) {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    if( a11y::enabled() ) {
+        auto snapshot = a11y::command_snapshot( ctxt, remove_color_tags( data.get_item_name() ) );
+        snapshot.summary = remove_color_tags( data.get_type_name() );
+        a11y::append_document( snapshot, "item:information", _( "Item info" ),
+                               format_item_info( data.get_item_display(), data.get_item_compare() ) );
+        snapshot.focus = "item:information";
+        reader.update( std::move( snapshot ) );
     }
 
     while( true ) {

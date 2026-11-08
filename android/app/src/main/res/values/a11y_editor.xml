@@ -1,0 +1,43 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="a11yEditorTitle">Edit value</string>
+    <string name="a11yEditorInstructions">Edit text. Apply submits the value; confirm separately in the game. Back cancels.</string>
+    <string name="a11yEditorValue">Current value</string>
+    <string name="a11yEditorReadValue">Read the full value</string>
+    <string name="a11yEditorLetters">Choose a letter</string>
+    <string name="a11yEditorTone">Change the tone of the previous vowel</string>
+    <string name="a11yEditorCase">Toggle uppercase and lowercase</string>
+    <string name="a11yEditorUppercase">Uppercase</string>
+    <string name="a11yEditorLowercase">Lowercase</string>
+    <string name="a11yEditorDigits">Choose a digit</string>
+    <string name="a11yEditorPunctuation">Choose punctuation</string>
+    <string name="a11yEditorSpace">Insert a space</string>
+    <string name="a11yEditorLeft">Move left one character</string>
+    <string name="a11yEditorRight">Move right one character</string>
+    <string name="a11yEditorDelete">Delete the previous character</string>
+    <string name="a11yEditorClear">Clear the value</string>
+    <string name="a11yEditorConfirmClear">Confirm clearing the value</string>
+    <string name="a11yEditorApply">Apply the value to the field</string>
+    <string name="a11yEditorCancel">Cancel editing</string>
+    <string name="a11yEditorKeyboardReturn">Return to editor commands</string>
+    <string name="a11yEditorEmpty">Empty value</string>
+    <string name="a11yEditorEnd">End of the value</string>
+    <string name="a11yEditorStart">Start of the value</string>
+    <string name="a11yEditorDeleted">Deleted: %1$s</string>
+    <string name="a11yEditorNoVowel">Place the cursor after a vowel first.</string>
+    <string name="a11yEditorApplied">Applied. Confirm separately in the game.</string>
+    <string name="a11yEditorInvalid">Invalid value. Draft kept.</string>
+    <string name="a11yToneNone">No tone</string>
+    <string name="a11yToneGrave">Grave tone</string>
+    <string name="a11yToneAcute">Acute tone</string>
+    <string name="a11yToneHook">Hook tone</string>
+    <string name="a11yToneTilde">Tilde tone</string>
+    <string name="a11yToneDot">Dot tone</string>
+    <string name="a11yEditorRange">Allowed values: %1$s to %2$s</string>
+    <string name="a11yEditorStep">Step: %1$s</string>
+    <string name="a11yEditorIncreaseStep">Increase by one step</string>
+    <string name="a11yEditorDecreaseStep">Decrease by one step</string>
+    <string name="a11yEditorNotANumber">Enter a number.</string>
+    <string name="a11yEditorOutOfRange">Value must be %1$s to %2$s.</string>
+    <string name="a11yEditorStepMismatch">Use steps of %1$s from %2$s.</string>
+</resources>

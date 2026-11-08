@@ -19,6 +19,8 @@
 #include <vector>
 
 #include "achievement.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "addiction.h"
 #include "bionics.h"
 #include "calendar_ui.h"
@@ -796,6 +798,13 @@ bool avatar::create( character_type type, const std::string &tempname )
             break;
         case character_type::TEMPLATE:
             if( !load_template( tempname, /*out*/ pool ) ) {
+                if( a11y::enabled() ) {
+                    // load_template only debug-logs read/parse failures, so
+                    // without this the load silently returns to the menu
+                    // (R07.3).
+                    popup( _( "The character template \"%s\" could not be loaded. Its file may be missing or damaged." ),
+                           tempname );
+                }
                 return false;
             }
 
@@ -2594,8 +2603,12 @@ void character_creator_ui::setup_new_uilist()
 static void set_uilist_selected( std::shared_ptr<uilist> &menu, int idx )
 {
     if( !menu->entries.empty() ) {
+        // idx is a logical (unfiltered) entry index. set_selected now also
+        // syncs the filtered-space cursor; the old scrollby(abs(idx)) call
+        // reinterpreted the same number as a filtered-space position and
+        // selected a different entry whenever a category/filter was active
+        // (R04.1).
         menu->set_selected( idx );
-        menu->scrollby( uilist::scroll_amount::abs( idx ) );
     }
 }
 
@@ -2615,7 +2628,23 @@ void character_creator_ui::update_uilist_entries()
             for( const scenario *scen : cc_uistate.sorted_scenarios ) {
                 uilist_entry entry = get_uilist_entry( scen->gender_appropriate_name( u.male ) );
                 entry.text_color = scen == cc_uistate.get_selected_scenario() ? COL_SELECTED : COL_NOT_SELECTED;
+                // Scenarios have a point cost (counted by skill_points_used)
+                // but it was published nowhere at this tab (R07.2).
+                entry.a11y_value = string_format( _( "Point cost: %d" ), scen->point_cost() );
+                if( scen == get_scenario() ) {
+                    entry.a11y_value += ". " + std::string( _( "Current choice" ) );
+                }
                 entry.enabled = scen->can_pick().success();
+                entry.desc = scen->description( u.male );
+                if( !entry.enabled ) {
+                    entry.a11y_disabled_reason = scen->can_pick().str();
+                } else if( scen->has_flag( "CITY_START" ) && !cities_enabled() ) {
+                    // can_pick does not cover this requirement; confirm used
+                    // to drop the choice with no message at all.
+                    entry.enabled = false;
+                    entry.a11y_disabled_reason =
+                        _( "This scenario starts in a city, but cities are disabled." );
+                }
                 menu->addentry( entry );
             }
             set_uilist_selected( menu, cc_uistate.selected_scenario_index );
@@ -2628,7 +2657,35 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry entry = get_uilist_entry( prof_id->gender_appropriate_name( u.male ) );
                 entry.text_color = prof_id == cc_uistate.get_selected_profession() ? COL_SELECTED :
                                    COL_NOT_SELECTED;
+                entry.a11y_value = string_format( _( "Point cost: %d" ), prof_id->point_cost() );
+                if( prof_id == u.prof->ident() ) {
+                    entry.a11y_value += ". " + std::string( _( "Current choice" ) );
+                }
                 entry.enabled = prof_id->can_pick().success();
+                entry.desc = prof_id->description( u.male );
+                if( !entry.enabled ) { entry.a11y_disabled_reason = prof_id->can_pick().str(); }
+                // The detail pane lists the profession's bionics and spells,
+                // but at this tab the reader only receives desc, so name them
+                // here (R07.2; the same data is repeated at the summary tab).
+                if( !prof_id->CBMs().empty() ) {
+                    std::vector<std::string> bionic_names;
+                    bionic_names.reserve( prof_id->CBMs().size() );
+                    for( const bionic_id &cbm : prof_id->CBMs() ) {
+                        bionic_names.emplace_back( cbm->name.translated() );
+                    }
+                    entry.desc += "\n" + string_format( _( "Bionics: %s" ),
+                                                        enumerate_as_string( bionic_names ) );
+                }
+                if( !prof_id->spells().empty() ) {
+                    std::vector<std::string> spell_names;
+                    spell_names.reserve( prof_id->spells().size() );
+                    for( const auto &spell : prof_id->spells() ) {
+                        spell_names.emplace_back( string_format( _( "%1$s level %2$d" ),
+                                                  spell.first->name, spell.second ) );
+                    }
+                    entry.desc += "\n" + string_format( _( "Spells: %s" ),
+                                                        enumerate_as_string( spell_names ) );
+                }
                 menu->addentry( entry );
             }
             set_uilist_selected( menu, cc_uistate.selected_profession_index );
@@ -2640,6 +2697,34 @@ void character_creator_ui::update_uilist_entries()
             for( const profession_id prof_id : cc_uistate.sorted_hobbies ) {
                 uilist_entry entry = get_uilist_entry( prof_id->gender_appropriate_name( u.male ) );
                 entry.text_color = u.hobbies.count( &*prof_id ) ? COL_SELECTED : COL_NOT_SELECTED;
+                entry.a11y_checked = u.hobbies.count( &*prof_id ) != 0;
+                entry.a11y_value = string_format( _( "Point cost: %d" ), prof_id->point_cost() );
+                entry.desc = prof_id->description( u.male );
+                // Same pane parity as the profession tab: backgrounds can
+                // grant bionics and spells (R07.2). Trait conflicts of a
+                // background are checked at confirm time by
+                // hobby_conflict_check, which explains itself with a popup;
+                // they are not pre-published here because that check is a
+                // confirm-time function with its own messages.
+                if( !prof_id->CBMs().empty() ) {
+                    std::vector<std::string> bionic_names;
+                    bionic_names.reserve( prof_id->CBMs().size() );
+                    for( const bionic_id &cbm : prof_id->CBMs() ) {
+                        bionic_names.emplace_back( cbm->name.translated() );
+                    }
+                    entry.desc += "\n" + string_format( _( "Bionics: %s" ),
+                                                        enumerate_as_string( bionic_names ) );
+                }
+                if( !prof_id->spells().empty() ) {
+                    std::vector<std::string> spell_names;
+                    spell_names.reserve( prof_id->spells().size() );
+                    for( const auto &spell : prof_id->spells() ) {
+                        spell_names.emplace_back( string_format( _( "%1$s level %2$d" ),
+                                                  spell.first->name, spell.second ) );
+                    }
+                    entry.desc += "\n" + string_format( _( "Spells: %s" ),
+                                                        enumerate_as_string( spell_names ) );
+                }
                 menu->addentry( entry );
             }
             break;
@@ -2653,7 +2738,17 @@ void character_creator_ui::update_uilist_entries()
             const int stat_count = static_cast<int>( character_stat::DUMMY_STAT );
             for( int i = 0; i < stat_count; i++ ) {
                 uilist_entry entry = get_uilist_entry( char_creation::get_character_stat_header( i ) );
-                menu->addentry( get_uilist_entry( char_creation::get_character_stat_header( i ) ) );
+                // The raw number alone hid the level wording, the allowed
+                // range and the remaining stat pool (R07.2); the level
+                // wording is the same one the header text uses.
+                entry.a11y_value = string_format( _( "%1$d (%2$s). Range %3$d to %4$d." ),
+                                                  cc_uistate.stats[i],
+                                                  char_creation::stat_level_description(
+                                                          cc_uistate.stats[i] ),
+                                                  CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
+                entry.desc = string_format( _( "Stat points left: %d." ),
+                                            multi_pool( u ).stat_points_left );
+                menu->addentry( entry );
             }
             break;
         }
@@ -2665,9 +2760,66 @@ void character_creator_ui::update_uilist_entries()
                 uilist_entry trait_entry = get_uilist_entry( current_trait->name() );
                 trait_entry.retval = i;
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
+                trait_entry.a11y_checked = u.has_trait( current_trait );
+                trait_entry.a11y_value = string_format( _( "Trait point value: %d" ), current_trait->points );
+                trait_entry.desc = u.mutation_desc( current_trait );
                 trait_entry.enabled = !( u.has_conflicting_trait( current_trait ) ||
                                          get_scenario()->is_forbidden_trait( current_trait ) ||
                                          u.prof->is_forbidden_trait( current_trait ) );
+                if( !trait_entry.enabled ) {
+                    const std::unordered_set<trait_id> conflicts = u.get_conflicting_traits( current_trait );
+                    if( !conflicts.empty() ) {
+                        std::vector<std::string> conflict_names;
+                        conflict_names.reserve( conflicts.size() );
+                        for( const trait_id &conflict : conflicts ) {
+                            conflict_names.emplace_back( u.mutation_name( conflict ) );
+                        }
+                        trait_entry.a11y_disabled_reason = string_format(
+                                _( "You already picked some conflicting traits: %s." ),
+                                enumerate_as_string( conflict_names ) );
+                    } else if( get_scenario()->is_forbidden_trait( current_trait ) ) {
+                        trait_entry.a11y_disabled_reason =
+                            _( "The scenario you picked prevents you from taking this trait!" );
+                    } else if( u.prof->is_forbidden_trait( current_trait ) ) {
+                        trait_entry.a11y_disabled_reason = string_format(
+                                _( "Your profession of %s prevents you from taking this trait." ),
+                                u.prof->gender_appropriate_name( u.male ) );
+                    }
+                }
+                const std::vector<bionic_id> blocking_bionics =
+                    bionics_cancelling_trait( u.prof->CBMs(), current_trait );
+                if( !blocking_bionics.empty() ) {
+                    std::vector<std::string> bionic_names;
+                    bionic_names.reserve( blocking_bionics.size() );
+                    for( const bionic_id &blocking_bionic : blocking_bionics ) {
+                        bionic_names.emplace_back( blocking_bionic->name.translated() );
+                    }
+                    trait_entry.desc += "\n" + string_format(
+                                            _( "The following bionics prevent you from taking this trait: %s." ),
+                                            enumerate_as_string( bionic_names ) );
+                    if( !u.has_trait( current_trait ) ) {
+                        // Publish this block the same way as the three
+                        // forbidden cases above (disabled with a reason)
+                        // instead of leaving the entry selectable and only
+                        // explaining at confirm time (R07.2).
+                        trait_entry.enabled = false;
+                        trait_entry.a11y_disabled_reason = string_format(
+                                _( "The following bionics prevent you from taking this trait: %s." ),
+                                enumerate_as_string( bionic_names ) );
+                    }
+                }
+                if( u.has_trait( current_trait ) &&
+                    ( get_scenario()->is_locked_trait( current_trait ) ||
+                      u.prof->is_locked_trait( current_trait ) ||
+                      std::any_of( u.hobbies.begin(), u.hobbies.end(),
+                [&]( const profession * hobby ) {
+                    return hobby->is_locked_trait( current_trait );
+                } ) ) ) {
+                    // Removal is refused at confirm time with a popup; say
+                    // so in advance as part of the entry (R07.2).
+                    trait_entry.desc += "\n" + std::string(
+                            _( "This trait is locked by your scenario, profession or background and cannot be removed." ) );
+                }
                 menu->addentry( trait_entry );
             }
             break;
@@ -2675,10 +2827,39 @@ void character_creator_ui::update_uilist_entries()
         case CHARCREATOR_SKILLS: {
             cc_uistate.recalc_skill_list();
             const int skill_count = cc_uistate.sorted_skills.size();
+            const multi_pool creator_points( u );
             for( int i = 0; i < skill_count; i++ ) {
+                const Skill *skill = cc_uistate.sorted_skills[i];
                 uilist_entry skill_entry = get_uilist_entry( get_skill_entry_text(
-                                               cc_uistate.sorted_skills[i]->ident(), u ) );
+                                               skill->ident(), u ) );
                 skill_entry.retval = i;
+                skill_entry.desc = skill->description();
+                // This tab published no value at all: the level only existed
+                // inside the entry text, which screen-reader mode blanks
+                // (R07.2). Split it the same way get_skill_entry_text does:
+                // own level, plus the profession/background bonus.
+                const int own_level = u.get_skill_level( skill->ident() );
+                int bonus_level = 0;
+                for( const auto &prof_skill : u.prof->skills() ) {
+                    if( prof_skill.first == skill->ident() ) {
+                        bonus_level += prof_skill.second;
+                        break;
+                    }
+                }
+                for( const profession *hobby : u.hobbies ) {
+                    for( const auto &hobby_skill : hobby->skills() ) {
+                        if( hobby_skill.first == skill->ident() ) {
+                            bonus_level = std::max( bonus_level, hobby_skill.second );
+                            break;
+                        }
+                    }
+                }
+                skill_entry.a11y_value = bonus_level == 0
+                                         ? string_format( _( "Level: %d" ), own_level )
+                                         : string_format( _( "Level: %1$d + %2$d from profession or background" ),
+                                                 own_level, bonus_level );
+                skill_entry.desc += "\n" + string_format( _( "Skill points left: %d." ),
+                                    creator_points.skill_points_left );
                 menu->addentry( skill_entry );
             }
             break;
@@ -2867,6 +3048,236 @@ void character_creator_ui_impl::draw_top_bar( const avatar &u ) const
                                       ui_parent->get_current_tab_input().get_desc( "HELP_KEYBINDINGS" ) ) );
 }
 
+static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, const avatar &you )
+{
+    const scenario *scenario_data = get_scenario();
+    const profession &profession_data = *you.prof;
+    const std::string name = you.name.empty() ? std::string( _( "Not set" ) ) : you.name;
+    const std::string scenario_name = scenario_data->gender_appropriate_name( you.male );
+    const std::string profession_name = profession_data.gender_appropriate_name( you.male );
+    snapshot.summary = remove_color_tags( string_format( _( "Character: %1$s. Scenario: %2$s. Profession: %3$s." ),
+                                     name, scenario_name, profession_name ) );
+
+    for( a11y::semantic_node &node : snapshot.nodes ) {
+        if( node.id == "CHANGE_NAME" ) { node.value = name; }
+        if( node.id == "CHANGE_GENDER" ) {
+            node.value = remove_color_tags( char_creation::get_gender_string( you.male ) );
+        }
+        if( node.id == "CHANGE_OUTFIT" ) {
+            node.value = remove_color_tags( char_creation::get_gender_string( outfit ) );
+        }
+        if( node.id == "CHANGE_HEIGHT" ) { node.value = you.height_string(); }
+        if( node.id == "CHANGE_AGE" ) { node.value = you.age_string( scenario_data->start_of_game() ); }
+        if( node.id == "CHANGE_BLOOD_TYPE" ) {
+            node.value = io::enum_to_string( you.my_blood_type ) + ( you.blood_rh_factor ? "+" : "-" );
+        }
+        if( node.id == "CHANGE_START_OF_CATACLYSM" ) {
+            node.value = to_string( scenario_data->start_of_cataclysm() );
+        }
+        if( node.id == "CHANGE_START_OF_GAME" ) {
+            node.value = to_string( scenario_data->start_of_game() );
+        }
+        if( node.id == "CHOOSE_CITY" ) {
+            node.value = you.starting_city.has_value() ? you.starting_city->name : _( "Random" );
+        }
+        if( node.id == "CHOOSE_LOCATION" ) {
+            if( you.random_start_location ) {
+                node.value = string_format( n_gettext( "Random location (%d variant)",
+                                                       "Random location (%d variants)",
+                                                       scenario_data->start_location_targets_count() ),
+                                            scenario_data->start_location_targets_count() );
+            } else {
+                const int variants = you.start_location.obj().targets_count();
+                node.value = string_format( n_gettext( "%s (%d variant)", "%s (%d variants)", variants ),
+                                            you.start_location.obj().name(), variants );
+            }
+        }
+    }
+
+    auto add_document = [&snapshot]( const std::string &id, const std::string &label,
+    const std::string &detail ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "document";
+        node.label = label;
+        node.detail = remove_color_tags( detail );
+        snapshot.nodes.push_back( std::move( node ) );
+    };
+
+    std::string overview = string_format( _( "Name: %1$s. Gender: %2$s. Outfit: %3$s. "
+                                  "Scenario: %4$s. Profession: %5$s. Age: %6$s. Height: %7$s. Blood type: %8$s%9$s." ),
+                                          name, remove_color_tags( char_creation::get_gender_string( you.male ) ),
+                                          remove_color_tags( char_creation::get_gender_string( outfit ) ),
+                                          scenario_name, profession_name,
+                                          you.age_string( scenario_data->start_of_game() ), you.height_string(),
+                                          io::enum_to_string( you.my_blood_type ), you.blood_rh_factor ? "+" : "-" );
+    std::string hobbies;
+    for( const profession *hobby : you.hobbies ) {
+        if( !hobbies.empty() ) { hobbies += ", "; }
+        hobbies += hobby->gender_appropriate_name( you.male );
+    }
+    if( hobbies.empty() ) { hobbies = _( "None" ); }
+    overview += " " + string_format( _( "Backgrounds: %s." ), hobbies );
+    add_document( "character:overview", _( "Character overview" ), overview );
+
+    std::string stats = string_format( _( "%1$s: %2$d. %3$s: %4$d. %5$s: %6$d. %7$s: %8$d." ),
+                                       get_character_stat_name( static_cast<int>( character_stat::STRENGTH ) ),
+                                       you.get_str_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::DEXTERITY ) ),
+                                       you.get_dex_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::INTELLIGENCE ) ),
+                                       you.get_int_base(),
+                                       get_character_stat_name( static_cast<int>( character_stat::PERCEPTION ) ),
+                                       you.get_per_base() );
+    add_document( "character:stats", _( "Starting attributes" ), stats );
+
+    const multi_pool points( you );
+    add_document( "character:points", _( "Creation points remaining" ),
+                  string_format( _( "Stats: %1$d. Traits: %2$d. Skills: %3$d." ),
+                                 points.stat_points_left, points.trait_points_left,
+                                 points.skill_points_left ) );
+
+    std::string traits;
+    for( const trait_and_var &trait : you.get_mutations_variants( false ) ) {
+        if( !traits.empty() ) { traits += ". "; }
+        traits += trait.name();
+    }
+    if( traits.empty() ) { traits = _( "None" ); }
+    add_document( "character:traits", _( "Starting traits" ), traits );
+
+    std::vector<proficiency_id> proficiencies = profession_data.proficiencies();
+    // The summary pane also lists proficiencies the character already
+    // knows (draw_character_proficiencies); include them here too (R07.2).
+    for( const proficiency_id &proficiency : you._proficiencies->known_profs() ) {
+        if( std::find( proficiencies.begin(), proficiencies.end(), proficiency ) == proficiencies.end() ) {
+            proficiencies.push_back( proficiency );
+        }
+    }
+    for( const profession *hobby : you.hobbies ) {
+        for( const proficiency_id &proficiency : hobby->proficiencies() ) {
+            if( std::find( proficiencies.begin(), proficiencies.end(), proficiency ) == proficiencies.end() ) {
+                proficiencies.push_back( proficiency );
+            }
+        }
+    }
+    std::string proficiency_details;
+    for( const proficiency_id &proficiency : proficiencies ) {
+        if( !proficiency_details.empty() ) { proficiency_details += ". "; }
+        proficiency_details += proficiency->name();
+    }
+    if( proficiency_details.empty() ) { proficiency_details = _( "None" ); }
+    add_document( "character:proficiencies", _( "Starting proficiencies" ), proficiency_details );
+
+    std::vector<bionic_id> bionics = profession_data.CBMs();
+    for( const profession *hobby : you.hobbies ) {
+        const std::vector<bionic_id> hobby_bionics = hobby->CBMs();
+        for( const bionic_id &bionic : hobby_bionics ) {
+            if( std::find( bionics.begin(), bionics.end(), bionic ) == bionics.end() ) {
+                bionics.push_back( bionic );
+            }
+        }
+    }
+    std::string bionic_details;
+    for( const bionic_id &bionic : bionics ) {
+        if( !bionic_details.empty() ) { bionic_details += ". "; }
+        const bionic_data &data = bionic.obj();
+        bionic_details += data.name.translated();
+        if( data.activated && data.has_flag( json_flag_BIONIC_TOGGLED ) ) {
+            bionic_details += " (" + std::string( _( "toggled" ) ) + ")";
+        } else if( data.activated ) {
+            bionic_details += " (" + std::string( _( "activated" ) ) + ")";
+        }
+    }
+    if( bionic_details.empty() ) { bionic_details = _( "None" ); }
+    add_document( "character:bionics", _( "Starting bionics" ), bionic_details );
+
+    std::string spell_details;
+    std::string mission_details;
+    auto append_profession_content = [&spell_details, &mission_details]( const profession &source ) {
+        for( const auto &spell : source.spells() ) {
+            if( !spell_details.empty() ) { spell_details += ". "; }
+            spell_details += string_format( _( "%1$s level %2$d" ), spell.first->name, spell.second );
+        }
+        for( const mission_type_id &mission : source.missions() ) {
+            if( !mission_details.empty() ) { mission_details += ". "; }
+            mission_details += mission_type::get( mission )->tname();
+        }
+    };
+    append_profession_content( profession_data );
+    for( const profession *hobby : you.hobbies ) { append_profession_content( *hobby ); }
+    for( const mission_type_id &mission : scenario_data->missions() ) {
+        if( !mission_details.empty() ) { mission_details += ". "; }
+        mission_details += mission_type::get( mission )->tname();
+    }
+    if( spell_details.empty() ) { spell_details = _( "None" ); }
+    if( mission_details.empty() ) { mission_details = _( "None" ); }
+    add_document( "character:spells", _( "Starting spells" ), spell_details );
+    add_document( "character:missions", _( "Starting missions" ), mission_details );
+
+    std::vector<std::string> skill_details;
+    const std::vector<const Skill *> skills = Skill::get_skills_sorted_by(
+    []( const Skill &lhs, const Skill &rhs ) {
+        return localized_compare( std::make_pair( 0, lhs.name() ),
+                                  std::make_pair( 0, rhs.name() ) );
+    } );
+    for( const Skill *skill : skills ) {
+        const skill_id id = skill->ident();
+        int level = you.get_skill_level( id );
+        for( const auto &entry : profession_data.skills() ) {
+            if( entry.first == id ) { level += entry.second; break; }
+        }
+        for( const profession *hobby : you.hobbies ) {
+            for( const auto &entry : hobby->skills() ) {
+                if( entry.first == id ) { level = std::max( level, entry.second ); break; }
+            }
+        }
+        level = std::clamp( level, MIN_SKILL, MAX_SKILL );
+        if( level > 0 ) {
+            skill_details.push_back( string_format( _( "%1$s: %2$d" ), skill->name(), level ) );
+        }
+    }
+    std::string skills_detail;
+    for( const std::string &skill : skill_details ) {
+        if( !skills_detail.empty() ) { skills_detail += ". "; }
+        skills_detail += skill;
+    }
+    if( skills_detail.empty() ) { skills_detail = _( "None" ); }
+    add_document( "character:skills", _( "Starting skills" ), skills_detail );
+
+    std::string start_location;
+    if( you.random_start_location ) {
+        start_location = string_format( n_gettext( "Random location (%d variant)",
+                                      "Random location (%d variants)",
+                                      scenario_data->start_location_targets_count() ),
+                                        scenario_data->start_location_targets_count() );
+    } else {
+        const int variants = you.start_location.obj().targets_count();
+        start_location = string_format( n_gettext( "%s (%d variant)", "%s (%d variants)", variants ),
+                                        you.start_location.obj().name(), variants );
+    }
+    std::string vehicle = _( "None" );
+    const vproto_id scenario_vehicle = scenario_data->vehicle();
+    const vproto_id profession_vehicle = profession_data.vehicle();
+    if( scenario_vehicle ) {
+        // The visual pane labels which source provides the vehicle
+        // (draw_starting_vehicle); keep the same distinction (R07.2).
+        vehicle = string_format( _( "%s (from scenario)" ), scenario_vehicle->name.translated() );
+    } else if( profession_vehicle ) {
+        vehicle = string_format( _( "%s (from profession)" ),
+                                 profession_vehicle->name.translated() );
+    }
+    std::string starting = string_format( _( "Location: %1$s. City: %2$s. Start of cataclysm: %3$s. "
+                                   "Start of game: %4$s. Starting vehicle: %5$s." ),
+                                          start_location,
+                                          you.starting_city.has_value() ? you.starting_city->name : _( "Random" ),
+                                          to_string( scenario_data->start_of_cataclysm() ),
+                                          to_string( scenario_data->start_of_game() ), vehicle );
+    add_document( "character:starting", _( "Starting location and date" ), starting );
+    add_document( "character:scenario", _( "Scenario description" ), scenario_data->description( you.male ) );
+    add_document( "character:profession", _( "Profession description" ), profession_data.description( you.male ) );
+    add_document( "character:rating", _( "Character rating" ), cc_uistate.rating_string );
+}
+
 bool character_creator_ui::display()
 {
     cc_uistate.reset();
@@ -2892,6 +3303,10 @@ bool character_creator_ui::display()
     cc_uistate.quit_to_main_menu = false;
     cc_uistate.finished_character_creator = false;
 
+    std::unique_ptr<a11y::screen_scope> reader;
+    input_context *reader_input = nullptr;
+    std::shared_ptr<uilist> reader_list;
+
     while( !cc_uistate.finished_character_creator ) {
 
         input_context &current_tab_input = get_current_tab_input();
@@ -2899,13 +3314,37 @@ bool character_creator_ui::display()
 
         ui_manager::redraw();
         std::shared_ptr<uilist> current_tab_uilist = get_current_tab_uilist();
+        if( reader_input != &current_tab_input || reader_list != current_tab_uilist ) {
+            reader.reset();
+            reader_input = &current_tab_input;
+            reader_list = current_tab_uilist;
+            if( current_tab_uilist ) {
+                reader = current_tab_uilist->create_reader_scope( current_tab_input );
+            } else {
+                reader = std::make_unique<a11y::screen_scope>( &current_tab_input, "CHARACTER_CREATION",
+                [&]( const a11y::semantic_intent & intent ) {
+                    return a11y::registered_intent( get_current_tab_input(), intent );
+                } );
+            }
+        }
         if( current_tab_uilist ) {
             cc_uilist_current = current_tab_uilist->create_or_get_ui();
             if( current_tab_uilist->query_setup() ) {
+                current_tab_uilist->update_reader( *reader, current_tab_input );
                 current_tab_uilist->query_once( current_tab_input, 33 );
             }
         } else {
             cc_uilist_current.reset();
+            if( a11y::enabled() ) {
+                a11y::semantic_snapshot snapshot = a11y::command_snapshot( current_tab_input, _( "Character creation" ) );
+                const avatar &you = get_avatar();
+                append_character_reader_summary( snapshot, you );
+                for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+                    snapshot.nodes[i].position = static_cast<int>( i + 1 );
+                    snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+                }
+                reader->update( std::move( snapshot ) );
+            }
             handle_action( current_tab_input.handle_input( 33 ) );
         }
         if( !cc_uistate.top_bar_button_action.empty() ) {

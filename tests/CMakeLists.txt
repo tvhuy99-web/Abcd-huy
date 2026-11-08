@@ -19,13 +19,20 @@ if (BUILD_TESTING)
         # Unfortunately we currently need to put this in the source dir, not the
         # build dir
         set(TEST_LANG ${CMAKE_SOURCE_DIR}/data/mods/TEST_DATA/lang)
-        set(TEST_MO ${TEST_LANG}/mo/en/LC_MESSAGES/TEST_DATA.mo)
-        add_custom_command(
-            OUTPUT ${TEST_MO}
-            MAIN_DEPENDENCY ${TEST_LANG}/po/en.po
-            COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f -o ${TEST_MO} ${TEST_LANG}/po/en.po)
-
-        add_custom_target(test_mo DEPENDS ${TEST_MO})
+        file(GLOB TEST_PO_FILES CONFIGURE_DEPENDS ${TEST_LANG}/po/*.po)
+        set(TEST_MO_FILES)
+        foreach(TEST_PO ${TEST_PO_FILES})
+            get_filename_component(TEST_LANGUAGE ${TEST_PO} NAME_WE)
+            set(TEST_MO_DIR ${TEST_LANG}/mo/${TEST_LANGUAGE}/LC_MESSAGES)
+            set(TEST_MO ${TEST_MO_DIR}/TEST_DATA.mo)
+            add_custom_command(
+                OUTPUT ${TEST_MO}
+                MAIN_DEPENDENCY ${TEST_PO}
+                COMMAND ${CMAKE_COMMAND} -E make_directory ${TEST_MO_DIR}
+                COMMAND ${GETTEXT_MSGFMT_EXECUTABLE} -f -o ${TEST_MO} ${TEST_PO})
+            list(APPEND TEST_MO_FILES ${TEST_MO})
+        endforeach()
+        add_custom_target(test_mo DEPENDS ${TEST_MO_FILES})
     endif()
 
     if (TILES)

@@ -28,6 +28,11 @@
 
 class scrollbar;
 class translation;
+namespace a11y
+{
+class screen_scope;
+struct semantic_node;
+}
 
 ////////////////////////////////////////////////////////////////////////////////////
 /**
@@ -70,6 +75,9 @@ struct uilist_entry {
         std::string txt;            // what it says on the tin
         std::string desc;           // optional, possibly longer, description
         std::string ctxt;           // second column text
+        std::optional<bool> a11y_checked;
+        std::string a11y_value;
+        std::string a11y_disabled_reason;
         nc_color hotkey_color;
         nc_color text_color;
         mvwzstr extratxt;
@@ -230,6 +238,10 @@ class uilist_callback
                           uilist * ) {
             return false;
         }
+        // Customize the reader node for a registered action. Keep this state
+        // derived from the same menu selection and game data used by key().
+        virtual void describe_accessibility_action( const std::string &, int,
+                a11y::semantic_node & ) const {}
         virtual void refresh( uilist * ) {}
         virtual float desired_extra_space_left( ) {
             return 0.0;
@@ -327,6 +339,9 @@ class uilist // NOLINT(cata-xy)
                                             bool allow_unfiltered_hotkeys = false );
         // helper function for query(); can be used to externally maintain a uilist_impl
         void query_once( input_context &ctxt, int timeout = 50, bool allow_unfiltered_hotkeys = false );
+        // Shared by query() and screens that own an external query_once loop.
+        std::unique_ptr<a11y::screen_scope> create_reader_scope( input_context &ctxt );
+        void update_reader( a11y::screen_scope &reader, const input_context &ctxt );
 
         void filterlist();
         // In add_entry/add_entry_desc/add_entry_col, int k only support letters

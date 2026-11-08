@@ -1,0 +1,42 @@
+# Danh mục bề mặt cần nghiệm thu — bản đầu
+
+Trạng thái mọi hàng: **chưa có nghiệm thu trợ năng**. Đây là bản kiểm kê đầu,
+không phải danh sách đầy đủ hoặc mẫu số để công bố “100%”. Tên màn/context
+được xác định bằng đọc nguồn tại baseline và công cụ `inventory.py`.
+
+| Nhóm | Nguồn chính để rà luồng | Chi tiết bắt buộc |
+| --- | --- | --- |
+| Khởi động Java | `SplashScreen.java`, `NativeUI.java` | Cài/nâng dữ liệu, lỗi, cảnh báo, quay lại |
+| Menu chính | `main_menu.cpp/.h` | Context MAIN_MENU trong constructor initializer, không nằm trong kết quả literal hiện tại |
+| Thế giới/mod | `worldfactory.cpp`, `mod_manager_ui.cpp` | WORLDGEN_CONFIRM_DIALOG, MODMANAGER_DIALOG, chọn thế giới, xóa, phụ thuộc |
+| Tạo nhân vật | `newcharacter.cpp` | Tất cả tab, mẫu, nhập tên, xác nhận |
+| Menu chung | `uilist.cpp` | Filter/category/retval và nhánh native trả về sớm |
+| Popup/nhập | `popup.cpp`, `input_popup.cpp`, `string_input_popup.cpp` | Hỏi, chọn nhiều, số, Unicode, IME, hủy |
+| Bản đồ cục bộ | `game_ui_tile_info.cpp`, `surroundings_menu.cpp`, `a11y_world.cpp` | Tri thức theo từng trường, âm, memory, bộ lọc đã biết/đáng chú ý/dấu nghe, bán kính ngang và độ sâu tầng tùy chọn; tầng khác chỉ từ memory |
+| Di chuyển/hành động | `action.cpp`, `handle_action.cpp`, `avatar_action.cpp`, `do_turn.cpp`, `a11y_world.cpp` | DEFAULTMODE, LOOK, realtime, kết quả thật; xác nhận ngủ/chờ nêu rõ thời gian tiếp tục trôi và activity reader cảnh báo realtime; luồng/hủy còn chưa nghiệm thu |
+| Hành trang | `inventory_ui.cpp`, `item_contents.cpp`, `pickup.cpp` | Nhiều lựa chọn, pockets, container, số lượng |
+| Kho nâng cao | `advanced_inv.cpp`, `armor_layers.cpp` | Hai cột nguồn/đích, sức chứa, thứ tự mặc |
+| Y tế/trạng thái | `medical_ui.cpp`, `player_display.cpp`, `morale.cpp` | Chi tiết bộ phận/hiệu ứng, giá trị không chỉ qua màu |
+| Thông báo | `messages.cpp`, `output.cpp` | Cooldown/coalescing, lịch sử, văn bản dài |
+| Chiến đấu | `ranged.cpp`, hệ thống hành động/võ thuật | Nhắm/chọn ô/tầng/vùng, bắn, hủy, nạp |
+| Chế tạo/xây | `crafting_gui.cpp`, `construction.cpp` | Công thức, thay thế, batch, vị trí, thiếu điều kiện |
+| Bản đồ lớn | `overmap_ui.cpp`, `calendar_ui.cpp` | Snapshot tọa độ/tầng con trỏ và ô kế cận theo mức đã khám phá; ghi chú/vùng nguy hiểm; tuyến, điểm đến, vị trí tương đối và độ dài; lệnh travel/ghi chú có mô tả/trạng thái; danh sách note và kết quả tìm kiếm đọc được, chọn note/kết quả chỉ di chuyển con trỏ; chỉnh thời gian đọc giá trị, tăng/giảm/đặt lại và lý do giới hạn độ chính xác; toàn luồng travel/notes/search/levels/calendar và kiểm tra dữ liệu ẩn vẫn chưa nghiệm thu |
+| NPC/thương mại | `dialogue_imgui.cpp`, `npctalk.cpp`, `trade_ui.cpp` | Lịch sử người nói, câu trả lời, giá trị giao dịch |
+| Nhiệm vụ/trại | `mission_ui.cpp`, `mission_companion.cpp`, `faction_camp.cpp` | Màn nhiệm vụ có tab active/completed/failed/points of interest, hàng và chi tiết ngữ nghĩa, mục tiêu hiện hành, deadline/kết quả, vị trí/khoảng cách; menu giao việc/trả đồng đội đọc lựa chọn, mô tả, trạng thái cho phép và tab trại. Xác nhận/xóa theo action gốc; chưa kiểm thử điều kiện/kết quả từng loại hoặc toàn luồng |
+| Phe/người theo | `faction_ui.cpp` | Bốn tab, danh sách trại/người theo/nhóm/sinh vật đã biết, thông tin trại, nhiệm vụ/ETA/trạng thái/sức khỏe/kỹ năng người theo, khả năng liên hệ và chi tiết phe/sinh vật; lệnh chỉ hiện khi phù hợp; chưa kiểm thử |
+| Phương tiện | `veh_interact.cpp`, `vehicle_use.cpp`, `vehicle_display.cpp` | Bộ phận/vị trí, sửa/lắp, lái, cargo |
+| Điều khiển động cơ | `smart_controller_ui.cpp` | SMART_ENGINE_CONTROLLER, điều chỉnh và hủy |
+| Vùng/tự động hóa | `zone_manager_ui.cpp`, `study_zone_ui.cpp` | Hai góc/tầng, kích thước, STUDY_ZONE_UI |
+| Bionics/đột biến/phép | `bionics_ui.cpp`, `mutation_ui.cpp`, `magic.cpp` | Chủ động/bị động, chi phí, xác nhận; bổ sung `bionics_ui.cpp` so với kế hoạch đầu |
+| Kỹ năng/kiến thức | `skill_ui.cpp`, `proficiency_ui.cpp` | Biểu đồ, điều kiện, PROFICIENCY_WINDOW theo mã thật |
+| Máy tính trong game | `computer_session.cpp` | YESNOQUIT và các nhánh chuyên biệt, không tự tiết lộ dữ liệu |
+| Nhật ký/điểm/kết thúc | `diary_ui.cpp`, `scores_ui.cpp`, `end_screen.cpp`, luồng kết thúc game | Nhật ký có pane trang/thay đổi/nội dung và sửa text; màn kết thúc đọc nội dung bổ sung/nhập lời cuối; điểm/thành tích/quy tắc/hạ gục và nhật ký tưởng niệm có cây reader; deathcam quét theo tâm camera. Xác nhận/xuất/xóa, nghỉ hưu/trở về menu và toàn hàng vẫn chưa nghiệm thu |
+| Cấu hình | `options.cpp`, `safemode_ui.cpp`, `auto_pickup.cpp`, `panels.cpp`, `color.cpp` | Kiểu giá trị, vùng kiểm thử quy tắc, reset/hủy, tất cả tùy chọn Android |
+| Minigame thiết bị | `iuse_software_kitten.cpp`, `iuse_software_lightson.cpp`, `iuse_software_minesweeper.cpp`, `iuse_software_snake.cpp`, `iuse_software_sokoban.cpp` | Bàn chơi, thời gian/input riêng, luật và đường thoát; không mặc định bộ đọc bản đồ thế giới phủ được |
+| Trợ giúp/phím | `help.cpp`, `input_context.cpp`, `output.cpp` | Tìm mọi lệnh, thay phím, phần không dùng input_context |
+| Lưu/tải/sao lưu | Luồng game/main menu, `CDDADocumentsProvider.java` | Nhiều nhân vật/thế giới, lỗi, file picker và chuyển quyền đọc |
+| Công cụ phát triển | `debug_menu.cpp`, `editmap.cpp`, `wish.cpp` | Phạm vi riêng; nếu hiển thị vẫn phải có mô tả giới hạn/đường thoát |
+
+Mỗi hàng sẽ được tách thành bản ghi: đường tìm → dữ liệu → tham số → kích hoạt
+→ hủy → kết quả → ranh giới thông tin → test ID → build → bằng chứng máy thật.
+Các tên context hoặc số đếm ở đây không thay thế kiểm kê luồng runtime.

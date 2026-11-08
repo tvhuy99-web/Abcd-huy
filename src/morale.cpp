@@ -1,5 +1,8 @@
 #include "morale.h"
 
+#include "a11y_document.h"
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -837,6 +840,52 @@ void player_morale::display( int focus_eq, int pain_penalty, int sleepiness_pena
     ctxt.register_action( "CONFIRM" );
     ctxt.register_action( "QUIT" );
     ctxt.register_action( "HELP_KEYBINDINGS" );
+
+    // Reader adapter (R10.1): this screen previously had no a11y points
+    // at all, so opening it from the character sheet silenced the
+    // reader. The documents below publish exactly what this screen
+    // prints: each source's name and percent contribution (the screen
+    // never prints durations, and none are derived here), the signed
+    // totals, the deadened modifier, the penalties shown, and the focus
+    // trend. Scrolling remains the screen's own UP/DOWN actions through
+    // the registered commands.
+    a11y::screen_scope reader( &ctxt, "morale",
+    [&ctxt]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    if( a11y::enabled() ) {
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Morale" ) );
+        std::string sources;
+        const auto append_sources = [&sources]( const std::string & header, const int total,
+                                                const std::vector<morale_point> &group ) {
+            if( !sources.empty() ) {
+                sources += "\n";
+            }
+            sources += header + ": " + string_format( "%+d", total );
+            for( const morale_point &mp : group ) {
+                sources += "\n" + mp.get_name() + ": " +
+                           string_format( "%d%%", mp.get_percent_contribution() );
+            }
+        };
+        append_sources( _( "Total positive morale" ), get_total_positive_value(), positive_morale );
+        append_sources( _( "Total negative morale" ), -get_total_negative_value(), negative_morale );
+        if( positive_morale.empty() && negative_morale.empty() ) {
+            sources = _( "Nothing affects your morale" );
+        }
+        a11y::append_document( snapshot, "morale:sources", _( "Morale sources" ), sources );
+        std::string summary = string_format( _( "Total morale: %+d" ), who.get_morale_level() );
+        summary += "\n" + string_format( _( "All morale modified to: %d%%" ),
+                                         static_cast<int>( who.get_modifier_for_ALL_morale() * 100.0 ) );
+        if( pain_penalty != 0 ) {
+            summary += "\n" + string_format( _( "Pain level: %+d" ), -pain_penalty );
+        }
+        if( sleepiness_penalty != 0 ) {
+            summary += "\n" + string_format( _( "Sleepiness level: %+d" ), -sleepiness_penalty );
+        }
+        summary += "\n" + string_format( _( "Focus trends towards: %d" ), focus_eq );
+        a11y::append_document( snapshot, "morale:summary", _( "Morale summary" ), summary );
+        reader.update( std::move( snapshot ) );
+    }
 
     std::string action;
     do {

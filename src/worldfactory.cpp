@@ -7,16 +7,20 @@
 #include <exception>
 #include <iterator>
 #include <memory>
+#include <optional>
 #include <set>
 #include <unordered_map>
 #include <utility>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "cata_utility.h"
 #include "catacharset.h"
 #include "char_validity_check.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "dependency_tree.h"
 #include "enums.h"
 #include "filesystem.h"
 #include "input.h"
@@ -205,7 +209,16 @@ WORLD *worldfactory::make_new_world( bool show_prompt, const std::string &world_
 
     retworld->create_timestamp();
 
-    return add_world( std::move( retworld ) );
+    WORLD *created_world = add_world( std::move( retworld ) );
+    if( created_world == nullptr && a11y::enabled() ) {
+        // add_world fails without any user-facing message when the world
+        // files cannot be written (WORLD::save only debug-logs). A
+        // cancellation cannot reach this point (the worldgen flows return
+        // earlier), and a mod conflict has already shown its own popup
+        // above, so this announcement only covers the silent I/O failure.
+        popup( _( "The world could not be created because its files could not be written." ) );
+    }
+    return created_world;
 }
 
 static std::optional<std::string> prompt_world_name( const std::string &title,
@@ -268,6 +281,12 @@ int worldfactory::show_worldgen_advanced( WORLD *world )
                 if( query_yn( _( "World name is empty.  Randomize the name?" ) ) ) {
                     world->world_name = pick_random_name();
                 }
+            } else if( !valid_worldname( ret.value() ) ) {
+                // The basic flow validates the name before finishing; this
+                // flow did not, so a duplicate or invalid name went straight
+                // to add_world and failed (or collided) silently.
+                // valid_worldname has already explained the problem with a
+                // popup; ask for another name instead (R07.1).
             } else {
                 // done, generate world
                 world->world_name = ret.value();
@@ -633,6 +652,51 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
     // for mouse selection
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
+    ctxt.register_action( "A11Y_INTERNAL_SELECT_WORLD" );
+    std::optional<std::string> accessible_world_selection;
+
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "world-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const std::string world_prefix = "world:item:";
+        if( intent.action == "activate" && intent.node.rfind( world_prefix, 0 ) == 0 ) {
+            const std::string selected_world = intent.node.substr( world_prefix.size() );
+            accessible_world_selection = selected_world;
+            return "A11Y_INTERNAL_SELECT_WORLD";
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) { return; }
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "World selection" );
+        snapshot.summary = _( "Activate a world to select it. Confirm enters the selected world." );
+        std::string selected_id;
+        for( size_t page = 0; page < world_pages.size(); ++page ) {
+            for( size_t row = 0; row < world_pages[page].size(); ++row ) {
+                const std::string &world_name = world_pages[page][row];
+                a11y::semantic_node node;
+                node.id = "world:item:" + world_name;
+                node.role = "button";
+                node.label = world_name;
+                const size_t saves = get_world( world_name )->world_saves.size();
+                node.value = string_format( n_gettext( "%lu save", "%lu saves", saves ), saves );
+                node.selected = page == selpage && static_cast<int>( row ) == sel;
+                if( node.selected ) { selected_id = node.id; }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+        }
+        snapshot.focus = selected_id;
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
+    update_reader();
 
     while( true ) {
         ui_manager::redraw();
@@ -686,9 +750,24 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
                     selpage = world_pages.size() - 1;
                 }
             } while( world_pages[selpage].empty() );
+        } else if( action == "A11Y_INTERNAL_SELECT_WORLD" ) {
+            if( accessible_world_selection ) {
+                for( size_t page = 0; page < world_pages.size(); ++page ) {
+                    const auto &page_worlds = world_pages[page];
+                    const auto found = std::find( page_worlds.begin(), page_worlds.end(),
+                                                  *accessible_world_selection );
+                    if( found != page_worlds.end() ) {
+                        selpage = page;
+                        sel = static_cast<int>( std::distance( page_worlds.begin(), found ) );
+                        break;
+                    }
+                }
+                accessible_world_selection.reset();
+            }
         } else if( action == "CONFIRM" ) {
             return get_world( world_pages[selpage][sel] );
         }
+        update_reader();
     }
 
     return nullptr;
@@ -946,6 +1025,93 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
     ctxt.register_action( "SEC_SELECT" );
+    ctxt.register_action( "A11Y_INTERNAL_ACTIVE_MOD_FOCUS" );
+
+    std::unordered_map<std::string, size_t> reader_targets;
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "active-world-mods", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const auto target = reader_targets.find( intent.node );
+        if( target == reader_targets.end() ) {
+            return a11y::registered_intent( ctxt, intent );
+        }
+        if( intent.action != "focus" && intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        cursor = static_cast<int>( target->second );
+        recalc_start = true;
+        // This screen is a read-only inspection. Activating a row only makes
+        // its details the current reader focus and must not dismiss the screen.
+        return "A11Y_INTERNAL_ACTIVE_MOD_FOCUS";
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) {
+            return;
+        }
+        reader_targets.clear();
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Active world mods" );
+        snapshot.summary = _( "Read the mods enabled for this world and their load order. This list does not change the world." );
+        if( world_mods.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "active-mods:empty";
+            empty.role = "document";
+            empty.label = _( "No active mods" );
+            empty.detail = _( "This world has no active mods." );
+            snapshot.nodes.push_back( std::move( empty ) );
+        }
+        for( size_t i = 0; i < world_mods.size(); ++i ) {
+            const mod_id &id = world_mods[i];
+            a11y::semantic_node node;
+            node.id = "active-mods:item:" + std::to_string( i );
+            node.role = "listitem";
+            node.label = id.is_valid() ? id->name() : _( "Missing mod" );
+            node.value = string_format( _( "Load order position %1$lu of %2$lu" ), i + 1,
+                                        world_mods.size() );
+            node.selected = cursor == static_cast<int>( i );
+            if( id.is_valid() && node.selected ) {
+                node.detail = remove_color_tags( mman_ui->get_information( &id.obj() ) );
+                if( id->obsolete ) {
+                    node.detail += " " + std::string( _( "This mod is obsolete." ) );
+                }
+                // Same category/conflict notes as the mod-selection screen
+                // (R07.1): get_information alone lists neither.
+                if( !id->category.second.empty() ) {
+                    node.detail += " " + string_format( _( "Category: %s." ),
+                                                        id->category.second.translated() );
+                }
+                if( !id->conflicts.empty() ) {
+                    std::vector<std::string> conflict_names;
+                    conflict_names.reserve( id->conflicts.size() );
+                    for( const mod_id &conflict : id->conflicts ) {
+                        conflict_names.emplace_back( conflict.is_valid() ? conflict->name() :
+                                                     conflict.str() );
+                    }
+                    node.detail += " " + string_format( _( "Declared conflicts: %s." ),
+                                                        enumerate_as_string( conflict_names ) );
+                }
+                if( const std::optional<mod_id> conflict = mman_ui->find_mod_conflict( id,
+                        world_mods ) ) {
+                    node.detail += " " + string_format( _( "Conflicts with %s." ),
+                                                        ( *conflict )->name() );
+                }
+            } else if( !id.is_valid() ) {
+                node.detail = string_format( _( "This mod is missing: %s." ), id.str() );
+            }
+            reader_targets.emplace( node.id, i );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.focus = world_mods.empty() ? "active-mods:empty" :
+                         "active-mods:item:" + std::to_string( cursor );
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
         draw_border( w_border, BORDER_COLOR, _( "Active world mods" ) );
@@ -957,6 +1123,7 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
     } );
 
     while( true ) {
+        update_reader();
         ui_manager::redraw();
 
         const std::string action = ctxt.handle_input();
@@ -973,7 +1140,9 @@ void worldfactory::show_active_world_mods( const std::vector<mod_id> &world_mods
             }
         }
 
-        if( navigate_ui_list( action, cursor, scroll_rate, recmax, true ) ) {
+        if( action == "A11Y_INTERNAL_ACTIVE_MOD_FOCUS" ) {
+            recalc_start = true;
+        } else if( navigate_ui_list( action, cursor, scroll_rate, recmax, true ) ) {
             recalc_start = true;
         } else if( action == "QUIT" || action == "CONFIRM" ||
                    action == "SELECT" || action == "SEC_SELECT" ) {
@@ -1019,6 +1188,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
     // for mouse selection
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
+    ctxt.register_action( "A11Y_INTERNAL_MOD_FOCUS" );
 
     point filter_pos;
     int filter_view_len = 0;
@@ -1297,8 +1467,240 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
         fpopup.reset();
     };
 
+    struct mod_reader_target {
+        bool category = false;
+        bool active_list = false;
+        size_t index = 0;
+    };
+    std::unordered_map<std::string, mod_reader_target> reader_targets;
+    std::string reader_focus;
+    recalc_start = true;
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "mod-selection", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const auto target = reader_targets.find( intent.node );
+        if( target == reader_targets.end() ) {
+            return a11y::registered_intent( ctxt, intent );
+        }
+        if( target->second.category ) {
+            if( intent.action == "activate" ) {
+                iCurrentTab = target->second.index;
+                active_header = 0;
+                cursel[0] = 0;
+                startsel[0] = 0;
+                recalc_start = true;
+                reader_focus = intent.node;
+                return "A11Y_INTERNAL_MOD_FOCUS";
+            }
+            return std::nullopt;
+        }
+        if( intent.action != "focus" && intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        active_header = target->second.active_list ? 1 : 0;
+        cursel[active_header] = target->second.index;
+        startsel[active_header] = 0;
+        recalc_start = true;
+        reader_focus = intent.node;
+        return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" ) :
+               std::optional<std::string>( "A11Y_INTERNAL_MOD_FOCUS" );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) { return; }
+        reader_targets.clear();
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "World mod selection" );
+        snapshot.summary = _( "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order." );
+
+        const std::vector<std::pair<std::string, translation>> &mod_tabs = get_mod_list_tabs();
+        for( size_t i = 0; i < mod_tabs.size(); ++i ) {
+            a11y::semantic_node category;
+            category.id = "mod:category:" + std::to_string( i );
+            category.role = "tab";
+            category.label = mod_tabs[i].second.translated();
+            category.selected = active_header == 0 && iCurrentTab == i;
+            category.detail = _( "Activate to show the mods in this category." );
+            category.depth = 0;
+            category.expanded = iCurrentTab == i;
+            category.has_children = true;
+            reader_targets.emplace( category.id, mod_reader_target{ true, false, i } );
+            snapshot.nodes.push_back( std::move( category ) );
+        }
+
+        // Native still paints both panes, but the reader navigates their
+        // choices as separate pages, never among the category tabs.
+        a11y::semantic_node active_tab;
+        active_tab.id = "mod:active-list";
+        active_tab.role = "tab";
+        active_tab.label = _( "Active mod load order" );
+        active_tab.selected = active_header == 1;
+        active_tab.depth = 0;
+        active_tab.expanded = true;
+        active_tab.has_children = true;
+        snapshot.nodes.push_back( std::move( active_tab ) );
+
+        a11y::semantic_node tools_tab;
+        tools_tab.id = "mod:tools";
+        tools_tab.role = "tab";
+        tools_tab.label = _( "Mod selection commands" );
+        tools_tab.depth = 0;
+        tools_tab.expanded = true;
+        tools_tab.has_children = true;
+        snapshot.nodes.push_back( std::move( tools_tab ) );
+
+        const std::string available_parent = "mod:category:" +
+                                             std::to_string( iCurrentTab );
+        const auto mod_detail = [&]( const mod_id &id ) {
+            if( !id.is_valid() ) {
+                return string_format( _( "This mod is missing: %s." ), id.str() );
+            }
+            std::string detail = remove_color_tags( mman_ui->get_information( &id.obj() ) );
+            if( id->obsolete ) {
+                detail += " " + std::string( _( "This mod is obsolete." ) );
+            }
+            if( !id->category.second.empty() ) {
+                detail += " " + string_format( _( "Category: %s." ),
+                                               id->category.second.translated() );
+            }
+            // The mod's own declared conflicts are part of its data, not
+            // only its relation to the current load order; get_information
+            // does not list them, so append them here (R07.1).
+            if( !id->conflicts.empty() ) {
+                std::vector<std::string> conflict_names;
+                conflict_names.reserve( id->conflicts.size() );
+                for( const mod_id &conflict : id->conflicts ) {
+                    conflict_names.emplace_back( conflict.is_valid() ? conflict->name() :
+                                                  conflict.str() );
+                }
+                detail += " " + string_format( _( "Declared conflicts: %s." ),
+                                               enumerate_as_string( conflict_names ) );
+            }
+            if( const std::optional<mod_id> conflict = mman_ui->find_mod_conflict( id, active_mod_order ) ) {
+                detail += " " + string_format( _( "Conflicts with %s." ), ( *conflict )->name() );
+            }
+            return detail;
+        };
+
+        const std::vector<mod_id> &available_mods = all_tabs[iCurrentTab].mods;
+        cursel[0] = available_mods.empty() ? 0 : std::min( cursel[0], available_mods.size() - 1 );
+        cursel[1] = active_mod_order.empty() ? 0 : std::min( cursel[1], active_mod_order.size() - 1 );
+        if( available_mods.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "mod:available-empty";
+            empty.parent_id = available_parent;
+            empty.depth = 1;
+            empty.role = "document";
+            empty.label = _( "Available mod list is empty" );
+            empty.detail = all_tabs[iCurrentTab].mods_unfiltered.empty() ?
+                           _( "No mods are available in this category." ) :
+                           _( "No mods match the current filter." );
+            snapshot.nodes.push_back( std::move( empty ) );
+        }
+        for( size_t i = 0; i < available_mods.size(); ++i ) {
+            const mod_id &id = available_mods[i];
+            a11y::semantic_node node;
+            node.id = "mod:available:" + id.str();
+            node.parent_id = available_parent;
+            node.depth = 1;
+            node.role = "button";
+            node.label = id.is_valid() ? id->name() : _( "Missing mod" );
+            node.value = std::find( active_mod_order.begin(), active_mod_order.end(), id ) != active_mod_order.end() ?
+                         _( "Already in load order" ) : _( "Available to add" );
+            if( !id.is_valid() ) {
+                node.enabled = false;
+                node.disabled_reason = _( "This mod is missing and cannot be added." );
+            } else if( !mman_ui->mm_tree.is_available( id ) ) {
+                // try_add refuses such mods silently (mod_manager_ui.cpp).
+                // Publish the refusal up front, with the dependency tree's
+                // own error text as the reason, so a reader user hears why
+                // this mod cannot be enabled instead of seeing no change
+                // after activating it (R07.1).
+                node.enabled = false;
+                dependency_node *mod_node = mman_ui->mm_tree.get_node( id );
+                node.disabled_reason = mod_node != nullptr
+                                       ? remove_color_tags( mod_node->s_errors() )
+                                       : std::string();
+                if( node.disabled_reason.empty() ) {
+                    node.disabled_reason = _( "This mod has errors and cannot be added." );
+                }
+            }
+            node.selected = active_header == 0 && cursel[0] == i;
+            if( node.selected ) {
+                node.detail = mod_detail( id );
+            }
+            reader_targets.emplace( node.id, mod_reader_target{ false, false, i } );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        if( active_mod_order.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "mod:active-empty";
+            empty.parent_id = "mod:active-list";
+            empty.depth = 1;
+            empty.role = "document";
+            empty.label = _( "Active mod load order is empty" );
+            empty.detail = _( "Activate a mod from the available list to add it." );
+            snapshot.nodes.push_back( std::move( empty ) );
+        }
+        for( size_t i = 0; i < active_mod_order.size(); ++i ) {
+            const mod_id &id = active_mod_order[i];
+            a11y::semantic_node node;
+            node.id = "mod:active:" + id.str();
+            node.parent_id = "mod:active-list";
+            node.depth = 1;
+            node.role = "button";
+            node.label = id.is_valid() ? id->name() : _( "Missing mod" );
+            node.value = string_format( _( "Load order position %1$lu of %2$lu" ), i + 1,
+                                        active_mod_order.size() );
+            node.selected = active_header == 1 && cursel[1] == i;
+            if( node.selected ) {
+                node.detail = mod_detail( id );
+            }
+            reader_targets.emplace( node.id, mod_reader_target{ false, true, i } );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        a11y::semantic_node filter;
+        filter.id = "mod:filter";
+        filter.parent_id = "mod:tools";
+        filter.depth = 1;
+        filter.role = "document";
+        filter.label = _( "Current mod filter" );
+        filter.detail = current_filter.empty() ? _( "No filter is active." ) : current_filter;
+        snapshot.nodes.push_back( std::move( filter ) );
+
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            node.parent_id = "mod:tools";
+            node.depth = 1;
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        // Position/total for every node is local to its own level. Native
+        // validation rejects a child whose parent was not published.
+        std::unordered_map<std::string, int> totals;
+        for( const a11y::semantic_node &node : snapshot.nodes ) {
+            totals[node.parent_id]++;
+        }
+        std::unordered_map<std::string, int> seen;
+        for( a11y::semantic_node &node : snapshot.nodes ) {
+            node.position = ++seen[node.parent_id];
+            node.total = totals[node.parent_id];
+        }
+        snapshot.focus.clear();
+        if( !reader_focus.empty() && std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
+        [&]( const a11y::semantic_node &node ) { return node.id == reader_focus; } ) ) {
+            snapshot.focus = reader_focus;
+        }
+        if( snapshot.focus.empty() ) {
+            snapshot.focus = active_header == 1 ? "mod:active-list" :
+                             !mod_tabs.empty() ? "mod:category:" +
+                             std::to_string( iCurrentTab ) : "mod:tools";
+        }
+        reader->update( std::move( snapshot ) );
+    };
+
     int tab_output = 0;
     while( tab_output == 0 ) {
+        update_reader();
         ui_manager::redraw();
 
         recalc_start = false;
@@ -1376,7 +1778,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             }
         }
 
-        if( navigate_ui_list( action, cursel[active_header], scroll_rate, recmax, true ) ) {
+        if( action == "A11Y_INTERNAL_MOD_FOCUS" ) {
+            recalc_start = true;
+        } else if( navigate_ui_list( action, cursel[active_header], scroll_rate, recmax, true ) ) {
             recalc_start = true;
         } else if( action == "LEFT" || action == "RIGHT" ) {
             active_header = inc_clamp_wrap( active_header, action == "RIGHT", headers.size() );
@@ -1522,6 +1926,7 @@ int worldfactory::show_worldgen_basic( WORLD *world )
     // mouse selection
     ctxt.register_action( "SELECT" );
     ctxt.register_action( "MOUSE_MOVE" );
+    ctxt.register_action( "A11Y_INTERNAL_WORLDGEN_FOCUS" );
 
     int win_height = 0;
     int content_height = 0; // buttons & sliders
@@ -1560,6 +1965,134 @@ int worldfactory::show_worldgen_basic( WORLD *world )
     }
     const std::vector<int> wg_slvl_default = wg_slevels; // save default slider levels
 
+    std::unordered_map<std::string, int> accessible_selection;
+    std::unordered_map<std::string, std::string> accessible_actions;
+    std::string accessible_focus;
+    std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
+            &ctxt, "world-generation", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        const auto selection = accessible_selection.find( intent.node );
+        if( intent.action == "focus" || intent.action == "activate" ) {
+            if( selection != accessible_selection.end() ) {
+                sel_opt = selection->second;
+                accessible_focus = intent.node;
+                if( intent.action == "activate" ) {
+                    const auto action = accessible_actions.find( intent.node );
+                    if( action != accessible_actions.end() ) {
+                        return action->second;
+                    }
+                }
+                return "A11Y_INTERNAL_WORLDGEN_FOCUS";
+            }
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+    const auto update_reader = [&]() {
+        if( !a11y::enabled() ) { return; }
+        accessible_selection.clear();
+        accessible_actions.clear();
+
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Create world" );
+        snapshot.summary = _( "Set a world name and options. Adjust each option, choose mods, then finish to create the world." );
+
+        a11y::semantic_node name;
+        name.id = "worldgen:name";
+        name.role = "button";
+        name.label = _( "World name" );
+        name.value = worldname.empty() ? _( "Not set" ) : worldname;
+        name.detail = _( "Activate to edit the world name." );
+        name.selected = sel_opt == 0;
+        snapshot.nodes.push_back( std::move( name ) );
+        accessible_selection.emplace( "worldgen:name", 0 );
+        accessible_actions.emplace( "worldgen:name", "CONFIRM" );
+
+        for( size_t i = 0; i < wg_sliders.size(); ++i ) {
+            const option_slider &slider = wg_sliders[i].obj();
+            const std::string id = std::to_string( i );
+            const std::string label = slider.name().translated();
+            const std::string value = custom_opts ? std::string( _( "Custom" ) ) :
+                                      slider.level_name( wg_slevels[i] ).translated();
+            a11y::semantic_node option;
+            option.id = "worldgen:slider:" + id;
+            option.role = "slider";
+            option.label = label;
+            option.value = value;
+            option.detail = remove_color_tags( slider.level_desc( wg_slevels[i] ).translated() );
+            option.selected = sel_opt == static_cast<int>( i + 1 );
+            snapshot.nodes.push_back( std::move( option ) );
+            accessible_selection.emplace( "worldgen:slider:" + id, static_cast<int>( i + 1 ) );
+
+            for( const bool increase : { false, true } ) {
+                const std::string action_id = "worldgen:slider:" + id +
+                                              ( increase ? ":increase" : ":decrease" );
+                a11y::semantic_node adjustment;
+                adjustment.id = action_id;
+                adjustment.label = string_format( increase ? _( "Increase %s" ) : _( "Decrease %s" ), label );
+                adjustment.value = value;
+                adjustment.enabled = increase ? wg_slevels[i] + 1 < slider.count() : wg_slevels[i] > 0;
+                if( !adjustment.enabled ) {
+                    adjustment.disabled_reason = increase ? _( "This option is already at its highest value." ) :
+                                                 _( "This option is already at its lowest value." );
+                }
+                snapshot.nodes.push_back( std::move( adjustment ) );
+                accessible_selection.emplace( action_id, static_cast<int>( i + 1 ) );
+                accessible_actions.emplace( action_id, increase ? "RIGHT" : "LEFT" );
+            }
+        }
+
+        const int finish_index = static_cast<int>( wg_sliders.size() + 1 );
+        const int reset_index = finish_index + 1;
+        const int randomize_index = finish_index + 2;
+        const auto add_worldgen_action = [&]( const std::string &id, const std::string &label,
+        const std::string &detail, int selected_index, const std::string &action ) {
+            a11y::semantic_node node;
+            node.id = id;
+            node.label = label;
+            node.detail = detail;
+            node.selected = sel_opt == selected_index;
+            snapshot.nodes.push_back( std::move( node ) );
+            accessible_selection.emplace( id, selected_index );
+            accessible_actions.emplace( id, action );
+        };
+        add_worldgen_action( "worldgen:finish", _( "Finish world setup" ),
+                             _( "Review the name and settings, then confirm to create this world." ),
+                             finish_index, "FINALIZE" );
+        add_worldgen_action( "worldgen:reset", _( "Reset world settings" ),
+                             _( "Restore world options and the default mod list." ),
+                             reset_index, "RESET" );
+        add_worldgen_action( "worldgen:randomize", _( "Randomize world options" ),
+                             _( "Choose random values for all world options." ),
+                             randomize_index, "RANDOMIZE" );
+        add_worldgen_action( "worldgen:advanced", _( "Advanced world options" ),
+                             _( "Open the detailed world options." ),
+                             static_cast<int>( wg_sliders.size() + 4 ), "ADVANCED_SETTINGS" );
+        const size_t active_mod_count = world->active_mod_order.size();
+        a11y::semantic_node mods;
+        mods.id = "worldgen:mods";
+        mods.label = _( "Choose world mods" );
+        mods.value = string_format( n_gettext( "%lu active mod", "%lu active mods", active_mod_count ),
+                                    active_mod_count );
+        mods.detail = _( "Choose which mods this world uses before creating it." );
+        mods.selected = sel_opt == static_cast<int>( wg_sliders.size() + 5 );
+        snapshot.nodes.push_back( std::move( mods ) );
+        accessible_selection.emplace( "worldgen:mods", static_cast<int>( wg_sliders.size() + 5 ) );
+        accessible_actions.emplace( "worldgen:mods", "PICK_MODS" );
+
+        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        for( a11y::semantic_node &node : commands.nodes ) {
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        snapshot.focus = snapshot.nodes.empty() ? std::string() : "worldgen:name";
+        if( !accessible_focus.empty() && std::any_of( snapshot.nodes.begin(), snapshot.nodes.end(),
+        [&]( const a11y::semantic_node &node ) { return node.id == accessible_focus; } ) ) {
+            snapshot.focus = accessible_focus;
+        }
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        reader->update( std::move( snapshot ) );
+    };
     ui.on_redraw( [&]( const ui_adaptor & ) {
         slider_inc_map.clear();
         btn_map.clear();
@@ -1705,6 +2238,7 @@ int worldfactory::show_worldgen_basic( WORLD *world )
     } );
 
     do {
+        update_reader();
         ui_manager::redraw();
 
         recalc_startpos = false;
@@ -1753,7 +2287,10 @@ int worldfactory::show_worldgen_basic( WORLD *world )
         }
 
         // Handle other inputs
-        if( action == "CONFIRM" ) {
+        if( action == "A11Y_INTERNAL_WORLDGEN_FOCUS" ) {
+            // The screen reader moved its selection.  The next snapshot below
+            // publishes the matching world-generation row.
+        } else if( action == "CONFIRM" ) {
             if( sel_opt == 0 ) {
                 // rename
                 std::optional<std::string> ret = prompt_world_name( _( "World name:" ), worldname );

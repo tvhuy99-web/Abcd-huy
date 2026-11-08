@@ -3,13 +3,20 @@
 #include <algorithm> //std::min
 #include <cstddef>
 #include <functional>
+#include <iterator>
+#include <optional>
 #include <string>
 #include <unordered_map>
+#include <utility>
+#include <vector>
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "color.h"
 #include "cursesdef.h"
 #include "enums.h"
+#include "input.h"
 #include "input_context.h"
 #include "inventory.h"
 #include "magic.h"
@@ -241,6 +248,251 @@ void avatar::power_mutations()
 
     std::optional<trait_id> examine_id;
 
+    // Reader adapter (R17): this screen previously had no a11y points at
+    // all. The snapshot below publishes exactly what the original UI
+    // prints: the titlebar mode word, the active/passive captions with
+    // their counts, and for the current tab's column the row text as
+    // drawn (assigned key, name, and for active traits the cost/cooldown
+    // text and the " - Active" suffix). Two states are carried only by
+    // color or symbol in the original -- powered (green versus red) and,
+    // for passive traits, the sprite-hidden " H" suffix -- so the entry
+    // detail restates them in words, next to the same description text
+    // the examining window shows (mutation_desc plus the purifier note).
+    // Nothing the screen does not print is synthesized here.
+    // Intents never touch mutation state directly: focus only moves the
+    // original cursor (and the examining target, exactly as UP/DOWN do)
+    // and never activates; activate returns the loop's own CONFIRM, so
+    // the original branch for the current menu mode runs --
+    // choose_key_from_user when reassigning, activation/deactivation
+    // with the engine's own resource checks and popups when activating,
+    // examining, or the sprite-visibility toggle when hiding. Tab
+    // activation returns the original NEXT_TAB (PREV_TAB does the same
+    // toggle, and the loop itself resets cursor/scroll); tab focus only
+    // observes.
+    const auto sync_reader_cursor = [&]( const int index ) {
+        cursor = index;
+        examine_pos = 0;
+        examine_id = GetTrait( active, passive, cursor, tab_mode );
+        if( cursor < scroll_position ) {
+            scroll_position = cursor;
+        } else if( list_height > 0 && cursor - scroll_position >= list_height ) {
+            scroll_position = cursor - list_height + 1;
+        }
+        scroll_position = std::max( 0, std::min( scroll_position,
+                                                  std::max( 0, max_scroll_position ) ) );
+    };
+    a11y::screen_scope reader( &ctxt, "mutations",
+    [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.node == "mutations:tab:active" || intent.node == "mutations:tab:passive" ) {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "activate" ) {
+                const mutation_tab_mode target = intent.node == "mutations:tab:active"
+                        ? mutation_tab_mode::active : mutation_tab_mode::passive;
+                return target == tab_mode ? std::optional<std::string>( "TIMEOUT" )
+                       : std::optional<std::string>( "NEXT_TAB" );
+            }
+        }
+        if( intent.node == "mutations:empty" &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node.compare( 0, 16, "mutations:entry:" ) == 0 &&
+            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            // Re-resolve the row against the lists the loop is using at
+            // intent time; an index minted against an older snapshot
+            // must never act on a trait that is no longer there.
+            if( tab_mode == mutation_tab_mode::none ) {
+                return std::nullopt;
+            }
+            const std::string index_text = intent.node.substr( 16 );
+            int index = 0;
+            bool valid = !index_text.empty();
+            for( const char digit : index_text ) {
+                if( digit < '0' || digit > '9' ) {
+                    valid = false;
+                    break;
+                }
+                index = index * 10 + ( digit - '0' );
+                if( index > 100000 ) {
+                    valid = false;
+                    break;
+                }
+            }
+            const std::vector<trait_id> &current = tab_mode == mutation_tab_mode::active
+                                                   ? active : passive;
+            if( !valid || index >= static_cast<int>( current.size() ) ||
+                cached_mutations.find( current[index] ) == cached_mutations.end() ) {
+                return std::nullopt;
+            }
+            sync_reader_cursor( index );
+            return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+                   : std::optional<std::string>( "TIMEOUT" );
+        }
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto make_reader_snapshot = [&]() {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Mutations" );
+        std::string mode_word;
+        switch( menu_mode ) {
+            case mutation_menu_mode::activating:
+                mode_word = _( "Activating" );
+                break;
+            case mutation_menu_mode::examining:
+                mode_word = _( "Examining" );
+                break;
+            case mutation_menu_mode::reassigning:
+                mode_word = _( "Reassigning" );
+                break;
+            case mutation_menu_mode::hiding:
+                mode_word = _( "Hiding" );
+                break;
+        }
+        snapshot.summary = string_format( _( "Mutations: %1$s. %2$d active, %3$d passive." ),
+                                          mode_word, static_cast<int>( active.size() ),
+                                          static_cast<int>( passive.size() ) );
+        if( menu_mode == mutation_menu_mode::reassigning ) {
+            // The one titlebar sentence that is not a keybinding hint:
+            // the reassigning instructions, including the SPACE cancel.
+            snapshot.summary += " " + remove_color_tags(
+                                      _( "Select a mutation to reassign or press [<color_yellow>SPACE</color>] to cancel." ) );
+        }
+        const auto append_tab = [&]( const char *id, const std::string &label,
+                                     const mutation_tab_mode tab, const std::size_t count,
+                                     const int position ) {
+            a11y::semantic_node node;
+            node.id = id;
+            node.role = "tab";
+            node.label = label;
+            node.value = std::to_string( count );
+            node.detail = string_format( _( "%d mutations" ), static_cast<int>( count ) );
+            node.selected = tab_mode == tab;
+            node.position = position;
+            node.total = 2;
+            node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( node ) );
+        };
+        append_tab( "mutations:tab:active", _( "Active" ), mutation_tab_mode::active,
+                    active.size(), 1 );
+        append_tab( "mutations:tab:passive", _( "Passive" ), mutation_tab_mode::passive,
+                    passive.size(), 2 );
+
+        const std::vector<trait_id> &current = tab_mode == mutation_tab_mode::active
+                                               ? active : passive;
+        if( tab_mode == mutation_tab_mode::none || current.empty() ) {
+            // The original columns print "None" for an empty list.
+            a11y::semantic_node node;
+            node.id = "mutations:empty";
+            node.role = "status";
+            node.label = _( "None" );
+            node.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = tab_mode == mutation_tab_mode::none ? "mutations:empty"
+                             : tab_mode == mutation_tab_mode::active ? "mutations:tab:active"
+                             : "mutations:tab:passive";
+        } else {
+            const int selected_index = std::clamp( cursor, 0,
+                                                   static_cast<int>( current.size() ) - 1 );
+            for( std::size_t i = 0; i < current.size(); ++i ) {
+                const trait_id &tid = current[i];
+                const mutation_branch &md = tid.obj();
+                const trait_data &td = cached_mutations[tid];
+                a11y::semantic_node node;
+                node.id = "mutations:entry:" + std::to_string( i );
+                node.role = "listitem";
+                if( tab_mode == mutation_tab_mode::passive ) {
+                    // Row as drawn: "<key> <name>", plus " H" when the
+                    // sprite is hidden.
+                    node.label = string_format( "%c %s", td.key, mutation_name( md.id ) );
+                    if( !td.show_sprite ) {
+                        node.label += _( " H" );
+                    }
+                } else {
+                    // Row as drawn: the key, then the text built by
+                    // on_redraw (name, cost/cooldown, " - Active"). The
+                    // resource-unit assembly is copied verbatim from
+                    // on_redraw so the spoken row matches the printed
+                    // one, quirks included.
+                    std::string mut_desc;
+                    std::string resource_unit;
+                    int number_of_resource = 0;
+                    if( md.hunger ) {
+                        resource_unit += _( " kcal" );
+                        number_of_resource++;
+                    }
+                    if( md.thirst ) {
+                        if( number_of_resource > 0 ) {
+                            resource_unit += _( " &" );
+                        }
+                        resource_unit += _( " thirst" );
+                        number_of_resource++;
+                    }
+                    if( md.sleepiness ) {
+                        if( number_of_resource > 0 ) {
+                            resource_unit += _( " &" );
+                        }
+                        resource_unit += _( " sleepiness" );
+                    }
+                    if( md.stamina ) {
+                        if( number_of_resource > 0 ) {
+                            resource_unit += _( " &" );
+                        }
+                        resource_unit += _( " stamina" );
+                    }
+                    if( md.mana ) {
+                        resource_unit += _( " mana" );
+                        number_of_resource++;
+                    }
+                    mut_desc += mutation_name( md.id );
+                    if( md.cost > 0 && md.cooldown > 0_turns ) {
+                        mut_desc += string_format( _( " - %d%s / %s" ),
+                                                   md.cost, resource_unit,
+                                                   to_string_clipped( md.cooldown ) );
+                    } else if( md.cost > 0 ) {
+                        mut_desc += string_format( _( " - %d%s" ), md.cost, resource_unit );
+                    } else if( md.cooldown > 0_turns ) {
+                        mut_desc += string_format( _( " - %s" ), to_string_clipped( md.cooldown ) );
+                    }
+                    if( td.powered ) {
+                        mut_desc += _( " - Active" );
+                    }
+                    node.label = string_format( "%c %s", td.key, mut_desc );
+                }
+                node.label = remove_color_tags( node.label );
+                // Detail: the description the examining window shows
+                // for this trait, with the states the original only
+                // encodes in color or the " H" symbol restated in words.
+                std::string detail = mutation_desc( tid );
+                if( !purifiable( tid ) ) {
+                    detail +=
+                        _( "\n<color_yellow>This trait is an intrinsic part of you now, purifier won't be able to remove it.</color>" );
+                }
+                if( tab_mode == mutation_tab_mode::active ) {
+                    detail += "\n" + std::string( td.powered ? _( "Active" ) : _( "Not active" ) );
+                } else if( !td.show_sprite ) {
+                    detail += "\n" + std::string( _( "Hidden" ) );
+                }
+                node.detail = remove_color_tags( detail );
+                node.checked = tab_mode == mutation_tab_mode::active && td.powered;
+                node.selected = static_cast<int>( i ) == selected_index;
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( current.size() );
+                if( node.selected ) {
+                    snapshot.focus = node.id;
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+        }
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, _( "Mutations" ) );
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.nodes.begin() ),
+                               std::make_move_iterator( commands.nodes.end() ) );
+        return snapshot;
+    };
+
     ui.on_redraw( [&]( const ui_adaptor & ) {
         werase( wBio );
         draw_border( wBio, BORDER_COLOR, _( "Mutations" ) );
@@ -392,6 +644,9 @@ void avatar::power_mutations()
     while( !exit ) {
         recalc_max_scroll_position();
         ui_manager::redraw();
+        if( a11y::enabled() ) {
+            reader.update( make_reader_snapshot() );
+        }
         bool handled = false;
         const std::string action = ctxt.handle_input();
         const input_event evt = ctxt.get_raw_input();
@@ -405,38 +660,22 @@ void avatar::power_mutations()
                 const mutation_branch &mut_data = mut_id.obj();
                 switch( menu_mode ) {
                     case mutation_menu_mode::reassigning: {
-                        query_popup pop;
-                        pop.message( _( "%s; enter new letter." ), mutation_name( mut_id ) )
-                        .preferred_keyboard_mode( keyboard_mode::keychar )
-                        .context( "POPUP_WAIT" )
-                        .allow_cancel( true )
-                        .allow_anykey( true );
-
-                        bool pop_exit = false;
-                        while( !pop_exit ) {
-                            const query_popup::result ret = pop.query();
-                            bool pop_handled = false;
-                            if( ret.evt.type == input_event_t::keyboard_char && !ret.evt.sequence.empty() ) {
-                                const int newch = ret.evt.get_first_input();
-                                if( mutation_chars.valid( newch ) ) {
-                                    const trait_id other_mut_id = trait_by_invlet( newch );
-                                    if( !other_mut_id.is_null() ) {
-                                        std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
-                                    } else {
-                                        cached_mutations[mut_id].key = newch;
-                                    }
-                                    pop_exit = true;
-                                    pop_handled = true;
-                                }
+                        int newch = KEY_ESCAPE;
+                        do {
+                            newch = choose_key_from_user(
+                                        string_format( _( "%s; enter new letter." ), mutation_name( mut_id ) ),
+                                        mutation_chars.get_allowed_chars() );
+                            if( newch != KEY_ESCAPE && !mutation_chars.valid( newch ) ) {
+                                popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
+                                       mutation_chars.get_allowed_chars() );
                             }
-                            if( !pop_handled ) {
-                                if( ret.action == "QUIT" ) {
-                                    pop_exit = true;
-                                } else if( ret.action != "HELP_KEYBINDINGS" &&
-                                           ret.evt.type == input_event_t::keyboard_char ) {
-                                    popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
-                                           mutation_chars.get_allowed_chars() );
-                                }
+                        } while( newch != KEY_ESCAPE && !mutation_chars.valid( newch ) );
+                        if( newch != KEY_ESCAPE ) {
+                            const trait_id other_mut_id = trait_by_invlet( newch );
+                            if( !other_mut_id.is_null() ) {
+                                std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
+                            } else {
+                                cached_mutations[mut_id].key = newch;
                             }
                         }
 
@@ -467,12 +706,23 @@ void avatar::power_mutations()
                                 // Action done, leave screen
                                 exit = true;
                             } else {
-                                popup( _( "You don't have enough in you to activate your %s!" ), mutation_name( mut_data.id ) );
+                                if( a11y::enabled() ) {
+                                    add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
+                                                       mutation_name( mut_data.id ) );
+                                } else {
+                                    popup( _( "You don't have enough in you to activate your %s!" ),
+                                           mutation_name( mut_data.id ) );
+                                }
                             }
                         } else {
-                            popup( _( "You cannot activate %1$s!  To read a description of "
-                                      "%1$s, press '%2$s', then '%3$c'." ),
-                                   mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
+                            if( a11y::enabled() ) {
+                                add_msg_if_player( m_info, _( "Cannot activate %s. Focus it to hear the description." ),
+                                                   mutation_name( mut_data.id ) );
+                            } else {
+                                popup( _( "You cannot activate %1$s!  To read a description of "
+                                "%1$s, press '%2$s', then '%3$c'." ),
+                                mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
+                            }
                         }
                         break;
                     }
@@ -577,42 +827,24 @@ void avatar::power_mutations()
                     const mutation_branch &mut_data = mut_id.obj();
                     switch( menu_mode ) {
                         case mutation_menu_mode::reassigning: {
-                            query_popup pop;
-                            pop.message( _( "%s; enter new letter." ), mutation_name( mut_id ) )
-                            .preferred_keyboard_mode( keyboard_mode::keychar )
-                            .context( "POPUP_WAIT" )
-                            .allow_cancel( true )
-                            .allow_anykey( true );
-
-                            bool pop_exit = false;
-                            while( !pop_exit ) {
-                                const query_popup::result ret = pop.query();
-                                bool pop_handled = false;
-                                if( ret.evt.type == input_event_t::keyboard_char && !ret.evt.sequence.empty() ) {
-                                    const int newch = ret.evt.get_first_input();
-                                    if( mutation_chars.valid( newch ) ) {
-                                        const trait_id other_mut_id = trait_by_invlet( newch );
-                                        if( !other_mut_id.is_null() ) {
-                                            std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
-                                        } else {
-                                            cached_mutations[mut_id].key = newch;
-                                        }
-                                        pop_exit = true;
-                                        pop_handled = true;
-                                    } else if( newch == ' ' ) {
-                                        cached_mutations[mut_id].key = newch;
-                                        pop_exit = true;
-                                        pop_handled = true;
-                                    }
+                            int newch = KEY_ESCAPE;
+                            do {
+                                newch = choose_key_from_user(
+                                            string_format( _( "%s; enter new letter." ), mutation_name( mut_id ) ),
+                                            mutation_chars.get_allowed_chars(), ' ' );
+                                if( newch != KEY_ESCAPE && newch != ' ' && !mutation_chars.valid( newch ) ) {
+                                    popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
+                                           mutation_chars.get_allowed_chars() );
                                 }
-                                if( !pop_handled ) {
-                                    if( ret.action == "QUIT" ) {
-                                        pop_exit = true;
-                                    } else if( ret.action != "HELP_KEYBINDINGS" &&
-                                               ret.evt.type == input_event_t::keyboard_char ) {
-                                        popup( _( "Invalid mutation letter.  Only those characters are valid:\n\n%s" ),
-                                               mutation_chars.get_allowed_chars() );
-                                    }
+                            } while( newch != KEY_ESCAPE && newch != ' ' && !mutation_chars.valid( newch ) );
+                            if( newch == ' ' ) {
+                                cached_mutations[mut_id].key = newch;
+                            } else if( newch != KEY_ESCAPE && mutation_chars.valid( newch ) ) {
+                                const trait_id other_mut_id = trait_by_invlet( newch );
+                                if( !other_mut_id.is_null() ) {
+                                    std::swap( cached_mutations[mut_id].key, cached_mutations[other_mut_id].key );
+                                } else {
+                                    cached_mutations[mut_id].key = newch;
                                 }
                             }
 
@@ -633,6 +865,7 @@ void avatar::power_mutations()
                                 } else if( ( !mut_data.hunger || get_kcal_percent() >= 0.8f ) &&
                                            ( !mut_data.thirst || get_thirst() <= 400 ) &&
                                            ( !mut_data.sleepiness || get_sleepiness() <= 400 ) &&
+                                           ( !mut_data.stamina || get_stamina() >= mut_data.cost ) &&
                                            ( !mut_data.mana || magic->available_mana() >= mut_data.cost ) ) {
                                     add_msg_if_player( m_neutral,
                                                        string_format( mut_data.activation_msg.translated(), mutation_name( mut_data.id ) ) );
@@ -642,12 +875,23 @@ void avatar::power_mutations()
                                     // Action done, leave screen
                                     exit = true;
                                 } else {
-                                    popup( _( "You don't have enough in you to activate your %s!" ), mutation_name( mut_data.id ) );
+                                    if( a11y::enabled() ) {
+                                        add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
+                                                           mutation_name( mut_data.id ) );
+                                    } else {
+                                        popup( _( "You don't have enough in you to activate your %s!" ),
+                                               mutation_name( mut_data.id ) );
+                                    }
                                 }
                             } else {
-                                popup( _( "You cannot activate %1$s!  To read a description of "
-                                          "%1$s, press '%2$s'." ),
-                                       mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                                if( a11y::enabled() ) {
+                                    add_msg_if_player( m_info, _( "Cannot activate %s. Focus it to hear the description." ),
+                                                       mutation_name( mut_data.id ) );
+                                } else {
+                                    popup( _( "You cannot activate %1$s!  To read a description of "
+                                    "%1$s, press '%2$s'." ),
+                                    mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                                }
                             }
                             break;
                         }

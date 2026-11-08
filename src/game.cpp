@@ -1,4 +1,9 @@
 #include "game.h"
+#include "a11y_android.h"
+#include "a11y_input.h"
+#include "a11y_outcome.h"
+#include "a11y_perception.h"
+#include "a11y_runtime.h"
 #include "map_memory.h"
 
 #include <algorithm>
@@ -105,6 +110,7 @@
 #include "field_type.h"
 #include "filesystem.h"
 #include "flag.h"
+#include "flexbuffer_cache.h"
 #include "flexbuffer_json-inl.h"
 #include "flexbuffer_json.h"
 #include "flood_fill.h"
@@ -582,6 +588,10 @@ void game::toggle_pixel_minimap() const
     }
     pixel_minimap_option = !pixel_minimap_option;
     mark_main_ui_adaptor_resize();
+    if( a11y::enabled() ) {
+        add_msg( m_info, pixel_minimap_option ?
+                 _( "Pixel minimap enabled." ) : _( "Pixel minimap disabled." ) );
+    }
 #endif // TILES
 }
 
@@ -682,9 +692,31 @@ void game::reenter_fullscreen()
 /*
  * Initialize more stuff after mapbuffer is loaded.
  */
-void game::setup()
+void game::setup( bool loading_saved_character )
 {
+#if defined(__ANDROID__)
+    const auto setup_started_at = std::chrono::steady_clock::now();
+    const flexbuffer_cache_stats cache_before = flexbuffer_cache::statistics();
+#endif
+    a11y::replace_game_session();
+#if defined(__ANDROID__)
+    // Requested Android accessibility fast path. Persist the enabled
+    // setting even for installations that previously stored false.
+    // Runtime JSON schema validation and load failures still throw.
+    if( !get_option<bool>( "SKIP_VERIFICATION" ) ) {
+        get_options().get_option( "SKIP_VERIFICATION" ).setValue( std::string( "true" ) );
+        get_options().save();
+    }
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_FASTPATH skip_verification=" <<
+                              get_option<bool>( "SKIP_VERIFICATION" );
+#endif
     new_game = true;
+    if( a11y::android::enabled() && !a11y::android::suspended() ) {
+        a11y::android::announce( "A11Y_LOADING:" +
+                                 std::string( loading_saved_character ?
+                                              _( "Loading saved character." ) :
+                                              _( "Preparing new character." ) ), 1 );
+    }
     {
         static_popup popup;
         popup.message( "%s", _( "Please wait while the world data loads…\nLoading core data" ) );
@@ -693,6 +725,9 @@ void game::setup()
 
         load_core_data();
     }
+#if defined(__ANDROID__)
+    const auto core_data_loaded_at = std::chrono::steady_clock::now();
+#endif
 
     // invalidate calendar caches in case we were previously playing
     // a different world
@@ -701,7 +736,28 @@ void game::setup()
     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
     world_generator->get_mod_manager().check_mods_list( world_generator->active_world );
+#if defined(__ANDROID__)
+    const auto mods_checked_at = std::chrono::steady_clock::now();
+#endif
     load_world_modfiles();
+#if defined(__ANDROID__)
+    const auto mods_loaded_at = std::chrono::steady_clock::now();
+    const flexbuffer_cache_stats cache_after = flexbuffer_cache::statistics();
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_JSON_CACHE hits=" <<
+                              ( cache_after.hits - cache_before.hits ) <<
+                              " misses=" << ( cache_after.misses - cache_before.misses ) <<
+                              " writes=" << ( cache_after.writes - cache_before.writes );
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=" <<
+                              ( loading_saved_character ? "resume" : "new" ) <<
+                              " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  core_data_loaded_at - setup_started_at ).count() <<
+                              " mods_check_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_checked_at - core_data_loaded_at ).count() <<
+                              " mods_load_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_loaded_at - mods_checked_at ).count() <<
+                              " mods_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_loaded_at - core_data_loaded_at ).count();
+#endif
     // Panel manager needs JSON data to be loaded before init
     panel_manager::get_manager().init();
 
@@ -788,6 +844,9 @@ void game::legacy_migrate_npctalk_var_prefix( global_variables::impl_t &map_of_v
 // Set up all default values for a new game
 bool game::start_game()
 {
+#if defined(__ANDROID__)
+    const auto new_game_started_at = std::chrono::steady_clock::now();
+#endif
     if( !gamemode ) {
         gamemode = std::make_unique<special_game>();
     }
@@ -806,6 +865,10 @@ bool game::start_game()
     overmap_buffer.init_region_layout();
 
     background_pane background;
+    if( a11y::android::enabled() && !a11y::android::suspended() ) {
+        a11y::android::announce( "A11Y_LOADING:" +
+                                 std::string( _( "Creating your character and starting the game." ) ), 1 );
+    }
     static_popup popup;
     popup.message( "%s", _( "Please wait as we build your world" ) );
     ui_manager::redraw();
@@ -1078,6 +1141,11 @@ bool game::start_game()
         debug_menu::do_debug_quick_setup();
         add_msg( m_good, _( "Debug character detected.  Quick setup applied, good luck on the testing!" ) );
     }
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_TIMING mode=new phase=character_and_world_ms " <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - new_game_started_at ).count();
+#endif
     return true;
 }
 
@@ -5251,11 +5319,47 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
             add_msg( _( "No vehicle controls found." ) );
             return;
         } else if( num_valid_controls > 1 ) {
-            const std::optional<tripoint_bub_ms> temp = choose_adjacent( _( "Control vehicle where?" ) );
-            if( !temp ) {
-                return;
+            if( a11y::enabled() ) {
+                std::vector<tripoint_bub_ms> candidate_positions;
+                uilist choices;
+                choices.title = _( "Choose vehicle controls" );
+                for( const tripoint_bub_ms &candidate : here.points_in_radius( u.pos_bub(), 1 ) ) {
+                    const optional_vpart_position found = here.veh_at( candidate );
+                    if( !found || !found->part_with_feature( "CONTROLS", true ) ) {
+                        continue;
+                    }
+                    // Do not narrate vehicle parts hidden from the player.
+                    if( a11y::observe_tile( candidate ).source !=
+                        a11y::observation_source::visible ) {
+                        continue;
+                    }
+                    candidate_positions.push_back( candidate );
+                    choices.addentry( static_cast<int>( candidate_positions.size() - 1 ), true,
+                                      MENU_AUTOASSIGN,
+                                      string_format( _( "%1$s, %2$s" ), found->vehicle().name,
+                                                     direction_name( direction_from( u.pos_bub(), candidate ) ) ) );
+                }
+                if( candidate_positions.empty() ) {
+                    add_msg( m_info, _( "No visible vehicle controls nearby." ) );
+                    return;
+                }
+                if( candidate_positions.size() == 1 ) {
+                    vehicle_position = candidate_positions.front();
+                } else {
+                    choices.query();
+                    if( choices.ret < 0 ||
+                        choices.ret >= static_cast<int>( candidate_positions.size() ) ) {
+                        return;
+                    }
+                    vehicle_position = candidate_positions[choices.ret];
+                }
+            } else {
+                const std::optional<tripoint_bub_ms> temp = choose_adjacent( _( "Control vehicle where?" ) );
+                if( !temp ) {
+                    return;
+                }
+                vehicle_position = *temp;
             }
-            vehicle_position = temp.value();
             const optional_vpart_position vp = here.veh_at( *vehicle_position );
             if( vp ) {
                 vehicle_controls = vp.value().part_with_feature( "CONTROLS", true );
@@ -5464,7 +5568,16 @@ void game::examine( bool with_pickup )
     }
 
     std::optional<tripoint_bub_ms> examp;
-    if( with_pickup ) {
+    if( a11y::enabled() ) {
+        // The reader sees the complete nearby list first, rather than
+        // choosing an unlabelled direction. Original examine logic stays intact.
+        examp = choose_accessible_nearby_target(
+                    with_pickup ? _( "Examine or pick up nearby objects" )
+                    : _( "Examine nearby objects" ),
+        [&]( const tripoint_bub_ms &target ) {
+            return can_examine_at( here, target, with_pickup );
+        } );
+    } else if( with_pickup ) {
         // Examine and/or pick up items
         examp = choose_adjacent_highlight( here, _( "Examine terrain, furniture, or items where?" ),
                                            _( "There is nothing that can be examined nearby." ),
@@ -5766,7 +5879,72 @@ void game::peek()
 {
     map &here = get_map();
 
-    const std::optional<tripoint_rel_ms> p = choose_direction( _( "Peek where?" ), true );
+    std::optional<tripoint_rel_ms> p;
+#if defined(__ANDROID__)
+    if( a11y::enabled() ) {
+        // The stock direction popup is visual only. Publish explicit
+        // directions so the reader can select peeking without guesswork.
+        input_context direction_input( "PEEK_DIRECTION" );
+        direction_input.register_action( "ANY_INPUT" );
+        direction_input.register_action( "CONFIRM" );
+        direction_input.register_action( "QUIT" );
+        const std::vector<std::pair<std::string, tripoint_rel_ms>> directions = {
+            { _( "North" ), tripoint_rel_ms( 0, -1, 0 ) },
+            { _( "Northeast" ), tripoint_rel_ms( 1, -1, 0 ) },
+            { _( "East" ), tripoint_rel_ms( 1, 0, 0 ) },
+            { _( "Southeast" ), tripoint_rel_ms( 1, 1, 0 ) },
+            { _( "South" ), tripoint_rel_ms( 0, 1, 0 ) },
+            { _( "Southwest" ), tripoint_rel_ms( -1, 1, 0 ) },
+            { _( "West" ), tripoint_rel_ms( -1, 0, 0 ) },
+            { _( "Northwest" ), tripoint_rel_ms( -1, -1, 0 ) },
+            { _( "Above" ), tripoint_rel_ms( 0, 0, 1 ) },
+            { _( "Below" ), tripoint_rel_ms( 0, 0, -1 ) }
+        };
+        a11y::screen_scope direction_reader( &direction_input, "peek-direction",
+        [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action != "activate" ) {
+                return std::nullopt;
+            }
+            for( std::size_t i = 0; i < directions.size(); ++i ) {
+                if( intent.node == "peek:direction:" + std::to_string( i ) ) {
+                    p = directions[i].second;
+                    return std::string( "CONFIRM" );
+                }
+            }
+            return std::nullopt;
+        } );
+        a11y::semantic_snapshot directions_snapshot;
+        directions_snapshot.title = _( "Peek where?" );
+        directions_snapshot.summary = _( "Choose a direction to peek. Peeking costs time." );
+        directions_snapshot.focus = "peek:direction:0";
+        for( std::size_t i = 0; i < directions.size(); ++i ) {
+            a11y::semantic_node node;
+            node.id = "peek:direction:" + std::to_string( i );
+            node.label = directions[i].first;
+            node.role = "button";
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( directions.size() );
+            directions_snapshot.nodes.push_back( std::move( node ) );
+        }
+        direction_reader.update( std::move( directions_snapshot ) );
+        while( true ) {
+            const std::string action = direction_input.handle_input();
+            if( action == "QUIT" ) {
+                return;
+            }
+            if( action == "CONFIRM" && p ) {
+                break;
+            }
+        }
+    } else {
+        p = choose_direction( _( "Peek where?" ), true );
+    }
+#else
+    p = choose_direction( _( "Peek where?" ), true );
+#endif
     if( !p ) {
         return;
     }
@@ -5978,6 +6156,38 @@ std::optional<tripoint_bub_ms> game::look_around()
     return result.position;
 }
 
+// Axis-by-axis position relative to the avatar, for the look_around
+// reader adapter (R16). This re-states, locally, the wording of
+// relative_position_name in a11y_world.cpp (which is not shared):
+// north/south and east/west offsets with tile counts, plus the level
+// difference when the tile is on another level.
+static std::string look_around_relative_position_name( const int dx, const int dy, const int dz )
+{
+    if( dx == 0 && dy == 0 && dz == 0 ) {
+        return _( "Current tile" );
+    }
+    std::string result;
+    if( dy != 0 ) {
+        result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    }
+    if( dx != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+    }
+    if( dz != 0 ) {
+        if( dx != 0 || dy != 0 ) {
+            result += ", ";
+        } else {
+            result.clear();
+        }
+        result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                 std::abs( dz ) );
+    }
+    return result;
+}
+
 look_around_result game::look_around(
     const bool show_window, tripoint_bub_ms &center, const tripoint_bub_ms &start_point,
     bool has_first_point,
@@ -6144,6 +6354,106 @@ look_around_result game::look_around(
             zone_cursor, is_moving_zone );
     add_draw_callback( zone_cb );
 
+    // Reader adapter (R16): look_around is also the zone corner picker
+    // and the zone move picker, so the reader must say which mode this
+    // is, where the cursor is relative to the avatar, what tile is
+    // there, and -- before the second corner is confirmed -- how large
+    // the selection so far is. Cursor movement stays on the original
+    // direction actions; every intent is just the registered one, and
+    // focusing a node changes nothing. The scope is created here,
+    // after ctxt has registered its actions and before the do loop, so
+    // the builder can capture zone_start/zone_end, which the loop
+    // recomputes on every iteration before input is handled.
+    a11y::screen_scope reader( &ctxt, "look-around",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        return a11y::registered_intent( ctxt, intent );
+    } );
+
+    const auto build_snapshot = [&]() {
+        const std::string title = select_zone ? _( "Select zone corner" )
+                                  : ( is_moving_zone ? _( "Move zone" ) : _( "Look around" ) );
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, title );
+        std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+        snapshot.nodes.clear();
+
+        for( a11y::semantic_node &command : commands ) {
+            if( command.id == "CONFIRM" ) {
+                command.detail = select_zone ? _( "Set this tile as the corner of the zone." )
+                                 : _( "Finish and use this tile." );
+            } else if( command.id == "QUIT" ) {
+                command.detail = _( "Cancel without selecting a tile." );
+            }
+        }
+
+        if( select_zone && !has_first_point ) {
+            snapshot.summary = _( "Select the first corner of the zone." );
+        } else if( select_zone && has_first_point ) {
+            snapshot.summary = _( "Select the second corner of the zone. "
+                                  "The selection so far is described below." );
+        } else if( is_moving_zone ) {
+            snapshot.summary = _( "Choose the new position of the zone." );
+        } else {
+            snapshot.summary = _( "Move the cursor to inspect tiles. "
+                                  "Confirm to finish here, or cancel to return." );
+        }
+
+        const tripoint_bub_ms avatar_pos = u.pos_bub();
+        const auto relative_to_avatar = [&]( const tripoint_bub_ms & point ) {
+            return look_around_relative_position_name( point.x() - avatar_pos.x(),
+                    point.y() - avatar_pos.y(), point.z() - avatar_pos.z() );
+        };
+
+        a11y::semantic_node cursor;
+        cursor.id = "look:cursor";
+        cursor.role = "status";
+        cursor.label = _( "Cursor" );
+        // Knowledge boundary (R08 precedent): a cursor on another level
+        // may only read map memory, never the live tile.
+        const std::string cursor_text = relative_to_avatar( lp ) + ". " +
+                                        a11y::describe_tile( lp.z() != u.posz()
+                                                ? a11y::observe_memory_tile( lp )
+                                                : a11y::observe_tile( lp ) );
+        cursor.value = cursor_text;
+        cursor.detail = cursor_text;
+        cursor.actions = { "focus" };
+        snapshot.nodes.push_back( cursor );
+
+        const auto add_selection = [&]( const tripoint_bub_ms & first,
+                                        const tripoint_bub_ms & second ) {
+            a11y::semantic_node selection;
+            selection.id = "look:selection";
+            selection.role = "status";
+            selection.label = _( "Selection" );
+            const std::string text = string_format(
+                                         _( "First corner: %1$s. Second corner: %2$s. "
+                                            "Size: %3$d by %4$d tiles, %5$d levels." ),
+                                         relative_to_avatar( first ), relative_to_avatar( second ),
+                                         std::abs( second.x() - first.x() ) + 1,
+                                         std::abs( second.y() - first.y() ) + 1,
+                                         std::abs( second.z() - first.z() ) + 1 );
+            selection.value = text;
+            selection.detail = text;
+            selection.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( selection ) );
+        };
+        if( select_zone && has_first_point ) {
+            add_selection( start_point, lp );
+        } else if( is_moving_zone && zone_start && zone_end ) {
+            add_selection( *zone_start, *zone_end );
+        }
+
+        snapshot.focus = "look:cursor";
+
+        snapshot.nodes.insert( snapshot.nodes.end(),
+                               std::make_move_iterator( commands.begin() ),
+                               std::make_move_iterator( commands.end() ) );
+        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        }
+        return snapshot;
+    };
+
     is_looking = true;
     const tripoint_rel_ms prev_offset = u.view_offset;
 #if defined(TILES)
@@ -6187,6 +6497,10 @@ look_around_result game::look_around(
 
         if( ( select_zone && has_first_point ) || is_moving_zone ) {
             ctxt.set_timeout( get_option<int>( "BLINK_SPEED" ) );
+        }
+
+        if( a11y::enabled() ) {
+            reader.update( build_snapshot() );
         }
 
         //Wait for input
@@ -6393,6 +6707,9 @@ void game::zoom_out()
         uistate.tileset_zoom = 64;
     }
     rescale_tileset( uistate.tileset_zoom );
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "World view zoom level: %d." ), uistate.tileset_zoom );
+    }
 #endif
 }
 
@@ -6417,6 +6734,9 @@ void game::zoom_in()
         uistate.tileset_zoom = uistate.tileset_zoom * 2;
     }
     rescale_tileset( uistate.tileset_zoom );
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "World view zoom level: %d." ), uistate.tileset_zoom );
+    }
 #endif
 }
 
@@ -6621,6 +6941,10 @@ void game::insert_item()
         return;
     }
 
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "Selected container: %s. Choose items and quantities to insert." ),
+                 item_loc->tname() );
+    }
     game_menus::inv::insert_items( item_loc );
 }
 
@@ -6631,13 +6955,35 @@ void game::unload_container( const std::optional<tripoint_bub_ms> &p )
         pnt = choose_adjacent( _( "Unload where?" ) );
     }
     if( pnt ) {
-        u.drop( game_menus::inv::unload_container(), *pnt );
+        const drop_locations chosen = game_menus::inv::unload_container();
+        if( !chosen.empty() ) {
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "Unloading %1$d item stacks onto %2$s. "
+                                     "Favorite items and liquids remain in their containers." ),
+                         static_cast<int>( chosen.size() ),
+                         a11y::describe_tile( a11y::observe_tile( *pnt ) ) );
+            }
+            u.drop( chosen, *pnt );
+        }
     }
 }
 
 void game::drop_in_direction( const tripoint_bub_ms &pnt )
 {
-    u.drop( game_menus::inv::multidrop( u ), pnt );
+    const drop_locations chosen = game_menus::inv::multidrop( u );
+    if( chosen.empty() ) {
+        return;
+    }
+    if( a11y::enabled() ) {
+        int total_count = 0;
+        for( const drop_location &entry : chosen ) {
+            total_count += entry.second;
+        }
+        add_msg( m_info, _( "Dropping %1$d items at %2$s. The game will confirm "
+                             "each move when it completes." ),
+                 total_count, a11y::describe_tile( a11y::observe_tile( pnt ) ) );
+    }
+    u.drop( chosen, pnt );
 }
 
 // Used to set up the first Hotkey in the display set
@@ -6878,6 +7224,14 @@ void game::butcher( const std::optional<tripoint_bub_ms> &p )
     // Generate the indexed stacks so we can display them nicely
     const auto disassembly_stacks = generate_butcher_stack_display( disassembles );
     const auto salvage_stacks = generate_butcher_stack_display( salvageables );
+    if( a11y::enabled() ) {
+        add_msg( m_info,
+                 _( "Available for processing: %1$d corpses, %2$d disassembly groups, "
+                    "%3$d cutting groups. Check each menu option for estimated time." ),
+                 static_cast<int>( corpses.size() ),
+                 static_cast<int>( disassembly_stacks.size() ),
+                 static_cast<int>( salvage_stacks.size() ) );
+    }
     // Always ask before cutting up/disassembly, but not before butchery
     size_t ret = 0;
     if( !corpses.empty() || !disassembles.empty() || !salvageables.empty() ) {
@@ -7136,6 +7490,12 @@ void game::reload( item_location &loc, bool prompt, bool empty )
         const int extra_moves = loc->get_var( "dirt", 0 ) > 7800 ? 2500 : 0;
         if( extra_moves > 0 ) {
             add_msg( m_warning, _( "You struggle to reload the fouled %s." ), loc->tname() );
+        }
+        if( a11y::enabled() ) {
+            // Announce the exact target and ammunition selected by the
+            // engine, rather than guessing from the automatic reload order.
+            add_msg( m_info, _( "Preparing to reload %1$s using %2$s." ),
+                     loc->tname(), opt.ammo->tname() );
         }
         u.assign_activity( reload_activity_actor( std::move( opt ), extra_moves ) );
     }
@@ -9295,7 +9655,12 @@ std::optional<tripoint_bub_ms> game::point_selection_menu( const std::vector<tri
         const std::string &up_or_down = up ? _( "Climb up %s (%s)" ) : _( "Climb down %s (%s)" );
         // TODO: Inform player what is on said tile
         // But don't just print terrain name (in many cases it will be "open air")
-        pmenu.addentry( num++, true, MENU_AUTOASSIGN, string_format( up_or_down, dir_name, dir_arrow ) );
+        if( a11y::enabled() ) {
+            pmenu.addentry( num++, true, MENU_AUTOASSIGN,
+                            string_format( up ? _( "Climb up %s" ) : _( "Climb down %s" ), dir_name ) );
+        } else {
+            pmenu.addentry( num++, true, MENU_AUTOASSIGN, string_format( up_or_down, dir_name, dir_arrow ) );
+        }
     }
 
     pmenu.query();
@@ -9326,11 +9691,48 @@ static std::optional<tripoint_bub_ms> find_empty_spot_nearby( const tripoint_bub
     return std::nullopt;
 }
 
+namespace
+{
+// RAII fallback for game::vertical_move (R08), same contract as the guard
+// in avatar_action::move: an explicit outcome record made during the call
+// wins; otherwise a changed z-level means vertical_moved and an unchanged
+// one means undetermined. "blocked" is never inferred here.
+class vertical_move_outcome_guard
+{
+    public:
+        vertical_move_outcome_guard( const avatar &you, const bool active )
+            : you_( you ), start_pos_( you.pos_abs() ),
+              start_sequence_( a11y::last_action_outcome().sequence ), active_( active ) {}
+        vertical_move_outcome_guard( const vertical_move_outcome_guard & ) = delete;
+        vertical_move_outcome_guard &operator=( const vertical_move_outcome_guard & ) = delete;
+        ~vertical_move_outcome_guard() {
+            if( !active_ || a11y::last_action_outcome().sequence != start_sequence_ ) {
+                return;
+            }
+            if( you_.pos_abs().z() != start_pos_.z() ) {
+                a11y::record_action_outcome( a11y::action_outcome_kind::vertical_moved, "" );
+            } else {
+                a11y::record_action_outcome( a11y::action_outcome_kind::vertical_unchanged, "" );
+            }
+        }
+    private:
+        const avatar &you_;
+        tripoint_abs_ms start_pos_;
+        std::uint64_t start_sequence_ = 0;
+        bool active_ = true;
+};
+} // namespace
+
 void game::vertical_move( int movez, bool force, bool peeking )
 {
     if( u.has_flag( json_flag_CANNOT_MOVE ) ) {
+        // The guard is not constructed on this path: a character that
+        // cannot move at all produces no action outcome (R08).
         return;
     }
+    // Peeking between levels is observation, not an action: it must not
+    // overwrite the last real action outcome (R08.3).
+    const vertical_move_outcome_guard outcome_guard( u, !peeking );
 
     if( u.is_mounted() ) {
         monster *mons = u.mounted_creature.get();

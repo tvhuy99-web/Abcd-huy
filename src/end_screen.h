@@ -26,6 +26,8 @@ class end_screen_ui_impl : public cataimgui::window
 {
     public:
         std::string text;
+        std::string accessibility_description;
+        std::string accessibility_last_words_label;
         explicit end_screen_ui_impl() : cataimgui::window( _( "The End" ) ) {
         }
     protected:

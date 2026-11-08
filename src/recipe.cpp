@@ -1349,6 +1349,16 @@ bool recipe::has_byproducts() const
     return !byproducts.empty() || !!byproduct_group;
 }
 
+const std::map<itype_id, int> &recipe::legacy_byproducts() const
+{
+    return byproducts;
+}
+
+bool recipe::has_byproduct_group() const
+{
+    return !!byproduct_group;
+}
+
 bool recipe::in_byproducts( const itype_id &it ) const
 {
     return ( !byproducts.empty() && byproducts.find( it ) != byproducts.end() ) ||

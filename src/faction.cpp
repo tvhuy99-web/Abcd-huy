@@ -386,7 +386,7 @@ nc_color faction::food_supply_color() const
     }
 }
 
-std::pair<nc_color, std::string> faction::vitamin_stores( vitamin_type vit_type )
+std::pair<nc_color, std::string> faction::vitamin_stores( vitamin_type vit_type ) const
 {
     bool is_toxin = vit_type == vitamin_type::TOXIN;
     const double days_of_food = food_supply().kcal() / 3000.0;

@@ -116,6 +116,23 @@ class options_manager
 
                 int getMaxLength() const;
 
+                // Numeric domain for the accessibility form contract
+                // (R02.3): only meaningful for int/float options, where the
+                // add() overloads stored an explicit range (and a step for
+                // float). Other types report an empty 0 domain.
+                double getNumericMin() const {
+                    return eType == CVT_FLOAT ? static_cast<double>( fMin ) :
+                           eType == CVT_INT ? static_cast<double>( iMin ) : 0.0;
+                }
+                double getNumericMax() const {
+                    return eType == CVT_FLOAT ? static_cast<double>( fMax ) :
+                           eType == CVT_INT ? static_cast<double>( iMax ) : 0.0;
+                }
+                double getNumericStep() const {
+                    return eType == CVT_FLOAT ? static_cast<double>( fStep ) :
+                           eType == CVT_INT ? 1.0 : 0.0;
+                }
+
                 //set to next item
                 void setNext();
                 //set to previous item

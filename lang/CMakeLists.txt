@@ -38,6 +38,11 @@ foreach (LANG ${LANGUAGES})
         set(_PO ${CMAKE_SOURCE_DIR}/lang/po/${LANG}.po.gz)
     endif()
     set(_MO ${CMAKE_SOURCE_DIR}/lang/mo/${LANG}/LC_MESSAGES/cataclysm-dda.mo)
+    set(_PO_DEPENDENCIES ${_PO} ${CMAKE_SOURCE_DIR}/lang/compile_mo.py)
+    set(_OVERLAY ${CMAKE_SOURCE_DIR}/lang/po/accessibility/${LANG}.po)
+    if(EXISTS ${_OVERLAY})
+        list(APPEND _PO_DEPENDENCIES ${_OVERLAY})
+    endif()
     add_custom_command(
             OUTPUT ${_MO}
             COMMAND ${CMAKE_COMMAND} -E
@@ -45,7 +50,7 @@ foreach (LANG ${LANGUAGES})
             COMMAND ${Python3_EXECUTABLE} ${CMAKE_SOURCE_DIR}/lang/compile_mo.py
                 ${_PO} ${_MO} ${GETTEXT_MSGFMT_EXECUTABLE}
             WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
-            DEPENDS ${_PO} ${CMAKE_SOURCE_DIR}/lang/compile_mo.py
+            DEPENDS ${_PO_DEPENDENCIES}
     )
     list(APPEND _MO_FILES ${_MO})
     if (RELEASE)

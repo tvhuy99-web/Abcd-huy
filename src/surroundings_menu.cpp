@@ -12,6 +12,8 @@
 #include <tuple>
 #include <utility>
 
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "cata_utility.h"
@@ -1192,8 +1194,191 @@ void surroundings_menu::draw_examine_info()
     }
 }
 
+#if defined(__ANDROID__)
+void surroundings_menu::execute_accessible()
+{
+    // Same 60-tile visibility-bound search as the visual tabs. Unlike the
+    // grouped visual lists, every visible location is a separate row, so
+    // order and the chosen walking target are unambiguous.
+    struct nearby_row {
+        std::string label;
+        tripoint_bub_ms target;
+        tripoint_rel_ms relative;
+        int distance;
+        int stop_distance;
+    };
+    std::vector<nearby_row> nearby;
+    const tripoint_bub_ms origin = you.pos_bub();
+    const auto add_row = [&]( const std::string &category, const std::string &name,
+    const tripoint_rel_ms & relative, int stop_distance ) {
+        nearby.push_back( { category + ": " + name, origin + relative, relative,
+                            static_cast<int>( rl_dist( tripoint_rel_ms(), relative ) ),
+                            stop_distance } );
+    };
+    for( const auto *group : item_data.item_list ) {
+        for( const auto &entry : group->entities ) {
+            if( entry.entity ) {
+                add_row( _( "Item" ), entry.entity->tname(), entry.pos, 0 );
+            }
+        }
+    }
+    for( const auto *group : monster_data.monster_list ) {
+        for( const auto &entry : group->entities ) {
+            if( entry.entity ) {
+                add_row( _( "Creature" ), entry.entity->disp_name(), entry.pos, 1 );
+            }
+        }
+    }
+    for( const auto *group : terfurn_data.terfurn_list ) {
+        for( const auto &entry : group->entities ) {
+            if( entry.entity ) {
+                const tripoint_bub_ms target = origin + entry.pos;
+                add_row( _( "Terrain or furniture" ), entry.entity->name(), entry.pos,
+                         get_map().impassable( target ) ? 1 : 0 );
+            }
+        }
+    }
+    std::stable_sort( nearby.begin(), nearby.end(),
+    []( const nearby_row &lhs, const nearby_row &rhs ) {
+        if( lhs.distance != rhs.distance ) {
+            return lhs.distance < rhs.distance;
+        }
+        return lhs.label < rhs.label;
+    } );
+    constexpr std::size_t page_size = 80;
+    std::size_t page = 0;
+    input_context ctxt( "SURROUNDINGS" );
+    ctxt.register_action( "ANY_INPUT" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "HELP_KEYBINDINGS" );
+    a11y::screen_scope reader( &ctxt, "surroundings",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "focus" ) {
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        if( intent.node == "nearby:page:next" ) {
+            page = std::min( page + 1, ( nearby.size() - 1 ) / page_size );
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node == "nearby:page:previous" ) {
+            page = page > 0 ? page - 1 : 0;
+            return std::string( "TIMEOUT" );
+        }
+        const std::size_t start = page * page_size;
+        const std::size_t end = std::min( start + page_size, nearby.size() );
+        for( std::size_t i = start; i < end; ++i ) {
+            if( intent.node != "nearby:target:" + std::to_string( i ) ) {
+                continue;
+            }
+            const nearby_row &target = nearby[i];
+            // Use the engine's own hazard-aware route finder. A creature or
+            // impassable tile is approached to one tile away, never entered.
+            const std::optional<std::vector<tripoint_bub_ms>> route =
+            g->safe_route_to( you, target.target, target.stop_distance,
+            []( const std::string & reason ) {
+                add_msg( m_info, "%s", reason );
+            } );
+            if( !route ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( route->empty() ) {
+                add_msg( m_info, _( "Already at or next to the selected location." ) );
+                return std::string( "TIMEOUT" );
+            }
+            you.view_offset = stored_view_offset;
+            you.set_destination( *route );
+            return std::string( "QUIT" );
+        }
+        return std::nullopt;
+    } );
+
+    const auto relative_words = []( const tripoint_rel_ms &relative ) {
+        if( relative == tripoint_rel_ms() ) {
+            return std::string( _( "Current tile" ) );
+        }
+        std::string words;
+        if( relative.y() ) {
+            words = string_format( relative.y() < 0 ? _( "North %d" ) : _( "South %d" ),
+                                   std::abs( relative.y() ) );
+        }
+        if( relative.x() ) {
+            if( !words.empty() ) {
+                words += ", ";
+            }
+            words += string_format( relative.x() < 0 ? _( "West %d" ) : _( "East %d" ),
+                                    std::abs( relative.x() ) );
+        }
+        if( relative.z() ) {
+            if( !words.empty() ) {
+                words += ", ";
+            }
+            words += string_format( relative.z() > 0 ? _( "Level above %d" ) :
+                                    _( "Level below %d" ), std::abs( relative.z() ) );
+        }
+        return words;
+    };
+    while( true ) {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Nearby objects, nearest first" );
+        snapshot.summary = _( "Select an entry to walk toward it. "
+                              "The game avoids dangerous tiles and reports unreachable targets." );
+        if( nearby.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "nearby:empty";
+            empty.role = "document";
+            empty.label = _( "Nothing visible nearby." );
+            empty.actions = { "focus" };
+            snapshot.focus = empty.id;
+            snapshot.nodes.push_back( std::move( empty ) );
+        } else {
+            const std::size_t start = page * page_size;
+            const std::size_t end = std::min( start + page_size, nearby.size() );
+            if( page > 0 ) {
+                a11y::semantic_node previous;
+                previous.id = "nearby:page:previous";
+                previous.label = _( "Previous page" );
+                snapshot.nodes.push_back( std::move( previous ) );
+            }
+            for( std::size_t i = start; i < end; ++i ) {
+                const nearby_row &entry = nearby[i];
+                a11y::semantic_node node;
+                node.id = "nearby:target:" + std::to_string( i );
+                node.role = "listitem";
+                node.label = entry.label;
+                node.value = string_format( _( "%1$d tiles away. %2$s." ),
+                                            entry.distance, relative_words( entry.relative ) );
+                node.detail = _( "Activate to begin safe automatic travel toward this location." );
+                node.position = static_cast<int>( i ) + 1;
+                node.total = static_cast<int>( nearby.size() );
+                snapshot.nodes.push_back( std::move( node ) );
+            }
+            if( end < nearby.size() ) {
+                a11y::semantic_node next;
+                next.id = "nearby:page:next";
+                next.label = _( "Next page" );
+                snapshot.nodes.push_back( std::move( next ) );
+            }
+            snapshot.focus = "nearby:target:" + std::to_string( start );
+        }
+        reader.update( std::move( snapshot ) );
+        if( ctxt.handle_input() == "QUIT" ) {
+            return;
+        }
+    }
+}
+#endif
+
 void surroundings_menu::execute()
 {
+#if defined(__ANDROID__)
+    if( a11y::enabled() ) {
+        execute_accessible();
+        return;
+    }
+#endif
     while( true ) {
         update_path_end();
         g->invalidate_main_ui_adaptor();

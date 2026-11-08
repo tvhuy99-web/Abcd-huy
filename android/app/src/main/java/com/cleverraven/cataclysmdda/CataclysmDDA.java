@@ -4,6 +4,7 @@ import org.libsdl.app.SDLActivity;
 
 import android.app.Activity;
 import android.content.Context;
+import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -14,7 +15,9 @@ import android.os.Bundle;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.util.Log;
+import android.view.MotionEvent;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.ViewTreeObserver;
 import android.view.WindowInsets;
 import android.view.WindowInsetsController;
@@ -34,6 +37,7 @@ public class CataclysmDDA extends SDLActivity {
     public static final String SCREEN_ORIENTATION_AUTO = "auto";
 
     private NativeUI nativeUI = new NativeUI(CataclysmDDA.this);
+    private volatile GameReaderController readerController;
     private int lastImeLeft = -1;
     private int lastImeTop = -1;
     private int lastImeRight = -1;
@@ -60,6 +64,8 @@ public class CataclysmDDA extends SDLActivity {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        SessionDebugLog.start(this);
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onCreate");
         super.onCreate(savedInstanceState);
         if (mLayout != null) {
             mLayout.setVisibility(View.INVISIBLE);
@@ -67,18 +73,171 @@ public class CataclysmDDA extends SDLActivity {
         applyStoredScreenOrientation(this);
         setImeInsetListener();
         applySystemUiMode();
+        if (mLayout != null) {
+            readerController = new GameReaderController(this, mLayout);
+        }
     }
 
     @Override
     protected void onResume() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onResume");
         super.onResume();
         applyStoredScreenOrientation(this);
         applySystemUiMode();
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onResume(); }
     }
+
+    @Override
+    protected void onPause() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onPause");
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onPause(); }
+        super.onPause();
+    }
+
+    @Override
+    protected void onDestroy() {
+        SessionDebugLog.event("LIFECYCLE", "game_activity_onDestroy finishing="
+                + isFinishing() + " changingConfig=" + isChangingConfigurations());
+        if (isFinishing() && !isChangingConfigurations()) {
+            SessionDebugLog.finishNormally();
+        }
+        GameReaderController reader = readerController;
+        readerController = null;
+        if (reader != null) { reader.close(); }
+        super.onDestroy();
+    }
+
+    @Override
+    public boolean dispatchTouchEvent(MotionEvent event) {
+        // GnollHack uses the Activity root to prevent parent interception
+        // when another finger joins a gesture. Our transparent reader surface
+        // receives the pointer sequence after this Activity-level guard.
+        GameReaderController reader = readerController;
+        if (event != null && reader != null && reader.isEnabled()
+                && !reader.usesTouchExploration() && getWindow() != null) {
+            int action = event.getActionMasked();
+            View decor = getWindow().getDecorView();
+            if (decor instanceof ViewGroup) {
+                if (action == MotionEvent.ACTION_POINTER_DOWN
+                        && event.getPointerCount() >= 2) {
+                    ((ViewGroup) decor).requestDisallowInterceptTouchEvent(true);
+                } else if (action == MotionEvent.ACTION_UP
+                        || action == MotionEvent.ACTION_CANCEL) {
+                    ((ViewGroup) decor).requestDisallowInterceptTouchEvent(false);
+                }
+            }
+        }
+        return super.dispatchTouchEvent(event);
+    }
+
+    @Override
+    public void onBackPressed() {
+        GameReaderController reader = readerController;
+        if (reader != null && reader.isEnabled()) { reader.onBackPressed(); }
+        else { super.onBackPressed(); }
+    }
+
+    // Called on the SDL game thread. Presentation is posted to the main looper.
+    public void onAccessibilitySnapshot(String json) {
+        SessionDebugLog.event("SNAPSHOT", "bytes=" + json.length());
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.receive(json); }
+    }
+
+    // Called from the SDL game thread. The controller moves presentation to
+    // the main looper and drops messages without a live reader context.
+    public void onAccessibilityAnnouncement(String text, int priority) {
+        SessionDebugLog.event("GAME_SPEECH", "priority=" + priority + " text=" + text);
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.announceGameMessage(text, priority); }
+    }
+
+    // Called from the SDL game thread with one internal cue literal
+    // (R21.2). The controller checks the lifecycle and the user's cue
+    // opt-in before anything plays.
+    public void onAccessibilityCue(String name) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onGameCue(name); }
+    }
+
+    /**
+     * SDL debug messages have no semantic game nodes. They need an emergency
+     * reader panel even if the game menu never finished initializing.
+     */
+    public void onAccessibilityDebugPrompt(String report) {
+        SessionDebugLog.event("NATIVE_ERROR", report);
+        runOnUiThread(() -> {
+            GameReaderController reader = readerController;
+            if (reader != null && !isFinishing() && !isDestroyed()) {
+                reader.showDebugPrompt(report);
+            }
+        });
+    }
+
+    public void onAccessibilityDebugPromptDismissed() {
+        runOnUiThread(() -> {
+            GameReaderController reader = readerController;
+            if (reader != null) { reader.dismissDebugPrompt(); }
+        });
+    }
+
+    static native void nativeDebugPromptResponse(int action);
+
+    /** Native engine diagnostic events do not depend on TTS being enabled. */
+    public void onAccessibilityNativeDiagnostic(String category, String detail) {
+        SessionDebugLog.event(category, detail);
+    }
+
+    /** SDL's confirmed normal quit clears the active journal synchronously. */
+    public void onAccessibilityNormalExit() {
+        SessionDebugLog.finishNormally();
+    }
+
+    /** The tenth entry in the native main menu. */
+    public void onAccessibilityOpenDebugLog() {
+        SessionDebugLog.event("MENU", "debug_log_open_requested");
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, DebugLogActivity.class));
+            }
+        });
+    }
+
+    /** Open the Android voice configuration requested from the game menu. */
+    public void onAccessibilityOpenTtsSettings() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, TtsSettingsActivity.class));
+            }
+        });
+    }
+
+    /** Launch the separate native game-audio controls from Settings. */
+    public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
+        runOnUiThread(() -> {
+            if (isFinishing() || isDestroyed()) { return; }
+            Intent intent = new Intent(this, SoundSettingsActivity.class);
+            intent.putExtra("native_music_volume", music);
+            intent.putExtra("native_effects_volume", effects);
+            intent.putExtra("native_sound_enabled", enabled);
+            startActivity(intent);
+        });
+    }
+
+    // Java never edits native options on this thread. C++ drains a queue.
+    static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
+
+    static native void nativeConfigureReader(boolean enabled, boolean suspended);
+    static native boolean nativeReaderIntent(long session, long frame, long generation,
+            long revision, long request, String node, String action, String value);
 
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onWindowFocusChanged(hasFocus); }
         if (hasFocus) {
             applySystemUiMode();
         }

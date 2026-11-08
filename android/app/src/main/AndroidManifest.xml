@@ -7,6 +7,11 @@
     android:versionName="1.0"
     android:installLocation="auto">
 
+    <!-- Otopack is fetched directly from GitHub on first launch; Wi-Fi auto,
+         metered downloads require an accessible confirmation. -->
+    <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+
     <!-- OpenGL ES 2.0 -->
     <uses-feature android:glEsVersion="0x00020000" />
 
@@ -14,6 +19,13 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <!-- Allow access to the vibrator -->
     <uses-permission android:name="android.permission.VIBRATE" />
+
+    <!-- Package visibility for the optional internal speech backend. -->
+    <queries>
+        <intent>
+            <action android:name="android.intent.action.TTS_SERVICE" />
+        </intent>
+    </queries>
 
     <!-- if you want to capture audio, uncomment this. -->
     <!-- <uses-permission android:name="android.permission.RECORD_AUDIO" /> -->
@@ -60,10 +72,22 @@
                   android:configChanges="keyboardHidden|keyboard|orientation|screenSize|smallestScreenSize|screenLayout|navigation"
                   >
         </activity>
+        <activity android:name="ReaderSetupActivity"
+                  android:exported="false"
+                  android:label="@string/a11yReaderSetup" />
+        <activity android:name="TtsSettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yTtsSettingsTitle" />
+        <activity android:name="SoundSettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11ySoundSettingsTitle" />
+        <activity android:name="DebugLogActivity"
+                  android:exported="false"
+                  android:label="@string/a11yDebugLogTitle" />
         <!-- Expose app's private data directory for backup without root -->
         <provider
             android:name=".CDDADocumentsProvider"
-            android:authorities="com.cleverraven.cataclysmdda.documents"
+            android:authorities="${documentsAuthority}"
             android:exported="true"
             android:grantUriPermissions="true"
             android:permission="android.permission.MANAGE_DOCUMENTS">

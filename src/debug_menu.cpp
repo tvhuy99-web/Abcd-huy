@@ -30,6 +30,7 @@
 
 #include "achievement.h"
 #include "action.h"
+#include "a11y_runtime.h"
 #include "activity_tracker.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -1173,7 +1174,10 @@ static std::optional<debug_menu_index> debug_menu_uilist()
         // titlebar and descriptive text, so that this menu makes
         // sense and can be auto–sized.
         uilist debug = uilist();
-        debug.text = _( "Debug Functions" );
+        debug.text = a11y::enabled() ?
+                     _( "Debug functions. Choose a category or cancel to return. "
+                        "Debug commands may permanently change your current game." ) :
+                     _( "Debug Functions" );
         debug.entries = debug_menu;
         debug.query();
         const int group = debug.ret;
@@ -5059,6 +5063,20 @@ const debug_action_entry *find_action( debug_menu_index id )
 
 void execute_action( debug_menu_index action )
 {
+    // Canceling this prompt must not disable achievements or change the game.
+    // Shared uilist adapters already expose each debug submenu and Back/QUIT;
+    // this final confirmation protects against accidental destructive activation.
+    if( action == debug_menu_index::last ) {
+        return;
+    }
+    const debug_action_entry *entry = find_action( action );
+    if( entry == nullptr || !entry->execute ) {
+        return;
+    }
+    if( a11y::enabled() && !query_yn( _( "Run this debug command? It may permanently "
+                                          "change your character or world. Continue?" ) ) ) {
+        return;
+    }
     achievements_tracker &achievements = get_achievements();
     static const std::unordered_set<debug_menu_index> non_cheaty_options = {
         debug_menu_index::ENABLE_ACHIEVEMENTS
@@ -5071,13 +5089,7 @@ void execute_action( debug_menu_index action )
 
     get_event_bus().send<event_type::uses_debug_menu>( action );
 
-    if( action == debug_menu_index::last ) {
-        return;
-    }
-    const debug_action_entry *entry = find_action( action );
-    if( entry && entry->execute ) {
-        entry->execute();
-    }
+    entry->execute();
 
     get_map().invalidate_map_cache( get_map().get_abs_sub().z() );
 }

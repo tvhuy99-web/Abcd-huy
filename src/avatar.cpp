@@ -14,6 +14,8 @@
 #include <string>
 #include <utility>
 
+#include "a11y_outcome.h"
+#include "a11y_runtime.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar_action.h"
@@ -29,6 +31,7 @@
 #include "creature.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "display.h"
 #include "diary.h"
 #include "effect.h"
 #include "enums.h"
@@ -898,7 +901,8 @@ void avatar::clear_identified()
 
 void avatar::wake_up()
 {
-    if( has_effect( effect_sleep ) ) {
+    const bool was_asleep = has_effect( effect_sleep );
+    if( was_asleep ) {
         // alarm was set and player hasn't slept through the alarm.
         if( has_effect( effect_alarm_clock ) && !has_effect( effect_slept_through_alarm ) ) {
             add_msg( _( "It looks like you woke up before your alarm." ) );
@@ -912,6 +916,14 @@ void avatar::wake_up()
         }
     }
     Character::wake_up();
+    if( was_asleep && a11y::enabled() ) {
+        add_msg( m_info,
+                 _( "Awake at %1$s. Sleepiness: %2$s. Thirst: %3$s. "
+                    "Check your health summary for changes during sleep." ),
+                 to_string_time_of_day( calendar::turn ),
+                 display::sleepiness_text_color( *this ).first,
+                 display::thirst_text_color( *this ).first );
+    }
 }
 
 void avatar::add_snippet( snippet_id snippet )
@@ -1293,7 +1305,12 @@ void avatar::set_movement_mode( const move_mode_id &new_mode )
             stop_hauling();
         }
         add_msg( new_mode->change_message( true, get_steed_type() ) );
+        const move_mode_id old_mode = move_mode;
         move_mode = new_mode;
+        if( old_mode != new_mode ) {
+            a11y::record_action_outcome( a11y::action_outcome_kind::stance_changed,
+                                         new_mode->name() );
+        }
         // Enchantments based on move modes can stack inappropriately without a recalc here
         recalculate_enchantment_cache();
         recoil = MAX_RECOIL;
@@ -1324,7 +1341,12 @@ bool avatar::is_waiting_to_change_mode_mode()
 void avatar::set_desired_movement_mode( const move_mode_id &new_mode )
 {
     if( can_switch_to( new_mode ) ) {
-        add_msg( new_mode->prepare_message( get_steed_type() ) );
+        if( a11y::enabled() ) {
+            add_msg( _( "Selected movement: %s. Takes effect on your next action." ),
+                     new_mode->name() );
+        } else {
+            add_msg( new_mode->prepare_message( get_steed_type() ) );
+        }
         desired_move_mode = new_mode;
     } else {
         add_msg( new_mode->change_message( false, get_steed_type() ) );

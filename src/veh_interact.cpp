@@ -1,5 +1,8 @@
 #include "veh_interact.h"
 
+#include "a11y_input.h"
+#include "a11y_runtime.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -160,6 +163,61 @@ std::string enum_to_string<vehicle_action>( vehicle_action stage )
     }
 }
 } // namespace io
+
+// Reader adapter (R15.1/R15.2): veh_interact draws its panes by hand
+// across several nested loops (main, overview part selection, install,
+// repair, remove), so the generic command fallback would publish the
+// commands but never the vehicle itself. This session publishes what
+// the panes show -- a vehicle summary from the same values display_stats
+// prints, the cursor tile and its parts, and a tree of every part
+// grouped by tile -- and, inside the sub-loops, the actual lists those
+// loops step through. Browsing only moves the original cursor or list
+// positions; starting work always goes through the original loops' own
+// CONFIRM handling and requirement checks, and a chosen part is
+// re-resolved against the live vehicle at intent time because the
+// vehicle structure can change while this screen is open. The method
+// definitions live below the install_info_t/remove_info_t definitions,
+// which build() reads.
+class veh_interact::reader_session
+{
+    public:
+        explicit reader_session( veh_interact &owner );
+        enum class mode { main_mode, select_part, install, repair, remove };
+        void update( map &here, mode m );
+
+    private:
+        std::optional<std::string> handle( const a11y::semantic_intent &intent );
+        a11y::semantic_snapshot build( map &here );
+
+        veh_interact &owner;
+        mode current_mode = mode::main_mode;
+        // Map of the most recent update(); intent-time cursor moves go
+        // through the same map the loop is using.
+        map *current_map = nullptr;
+        // Bindings of the most recently published snapshot. Part bindings
+        // are shared by the main/select/repair/remove lists: part_index
+        // is the live vehicle part index (the identity re-resolved at
+        // intent time) and list_pos is the row's position in the list
+        // the current mode's loop steps through (overview row, position
+        // in need_repair, or position in parts_here).
+        struct part_binding {
+            std::string id;
+            int part_index;
+            int list_pos;
+        };
+        struct install_binding {
+            std::string id;
+            const vpart_info *info;
+        };
+        struct tile_binding {
+            std::string id;
+            point_rel_ms mount;
+        };
+        std::vector<part_binding> part_bindings;
+        std::vector<install_binding> install_bindings;
+        std::vector<tile_binding> tile_bindings;
+        a11y::screen_scope screen;
+};
 
 void veh_interact::assign_activity( map &here )
 {
@@ -322,6 +380,7 @@ veh_interact::veh_interact( map &here, vehicle &veh, const point_rel_ms &p )
     cache_tool_availability();
     // Initialize info of selected parts
     move_cursor( here, point_rel_ms::zero );
+    reader = std::make_unique<reader_session>( *this );
 }
 
 veh_interact::~veh_interact() = default;
@@ -428,6 +487,664 @@ struct veh_interact::remove_info_t {
     size_t tab = 0;
 };
 
+namespace
+{
+
+// Verbal equivalent of the condition the panes show only as a damage
+// symbol and a color. Uses the same damage fraction and the same bands
+// and words count_durability() applies to the vehicle as a whole.
+std::string reader_part_condition( const vehicle_part &pt )
+{
+    if( pt.is_broken() ) {
+        return _( "broken" );
+    }
+    const double pct = pt.damage_percent() * 100.0;
+    if( pct < 5.0 ) {
+        return _( "like new" );
+    }
+    if( pct < 33.0 ) {
+        return pgettext( "adjective", "dented" );
+    }
+    if( pct < 66.0 ) {
+        return _( "battered" );
+    }
+    if( pct < 100.0 ) {
+        return _( "wrecked" );
+    }
+    return _( "destroyed" );
+}
+
+// Position of a tile in the vehicle's own frame, relative to the
+// reference part (part 0, the same origin the coordinate translation
+// uses). In that frame +x is toward the front of the vehicle and +y is
+// to its right (see the mount documentation in vehicle.h).
+std::string reader_tile_words( const vehicle &veh, const point_rel_ms &mount )
+{
+    const point_rel_ms origin = veh.part( 0 ).mount;
+    const int dx = mount.x() - origin.x();
+    const int dy = mount.y() - origin.y();
+    if( dx == 0 && dy == 0 ) {
+        return _( "the reference tile" );
+    }
+    std::string result;
+    if( dx != 0 ) {
+        result += string_format( dx > 0 ? _( "%d ahead" ) : _( "%d back" ), std::abs( dx ) );
+    }
+    if( dy != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( dy > 0 ? _( "%d to the right" ) : _( "%d to the left" ),
+                                 std::abs( dy ) );
+    }
+    return result;
+}
+
+std::string reader_category_name( const std::string &key )
+{
+    if( key == "1_ENGINE" ) {
+        return _( "Engines" );
+    }
+    if( key == "2_TANK" ) {
+        return _( "Tanks and fuel stores" );
+    }
+    if( key == "3_BATTERY" ) {
+        return _( "Batteries" );
+    }
+    if( key == "4_REACTOR" ) {
+        return _( "Reactors" );
+    }
+    if( key == "5_TURRET" ) {
+        return _( "Turrets" );
+    }
+    if( key == "6_SEAT" ) {
+        return _( "Seats" );
+    }
+    if( key == "7_WHEELS" ) {
+        return _( "Wheels" );
+    }
+    return key;
+}
+
+// The per-category figures the overview's details callbacks print on
+// the part's row, as text: engine fuel and faults, tank contents and
+// quantity, battery capacity and charge, turret/reactor ammunition
+// (including the per-pocket state of a multi-magazine turret), and the
+// crew member on a seat.
+std::string reader_part_data( vehicle &veh, const vehicle_part &pt, const std::string &key )
+{
+    std::string data;
+    if( key == "1_ENGINE" ) {
+        if( !pt.fuel_current().is_null() ) {
+            data += string_format( _( "Fuel: %s. " ), item::nname( pt.fuel_current() ) );
+        }
+        data += pt.enabled ? _( "In use: yes." ) : _( "In use: no." );
+        for( const fault_id &f : pt.faults() ) {
+            data += string_format( _( " Fault: %1$s. %2$s" ), f->name(), f->description() );
+        }
+    } else if( key == "2_TANK" ) {
+        if( !pt.ammo_current().is_null() ) {
+            const itype *ammo_type = item::find_type( pt.ammo_current() );
+            if( pt.is_tank() ) {
+                const item &contents = pt.get_base().legacy_front();
+                if( contents.has_own_flag( flag_FROZEN ) ) {
+                    data += _( "Contents (frozen): " );
+                } else if( contents.rotten() ) {
+                    data += _( "Contents (rotten): " );
+                } else {
+                    data += _( "Contents: " );
+                }
+                data += string_format( "%1$s %2$s.", ammo_type->nname( 1 ),
+                                       ammo_type->item_measure_prefix( pt.ammo_remaining() ) );
+            } else {
+                const double vol_l = to_liter( pt.ammo_remaining() * 250_ml /
+                                               ammo_type->stack_size );
+                data += string_format( _( "Contents: %1$s, %2$.1f L." ),
+                                       ammo_type->nname( 1 ), round_up( vol_l, 1 ) );
+            }
+        } else {
+            data += _( "Empty." );
+        }
+        if( pt.is_leaking() ) {
+            data += _( " Leaking." );
+        }
+    } else if( key == "3_BATTERY" ) {
+        const int capacity = pt.ammo_capacity( ammo_battery );
+        const int pct = capacity > 0 ? pt.ammo_remaining() * 100 / capacity : 0;
+        data += string_format( _( "Capacity: %1$d. Charge: %2$d%%." ), capacity, pct );
+        if( pt.is_leaking() ) {
+            data += _( " Leaking." );
+        }
+    } else if( key == "4_REACTOR" || key == "5_TURRET" ) {
+        if( key == "5_TURRET" && pt.get_base().uses_firing_requirements() ) {
+            const turret_data td = veh.turret_query( const_cast<vehicle_part &>( pt ) );
+            for( const multimag_display_pocket &dp : td.multimag_display_state() ) {
+                std::string ammo_text = "-";
+                if( !dp.ammo_itype.is_null() ) {
+                    const itype *ad = item::find_type( dp.ammo_itype );
+                    ammo_text = ad ? ad->nname( std::max( dp.effective_qty, 1 ) ) : dp.pocket_id;
+                }
+                data += string_format( "%1$s: %2$s, %3$d. ", dp.pocket_id, ammo_text,
+                                       dp.effective_qty );
+            }
+        } else if( pt.ammo_remaining() > 0 ) {
+            data += string_format( _( "Ammunition: %1$s, %2$d." ),
+                                   item::nname( pt.ammo_current() ), pt.ammo_remaining() );
+        } else {
+            data += _( "No ammunition." );
+        }
+        if( pt.is_leaking() ) {
+            data += _( " Leaking." );
+        }
+    } else if( key == "6_SEAT" ) {
+        if( const npc *who = pt.crew() ) {
+            data += string_format( _( "Crew: %s." ), who->get_name() );
+        }
+    }
+    return data;
+}
+
+// Contents of one cargo part, in the same terms the advanced inventory
+// shows them: the stored items by display name (capped, with the exact
+// remainder counted) and the used/total volume print_part_list shows.
+std::string reader_cargo_data( const vehicle &veh, const vehicle_part &pt )
+{
+    const vehicle_stack vs = veh.get_items( pt );
+    std::string names;
+    int shown = 0;
+    int total = 0;
+    for( const item &it : vs ) {
+        ++total;
+        if( shown < 8 ) {
+            if( shown > 0 ) {
+                names += ", ";
+            }
+            names += it.display_name();
+            ++shown;
+        }
+    }
+    std::string data = string_format( _( "Cargo volume: %1$s of %2$s %3$s. " ),
+                                      format_volume( vs.stored_volume() ),
+                                      format_volume( vs.max_volume() ), volume_units_abbr() );
+    if( total == 0 ) {
+        data += _( "Empty." );
+    } else {
+        data += string_format( _( "Contents: %s" ), names );
+        if( total > shown ) {
+            data += string_format( _( ", and %d more" ), total - shown );
+        }
+        data += ".";
+    }
+    return data;
+}
+
+} // namespace
+
+veh_interact::reader_session::reader_session( veh_interact &owner ) :
+    owner( owner ),
+    screen( &owner.main_context, "vehicle-interact",
+[this]( const a11y::semantic_intent &intent ) {
+    return handle( intent );
+} ) {}
+
+void veh_interact::reader_session::update( map &here, const mode m )
+{
+    current_mode = m;
+    current_map = &here;
+    if( !a11y::enabled() ) {
+        return;
+    }
+    screen.update( build( here ) );
+}
+
+std::optional<std::string> veh_interact::reader_session::handle(
+    const a11y::semantic_intent &intent )
+{
+    vehicle &veh = *owner.veh;
+    for( const tile_binding &binding : tile_bindings ) {
+        if( intent.node != binding.id ) {
+            continue;
+        }
+        if( intent.action != "focus" && intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        // Focusing a tile only moves the original cursor there (the
+        // same transform overview() uses to sync the cursor to a part);
+        // it starts no task and moves no vehicle.
+        if( current_mode == mode::main_mode && current_map != nullptr ) {
+            for( const part_binding &part : part_bindings ) {
+                const vehicle_part &pt = veh.part( part.part_index );
+                if( pt.mount == binding.mount ) {
+                    owner.move_cursor( *current_map,
+                                       ( pt.mount.raw() + owner.cursor_vp_mount ).rotate( 3 ) );
+                    break;
+                }
+            }
+        }
+        return std::string( "TIMEOUT" );
+    }
+    for( const part_binding &binding : part_bindings ) {
+        if( intent.node != binding.id ) {
+            continue;
+        }
+        if( intent.action != "focus" && intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        // Re-resolve the part against the live vehicle: if the part is
+        // gone, the intent names nothing the current screen offers and
+        // falls through to the dispatcher as unhandled.
+        bool found = false;
+        for( const vpart_reference &vpr : veh.get_all_parts() ) {
+            if( static_cast<int>( vpr.part_index() ) == binding.part_index ) {
+                found = true;
+                break;
+            }
+        }
+        if( !found ) {
+            return std::nullopt;
+        }
+        switch( current_mode ) {
+            case mode::main_mode:
+                if( current_map != nullptr ) {
+                    const vehicle_part &pt = veh.part( binding.part_index );
+                    owner.move_cursor( *current_map,
+                                       ( pt.mount.raw() + owner.cursor_vp_mount ).rotate( 3 ) );
+                }
+                return std::string( "TIMEOUT" );
+            case mode::select_part:
+                owner.overview_pos = binding.list_pos;
+                return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+                       : std::optional<std::string>( "TIMEOUT" );
+            case mode::repair:
+                owner.repair_pos = binding.list_pos;
+                return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+                       : std::optional<std::string>( "TIMEOUT" );
+            case mode::remove:
+                if( owner.remove_info ) {
+                    owner.remove_info->pos = binding.list_pos;
+                }
+                return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+                       : std::optional<std::string>( "TIMEOUT" );
+            case mode::install:
+                break;
+        }
+        return std::nullopt;
+    }
+    for( const install_binding &binding : install_bindings ) {
+        if( intent.node != binding.id ) {
+            continue;
+        }
+        if( intent.action != "focus" && intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        if( !owner.install_info ) {
+            return std::nullopt;
+        }
+        // Re-resolve the candidate in the current tab list: the list is
+        // rebuilt per tile and per tab, so a stale row must not confirm
+        // whatever happens to sit at the old position.
+        const std::vector<const vpart_info *> &list = owner.install_info->tab_vparts;
+        const auto it = std::find( list.begin(), list.end(), binding.info );
+        if( it == list.end() ) {
+            return std::nullopt;
+        }
+        owner.install_info->pos = static_cast<int>( std::distance( list.begin(), it ) );
+        return intent.action == "activate" ? std::optional<std::string>( "CONFIRM" )
+               : std::optional<std::string>( "TIMEOUT" );
+    }
+    if( intent.node == "vehicle:cursor" || intent.node == "vehicle:message" ||
+        intent.node == "vehicle:most-damaged" || intent.node == "vehicle:needs-repair" ||
+        intent.node.rfind( "vehicle:here:", 0 ) == 0 ||
+        intent.node.rfind( "vehicle:install:empty", 0 ) == 0 ||
+        intent.node.rfind( "vehicle:repair:empty", 0 ) == 0 ) {
+        if( intent.action == "focus" ) {
+            return std::string( "TIMEOUT" );
+        }
+        return std::nullopt;
+    }
+    return a11y::registered_intent( owner.main_context, intent );
+}
+
+a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
+{
+    vehicle &veh = *owner.veh;
+    part_bindings.clear();
+    install_bindings.clear();
+    tile_bindings.clear();
+
+    const std::string title = owner.title ? *owner.title : veh.name;
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( owner.main_context, title );
+    std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
+    snapshot.nodes.clear();
+
+    if( current_mode == mode::main_mode || current_mode == mode::select_part ) {
+        // Group the overview rows by tile, as the grid groups them
+        // spatially; the overview's functional category travels in each
+        // row's detail.
+        std::map<std::pair<int, int>, std::vector<int>> rows_by_tile;
+        for( int row = 0; row < static_cast<int>( owner.overview_opts.size() ); ++row ) {
+            const vehicle_part &pt = *owner.overview_opts[row].part;
+            rows_by_tile[ { pt.mount.x(), pt.mount.y() } ].push_back( row );
+        }
+        for( const auto &tile_rows : rows_by_tile ) {
+            const vehicle_part &first = *owner.overview_opts[tile_rows.second.front()].part;
+            a11y::semantic_node tile;
+            tile.id = "vehicle:tile:" + std::to_string( tile_rows.first.first ) + ":" +
+                      std::to_string( tile_rows.first.second );
+            tile.role = "listitem";
+            tile.label = string_format( _( "Tile: %s" ),
+                                        reader_tile_words( veh, first.mount ) );
+            tile.depth = 0;
+            tile.has_children = true;
+            tile.expanded = true;
+            tile.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( tile );
+            tile_bindings.push_back( { tile.id, first.mount } );
+            for( const int row : tile_rows.second ) {
+                const veh_interact::part_option &opt = owner.overview_opts[row];
+                const vehicle_part &pt = *opt.part;
+                const int part_index = veh.index_of_part( &pt );
+                a11y::semantic_node node;
+                // A part can appear in two overview groups (a turret
+                // that is also a tank); the row number keeps node IDs
+                // unique, and the binding still resolves by part index.
+                node.id = "vehicle:part:" + std::to_string( row ) + ":" +
+                          std::to_string( part_index );
+                node.role = "listitem";
+                node.label = pt.name( false );
+                node.parent_id = tile.id;
+                node.depth = 1;
+                node.expanded = true;
+                std::string detail = reader_category_name( opt.key ) + ". " +
+                                     _( "Condition: " ) + reader_part_condition( pt ) + ".";
+                const std::string data = reader_part_data( veh, pt, opt.key );
+                if( !data.empty() ) {
+                    detail += " " + data;
+                }
+                if( pt.info().has_flag( VPFLAG_CARGO ) ) {
+                    detail += " " + reader_cargo_data( veh, pt );
+                }
+                node.detail = detail;
+                if( current_mode == mode::select_part ) {
+                    node.enabled = opt.selectable;
+                    if( !opt.selectable ) {
+                        node.disabled_reason = _( "This part cannot be chosen for this action." );
+                    }
+                    node.selected = row == owner.overview_pos;
+                    if( node.selected ) {
+                        snapshot.focus = node.id;
+                    }
+                }
+                snapshot.nodes.push_back( std::move( node ) );
+                part_bindings.push_back( { node.id, part_index, row } );
+            }
+        }
+    }
+
+    if( current_mode == mode::main_mode ) {
+        // Vehicle summary, from the same values display_stats prints.
+        units::volume total_cargo = 0_ml;
+        units::volume free_cargo = 0_ml;
+        for( const vpart_reference &vpr : veh.get_any_parts( VPFLAG_CARGO ) ) {
+            const vehicle_stack vs = vpr.items();
+            total_cargo += vs.max_volume();
+            free_cargo += vs.free_volume();
+        }
+        std::string summary = string_format( _( "Vehicle: %1$s. Status: %2$s. Mass: %3$.0f %4$s. "
+                                                "Cargo: %5$s of %6$s %7$s." ),
+                                             veh.name, owner.total_durability_text,
+                                             convert_weight( veh.total_mass( here ) ), weight_units(),
+                                             format_volume( total_cargo - free_cargo ),
+                                             format_volume( total_cargo ), volume_units_abbr() );
+        if( !veh.wheelcache.empty() || veh.floating.empty() ) {
+            const auto vel_to_str = []( const double vel ) {
+                return three_digit_display( convert_velocity( vel, VU_VEHICLE ) );
+            };
+            summary += string_format( _( " Safe speed: %1$s. Top speed: %2$s %3$s." ),
+                                      vel_to_str( veh.safe_ground_velocity( here, false ) ),
+                                      vel_to_str( veh.max_ground_velocity( here, false ) ),
+                                      velocity_units( VU_VEHICLE ) );
+        }
+        for( const itype_id &fuel : veh.get_printable_fuel_types( here ) ) {
+            const int cap = veh.fuel_capacity( here, fuel );
+            const int left = veh.fuel_left( here, fuel );
+            summary += string_format( _( " %1$s: %2$d%%." ), item::nname( fuel ),
+                                      cap > 0 ? left * 100 / cap : 0 );
+        }
+        snapshot.summary = summary;
+
+        if( owner.msg ) {
+            a11y::semantic_node node;
+            node.id = "vehicle:message";
+            node.role = "status";
+            node.label = remove_color_tags( *owner.msg );
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = "vehicle:message";
+        }
+
+        // The cursor tile and the parts on it: the w_parts pane.
+        {
+            a11y::semantic_node node;
+            node.id = "vehicle:cursor";
+            node.role = "status";
+            std::string label = _( "Cursor tile" );
+            if( owner.cpart >= 0 ) {
+                label += ": " + reader_tile_words( veh, veh.part( owner.cpart ).mount );
+            }
+            node.label = label;
+            std::string detail = string_format( _( "Terrain: %s." ), owner.terrain_here.name() );
+            if( owner.cpart >= 0 ) {
+                if( const std::optional<std::string> tile_label =
+                            vpart_position( veh, owner.cpart ).get_label() ) {
+                    detail += string_format( _( " Label: %s." ), *tile_label );
+                }
+            }
+            detail += string_format( _( " Parts here: %d." ),
+                                     static_cast<int>( owner.parts_here.size() ) );
+            node.detail = detail;
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            if( snapshot.focus.empty() ) {
+                snapshot.focus = node.id;
+            }
+        }
+        for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
+            const int part_index = owner.parts_here[i];
+            const vehicle_part &pt = veh.part( part_index );
+            a11y::semantic_node node;
+            node.id = "vehicle:here:" + std::to_string( part_index );
+            node.role = "listitem";
+            node.label = pt.name( false );
+            std::string detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
+            if( pt.is_fuel_store() && !pt.ammo_current().is_null() ) {
+                if( pt.ammo_current() == fuel_type_battery ) {
+                    detail += string_format( _( " (%d of %d charge)" ), pt.ammo_remaining(),
+                                             pt.ammo_capacity( ammo_battery ) );
+                } else if( pt.ammo_current()->stack_size > 0 ) {
+                    const itype *ammo_type = item::find_type( pt.ammo_current() );
+                    const auto stack = 250_ml / ammo_type->stack_size;
+                    detail += string_format( _( " (%.1f L %s)" ),
+                                             round_up( units::to_liter( pt.ammo_remaining() * stack ), 1 ),
+                                             item::nname( pt.ammo_current() ) );
+                }
+            }
+            if( pt.info().has_flag( VPFLAG_CARGO ) ) {
+                detail += " " + reader_cargo_data( veh, pt );
+            }
+            if( i == 0 ) {
+                detail += vpart_position( veh, part_index ).is_inside() ? _( " Interior." )
+                          : _( " Exterior." );
+            }
+            std::string desc;
+            pt.info().format_description( desc, c_light_gray, 80 );
+            if( !desc.empty() ) {
+                detail += "\n" + remove_color_tags( desc );
+            }
+            if( pt.degradation() > 0 && pt.damage() == pt.degradation() ) {
+                detail += "\n" + std::string(
+                              _( "Degraded and cannot be repaired beyond the current level." ) );
+            }
+            node.detail = detail;
+            node.selected = part_index == owner.cpart;
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
+        vehicle_part *most_damaged = owner.get_most_damaged_part();
+        vehicle_part *most_repairable = owner.get_most_repairable_part();
+        if( most_damaged && most_damaged->damage_percent() > 0 ) {
+            a11y::semantic_node node;
+            node.id = "vehicle:most-damaged";
+            node.role = "status";
+            node.label = string_format( most_damaged == most_repairable
+                                        ? _( "Most damaged: %s" )
+                                        : _( "Most damaged (can't repair): %s" ),
+                                        most_damaged->name( false ) );
+            node.detail = _( "Condition: " ) + reader_part_condition( *most_damaged ) + ".";
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        if( most_repairable && most_repairable != most_damaged ) {
+            a11y::semantic_node node;
+            node.id = "vehicle:needs-repair";
+            node.role = "status";
+            node.label = string_format( _( "Needs repair: %s" ), most_repairable->name( false ) );
+            node.detail = _( "Condition: " ) + reader_part_condition( *most_repairable ) + ".";
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+    } else if( current_mode == mode::select_part ) {
+        snapshot.summary = title + " " +
+                           std::string( _( "Browsing does not change the vehicle; activate a part to choose it." ) );
+    } else if( current_mode == mode::install && owner.install_info ) {
+        veh_interact::install_info_t &info = *owner.install_info;
+        snapshot.summary = title + " " + string_format( _( "Category: %s." ),
+                           info.tab_list[info.tab].name() );
+        if( info.tab_vparts.empty() ) {
+            a11y::semantic_node node;
+            node.id = "vehicle:install:empty";
+            node.role = "status";
+            node.label = _( "No parts in this category can be installed here." );
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = "vehicle:install:empty";
+        }
+        for( size_t i = 0; i < info.tab_vparts.size(); ++i ) {
+            const vpart_info *vp = info.tab_vparts[i];
+            a11y::semantic_node node;
+            node.id = "vehicle:install:" + vp->id.str();
+            node.role = "listitem";
+            node.label = vp->name();
+            node.selected = static_cast<int>( i ) == info.pos;
+            if( node.selected ) {
+                snapshot.focus = node.id;
+                // The loop has already computed this candidate's
+                // requirements into msg; recomputing also yields the
+                // installable flag the loop itself gates CONFIRM on.
+                const bool ok = owner.update_part_requirements( here );
+                node.enabled = ok;
+                if( !ok ) {
+                    node.disabled_reason = _( "This part cannot be installed here. The requirements say why." );
+                }
+                if( owner.msg ) {
+                    node.detail = remove_color_tags( *owner.msg );
+                }
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+            install_bindings.push_back( { node.id, vp } );
+        }
+    } else if( current_mode == mode::repair ) {
+        snapshot.summary = title;
+        if( owner.need_repair.empty() ) {
+            a11y::semantic_node node;
+            node.id = "vehicle:repair:empty";
+            node.role = "status";
+            node.label = _( "There are no parts which can be repaired here." );
+            node.actions = { "focus" };
+            snapshot.nodes.push_back( std::move( node ) );
+            snapshot.focus = "vehicle:repair:empty";
+        }
+        for( size_t j = 0; j < owner.need_repair.size(); ++j ) {
+            const int part_index = owner.parts_here[owner.need_repair[j]];
+            const vehicle_part &pt = veh.part( part_index );
+            a11y::semantic_node node;
+            node.id = "vehicle:repair:" + std::to_string( part_index );
+            node.role = "listitem";
+            node.label = pt.name( false );
+            std::string detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
+            if( pt.is_broken() ) {
+                detail += " " + std::string( _( "Broken; repairing replaces it." ) );
+            }
+            node.selected = static_cast<int>( j ) == owner.repair_pos;
+            if( node.selected ) {
+                snapshot.focus = node.id;
+                if( owner.msg ) {
+                    detail += "\n" + remove_color_tags( *owner.msg );
+                }
+            }
+            node.detail = detail;
+            snapshot.nodes.push_back( std::move( node ) );
+            part_bindings.push_back( { node.id, part_index, static_cast<int>( j ) } );
+        }
+    } else if( current_mode == mode::remove && owner.remove_info ) {
+        snapshot.summary = title;
+        // can_remove_part reports its refusal through msg; preserve
+        // whatever message the loop had so the pane is unchanged.
+        const std::optional<std::string> saved_msg = owner.msg;
+        for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
+            const int part_index = owner.parts_here[i];
+            const vehicle_part &pt = veh.part( part_index );
+            owner.msg.reset();
+            const bool can_remove = owner.can_remove_part( here, part_index,
+                                    get_player_character() );
+            a11y::semantic_node node;
+            node.id = "vehicle:remove:" + std::to_string( part_index );
+            node.role = "listitem";
+            node.label = pt.name( false );
+            node.detail = _( "Condition: " ) + reader_part_condition( pt ) + ".";
+            node.enabled = can_remove;
+            if( !can_remove ) {
+                node.disabled_reason = owner.msg ? remove_color_tags( *owner.msg )
+                                       : _( "This part cannot be removed." );
+            } else if( owner.msg ) {
+                node.detail += "\n" + remove_color_tags( *owner.msg );
+            }
+            node.selected = static_cast<int>( i ) == owner.remove_info->pos;
+            if( node.selected ) {
+                snapshot.focus = node.id;
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+            part_bindings.push_back( { node.id, part_index, static_cast<int>( i ) } );
+        }
+        owner.msg = saved_msg;
+    }
+
+    snapshot.nodes.insert( snapshot.nodes.end(),
+                           std::make_move_iterator( commands.begin() ),
+                           std::make_move_iterator( commands.end() ) );
+    // Flat positions for ordinary nodes; tree nodes count their sibling
+    // set under the same parent (R02.1).
+    for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        snapshot.nodes[i].position = static_cast<int>( i ) + 1;
+        snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+    }
+    std::map<std::string, int> sibling_seen;
+    std::map<std::string, int> sibling_total;
+    for( const a11y::semantic_node &node : snapshot.nodes ) {
+        if( node.depth >= 0 ) {
+            sibling_total[node.parent_id]++;
+        }
+    }
+    for( a11y::semantic_node &node : snapshot.nodes ) {
+        if( node.depth >= 0 ) {
+            node.position = ++sibling_seen[node.parent_id];
+            node.total = sibling_total[node.parent_id];
+        }
+    }
+    return snapshot;
+}
+
 shared_ptr_fast<ui_adaptor> veh_interact::create_or_get_ui_adaptor( map &here )
 {
     shared_ptr_fast<ui_adaptor> current_ui = ui.lock();
@@ -532,6 +1249,9 @@ void veh_interact::do_main_loop( map &here )
     while( !finish ) {
         calc_overview( here );
         ui_manager::redraw();
+        if( reader ) {
+            reader->update( here, reader_session::mode::main_mode );
+        }
         const int description_scroll_lines = catacurses::getmaxy( w_parts ) - 4;
         const std::string action = main_context.handle_input();
         msg.reset();
@@ -1009,6 +1729,9 @@ void veh_interact::do_install( map &here )
 
         const bool can_install = update_part_requirements( here );
         ui_manager::redraw();
+        if( reader ) {
+            reader->update( here, reader_session::mode::install );
+        }
 
         const std::string action = main_context.handle_input();
         msg.reset();
@@ -1147,7 +1870,8 @@ void veh_interact::do_repair( map &here )
 
     shared_ptr_fast<ui_adaptor> current_ui = create_or_get_ui_adaptor( here );
 
-    int pos = 0;
+    repair_pos = 0;
+    int &pos = repair_pos;
 
     restore_on_out_of_scope prev_hilight_part( highlight_part );
 
@@ -1209,6 +1933,9 @@ void veh_interact::do_repair( map &here )
         highlight_part = need_repair[pos];
 
         ui_manager::redraw();
+        if( reader ) {
+            reader->update( here, reader_session::mode::repair );
+        }
 
         const std::string action = main_context.handle_input();
         msg.reset();
@@ -1713,6 +2440,9 @@ void veh_interact::overview( map &here,
         }
 
         ui_manager::redraw();
+        if( reader ) {
+            reader->update( here, reader_session::mode::select_part );
+        }
 
         const std::string input = main_context.handle_input();
         msg.reset();
@@ -1882,7 +2612,8 @@ void veh_interact::do_remove( map &here )
     remove_info = std::make_unique<remove_info_t>();
 
     avatar &player_character = get_avatar();
-    int pos = 0;
+    int &pos = remove_info->pos;
+    pos = 0;
     for( size_t i = 0; i < parts_here.size(); i++ ) {
         if( can_remove_part( here, parts_here[ i ], player_character ) ) {
             pos = i;
@@ -1910,6 +2641,9 @@ void veh_interact::do_remove( map &here )
 
         calc_overview( here );
         ui_manager::redraw();
+        if( reader ) {
+            reader->update( here, reader_session::mode::remove );
+        }
 
         //read input
         const std::string action = main_context.handle_input();

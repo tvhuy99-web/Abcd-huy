@@ -537,6 +537,10 @@ inline void popup( const char *mes, Args &&... args )
     popup( string_format( mes, std::forward<Args>( args )... ), PF_NONE );
 }
 int popup( const std::string &text, PopupFlags flags = PF_NONE );
+// Ask for a keyboard letter directly for sighted/keyboard use. When the
+// in-game reader is active, expose the permitted choices as a semantic list.
+int choose_key_from_user( const std::string &message, const std::string &allowed_keys,
+                          int clear_key = -1 );
 template<typename ...Args>
 inline void full_screen_popup( const char *mes, Args &&... args )
 {
