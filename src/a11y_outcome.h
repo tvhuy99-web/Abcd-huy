@@ -22,7 +22,8 @@ enum class action_outcome_kind {
     vertical_moved,
     undetermined,
     // Appended at the end so the values of all existing kinds are unchanged.
-    safe_mode_blocked
+    safe_mode_blocked,
+    vertical_unchanged
 };
 
 struct action_outcome {

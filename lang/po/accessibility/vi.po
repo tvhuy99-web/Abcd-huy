@@ -1169,6 +1169,47 @@ msgstr "Đã tấn công %s."
 msgid "Movement mode: %s."
 msgstr "Chế độ di chuyển: %s."
 
+#, c-format
+msgid " (selected: %s)"
+msgstr " (đã chọn: %s)"
+
+#, c-format
+msgid "Now: %1$s. Selected: %2$s."
+msgstr "Hiện tại: %1$s. Đã chọn: %2$s."
+
+msgid "Auto travel: on"
+msgstr "Tự động di chuyển: bật"
+
+msgid "Auto travel: off"
+msgstr "Tự động di chuyển: tắt"
+
+msgid "When on, directional movement may follow a longer path. It does not select a destination."
+msgstr "Khi bật, di chuyển theo hướng có thể tự tìm đường xa hơn. Chế độ này không chọn điểm đến."
+
+msgid "Stand still for one turn"
+msgstr "Đứng yên một lượt"
+
+#, c-format
+msgid "Selected movement: %s. Takes effect on your next action."
+msgstr "Đã chọn di chuyển: %s. Có hiệu lực ở hành động tiếp theo."
+
+msgid "Stood still for one turn."
+msgstr "Đã đứng yên một lượt."
+
+msgid "No route in that direction."
+msgstr "Không tìm được đường theo hướng này."
+
+msgid "Choose a direction to follow a path. No destination is selected."
+msgstr "Chọn hướng để tự tìm đường. Chưa có điểm đến cụ thể."
+
+#, c-format
+msgid "Waiting: %s"
+msgstr "Đang chờ: %s"
+
+msgid "Did not change level. Check for a usable stairway or passage."
+msgstr "Chưa chuyển tầng. Hãy kiểm tra cầu thang hoặc lối đi phù hợp."
+
+
 msgid "Moved to another level."
 msgstr "Đã sang tầng khác."
 

@@ -61,6 +61,8 @@ std::string describe_action_outcome( const action_outcome &outcome )
             return string_format( _( "Movement mode: %s." ), outcome.detail );
         case action_outcome_kind::vertical_moved:
             return _( "Moved to another level." );
+        case action_outcome_kind::vertical_unchanged:
+            return _( "Did not change level. Check for a usable stairway or passage." );
         case action_outcome_kind::undetermined:
             return _( "The last action's result could not be determined." );
         case action_outcome_kind::safe_mode_blocked:

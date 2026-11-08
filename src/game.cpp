@@ -9612,7 +9612,7 @@ class vertical_move_outcome_guard
             if( you_.pos_abs().z() != start_pos_.z() ) {
                 a11y::record_action_outcome( a11y::action_outcome_kind::vertical_moved, "" );
             } else {
-                a11y::record_action_outcome( a11y::action_outcome_kind::undetermined, "" );
+                a11y::record_action_outcome( a11y::action_outcome_kind::vertical_unchanged, "" );
             }
         }
     private:
