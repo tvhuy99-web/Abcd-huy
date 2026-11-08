@@ -3340,6 +3340,12 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             return false;
 
         case ACTION_QUICKLOAD:
+            // Unlike Save and Quit, quickload can silently discard every
+            // change since the last save. Require spoken confirmation.
+            if( a11y::enabled() &&
+                !query_yn( _( "Reload the last save? Any progress not saved will be lost. Continue?" ) ) ) {
+                break;
+            }
             quickload();
             g->save_is_dirty = true;
             return false;

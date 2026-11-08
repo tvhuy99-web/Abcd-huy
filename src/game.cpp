@@ -588,6 +588,10 @@ void game::toggle_pixel_minimap() const
     }
     pixel_minimap_option = !pixel_minimap_option;
     mark_main_ui_adaptor_resize();
+    if( a11y::enabled() ) {
+        add_msg( m_info, pixel_minimap_option ?
+                 _( "Pixel minimap enabled." ) : _( "Pixel minimap disabled." ) );
+    }
 #endif // TILES
 }
 
@@ -6703,6 +6707,9 @@ void game::zoom_out()
         uistate.tileset_zoom = 64;
     }
     rescale_tileset( uistate.tileset_zoom );
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "World view zoom level: %d." ), uistate.tileset_zoom );
+    }
 #endif
 }
 
@@ -6727,6 +6734,9 @@ void game::zoom_in()
         uistate.tileset_zoom = uistate.tileset_zoom * 2;
     }
     rescale_tileset( uistate.tileset_zoom );
+    if( a11y::enabled() ) {
+        add_msg( m_info, _( "World view zoom level: %d." ), uistate.tileset_zoom );
+    }
 #endif
 }
 
