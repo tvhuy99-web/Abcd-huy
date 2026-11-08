@@ -4,7 +4,9 @@
 #include <cstddef>
 #include <initializer_list>
 #include <memory>
+#include <optional>
 #include <set>
+#include <string>
 #include <tuple>
 
 #include "a11y_body.h"

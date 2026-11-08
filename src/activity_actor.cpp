@@ -26,6 +26,7 @@
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_item_handling.h"
+#include "a11y_runtime.h"
 #include "advanced_inv.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -13861,10 +13862,29 @@ void wait_activity_actor::start( player_activity &act, Character & )
     act.moves_left = act.moves_total;
 }
 
+void wait_activity_actor::do_turn( player_activity &act, Character &who )
+{
+    // Long waits expose progress without flooding speech on every game tick.
+    // The engine still owns interruption, danger and activity completion.
+    if( who.is_avatar() && a11y::enabled() && act.moves_left > 0 &&
+        calendar::once_every( 5_minutes ) ) {
+        const int turns_left = act.moves_left / to_moves<int>( 1_turns );
+        who.add_msg_if_player( m_info, _( "Waiting: about %s remaining." ),
+                               to_string( time_duration::from_turns( turns_left ) ) );
+    }
+}
+
 void wait_activity_actor::finish( player_activity &act, Character &who )
 {
     who.add_msg_if_player( _( "You finish waiting." ) );
     act.set_to_null();
+}
+
+void wait_activity_actor::canceled( player_activity &, Character &who )
+{
+    if( who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_warning, _( "Waiting interrupted. Check your surroundings." ) );
+    }
 }
 
 void wait_activity_actor::serialize( JsonOut &jsout ) const

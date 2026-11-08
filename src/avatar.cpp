@@ -918,8 +918,9 @@ void avatar::wake_up()
     Character::wake_up();
     if( was_asleep && a11y::enabled() ) {
         add_msg( m_info,
-                 _( "Awake now. Sleepiness: %1$s. Thirst: %2$s. "
-                    "Check the clock and health summary for changes during sleep." ),
+                 _( "Awake at %1$s. Sleepiness: %2$s. Thirst: %3$s. "
+                    "Check your health summary for changes during sleep." ),
+                 to_string_time_of_day( calendar::turn ),
                  display::sleepiness_text_color( *this ).first,
                  display::thirst_text_color( *this ).first );
     }
