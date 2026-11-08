@@ -8349,6 +8349,11 @@ void reload_activity_actor::reload_msg( Character &who, bool finished )
             !ammo_uses_speedloader_clip ) {
 
             add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+        } else if( finished && a11y::enabled() ) {
+            // Most gun reloads previously produced only a sound at finish.
+            // Report completion after ammunition has actually been moved.
+            add_msg( m_neutral, _( "Reload complete: %1$s with %2$s." ),
+                     reloadable_name, ammo_name );
         }
         make_reload_sound( who, reloadable );
     } else if( reloadable.is_watertight_container() ) {

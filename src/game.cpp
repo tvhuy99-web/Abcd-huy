@@ -7445,6 +7445,12 @@ void game::reload( item_location &loc, bool prompt, bool empty )
         if( extra_moves > 0 ) {
             add_msg( m_warning, _( "You struggle to reload the fouled %s." ), loc->tname() );
         }
+        if( a11y::enabled() ) {
+            // Announce the exact target and ammunition selected by the
+            // engine, rather than guessing from the automatic reload order.
+            add_msg( m_info, _( "Preparing to reload %1$s using %2$s." ),
+                     loc->tname(), opt.ammo->tname() );
+        }
         u.assign_activity( reload_activity_actor( std::move( opt ), extra_moves ) );
     }
 }

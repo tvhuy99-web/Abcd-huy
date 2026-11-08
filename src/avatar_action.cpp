@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "a11y_outcome.h"
+#include "a11y_runtime.h"
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "avatar.h"
@@ -27,6 +28,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "flag.h"
+#include "fault.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
@@ -999,7 +1001,26 @@ void avatar_action::mend( avatar &you, item_location loc )
     }
 
     if( !loc ) {
-        if( you.is_armed() ) {
+        if( a11y::enabled() ) {
+            // Reader mode must let the player choose a carried or worn item.
+            // Selecting a row only focuses it; confirmation uses the native
+            // inventory selector and its existing item validation.
+            loc = g->inv_map_splice( [&you]( const item_location &candidate ) {
+                if( !you.has_item( *candidate ) ) {
+                    return false;
+                }
+                for( const fault_id &fault : candidate->faults ) {
+                    if( !fault->get_fixes().empty() ) {
+                        return true;
+                    }
+                }
+                return false;
+            }, _( "Choose item to mend" ), 1,
+            _( "You have no carried items with repairable faults." ) );
+            if( !loc ) {
+                return;
+            }
+        } else if( you.is_armed() ) {
             loc = you.get_wielded_item();
         } else {
             add_msg( m_info, _( "You're not wielding anything." ) );
@@ -1008,6 +1029,9 @@ void avatar_action::mend( avatar &you, item_location loc )
     }
 
     if( you.has_item( *loc ) ) {
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "Selected for mending: %s." ), loc->tname() );
+        }
         you.mend_item( item_location( loc ) );
     }
 }

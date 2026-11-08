@@ -1238,7 +1238,12 @@ void outfit::sort_armor( Character &guy )
                 if( leftListIndex > selected ) {
                     ++to;
                 }
+                const bool changed_layer = selected != leftListIndex;
                 worn.splice( to, worn, tmp_worn[selected] );
+                if( changed_layer && a11y::enabled() ) {
+                    guy.add_msg_if_player( m_info, _( "Armor layer changed: %1$s, position %2$d of %3$d." ),
+                                           tmp_worn[selected]->tname(), leftListIndex + 1, leftListSize );
+                }
                 selected = leftListIndex;
                 guy.calc_encumbrance();
             }

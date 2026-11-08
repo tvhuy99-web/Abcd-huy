@@ -14,6 +14,7 @@
 #include <vector>
 
 #include "action.h"
+#include "a11y_runtime.h"
 #include "activity_actor.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -4277,7 +4278,10 @@ void Character::mend_item( item_location &&obj, bool interactive )
             auto comps = reqs.get_folded_components_list( this, fold_width, col, inv,
                          is_crafting_component );
 
-            std::string descr = word_rewrap( obj.get_item()->get_fault_description( opt.fault ), 80 ) + "\n\n";
+            std::string descr = string_format( _( "Fault: %s.\n" ), opt.fault->name() );
+            descr += opt.doable ? _( "Status: ready to mend.\n" ) :
+                     _( "Status: cannot mend yet; a required skill, tool or component is missing.\n" );
+            descr += word_rewrap( obj.get_item()->get_fault_description( opt.fault ), 80 ) + "\n\n";
             for( const fault_id &fid : fix.faults_removed ) {
                 if( obj->has_fault( fid ) ) {
                     descr += string_format( _( "Removes fault: <color_green>%s</color>\n" ), fid->name() );
@@ -8462,6 +8466,11 @@ bool character_martial_arts::pick_style( const Character &you ) // Style selecti
         }
         kmenu.addentry_desc( i + STYLE_OFFSET, true, -1, entry_text,
                              wrap60( style.description.translated() ) );
+        // The highlighted row and the currently active style are different
+        // concepts. Expose the active state as a spoken value on each row.
+        kmenu.entries.back().a11y_value = selected ?
+                                          _( "Currently active fighting style." ) :
+                                          _( "Not currently active." );
     }
 
     kmenu.query();
@@ -8473,11 +8482,19 @@ bool character_martial_arts::pick_style( const Character &you ) // Style selecti
         // Bizarre and unsafe casting const reference to non-const????????
         Character &u = const_cast<Character &>( you );
         clear_all_effects( u );
-        set_style( selectable_styles[selection - STYLE_OFFSET], true );
+        const matype_id chosen_style = selectable_styles[selection - STYLE_OFFSET];
+        set_style( chosen_style, true );
         ma_static_effects( u );
         martialart_use_message( you );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "Active fighting style: %s." ), chosen_style->name.translated() );
+        }
     } else if( selection == KEEP_HANDS_FREE ) {
         keep_hands_free = !keep_hands_free;
+        if( a11y::enabled() ) {
+            add_msg( m_info, keep_hands_free ? _( "Keep hands free enabled." ) :
+                     _( "Keep hands free disabled." ) );
+        }
     } else {
         return false;
     }
