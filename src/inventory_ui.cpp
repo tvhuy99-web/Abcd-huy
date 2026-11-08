@@ -3726,6 +3726,25 @@ class inventory_selector::reader_session
                         node.detail += "\n" + string_format(
                                            _( "Inventory shortcut: %c." ), location->invlet );
                     }
+                    if( owner.title == _( "Consume item" ) && location->is_comestible() ) {
+                        if( location->get_comestible()->comesttype == "FOOD" ) {
+                            node.detail += "\n" + string_format(
+                                               _( "Estimated energy: %d kilocalories." ),
+                                               owner.u.compute_effective_nutrients( *location ).kcal() );
+                        }
+                        if( location->rotten() ) {
+                            node.detail += "\n" + std::string(
+                                               _( "Spoiled item: consumption may be unsafe." ) );
+                        } else if( location->is_going_bad() ) {
+                            node.detail += "\n" + std::string(
+                                               _( "This item is nearing spoilage." ) );
+                        }
+                        const auto rating = owner.u.can_eat( *location );
+                        if( !rating.success() ) {
+                            node.detail += "\n" + string_format(
+                                               _( "Consumption warning: %s" ), rating.str() );
+                        }
+                    }
                     if( pickup_mode ) {
                         node.label += string_format( _( ", located: %s" ),
                                                     remove_color_tags( location.describe( &owner.u ) ) );

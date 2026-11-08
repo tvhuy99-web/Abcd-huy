@@ -7060,6 +7060,12 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     workout_query.desc_enabled = true;
     workout_query.text =
         _( "Physical effort determines workout efficiency, but also rate of exhaustion." );
+    if( who.is_avatar() && a11y::enabled() ) {
+        workout_query.text += "\n" + std::string(
+                                  _( "Light uses the least stamina; high intensity is the most tiring. "
+                                     "Choose a level, then enter the number of minutes. "
+                                     "Cancel either step to avoid exercising." ) );
+    }
     workout_query.title = _( "Choose training intensity:" );
     workout_query.addentry_desc( 1, true, 'l', pgettext( "training intensity", "Light" ),
                                  _( "Light exercise comparable in intensity to walking, but more focused and methodical." ) );
@@ -7104,6 +7110,11 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     }
     act.moves_total = to_moves<int>( duration );
     act.moves_left = act.moves_total;
+    if( who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_info,
+                               _( "Workout started: intensity %1$d of 4, duration %2$d minutes. "
+                                  "Watch for thirst and exhaustion." ), intensity_modifier, length );
+    }
     if( who.male ) {
         sfx::play_activity_sound( "plmove", "sleepiness_m_med", sfx::get_heard_volume( location ) );
     } else {

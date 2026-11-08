@@ -208,6 +208,12 @@ static item_location inv_internal( Character &u, const inventory_selector_preset
         return item_location();
     }
 
+    if( using_consume_menu && a11y::enabled() ) {
+        inv_s.set_hint( hint + "\n" + string_format(
+                            _( "Consumable entries in this list: %d. "
+                               "Review each item before consuming it." ),
+                            static_cast<int>( inv_s.item_entry_count() ) ) );
+    }
     item_location location = inv_s.execute();
 
     // If something was chosen output to global consume menu UI state

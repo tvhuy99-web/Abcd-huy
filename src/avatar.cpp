@@ -31,6 +31,7 @@
 #include "creature.h"
 #include "cursesdef.h"
 #include "debug.h"
+#include "display.h"
 #include "diary.h"
 #include "effect.h"
 #include "enums.h"
@@ -900,7 +901,8 @@ void avatar::clear_identified()
 
 void avatar::wake_up()
 {
-    if( has_effect( effect_sleep ) ) {
+    const bool was_asleep = has_effect( effect_sleep );
+    if( was_asleep ) {
         // alarm was set and player hasn't slept through the alarm.
         if( has_effect( effect_alarm_clock ) && !has_effect( effect_slept_through_alarm ) ) {
             add_msg( _( "It looks like you woke up before your alarm." ) );
@@ -914,6 +916,13 @@ void avatar::wake_up()
         }
     }
     Character::wake_up();
+    if( was_asleep && a11y::enabled() ) {
+        add_msg( m_info,
+                 _( "Awake now. Sleepiness: %1$s. Thirst: %2$s. "
+                    "Check the clock and health summary for changes during sleep." ),
+                 display::sleepiness_text_color( *this ).first,
+                 display::thirst_text_color( *this ).first );
+    }
 }
 
 void avatar::add_snippet( snippet_id snippet )

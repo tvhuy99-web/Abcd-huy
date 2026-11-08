@@ -39,6 +39,7 @@
 #include "damage.h"
 #include "debug.h"
 #include "debug_menu.h"
+#include "display.h"
 #include "diary.h"
 #include "distraction_manager.h"
 #include "do_turn.h"
@@ -1600,6 +1601,13 @@ static void sleep()
         if( !active.empty() ) {
             data << std::endl;
         }
+        data << string_format(
+                    _( "Before sleep. Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
+                       "Location: %4$s." ),
+                    display::sleepiness_text_color( player_character ).first,
+                    display::thirst_text_color( player_character ).first,
+                    display::pain_text_color( player_character ).first,
+                    here.name( p ) ) << std::endl;
         data << _( "Sleeping advances game time. You cannot issue ordinary commands until you wake; "
                    "scheduled events and world changes may occur." );
     }
