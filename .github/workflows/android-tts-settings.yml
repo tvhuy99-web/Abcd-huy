@@ -32,6 +32,7 @@ on:
       - 'tools/accessibility/test_otopack_on_demand.py'
       - 'android/app/src/main/java/com/cleverraven/cataclysmdda/OptionalSoundpackInstaller.java'
       - 'tools/accessibility/test_loading_world_speech.py'
+      - 'tools/accessibility/test_recent_messages_and_load_timing.py'
   workflow_dispatch:
 
 permissions:
@@ -54,6 +55,7 @@ jobs:
       - run: python3 -m unittest discover -s tools/accessibility -p test_quiet_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_otopack_on_demand.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_loading_world_speech.py -v
+      - run: python3 -m unittest discover -s tools/accessibility -p test_recent_messages_and_load_timing.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_world_gestures.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_custom_gesture_bindings.py -v
       - run: python3 -m unittest discover -s tools/accessibility -p test_comprehensive_hub_restore.py -v

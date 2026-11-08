@@ -719,6 +719,9 @@ void game::setup( bool loading_saved_character )
     calendar::set_season_length( ::get_option<int>( "SEASON_LENGTH" ) );
 
     world_generator->get_mod_manager().check_mods_list( world_generator->active_world );
+#if defined(__ANDROID__)
+    const auto mods_checked_at = std::chrono::steady_clock::now();
+#endif
     load_world_modfiles();
 #if defined(__ANDROID__)
     const auto mods_loaded_at = std::chrono::steady_clock::now();
@@ -726,6 +729,10 @@ void game::setup( bool loading_saved_character )
                               ( loading_saved_character ? "resume" : "new" ) <<
                               " core_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
                                   core_data_loaded_at - setup_started_at ).count() <<
+                              " mods_check_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_checked_at - core_data_loaded_at ).count() <<
+                              " mods_load_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  mods_loaded_at - mods_checked_at ).count() <<
                               " mods_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
                                   mods_loaded_at - core_data_loaded_at ).count();
 #endif

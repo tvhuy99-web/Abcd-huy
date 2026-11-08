@@ -662,9 +662,13 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         node.actions = { "focus", "activate" };
         result.nodes.push_back( std::move( node ) );
     }
+    // Two-finger double-tap is a spoken recap: the newest event must be
+    // first, so players hear what just happened without waiting through
+    // older messages. Leave the game's underlying chronological log alone.
     std::string recent;
-    for( const auto &message : Messages::recent_messages( 12 ) ) {
-        recent += message.first + ": " + message.second + ". ";
+    const auto messages = Messages::recent_messages( 12 );
+    for( auto it = messages.rbegin(); it != messages.rend(); ++it ) {
+        recent += it->first + ": " + it->second + ". ";
     }
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
     // A small explicit command surface lets Android multi-finger gestures
