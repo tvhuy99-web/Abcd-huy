@@ -51,7 +51,8 @@ class HubMovementTest(unittest.TestCase):
         self.assertIn("Auto travel: on", self.world)
         self.assertIn("Auto travel: off", self.world)
         self.assertIn("No route in that direction.", self.handle)
-        self.assertIn("Choose a direction to follow a path.", self.handle)
+        self.assertIn("Auto travel on. Choose a direction to find a path.",
+                      self.handle)
         self.assertIn("Waiting: %s", self.handle)
         self.assertIn("Stood still for one turn.", self.handle)
         self.assertIn("vertical_unchanged", self.game)
