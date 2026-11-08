@@ -23,6 +23,9 @@ final class GameActionHub {
     static final int OPEN_TTS = 4;
     static final int OPEN_READER_SETUP = 5;
     static final int OPEN_SEARCH = 6;
+    static final int OPEN_DIRECTIONS = 7;
+    // Nested menu, not a seventeenth root category.
+    static final int DIRECTIONS = 16;
 
     static final class Entry {
         final String label;
@@ -45,6 +48,7 @@ final class GameActionHub {
                 case OPEN_ALL: return "hub:all";
                 case OPEN_TTS: return "hub:tts";
                 case OPEN_READER_SETUP: return "hub:reader_setup";
+                case OPEN_DIRECTIONS: return "hub:directions";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
                 default: return null;
             }
@@ -71,14 +75,25 @@ final class GameActionHub {
             R.string.a11yHubSystem
     };
 
+    private static final String[] DIRECTION_ACTIONS = {
+            "UP", "RIGHTUP", "RIGHT", "RIGHTDOWN",
+            "DOWN", "LEFTDOWN", "LEFT", "LEFTUP"
+    };
+    private static final int[] DIRECTION_LABELS = {
+            R.string.a11yHubMoveNorth, R.string.a11yHubMoveNortheast,
+            R.string.a11yHubMoveEast, R.string.a11yHubMoveSoutheast,
+            R.string.a11yHubMoveSouth, R.string.a11yHubMoveSouthwest,
+            R.string.a11yHubMoveWest, R.string.a11yHubMoveNorthwest
+    };
+
     private static final String[][] ACTIONS = {
             {},
             { "interact", "open", "close", "examine", "pickup", "pickup_all", "chat",
                     "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash", "look" },
             { "look", "peek", "listitems", "listitems", "map", "sky", "center", "zones" },
-            { "LEVEL_UP", "LEVEL_DOWN", "cycle_move", "cycle_move_reverse", "reset_move",
-                    "toggle_run", "toggle_crouch", "toggle_prone", "wait", "pause",
-                    "auto_travel_mode", "auto_travel_mode" },
+            { "LEVEL_UP", "LEVEL_DOWN", "open_movement", "cycle_move",
+                    "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",
+                    "toggle_prone", "wait", "pause", "auto_travel_mode" },
             { "interact", "open", "close", "examine", "examine_and_pickup",
                     "pickup", "pickup_all", "smash", "grab", "haul", "haul_toggle",
                     "butcher", "chat", "peek" },
@@ -162,8 +177,29 @@ final class GameActionHub {
             addCommandMatches(result, snapshot, query);
             return result;
         }
+        if (section == DIRECTIONS) {
+            for (int i = 0; i < DIRECTION_ACTIONS.length; i++) {
+                ReaderSnapshot.Node node = snapshot.find(DIRECTION_ACTIONS[i]);
+                if (node != null && node.enabled && node.actions.contains("activate")) {
+                    result.add(new Entry(context.getString(DIRECTION_LABELS[i]),
+                            DIRECTION_ACTIONS[i], EXECUTE, 0));
+                }
+            }
+            return result;
+        }
 
         Set<String> seen = new HashSet<>();
+        if (section == 3) {
+            for (String direction : DIRECTION_ACTIONS) {
+                ReaderSnapshot.Node available = snapshot.find(direction);
+                if (available != null && available.enabled
+                        && available.actions.contains("activate")) {
+                    result.add(new Entry(context.getString(R.string.a11yHubChooseDirection),
+                            "", OPEN_DIRECTIONS, 0));
+                    break;
+                }
+            }
+        }
         if (section == 2) {
             for (String id : new String[] { "reader:scan:north", "reader:scan:south",
                     "reader:scan:west", "reader:scan:east", "world:here" }) {

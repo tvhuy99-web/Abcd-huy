@@ -1182,6 +1182,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             } catch (NumberFormatException ignored) {
                 // Unknown old custom binding: do not execute an unrelated command.
             }
+        } else if ("hub:directions".equals(target)) {
+            openHubSection(GameActionHub.DIRECTIONS);
+            hubRootIndex = 3;
+            return;
         } else if ("hub:search".equals(target)) {
             showComprehensiveMenu();
             if (comprehensiveMenu) { searchHub(); }
@@ -1505,6 +1509,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         String heading = binding ? activity.getString(R.string.a11yBindTitle, bindingItem.label)
                 : hubSection == GameActionHub.ROOT
                 ? activity.getString(R.string.a11yHubTitle)
+                : hubSection == GameActionHub.DIRECTIONS
+                ? activity.getString(R.string.a11yHubChooseDirection)
                 : activity.getString(GameActionHub.TITLES[hubSection]);
         TextView titleView = new TextView(activity);
         titleView.setText(heading);
@@ -1673,6 +1679,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // Stale custom gesture target.
             }
         }
+        if ("hub:directions".equals(target)) {
+            return activity.getString(R.string.a11yHubChooseDirection);
+        }
         if ("hub:search".equals(target)) { return activity.getString(R.string.a11yHubSearch); }
         if ("hub:all".equals(target)) { return activity.getString(R.string.a11yHubAllCommands); }
         if ("hub:tts".equals(target)) { return activity.getString(R.string.a11yHubTts); }
@@ -1730,6 +1739,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             case GameActionHub.OPEN_GROUP:
                 hubRootIndex = hubIndex;
                 hubSection = item.group;
+                hubIndex = 0;
+                root.cancelGesture();
+                render();
+                readCurrent();
+                return;
+            case GameActionHub.OPEN_DIRECTIONS:
+                hubSection = GameActionHub.DIRECTIONS;
                 hubIndex = 0;
                 root.cancelGesture();
                 render();
@@ -1886,6 +1902,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (choosingGesture) {
                 choosingGesture = false;
                 bindingItem = null;
+            } else if (hubSection == GameActionHub.DIRECTIONS) {
+                hubSection = 3;
+                hubIndex = 0;
             } else if (hubSection != GameActionHub.ROOT) {
                 hubSection = GameActionHub.ROOT;
                 hubIndex = hubRootIndex;

@@ -90,6 +90,15 @@
     <string name="a11yHubNearby">Actions available here</string>
     <string name="a11yHubExplore">Explore and maps</string>
     <string name="a11yHubMovement">Movement and posture</string>
+    <string name="a11yHubChooseDirection">Choose movement direction</string>
+    <string name="a11yHubMoveNorth">Move north</string>
+    <string name="a11yHubMoveNortheast">Move northeast</string>
+    <string name="a11yHubMoveEast">Move east</string>
+    <string name="a11yHubMoveSoutheast">Move southeast</string>
+    <string name="a11yHubMoveSouth">Move south</string>
+    <string name="a11yHubMoveSouthwest">Move southwest</string>
+    <string name="a11yHubMoveWest">Move west</string>
+    <string name="a11yHubMoveNorthwest">Move northwest</string>
     <string name="a11yHubInteraction">Interact with surroundings</string>
     <string name="a11yHubInventory">Inventory and items</string>
     <string name="a11yHubHealth">Food, rest and medical</string>
