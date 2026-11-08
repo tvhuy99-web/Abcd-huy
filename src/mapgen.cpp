@@ -795,6 +795,8 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
         std::size_t functions_processed = 0;
         clock::duration slowest{};
         std::string slowest_group;
+#else
+        ( void )step;
 #endif
         for( auto &pr : groups ) {
 #if defined(__ANDROID__)
