@@ -50,6 +50,7 @@ public final class ReaderGestureSurface extends LinearLayout {
     private final GestureDetector detector;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private Runnable multiTapTimeout;
+    private Runnable multiHoldTimeout;
     private Runnable worldTapTimeout;
     private int worldTapCount;
     private String worldTapOwner;
@@ -118,7 +119,14 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger_long_press"
                             + " context=" + owner);
                     longPressHandled = true;
-                    listener.detail();
+                    // A custom one-finger hold overrides its old Detail
+                    // action only while playing. Menu long-press keeps
+                    // opening the gesture-assignment picker as before.
+                    if (!listener.directWorldGesturesEnabled()
+                            || !listener.handleCustomGesture(
+                                    ReaderGestureBindings.idForHold(1))) {
+                        listener.detail();
+                    }
                 }
             }
 
@@ -259,6 +267,44 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         trackMultiFingerMovement(event);
         return !multiFingerMoved;
+    }
+
+    private void cancelMultiHold() {
+        if (multiHoldTimeout != null) {
+            handler.removeCallbacks(multiHoldTimeout);
+            multiHoldTimeout = null;
+        }
+    }
+
+    /** Stable 2/3-finger holds are independent of Android's 1-finger detector. */
+    private void scheduleMultiHold(int fingers, String expectedOwner) {
+        cancelMultiHold();
+        if (fingers < 2 || fingers > 3 || lateMultiFingerJoin
+                || expectedOwner == null || !listener.directWorldGesturesEnabled()) {
+            return;
+        }
+        multiHoldTimeout = () -> {
+            multiHoldTimeout = null;
+            if (cancelled || !multiple || maxPointers != fingers
+                    || multiTrackedCount != fingers || multiFingerMoved
+                    || lateMultiFingerJoin || owner == null
+                    || !owner.equals(expectedOwner)
+                    || !owner.equals(listener.gestureContext())
+                    || !listener.directWorldGesturesEnabled()) {
+                return;
+            }
+            longPressHandled = true;
+            cancelled = true; // A hold must never become a tap, swipe or Back.
+            clearMultiTap();
+            clearWorldTaps();
+            String gesture = ReaderGestureBindings.idForHold(fingers);
+            SessionDebugLog.event("GESTURE", "long_press fingers=" + fingers
+                    + " id=" + gesture);
+            if (!listener.handleCustomGesture(gesture)) {
+                listener.unassignedMultiGesture(gesture);
+            }
+        };
+        handler.postDelayed(multiHoldTimeout, ViewConfiguration.getLongPressTimeout());
     }
 
     private void clearMultiTap() {
@@ -439,6 +485,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             return true;
         }
         if (action == MotionEvent.ACTION_DOWN) {
+            cancelMultiHold();
             owner = listener.gestureContext();
             multiple = false;
             maxPointers = 1;
@@ -456,6 +503,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             oneFingerPath.clear();
             recordOneFinger(firstX, firstY);
         } else if (action == MotionEvent.ACTION_CANCEL) {
+            cancelMultiHold();
             SessionDebugLog.event("TOUCH", "cancel fingers=" + maxPointers
                     + " age_ms=" + (event.getEventTime() - downTime));
             boolean recovered = recoverCancelledMultiTap(event);
@@ -469,6 +517,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             }
             return true;
         } else if (action == MotionEvent.ACTION_POINTER_DOWN) {
+            cancelMultiHold();
             multiple = true;
             maxPointers = Math.max(maxPointers, event.getPointerCount());
             if (event.getPointerCount() == 2) {
@@ -500,11 +549,16 @@ public final class ReaderGestureSurface extends LinearLayout {
             multiStartY = centroidY(event);
             multiLastX = multiStartX;
             multiLastY = multiStartY;
+            scheduleMultiHold(event.getPointerCount(), owner);
         }
+        if (action == MotionEvent.ACTION_UP) { cancelMultiHold(); }
         if (multiple) {
             if (action == MotionEvent.ACTION_MOVE
                     || action == MotionEvent.ACTION_POINTER_UP) {
                 trackMultiFingerMovement(event);
+            }
+            if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
+                cancelMultiHold();
             }
             // Two fingers down means Back on menus/forms. In active gameplay
             // it keeps its existing 16-tile scan action.
@@ -677,6 +731,7 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     private void cancelGesture(boolean keepMultiTap) {
+        cancelMultiHold();
         cancelled = true;
         activateOnUp = false;
         owner = null;

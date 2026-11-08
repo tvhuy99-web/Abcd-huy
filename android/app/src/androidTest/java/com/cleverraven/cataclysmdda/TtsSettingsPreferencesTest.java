@@ -44,6 +44,12 @@ public class TtsSettingsPreferencesTest {
             assertEquals("vi-VN", reloaded.getSpeechLanguageTag());
             assertTrue(reloaded.permitsNetworkVoice());
             assertEquals(1.5f, reloaded.getRate(), 0.001f);
+            reloaded.saveTtsSettings(false, null, null, "vi-VN",
+                    false, 10.0f, 1.0f, 1.0f);
+            assertEquals(10.0f, new ReaderPreferences(context).getRate(), 0.001f);
+            reloaded.saveTtsSettings(false, null, null, "vi-VN",
+                    false, 15.0f, 1.0f, 1.0f);
+            assertEquals(10.0f, new ReaderPreferences(context).getRate(), 0.001f);
             assertEquals(1.3f, reloaded.getPitch(), 0.001f);
             assertEquals(0.4f, reloaded.getVolume(), 0.001f);
             reloaded.saveTtsSettings(true, null, null, "vi-VN",

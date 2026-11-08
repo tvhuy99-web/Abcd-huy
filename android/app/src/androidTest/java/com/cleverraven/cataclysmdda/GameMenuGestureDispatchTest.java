@@ -29,6 +29,10 @@ public final class GameMenuGestureDispatchTest {
         int fourFingerTaps;
         int fourFingerSwipes;
         int unassignedGestures;
+        int oneFingerHolds;
+        int twoFingerHolds;
+        int threeFingerHolds;
+        int details;
 
         @Override public boolean usesTouchExploration() { return false; }
         @Override public String gestureContext() { return playing ? "world" : "menu"; }
@@ -59,6 +63,9 @@ public final class GameMenuGestureDispatchTest {
         @Override public void threeFingerTap() { tripleFingerTaps++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
+            if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
+            if ("hold_2".equals(id)) { twoFingerHolds++; return true; }
+            if ("hold_3".equals(id)) { threeFingerHolds++; return true; }
             if ("tap_4_1".equals(id)) { fourFingerTaps++; return true; }
             if ("swipe_4_right".equals(id)) { fourFingerSwipes++; return true; }
             return false;
@@ -67,7 +74,7 @@ public final class GameMenuGestureDispatchTest {
             unassignedGestures++;
         }
         @Override public void activate() { activations++; }
-        @Override public void detail() { }
+        @Override public void detail() { details++; }
         @Override public void readCurrent() { }
         @Override public void stopSpeech() { }
     }
@@ -267,6 +274,109 @@ public final class GameMenuGestureDispatchTest {
                         MotionEvent.ACTION_MOVE, 3, 110);
                 endMulti(surface, 3, start, 110);
                 assertEquals(1, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void singleFingerHoldOverridesDetailInWorldButNotMenus() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        final long[] down = new long[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                down[0] = SystemClock.uptimeMillis();
+                touch(surface[0], down[0], down[0], MotionEvent.ACTION_DOWN,
+                        80, 0, false);
+            });
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.oneFingerHolds);
+                assertEquals(0, actions.details);
+                touch(surface[0], down[0], SystemClock.uptimeMillis(),
+                        MotionEvent.ACTION_UP, 80, 0, false);
+                actions.playing = false;
+                down[0] = SystemClock.uptimeMillis();
+                touch(surface[0], down[0], down[0], MotionEvent.ACTION_DOWN,
+                        80, 0, false);
+            });
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.oneFingerHolds);
+                assertEquals(1, actions.details);
+                touch(surface[0], down[0], SystemClock.uptimeMillis(),
+                        MotionEvent.ACTION_UP, 80, 0, false);
+            });
+        }
+    }
+
+    @Test
+    public void twoAndThreeFingerHoldsFireOnceWithoutBecomingTaps()
+            throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        final long[] down = new long[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                down[0] = SystemClock.uptimeMillis();
+                startMulti(surface[0], 2, down[0]);
+            });
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.twoFingerHolds);
+                assertEquals(0, actions.threeFingerHolds);
+                endMulti(surface[0], 2, down[0], 0);
+                down[0] = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, down[0]);
+            });
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.twoFingerHolds);
+                assertEquals(1, actions.threeFingerHolds);
+                endMulti(surface[0], 3, down[0], 0);
+                assertEquals("Holding is not a tap", 0, actions.tripleFingerTaps);
+                assertEquals(0, actions.activations);
+            });
+        }
+    }
+
+    @Test
+    public void movingFingersCancelsPendingHold() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        final long[] down = new long[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                down[0] = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, down[0]);
+                multiTouch(surface[0], down[0], down[0] + 135,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+            });
+            Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
+            scenario.onActivity(activity -> {
+                assertEquals(0, actions.threeFingerHolds);
+                endMulti(surface[0], 3, down[0], 110);
             });
         }
     }

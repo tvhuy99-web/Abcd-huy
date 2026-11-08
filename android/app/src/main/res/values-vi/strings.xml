@@ -144,6 +144,9 @@
     <string name="a11yBindTap41">Chạm một lần bằng bốn ngón tay</string>
     <string name="a11yBindTap42">Chạm hai lần bằng bốn ngón tay</string>
     <string name="a11yBindTap43">Chạm ba lần bằng bốn ngón tay</string>
+    <string name="a11yBindHold1">Chạm và giữ một ngón tay</string>
+    <string name="a11yBindHold2">Chạm và giữ hai ngón tay</string>
+    <string name="a11yBindHold3">Chạm và giữ ba ngón tay</string>
     <string name="a11yBindTitle">Gán cử chỉ cho: %1$s</string>
     <string name="a11yBindDefault">Khôi phục cử chỉ mặc định</string>
     <string name="a11yBindCancel">Hủy</string>

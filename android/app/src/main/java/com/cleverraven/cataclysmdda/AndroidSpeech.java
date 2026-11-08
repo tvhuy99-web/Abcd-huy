@@ -229,7 +229,7 @@ public final class AndroidSpeech implements AutoCloseable {
         shutdownEngine();
         final long epoch = session.newEngine();
         setState(State.INITIALIZING);
-        if (language == null || !Float.isFinite(rate) || rate < 0.2f || rate > 3.0f
+        if (language == null || !Float.isFinite(rate) || rate < 0.2f || rate > 10.0f
                 || !Float.isFinite(pitch) || pitch < 0.5f || pitch > 2.0f
                 || !Float.isFinite(volume) || volume < 0.0f || volume > 1.0f) {
             fail(State.FAILED);

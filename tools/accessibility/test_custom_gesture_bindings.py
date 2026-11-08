@@ -1,4 +1,4 @@
-"""Regression contracts for the 33 persistent world action shortcuts."""
+"""Regression contracts for the 36 persistent world action shortcuts."""
 import re
 import unittest
 from pathlib import Path
@@ -9,15 +9,16 @@ RESOURCE = ROOT / "android/app/src/main/res"
 
 
 class CustomGestureContracts(unittest.TestCase):
-    def test_exactly_33_documented_choices_and_both_locales(self):
+    def test_exactly_36_documented_choices_and_both_locales(self):
         src = (JAVA / "ReaderGestureBindings.java").read_text(
             encoding="utf-8"
         )
         ids_block = src.split("static final String[] IDS = {", 1)[1]
         ids_block = ids_block.split("};", 1)[0]
         choices = re.findall(r'"([^"]+)"', ids_block)
-        self.assertEqual(len(choices), 33)
-        self.assertEqual(len(set(choices)), 33)
+        self.assertEqual(len(choices), 36)
+        self.assertEqual(len(set(choices)), 36)
+        self.assertEqual(choices[-3:], ["hold_1", "hold_2", "hold_3"])
         for prefix in ("values", "values-vi"):
             xml = (RESOURCE / prefix / "strings.xml").read_text(
                 encoding="utf-8"
@@ -58,6 +59,35 @@ class CustomGestureContracts(unittest.TestCase):
             'if (gesture == null || listener.handleCustomGesture(gesture))',
             surf,
         )
+
+    def test_hold_gestures_keep_navigation_and_swipes_safe(self):
+        src = (JAVA / "ReaderGestureSurface.java").read_text(
+            encoding="utf-8"
+        )
+        bind = (JAVA / "ReaderGestureBindings.java").read_text(
+            encoding="utf-8"
+        )
+        device = (
+            ROOT / "android/app/src/androidTest/java"
+            / "com/cleverraven/cataclysmdda/GameMenuGestureDispatchTest.java"
+        ).read_text(encoding="utf-8")
+        self.assertIn("static String idForHold(int fingers)", bind)
+        self.assertIn('"hold_" + fingers', bind)
+        self.assertIn("private void scheduleMultiHold(", src)
+        self.assertIn("private void cancelMultiHold()", src)
+        self.assertIn("ViewConfiguration.getLongPressTimeout()", src)
+        self.assertIn("multiTrackedCount != fingers || multiFingerMoved", src)
+        self.assertIn("if (!listener.directWorldGesturesEnabled()", src)
+        self.assertIn("cancelled = true; // A hold must never", src)
+        self.assertIn("if (action == MotionEvent.ACTION_POINTER_UP", src)
+        self.assertIn("listener.handleCustomGesture(gesture)", src)
+        self.assertIn(
+            "singleFingerHoldOverridesDetailInWorldButNotMenus", device
+        )
+        self.assertIn(
+            "twoAndThreeFingerHoldsFireOnceWithoutBecomingTaps", device
+        )
+        self.assertIn("movingFingersCancelsPendingHold", device)
 
     def test_complex_swipes_and_multi_finger_sequences(self):
         src = (JAVA / "ReaderGestureSurface.java").read_text(

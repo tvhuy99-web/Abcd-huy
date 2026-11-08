@@ -59,6 +59,23 @@ class TtsSettingsWiringTest(unittest.TestCase):
         self.assertIn("initPitch = preferences.getPitch()", queue)
         self.assertIn("initVolume = preferences.getVolume()", queue)
 
+    def test_tts_rate_reaches_ten_times_normal(self):
+        settings = (JAVA / "TtsSettingsActivity.java").read_text(
+            encoding="utf-8"
+        )
+        preferences = (JAVA / "ReaderPreferences.java").read_text(
+            encoding="utf-8"
+        )
+        speech = (JAVA / "AndroidSpeech.java").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("rate = slider(column, 95,", settings)
+        self.assertIn("(rate.getProgress() + 5) / 10.0f", settings)
+        self.assertIn('Math.min(10.0f, rate)', preferences)
+        self.assertIn('Math.min(10.0f, values.getFloat("rate"', preferences)
+        self.assertIn("rate > 10.0f", speech)
+        self.assertIn("engine.setSpeechRate(rate)", speech)
+
     def test_setup_saves_atomically_and_mute_survives_restart(self):
         preferences = (JAVA / "ReaderPreferences.java").read_text(
             encoding="utf-8"

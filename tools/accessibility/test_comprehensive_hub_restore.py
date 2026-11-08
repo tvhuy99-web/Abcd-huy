@@ -1,4 +1,4 @@
-"""Guard the approved 16-group menu and 33 latest-wins shortcuts."""
+"""Guard the approved 16-group menu and 36 latest-wins shortcuts."""
 import re
 import unittest
 from pathlib import Path
@@ -48,12 +48,12 @@ class ComprehensiveHubRestore(unittest.TestCase):
         self.assertIn("root.setVisibility(View.GONE);", self.ctrl)
         self.assertIn("android.graphics.Color.TRANSPARENT", self.ctrl)
 
-    def test_33_shortcuts_and_long_press_are_restored(self):
+    def test_36_shortcuts_and_long_press_are_restored(self):
         ids = self.bindings.split("static final String[] IDS = {", 1)[1]
         ids = ids.split("};", 1)[0]
         gestures = re.findall(r'"([^"]+)"', ids)
-        self.assertEqual(len(gestures), 33)
-        self.assertEqual(len(set(gestures)), 33)
+        self.assertEqual(len(gestures), 36)
+        self.assertEqual(len(set(gestures)), 36)
         self.assertIn("option.setOnLongClickListener(", self.ctrl)
         self.assertIn("showGestureChoices();", self.ctrl)
         self.assertIn("gestureBindings.assign(", self.ctrl)

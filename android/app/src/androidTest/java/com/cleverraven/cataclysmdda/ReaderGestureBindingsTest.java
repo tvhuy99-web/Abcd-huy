@@ -30,8 +30,8 @@ public final class ReaderGestureBindingsTest {
         try {
             store.edit().remove(KEY).commit();
             ReaderGestureBindings bindings = new ReaderGestureBindings(context);
-            assertEquals(33, ReaderGestureBindings.IDS.length);
-            assertEquals(33, ReaderGestureBindings.LABELS.length);
+            assertEquals(36, ReaderGestureBindings.IDS.length);
+            assertEquals(36, ReaderGestureBindings.LABELS.length);
 
             bindings.assign("tap_3_2", "action:open");
             assertEquals("action:open", bindings.targetFor("tap_3_2"));
@@ -55,6 +55,14 @@ public final class ReaderGestureBindingsTest {
                     new ReaderGestureBindings(context).gestureFor("action:fire"));
             bindings.restoreDefault("action:fire");
             assertNull(bindings.gestureFor("action:fire"));
+            // Holds share the same newest-assignment-wins persistence.
+            bindings.assign("hold_2", "action:open");
+            assertEquals("action:open", bindings.targetFor("hold_2"));
+            ReaderGestureBindings.Assignment replaced = bindings.assign(
+                    "hold_3", "action:open");
+            assertEquals("hold_2", replaced.displacedGesture);
+            assertNull(bindings.targetFor("hold_2"));
+            assertEquals("hold_3", bindings.gestureFor("action:open"));
         } finally {
             SharedPreferences.Editor edit = store.edit();
             if (old == null) { edit.remove(KEY); }
@@ -87,6 +95,10 @@ public final class ReaderGestureBindingsTest {
         assertNull(ReaderGestureSurface.identifyOneFingerSwipe(diagonal, 48));
 
         assertEquals("tap_4_3", ReaderGestureBindings.idForTap(4, 3));
+        assertEquals("hold_1", ReaderGestureBindings.idForHold(1));
+        assertEquals("hold_2", ReaderGestureBindings.idForHold(2));
+        assertEquals("hold_3", ReaderGestureBindings.idForHold(3));
+        assertNull(ReaderGestureBindings.idForHold(4));
         assertEquals("swipe_4_left", ReaderGestureBindings.idForSwipe(4, "left"));
         assertNull(ReaderGestureBindings.idForTap(5, 1));
         assertTrue(ReaderGestureBindings.indexOf("tap_2_1") >= 0);

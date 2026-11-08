@@ -115,7 +115,7 @@ public final class TtsSettingsActivity extends Activity {
 
         rateText = label(column, R.string.a11yTtsRate);
         rateText.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
-        rate = slider(column, 25, Math.round((saved.getRate() - 0.5f) * 10.0f));
+        rate = slider(column, 95, Math.round((saved.getRate() - 0.5f) * 10.0f));
         pitchText = label(column, R.string.a11yTtsPitch);
         pitchText.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         pitch = slider(column, 15, Math.round((saved.getPitch() - 0.5f) * 10.0f));

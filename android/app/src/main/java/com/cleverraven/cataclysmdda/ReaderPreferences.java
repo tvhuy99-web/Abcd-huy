@@ -108,7 +108,7 @@ public final class ReaderPreferences {
     }
 
     public float getRate() {
-        return Math.max(0.2f, Math.min(3.0f, values.getFloat("rate", 1.0f)));
+        return Math.max(0.2f, Math.min(10.0f, values.getFloat("rate", 1.0f)));
     }
 
     public float getPitch() {
@@ -127,7 +127,7 @@ public final class ReaderPreferences {
         editor.putBoolean("auto_reader_default_20261107", true);
         editor.putBoolean("enabled", enabled);
         editor.putBoolean("network_voice_consent", allowNetwork);
-        editor.putFloat("rate", Math.max(0.2f, Math.min(3.0f, rate)));
+        editor.putFloat("rate", Math.max(0.2f, Math.min(10.0f, rate)));
         editor.putFloat("tts_pitch", Math.max(0.5f, Math.min(2.0f, pitch)));
         editor.putFloat("tts_volume", Math.max(0.0f, Math.min(1.0f, volume)));
         if (engineName == null || engineName.isEmpty()) { editor.remove(SPEECH_ENGINE); }
@@ -161,7 +161,7 @@ public final class ReaderPreferences {
     public void confirmHeardAndEnable(boolean permitNetworkVoice, float rate) {
         values.edit().putBoolean("enabled", true)
                 .putBoolean("network_voice_consent", permitNetworkVoice)
-                .putFloat("rate", Math.max(0.2f, Math.min(3.0f, rate))).apply();
+                .putFloat("rate", Math.max(0.2f, Math.min(10.0f, rate))).apply();
     }
 
     public void disable() {

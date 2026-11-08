@@ -52,7 +52,10 @@ final class ReaderGestureBindings {
             "swipe_4_right",
             "tap_4_1",
             "tap_4_2",
-            "tap_4_3"
+            "tap_4_3",
+            "hold_1",
+            "hold_2",
+            "hold_3"
     };
 
     static final int[] LABELS = {
@@ -88,7 +91,10 @@ final class ReaderGestureBindings {
             R.string.a11yBindSwipe4Right,
             R.string.a11yBindTap41,
             R.string.a11yBindTap42,
-            R.string.a11yBindTap43
+            R.string.a11yBindTap43,
+            R.string.a11yBindHold1,
+            R.string.a11yBindHold2,
+            R.string.a11yBindHold3
     };
 
     static final class Assignment {
@@ -126,6 +132,10 @@ final class ReaderGestureBindings {
     static String idForTap(int fingers, int count) {
         String result = "tap_" + fingers + "_" + count;
         return indexOf(result) >= 0 ? result : null;
+    }
+
+    static String idForHold(int fingers) {
+        return fingers >= 1 && fingers <= 3 ? "hold_" + fingers : null;
     }
 
     private LinkedHashMap<String, String> readBindings() {

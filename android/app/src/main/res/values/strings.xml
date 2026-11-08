@@ -144,6 +144,9 @@
     <string name="a11yBindTap41">Four-finger single tap</string>
     <string name="a11yBindTap42">Four-finger double tap</string>
     <string name="a11yBindTap43">Four-finger triple tap</string>
+    <string name="a11yBindHold1">Touch and hold with one finger</string>
+    <string name="a11yBindHold2">Touch and hold with two fingers</string>
+    <string name="a11yBindHold3">Touch and hold with three fingers</string>
     <string name="a11yBindTitle">Assign gesture to: %1$s</string>
     <string name="a11yBindDefault">Restore default assignment</string>
     <string name="a11yBindCancel">Cancel</string>
