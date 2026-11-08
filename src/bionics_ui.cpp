@@ -32,6 +32,7 @@
 #include "item_location.h"
 #include "localized_comparator.h"
 #include "map.h"
+#include "messages.h"
 #include "output.h"
 #include "pimpl.h"
 #include "point.h"
@@ -1079,6 +1080,11 @@ void avatar::power_bionics()
                 tmp = bio_list[cursor];
                 if( !tmp->info().fuel_opts.empty() || tmp->info().is_remote_fueled ) {
                     tmp->toggle_safe_fuel_mod();
+                    if( a11y::enabled() ) {
+                        add_msg( m_info, _( "Fuel saving for %1$s: %2$s." ),
+                                 tmp->id->name.translated(),
+                                 tmp->is_safe_fuel_on() ? _( "on" ) : _( "off" ) );
+                    }
                     g->invalidate_main_ui_adaptor();
                 } else {
                     popup( _( "You can't toggle fuel saving mode on a non-fueled CBM." ) );
@@ -1090,6 +1096,11 @@ void avatar::power_bionics()
                 tmp = bio_list[cursor];
                 if( !tmp->info().fuel_opts.empty() || tmp->info().is_remote_fueled ) {
                     tmp->auto_shutdown = !tmp->auto_shutdown;
+                    if( a11y::enabled() ) {
+                        add_msg( m_info, _( "Automatic shutdown for %1$s: %2$s." ),
+                                 tmp->id->name.translated(),
+                                 tmp->auto_shutdown ? _( "on" ) : _( "off" ) );
+                    }
                     g->invalidate_main_ui_adaptor();
                 } else {
                     popup( _( "You can't toggle shutdown on empty mode on a non-fueled CBM." ) );
@@ -1100,6 +1111,11 @@ void avatar::power_bionics()
             if( !current_bionic_list->empty() ) {
                 tmp = bio_list[cursor];
                 tmp->show_sprite = !tmp->show_sprite;
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Show %1$s on screen: %2$s." ),
+                             tmp->id->name.translated(),
+                             tmp->show_sprite ? _( "on" ) : _( "off" ) );
+                }
             }
         } else if( action == "SORT" ) {
             uistate.bionic_sort_mode = pick_sort_mode();

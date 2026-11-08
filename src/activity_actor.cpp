@@ -7067,7 +7067,16 @@ void workout_activity_actor::start( player_activity &act, Character &who )
                                      "Choose a level, then enter the number of minutes. "
                                      "Cancel either step to avoid exercising." ) );
     }
+    static int reader_last_intensity = 0;
+    static int reader_last_duration = 0;
     workout_query.title = _( "Choose training intensity:" );
+    // Session-local shortcut: no extra duration entry for the previous preset.
+    if( who.is_avatar() && a11y::enabled() && reader_last_intensity > 0 &&
+        reader_last_duration > 0 ) {
+        workout_query.addentry( 5, true, MENU_AUTOASSIGN,
+                                _( "Repeat last workout: intensity %1$d of 4, %2$d minutes" ),
+                                reader_last_intensity, reader_last_duration );
+    }
     workout_query.addentry_desc( 1, true, 'l', pgettext( "training intensity", "Light" ),
                                  _( "Light exercise comparable in intensity to walking, but more focused and methodical." ) );
     workout_query.addentry_desc( 2, true, 'm', pgettext( "training intensity", "Moderate" ),
@@ -7077,7 +7086,11 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     workout_query.addentry_desc( 4, true, 'h', pgettext( "training intensity", "High" ),
                                  _( "High intensity exercise with maximum effort and full power.  Exhausting in the long run." ) );
     workout_query.query();
-    switch( workout_query.ret ) {
+    const bool repeat_previous = who.is_avatar() && a11y::enabled() &&
+                                 workout_query.ret == 5 &&
+                                 reader_last_intensity > 0 && reader_last_duration > 0;
+    const int selected_intensity = repeat_previous ? reader_last_intensity : workout_query.ret;
+    switch( selected_intensity ) {
         case UILIST_CANCEL:
             act.set_to_null();
             act_id = activity_id::NULL_ID();
@@ -7100,10 +7113,16 @@ void workout_activity_actor::start( player_activity &act, Character &who )
             intensity_modifier = 1;
             break;
     }
-    int length = 0;
-    query_int( length, false, _( "Train for how long (minutes): " ) );
+    int length = repeat_previous ? reader_last_duration : 0;
+    if( !repeat_previous ) {
+        query_int( length, false, _( "Train for how long (minutes): " ) );
+    }
     if( length > 0 ) {
         duration = length * 1_minutes;
+        if( who.is_avatar() && a11y::enabled() ) {
+            reader_last_intensity = intensity_modifier;
+            reader_last_duration = length;
+        }
     } else {
         act_id = activity_id::NULL_ID();
         act.set_to_null();
@@ -7121,7 +7140,9 @@ void workout_activity_actor::start( player_activity &act, Character &who )
     } else {
         sfx::play_activity_sound( "plmove", "sleepiness_f_med", sfx::get_heard_volume( location ) );
     }
-    who.add_msg_if_player( _( "You start your workout session." ) );
+    if( !who.is_avatar() || !a11y::enabled() ) {
+        who.add_msg_if_player( _( "You start your workout session." ) );
+    }
 }
 
 void workout_activity_actor::do_turn( player_activity &act, Character &who )

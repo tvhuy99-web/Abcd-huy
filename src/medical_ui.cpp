@@ -181,7 +181,11 @@ bool medical_ui::execute()
         // so moved here, outside of draw_controls()
         if( last_action == "CONFIRM" ) {
             if( !you->has_part( bp ) ) {
-                popup( _( "No body part is selected." ) );
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "No body part is selected." ) );
+                } else {
+                    popup( _( "No body part is selected." ) );
+                }
                 continue;
             }
             if( you->pick_wound_fix( bp ) ) {
@@ -942,6 +946,13 @@ struct healing_option {
 
 bool Character::pick_wound_fix( const bodypart_id &bp_id )
 {
+    const auto report_treatment_issue = [this]( const std::string &message ) {
+        if( is_avatar() && a11y::enabled() ) {
+            add_msg_if_player( m_info, "%s", message );
+        } else {
+            popup( message );
+        }
+    };
     std::vector<healing_option> healing_options;
     const temp_crafting_inventory &inv = crafting_inventory();
 
@@ -1012,18 +1023,18 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         if( bp->get_wounds().empty() ) {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
                 // should be popup, but popup() crashes this message, for some reason
-                popup( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any damage to repair." ), body_part_name( bp_id ) ) );
                 return false;
             } else {
-                popup( string_format( _( "The %s doesn't have any wounds to treat." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s doesn't have any wounds to treat." ), body_part_name( bp_id ) ) );
                 return false;
             }
         } else {
             if( bp_id->has_flag( json_flag_BIONIC_LIMB ) ) {
-                popup( string_format( _( "The %s damage cannot be repaired." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s damage cannot be repaired." ), body_part_name( bp_id ) ) );
                 return false;
             } else {
-                popup( string_format( _( "The %s wounds cannot be treated." ), body_part_name( bp_id ) ) );
+                report_treatment_issue( string_format( _( "The %s wounds cannot be treated." ), body_part_name( bp_id ) ) );
                 return false;
             }
         }

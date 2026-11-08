@@ -706,12 +706,23 @@ void avatar::power_mutations()
                                 // Action done, leave screen
                                 exit = true;
                             } else {
-                                popup( _( "You don't have enough in you to activate your %s!" ), mutation_name( mut_data.id ) );
+                                if( a11y::enabled() ) {
+                                    add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
+                                                       mutation_name( mut_data.id ) );
+                                } else {
+                                    popup( _( "You don't have enough in you to activate your %s!" ),
+                                           mutation_name( mut_data.id ) );
+                                }
                             }
                         } else {
-                            popup( _( "You cannot activate %1$s!  To read a description of "
-                                      "%1$s, press '%2$s', then '%3$c'." ),
-                                   mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
+                            if( a11y::enabled() ) {
+                                add_msg_if_player( m_info, _( "Cannot activate %s. Focus it to hear the description." ),
+                                                   mutation_name( mut_data.id ) );
+                            } else {
+                                popup( _( "You cannot activate %1$s!  To read a description of "
+                                "%1$s, press '%2$s', then '%3$c'." ),
+                                mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ), cached_mutations[mut_id].key );
+                            }
                         }
                         break;
                     }
@@ -854,6 +865,7 @@ void avatar::power_mutations()
                                 } else if( ( !mut_data.hunger || get_kcal_percent() >= 0.8f ) &&
                                            ( !mut_data.thirst || get_thirst() <= 400 ) &&
                                            ( !mut_data.sleepiness || get_sleepiness() <= 400 ) &&
+                                           ( !mut_data.stamina || get_stamina() >= mut_data.cost ) &&
                                            ( !mut_data.mana || magic->available_mana() >= mut_data.cost ) ) {
                                     add_msg_if_player( m_neutral,
                                                        string_format( mut_data.activation_msg.translated(), mutation_name( mut_data.id ) ) );
@@ -863,12 +875,23 @@ void avatar::power_mutations()
                                     // Action done, leave screen
                                     exit = true;
                                 } else {
-                                    popup( _( "You don't have enough in you to activate your %s!" ), mutation_name( mut_data.id ) );
+                                    if( a11y::enabled() ) {
+                                        add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
+                                                           mutation_name( mut_data.id ) );
+                                    } else {
+                                        popup( _( "You don't have enough in you to activate your %s!" ),
+                                               mutation_name( mut_data.id ) );
+                                    }
                                 }
                             } else {
-                                popup( _( "You cannot activate %1$s!  To read a description of "
-                                          "%1$s, press '%2$s'." ),
-                                       mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                                if( a11y::enabled() ) {
+                                    add_msg_if_player( m_info, _( "Cannot activate %s. Focus it to hear the description." ),
+                                                       mutation_name( mut_data.id ) );
+                                } else {
+                                    popup( _( "You cannot activate %1$s!  To read a description of "
+                                    "%1$s, press '%2$s'." ),
+                                    mutation_name( mut_data.id ), ctxt.get_desc( "TOGGLE_EXAMINE" ) );
+                                }
                             }
                             break;
                         }

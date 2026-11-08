@@ -1583,8 +1583,8 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         snapshot.nodes.push_back( std::move( node ) );
     }
     // Readable health overview before navigating all the character tabs.
-    std::string quick = string_format( _( "Hunger: %s" ),
-                                      display::hunger_text_color( you ).first ) + ". " +
+    const std::string needs = string_format( _( "Hunger: %s" ),
+                                        display::hunger_text_color( you ).first ) + ". " +
                         string_format( _( "Thirst: %s" ),
                                        display::thirst_text_color( you ).first ) + ". " +
                         string_format( _( "Sleepiness: %s" ),
@@ -1593,6 +1593,7 @@ a11y::semantic_snapshot player_display_reader_snapshot(
                                        display::pain_text_color( you ).first ) + ". " +
                         string_format( _( "Weariness: %s" ),
                                        display::weariness_text_color( you ).first );
+    std::string quick;
     int warnings = 0;
     for( const bodypart_id &part : you.get_all_body_parts( get_body_part_flags::sorted ) ) {
         std::string condition;
@@ -1613,8 +1614,12 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         }
     }
     if( warnings == 0 ) {
-        quick += "\n" + std::string( _( "No urgent body-part warnings detected." ) );
+        quick = _( "No urgent body-part warnings detected." );
+    } else if( curtab == player_display_tab::stats ) {
+        snapshot.summary += " " + string_format(
+                                _( "%d urgent body-part warnings. Open Quick health summary." ), warnings );
     }
+    quick += "\n" + needs;
     a11y::append_document( snapshot, "pd:quick-health", _( "Quick health summary" ), quick );
     const auto stat_text = []( const std::string & name, const int current, const int base ) {
         return current == base ? string_format( _( "%1$s: %2$d" ), name, current )
