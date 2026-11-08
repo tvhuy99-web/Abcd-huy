@@ -3,6 +3,7 @@
 
 #include <algorithm>
 #include <array>
+#include <chrono>
 #include <climits>
 #include <cstdint>
 #include <functional>
@@ -603,18 +604,83 @@ class mapgen_factory
         }
         /// @see mapgen_basic_container::setup
         void setup() {
+#if defined(__ANDROID__)
+            using clock = std::chrono::steady_clock;
+            const auto started = clock::now();
+            auto last_progress = started;
+            clock::duration slowest{};
+            std::string slowest_key;
+            std::size_t completed = 0;
+            const std::size_t total = mapgens_.size();
+#endif
             for( std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
+#if defined(__ANDROID__)
+                const auto key_started = clock::now();
+#endif
                 omw.second.setup();
                 inp_mngr.pump_events();
+#if defined(__ANDROID__)
+                const auto now = clock::now();
+                const auto spent = now - key_started;
+                ++completed;
+                if( spent > slowest ) {
+                    slowest = spent;
+                    slowest_key = omw.first;
+                }
+                if( now - last_progress >= std::chrono::seconds( 15 ) ) {
+                    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen" <<
+                                              " step=oter_setup_progress done=" << completed <<
+                                              " total=" << total << " elapsed_ms=" <<
+                                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                  now - started ).count();
+                    last_progress = now;
+                }
+#endif
             }
             // Dummy entry, overmap terrain null should never appear and is
             // therefore never generated.
             mapgens_.erase( "null" );
+#if defined(__ANDROID__)
+            DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_setup" <<
+                                      " groups=" << completed << " elapsed_ms=" <<
+                                      std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          clock::now() - started ).count() <<
+                                      " slowest_group=" << slowest_key << " slowest_ms=" <<
+                                      std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          slowest ).count();
+#endif
         }
         void finalize_parameters() {
+#if defined(__ANDROID__)
+            using clock = std::chrono::steady_clock;
+            const auto started = clock::now();
+            clock::duration slowest{};
+            std::string slowest_key;
+            std::size_t completed = 0;
+#endif
             for( std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
+#if defined(__ANDROID__)
+                const auto key_started = clock::now();
+#endif
                 omw.second.finalize_parameters();
+#if defined(__ANDROID__)
+                const auto spent = clock::now() - key_started;
+                ++completed;
+                if( spent > slowest ) {
+                    slowest = spent;
+                    slowest_key = omw.first;
+                }
+#endif
             }
+#if defined(__ANDROID__)
+            DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_parameters" <<
+                                      " groups=" << completed << " elapsed_ms=" <<
+                                      std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          clock::now() - started ).count() <<
+                                      " slowest_group=" << slowest_key << " slowest_ms=" <<
+                                      std::chrono::duration_cast<std::chrono::milliseconds>(
+                                          slowest ).count();
+#endif
         }
         void check_consistency() const {
             // Cache all strings that may get looked up here so we don't have to go through
@@ -715,37 +781,74 @@ const update_mapgen &string_id<update_mapgen>::obj() const
  */
 void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup too
 {
+#if defined(__ANDROID__)
+    using clock = std::chrono::steady_clock;
+    const auto started = clock::now();
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=start";
+#endif
+    // Measure nested and update mapgens by group, with a bounded slowest-group
+    // report. The existing setup/finalize order and event pumping are unchanged.
+    const auto profile_groups = [&]( const char *step, auto &groups, auto &&run ) {
+#if defined(__ANDROID__)
+        const auto phase_started = clock::now();
+        std::size_t groups_processed = 0;
+        std::size_t functions_processed = 0;
+        clock::duration slowest{};
+        std::string slowest_group;
+#endif
+        for( auto &pr : groups ) {
+#if defined(__ANDROID__)
+            const auto group_started = clock::now();
+#endif
+            for( const auto &ptr : pr.second.funcs() ) {
+                run( ptr );
+                inp_mngr.pump_events();
+#if defined(__ANDROID__)
+                ++functions_processed;
+#endif
+            }
+#if defined(__ANDROID__)
+            ++groups_processed;
+            const auto group_elapsed = clock::now() - group_started;
+            if( group_elapsed > slowest ) {
+                slowest = group_elapsed;
+                slowest_group = pr.first.str();
+            }
+#endif
+        }
+#if defined(__ANDROID__)
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=" << step <<
+                                  " groups=" << groups_processed <<
+                                  " functions=" << functions_processed << " elapsed_ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      clock::now() - phase_started ).count() <<
+                                  " slowest_group=" << slowest_group << " slowest_ms=" <<
+                                  std::chrono::duration_cast<std::chrono::milliseconds>(
+                                      slowest ).count();
+#endif
+    };
+
     oter_mapgen.setup();
-    // Not really calculate weights, but let's keep it here for now
-    for( auto &pr : nested_mapgens ) {
-        for( const std::pair<std::shared_ptr<mapgen_function_json_nested>, int> &ptr :
-             pr.second.funcs() ) {
-            ptr.first->setup();
-            inp_mngr.pump_events();
-        }
-    }
-    for( auto &pr : update_mapgens ) {
-        for( const auto &ptr : pr.second.funcs() ) {
-            ptr->setup();
-            inp_mngr.pump_events();
-        }
-    }
-    // Having set up all the mapgens we can now perform a second
-    // pass of finalizing their parameters
+    profile_groups( "nested_setup", nested_mapgens, []( const auto &ptr ) {
+        ptr.first->setup();
+    } );
+    profile_groups( "update_setup", update_mapgens, []( const auto &ptr ) {
+        ptr->setup();
+    } );
+
+    // A second pass finalizes the parameters after all mapgens are set up.
     oter_mapgen.finalize_parameters();
-    for( auto &pr : nested_mapgens ) {
-        for( const std::pair<std::shared_ptr<mapgen_function_json_nested>, int> &ptr :
-             pr.second.funcs() ) {
-            ptr.first->finalize_parameters();
-            inp_mngr.pump_events();
-        }
-    }
-    for( auto &pr : update_mapgens ) {
-        for( const auto &ptr : pr.second.funcs() ) {
-            ptr->finalize_parameters();
-            inp_mngr.pump_events();
-        }
-    }
+    profile_groups( "nested_parameters", nested_mapgens, []( const auto &ptr ) {
+        ptr.first->finalize_parameters();
+    } );
+    profile_groups( "update_parameters", update_mapgens, []( const auto &ptr ) {
+        ptr->finalize_parameters();
+    } );
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=total elapsed_ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  clock::now() - started ).count();
+#endif
 }
 
 void check_mapgen_definitions()
