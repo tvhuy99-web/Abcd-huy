@@ -23,7 +23,7 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn('node.id = "body:part:"', self.body)
         self.assertIn('node.role = "listitem"', self.body)
         self.assertIn("a11y::limb_health_description( *u, parent )", self.body)
-        self.assertIn('intent.action == "focus"', self.body)
+        self.assertIn('intent.action != "focus"', self.body)
         self.assertIn("prepare_infolist();", self.body)
         self.assertIn('return "CONFIRM";', self.body)
         self.assertIn('return "TIMEOUT";', self.body)
