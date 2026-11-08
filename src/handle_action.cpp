@@ -2114,7 +2114,11 @@ static void cast_spell( bool recast_spell = false )
     }
 
     if( recast_spell && player_character.magic->last_spell.is_null() ) {
-        popup( _( "Cast a spell first" ) );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "No previous spell to repeat." ) );
+        } else {
+            popup( _( "Cast a spell first" ) );
+        }
         return;
     }
 
@@ -2124,6 +2128,13 @@ static void cast_spell( bool recast_spell = false )
     // if no spell was selected
     if( sp.id().is_null() ) {
         return;
+    }
+    if( recast_spell && a11y::enabled() ) {
+        // Information only. Recasting remains a single action and does not
+        // require a second confirmation; native cast checks still apply.
+        add_msg( m_info, _( "Repeat %1$s. Cost %2$s %3$s. Time %4$s." ),
+                 sp.name(), sp.energy_cost_string( player_character ),
+                 sp.energy_string(), moves_to_string( sp.casting_time( player_character ) ) );
     }
     player_character.magic->last_spell = sp.id();
     player_character.cast_spell( sp, false, std::nullopt );
@@ -3010,10 +3021,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_FIRE_BURST: {
-            if( weapon ) {
+            if( weapon && weapon->is_gun() && !weapon->is_gunmod() ) {
                 if( weapon->gun_set_mode( gun_mode_BURST ) || weapon->gun_set_mode( gun_mode_AUTO ) ) {
+                    if( a11y::enabled() ) {
+                        const gun_mode mode = weapon->gun_current_mode();
+                        add_msg( m_info, _( "Burst mode: %1$s, %2$d shots." ),
+                                 mode.tname(), mode.qty );
+                    }
                     avatar_action::fire_wielded_weapon( player_character );
+                } else if( a11y::enabled() ) {
+                    add_msg( m_info, _( "This gun has no burst or automatic firing mode." ) );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a gun to use burst fire." ) );
             }
             break;
         }
@@ -3022,9 +3042,20 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             if( weapon && weapon->is_gun() && !weapon->is_gunmod() ) {
                 if( weapon->gun_all_modes().size() > 1 ) {
                     weapon->gun_cycle_mode();
+                    if( a11y::enabled() ) {
+                        const gun_mode mode = weapon->gun_current_mode();
+                        if( mode.melee() ) {
+                            add_msg( m_info, _( "Attack mode: %s (melee)." ), mode.tname() );
+                        } else {
+                            add_msg( m_info, _( "Firing mode: %1$s, %2$d shots." ),
+                                     mode.tname(), mode.qty );
+                        }
+                    }
                 } else {
                     add_msg( m_info, _( "Your %s has only one firing mode." ), weapon->tname() );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a gun to change firing mode." ) );
             }
             break;
 
@@ -3046,7 +3077,11 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                         player_character.add_msg_if_player(
                             _( "You need to keep that ammo on you to select it as default ammo." ) );
                     }
+                } else if( a11y::enabled() ) {
+                    add_msg( m_info, _( "This weapon does not support a default ammo choice." ) );
                 }
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "Hold a compatible gun to choose default ammunition." ) );
             }
             break;
 
@@ -3159,14 +3194,24 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_TOGGLE_AUTOSAFE: {
-            // Set Auto reactivate safe mode to x
-            set_next_option( "AUTOSAFEMODE" );
+            // Keep a single short outcome for reader users; set_next_option
+            // already speaks a verbose options string, so do not call both.
+            if( a11y::enabled() ) {
+                get_options().get_option( "AUTOSAFEMODE" ).setNext();
+                get_options().save();
+                add_msg( m_info, get_option<bool>( "AUTOSAFEMODE" ) ?
+                         _( "Automatic safe mode on." ) : _( "Automatic safe mode off." ) );
+            } else {
+                set_next_option( "AUTOSAFEMODE" );
+            }
             break;
         }
 
         case ACTION_IGNORE_ENEMY:
             if( safe_mode == SAFE_MODE_STOP ) {
-                add_msg( m_info, _( "Ignoring enemy!" ) );
+                add_msg( m_info, a11y::enabled() ?
+                         _( "Enemy warning ignored for now. Safe mode remains on." ) :
+                         _( "Ignoring enemy!" ) );
                 for( auto &elem : player_character.get_mon_visible().new_seen_mon ) {
                     monster &critter = *elem;
                     critter.ignoring = rl_dist( player_character.pos_bub(), critter.pos_bub() );
@@ -3180,6 +3225,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 }
                 player_character.remove_effect( effect_laserlocked );
                 safe_mode_warning_logged = false;
+            } else if( a11y::enabled() ) {
+                add_msg( m_info, _( "No active enemy warning to ignore." ) );
             }
             break;
 
@@ -3187,7 +3234,13 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             if( safe_mode == SAFE_MODE_STOP && !get_safemode().empty() ) {
                 get_safemode().add_rule( get_safemode().lastmon_whitelist, Creature::Attitude::ANY, 0,
                                          rule_state::WHITELISTED );
-                add_msg( m_info, _( "Creature whitelisted: %s" ), get_safemode().lastmon_whitelist );
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "Whitelisted %s. Future warnings for this type may be skipped." ),
+                             get_safemode().lastmon_whitelist );
+                } else {
+                    add_msg( m_info, _( "Creature whitelisted: %s" ),
+                             get_safemode().lastmon_whitelist );
+                }
                 set_safe_mode( SAFE_MODE_ON );
                 mostseen = 0;
             } else {

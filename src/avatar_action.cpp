@@ -23,6 +23,7 @@
 #include "calendar.h"
 #include "character.h"
 #include "color.h"
+#include "coordinates.h"
 #include "creature.h"
 #include "creature_tracker.h"
 #include "debug.h"
@@ -853,7 +854,9 @@ void avatar_action::autoattack( avatar &you, map &m )
         return !dynamic_cast<const npc &>( *c ).is_enemy();
     } ), critters.end() );
     if( critters.empty() ) {
-        add_msg( m_info, _( "No hostile creature in reach.  Waiting a turn." ) );
+        add_msg( m_info, a11y::enabled()
+                 ? _( "Autoattack: no target in reach. Will wait one turn if safe mode allows." )
+                 : _( "No hostile creature in reach.  Waiting a turn." ) );
         if( g->check_safe_mode_allowed() ) {
             you.pause();
         }
@@ -866,6 +869,14 @@ void avatar_action::autoattack( avatar &you, map &m )
     } );
 
     const tripoint_rel_ms diff = best.pos_bub() - you.pos_bub();
+    if( a11y::enabled() ) {
+        // The native autoattack has already chosen its target. Say which
+        // creature will be attacked without adding a selection or a delay.
+        add_msg( m_info, _( "Autoattack: %1$s, %2$s, distance %3$d." ),
+                 best.disp_name(), direction_name( direction_from( you.pos_bub(),
+                                  best.pos_bub() ) ),
+                 rl_dist( you.pos_bub(), best.pos_bub() ) );
+    }
     if( std::abs( diff.x() ) <= 1 && std::abs( diff.y() ) <= 1 && diff.z() == 0 ) {
         move( you, m, tripoint_rel_ms( diff.xy(), 0 ) );
         return;
