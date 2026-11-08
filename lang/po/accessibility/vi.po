@@ -25,6 +25,9 @@ msgstr "Đọc văn bản này"
 msgid "Dialog"
 msgstr "Hộp thoại"
 
+msgid "Dialog message"
+msgstr "Nội dung câu hỏi"
+
 msgid "Number"
 msgstr "Số"
 
@@ -3398,6 +3401,39 @@ msgstr "Địa hình hoặc nội thất"
 #, c-format
 msgid "%1$d tiles away. %2$s."
 msgstr "Cách %1$d ô. %2$s."
+
+#, c-format
+msgid "%1$s, %2$d tiles"
+msgstr "%1$s, %2$d ô"
+
+#, c-format
+msgid "%1$s %2$d tiles, %3$s %4$d tiles"
+msgstr "%1$s %2$d ô, %3$s %4$d ô"
+
+# Use standard translated compass words for the compact nearby scanner.
+msgid "north"
+msgstr "bắc"
+
+msgid "northeast"
+msgstr "đông bắc"
+
+msgid "east"
+msgstr "đông"
+
+msgid "southeast"
+msgstr "đông nam"
+
+msgid "south"
+msgstr "nam"
+
+msgid "southwest"
+msgstr "tây nam"
+
+msgid "west"
+msgstr "tây"
+
+msgid "northwest"
+msgstr "tây bắc"
 
 msgid "Activate to begin safe automatic travel toward this location."
 msgstr "Kích hoạt để tự đi đến vị trí này theo đường an toàn."

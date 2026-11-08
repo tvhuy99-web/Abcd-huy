@@ -340,6 +340,18 @@ query_popup::result query_popup::query_once()
     reader_snapshot.title = _( "Dialog" );
     reader_snapshot.summary = remove_color_tags( text );
     reader_snapshot.focus = "option:" + std::to_string( cur );
+    // Choices alone do not tell a blind player what they are answering.
+    // Keep the visible question as a separately focusable document so it
+    // remains available after the initial announcement.
+    if( !reader_snapshot.summary.empty() ) {
+        a11y::semantic_node question;
+        question.id = "dialog:message";
+        question.role = "document";
+        question.label = _( "Dialog message" );
+        question.value = reader_snapshot.summary;
+        question.actions = { "focus" };
+        reader_snapshot.nodes.push_back( std::move( question ) );
+    }
     for( std::size_t i = 0; i < options.size(); ++i ) {
         a11y::semantic_node node;
         node.id = "option:" + std::to_string( i );

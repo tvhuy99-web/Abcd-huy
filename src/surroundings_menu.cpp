@@ -32,6 +32,7 @@
 #include "item_contents.h"
 #include "item_location.h"
 #include "item_search.h"
+#include "line.h"
 #include "map.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -1299,17 +1300,31 @@ void surroundings_menu::execute_accessible()
         if( relative == tripoint_rel_ms() ) {
             return std::string( _( "Current tile" ) );
         }
+        const int x = relative.x();
+        const int y = relative.y();
         std::string words;
-        if( relative.y() ) {
-            words = string_format( relative.y() < 0 ? _( "North %d" ) : _( "South %d" ),
-                                   std::abs( relative.y() ) );
-        }
-        if( relative.x() ) {
-            if( !words.empty() ) {
-                words += ", ";
-            }
-            words += string_format( relative.x() < 0 ? _( "West %d" ) : _( "East %d" ),
-                                    std::abs( relative.x() ) );
+        if( x != 0 && y != 0 && std::abs( x ) == std::abs( y ) ) {
+            // A diagonal is a single direction and a single tile count.
+            const direction dir = y < 0 ?
+                                  ( x < 0 ? direction::NORTHWEST : direction::NORTHEAST ) :
+                                  ( x < 0 ? direction::SOUTHWEST : direction::SOUTHEAST );
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( dir ), std::abs( x ) );
+        } else if( x == 0 && y != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ) );
+        } else if( y == 0 && x != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
+        } else if( x != 0 && y != 0 ) {
+            // Unequal offsets are not diagonal tile counts: keep both axes.
+            words = string_format( _( "%1$s %2$d tiles, %3$s %4$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
         }
         if( relative.z() ) {
             if( !words.empty() ) {
@@ -1348,8 +1363,9 @@ void surroundings_menu::execute_accessible()
                 node.id = "nearby:target:" + std::to_string( i );
                 node.role = "listitem";
                 node.label = entry.label;
-                node.value = string_format( _( "%1$d tiles away. %2$s." ),
-                                            entry.distance, relative_words( entry.relative ) );
+                // The direction already includes tile counts. Do not repeat
+                // Chebyshev distance before the coordinates on each swipe.
+                node.value = relative_words( entry.relative );
                 node.detail = _( "Activate to begin safe automatic travel toward this location." );
                 node.position = static_cast<int>( i ) + 1;
                 node.total = static_cast<int>( nearby.size() );

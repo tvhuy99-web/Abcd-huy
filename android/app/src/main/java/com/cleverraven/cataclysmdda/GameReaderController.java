@@ -590,7 +590,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredMenu && next.find(focus) != null) {
-                    feedback(next.title + ". " + nodeText(next.find(focus), false));
+                    // YESNO choices are meaningless without the question.
+                    // Announce it once on entry, not again for every swipe.
+                    String introduction = next.title;
+                    if ("YESNO".equals(next.category) && !next.summary.trim().isEmpty()) {
+                        introduction += ". " + next.summary.trim();
+                    }
+                    feedback(introduction + ". " + nodeText(next.find(focus), false));
                 } else if (selectionChanged) {
                     readCurrent();
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
@@ -1852,7 +1858,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
-        if (node != null) { feedback(nodeText(node, true)); }
+        if (node != null) {
+            String information = nodeText(node, true);
+            if ("YESNO".equals(snapshot.category) && !snapshot.summary.trim().isEmpty()
+                    && !"dialog:message".equals(node.id)) {
+                information = snapshot.summary.trim() + ". " + information;
+            }
+            feedback(information);
+        }
     }
 
     /**
