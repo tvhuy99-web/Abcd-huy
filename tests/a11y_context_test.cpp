@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "a11y_context.h"
+#include "a11y_world_input_gate.h"
 #include "cata_catch.h"
 
 TEST_CASE( "a11y_only_active_overlay_accepts_input", "[a11y][context]" )
@@ -116,4 +117,87 @@ TEST_CASE( "a11y_recreated_runtime_cannot_accept_another_stack_token", "[a11y][c
     first.enter( "world", "DEFAULTMODE" );
     CHECK_FALSE( first.accepts( token ) );
     CHECK_FALSE( second.accepts( first.active_token().value() ) );
+}
+
+TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
+           "[a11y][context][walking]" )
+{
+    a11y::context_stack stack;
+    stack.enter( "world", "DEFAULTMODE" );
+    const auto token = stack.active_token().value();
+
+    a11y::semantic_snapshot world;
+    world.token = token;
+    world.category = "DEFAULTMODE";
+    world.swipe_movement_allowed = true;
+    world.revision = 15;
+    for( const std::string &direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
+        a11y::semantic_node node;
+        node.id = direction;
+        node.actions = { "focus", "activate" };
+        world.nodes.push_back( std::move( node ) );
+    }
+
+    a11y::semantic_intent swipe;
+    swipe.token = token;
+    swipe.action = "activate";
+    swipe.request = 1;
+    // The world could have published many new descriptions during the
+    // previous turn. This same-generation intent is still a single step.
+    swipe.revision = 2;
+    REQUIRE( stack.accepts( swipe.token ) );
+    for( const std::string &direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
+        swipe.node = direction;
+        CHECK( a11y::live_world_walk_command( world, swipe ) );
+    }
+
+    swipe.revision = 0;
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    swipe.revision = 16;
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    swipe.revision = 15;
+    swipe.node = "LEFTUP";
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    swipe.node = "UP";
+    swipe.action = "focus";
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    swipe.action = "activate";
+    swipe.value = "unexpected";
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    swipe.value.clear();
+
+    world.nodes[0].enabled = false;
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    world.nodes[0].enabled = true;
+    world.nodes[0].actions = { "focus" };
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    world.nodes[0].actions = { "focus", "activate" };
+
+    world.swipe_movement_allowed = false;
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+    world.swipe_movement_allowed = true;
+    world.category = "UILIST";
+    CHECK_FALSE( a11y::live_world_walk_command( world, swipe ) );
+
+    // Matching a world command is never sufficient by itself. The actual
+    // runtime first requires the current, unexpired session/frame/generation.
+    world.category = "DEFAULTMODE";
+    const auto overlay = stack.enter( "inventory", "INVENTORY" );
+    CHECK_FALSE( stack.accepts( swipe.token ) );
+    REQUIRE( stack.leave( overlay ) );
+    CHECK_FALSE( stack.accepts( swipe.token ) );
+    stack.set_suspended( true );
+    CHECK_FALSE( stack.accepts( swipe.token ) );
+}
+
+TEST_CASE( "a11y_world_step_node_identity_is_exact",
+           "[a11y][context][walking]" )
+{
+    CHECK( a11y::is_cardinal_step_node( "UP" ) );
+    CHECK( a11y::is_cardinal_step_node( "DOWN" ) );
+    CHECK( a11y::is_cardinal_step_node( "LEFT" ) );
+    CHECK( a11y::is_cardinal_step_node( "RIGHT" ) );
+    CHECK_FALSE( a11y::is_cardinal_step_node( "LEFTUP" ) );
+    CHECK_FALSE( a11y::is_cardinal_step_node( "reader:scan:north" ) );
+    CHECK_FALSE( a11y::is_cardinal_step_node( "world:here" ) );
 }
