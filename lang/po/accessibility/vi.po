@@ -3392,6 +3392,12 @@ msgstr "<N|n>hật ký gỡ lỗi"
 msgid "Nearby objects, nearest first"
 msgstr "Danh sách xung quanh, từ gần đến xa"
 
+msgid "Nearby"
+msgstr "Xung quanh"
+
+msgid "Nothing noteworthy nearby."
+msgstr "Không có mục đáng chú ý ở gần."
+
 msgid "Select an entry to walk toward it. The game avoids dangerous tiles and reports unreachable targets."
 msgstr "Chọn một mục để tự đi đến đó. Game tránh ô nguy hiểm và báo nếu không có đường."
 

@@ -20,22 +20,22 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
             "utf-8"
         )
 
-    def test_radius_is_still_60_for_all_three_sources(self):
+    def test_visual_list_keeps_original_search(self):
+        # The native visual tabs are unchanged; Android reader has its own
+        # separate 20-tile square and skips the 60-tile tab initialization.
         self.assertIn("const int radius = 60;", self.header)
         self.assertIn("closest_points_first( pos, radius )", self.menu)
         self.assertIn("get_visible_creatures( radius )", self.menu)
-        self.assertIn("you.sees( get_map(), points_p_it )", self.menu)
-        self.assertIn("m.sees_some_items( points_p_it, you )", self.menu)
+        self.assertIn("if( !a11y::enabled() )", self.menu)
 
     def test_flat_nearest_first_items_creatures_terrain(self):
         self.assertIn("void surroundings_menu::execute_accessible()",
                       self.menu)
-        for category in ("item_data.item_list",
-                         "monster_data.monster_list",
-                         "terfurn_data.terfurn_list"):
-            self.assertIn(category, self.menu)
-        self.assertIn("for( const auto &entry : group->entities )",
-                      self.menu)
+        self.assertIn("a11y::observe_tile( position )", self.menu)
+        self.assertIn("tile.seen_items", self.menu)
+        self.assertIn("tile.seen_creatures", self.menu)
+        self.assertIn("tile.known_traps", self.menu)
+        self.assertIn("tile.vehicle", self.menu)
         self.assertIn("std::stable_sort( nearby.begin(), nearby.end()",
                       self.menu)
         self.assertIn("lhs.distance < rhs.distance", self.menu)
@@ -59,8 +59,8 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("if( !route )", self.menu)
         self.assertIn("if( route->empty() )", self.menu)
         self.assertIn("get_map().impassable( target ) ? 1 : 0", self.menu)
-        self.assertIn("entry.entity->disp_name()", self.menu)
-        self.assertIn("entry.entity->tname()", self.menu)
+        self.assertIn("for( const std::string &creature : tile.seen_creatures )", self.menu)
+        self.assertIn("for( const std::string &item_name : tile.seen_items )", self.menu)
         self.assertIn("if( a11y::enabled() )", self.menu)
         self.assertIn("execute_accessible();", self.menu)
 

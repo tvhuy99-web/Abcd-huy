@@ -12,6 +12,7 @@
 #include <tuple>
 #include <utility>
 
+#include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "a11y_semantics.h"
 #include "avatar.h"
@@ -731,9 +732,17 @@ surroundings_menu::surroundings_menu( avatar &you, map &m, std::optional<tripoin
     stored_view_offset( you.view_offset ),
     min_width( min_width )
 {
-    item_data.init( you, m );
-    monster_data.init( you );
-    terfurn_data.init( you, m );
+#if defined(__ANDROID__)
+    // The accessible list scans its own 20-tile square. The visual tab
+    // scanners still use their original 60-tile radius when a11y is off.
+    if( !a11y::enabled() ) {
+#endif
+        item_data.init( you, m );
+        monster_data.init( you );
+        terfurn_data.init( you, m );
+#if defined(__ANDROID__)
+    }
+#endif
 
     highlight_new = get_option<bool>( "HIGHLIGHT_UNREAD_ITEMS" );
     switch_tab = uistate.vmenu_tab;
@@ -1196,11 +1205,36 @@ void surroundings_menu::draw_examine_info()
 }
 
 #if defined(__ANDROID__)
+// Include only terrain/furniture that changes navigation, is a hazard,
+// or has a useful interaction. Ordinary floors, walls, grass, roads, and
+// decorative furniture must not fill the spoken nearby list.
+static bool noteworthy_nearby_feature( const map_data_common_t &type,
+                                       const tripoint_bub_ms &position )
+{
+    return type.has_flag( ter_furn_flag::TFLAG_DOOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+           type.has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_LADDER ) ||
+           type.has_flag( ter_furn_flag::TFLAG_ELEVATOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_RAMP_UP ) ||
+           type.has_flag( ter_furn_flag::TFLAG_RAMP_DOWN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_CONSOLE ) ||
+           type.has_flag( ter_furn_flag::TFLAG_SIGN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_AUTODOC ) ||
+           type.has_flag( ter_furn_flag::TFLAG_AUTODOC_COUCH ) ||
+           type.has_flag( ter_furn_flag::TFLAG_TRANSLOCATOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_NO_FLOOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_PIT_FILLABLE ) ||
+           type.can_examine( position );
+}
+
 void surroundings_menu::execute_accessible()
 {
-    // Same 60-tile visibility-bound search as the visual tabs. Unlike the
-    // grouped visual lists, every visible location is a separate row, so
-    // order and the chosen walking target are unambiguous.
+    // A 20-tile *half-width* in BOTH axes, not 20 total entries or a
+    // circular radius. All 41 x 41 offsets are visited exactly once.
+    // Expanding square rings naturally read nearest to farthest without
+    // ranking creatures over items, doors, or other useful objects.
+    constexpr int scan_half_width = 20;
     struct nearby_row {
         std::string label;
         tripoint_bub_ms target;
@@ -1210,41 +1244,84 @@ void surroundings_menu::execute_accessible()
     };
     std::vector<nearby_row> nearby;
     const tripoint_bub_ms origin = you.pos_bub();
-    const auto add_row = [&]( const std::string &category, const std::string &name,
-    const tripoint_rel_ms & relative, int stop_distance ) {
-        nearby.push_back( { category + ": " + name, origin + relative, relative,
-                            static_cast<int>( rl_dist( tripoint_rel_ms(), relative ) ),
-                            stop_distance } );
+    map &here = get_map();
+    std::set<const vehicle *> seen_vehicles;
+    const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
+                              int stop_distance ) {
+        if( !name.empty() ) {
+            nearby.push_back( { name, origin + relative, relative,
+                                std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
+                                stop_distance } );
+        }
     };
-    for( const auto *group : item_data.item_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                add_row( _( "Item" ), entry.entity->tname(), entry.pos, 0 );
+
+    for( int distance = 0; distance <= scan_half_width; ++distance ) {
+        for( int dy = -distance; dy <= distance; ++dy ) {
+            for( int dx = -distance; dx <= distance; ++dx ) {
+                if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) {
+                    continue;
+                }
+                const tripoint_rel_ms relative( dx, dy, 0 );
+                const tripoint_bub_ms position = origin + relative;
+                if( !here.inbounds( position ) ) {
+                    continue;
+                }
+                // This existing observer applies the game's sight, memory,
+                // container-contents, trap and special-vision knowledge rules.
+                // Only recognized sounds/perceptions survive for unseen tiles.
+                const a11y::tile_observation tile = a11y::observe_tile( position );
+                for( const std::string &perception : tile.special_perceptions ) {
+                    add_row( perception, relative, 1 );
+                }
+                if( !tile.heard_marker.empty() ) {
+                    add_row( tile.heard_marker, relative, 1 );
+                }
+                if( tile.source != a11y::observation_source::visible ) {
+                    continue;
+                }
+
+                for( const std::string &creature : tile.seen_creatures ) {
+                    add_row( creature, relative, 1 );
+                }
+                for( const std::string &item_name : tile.seen_items ) {
+                    add_row( item_name, relative, 0 );
+                }
+                for( const std::string &known_trap : tile.known_traps ) {
+                    add_row( known_trap, relative, 1 );
+                }
+                // Ordinary blood splatter / residue must not be read as an
+                // obstacle. Only active dangerous fields warrant a row.
+                for( const auto &entry : here.field_at( position ) ) {
+                    if( entry.second.is_field_alive() && entry.second.is_dangerous() ) {
+                        add_row( entry.second.name(), relative, 1 );
+                    }
+                }
+                if( !tile.vehicle.empty() ) {
+                    const optional_vpart_position part = here.veh_at( position );
+                    if( part && seen_vehicles.insert( &part->vehicle() ).second ) {
+                        // A multi-tile vehicle is one object, not 20 entries.
+                        add_row( tile.vehicle, relative, 1 );
+                    }
+                }
+                const ter_t &terrain = *here.ter( position );
+                if( noteworthy_nearby_feature( terrain, position ) ) {
+                    add_row( tile.terrain, relative, here.impassable( position ) ? 1 : 0 );
+                }
+                if( here.has_furn( position ) ) {
+                    const furn_t &furniture = *here.furn( position );
+                    if( noteworthy_nearby_feature( furniture, position ) ||
+                        static_cast<bool>( furniture.workbench ) ) {
+                        add_row( tile.furniture, relative, here.impassable( position ) ? 1 : 0 );
+                    }
+                }
             }
         }
     }
-    for( const auto *group : monster_data.monster_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                add_row( _( "Creature" ), entry.entity->disp_name(), entry.pos, 1 );
-            }
-        }
-    }
-    for( const auto *group : terfurn_data.terfurn_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                const tripoint_bub_ms target = origin + entry.pos;
-                add_row( _( "Terrain or furniture" ), entry.entity->name(), entry.pos,
-                         get_map().impassable( target ) ? 1 : 0 );
-            }
-        }
-    }
+    // Rings already provide nearest-first order. Stable ties preserve the
+    // scan order; never impose a category or threat priority.
     std::stable_sort( nearby.begin(), nearby.end(),
     []( const nearby_row &lhs, const nearby_row &rhs ) {
-        if( lhs.distance != rhs.distance ) {
-            return lhs.distance < rhs.distance;
-        }
-        return lhs.label < rhs.label;
+        return lhs.distance < rhs.distance;
     } );
     constexpr std::size_t page_size = 80;
     std::size_t page = 0;
@@ -1337,14 +1414,12 @@ void surroundings_menu::execute_accessible()
     };
     while( true ) {
         a11y::semantic_snapshot snapshot;
-        snapshot.title = _( "Nearby objects, nearest first" );
-        snapshot.summary = _( "Select an entry to walk toward it. "
-                              "The game avoids dangerous tiles and reports unreachable targets." );
+        snapshot.title = _( "Nearby" );
         if( nearby.empty() ) {
             a11y::semantic_node empty;
             empty.id = "nearby:empty";
             empty.role = "document";
-            empty.label = _( "Nothing visible nearby." );
+            empty.label = _( "Nothing noteworthy nearby." );
             empty.actions = { "focus" };
             snapshot.focus = empty.id;
             snapshot.nodes.push_back( std::move( empty ) );
@@ -1366,9 +1441,7 @@ void surroundings_menu::execute_accessible()
                 // The direction already includes tile counts. Do not repeat
                 // Chebyshev distance before the coordinates on each swipe.
                 node.value = relative_words( entry.relative );
-                node.detail = _( "Activate to begin safe automatic travel toward this location." );
-                node.position = static_cast<int>( i ) + 1;
-                node.total = static_cast<int>( nearby.size() );
+                // No instructional sentence or position counter on each swipe.
                 snapshot.nodes.push_back( std::move( node ) );
             }
             if( end < nearby.size() ) {
