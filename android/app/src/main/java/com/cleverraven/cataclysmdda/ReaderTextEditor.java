@@ -241,6 +241,13 @@ public final class ReaderTextEditor {
 
     /** Used by the global two-finger Up confirmation, including digit view. */
     public void submitCurrent() {
+        if (quantityChoices && "quantities".equals(group)) {
+            // Two-finger Up and the confirm action must activate the
+            // highlighted completed number, not submit the stale text
+            // retained in the editor field from the last selection.
+            activate();
+            return;
+        }
         String error = validationError();
         if (error != null) { listener.speak(error); }
         else { listener.submit(getText()); }
