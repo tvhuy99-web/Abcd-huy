@@ -457,6 +457,35 @@ void cue( const std::string &name )
 #endif
 }
 
+void alignment_distance( const int distance )
+{
+#if defined(__ANDROID__)
+    if( !enabled() || suspended() ) {
+        return;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        if( cls != nullptr ) {
+            jmethodID method = env->GetMethodID( cls, "onAccessibilityAlignment", "(I)V" );
+            if( method != nullptr ) {
+                env->CallVoidMethod( activity, method, static_cast<jint>( distance ) );
+            }
+        }
+    }
+    if( env->ExceptionCheck() ) {
+        env->ExceptionClear();
+    }
+    env->PopLocalFrame( nullptr );
+#else
+    ( void )distance;
+#endif
+}
+
 void status( const std::string &code, const semantic_intent *intent )
 {
     // Codes are internal literals; translated user-facing text belongs to Java.
