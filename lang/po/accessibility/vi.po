@@ -43,6 +43,54 @@ msgstr "Đã nhớ: "
 msgid "Current tile"
 msgstr "Ô hiện tại"
 
+#, c-format
+msgid "Trap: %s."
+msgstr "Có bẫy: %s."
+
+#, c-format
+msgid "Creature: %s."
+msgstr "Có sinh vật: %s."
+
+#, c-format
+msgid "Hazard: %s."
+msgstr "Có nguy hiểm: %s."
+
+#, c-format
+msgid "Obstacle: %s."
+msgstr "Có vật cản: %s."
+
+#, c-format
+msgid "Route feature: %s."
+msgstr "Lối đi đặc biệt: %s."
+
+#, c-format
+msgid "Sound marker: %s."
+msgstr "Dấu âm thanh: %s."
+
+#, c-format
+msgid "Vehicle: %s."
+msgstr "Có phương tiện: %s."
+
+#, c-format
+msgid "Item here: %s."
+msgstr "Có %s."
+
+#, c-format
+msgid "Items here: %1$s, %2$s."
+msgstr "Có %1$s, %2$s."
+
+#, c-format
+msgid "Items here: %1$s and %2$d other types."
+msgstr "Có %1$s và %2$d loại đồ khác."
+
+#, c-format
+msgid "Furniture: %s."
+msgstr "Có %s."
+
+msgid "Current position"
+msgstr "Vị trí hiện tại"
+
+
 msgid "One level above"
 msgstr "Tầng phía trên"
 
