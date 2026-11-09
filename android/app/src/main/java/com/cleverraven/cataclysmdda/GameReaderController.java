@@ -283,6 +283,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void updateNativeState(boolean force) {
         boolean enabled = !closed && preferences.isEnabled();
         boolean suspended = !foreground || !windowFocused || (!usesTouchExploration() && !speech.isReady());
+        if (!enabled || suspended) {
+            sonar.setWorldActive(false);
+        }
         if (force || !nativeConfigured || lastEnabled != enabled || lastSuspended != suspended) {
             try {
                 CataclysmDDA.nativeConfigureReader(enabled, suspended);
@@ -353,6 +356,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 if (object.optBoolean("inactive")) {
+                    sonar.setWorldActive(false);
                     comprehensiveMenu = false;
                     choosingGesture = false;
                     bindingItem = null;
@@ -2383,6 +2387,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         debugReport = report;
+        sonar.setWorldActive(false);
         debugFocus = 0;
         debugResponsePending = false;
         root.cancelGesture();
