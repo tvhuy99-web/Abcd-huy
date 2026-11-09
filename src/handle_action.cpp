@@ -5,6 +5,8 @@
 #include <cmath>
 #include <initializer_list>
 #include <list>
+#include <optional>
+#include <vector>
 #include <map>
 #include <sstream>
 #include <string>
@@ -60,6 +62,7 @@
 #include "input_popup.h"
 #include "inventory_ui.h"
 #include "item.h"
+#include "item_location.h"
 #include "item_group.h"
 #include "itype.h"
 #include "iuse.h"
@@ -69,6 +72,7 @@
 #include "magic_enchantment.h"
 #include "magic_type.h"
 #include "map.h"
+#include "map_selector.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapsharing.h"
@@ -245,6 +249,163 @@ class user_turn
 };
 } // namespace
 
+// A one-tile pickup shortcut for the spoken interaction hub. A single
+// individual item starts the real pickup activity immediately; every other
+// case gets a short reader-owned quantity list with one final confirmation.
+// No item is removed or moved until Character::pick_up validates the request.
+static void pickup_here_accessible()
+{
+    avatar &you = get_avatar();
+    map &here = get_map();
+    const tripoint_bub_ms pos = you.pos_bub();
+    if( here.has_flag( ter_furn_flag::TFLAG_SEALED, pos ) ||
+        here.only_liquid_in_liquidcont( pos ) || !here.has_items( pos ) ) {
+        add_msg( m_info, _( "There is nothing to pick up here." ) );
+        return;
+    }
+
+    struct pickup_choice {
+        item_location location;
+        std::string name;
+        int available = 1;
+        int selected = 0;
+        std::optional<std::string> draft;
+    };
+    std::vector<pickup_choice> choices;
+    map_stack ground = here.i_at( pos );
+    for( item &it : ground ) {
+        const int quantity = it.count_by_charges() ? std::max( 1, it.charges ) : 1;
+        choices.push_back( { item_location( map_cursor( pos ), &it ),
+                             it.tname(), quantity, 0, std::nullopt } );
+    }
+    if( choices.empty() ) {
+        add_msg( m_info, _( "There is nothing to pick up here." ) );
+        return;
+    }
+
+    if( choices.size() == 1 && choices.front().available == 1 ) {
+        drop_locations only;
+        only.emplace_back( choices.front().location, 0 );
+        you.pick_up( only );
+        return;
+    }
+
+    input_context ctxt( "A11Y_PICKUP_HERE" );
+    ctxt.register_action( "ANY_INPUT" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "CONFIRM" );
+    a11y::screen_scope reader( &ctxt, "pickup-here",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "pickup-here:confirm" && intent.action == "activate" ) {
+            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice &choice ) {
+            return choice.selected > 0;
+            } ) ) {
+                add_msg( m_info, _( "No items selected." ) );
+                return std::string( "TIMEOUT" );
+            }
+            return std::string( "CONFIRM" );
+        }
+        for( std::size_t i = 0; i < choices.size(); ++i ) {
+            if( intent.node != "pickup-here:item:" + std::to_string( i ) ) {
+                continue;
+            }
+            pickup_choice &choice = choices[i];
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( choice.available == 1 && intent.action == "activate" ) {
+                choice.selected = choice.selected == 0 ? 1 : 0;
+                return std::string( "TIMEOUT" );
+            }
+            if( choice.available > 1 && intent.action == "set_value" ) {
+                // The reader runtime already checks the integer form range.
+                choice.draft = intent.value;
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "cancel_draft" ) {
+                choice.draft.reset();
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "apply" && choice.draft ) {
+                try {
+                    const int count = std::stoi( *choice.draft );
+                    if( count < 0 || count > choice.available ) {
+                        return std::nullopt;
+                    }
+                    choice.selected = count;
+                    choice.draft.reset();
+                    return std::string( "TIMEOUT" );
+                } catch( const std::exception & ) {
+                    return std::nullopt;
+                }
+            }
+        }
+        return std::nullopt;
+    } );
+
+    while( true ) {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Pick up here" );
+        snapshot.focus = "pickup-here:item:0";
+        for( std::size_t i = 0; i < choices.size(); ++i ) {
+            const pickup_choice &choice = choices[i];
+            a11y::semantic_node node;
+            node.id = "pickup-here:item:" + std::to_string( i );
+            node.label = choice.name;
+            if( choice.available == 1 ) {
+                node.role = "checkbox";
+                node.checked = choice.selected == 1;
+                node.actions = { "focus", "activate" };
+            } else {
+                node.role = "button";
+                node.value = string_format( _( "%1$d of %2$d" ),
+                                            choice.selected, choice.available );
+                node.field_type = "int";
+                node.applied_value = std::to_string( choice.selected );
+                node.has_field_range = true;
+                node.field_min = 0.0;
+                node.field_max = static_cast<double>( choice.available );
+                node.field_step = 1.0;
+                node.actions = { "focus", "activate", "set_value", "apply", "cancel_draft" };
+                if( choice.draft ) {
+                    node.has_draft = true;
+                    node.draft_value = *choice.draft;
+                }
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        a11y::semantic_node confirm;
+        confirm.id = "pickup-here:confirm";
+        confirm.label = _( "Confirm pickup" );
+        confirm.role = "button";
+        snapshot.nodes.push_back( std::move( confirm ) );
+        reader.update( std::move( snapshot ) );
+
+        const std::string action = ctxt.handle_input();
+        if( action == "QUIT" ) {
+            return;
+        }
+        if( action == "CONFIRM" ) {
+            drop_locations selection;
+            for( const pickup_choice &choice : choices ) {
+                // Revalidate item handles before giving them to the engine.
+                if( choice.selected <= 0 || !choice.location.valid() ) {
+                    continue;
+                }
+                const int quantity = choice.selected == choice.available ? 0 :
+                                     choice.selected;
+                selection.emplace_back( choice.location, quantity );
+            }
+            if( !selection.empty() ) {
+                you.pick_up( selection );
+            } else {
+                add_msg( m_info, _( "Selected items are no longer available." ) );
+            }
+            return;
+        }
+    }
+}
+
 input_context game::get_player_input( std::string &action )
 {
     close_blocking_activity_reader();
@@ -338,6 +499,8 @@ input_context game::get_player_input( std::string &action )
                 a11y::announce_linear_scan( 1, 0 );
             } else if( intent.node == "reader:places" ) {
                 ui::omap::display_accessible_places();
+            } else if( intent.node == "reader:pickup_here" ) {
+                pickup_here_accessible();
             } else if( intent.node == "reader:coordinates" ) {
                 a11y::announce_player_coordinates();
             }
