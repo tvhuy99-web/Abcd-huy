@@ -1,6 +1,7 @@
 #include "input_popup.h"
 #include "a11y_runtime.h"
 #include "a11y_android.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_text.h"
 
 #include <cstddef>
@@ -447,12 +448,25 @@ void number_input_popup<float>::draw_input_control()
 template<typename T>
 T number_input_popup<T>::query()
 {
+    last_quantity_cancelled = false;
     a11y::screen_scope reader( &ctxt, "NUMBER_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
             return "TEXT.QUIT";
         }
         if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
+        if( accessible_quantity_max && std::is_integral<T>::value &&
+            intent.node == "quantity" && intent.action == "set_value" ) {
+            const auto count = a11y::selected_quantity( intent.value,
+                               static_cast<std::size_t>( *accessible_quantity_max ) );
+            if( !count ) {
+                a11y::android::status( "invalid_value", &intent );
+                return std::nullopt;
+            }
+            value = static_cast<T>( *count );
+            // Selecting one completed number closes the popup.
+            return "TEXT.CONFIRM";
+        }
         if( intent.node == "text" && intent.action == "set_text" ) {
             std::istringstream parser( intent.value );
             parser.imbue( std::locale::classic() );
@@ -476,10 +490,36 @@ T number_input_popup<T>::query()
         std::ostringstream reader_value;
         reader_value.imbue( std::locale::classic() );
         reader_value << value;
-        reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
-                       remove_color_tags( reader_description() ), reader_value.str(), true,
-                       step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
-                       std::is_integral<T>::value ) );
+        if( accessible_quantity_max && std::is_integral<T>::value ) {
+            a11y::semantic_snapshot snapshot;
+            snapshot.title = remove_color_tags( reader_title );
+            snapshot.summary = remove_color_tags( reader_description() );
+            snapshot.focus = "quantity";
+            a11y::semantic_node field;
+            field.id = "quantity";
+            field.role = "checkbox";
+            field.label = _( "Quantity" );
+            field.value = reader_value.str();
+            field.field_type = "int";
+            field.applied_value = reader_value.str();
+            field.has_field_range = true;
+            field.field_min = 0;
+            field.field_max = static_cast<double>( *accessible_quantity_max );
+            field.field_step = 1;
+            field.actions = { "focus", "activate", "set_value" };
+            snapshot.nodes.push_back( std::move( field ) );
+            a11y::semantic_node cancel;
+            cancel.id = "cancel";
+            cancel.label = _( "Cancel" );
+            cancel.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( cancel ) );
+            reader.update( std::move( snapshot ) );
+        } else {
+            reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
+                           remove_color_tags( reader_description() ), reader_value.str(), true,
+                           step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
+                           std::is_integral<T>::value ) );
+        }
         std::string action = ctxt.handle_input();
 
         if( handle_custom_callbacks( action ) ) {
@@ -489,16 +529,32 @@ T number_input_popup<T>::query()
         if( action == "TEXT.CONFIRM" ) {
             return value;
         } else if( action == "TEXT.QUIT" ) {
+            last_quantity_cancelled = true;
             break;
         }
 
         // mouse click on x to close leads here
         if( !get_is_open() ) {
+            last_quantity_cancelled = true;
             break;
         }
     }
 
     return old_value;
+}
+
+template<typename T>
+void number_input_popup<T>::set_accessible_quantity_max( const T available )
+{
+    if( std::is_integral<T>::value && available > 0 ) {
+        accessible_quantity_max = available;
+    }
+}
+
+template<typename T>
+bool number_input_popup<T>::quantity_cancelled() const
+{
+    return last_quantity_cancelled;
 }
 
 template<typename T>
