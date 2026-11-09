@@ -236,6 +236,7 @@ public class CataclysmDDA extends SDLActivity {
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
+    static native int nativeCancelPendingWorldSteps();
     static native boolean nativeReaderIntent(long session, long frame, long generation,
             long revision, long request, String node, String action, String value);
 
