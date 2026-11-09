@@ -86,6 +86,9 @@ public final class ReaderTextEditor {
         choices = new LinearLayout(activity);
         choices.setOrientation(LinearLayout.VERTICAL);
         root.addView(choices);
+        // Number dialogs start on actual digits, not a long controls menu.
+        // One-finger up/down selects a digit; double-tap enters it.
+        if (numeric) { group = "digits"; selected = 1; }
         build();
     }
 
@@ -131,14 +134,7 @@ public final class ReaderTextEditor {
                     readCurrent();
                 }
             });
-            add(R.string.a11yEditorApply, () -> {
-                String error = validationError();
-                if (error != null) {
-                    listener.speak(error);
-                } else {
-                    listener.submit(getText());
-                }
-            });
+            add(R.string.a11yEditorApply, this::submitCurrent);
             add(R.string.a11yEditorCancel, listener::cancel);
         } else if ("tones".equals(group)) {
             add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
@@ -204,6 +200,16 @@ public final class ReaderTextEditor {
     }
 
     public void activate() { items.get(selected).action.run(); }
+
+    /** Used by the global two-finger Up confirmation, including digit view. */
+    public void submitCurrent() {
+        String error = validationError();
+        if (error != null) { listener.speak(error); }
+        else { listener.submit(getText()); }
+    }
+
+    /** Two-finger Down discards the entire draft, even from the digit view. */
+    public void cancelInput() { listener.cancel(); }
 
     public void readCurrent() {
         listener.speak(items.get(selected).label + ", "
