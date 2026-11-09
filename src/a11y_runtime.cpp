@@ -1,6 +1,7 @@
 #include "a11y_runtime.h"
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <utility>
 #include <vector>
@@ -10,6 +11,7 @@
 #include "a11y_input.h"
 #include "a11y_outcome.h"
 #include "a11y_world.h"
+#include "a11y_world_input_gate.h"
 
 namespace a11y
 {
@@ -279,24 +281,37 @@ std::optional<std::string> poll_input( const void *input_owner )
     }
     while( auto intent = android::take() ) {
         screen_data &screen = *screens.back();
-        // A walking swipe can arrive while the previous turn is still
-        // simulating. Keep the strict frame/generation check, but allow one
-        // older revision ONLY for cardinal steps when the fresh native
-        // snapshot still permits walking. Other stale commands stay stale.
-        const bool previous_world_step =
-            screen.category == "DEFAULTMODE" && screen.snapshot.swipe_movement_allowed &&
-            intent->action == "activate" &&
-            ( intent->node == "UP" || intent->node == "DOWN" ||
-              intent->node == "LEFT" || intent->node == "RIGHT" ) &&
-            intent->revision < screen.revision &&
-            screen.revision - intent->revision == 1;
-        if( !contexts.accepts( intent->token ) ||
-            ( intent->revision != screen.revision && !previous_world_step ) ||
-            intent->request <= screen.last_request ) {
+        // A normal walking swipe remains an input command as world map
+        // descriptions advance. A previous revision is valid for a live
+        // cardinal step, not for menu entries or any other semantic action.
+        // The context token still rejects all input across modal, session,
+        // lifecycle and foreground transitions, and request IDs are strictly
+        // monotonic. Recheck the native walking permission for every step.
+        const bool world_walk = live_world_walk_command( screen.snapshot, *intent );
+        const bool valid_token = contexts.accepts( intent->token );
+        const bool valid_revision = intent->revision == screen.revision || world_walk;
+        const bool valid_request = intent->request > screen.last_request;
+        if( !valid_token || !valid_revision || !valid_request ) {
             android::status( "stale", &*intent );
             continue;
         }
         screen.last_request = intent->request;
+#if defined(__ANDROID__)
+        if( world_walk ) {
+            static unsigned int walk_input_samples = 0;
+            if( ( ++walk_input_samples % 16 ) == 0 ) {
+                const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::steady_clock::now().time_since_epoch() ).count();
+                const std::uint64_t wait_ms =
+                    intent->received_at_ms > 0 &&
+                    now_ms >= static_cast<std::int64_t>( intent->received_at_ms ) ?
+                    static_cast<std::uint64_t>( now_ms ) - intent->received_at_ms : 0;
+                android::diagnostic_event( "WORLD_INPUT_TIMING",
+                        "jni_to_poll_ms=" + std::to_string( wait_ms ) +
+                        " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
+            }
+        }
+#endif
         // Only three actions may carry a value at all (R03.1). Every other
         // action is a plain command on its node; a value smuggled into one
         // (stale editor callback, hand-crafted intent) is rejected before
