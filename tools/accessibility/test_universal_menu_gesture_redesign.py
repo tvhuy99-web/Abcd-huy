@@ -75,6 +75,39 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn('if( activation == "TOGGLE_ENTRY" ) {', native)
         self.assertIn('_( "Selected: %1$s. Available: %2$s." )', native)
 
+    def test_browsing_wraps_bidirectionally_for_every_reader_list(self):
+        ctrl = self.controller
+        # All three global reader contexts wrap rather than clamp.
+        self.assertIn("debugFocus = Math.floorMod(debugFocus + delta, 4);", ctrl)
+        self.assertIn("hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);", ctrl)
+        self.assertIn("gestureChoice = Math.floorMod(gestureChoice + delta,", ctrl)
+        self.assertIn("hubIndex = Math.floorMod(hubIndex + delta, options.size());", ctrl)
+        self.assertIn("selected = Math.floorMod(index() + delta, filtered.size());", ctrl)
+        # Native number editor already wraps and stays short.
+        self.assertIn("selected = Math.floorMod(selected + delta, items.size());",
+                      self.editor)
+
+    def test_repeated_inventory_and_menu_reading_is_concise_but_detail_remains(self):
+        ctrl = self.controller
+        self.assertIn("if (includeDetail && node.position > 0 && node.total > 0)", ctrl)
+        self.assertIn("if (includeDetail && !node.detail.isEmpty())", ctrl)
+        self.assertIn("if (!quantityRow) {", ctrl)
+        self.assertIn('return entries.get(selected).label;', ctrl)
+        self.assertIn('listener.speak(items.get(selected).label);', self.editor)
+        native = (ROOT / "src/inventory_ui.cpp").read_text(encoding="utf-8")
+        self.assertIn('node.detail = location.describe( &owner.u );', native)
+        self.assertIn('node.field_type = "int";', native)
+
+    def test_visible_ground_items_mark_world_tiles_but_announcement_is_summary(self):
+        native = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
+        self.assertIn("!tile.seen_items.empty()", native)
+        self.assertIn('return _( "Visible items" );', native)
+        self.assertIn('here.role = noteworthy_here ? "alert" : "document";', native)
+        self.assertIn('here.value = noteworthy_category( current_tile )', native)
+        self.assertIn('here.label = _( "Death camera center" );', native)
+        self.assertIn('boolean newlyNoteworthy = worldView', self.controller)
+        self.assertIn('if (newlyNoteworthy) { feedback(nextTile.value); }', self.controller)
+
     def test_localized_accessibility_commands_exist(self):
         for locale in ("values", "values-vi"):
             xml = (ROOT / "android/app/src/main/res" / locale / "strings.xml").read_text(
