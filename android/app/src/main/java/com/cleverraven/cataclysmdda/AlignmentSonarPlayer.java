@@ -20,7 +20,9 @@ final class AlignmentSonarPlayer implements AutoCloseable {
 
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SoundPool pool;
-    private final int soundId;
+    // SoundPool loads asynchronously. Its listener is installed before load().
+    private int soundId;
+    private int playingStream;
     private final Runnable tick = new Runnable() {
         @Override
         public void run() {
@@ -28,7 +30,7 @@ final class AlignmentSonarPlayer implements AutoCloseable {
             if (!closed && worldActive && nearestDistance > 0) {
                 if (loaded) {
                     final float gain = volumeAt(nearestDistance);
-                    pool.play(soundId, gain, gain, 1, 0, 1.0f);
+                    playingStream = pool.play(soundId, gain, gain, 1, 0, 1.0f);
                 }
                 scheduled = true;
                 handler.postDelayed(this, PING_INTERVAL_MS);
@@ -82,6 +84,10 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         if (!worldActive || nearestDistance < 1) {
             handler.removeCallbacks(tick);
             scheduled = false;
+            if (playingStream != 0) {
+                pool.stop(playingStream);
+                playingStream = 0;
+            }
         } else if (!scheduled) {
             scheduled = true;
             handler.post(tick);
@@ -100,6 +106,10 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         handler.removeCallbacks(tick);
         nearestDistance = -1;
         worldActive = false;
+        if (playingStream != 0) {
+            pool.stop(playingStream);
+            playingStream = 0;
+        }
         pool.release();
     }
 }
