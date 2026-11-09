@@ -1,4 +1,5 @@
 #include "a11y_android.h"
+#include "a11y_world_input_gate.h"
 
 #include <algorithm>
 #include <atomic>
@@ -25,6 +26,18 @@ std::atomic<bool> reader_suspended{ true };
 std::atomic<std::uint64_t> epoch{ 1 };
 std::mutex inbox_mutex;
 std::deque<semantic_intent> inbox;
+// Protected by inbox_mutex, never read from Java without holding it.
+context_token last_world_token;
+bool has_world_token = false;
+bool world_step_ready = false;
+
+bool matches_last_world( const context_token &token )
+{
+    return has_world_token && token.session == last_world_token.session &&
+           token.frame == last_world_token.frame &&
+           token.generation == last_world_token.generation;
+}
+
 std::atomic<int> debug_prompt_response{ 0 };
 #if defined(__ANDROID__)
 // UI thread only queues updates. C++ options and audio are modified on the
@@ -49,6 +62,8 @@ void configure( const bool enable, const bool suspend )
     reader_enabled.store( enable, std::memory_order_release );
     reader_suspended.store( suspend, std::memory_order_release );
     inbox.clear();
+    world_step_ready = false;
+    has_world_token = false;
     epoch.fetch_add( 1, std::memory_order_release );
 #if defined(__ANDROID__)
     PushWakeEvent();
@@ -61,6 +76,17 @@ bool enqueue( semantic_intent intent )
     if( !enabled() || suspended() || inbox.size() >= 32 || intent.request == 0 ||
         intent.node.size() > 512 || intent.action.size() > 80 || intent.value.size() > 16384 ) {
         return false;
+    }
+    // Only the world walking channel is single-flight. Menu navigation
+    // retains the existing mailbox because it uses a different token.
+    if( intent.action == "activate" && is_world_step_node( intent.node ) &&
+        matches_last_world( intent.token ) ) {
+        if( !world_step_ready ) {
+            return false;
+        }
+        // Reserve the one movement input immediately. Subsequent swipes
+        // during a long game turn are refused now, never executed later.
+        world_step_ready = false;
     }
     intent.received_at_ms = static_cast<std::uint64_t>(
                                 std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -87,6 +113,17 @@ void clear()
 {
     const std::lock_guard<std::mutex> lock( inbox_mutex );
     inbox.clear();
+    world_step_ready = false;
+}
+
+void set_world_step_ready( const std::optional<context_token> token, const bool ready )
+{
+    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    if( token ) {
+        last_world_token = *token;
+        has_world_token = true;
+    }
+    world_step_ready = ready && token.has_value() && enabled() && !suspended();
 }
 
 std::size_t cancel_pending_world_steps()
@@ -98,9 +135,7 @@ std::size_t cancel_pending_world_steps()
     const std::size_t before = inbox.size();
     inbox.erase( std::remove_if( inbox.begin(), inbox.end(),
     []( const semantic_intent & intent ) {
-        return intent.action == "activate" &&
-               ( intent.node == "UP" || intent.node == "DOWN" ||
-                 intent.node == "LEFT" || intent.node == "RIGHT" );
+        return intent.action == "activate" && is_world_step_node( intent.node );
     } ), inbox.end() );
     return before - inbox.size();
 }
