@@ -70,7 +70,8 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
     def test_numeric_editor_digits_and_commit_cancel(self):
         code = self.editor
         self.assertIn('if (numeric) {', code)
-        self.assertIn('group = "digits";', code)
+        self.assertIn('group = this.quantityChoices ? "quantities" : "digits";', code)
+        self.assertIn('if (quantityChoices && "quantities".equals(group))', code)
         self.assertIn('selected = 1;', code)
         self.assertIn('public void submitCurrent() {', code)
         self.assertIn('public void cancelInput() { listener.cancel(); }', code)
