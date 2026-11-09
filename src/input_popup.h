@@ -121,6 +121,11 @@ class number_input_popup : public input_popup
                                      const point &pos = point::min, ImGuiWindowFlags flags = ImGuiWindowFlags_None );
         T query();
         void set_step_size( std::optional<T> step, std::optional<T> fast_step );
+        // Opt-in only for an integer item quantity with a real upper bound.
+        // Generic number fields (settings, character creation, etc.) retain
+        // their existing edit-and-confirm interaction.
+        void set_accessible_quantity_max( T available );
+        bool quantity_cancelled() const;
     protected:
         void draw_input_control() override;
     private:
@@ -128,5 +133,7 @@ class number_input_popup : public input_popup
         T old_value;
         std::optional<T> step_size = std::nullopt;
         std::optional<T> fast_step_size = std::nullopt;
+        std::optional<T> accessible_quantity_max = std::nullopt;
+        bool last_quantity_cancelled = false;
 };
 #endif // CATA_SRC_INPUT_POPUP_H
