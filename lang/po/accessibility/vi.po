@@ -3762,3 +3762,37 @@ msgstr "Đang chờ, còn khoảng %s."
 
 msgid "Waiting interrupted. Check your surroundings."
 msgstr "Đã ngừng chờ giữa chừng. Hãy kiểm tra xung quanh."
+
+msgid "Explore places"
+msgstr "Khám phá địa điểm"
+
+msgid "Choose travel mode"
+msgstr "Chọn cách di chuyển"
+
+msgid "No known destinations nearby."
+msgstr "Không có địa điểm đã biết trong phạm vi tìm kiếm."
+
+msgid "No travel route to the selected place."
+msgstr "Không tìm được đường đến địa điểm đã chọn."
+
+msgid "This destination is no longer known."
+msgstr "Không còn thông tin đáng tin cậy về địa điểm này."
+
+msgid "You are not controlling a vehicle."
+msgstr "Bạn chưa điều khiển phương tiện."
+
+msgid "Walk"
+msgstr "Đi bộ"
+
+msgid "Run"
+msgstr "Chạy"
+
+msgid "Drive"
+msgstr "Đi xe"
+
+msgid "Back"
+msgstr "Quay lại"
+
+#, c-format
+msgid "%1$s, about %2$d tiles"
+msgstr "%1$s, cách khoảng %2$d ô"
