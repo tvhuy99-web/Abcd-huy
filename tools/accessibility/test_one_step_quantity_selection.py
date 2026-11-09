@@ -73,6 +73,22 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn("if (editor == null || formRequest != 0 || snapshot == null",
                       self.controller)  # prevents duplicate commits while pending
 
+    def test_container_rows_select_before_opening_read_only_pockets(self):
+        # A pickup checkbox can also be a tree parent because it owns
+        # informational pocket-status children. Double-tap belongs to the
+        # item selection, not the non-actionable pocket child.
+        code = self.controller.split("public void activate()", 1)[1].split(
+            "private void openEditor(", 1)[0]
+        self.assertIn('node.id.startsWith("item:")', code)
+        self.assertIn('node.actions.contains("activate")', code)
+        self.assertIn('if (node.hasChildren && !actionableItem)', code)
+        self.assertLess(code.index("if (node.hasChildren && !actionableItem)"),
+                        code.index("if (!node.fieldType.isEmpty())"))
+        self.assertLess(code.index("if (!node.fieldType.isEmpty())"),
+                        code.index('send("activate", "");'))
+        self.assertIn('pocket_node.actions = { "focus" };', self.inventory)
+        self.assertIn('intent.node.rfind( "pocket:", 0 ) == 0', self.inventory)
+
     def test_other_numeric_forms_keep_existing_submit_behavior(self):
         self.assertIn('this(activity, initial, numeric, integer, rangeMin, rangeMax, rangeStep, false, listener)',
                       self.editor)
