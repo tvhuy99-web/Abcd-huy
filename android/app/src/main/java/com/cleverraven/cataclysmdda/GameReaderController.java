@@ -1672,7 +1672,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         // Enter the child list, not an interleaved parent+children tree.
         // Native expansion remains validated by the game before entry.
-        if (node.hasChildren) {
+        // Inventory rows may expose read-only pocket details as tree children.
+        // Double-tap must still select the item (or open its quantity picker),
+        // not trap the reader inside a non-activatable pocket-status list.
+        // Other expandable nodes keep their normal nested navigation.
+        final boolean actionableItem = node.id.startsWith("item:")
+                && node.actions.contains("activate");
+        if (node.hasChildren && !actionableItem) {
             if (node.expanded && enterReaderLayer(node)) { return; }
             if (node.actions.contains("expand")) {
                 pendingReaderLayer = node.id;
