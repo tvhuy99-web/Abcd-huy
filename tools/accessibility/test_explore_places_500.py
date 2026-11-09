@@ -11,13 +11,17 @@ class ExplorePlaces500Tests(unittest.TestCase):
         cls.ui = (ROOT / "src/overmap_ui.cpp").read_text(encoding="utf-8")
         cls.header = (ROOT / "src/overmap_ui.h").read_text(encoding="utf-8")
         cls.world = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
-        cls.dispatch = (ROOT / "src/handle_action.cpp").read_text(encoding="utf-8")
-        cls.hub = (ROOT / "android/app/src/main/java/com/cleverraven/"
-                   "cataclysmdda/GameActionHub.java").read_text(encoding="utf-8")
-        cls.reader = (ROOT / "android/app/src/main/java/com/cleverraven/"
-                      "cataclysmdda/GameReaderController.java").read_text(
-                          encoding="utf-8"
-                      )
+        cls.dispatch = (ROOT / "src/handle_action.cpp").read_text(
+            encoding="utf-8"
+        )
+        cls.hub = (
+            ROOT / "android/app/src/main/java/com/cleverraven/"
+            "cataclysmdda/GameActionHub.java"
+        ).read_text(encoding="utf-8")
+        cls.reader = (
+            ROOT / "android/app/src/main/java/com/cleverraven/"
+            "cataclysmdda/GameReaderController.java"
+        ).read_text(encoding="utf-8")
         cls.translations = (ROOT / "lang/po/accessibility/vi.po").read_text(
             encoding="utf-8"
         )
@@ -30,7 +34,8 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertIn('ui::omap::display_accessible_places();', self.dispatch)
         self.assertIn('void display_accessible_places();', self.header)
         self.assertIn(
-            '{ "listitems", "reader:places", "map", "sky", "center", "zones" }',
+            '{ "listitems", "reader:places", "map", "sky",'
+            ' "center", "zones" }',
             self.hub,
         )
         self.assertIn('node.actions.contains("activate")', self.hub)
@@ -58,7 +63,8 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertNotIn("row.position =", code)
         self.assertNotIn("row.total =", code)
         self.assertIn("row.label = p.name;", code)
-        self.assertIn('"places".equals(next.category) ? ""', self.reader)
+        self.assertIn('if ("places".equals(next.category)) {',
+                      self.reader)
         self.assertIn('snapshot.focus = "places:target:"', code)
         self.assertIn("constexpr std::size_t page_size = 80;", code)
         self.assertIn('"places:page:next"', code)
@@ -73,7 +79,9 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertIn("get_overmap_path_to( destination, driving )", code)
         self.assertIn("route.empty()", code)
         self.assertIn("you.omt_path = std::move( route );", code)
-        self.assertIn("you.assign_activity( autodrive_activity_actor() );", code)
+        self.assertIn(
+            "you.assign_activity( autodrive_activity_actor() );", code
+        )
         self.assertIn("you.assign_activity( ACT_TRAVELLING );", code)
         self.assertIn("you.set_desired_movement_mode(", code)
         self.assertIn("if( !shore )", code)
