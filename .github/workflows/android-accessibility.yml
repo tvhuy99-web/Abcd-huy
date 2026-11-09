@@ -91,6 +91,20 @@ jobs:
           restore-keys: |
             a11y-android-arm64-ndk28-${{ matrix.name }}-
             a11y-android-arm64-ndk28-
+      - name: Download Gradle distribution (retry transient network failures)
+        working-directory: android
+        run: |
+          for attempt in 1 2 3; do
+            echo "Gradle bootstrap attempt ${attempt}/3"
+            if bash ./gradlew --version; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Gradle distribution could not be downloaded after 3 attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 20))
+          done
       - name: Build installable debug APK
         working-directory: android
         env:
