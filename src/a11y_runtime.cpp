@@ -9,6 +9,7 @@
 #include "a11y_android.h"
 #include "a11y_context.h"
 #include "a11y_input.h"
+#include "input_context.h"
 #include "a11y_outcome.h"
 #include "a11y_world.h"
 #include "a11y_world_input_gate.h"
@@ -372,6 +373,18 @@ std::optional<std::string> poll_input( const void *input_owner )
             if( auto action = screen.handler( *intent ) ) {
                 return action;
             }
+        }
+        // All reader adapters share a final Back path. A screen may handle
+        // cancel itself (for an inner page), but a missing custom cancel
+        // must not trap the user. Only a QUIT/CANCEL action actually
+        // registered by this owning input_context can be synthesized.
+        // Mandatory non-cancellable dialogs have no such action.
+        if( intent->action == "cancel" ) {
+            const input_context &context = *static_cast<const input_context *>( input_owner );
+            if( auto action = registered_intent( context, *intent ) ) {
+                return action;
+            }
+            android::status( "unsupported", &*intent );
         }
     }
     return std::nullopt;
