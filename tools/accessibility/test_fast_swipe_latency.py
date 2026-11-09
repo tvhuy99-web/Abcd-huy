@@ -53,10 +53,21 @@ class FastSwipeLatencyContracts(unittest.TestCase):
 
     def test_stable_gesture_context_during_footsteps(self):
         ctrl = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
-        self.assertIn('":walk:" + snapshot.session', ctrl)
+        self.assertIn('":screen:" + snapshot.session', ctrl)
         self.assertIn('snapshot.frame + ":" + snapshot.generation', ctrl)
         self.assertIn("worldMovementEnabled()", ctrl)
         self.assertIn("snapshot.swipeMovementAllowed", ctrl)
+
+    def test_single_flight_accepts_no_steps_during_simulation(self):
+        bridge = (SRC / "a11y_android.cpp").read_text(encoding="utf-8")
+        context = (SRC / "input_context.cpp").read_text(encoding="utf-8")
+        runtime = (SRC / "a11y_runtime.cpp").read_text(encoding="utf-8")
+        self.assertIn("if( !world_step_ready )", bridge)
+        self.assertIn("world_step_ready = false;", bridge)
+        self.assertIn("matches_last_world( intent.token )", bridge)
+        self.assertIn("a11y::set_world_input_ready( this, true );", context)
+        self.assertIn("a11y::set_world_input_ready( this, false );", context)
+        self.assertIn('screens.back()->category == "DEFAULTMODE"', runtime)
 
     def test_no_new_movement_backlog_or_synthetic_steps(self):
         runtime = (SRC / "a11y_runtime.cpp").read_text(encoding="utf-8")
