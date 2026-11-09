@@ -3,6 +3,7 @@ package com.cleverraven.cataclysmdda;
 import android.app.Activity;
 import android.icu.text.BreakIterator;
 import android.text.InputType;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -134,7 +135,7 @@ public final class ReaderTextEditor {
                 items.add(new Choice(number, () -> listener.submit(number)));
             }
             if (rangeMax > 9) {
-                items.add(new Choice(string(R.string.a11yQuantityAll),
+                items.add(new Choice(string(R.string.a11yQuantityAll) + ": " + formatNumber(rangeMax),
                         () -> listener.submit(formatNumber(rangeMax))));
                 add(R.string.a11yQuantityOther, () -> open("digits"));
             }
@@ -201,12 +202,16 @@ public final class ReaderTextEditor {
     private void open(String next) {
         clearing = false;
         group = next;
-        selected = 0;
+        selected = quantityChoices && "digits".equals(next) ? 1 : 0;
         build();
         readCurrent();
     }
 
     private void render() {
+        // Do not show an editable value from a previous choice beside a
+        // one-tap quantity list. Reveal the field only in manual entry.
+        field.setVisibility(quantityChoices && "quantities".equals(group)
+                ? View.GONE : View.VISIBLE);
         choices.removeAllViews();
         int start = selected / 16 * 16;
         for (int i = start; i < Math.min(start + 16, items.size()); i++) {
