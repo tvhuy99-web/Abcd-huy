@@ -3299,7 +3299,7 @@ void ui::omap::display_accessible_places()
                                natural_group } );
             if( overmap_buffer.has_note( target ) ) {
                 const std::string &note = overmap_buffer.note( target );
-                const std::size_t text_start = std::get<2>( get_note_display_info( note ) );
+                const std::size_t text_start = std::get<2>( overmap_ui::get_note_display_info( note ) );
                 const std::string label = note.substr( text_start );
                 if( !label.empty() ) {
                     found.push_back( { label, target, distance, dx, dy, "" } );
@@ -3477,7 +3477,7 @@ void ui::omap::display_accessible_places()
             add_msg( m_info, _( "You are already in the selected map area." ) );
             return std::string( "TIMEOUT" );
         }
-        std::vector<tripoint_abs_omt> route = get_overmap_path_to( destination, driving );
+        std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, driving );
         if( route.empty() ) {
             add_msg( m_info, _( "No travel route to the selected place." ) );
             return std::string( "TIMEOUT" );
