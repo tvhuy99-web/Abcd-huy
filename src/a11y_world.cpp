@@ -678,6 +678,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:scan:south", _( "Scan 16 tiles south" ), "" ) );
     result.nodes.push_back( button( "reader:scan:west", _( "Scan 16 tiles west" ), "" ) );
     result.nodes.push_back( button( "reader:scan:east", _( "Scan 16 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
     // Nearby observations are read-only. A tile selection never walks, attacks
     // or constructs a route. Direction commands below use the normal engine.
