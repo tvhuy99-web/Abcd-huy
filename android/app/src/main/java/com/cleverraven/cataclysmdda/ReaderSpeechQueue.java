@@ -49,17 +49,11 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     private static final int MAX_PENDING = 8;
-    // Duplicate suppression (R21.1): the game announces bursts of similar
-    // events, and identical wording inside a short window carries no new
-    // information for the listener — the engine already coalesces exact
-    // repeats inside its own message log, this is the same policy at the
-    // speech boundary. Urgent warnings are never dropped by the window;
-    // they are still deduplicated against the active and pending requests
-    // so a repeated warning cannot queue up copies of itself.
-    private static final long DUPLICATE_WINDOW_MS = 4000;
+    // Only identical in-flight informational messages are coalesced.
+    // A focus gesture must always announce its newly selected item, even if
+    // the same text was spoken moments ago.
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final ArrayDeque<Request> pending = new ArrayDeque<>();
-    private final java.util.HashMap<String, Long> recentStarts = new java.util.HashMap<>();
     // Bounded counters for the diagnostics report (R21.4). Counts only —
     // never utterance text.
     private long statSpoken;
@@ -78,7 +72,6 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private String activeChunk;
     private long sequence;
     private int chunkIndex;
-    private Runnable focusDebounce;
     private Runnable completionTimeout;
     private boolean closed;
     private boolean healthy;
@@ -325,17 +318,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     public void focus(String key, String text) {
-        if (focusDebounce != null) {
-            handler.removeCallbacks(focusDebounce);
-        }
-        final String owner = contextKey;
-        focusDebounce = () -> {
-            focusDebounce = null;
-            if (owner.equals(contextKey)) {
-                say(key, text, FOCUS);
-            }
-        };
-        handler.postDelayed(focusDebounce, 120);
+        // Do not debounce a deliberate swipe. say() preempts the previous
+        // focus utterance and replaces pending focus speech, so when swipes
+        // come in quick succession only the final selection remains active.
+        say(key, text, FOCUS);
     }
 
     public void say(String key, String text, int priority) {
@@ -352,33 +338,21 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         if (!isReady() || text == null || text.trim().isEmpty()) {
             return;
         }
-        if (active != null && active.context.equals(contextKey) && active.key.equals(key)
-                && active.text.equals(text)) {
-            return;
-        }
-        // Duplicate suppression (R21.1): identical wording that is already
-        // speaking, already queued at an equal or higher priority, or was
-        // started inside the duplicate window adds nothing. The window
-        // never applies to URGENT — a repeated warning is spoken again —
-        // but an urgent request still cannot duplicate the active or a
-        // pending copy of itself.
-        if (active != null && active.context.equals(contextKey) && active.text.equals(text)) {
-            statDroppedDuplicate++;
-            return;
-        }
-        for (Request queued : pending) {
-            if (queued.context.equals(contextKey) && queued.text.equals(text)
-                    && queued.priority >= priority) {
+        // Focus is user-directed, even when it repeats the same label.
+        // For other speech, suppress only duplicate requests still active
+        // or waiting in this context; never suppress based on elapsed time.
+        if (priority != FOCUS) {
+            if (active != null && active.context.equals(contextKey)
+                    && active.text.equals(text)) {
                 statDroppedDuplicate++;
                 return;
             }
-        }
-        if (priority < URGENT) {
-            Long started = recentStarts.get(text);
-            if (started != null
-                    && SystemClock.elapsedRealtime() - started < DUPLICATE_WINDOW_MS) {
-                statDroppedDuplicate++;
-                return;
+            for (Request queued : pending) {
+                if (queued.context.equals(contextKey) && queued.text.equals(text)
+                        && queued.priority >= priority) {
+                    statDroppedDuplicate++;
+                    return;
+                }
             }
         }
         Request request = new Request(contextKey, key, text, priority, ttlMs);
@@ -456,14 +430,6 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             chunkIndex = 0;
             lastText = best.text;
             lastKey = best.key;
-            // Start-time record for the duplicate window in say(): the
-            // map is a bounded heuristic (cleared when it grows), losing
-            // old entries only weakens suppression, never correctness.
-            recentStarts.put(best.text, now);
-            if (recentStarts.size() > 64) {
-                recentStarts.clear();
-                recentStarts.put(best.text, now);
-            }
             speakChunk();
         }
     }
@@ -522,14 +488,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         // The duplicate window must not reach across a lifecycle
         // boundary either: what was said before a pause says nothing
         // about what the fresh foreground session needs to hear.
-        recentStarts.clear();
     }
 
     private void clearRequests() {
-        if (focusDebounce != null) {
-            handler.removeCallbacks(focusDebounce);
-            focusDebounce = null;
-        }
         removeCompletionTimeout();
         pending.clear();
         Request interrupted = active;
