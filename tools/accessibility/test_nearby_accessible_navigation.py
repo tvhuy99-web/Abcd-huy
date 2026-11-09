@@ -50,15 +50,16 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn('"nearby:page:next"', self.menu)
         self.assertIn('"nearby:page:previous"', self.menu)
         self.assertIn("const std::size_t end = std::min(", self.menu)
-        self.assertIn("node.total = static_cast<int>( nearby.size() );",
-                      self.menu)
+        # No spoken position counters on each entry.
+        self.assertNotIn("node.total = static_cast<int>( nearby.size() );",
+                         self.menu)
 
     def test_selected_target_uses_safety_aware_pathfinder(self):
         self.assertIn("g->safe_route_to( you, target.target", self.menu)
         self.assertIn("you.set_destination( *route );", self.menu)
         self.assertIn("if( !route )", self.menu)
         self.assertIn("if( route->empty() )", self.menu)
-        self.assertIn("get_map().impassable( target ) ? 1 : 0", self.menu)
+        self.assertIn("here.impassable( position ) ? 1 : 0", self.menu)
         self.assertIn("for( const std::string &creature : tile.seen_creatures )", self.menu)
         self.assertIn("for( const std::string &item_name : tile.seen_items )", self.menu)
         self.assertIn("if( a11y::enabled() )", self.menu)
