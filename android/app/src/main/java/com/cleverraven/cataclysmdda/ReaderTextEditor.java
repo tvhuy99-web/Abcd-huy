@@ -42,6 +42,8 @@ public final class ReaderTextEditor {
     private String group = "controls";
     private boolean uppercase;
     private boolean clearing;
+    private boolean replaceInitialNumberOnFirstDigit;
+    private String initialNumber = "";
     private long revision;
 
     private static final class Choice {
@@ -88,7 +90,12 @@ public final class ReaderTextEditor {
         root.addView(choices);
         // Number dialogs start on actual digits, not a long controls menu.
         // One-finger up/down selects a digit; double-tap enters it.
-        if (numeric) { group = "digits"; selected = 1; }
+        if (numeric) {
+            group = "digits";
+            selected = 1;
+            initialNumber = initial;
+            replaceInitialNumberOnFirstDigit = true;
+        }
         build();
     }
 
@@ -230,6 +237,17 @@ public final class ReaderTextEditor {
 
     private void insert(String value) {
         clearing = false;
+        // Starting a numeric entry replaces the old value rather than
+        // turning, for example, 12 followed by 5 into an accidental 125.
+        if (numeric && "digits".equals(group) && replaceInitialNumberOnFirstDigit
+                && getText().equals(initialNumber)) {
+            field.setText(value);
+            field.setSelection(value.length());
+            replaceInitialNumberOnFirstDigit = false;
+            listener.speak(value);
+            return;
+        }
+        replaceInitialNumberOnFirstDigit = false;
         String text = getText();
         int position = caret(text);
         field.setText(text.substring(0, position) + value + text.substring(position));
@@ -326,6 +344,7 @@ public final class ReaderTextEditor {
 
     private void stepBy(int direction) {
         clearing = false;
+        replaceInitialNumberOnFirstDigit = false;
         double value;
         try {
             value = Double.parseDouble(getText().trim());
