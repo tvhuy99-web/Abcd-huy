@@ -27,6 +27,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean adjustFocusedSetting(int delta);
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
+        /** Confirm the current native menu, selection or editor without guessing an action. */
+        void confirm();
+        /** Open advanced commands without changing the focused gameplay item. */
+        void openContextActions();
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -119,13 +123,12 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger_long_press"
                             + " context=" + owner);
                     longPressHandled = true;
-                    // A custom one-finger hold overrides its old Detail
-                    // action only while playing. Menu long-press keeps
-                    // opening the gesture-assignment picker as before.
+                    // World shortcuts retain their existing hold bindings.
+                    // In menus, long-press opens commands; detail is two-finger tap.
                     if (!listener.directWorldGesturesEnabled()
                             || !listener.handleCustomGesture(
                                     ReaderGestureBindings.idForHold(1))) {
-                        listener.detail();
+                        listener.openContextActions();
                     }
                 }
             }
@@ -403,6 +406,11 @@ public final class ReaderGestureSurface extends LinearLayout {
     private void dispatchMultiTap(int fingers, int count) {
         SessionDebugLog.event("GESTURE", "multi_tap fingers=" + fingers
                 + " count=" + count);
+        // Detail belongs to a single two-finger tap on BOTH world and menus.
+        if (fingers == 2 && count == 1) {
+            listener.twoFingerTap(count);
+            return;
+        }
         if (!listener.directWorldGesturesEnabled()) { return; }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);
         if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
@@ -559,6 +567,26 @@ public final class ReaderGestureSurface extends LinearLayout {
             }
             if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
                 cancelMultiHold();
+            }
+            // Two fingers up confirms on native menus and number editors only.
+            // Keep the world map's existing 16-tile directional scan intact.
+            if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
+                    && !cancelled && owner != null && owner.equals(listener.gestureContext())
+                    && !listener.directWorldGesturesEnabled()
+                    && event.getEventTime() - downTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())
+                    && TwoFingerBackGesture.matchesUp(event, backPointerIds,
+                            backPointerStartX, backPointerStartY, backPointerCount,
+                            listener.swipeDistancePx())) {
+                ignoreUntilPointersReleased = true;
+                multiple = false;
+                backPointerCount = 0;
+                cancelled = true;
+                owner = null;
+                previousTapOwner = null;
+                clearMultiTap();
+                listener.confirm();
+                return true;
             }
             // Two fingers down means Back on menus/forms. In active gameplay
             // it keeps its existing 16-tile scan action.
