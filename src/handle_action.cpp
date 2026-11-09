@@ -265,9 +265,9 @@ static void pickup_here_accessible()
     }
 
     struct pickup_choice {
-        item_location location;
+        std::vector<drop_location> sources;
         std::string name;
-        int available = 1;
+        int available = 0;
         int selected = 0;
         std::optional<std::string> draft;
     };
@@ -275,8 +275,21 @@ static void pickup_here_accessible()
     map_stack ground = here.i_at( pos );
     for( item &it : ground ) {
         const int quantity = it.count_by_charges() ? std::max( 1, it.charges ) : 1;
-        choices.push_back( { item_location( map_cursor( pos ), &it ),
-                             it.tname(), quantity, 0, std::nullopt } );
+        const std::string label = it.tname();
+        const item_location location( map_cursor( pos ), &it );
+        // Identically named ground items form one quantity row instead of
+        // requiring the listener to tick twenty indistinguishable entries.
+        const auto found = std::find_if( choices.begin(), choices.end(),
+        [&]( const pickup_choice &choice ) {
+            return choice.name == label;
+        } );
+        if( found != choices.end() ) {
+            found->sources.emplace_back( location, quantity );
+            found->available += quantity;
+        } else {
+            choices.push_back( { { { location, quantity } }, label,
+                                 quantity, 0, std::nullopt } );
+        }
     }
     if( choices.empty() ) {
         add_msg( m_info, _( "There is nothing to pick up here." ) );
@@ -285,7 +298,7 @@ static void pickup_here_accessible()
 
     if( choices.size() == 1 && choices.front().available == 1 ) {
         drop_locations only;
-        only.emplace_back( choices.front().location, 0 );
+        only.emplace_back( choices.front().sources.front().first, 0 );
         you.pick_up( only );
         return;
     }
@@ -388,13 +401,21 @@ static void pickup_here_accessible()
         if( action == "CONFIRM" ) {
             drop_locations selection;
             for( const pickup_choice &choice : choices ) {
-                // Revalidate item handles before giving them to the engine.
-                if( choice.selected <= 0 || !choice.location.valid() ) {
-                    continue;
+                int remaining = choice.selected;
+                // Keep the original item handles and the requested total.
+                // Picking the entire source uses the engine's quantity=0
+                // convention; partial charged stacks use the precise count.
+                for( const drop_location &source : choice.sources ) {
+                    if( remaining <= 0 ) {
+                        break;
+                    }
+                    if( !source.first.valid() ) {
+                        continue;
+                    }
+                    const int take = std::min( remaining, source.second );
+                    selection.emplace_back( source.first, take == source.second ? 0 : take );
+                    remaining -= take;
                 }
-                const int quantity = choice.selected == choice.available ? 0 :
-                                     choice.selected;
-                selection.emplace_back( choice.location, quantity );
             }
             if( !selection.empty() ) {
                 you.pick_up( selection );
