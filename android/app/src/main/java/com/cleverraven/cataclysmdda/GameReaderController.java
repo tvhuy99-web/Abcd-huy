@@ -1269,6 +1269,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { editor.navigate(delta); return; }
+        if (snapshot == null && !comprehensiveMenu) {
+            // Native loading screens do not publish a focusable list.
+            // A swipe here is a request for the latest loading status,
+            // not a silent attempt to navigate the old menu.
+            readCurrent();
+            return;
+        }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
                 hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);
@@ -2263,8 +2270,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) {
-            if (snapshot == null && !lastLoadingStatus.isEmpty()) {
-                feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
+            if (snapshot == null) {
+                feedback(lastLoadingStatus.isEmpty()
+                        ? activity.getString(R.string.a11yReaderWaiting)
+                        : activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
             }
             return;
         }
