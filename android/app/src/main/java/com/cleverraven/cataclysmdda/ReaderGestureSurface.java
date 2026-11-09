@@ -632,12 +632,16 @@ public final class ReaderGestureSurface extends LinearLayout {
                     String direction = cardinal(dx, dy, threshold);
                     if (direction != null) {
                         clearMultiTap();
-                        if (maxPointers == 2 && listener.directWorldGesturesEnabled()) {
-                            // Two-finger world swipes keep their original directional scan.
-                            listener.scanDirection("right".equals(direction) ? 1
-                                    : "left".equals(direction) ? -1 : 0,
-                                    "down".equals(direction) ? 1
-                                    : "up".equals(direction) ? -1 : 0);
+                        if (maxPointers == 2) {
+                            // Only live-world two-finger swipes scan. Modal taps
+                            // are still received, and modal up/down already
+                            // took their dedicated confirmation/back paths.
+                            if (listener.directWorldGesturesEnabled()) {
+                                listener.scanDirection("right".equals(direction) ? 1
+                                        : "left".equals(direction) ? -1 : 0,
+                                        "down".equals(direction) ? 1
+                                        : "up".equals(direction) ? -1 : 0);
+                            }
                         } else if (maxPointers >= 3 && listener.directWorldGesturesEnabled()) {
                             String gesture = ReaderGestureBindings.idForSwipe(
                                     maxPointers, direction);
