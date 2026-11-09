@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_A11Y_ANDROID_H
 #define CATA_SRC_A11Y_ANDROID_H
 
+#include <cstddef>
 #include <cstdint>
 #include <optional>
 #include <string>
@@ -18,6 +19,9 @@ void configure( bool enabled, bool suspended );
 bool enqueue( semantic_intent intent );
 std::optional<semantic_intent> take();
 void clear();
+// Called by Android on entering its UI-only command hub; the native
+// modal/lifecycle boundaries already invalidate older context tokens.
+std::size_t cancel_pending_world_steps();
 void publish( const std::string &json );
 void announce( const std::string &text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
