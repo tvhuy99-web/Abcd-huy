@@ -840,11 +840,25 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (includeDetail && node.selected) {
             text.append(". ").append(activity.getString(R.string.a11ySelected));
         }
-        // Position and total are available on explicit Detail, but repeatedly
-        // announcing "item 5 of 40" makes quick inventory/menu browsing noisy.
-        if (includeDetail && node.position > 0 && node.total > 0) {
+        // Read the position on every focus move, not only on Detail.
+        // Nearby entries may have the same label (e.g. two distinct doors),
+        // and their 1/2, 2/2 markers prevent an endless-list impression.
+        int spokenPosition = node.position;
+        int spokenTotal = node.total;
+        if ((spokenPosition <= 0 || spokenTotal <= 0) && snapshot != null
+                && !"DEFAULTMODE".equals(snapshot.category)) {
+            List<ReaderSnapshot.Node> siblings = visibleNodes();
+            for (int i = 0; i < siblings.size(); i++) {
+                if (siblings.get(i).id.equals(node.id)) {
+                    spokenPosition = i + 1;
+                    spokenTotal = siblings.size();
+                    break;
+                }
+            }
+        }
+        if (spokenPosition > 0 && spokenTotal > 0) {
             text.append(", ").append(activity.getString(
-                    R.string.a11yPosition, node.position, node.total));
+                    R.string.a11yPosition, spokenPosition, spokenTotal));
         }
         if (!node.enabled) {
             text.append(". ").append(node.disabledReason.isEmpty()
@@ -1820,8 +1834,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private String hubSpoken(List<GameActionHub.Entry> entries, int selected) {
-        // Repeated menu browsing speaks the command name only.
-        return entries.get(selected).label;
+        if (entries.isEmpty() || selected < 0 || selected >= entries.size()) {
+            return "";
+        }
+        return entries.get(selected).label + ", "
+                + activity.getString(R.string.a11yPosition, selected + 1, entries.size());
     }
 
     private String gestureChoiceLabel(int index) {
@@ -2225,9 +2242,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (editor != null) { editor.readCurrent(); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                feedback(hubActionLabel(hubActionChoice));
+                feedback(hubActionLabel(hubActionChoice) + ", "
+                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
             } else if (choosingGesture) {
-                feedback(gestureChoiceLabel(gestureChoice));
+                feedback(gestureChoiceLabel(gestureChoice) + ", "
+                        + activity.getString(R.string.a11yPosition, gestureChoice + 1,
+                                ReaderGestureBindings.IDS.length + 2));
             } else {
                 List<GameActionHub.Entry> items = hubEntries();
                 if (items.isEmpty()) {
