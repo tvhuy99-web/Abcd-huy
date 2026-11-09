@@ -124,6 +124,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastEnabled;
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
+    private int worldJavaTimingSample;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
@@ -301,10 +302,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     public void receive(String json) {
         final long owner = presentationEpoch;
+        final long receivedAt = SystemClock.elapsedRealtime();
         handler.post(() -> {
             if (closed || !foreground || !preferences.isEnabled() || owner != presentationEpoch) {
                 return;
             }
+            final long dispatchedAt = SystemClock.elapsedRealtime();
             try {
                 JSONObject object = new JSONObject(json);
                 if (object.has("status")) {
@@ -376,6 +379,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 ReaderSnapshot next = new ReaderSnapshot(object);
+                final long parsedAt = SystemClock.elapsedRealtime();
                 SessionDebugLog.event("SCREEN", "category=" + next.category
                         + " title=" + next.title + " focus=" + next.focus
                         + " nodes=" + next.nodes.size());
@@ -639,6 +643,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
                 render();
+                if (worldView && (++worldJavaTimingSample % 16) == 0) {
+                    SessionDebugLog.event("WORLD_JAVA_TIMING",
+                            "jni_to_ui_ms=" + (dispatchedAt - receivedAt)
+                            + " parse_ms=" + (parsedAt - dispatchedAt)
+                            + " ui_update_ms=" + (SystemClock.elapsedRealtime() - parsedAt)
+                            + " nodes=" + next.nodes.size());
+                }
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredMenu && next.find(focus) != null) {
@@ -1981,6 +1992,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         root.cancelGesture();
+        // The hub lives only in Java, so opening it would not otherwise
+        // invalidate the native DEFAULTMODE token. Prevent older swipes
+        // from moving the character after this explicit mode change.
+        try {
+            final int discarded = CataclysmDDA.nativeCancelPendingWorldSteps();
+            if (discarded != 0) {
+                SessionDebugLog.event("GESTURE_ACTION",
+                        "hub_cancelled_pending_world_steps=" + discarded);
+            }
+        } catch (UnsatisfiedLinkError unavailable) {
+            SessionDebugLog.event("ERROR", "JNI nativeCancelPendingWorldSteps " + unavailable);
+        }
         comprehensiveMenu = true;
         sonar.setWorldActive(false);
         choosingGesture = false;
