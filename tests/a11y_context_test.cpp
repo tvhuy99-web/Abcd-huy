@@ -131,7 +131,7 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
     world.category = "DEFAULTMODE";
     world.swipe_movement_allowed = true;
     world.revision = 15;
-    for( const std::string &direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
+    for( const char *direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
         a11y::semantic_node node;
         node.id = direction;
         node.actions = { "focus", "activate" };
@@ -146,7 +146,7 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
     // previous turn. This same-generation intent is still a single step.
     swipe.revision = 2;
     REQUIRE( stack.accepts( swipe.token ) );
-    for( const std::string &direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
+    for( const char *direction : { "UP", "DOWN", "LEFT", "RIGHT" } ) {
         swipe.node = direction;
         CHECK( a11y::live_world_walk_command( world, swipe ) );
     }
