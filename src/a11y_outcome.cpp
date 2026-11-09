@@ -27,9 +27,13 @@ void record_action_outcome( action_outcome_kind kind, std::string detail )
     last_outcome = std::move( outcome );
     if( kind == action_outcome_kind::blocked ||
         kind == action_outcome_kind::safe_mode_blocked ) {
-        // The blocked-step cue duplicates this outcome, which the world
-        // snapshot already speaks; the blocker was classified only from
-        // what the character could perceive (R21.2).
+        // World snapshots keep this outcome for later review, but routine
+        // world refreshes are intentionally silent. Announce each blocked
+        // attempt immediately, even when the player has not moved or the
+        // game turn did not advance. Do not announce successful steps.
+        // The name is supplied by the movement engine after it has
+        // classified the perceived obstacle (never by a hidden-map scan).
+        android::announce( describe_action_outcome( last_outcome ), 3 );
         android::cue( "blocked" );
     }
 }
@@ -54,7 +58,7 @@ std::string describe_action_outcome( const action_outcome &outcome )
         case action_outcome_kind::opened:
             return string_format( _( "Opened the %s." ), outcome.detail );
         case action_outcome_kind::blocked:
-            return string_format( _( "Blocked by %s." ), outcome.detail );
+            return string_format( _( "%s. Cannot move." ), outcome.detail );
         case action_outcome_kind::attacked:
             return string_format( _( "Attacked %s." ), outcome.detail );
         case action_outcome_kind::stance_changed:

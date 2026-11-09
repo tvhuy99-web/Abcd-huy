@@ -1165,6 +1165,20 @@ msgid "Blocked by %s."
 msgstr "Bị chặn bởi %s."
 
 #, c-format
+msgid "%s. Cannot move."
+msgstr "%s, không thể di chuyển."
+
+msgid "your condition"
+msgstr "tình trạng hiện tại của bạn"
+
+msgid "your shell"
+msgstr "lớp vỏ của bạn"
+
+#, c-format
+msgid "Actions for %s"
+msgstr "Thao tác với %s"
+
+#, c-format
 msgid "Attacked %s."
 msgstr "Đã tấn công %s."
 

@@ -2222,6 +2222,11 @@ int game::inventory_item_menu( item_location locThisItem,
                                                    u.get_wielded_item()->has_flag( flag_NO_UNWIELD ) ?
                                                    hint_rating::cant : hint_rating::good;
                 action_menu.reset();
+                if( a11y::enabled() ) {
+                    // The selected item's actions need their own named
+                    // reader screen, not a generic silent "Menu" popup.
+                    action_menu.title = string_format( _( "Actions for %s" ), oThisItem.tname() );
+                }
                 action_menu.allow_anykey = true;
                 float popup_width = 0.0;
                 const auto addentry = [&]( const char key, const std::string & text, const hint_rating hint ) {
@@ -2330,7 +2335,11 @@ int game::inventory_item_menu( item_location locThisItem,
             }
 
             const int prev_selected = action_menu.selected;
-            ui_impl = action_menu.query( false );
+            // With the one-shot query, each focus swipe destroys the
+            // semantic screen scope and temporarily publishes "inactive".
+            // Keep it alive across navigation until an actual action is
+            // selected; retain the original one-step ImGui loop otherwise.
+            ui_impl = action_menu.query( a11y::enabled() );
             if( action_menu.ret >= 0 ) {
                 cMenu = action_menu.ret; /* Remember: hotkey == retval, see addentry above. */
             } else if( action_menu.ret == UILIST_UNBOUND && action_menu.ret_act == "RIGHT" ) {
