@@ -973,6 +973,47 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
 
 // Deliberately bypass observe_tile() and its visibility/memory restrictions:
 // this explicit assistive scan reveals the live map, even behind walls.
+unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
+{
+    unrestricted_tile tile;
+    map &here = get_map();
+    if( !here.inbounds( position ) ) {
+        return tile;
+    }
+    tile.terrain = remove_color_tags( here.tername( position ) );
+    if( here.has_furn( position ) ) {
+        tile.furniture = remove_color_tags( here.furnname( position ) );
+    }
+    tile.impassable = here.impassable( position );
+    for( const auto &entry : here.field_at( position ) ) {
+        tile.fields.push_back( remove_color_tags( entry.second.name() ) );
+    }
+    const trap &hazard = here.tr_at( position );
+    if( !hazard.is_null() ) {
+        tile.traps.push_back( remove_color_tags( hazard.name() ) );
+    }
+    const Creature *creature = get_creature_tracker().creature_at( position, true );
+    if( creature != nullptr && creature != &get_avatar() ) {
+        tile.creatures.push_back( remove_color_tags( creature->disp_name() ) );
+    }
+    const optional_vpart_position vehicle = here.veh_at( position );
+    if( vehicle ) {
+        tile.vehicle = remove_color_tags( vehicle->vehicle().name );
+    }
+    std::map<std::string, int> counts;
+    for( const item &obj : here.i_at( position ) ) {
+        const std::string name = remove_color_tags( obj.tname() );
+        if( !name.empty() ) {
+            ++counts[name];
+        }
+    }
+    for( const auto &entry : counts ) {
+        tile.items.push_back( entry.second == 1 ? entry.first :
+                              string_format( _( "%1$s [%2$d]" ), entry.first, entry.second ) );
+    }
+    return tile;
+}
+
 void announce_linear_scan( const int dx, const int dy )
 {
     if( std::abs( dx ) + std::abs( dy ) != 1 ) {
@@ -980,8 +1021,6 @@ void announce_linear_scan( const int dx, const int dy )
     }
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
-    // The swipe itself supplies the direction. Announce the observations
-    // immediately, without repeating the gesture or the 16-tile range.
     std::string spoken;
     for( int distance = 1; distance <= 16; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
@@ -989,36 +1028,32 @@ void announce_linear_scan( const int dx, const int dy )
         if( !here.inbounds( pos ) ) {
             detail = _( "Outside loaded map" );
         } else {
-            detail = here.tername( pos );
-            if( here.has_furn( pos ) ) {
-                detail += ". " + here.furnname( pos );
+            const unrestricted_tile tile = scan_unrestricted_tile( pos );
+            detail = tile.terrain;
+            if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
+                detail += ". " + tile.furniture;
             }
-            if( here.impassable( pos ) ) {
+            if( tile.impassable ) {
                 detail += ". " + std::string( _( "Impassable" ) );
             }
-            for( const auto &entry : here.field_at( pos ) ) {
-                detail += ". " + entry.second.name();
+            for( const std::string &field : tile.fields ) {
+                detail += ". " + field;
             }
-            const trap &hazard = here.tr_at( pos );
-            if( !hazard.is_null() ) {
-                detail += ". " + string_format( _( "Trap: %s" ), hazard.name() );
+            for( const std::string &hazard : tile.traps ) {
+                detail += ". " + string_format( _( "Trap: %s" ), hazard );
             }
-            const Creature *creature = get_creature_tracker().creature_at( pos, true );
-            if( creature != nullptr && creature != &get_avatar() ) {
-                detail += ". " + creature->disp_name();
+            for( const std::string &creature : tile.creatures ) {
+                detail += ". " + creature;
             }
-            const optional_vpart_position vp = here.veh_at( pos );
-            if( vp ) {
-                detail += ". " + string_format( _( "Vehicle: %s" ), vp->vehicle().name );
+            if( !tile.vehicle.empty() ) {
+                detail += ". " + string_format( _( "Vehicle: %s" ), tile.vehicle );
             }
-            std::map<std::string, int> items;
-            for( const item &obj : here.i_at( pos ) ) {
-                ++items[obj.tname()];
-            }
-            for( const auto &entry : items ) {
-                detail += ". " + entry.first;
-                if( entry.second > 1 ) {
-                    detail += " " + std::to_string( entry.second );
+            if( !tile.items.empty() ) {
+                // Distinguish the furniture from items on the same tile.
+                // Never assert that items are inside an actual container.
+                detail += ". " + std::string( _( "Items:" ) );
+                for( const std::string &name : tile.items ) {
+                    detail += " " + name + ".";
                 }
             }
         }
@@ -1027,8 +1062,6 @@ void announce_linear_scan( const int dx, const int dy )
         }
         spoken += string_format( _( "Tile %1$d: %2$s." ), distance, detail );
     }
-    // Native calls never read game state off-thread. Android handles the
-    // prefixed utterance as long-form TTS rather than a short event notice.
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
 }
 
