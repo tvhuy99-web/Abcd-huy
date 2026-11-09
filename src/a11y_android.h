@@ -19,6 +19,9 @@ void configure( bool enabled, bool suspended );
 bool enqueue( semantic_intent intent );
 std::optional<semantic_intent> take();
 void clear();
+// Native movement readiness is set only by the game input wait. Unlike
+// menu intents, an accepted movement must never sit behind a game turn.
+void set_world_step_ready( std::optional<context_token> token, bool ready );
 // Called by Android on entering its UI-only command hub; the native
 // modal/lifecycle boundaries already invalidate older context tokens.
 std::size_t cancel_pending_world_steps();
