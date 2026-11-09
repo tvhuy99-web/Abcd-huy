@@ -162,6 +162,12 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.onGameCue(name); }
     }
 
+    /** Visibility-filtered cardinal distance from the native game thread. */
+    public void onAccessibilityAlignment(int distance) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onAlignmentDistance(distance); }
+    }
+
     /**
      * SDL debug messages have no semantic game nodes. They need an emergency
      * reader panel even if the game menu never finished initializing.
