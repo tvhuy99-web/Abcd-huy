@@ -24,6 +24,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "enum_traits.h"
+#include "field.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
