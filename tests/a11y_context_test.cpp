@@ -2,6 +2,7 @@
 #include <utility>
 
 #include "a11y_context.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_world_input_gate.h"
 #include "cata_catch.h"
 
@@ -200,4 +201,29 @@ TEST_CASE( "a11y_world_step_node_identity_is_exact",
     CHECK_FALSE( a11y::is_cardinal_step_node( "LEFTUP" ) );
     CHECK_FALSE( a11y::is_cardinal_step_node( "reader:scan:north" ) );
     CHECK_FALSE( a11y::is_cardinal_step_node( "world:here" ) );
+}
+
+TEST_CASE( "a11y_item_quantities_are_complete_one_step_choices",
+           "[a11y][quantity]" )
+{
+    // The same strict parser is used by inventory multi-select (pickup,
+    // drop, insert and trade) and the one-tile quick pickup menu.
+    REQUIRE( a11y::selected_quantity( "1", 1 ) == std::optional<std::size_t>( 1 ) );
+    REQUIRE( a11y::selected_quantity( "0", 1 ) == std::optional<std::size_t>( 0 ) );
+    REQUIRE( a11y::selected_quantity( "12", 30 ) == std::optional<std::size_t>( 12 ) );
+    REQUIRE( a11y::selected_quantity( "30", 30 ) == std::optional<std::size_t>( 30 ) );
+    REQUIRE( a11y::selected_quantity( "1000000", 1000000 ) ==
+             std::optional<std::size_t>( 1000000 ) );
+
+    // Never silently clamp a stale choice to a different count, accept
+    // negatives/whitespace, or overflow the native available amount.
+    CHECK_FALSE( a11y::selected_quantity( "", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "31", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "-1", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "+1", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "1.5", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "1 ", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "999999999999999999999999", 30 ) );
+    CHECK_FALSE( a11y::selected_quantity( "1", 0 ) );
+    REQUIRE( a11y::selected_quantity( "0", 0 ) == std::optional<std::size_t>( 0 ) );
 }
