@@ -18,6 +18,8 @@ bool suspended();
 void synchronize_lifecycle();
 void replace_game_session();
 bool bound_to( const void *input_owner );
+// Open/close the single-flight native world input window on the game thread.
+void set_world_input_ready( const void *input_owner, bool ready );
 // Activates scopes that were constructed (and published a snapshot) while
 // the reader was disabled or suspended, so a screen that is already open
 // when the reader becomes available starts serving the reader without
