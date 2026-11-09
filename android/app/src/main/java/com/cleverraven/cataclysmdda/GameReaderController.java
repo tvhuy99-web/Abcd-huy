@@ -1316,7 +1316,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             for (ReaderSnapshot.Node candidate : snapshot.nodes) {
                 String label = candidate.label.trim().toLowerCase(Locale.ROOT);
                 if (candidate.enabled && candidate.actions.contains("activate")
-                        && ("YES".equals(candidate.id) || "action:YES".equals(candidate.id)
+                        && ("option:0".equals(candidate.id) || "YES".equals(candidate.id)
+                            || "action:YES".equals(candidate.id)
                             || label.equals("yes") || label.equals("có")
                             || label.startsWith("yes ") || label.startsWith("có "))) {
                     focus = candidate.id;
@@ -1346,6 +1347,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // fire arbitrary world commands or status/document nodes.
         if (chosen.enabled && chosen.actions.contains("activate")
                 && ("listitem".equals(chosen.role)
+                    || chosen.id.startsWith("option:")
+                    || chosen.id.startsWith("response:")
                     || "dialogue".equals(snapshot.category)
                     || "MAIN_MENU".equals(snapshot.category))) {
             activate();
@@ -2303,7 +2306,31 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (backReaderLayer()) { return; }
-        if (snapshot != null) { send("cancel", ""); }
+        if (snapshot != null) {
+            // A mandatory Yes/No dialog may have no registered Cancel.
+            // Treat Back as the native No response, never as Yes.
+            if ("YESNO".equals(snapshot.category)) {
+                ReaderSnapshot.Node no = snapshot.find("option:1");
+                if (no != null && no.enabled && no.actions.contains("activate")) {
+                    String previous = focus;
+                    focus = no.id;
+                    send("activate", "");
+                    focus = previous;
+                    return;
+                }
+            }
+            // Informational popups sometimes expose Continue but no Quit.
+            ReaderSnapshot.Node continueNode = snapshot.find("continue");
+            if (continueNode != null && continueNode.enabled
+                    && continueNode.actions.contains("activate")) {
+                String previous = focus;
+                focus = continueNode.id;
+                send("activate", "");
+                focus = previous;
+                return;
+            }
+            send("cancel", "");
+        }
     }
 
     /**
