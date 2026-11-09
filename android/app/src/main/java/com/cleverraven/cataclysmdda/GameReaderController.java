@@ -824,7 +824,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {
         StringBuilder text = new StringBuilder(node.label);
-        if (!node.value.isEmpty()) { text.append(". ").append(node.value); }
+        // A semantic value identical to its label adds no information.
+        if (!node.value.isEmpty() && !node.value.equals(node.label)) {
+            text.append(". ").append(node.value);
+        }
         // Inventory quantity rows already say how many are selected. Adding
         // "checked/unchecked" repeats the same fact on every swipe.
         boolean quantityRow = snapshot != null && "inventory".equals(snapshot.category)
