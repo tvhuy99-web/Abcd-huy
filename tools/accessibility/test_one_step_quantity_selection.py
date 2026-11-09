@@ -88,6 +88,9 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
                         code.index('send("activate", "");'))
         self.assertIn('pocket_node.actions = { "focus" };', self.inventory)
         self.assertIn('intent.node.rfind( "pocket:", 0 ) == 0', self.inventory)
+        self.assertIn('child.id.startsWith("pocket:")', self.controller)
+        self.assertIn('node.id.equals(child.parentId)', self.controller)
+        self.assertIn('information += ". " + nodeText(child, true);', self.controller)
 
     def test_other_numeric_forms_keep_existing_submit_behavior(self):
         self.assertIn('this(activity, initial, numeric, integer, rangeMin, rangeMax, rangeStep, false, listener)',
