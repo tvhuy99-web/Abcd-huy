@@ -956,6 +956,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void openContextActions() {
         if (debugReport != null || closed) { return; }
+        if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             showHubActionChoices();
             return;
