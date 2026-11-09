@@ -21,7 +21,10 @@ public final class GameMenuGestureDispatchTest {
     private static final class Actions implements ReaderGestureSurface.Listener {
         boolean playing;
         int backs;
+        int confirms;
+        int contextMenus;
         int scans;
+        int northScans;
         int sliderChanges;
         int actionMenus;
         int activations;
@@ -51,6 +54,8 @@ public final class GameMenuGestureDispatchTest {
             return true;
         }
         @Override public void goBack() { backs++; }
+        @Override public void confirm() { confirms++; }
+        @Override public void openContextActions() { contextMenus++; }
         @Override public boolean movementPracticeEnabled() { return false; }
         @Override public void practiceMovementDirection(int dx, int dy) { }
         @Override public boolean worldMovementEnabled() { return false; }
@@ -58,8 +63,11 @@ public final class GameMenuGestureDispatchTest {
         @Override public boolean directWorldGesturesEnabled() { return playing; }
         @Override public void scanDirection(int dx, int dy) {
             if (dx == 0 && dy == 1) { scans++; }
+            if (dx == 0 && dy == -1) { northScans++; }
         }
-        @Override public void twoFingerTap(int count) { }
+        @Override public void twoFingerTap(int count) {
+            if (count == 1) { details++; }
+        }
         @Override public void threeFingerTap() { tripleFingerTaps++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
@@ -159,6 +167,19 @@ public final class GameMenuGestureDispatchTest {
                 MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
                 200, 210, true);
         touch(surface, start, start + 130, MotionEvent.ACTION_UP, 200, 0, false);
+    }
+
+    private static void swipeTwoUp(ReaderGestureSurface surface) {
+        long start = SystemClock.uptimeMillis();
+        touch(surface, start, start, MotionEvent.ACTION_DOWN, 210, 0, false);
+        touch(surface, start, start + 30,
+                MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                210, 210, true);
+        touch(surface, start, start + 75, MotionEvent.ACTION_MOVE, 110, 100, true);
+        touch(surface, start, start + 100,
+                MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                110, 100, true);
+        touch(surface, start, start + 130, MotionEvent.ACTION_UP, 110, 0, false);
     }
 
     @Test
@@ -310,7 +331,8 @@ public final class GameMenuGestureDispatchTest {
             Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
             scenario.onActivity(activity -> {
                 assertEquals(1, actions.oneFingerHolds);
-                assertEquals(1, actions.details);
+                assertEquals(0, actions.details);
+                assertEquals(1, actions.contextMenus);
                 touch(surface[0], down[0], SystemClock.uptimeMillis(),
                         MotionEvent.ACTION_UP, 80, 0, false);
             });
@@ -377,6 +399,52 @@ public final class GameMenuGestureDispatchTest {
             scenario.onActivity(activity -> {
                 assertEquals(0, actions.threeFingerHolds);
                 endMulti(surface[0], 3, down[0], 110);
+            });
+        }
+    }
+
+    @Test
+    public void upSwipeConfirmsOnlyInMenusAndScansInWorld() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                Actions actions = new Actions();
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                swipeTwoUp(surface);
+                assertEquals(1, actions.confirms);
+                assertEquals(0, actions.northScans);
+                actions.playing = true;
+                swipeTwoUp(surface);
+                assertEquals(1, actions.confirms);
+                assertEquals(1, actions.northScans);
+            });
+        }
+    }
+
+    @Test
+    public void twoFingerSingleTapReadsDetailInMenus() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface, 2, start);
+                endMulti(surface, 2, start, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.details);
+                assertEquals(0, actions.confirms);
+                assertEquals(0, actions.backs);
             });
         }
     }
