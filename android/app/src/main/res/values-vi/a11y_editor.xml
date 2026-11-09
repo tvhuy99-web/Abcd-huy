@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="a11yQuantityInstructions">Chọn một số để đánh dấu số lượng ngay và trở về danh sách. Quay lại để hủy. Xác nhận chung khi đã chọn xong vật phẩm.</string>
+    <string name="a11yQuantityInstructions">Chọn số lượng. Chạm số để đánh dấu ngay. Quay lại để hủy.</string>
     <string name="a11yQuantityDeselect">Bỏ chọn vật phẩm, số không</string>
     <string name="a11yQuantityAll">Chọn tất cả số lượng có sẵn</string>
     <string name="a11yQuantityOther">Nhập số lượng khác</string>
