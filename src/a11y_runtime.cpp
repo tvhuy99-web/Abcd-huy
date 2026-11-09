@@ -7,6 +7,7 @@
 
 #include "a11y_android.h"
 #include "a11y_context.h"
+#include "a11y_input.h"
 #include "a11y_outcome.h"
 #include "a11y_world.h"
 
@@ -33,6 +34,8 @@ std::vector<std::unique_ptr<screen_data>> screens;
 // activate_pending_scopes() to give already-open screens a reader adapter
 // when the reader becomes available (R03.3). Game thread only.
 std::vector<screen_scope *> live_scopes;
+// Destruct before screens and live_scopes at process exit.
+std::unique_ptr<screen_scope> retained_world_scope;
 std::uint64_t seen_epoch = 0;
 
 void publish_current()
@@ -57,6 +60,8 @@ void replace_game_session()
     reset_status_monitor();
     // The previous character's last action outcome must not carry over.
     reset_action_outcomes();
+    retained_world_scope.reset();
+    invalidate_command_snapshot_cache();
     contexts.invalidate_session();
     android::clear();
     for( auto &screen : screens ) {
@@ -75,6 +80,7 @@ void synchronize_lifecycle()
     if( current != seen_epoch ) {
         seen_epoch = current;
         reset_status_monitor();
+        invalidate_command_snapshot_cache();
         // Force a generation boundary even when two Activity callbacks report
         // the same state. Tokens from an old UI owner must never become valid.
         contexts.set_suspended( true );
@@ -115,6 +121,9 @@ void screen_scope::activate()
     if( frame != 0 || !enabled() ) {
         return;
     }
+    if( screen_category != "DEFAULTMODE" ) {
+        invalidate_command_snapshot_cache();
+    }
     frame = contexts.enter( "semantic-screen", screen_category );
     auto screen = std::make_unique<screen_data>();
     screen->frame = frame;
@@ -123,6 +132,21 @@ void screen_scope::activate()
     screen->handler = std::move( intent_callback );
     screens.push_back( std::move( screen ) );
     android::clear();
+}
+
+void screen_scope::rebind( const void *input_owner, intent_handler handler )
+{
+    owner = input_owner;
+    if( frame == 0 ) {
+        intent_callback = std::move( handler );
+        return;
+    }
+    const auto found = std::find_if( screens.begin(), screens.end(),
+    [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
+    if( found != screens.end() ) {
+        ( *found )->input_owner = input_owner;
+        ( *found )->handler = std::move( handler );
+    }
 }
 
 screen_scope::~screen_scope()
@@ -148,6 +172,26 @@ screen_scope::~screen_scope()
             ++screens.back()->revision;
         }
         publish_current();
+    }
+}
+
+screen_scope &bind_world_screen( const void *input_owner, intent_handler handler )
+{
+    if( !retained_world_scope ) {
+        retained_world_scope = std::make_unique<screen_scope>(
+                                   input_owner, "DEFAULTMODE", std::move( handler ) );
+    } else {
+        retained_world_scope->rebind( input_owner, std::move( handler ) );
+    }
+    return *retained_world_scope;
+}
+
+void unbind_world_screen()
+{
+    if( retained_world_scope ) {
+        // The previous turn's lambda contains local references; clear it
+        // before the owning input_context leaves the stack.
+        retained_world_scope->rebind( nullptr, {} );
     }
 }
 
@@ -235,7 +279,19 @@ std::optional<std::string> poll_input( const void *input_owner )
     }
     while( auto intent = android::take() ) {
         screen_data &screen = *screens.back();
-        if( !contexts.accepts( intent->token ) || intent->revision != screen.revision ||
+        // A walking swipe can arrive while the previous turn is still
+        // simulating. Keep the strict frame/generation check, but allow one
+        // older revision ONLY for cardinal steps when the fresh native
+        // snapshot still permits walking. Other stale commands stay stale.
+        const bool previous_world_step =
+            screen.category == "DEFAULTMODE" && screen.snapshot.swipe_movement_allowed &&
+            intent->action == "activate" &&
+            ( intent->node == "UP" || intent->node == "DOWN" ||
+              intent->node == "LEFT" || intent->node == "RIGHT" ) &&
+            intent->revision < screen.revision &&
+            screen.revision - intent->revision == 1;
+        if( !contexts.accepts( intent->token ) ||
+            ( intent->revision != screen.revision && !previous_world_step ) ||
             intent->request <= screen.last_request ) {
             android::status( "stale", &*intent );
             continue;
