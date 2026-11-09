@@ -16,6 +16,7 @@
 #include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_perception.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
 #include "a11y_world.h"
 #include "activity_actor_definitions.h"
@@ -269,7 +270,6 @@ static void pickup_here_accessible()
         std::string name;
         int available = 0;
         int selected = 0;
-        std::optional<std::string> draft;
     };
     std::vector<pickup_choice> choices;
     map_stack ground = here.i_at( pos );
@@ -288,7 +288,7 @@ static void pickup_here_accessible()
             found->available += quantity;
         } else {
             choices.push_back( { { { location, quantity } }, label,
-                                 quantity, 0, std::nullopt } );
+                                 quantity, 0 } );
         }
     }
     if( choices.empty() ) {
@@ -334,26 +334,15 @@ static void pickup_here_accessible()
                 return std::string( "TIMEOUT" );
             }
             if( choice.available > 1 && intent.action == "set_value" ) {
-                // The reader runtime already checks the integer form range.
-                choice.draft = intent.value;
-                return std::string( "TIMEOUT" );
-            }
-            if( intent.action == "cancel_draft" ) {
-                choice.draft.reset();
-                return std::string( "TIMEOUT" );
-            }
-            if( intent.action == "apply" && choice.draft ) {
-                try {
-                    const int count = std::stoi( *choice.draft );
-                    if( count < 0 || count > choice.available ) {
-                        return std::nullopt;
-                    }
-                    choice.selected = count;
-                    choice.draft.reset();
-                    return std::string( "TIMEOUT" );
-                } catch( const std::exception & ) {
+                const auto amount = a11y::selected_quantity( intent.value,
+                                    static_cast<std::size_t>( choice.available ) );
+                if( !amount ) {
                     return std::nullopt;
                 }
+                // Choosing a number is the complete selection operation.
+                // Moving the items still requires the list's CONFIRM.
+                choice.selected = static_cast<int>( *amount );
+                return std::string( "TIMEOUT" );
             }
         }
         return std::nullopt;
@@ -373,7 +362,8 @@ static void pickup_here_accessible()
                 node.checked = choice.selected == 1;
                 node.actions = { "focus", "activate" };
             } else {
-                node.role = "button";
+                node.role = "checkbox";
+                node.checked = choice.selected > 0;
                 node.value = string_format( _( "%1$d of %2$d" ),
                                             choice.selected, choice.available );
                 node.field_type = "int";
@@ -382,11 +372,7 @@ static void pickup_here_accessible()
                 node.field_min = 0.0;
                 node.field_max = static_cast<double>( choice.available );
                 node.field_step = 1.0;
-                node.actions = { "focus", "activate", "set_value", "apply", "cancel_draft" };
-                if( choice.draft ) {
-                    node.has_draft = true;
-                    node.draft_value = *choice.draft;
-                }
+                node.actions = { "focus", "activate", "set_value" };
             }
             snapshot.nodes.push_back( std::move( node ) );
         }
