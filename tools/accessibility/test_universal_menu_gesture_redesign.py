@@ -116,16 +116,16 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
             "selected = Math.floorMod(selected + delta, items.size());",
             self.editor)
 
-    def test_compact_focus_retains_item_details(self):
+    def test_focus_restores_item_count_and_keeps_details(self):
         ctrl = self.controller
         self.assertIn(
-            "if (includeDetail && node.position > 0 && node.total > 0)",
+            "if (spokenPosition > 0 && spokenTotal > 0)",
             ctrl)
         self.assertIn("if (includeDetail && !node.detail.isEmpty())", ctrl)
         self.assertIn("if (!quantityRow) {", ctrl)
-        self.assertIn('return entries.get(selected).label;', ctrl)
+        self.assertIn("R.string.a11yPosition, selected + 1, entries.size()", ctrl)
         self.assertIn(
-            'listener.speak(items.get(selected).label);',
+            'listener.speak(items.get(selected).label + ", "',
             self.editor)
         native = (ROOT / "src/inventory_ui.cpp").read_text(encoding="utf-8")
         self.assertIn('node.detail = location.describe( &owner.u );', native)
