@@ -138,11 +138,12 @@ struct semantic_intent {
     context_token token;
     std::uint64_t revision = 0;
     std::uint64_t request = 0;
-    // Native JNI receipt time, not serialized into semantic snapshots.
-    std::uint64_t received_at_ms = 0;
     std::string node;
     std::string action;
     std::string value;
+    // Native JNI receipt time, not serialized into semantic snapshots.
+    // Keep this last for compatibility with existing aggregate constructors.
+    std::uint64_t received_at_ms = 0;
 };
 
 // Validates the structural contracts above: unique IDs, tree parentage
