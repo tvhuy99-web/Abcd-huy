@@ -63,8 +63,7 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertNotIn("row.position =", code)
         self.assertNotIn("row.total =", code)
         self.assertIn("row.label = p.name;", code)
-        self.assertIn('if ("places".equals(next.category)) {',
-                      self.reader)
+        self.assertIn('"places".equals(next.category)', self.reader)
         self.assertIn('snapshot.focus = "places:target:"', code)
         self.assertIn("constexpr std::size_t page_size = 80;", code)
         self.assertIn('"places:page:next"', code)
