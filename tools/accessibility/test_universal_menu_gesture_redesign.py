@@ -103,10 +103,56 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn("!tile.seen_items.empty()", native)
         self.assertIn('return _( "Visible items" );', native)
         self.assertIn('here.role = noteworthy_here ? "alert" : "document";', native)
-        self.assertIn('here.value = noteworthy_category( current_tile )', native)
+        self.assertIn('here.value = short_tile_alert( current_tile );', native)
         self.assertIn('here.label = _( "Death camera center" );', native)
         self.assertIn('boolean newlyNoteworthy = worldView', self.controller)
         self.assertIn('if (newlyNoteworthy) { feedback(nextTile.value); }', self.controller)
+
+    def test_world_tile_alert_speaks_visible_items_not_ordinary_floor(self):
+        world = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
+        perception = (ROOT / "src/a11y_perception.cpp").read_text(encoding="utf-8")
+        self.assertIn("std::string short_tile_alert( const tile_observation &tile )", world)
+        self.assertIn('_( "Item here: %s." )', world)
+        self.assertIn('_( "Items here: %1$s, %2$s." )', world)
+        self.assertIn('_( "Items here: %1$s and %2$d other types." )', world)
+        self.assertIn('_( "Trap: %s." )', world)
+        self.assertIn('if( !tile.known_traps.empty() ) {', world)
+        self.assertIn('if( !tile.seen_items.empty() ) {', world)
+        self.assertIn('here.role = noteworthy_here ? "alert" : "document";', world)
+        self.assertIn('here.value = current_tile.terrain;', world)
+        self.assertIn('!tile.seen_items.empty()', world)
+        # Item content must come from visible/known observations, not raw world scans.
+        self.assertIn('here.sees_some_items( position, viewer )', perception)
+        self.assertIn('here.could_see_items( position, viewer )', perception)
+        self.assertIn('result.seen_items.push_back(', perception)
+
+    def test_world_alert_uses_position_so_identical_neighbor_tiles_are_announced(self):
+        world = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
+        self.assertIn('"world:tile_position"', world)
+        self.assertIn('get_avatar().pos_abs()', world)
+        self.assertIn('location.actions = { "focus" };', world)
+        self.assertIn('previousSnapshot.find("world:tile_position")', self.controller)
+        self.assertIn('next.find("world:tile_position")', self.controller)
+        self.assertIn('boolean steppedToAnotherTile =', self.controller)
+        self.assertIn('steppedToAnotherTile || !"alert".equals(previousTile.role)', self.controller)
+        self.assertIn('if (newlyNoteworthy) { feedback(nextTile.value); }', self.controller)
+
+    def test_hub_long_press_keeps_gesture_assignment_and_favorites(self):
+        ctrl = self.controller
+        self.assertIn('option.setOnLongClickListener(view -> {', ctrl)
+        self.assertIn('showHubActionChoices();', ctrl)
+        self.assertIn('if (comprehensiveMenu) {\n            showHubActionChoices();', ctrl)
+        self.assertIn('hubActionChoice = 0;', ctrl)
+        self.assertIn('if (choice == 0) {\n            showGestureChoices();', ctrl)
+        self.assertIn('favorites.add(target, label)', ctrl)
+        self.assertIn('favorites.remove(target)', ctrl)
+
+    def test_vietnamese_alert_localization(self):
+        vi = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
+        for phrase in ('Item here: %s.', 'Items here: %1$s, %2$s.',
+                       'Items here: %1$s and %2$d other types.',
+                       'Trap: %s.', 'Creature: %s.', 'Current position'):
+            self.assertIn('msgid "' + phrase + '"', vi)
 
     def test_localized_accessibility_commands_exist(self):
         for locale in ("values", "values-vi"):
