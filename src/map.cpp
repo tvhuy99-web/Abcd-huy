@@ -9064,7 +9064,10 @@ void map::reconcile_loaded_items( const reconcile_scope scope )
             for( int gridz = zmin; gridz <= zmax; gridz++ ) {
                 const tripoint_rel_sm grid( gridx, gridy, gridz );
                 submap *const sm = get_submap_at_grid( grid );
-                if( sm == nullptr ) {
+                // A uniform submap has no per-tile items (get_items returns
+                // an empty colony). Avoid walking every tile on empty rock
+                // and open-air levels whenever the reality bubble shifts.
+                if( sm == nullptr || sm->is_uniform() ) {
                     continue;
                 }
                 for( int sx = 0; sx < SEEX; ++sx ) {
@@ -9974,6 +9977,17 @@ void map::actualize( const tripoint_rel_sm &grid )
     process_items_in_vehicles( *tmpsub );
     process_items_in_submap( *tmpsub, grid );
     explosion_handler::process_explosions();
+    // Uniform rock floors and open air have no furniture, tile items, fields
+    // or traps; none of the per-tile seasonal updates below can change them.
+    // The vehicle/item processing above still runs, and the touch timestamp
+    // must be advanced just as it would after the ordinary scan.
+    if( tmpsub->is_uniform() ) {
+        const ter_id terrain = tmpsub->get_ter( point_sm_ms::zero );
+        if( terrain == ter_t_rock_floor || terrain == ter_t_open_air ) {
+            tmpsub->last_touched = calendar::turn;
+            return;
+        }
+    }
     for( int x = 0; x < SEEX; x++ ) {
         for( int y = 0; y < SEEY; y++ ) {
             const tripoint_bub_ms pnt =  rebase_bub( coords::project_to<coords::ms>( grid ) + point( x, y ) );
