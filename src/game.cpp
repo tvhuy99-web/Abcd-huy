@@ -8010,6 +8010,9 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
 bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
                       const bool furniture_move )
 {
+#if defined(__ANDROID__)
+    const auto walk_started = std::chrono::steady_clock::now();
+#endif
     if( u.has_flag( json_flag_PHASE_MOVEMENT ) ) {
         place_player( dest_loc );
         return true; // debug trait immunity to gravity, walls etc
@@ -8313,7 +8316,13 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
     bool moving = dest_loc != oldpos;
 
+#if defined(__ANDROID__)
+    const auto before_place = std::chrono::steady_clock::now();
+#endif
     point_rel_sm submap_shift = place_player( dest_loc );
+#if defined(__ANDROID__)
+    const auto after_place = std::chrono::steady_clock::now();
+#endif
     point_rel_ms ms_shift = coords::project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift.raw();
 
@@ -8384,6 +8393,26 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
     on_move_effects();
 
+#if defined(__ANDROID__)
+    const auto walk_finished = std::chrono::steady_clock::now();
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              walk_finished - walk_started ).count();
+    if( total_ms >= 150 ) {
+        const auto place_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  after_place - before_place ).count();
+        const auto before_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   before_place - walk_started ).count();
+        const auto after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  walk_finished - after_place ).count();
+        a11y::android::diagnostic_event( "WORLD_WALK_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " before_place_ms=" + std::to_string( before_ms ) +
+                " place_player_ms=" + std::to_string( place_ms ) +
+                " after_place_ms=" + std::to_string( after_ms ) +
+                " shift_x=" + std::to_string( submap_shift.x() ) +
+                " shift_y=" + std::to_string( submap_shift.y() ) );
+    }
+#endif
     return true;
 }
 
@@ -8541,6 +8570,9 @@ static void autopulp_or_butcher( avatar &u )
 
 point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 {
+#if defined(__ANDROID__)
+    const auto place_started = std::chrono::steady_clock::now();
+#endif
     map &here = get_map();
     const optional_vpart_position vp1 = here.veh_at( dest_loc );
     if( const std::optional<std::string> label = vp1.get_label() ) {
@@ -8716,7 +8748,13 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         mon->process_triggers();
         here.creature_in_field( *mon );
     }
+#if defined(__ANDROID__)
+    const auto before_map_update = std::chrono::steady_clock::now();
+#endif
     point_rel_sm submap_shift = update_map( u, z_level_changed );
+#if defined(__ANDROID__)
+    const auto after_map_update = std::chrono::steady_clock::now();
+#endif
     // Important: don't use dest_loc after this line. `update_map` may have shifted the map
     // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
     // If you must use it you can calculate the position in the new, shifted system with
@@ -8780,7 +8818,13 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 
     // Traps!
     // Try to detect.
+#if defined(__ANDROID__)
+    const auto before_search = std::chrono::steady_clock::now();
+#endif
     u.search_surroundings();
+#if defined(__ANDROID__)
+    const auto after_search = std::chrono::steady_clock::now();
+#endif
     if( u.is_mounted() ) {
         here.creature_on_trap( *u.mounted_creature );
     } else {
@@ -8886,6 +8930,27 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
                u.is_mounted() ) {
         add_msg( _( "There are vehicle controls here but you cannot reach them whilst mounted." ) );
     }
+#if defined(__ANDROID__)
+    const auto place_finished = std::chrono::steady_clock::now();
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              place_finished - place_started ).count();
+    if( total_ms >= 150 ) {
+        const auto update_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   after_map_update - before_map_update ).count();
+        const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   after_search - before_search ).count();
+        a11y::android::diagnostic_event( "WORLD_PLACE_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " update_map_ms=" + std::to_string( update_ms ) +
+                " search_ms=" + std::to_string( search_ms ) +
+                " before_update_ms=" + std::to_string(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        before_map_update - place_started ).count() ) +
+                " after_update_ms=" + std::to_string(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        place_finished - after_map_update ).count() ) );
+    }
+#endif
     return submap_shift;
 }
 
@@ -10708,6 +10773,9 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
         return point_rel_sm::zero;
     }
 
+#if defined(__ANDROID__)
+    const auto shift_started = std::chrono::steady_clock::now();
+#endif
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point_rel_sm> size_1( {-1, -1}, { 1, 1 } );
@@ -10718,6 +10786,9 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
         remaining_shift -= this_shift;
     }
 
+#if defined(__ANDROID__)
+    const auto after_map_shift = std::chrono::steady_clock::now();
+#endif
     // Shift monsters
     shift_monsters( { shift, 0 } );
     const point_rel_ms shift_ms = coords::project_to<coords::ms>( shift );
@@ -10752,18 +10823,44 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     // Put those in the active list.
     load_npcs();
 
+#if defined(__ANDROID__)
+    const auto after_npc_load = std::chrono::steady_clock::now();
+#endif
     // Make sure map cache is consistent since it may have shifted.
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
         here.invalidate_map_cache( zlev );
     }
     here.build_map_cache( here.get_abs_sub().z() );
+#if defined(__ANDROID__)
+    const auto after_cache_build = std::chrono::steady_clock::now();
+#endif
 
     // Spawn monsters if appropriate
     // This call will generate new monsters in addition to loading, so it's placed after NPC loading
     here.spawn_monsters( false ); // Static monsters
+#if defined(__ANDROID__)
+    const auto after_monster_spawn = std::chrono::steady_clock::now();
+#endif
 
     // Update what parts of the world map we can see
     update_overmap_seen();
+#if defined(__ANDROID__)
+    const auto shift_finished = std::chrono::steady_clock::now();
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              shift_finished - shift_started ).count();
+    if( total_ms >= 150 ) {
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_SHIFT_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " map_shift_ms=" + std::to_string( ms( shift_started, after_map_shift ) ) +
+                " npcs_ms=" + std::to_string( ms( after_map_shift, after_npc_load ) ) +
+                " cache_ms=" + std::to_string( ms( after_npc_load, after_cache_build ) ) +
+                " spawn_ms=" + std::to_string( ms( after_cache_build, after_monster_spawn ) ) +
+                " reveal_ms=" + std::to_string( ms( after_monster_spawn, shift_finished ) ) );
+    }
+#endif
 
     return shift;
 }
