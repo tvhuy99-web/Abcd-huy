@@ -309,6 +309,9 @@ static void pickup_here_accessible()
     ctxt.register_action( "CONFIRM" );
     a11y::screen_scope reader( &ctxt, "pickup-here",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            return std::string( "QUIT" );
+        }
         if( intent.node == "pickup-here:confirm" && intent.action == "activate" ) {
             if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice &choice ) {
             return choice.selected > 0;
