@@ -43,9 +43,13 @@ class WorldGestureContracts(unittest.TestCase):
         scan = world.split("void announce_linear_scan(", 1)[1]
         scan = scan.split("void announce_player_coordinates()", 1)[0]
         self.assertIn("distance = 1; distance <= 16; ++distance", scan)
-        self.assertIn("here.tername( pos )", scan)
-        self.assertIn("get_creature_tracker().creature_at( pos, true )", scan)
-        self.assertIn("here.i_at( pos )", scan)
+        self.assertIn("scan_unrestricted_tile( pos )", scan)
+        helper = world.split("unrestricted_tile scan_unrestricted_tile(", 1)[1]
+        self.assertIn("here.tername( position )", helper)
+        self.assertIn("get_creature_tracker().creature_at( position, true )", helper)
+        self.assertIn("here.i_at( position )", helper)
+        self.assertIn("remove_color_tags( obj.tname() )", helper)
+        self.assertIn('_( "Items:" )', scan)
         self.assertNotIn("observe_tile(", scan)
         self.assertIn("A11Y_SCAN:", scan)
         handler = HANDLER.read_text(encoding="utf-8")
