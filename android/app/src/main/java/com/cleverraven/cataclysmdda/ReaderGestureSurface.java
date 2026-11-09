@@ -618,10 +618,13 @@ public final class ReaderGestureSurface extends LinearLayout {
                         + " duration_ms=" + (event.getEventTime() - downTime)
                         + " dx=" + (multiLastX - multiStartX)
                         + " dy=" + (multiLastY - multiStartY));
+                // Modal two-finger taps also reach the detail dispatcher.
+                // Modal swipes remain reserved for Back/Confirm above; only
+                // a live world may interpret directional swipes as scans.
                 boolean permitted = !cancelled && owner != null
                         && owner.equals(listener.gestureContext())
                         && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
-                        && listener.directWorldGesturesEnabled();
+                        && (listener.directWorldGesturesEnabled() || maxPointers == 2);
                 float dx = multiLastX - multiStartX;
                 float dy = multiLastY - multiStartY;
                 float threshold = listener.swipeDistancePx();
@@ -629,14 +632,13 @@ public final class ReaderGestureSurface extends LinearLayout {
                     String direction = cardinal(dx, dy, threshold);
                     if (direction != null) {
                         clearMultiTap();
-                        if (maxPointers == 2) {
-                            // Two-finger swipes are dedicated to the 16-tile scan,
-                            // not among the 33 assignable shortcut gestures.
+                        if (maxPointers == 2 && listener.directWorldGesturesEnabled()) {
+                            // Two-finger world swipes keep their original directional scan.
                             listener.scanDirection("right".equals(direction) ? 1
                                     : "left".equals(direction) ? -1 : 0,
                                     "down".equals(direction) ? 1
                                     : "up".equals(direction) ? -1 : 0);
-                        } else {
+                        } else if (maxPointers >= 3 && listener.directWorldGesturesEnabled()) {
                             String gesture = ReaderGestureBindings.idForSwipe(
                                     maxPointers, direction);
                             if (gesture != null && !listener.handleCustomGesture(gesture)) {
