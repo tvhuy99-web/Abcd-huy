@@ -792,14 +792,24 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String nodeText(ReaderSnapshot.Node node, boolean includeDetail) {
         StringBuilder text = new StringBuilder(node.label);
         if (!node.value.isEmpty()) { text.append(". ").append(node.value); }
-        if (node.checked) { text.append(". ").append(activity.getString(R.string.a11yChecked)); }
-        else if ("checkbox".equals(node.role)) { text.append(". ").append(activity.getString(R.string.a11yUnchecked)); }
+        // Inventory quantity rows already say how many are selected. Adding
+        // "checked/unchecked" repeats the same fact on every swipe.
+        boolean quantityRow = snapshot != null && "inventory".equals(snapshot.category)
+                && "checkbox".equals(node.role) && !node.fieldType.isEmpty();
+        if (!quantityRow) {
+            if (node.checked) { text.append(". ").append(activity.getString(R.string.a11yChecked)); }
+            else if ("checkbox".equals(node.role)) {
+                text.append(". ").append(activity.getString(R.string.a11yUnchecked));
+            }
+        }
         // Selection is already represented by focus. Do not say "selected"
         // on every swipe; the full state is still available on Detail.
         if (includeDetail && node.selected) {
             text.append(". ").append(activity.getString(R.string.a11ySelected));
         }
-        if (node.position > 0 && node.total > 0) {
+        // Position and total are available on explicit Detail, but repeatedly
+        // announcing "item 5 of 40" makes quick inventory/menu browsing noisy.
+        if (includeDetail && node.position > 0 && node.total > 0) {
             text.append(", ").append(activity.getString(
                     R.string.a11yPosition, node.position, node.total));
         }
@@ -1205,30 +1215,33 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void navigate(int delta) {
         SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        if (delta == 0) { readCurrent(); return; }
         if (debugReport != null) {
-            debugFocus = Math.max(0, Math.min(3, debugFocus + delta));
+            debugFocus = Math.floorMod(debugFocus + delta, 4);
             readCurrent();
             return;
         }
         if (editor != null) { editor.navigate(delta); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                hubActionChoice = Math.max(0, Math.min(1, hubActionChoice + delta));
+                hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);
             } else if (choosingGesture) {
-                gestureChoice = Math.max(0, Math.min(ReaderGestureBindings.IDS.length + 1,
-                        gestureChoice + delta));
+                gestureChoice = Math.floorMod(gestureChoice + delta,
+                        ReaderGestureBindings.IDS.length + 2);
             } else {
                 List<GameActionHub.Entry> options = hubEntries();
                 if (options.isEmpty()) { return; }
-                hubIndex = Math.max(0, Math.min(options.size() - 1, hubIndex + delta));
+                hubIndex = Math.floorMod(hubIndex + delta, options.size());
             }
             render();
             readCurrent();
             return;
         }
-        if (snapshot == null || visibleNodes().isEmpty()) { return; }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
-        int selected = Math.max(0, Math.min(filtered.size() - 1, index() + delta));
+        if (filtered.isEmpty()) { return; }
+        // All spoken lists wrap both ways: end -> first, first -> end.
+        // This also applies to the contextual command drawer and nested lists.
+        int selected = Math.floorMod(index() + delta, filtered.size());
         focus = filtered.get(selected).id;
         render();
         // Command focus changes are local: native command scopes do not
@@ -1774,8 +1787,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private String hubSpoken(List<GameActionHub.Entry> entries, int selected) {
-        return entries.get(selected).label + ", "
-                + activity.getString(R.string.a11yPosition, selected + 1, entries.size());
+        // Repeated menu browsing speaks the command name only.
+        return entries.get(selected).label;
     }
 
     private String gestureChoiceLabel(int index) {
@@ -2178,12 +2191,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (editor != null) { editor.readCurrent(); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                feedback(hubActionLabel(hubActionChoice) + ", "
-                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
+                feedback(hubActionLabel(hubActionChoice));
             } else if (choosingGesture) {
-                feedback(gestureChoiceLabel(gestureChoice) + ", "
-                        + activity.getString(R.string.a11yPosition, gestureChoice + 1,
-                                ReaderGestureBindings.IDS.length + 2));
+                feedback(gestureChoiceLabel(gestureChoice));
             } else {
                 List<GameActionHub.Entry> items = hubEntries();
                 if (items.isEmpty()) {
