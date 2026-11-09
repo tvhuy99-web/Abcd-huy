@@ -8,6 +8,7 @@ on:
     branches:
       - integration/reader-vietnamese-20261107
       - perf/character-blueprint-cache-20261108
+      - perf/reader-swipe-latency-20261109
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'
