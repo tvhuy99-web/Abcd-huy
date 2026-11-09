@@ -81,7 +81,10 @@ bool enqueue( semantic_intent intent )
     // retains the existing mailbox because it uses a different token.
     if( intent.action == "activate" && is_world_step_node( intent.node ) &&
         matches_last_world( intent.token ) ) {
-        if( !world_step_ready ) {
+        if( !world_step_ready ||
+            std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
+            return pending.action == "activate" && is_world_step_node( pending.node );
+        } ) ) {
             return false;
         }
         // Reserve the one movement input immediately. Subsequent swipes
@@ -123,7 +126,14 @@ void set_world_step_ready( const std::optional<context_token> token, const bool 
         last_world_token = *token;
         has_world_token = true;
     }
-    world_step_ready = ready && token.has_value() && enabled() && !suspended();
+    // A repeated game-thread poll must not reopen the gate while an
+    // accepted step is still waiting in the native mailbox.
+    const bool pending_step = std::any_of( inbox.begin(), inbox.end(),
+    []( const semantic_intent &pending ) {
+        return pending.action == "activate" && is_world_step_node( pending.node );
+    } );
+    world_step_ready = ready && token.has_value() && enabled() && !suspended() &&
+                       !pending_step;
 }
 
 std::size_t cancel_pending_world_steps()
