@@ -2735,17 +2735,21 @@ static std::map<action_id, std::string> get_actions_disabled_mounted()
     };
 }
 
-static std::vector<action_id> get_actions_move_mode()
+static bool is_move_mode_action( const action_id act )
 {
-    return std::vector<action_id> {
-        ACTION_CYCLE_MOVE,
-        ACTION_CYCLE_MOVE_REVERSE,
-        ACTION_RESET_MOVE,
-        ACTION_TOGGLE_RUN,
-        ACTION_TOGGLE_CROUCH,
-        ACTION_TOGGLE_PRONE,
-        ACTION_OPEN_MOVEMENT,
-    };
+    // Avoid allocating a fresh vector for every movement command.
+    switch( act ) {
+        case ACTION_CYCLE_MOVE:
+        case ACTION_CYCLE_MOVE_REVERSE:
+        case ACTION_RESET_MOVE:
+        case ACTION_TOGGLE_RUN:
+        case ACTION_TOGGLE_CROUCH:
+        case ACTION_TOGGLE_PRONE:
+        case ACTION_OPEN_MOVEMENT:
+            return true;
+        default:
+            return false;
+    }
 }
 
 bool game::do_regular_action( action_id &act, avatar &player_character,
@@ -2757,14 +2761,17 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
     const bool in_shell = player_character.has_active_mutation( trait_SHELL2 )
                           || player_character.has_active_mutation( trait_SHELL3 );
 
-    const std::map<action_id, std::string> actions_disabled_mounted = get_actions_disabled_mounted();
-    const std::map<action_id, std::string> actions_disabled_in_shell = get_actions_disabled_in_shell();
-    const std::map<action_id, std::string> actions_disabled_while_handless_shapeshifted =
-        get_actions_disabled_in_handless_temporary_shapeshift();
-
-    if( in_shell && actions_disabled_in_shell.count( act ) > 0 ) {
-        add_msg( m_info, actions_disabled_in_shell.at( act ) );
-        return true;
+    // Most turns are ordinary footsteps. Do not allocate and translate
+    // three maps of restricted action descriptions on every step. Build
+    // one only when the corresponding exceptional character state exists;
+    // translations are still resolved at use-time after language changes.
+    if( in_shell ) {
+        const auto actions_disabled_in_shell = get_actions_disabled_in_shell();
+        const auto blocked = actions_disabled_in_shell.find( act );
+        if( blocked != actions_disabled_in_shell.end() ) {
+            add_msg( m_info, blocked->second );
+            return true;
+        }
     }
 
     if( u.has_effect( effect_incorporeal ) && actions_disabled_in_incorporeal.count( act ) > 0 ) {
@@ -2772,20 +2779,25 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         return true;
     }
 
-    if( u.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) &&
-        actions_disabled_while_handless_shapeshifted.count( act ) > 0 ) {
-        add_msg( m_info, _( "You can't do that while shapeshifted." ) );
-        return true;
+    if( u.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ) {
+        const auto actions_disabled_while_handless_shapeshifted =
+            get_actions_disabled_in_handless_temporary_shapeshift();
+        if( actions_disabled_while_handless_shapeshifted.count( act ) > 0 ) {
+            add_msg( m_info, _( "You can't do that while shapeshifted." ) );
+            return true;
+        }
     }
 
-    if( player_character.is_mounted() && actions_disabled_mounted.count( act ) > 0 ) {
-        add_msg( m_info, actions_disabled_mounted.at( act ) );
-        return true;
+    if( player_character.is_mounted() ) {
+        const auto actions_disabled_mounted = get_actions_disabled_mounted();
+        const auto blocked = actions_disabled_mounted.find( act );
+        if( blocked != actions_disabled_mounted.end() ) {
+            add_msg( m_info, blocked->second );
+            return true;
+        }
     }
 
-    const std::vector<action_id> actions_move_mode = get_actions_move_mode();
-    const bool is_actions_move_mode = std::find( actions_move_mode.begin(),
-                                      actions_move_mode.end(), act ) != actions_move_mode.end();
+    const bool is_actions_move_mode = is_move_mode_action( act );
     // Are we performing an action that is not a move mode action?
     int desired_move_mode_cost = 0;
     if( player_character.is_waiting_to_change_mode_mode() && !is_actions_move_mode ) {
