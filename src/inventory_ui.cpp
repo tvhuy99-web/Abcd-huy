@@ -8,6 +8,7 @@
 
 #include "activity_actor_definitions.h"
 #include "a11y_input.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -3695,7 +3696,7 @@ class inventory_selector::reader_session
                         return b.column == column && b.location == location;
                     } );
                     if( binding == bindings.end() ) {
-                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ), std::nullopt } );
+                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ) } );
                         binding = std::prev( bindings.end() );
                     }
                     entry->cache_denial( owner.preset );
@@ -3822,35 +3823,22 @@ class inventory_selector::reader_session
                         snapshot.focus = node.id;
                     }
                     if( quantity_form ) {
-                        // R09.1 quantity form (R02.3) for multi-select
-                        // sessions: the applied value is chosen_count, the
-                        // domain is 0..get_available_count() with step 1.
-                        // "set_value" only stores a draft in the binding;
-                        // chosen_count changes solely through "apply" below.
-                        // CONFIRM sessions get no form: their count lives in
-                        // the caller's number popup.
-                        node.field_type = "int";
-                        node.has_field_range = true;
-                        node.field_min = 0.0;
-                        node.field_max = static_cast<double>( entry->get_available_count() );
-                        node.field_step = 1.0;
-                        node.applied_value = std::to_string( entry->chosen_count );
-                        node.actions = { "focus", "activate", "set_value", "apply", "cancel_draft" };
-                        if( binding->draft.has_value() ) {
-                            long long draft_value = 0;
-                            const long long available =
-                                static_cast<long long>( entry->get_available_count() );
-                            if( parse_count( *binding->draft, draft_value ) && draft_value >= 0 &&
-                                draft_value <= available ) {
-                                node.has_draft = true;
-                                node.draft_value = *binding->draft;
-                            } else {
-                                // The available count shrank under the
-                                // draft: drop it instead of publishing an
-                                // out-of-domain draft, which snapshot
-                                // validation would reject wholesale.
-                                binding->draft.reset();
-                            }
+                        // A single unit is an immediate checkbox. Only
+                        // stacks larger than one need a quantity chooser.
+                        const int available = entry->get_available_count();
+                        if( available > 1 ) {
+                            node.field_type = "int";
+                            node.has_field_range = true;
+                            node.field_min = 0.0;
+                            node.field_max = static_cast<double>( available );
+                            node.field_step = 1.0;
+                            node.applied_value = std::to_string( entry->chosen_count );
+                            // One completed number commits the selection.
+                            // Global CONFIRM performs the eventual item
+                            // transfer, never the number picker.
+                            node.actions = { "focus", "activate", "set_value" };
+                        } else {
+                            node.actions = { "focus", "activate" };
                         }
                     }
                     rows.push_back( std::move( node ) );
@@ -4071,9 +4059,6 @@ class inventory_selector::reader_session
             inventory_column *column;
             item_location location;
             std::string id;
-            // Unapplied quantity draft (R09.1/R02.3), raw intent text. Only
-            // "apply" in handle() may turn it into a chosen_count change.
-            std::optional<std::string> draft;
         };
         inventory_selector &owner;
         input_context &context;
@@ -4093,30 +4078,6 @@ class inventory_selector::reader_session
             return activation == "TOGGLE_ENTRY" &&
                    dynamic_cast<const inventory_multiselector *>( &owner ) != nullptr &&
                    dynamic_cast<const inventory_compare_selector *>( &owner ) == nullptr;
-        }
-
-        static bool parse_count( const std::string &text, long long &value ) {
-            if( text.empty() || text.size() > 18 ) {
-                return false;
-            }
-            std::size_t pos = 0;
-            bool negative = false;
-            if( text[pos] == '-' ) {
-                negative = true;
-                ++pos;
-            }
-            if( pos == text.size() ) {
-                return false;
-            }
-            long long result = 0;
-            for( ; pos < text.size(); ++pos ) {
-                if( text[pos] < '0' || text[pos] > '9' ) {
-                    return false;
-                }
-                result = result * 10 + ( text[pos] - '0' );
-            }
-            value = negative ? -result : result;
-            return true;
         }
 
         std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
@@ -4147,59 +4108,38 @@ class inventory_selector::reader_session
             }
             if( intent.action == "activate" && entry.is_selectable() &&
                 owner.highlight( binding->location ) ) {
-                // A row activation acts on one item even if keyboard category
-                // selection was previously active. Bulk actions remain commands.
+                if( has_quantity_form() && entry.get_available_count() == 1 ) {
+                    // Selecting one item never opens a number editor.
+                    inventory_multiselector *multi =
+                        dynamic_cast<inventory_multiselector *>( &owner );
+                    if( multi == nullptr ) {
+                        return std::nullopt;
+                    }
+                    multi->toggle_entry( entry, entry.chosen_count == 0 ? 1 : 0 );
+                    return "TIMEOUT";
+                }
+                // Preserve the existing action menu and comparison behavior.
                 owner.mode = navigation_mode::ITEM;
                 for( inventory_column *column : owner.columns ) {
                     column->on_mode_change( owner.mode );
                 }
                 return activation;
             }
-            if( !has_quantity_form() ) {
+            if( !has_quantity_form() || intent.action != "set_value" ||
+                !entry.is_selectable() || entry.get_available_count() <= 1 ) {
                 return std::nullopt;
             }
-            if( intent.action == "set_value" ) {
-                // The runtime already validated the value against the
-                // published domain (R02.4). Store the draft only; the
-                // applied chosen_count does not change here.
-                binding->draft = intent.value;
-                return "TIMEOUT";
+            // Revalidate against the LIVE row on the game thread. A complete
+            // numeric choice immediately updates the native selection; no
+            // extra Apply command or unapplied quantity draft remains.
+            const auto amount = a11y::selected_quantity( intent.value,
+                                static_cast<std::size_t>( entry.get_available_count() ) );
+            inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
+            if( !amount || multi == nullptr ) {
+                return std::nullopt;
             }
-            if( intent.action == "cancel_draft" ) {
-                binding->draft.reset();
-                return "TIMEOUT";
-            }
-            if( intent.action == "apply" ) {
-                if( !binding->draft.has_value() ) {
-                    return std::nullopt;
-                }
-                long long value = 0;
-                if( !parse_count( *binding->draft, value ) ) {
-                    binding->draft.reset();
-                    return std::nullopt;
-                }
-                if( !entry.is_selectable() ) {
-                    return std::nullopt;
-                }
-                // The entry was re-resolved by location above, at commit
-                // time; a vanished item already returned nullopt. Clamp to
-                // the live domain, then set the count through the
-                // multiselector's public API: toggle_entry( entry, count )
-                // wraps the protected set_chosen_count( entry, count ),
-                // refreshes the selection column and fires on_toggle()
-                // (trade panes recalculate through it). set_chosen_count
-                // itself is not reachable from this base-class session.
-                const long long available = static_cast<long long>( entry.get_available_count() );
-                const long long clamped = std::clamp( value, 0LL, available );
-                inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
-                if( multi == nullptr ) {
-                    return std::nullopt;
-                }
-                multi->toggle_entry( entry, static_cast<std::size_t>( clamped ) );
-                binding->draft.reset();
-                return "TIMEOUT";
-            }
-            return std::nullopt;
+            multi->toggle_entry( entry, *amount );
+            return "TIMEOUT";
         }
 };
 
