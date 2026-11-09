@@ -16,6 +16,7 @@ on:
       - 'lang/**'
       - 'data/**'
       - 'tools/accessibility/**'
+      - 'tests/a11y_context_test.cpp'
   workflow_dispatch:
     inputs:
       compare_baseline:
