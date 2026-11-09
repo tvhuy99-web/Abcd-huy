@@ -46,12 +46,12 @@ class ConciseFocusTest(unittest.TestCase):
         self.assertIn("String information = nodeText(node, true);", self.reader)
         self.assertIn("feedback(information);", self.reader)
 
-    def test_editor_speaks_choice_and_position_only(self):
+    def test_editor_speaks_current_choice_without_repetitive_counters(self):
         body = self.editor.split("public void readCurrent() {", 1)[1].split(
             "private BreakIterator boundaries(", 1
         )[0]
-        self.assertIn('items.get(selected).label + ", "', body)
-        self.assertIn("R.string.a11yPosition", body)
+        self.assertIn("listener.speak(items.get(selected).label);", body)
+        self.assertNotIn("R.string.a11yPosition", body)
 
 
 if __name__ == "__main__":
