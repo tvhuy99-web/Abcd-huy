@@ -168,12 +168,18 @@ task fetchSdl3Aars {
             def zipName = "${entry.name}-devel-${entry.version}-android.zip"
             def zipFile = new File(cacheDir, zipName)
             if (!zipFile.exists()) {
-                def url = "https://github.com/libsdl-org/${entry.repo}/releases/download/release-${entry.version}/${zipName}"
-                // Release assets sometimes return transient HTTP 5xx responses.
+                // SDL hosts the same official release ZIPs on libsdl.org.
+                // Prefer that mirror when GitHub Releases returns gateway errors.
+                def mirrorPath = entry.repo == 'SDL' ? 'release' : "projects/${entry.repo}/release"
+                def urls = [
+                    "https://www.libsdl.org/${mirrorPath}/${zipName}",
+                    "https://github.com/libsdl-org/${entry.repo}/releases/download/release-${entry.version}/${zipName}"
+                ]
                 // Write to a temporary path to avoid caching incomplete ZIPs.
                 def partialFile = new File(cacheDir, "${zipName}.part")
                 boolean downloaded = false
                 for (int attempt = 1; attempt <= 6 && !downloaded; attempt++) {
+                    def url = urls[(attempt - 1) % urls.size()]
                     partialFile.delete()
                     try {
                         println("Downloading ${url} (attempt ${attempt}/6)")
