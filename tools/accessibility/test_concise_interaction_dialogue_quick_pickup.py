@@ -74,9 +74,8 @@ class ConciseInteractionDialogueQuickPickupTest(unittest.TestCase):
         self.assertIn('intent.action == "apply"', code)
         self.assertIn('confirm.id = "pickup-here:confirm";', code)
         self.assertIn("you.pick_up( selection );", code)
-        self.assertIn("choice.selected <= 0", code) if (
-            "choice.selected <= 0" in code
-        ) else self.assertIn("remaining = choice.selected;", code)
+        self.assertIn("remaining = choice.selected;", code)
+        self.assertIn('if( intent.action == "cancel" )', code)
 
     def test_hub_registration_and_vietnamese_copy(self):
         self.assertIn('"reader:pickup_here"', self.hub)
