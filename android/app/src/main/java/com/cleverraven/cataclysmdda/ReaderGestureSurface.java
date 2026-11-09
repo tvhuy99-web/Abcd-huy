@@ -28,9 +28,9 @@ public final class ReaderGestureSurface extends LinearLayout {
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
         /** Confirm the current native menu, selection or editor without guessing an action. */
-        void confirm();
+        default void confirm() { }
         /** Open advanced commands without changing the focused gameplay item. */
-        void openContextActions();
+        default void openContextActions() { }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
