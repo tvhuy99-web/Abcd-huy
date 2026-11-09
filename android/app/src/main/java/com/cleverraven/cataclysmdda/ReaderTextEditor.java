@@ -26,6 +26,9 @@ public final class ReaderTextEditor {
     private final Listener listener;
     private final boolean numeric;
     private final boolean integer;
+    // Only item-quantity pickers use one-touch completed numbers. Other
+    // numeric and text forms retain their existing draft/Apply workflow.
+    private final boolean quantityChoices;
     // Numeric domain from the form contract (R04.2). Null means the source
     // publishes no bound: classic number popups have no min/max at all,
     // only an edit step. The engine stays the authority; these values let
@@ -58,17 +61,28 @@ public final class ReaderTextEditor {
 
     public ReaderTextEditor(Activity activity, String initial, boolean numeric, boolean integer,
                             Double rangeMin, Double rangeMax, Double rangeStep, Listener listener) {
+        this(activity, initial, numeric, integer, rangeMin, rangeMax, rangeStep, false, listener);
+    }
+
+    public ReaderTextEditor(Activity activity, String initial, boolean numeric, boolean integer,
+                            Double rangeMin, Double rangeMax, Double rangeStep,
+                            boolean quantityChoices, Listener listener) {
         this.activity = activity;
         this.listener = listener;
         this.numeric = numeric;
         this.integer = integer;
+        this.quantityChoices = quantityChoices && numeric && integer
+                && rangeMin != null && rangeMin == 0.0
+                && rangeMax != null && rangeMax > 1.0
+                && rangeStep != null && rangeStep == 1.0;
         this.rangeMin = rangeMin;
         this.rangeMax = rangeMax;
         this.rangeStep = rangeStep;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         TextView instructions = new TextView(activity);
-        instructions.setText(R.string.a11yEditorInstructions);
+        instructions.setText(this.quantityChoices
+                ? R.string.a11yQuantityInstructions : R.string.a11yEditorInstructions);
         instructions.setTextColor(0xffeeeeee);
         root.addView(instructions);
         field = new EditText(activity);
@@ -91,7 +105,7 @@ public final class ReaderTextEditor {
         // Number dialogs start on actual digits, not a long controls menu.
         // One-finger up/down selects a digit; double-tap enters it.
         if (numeric) {
-            group = "digits";
+            group = this.quantityChoices ? "quantities" : "digits";
             selected = 1;
             initialNumber = initial;
             replaceInitialNumberOnFirstDigit = true;
@@ -109,7 +123,23 @@ public final class ReaderTextEditor {
     private void build() {
         revision++;
         items.clear();
-        if ("controls".equals(group)) {
+        if ("quantities".equals(group)) {
+            // Each number is a whole choice, not a digit to be entered
+            // into a draft. One double tap commits and returns to the
+            // previous inventory selection screen.
+            add(R.string.a11yQuantityDeselect, () -> listener.submit("0"));
+            final int quickMax = (int) Math.min(9, Math.floor(rangeMax));
+            for (int count = 1; count <= quickMax; count++) {
+                final String number = Integer.toString(count);
+                items.add(new Choice(number, () -> listener.submit(number)));
+            }
+            if (rangeMax > 9) {
+                items.add(new Choice(string(R.string.a11yQuantityAll),
+                        () -> listener.submit(formatNumber(rangeMax))));
+                add(R.string.a11yQuantityOther, () -> open("digits"));
+            }
+            add(R.string.a11yEditorCancel, listener::cancel);
+        } else if ("controls".equals(group)) {
             add(R.string.a11yEditorReadValue, () -> listener.speak(valueDescription()));
             if (!numeric) {
                 add(R.string.a11yEditorLetters, () -> open("letters"));
@@ -381,6 +411,11 @@ public final class ReaderTextEditor {
     }
 
     public boolean back() {
+        if (quantityChoices) {
+            if (!"quantities".equals(group)) { open("quantities"); return true; }
+            listener.cancel();
+            return true;
+        }
         if (!"controls".equals(group)) { open("controls"); return true; }
         listener.cancel();
         return true;
