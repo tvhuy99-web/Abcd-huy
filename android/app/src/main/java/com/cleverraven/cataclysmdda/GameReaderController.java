@@ -125,6 +125,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastSuspended = true;
     private volatile long presentationEpoch;
     private int worldJavaTimingSample;
+    private long lastWorldBusyNotice;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
@@ -1830,7 +1831,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // Focus intents are re-sent on every navigation and race
                 // screen changes routinely; a rejected one is dropped
                 // silently instead of announcing a stale entry (R03.1).
-                if (!"focus".equals(action)) {
+                final boolean walking = "activate".equals(action)
+                        && "DEFAULTMODE".equals(owner.category)
+                        && !comprehensiveMenu && ("UP".equals(focus) || "DOWN".equals(focus)
+                        || "LEFT".equals(focus) || "RIGHT".equals(focus)
+                        || "LEFTUP".equals(focus) || "LEFTDOWN".equals(focus)
+                        || "RIGHTUP".equals(focus) || "RIGHTDOWN".equals(focus));
+                if (walking) {
+                    // Native now refuses unserviceable steps immediately
+                    // rather than storing them to execute after a long turn.
+                    SessionDebugLog.event("WORLD_STEP_BUSY", "request=" + request);
+                    final long now = SystemClock.elapsedRealtime();
+                    if (now - lastWorldBusyNotice >= 2500) {
+                        lastWorldBusyNotice = now;
+                        feedback(activity.getString(R.string.a11yWorldStepBusy));
+                    }
+                } else if (!"focus".equals(action)) {
                     feedback(activity.getString(R.string.a11yReaderStale));
                 }
             } else {
