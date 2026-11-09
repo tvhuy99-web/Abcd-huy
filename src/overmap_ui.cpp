@@ -3434,11 +3434,47 @@ void ui::omap::display_accessible_places()
             add_msg( m_info, _( "You are not controlling a vehicle." ) );
             return std::string( "TIMEOUT" );
         }
-        const tripoint_abs_omt destination = places[*selected].target;
+        tripoint_abs_omt destination = places[*selected].target;
         // Recheck the discovery boundary when starting a route. The known
         // place may have changed since the list was opened.
         if( overmap_buffer.seen( destination ) <= om_vision_level::outlines ) {
             add_msg( m_info, _( "This destination is no longer known." ) );
+            return std::string( "TIMEOUT" );
+        }
+        // Walkers approach water from known dry land. Never route directly
+        // into the middle of a lake or river just because it was selected.
+        const oter_id terrain = overmap_buffer.ter_existing( destination );
+        if( !driving && terrain.is_valid() && terrain->is_water() ) {
+            std::optional<tripoint_abs_omt> shore;
+            int shortest = scan_tiles + tiles_per_omt * 2;
+            for( int dy = -1; dy <= 1; ++dy ) {
+                for( int dx = -1; dx <= 1; ++dx ) {
+                    if( dx == 0 && dy == 0 ) {
+                        continue;
+                    }
+                    const tripoint_abs_omt adjacent = destination + tripoint_rel_omt( dx, dy, 0 );
+                    if( overmap_buffer.seen( adjacent ) <= om_vision_level::outlines ) {
+                        continue;
+                    }
+                    const oter_id land = overmap_buffer.ter_existing( adjacent );
+                    if( !land.is_valid() || land->is_water() ) {
+                        continue;
+                    }
+                    const int distance = distance_to( adjacent );
+                    if( distance < shortest ) {
+                        shortest = distance;
+                        shore = adjacent;
+                    }
+                }
+            }
+            if( !shore ) {
+                add_msg( m_info, _( "No known shore is reachable near this place." ) );
+                return std::string( "TIMEOUT" );
+            }
+            destination = *shore;
+        }
+        if( !driving && destination == you.pos_abs_omt() ) {
+            add_msg( m_info, _( "You are already in the selected map area." ) );
             return std::string( "TIMEOUT" );
         }
         std::vector<tripoint_abs_omt> route = get_overmap_path_to( destination, driving );
