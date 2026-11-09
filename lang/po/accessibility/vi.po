@@ -3796,3 +3796,9 @@ msgstr "Quay lại"
 #, c-format
 msgid "%1$s, about %2$d tiles"
 msgstr "%1$s, cách khoảng %2$d ô"
+
+msgid "No known shore is reachable near this place."
+msgstr "Không tìm thấy bờ đất đã biết gần địa điểm này."
+
+msgid "You are already in the selected map area."
+msgstr "Bạn đã ở trong khu vực bản đồ được chọn."
