@@ -79,6 +79,9 @@ msgstr "Có %s."
 msgid "Items here: %1$s, %2$s."
 msgstr "Có %1$s, %2$s."
 
+msgid "Items:"
+msgstr "Vật phẩm:"
+
 #, c-format
 msgid "Items here: %1$s and %2$d other types."
 msgstr "Có %1$s và %2$d loại đồ khác."
