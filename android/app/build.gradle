@@ -169,9 +169,38 @@ task fetchSdl3Aars {
             def zipFile = new File(cacheDir, zipName)
             if (!zipFile.exists()) {
                 def url = "https://github.com/libsdl-org/${entry.repo}/releases/download/release-${entry.version}/${zipName}"
-                println("Downloading ${url}")
-                new URL(url).withInputStream { input ->
-                    zipFile.withOutputStream { output -> output << input }
+                // Release assets sometimes return transient HTTP 5xx responses.
+                // Write to a temporary path to avoid caching incomplete ZIPs.
+                def partialFile = new File(cacheDir, "${zipName}.part")
+                boolean downloaded = false
+                for (int attempt = 1; attempt <= 6 && !downloaded; attempt++) {
+                    partialFile.delete()
+                    try {
+                        println("Downloading ${url} (attempt ${attempt}/6)")
+                        def connection = new URL(url).openConnection()
+                        connection.connectTimeout = 60000
+                        connection.readTimeout = 120000
+                        connection.getInputStream().withCloseable { input ->
+                            partialFile.withOutputStream { output -> output << input }
+                        }
+                        def partialDigest = java.security.MessageDigest.getInstance('SHA-256')
+                        partialFile.eachByte(8192) { buf, len -> partialDigest.update(buf, 0, len) }
+                        def partialSha = partialDigest.digest().collect { String.format('%02x', it) }.join('')
+                        if (partialSha != entry.zipSha256) {
+                            throw new IOException("SHA256 mismatch for ${zipName}")
+                        }
+                        if (!partialFile.renameTo(zipFile)) {
+                            throw new IOException("Could not move downloaded ${zipName} into cache")
+                        }
+                        downloaded = true
+                    } catch (Exception error) {
+                        partialFile.delete()
+                        if (attempt == 6) {
+                            throw new GradleException("Could not download ${zipName} after 6 attempts", error)
+                        }
+                        println("Download failed: ${error.message}. Retrying.")
+                        Thread.sleep(attempt * 15000L)
+                    }
                 }
             }
             def md = java.security.MessageDigest.getInstance('SHA-256')
