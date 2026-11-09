@@ -24,13 +24,13 @@ di chuyển bên Java.
    Thay đổi revision do bước đi không còn hủy cử chỉ đang vuốt dở.
    Menu, lifecycle và các màn hình khác vẫn dùng khóa cũ.
 3. Một lệnh hướng thuộc đúng bốn hướng `UP/DOWN/LEFT/RIGHT`, có
-   `activate` và revision **liền trước** vẫn có thể được chấp nhận khi
-   game đã xuất bản một snapshot mới. C++ **vẫn** yêu cầu token
-   `session/frame/generation` đúng và snapshot hiện thời cho phép
-   `swipe_movement_allowed`, đồng thời xác thực node/hành động gốc.
-   Những lệnh khác, revision cũ hơn một phiên bản, chuyển modal, đổi
-   phiên, ngủ, điều khiển xe và tự động di chuyển đều không được mở
-   rộng đặc quyền.
+   `activate`, cùng token phiên điều khiển **vẫn đang hoạt động**,
+   được phép dùng revision đã cũ nhiều phiên bản. C++ **vẫn** yêu cầu
+   `session/frame/generation` đúng, revision không đến từ tương lai,
+   và snapshot mới nhất cho phép `swipe_movement_allowed`; kiểm tra
+   lại ID node, trạng thái cho phép và hành động ngay trên C++.
+   Những lệnh menu/vật phẩm, chuyển modal, đổi phiên, ngủ, điều khiển
+   xe và tự động di chuyển vẫn dùng cơ chế kiểm soát nghiêm ngặt.
 4. Bản mô tả các lệnh mặc định không đổi được lưu lại trên game thread,
    tránh gọi lại liên tục các bước dịch nhãn và lấy mô tả phím tắt.
    Cache bị xóa khi vào modal, đổi vòng đời trình đọc hoặc đổi phiên
@@ -78,3 +78,29 @@ Trên điện thoại, bật nhật ký phiên và thử:
 
 Thay đổi này là một vòng tối ưu kiến trúc có cơ sở từ nhật ký, chưa phải
 bằng chứng về mức tăng tốc đo được trên thiết bị.
+
+## Bản sửa bổ sung sau khi thử `23e40c2`
+
+Nhật ký `cataclysm-session-debug_6.txt` ghi 65 yêu cầu đi bộ, trong đó
+10 yêu cầu bị `stale`; quá trình này không còn làm đổi vuốt thành điều
+hướng nhưng vẫn mất bước khi engine cập nhật nhiều revision trước khi
+xử lý được lệnh.
+
+- Bỏ giới hạn revision chỉ được cũ một bản **cho lệnh đi bộ bốn hướng**.
+  Đối với bước đi, snapshot là một mô tả thế giới thay đổi thường xuyên,
+  không phải định danh lượt điều khiển. Token `session/frame/generation`,
+  số request tăng dần và quyền đi bộ **trong snapshot native hiện tại**
+  vẫn phải đúng. Mọi hành động khác không thay đổi quy tắc.
+- Khi người chơi mở Menu tổng hợp chỉ có ở Android, JNI xóa **chỉ các
+  lệnh đi bộ chưa xử lý trong mailbox sẵn có**. Không tạo hàng đợi mới
+  và không xóa các lệnh menu. Modal native vẫn tự chặn qua generation.
+- Sự kiện `WORLD_INPUT_TIMING` (1/16 bước) đo thời gian từ lúc JNI
+  nhận cú vuốt đến khi game thread lấy nó ra, cùng độ trễ revision.
+- Sự kiện `WORLD_JAVA_TIMING` (1/16 snapshot thế giới) tách thời gian
+  chờ UI thread, phân tích JSON và cập nhật giao diện.
+- Thêm kiểm thử C++ về bốn hướng, revision cũ nhiều bản, revision tương
+  lai, node vô hiệu, dữ liệu bất hợp lệ, modal/lifecycle và token cũ.
+
+**Chưa khẳng định hết trễ:** game có những lượt xử lý 0,8–1 giây,
+không thể cho bước tiếp qua trước khi game thực sự xong một lượt.
+Không chạy bước giả và không dùng nhiều luồng cùng sửa trạng thái game.
