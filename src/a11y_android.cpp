@@ -145,7 +145,8 @@ std::size_t cancel_pending_world_steps()
     const std::size_t before = inbox.size();
     inbox.erase( std::remove_if( inbox.begin(), inbox.end(),
     []( const semantic_intent & intent ) {
-        return intent.action == "activate" && is_world_step_node( intent.node );
+        return intent.action == "activate" && is_world_step_node( intent.node ) &&
+               matches_last_world( intent.token );
     } ), inbox.end() );
     return before - inbox.size();
 }
