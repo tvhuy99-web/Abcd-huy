@@ -336,6 +336,8 @@ input_context game::get_player_input( std::string &action )
                 a11y::announce_linear_scan( -1, 0 );
             } else if( intent.node == "reader:scan:east" ) {
                 a11y::announce_linear_scan( 1, 0 );
+            } else if( intent.node == "reader:places" ) {
+                ui::omap::display_accessible_places();
             } else if( intent.node == "reader:coordinates" ) {
                 a11y::announce_player_coordinates();
             }
