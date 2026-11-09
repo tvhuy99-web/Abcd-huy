@@ -614,12 +614,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         return;
                     }
                 }
-                // Routine steps are silent, including context refreshes. A
-                // newly encountered noteworthy obstacle, trap, creature or
-                // landmark is announced briefly without the tile preamble.
+                // Ordinary floor-to-floor footsteps are silent. A newly
+                // entered notable tile speaks its observed objects or hazards.
+                // Position matters: two adjacent floor tiles holding the same
+                // item must each announce when the avatar enters them.
+                ReaderSnapshot.Node previousPosition = previousSnapshot == null ? null
+                        : previousSnapshot.find("world:tile_position");
+                ReaderSnapshot.Node nextPosition = next.find("world:tile_position");
+                boolean steppedToAnotherTile = previousPosition != null && nextPosition != null
+                        && !previousPosition.value.equals(nextPosition.value);
                 boolean newlyNoteworthy = worldView && previousTile != null
                         && "alert".equals(nextTile.role)
-                        && (!"alert".equals(previousTile.role)
+                        && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
                 render();
                 if (worldView) {
