@@ -770,7 +770,9 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
     std::vector<tripoint_bub_ms> targets;
     uilist menu;
     menu.title = title;
-    menu.text = _( "Nearby objects. Choose an entry to interact; cancel to do nothing." );
+    // The first real object should be heard immediately, without a tutorial.
+    menu.input_category = "nearby-target";
+    menu.text.clear();
     for( std::size_t i = 0; i < offsets.size(); ++i ) {
         const tripoint_bub_ms target = origin + offsets[i];
         // Never list live hidden terrain or unseen creatures from the engine's
@@ -781,8 +783,32 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         }
         const int index = static_cast<int>( targets.size() );
         targets.push_back( target );
-        menu.addentry( index, true, -1, string_format( _( "%1$s: %2$s" ),
-                       directions[i], a11y::describe_tile( observed ) ) );
+        // Read only the most useful object on this tile by default.
+        // The complete perception-safe description remains in the row's
+        // explicit detail, including any other objects sharing the tile.
+        std::string name = observed.terrain;
+        if( !observed.seen_items.empty() ) {
+            name = observed.seen_items.front();
+        }
+        if( !observed.furniture.empty() ) {
+            name = observed.furniture;
+        }
+        if( !observed.vehicle.empty() ) {
+            name = observed.vehicle;
+        }
+        if( !observed.seen_creatures.empty() ) {
+            name = observed.seen_creatures.front();
+        }
+        if( observed.door != a11y::door_state::none ) {
+            name = !observed.furniture.empty() ? observed.furniture : observed.terrain;
+            const char *state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
+                                observed.door == a11y::door_state::closed ? _( "Closed" ) :
+                                _( "Open" );
+            name += " (" + std::string( state ) + ")";
+        }
+        menu.addentry_desc( index, true, -1,
+                            string_format( _( "%1$s. %2$s" ), name, directions[i] ),
+                            a11y::describe_tile( observed ) );
     }
     if( targets.empty() ) {
         add_msg( m_info, _( "No visible objects here can be examined or interacted with." ) );
