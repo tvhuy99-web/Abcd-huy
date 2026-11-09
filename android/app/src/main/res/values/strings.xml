@@ -200,4 +200,5 @@
     <string name="a11yContextConfirm">Confirm</string>
     <string name="a11yContextBack">Cancel or back</string>
     <string name="a11yContextConfirmUnavailable">No confirmation action here</string>
+    <string name="a11yGlobalGestureHelp">Menus: hold one finger for screen commands; tap two fingers once for details; swipe two fingers up to confirm, down to cancel or back. In number entry, swipe vertically to choose digits. On the world map, two-finger directional swipes still scan.</string>
 </resources>
