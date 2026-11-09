@@ -3704,9 +3704,15 @@ class inventory_selector::reader_session
                     node.id = binding->id;
                     node.role = activation == "TOGGLE_ENTRY" ? "checkbox" : "button";
                     node.label = remove_color_tags( cells.empty() ? location->display_name() : cells.front() );
-                    node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
-                                               std::to_string( entry->chosen_count ),
-                                               std::to_string( entry->get_available_count() ) );
+                    // A plain inventory selection opens the item's action menu;
+                    // it does not mark an amount. Do not say "Selected: 0"
+                    // in this mode. Multi-select pickup/drop screens still
+                    // need their selected and available quantity announced.
+                    if( activation == "TOGGLE_ENTRY" ) {
+                        node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
+                                                   std::to_string( entry->chosen_count ),
+                                                   std::to_string( entry->get_available_count() ) );
+                    }
                     node.detail = location.describe( &owner.u );
                     // Physical characteristics and equipment state for every
                     // inventory screen, without changing its selection rules.
