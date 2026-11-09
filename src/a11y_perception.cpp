@@ -264,7 +264,11 @@ std::string describe_tile( const tile_observation &observation )
             result = _( "Remembered, not currently visible: " );
         }
         result += observation.terrain;
-        if( !observation.furniture.empty() ) { result += ". " + observation.furniture; }
+        // Terrain and furniture can have the same translated name. Do not
+        // announce an identical fact twice (e.g. "floor. floor").
+        if( !observation.furniture.empty() && observation.furniture != observation.terrain ) {
+            result += ". " + observation.furniture;
+        }
         if( observation.door != door_state::none ) {
             const std::string state = observation.door == door_state::locked ? _( "Locked" ) :
                                       observation.door == door_state::closed ? _( "Closed" ) :
