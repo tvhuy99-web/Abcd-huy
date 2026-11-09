@@ -1241,17 +1241,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     + ":" + (hubActionItem == null ? "" : hubActionItem.shortcutTarget())
                     + (editor == null ? "" : ":editor:" + editor.contextKey());
         }
-        // A new character position is not a new gesture mode. Do not
-        // cancel an in-flight swipe just because the world revision changed.
-        // Native DEFAULTMODE still authorizes each movement independently.
-        if (snapshot != null && "DEFAULTMODE".equals(snapshot.category)
-                && worldMovementEnabled()) {
-            return presentationEpoch + ":walk:" + snapshot.session + ":"
-                    + snapshot.frame + ":" + snapshot.generation;
+        // A snapshot revision is not a new input screen. Keep gestures
+        // alive when the same native session/frame/generation merely
+        // republishes its contents, but invalidate across modal/lifecycle
+        // boundaries and across opening or closing a local editor.
+        if (snapshot != null) {
+            return presentationEpoch + ":screen:" + snapshot.session + ":"
+                    + snapshot.frame + ":" + snapshot.generation
+                    + ":" + snapshot.category
+                    + (editor == null ? "" : ":editor:" + editor.contextKey());
         }
-        return presentationEpoch + ":" + (snapshot == null ? "waiting"
-                : snapshot.contextKey() + ":" + snapshot.revision)
-                + (editor == null ? "" : ":editor:" + editor.contextKey());
+        return presentationEpoch + ":waiting";
     }
 
     @Override
