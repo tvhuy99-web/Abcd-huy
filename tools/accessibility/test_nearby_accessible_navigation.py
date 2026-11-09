@@ -32,9 +32,10 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("void surroundings_menu::execute_accessible()",
                       self.menu)
         self.assertIn("a11y::observe_tile( position )", self.menu)
-        self.assertIn("tile.seen_items", self.menu)
-        self.assertIn("tile.seen_creatures", self.menu)
-        self.assertIn("tile.known_traps", self.menu)
+        self.assertIn("a11y::scan_unrestricted_tile( position )", self.menu)
+        self.assertIn("tile.items", self.menu)
+        self.assertIn("tile.creatures", self.menu)
+        self.assertIn("tile.traps", self.menu)
         self.assertIn("tile.vehicle", self.menu)
         self.assertIn("std::stable_sort( nearby.begin(), nearby.end()",
                       self.menu)
@@ -59,9 +60,9 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("you.set_destination( *route );", self.menu)
         self.assertIn("if( !route )", self.menu)
         self.assertIn("if( route->empty() )", self.menu)
-        self.assertIn("here.impassable( position ) ? 1 : 0", self.menu)
-        self.assertIn("for( const std::string &creature : tile.seen_creatures )", self.menu)
-        self.assertIn("for( const std::string &item_name : tile.seen_items )", self.menu)
+        self.assertIn("tile.impassable ? 1 : 0", self.menu)
+        self.assertIn("for( const std::string &creature : tile.creatures )", self.menu)
+        self.assertIn("for( const std::string &item_name : tile.items )", self.menu)
         self.assertIn("if( a11y::enabled() )", self.menu)
         self.assertIn("execute_accessible();", self.menu)
 
