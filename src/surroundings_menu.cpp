@@ -15,6 +15,7 @@
 #include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "a11y_semantics.h"
+#include "a11y_world.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "cata_utility.h"
@@ -1267,53 +1268,48 @@ void surroundings_menu::execute_accessible()
                 if( !here.inbounds( position ) ) {
                     continue;
                 }
-                // This existing observer applies the game's sight, memory,
-                // container-contents, trap and special-vision knowledge rules.
-                // Only recognized sounds/perceptions survive for unseen tiles.
-                const a11y::tile_observation tile = a11y::observe_tile( position );
-                for( const std::string &perception : tile.special_perceptions ) {
-                    add_row( perception, relative, 1 );
+                // Preserve heard markers, but inspect raw map objects
+                // exactly like the 16-tile assisted scan. Do not include
+                // ordinary empty floors, grass or roads in this list.
+                const a11y::tile_observation observed = a11y::observe_tile( position );
+                const a11y::unrestricted_tile tile = a11y::scan_unrestricted_tile( position );
+                if( tile.creatures.empty() ) {
+                    for( const std::string &perception : observed.special_perceptions ) {
+                        add_row( remove_color_tags( perception ), relative, 1 );
+                    }
                 }
-                if( !tile.heard_marker.empty() ) {
-                    add_row( tile.heard_marker, relative, 1 );
+                if( !observed.heard_marker.empty() ) {
+                    add_row( remove_color_tags( observed.heard_marker ), relative, 1 );
                 }
-                if( tile.source != a11y::observation_source::visible ) {
-                    continue;
-                }
-
-                for( const std::string &creature : tile.seen_creatures ) {
+                for( const std::string &creature : tile.creatures ) {
                     add_row( creature, relative, 1 );
                 }
-                for( const std::string &item_name : tile.seen_items ) {
+                for( const std::string &item_name : tile.items ) {
                     add_row( item_name, relative, 0 );
                 }
-                for( const std::string &known_trap : tile.known_traps ) {
-                    add_row( known_trap, relative, 1 );
+                for( const std::string &hazard : tile.traps ) {
+                    add_row( hazard, relative, 1 );
                 }
-                // Ordinary blood splatter / residue must not be read as an
-                // obstacle. Only active dangerous fields warrant a row.
+                // Only dangerous active fields are useful in a flat
+                // surrounding list; ordinary blood and residue stay out.
                 for( const auto &entry : here.field_at( position ) ) {
                     if( entry.second.is_field_alive() && entry.second.is_dangerous() ) {
-                        add_row( entry.second.name(), relative, 1 );
+                        add_row( remove_color_tags( entry.second.name() ), relative, 1 );
                     }
                 }
-                if( !tile.vehicle.empty() ) {
-                    const optional_vpart_position part = here.veh_at( position );
-                    if( part && seen_vehicles.insert( &part->vehicle() ).second ) {
-                        // A multi-tile vehicle is one object, not 20 entries.
-                        add_row( tile.vehicle, relative, 1 );
-                    }
+                const optional_vpart_position part = here.veh_at( position );
+                if( part && !tile.vehicle.empty() &&
+                    seen_vehicles.insert( &part->vehicle() ).second ) {
+                    add_row( tile.vehicle, relative, 1 );
                 }
                 const ter_t &terrain = *here.ter( position );
                 if( noteworthy_nearby_feature( terrain, position ) ) {
-                    add_row( tile.terrain, relative, here.impassable( position ) ? 1 : 0 );
+                    add_row( tile.terrain, relative, tile.impassable ? 1 : 0 );
                 }
-                if( here.has_furn( position ) ) {
-                    const furn_t &furniture = *here.furn( position );
-                    if( noteworthy_nearby_feature( furniture, position ) ||
-                        static_cast<bool>( furniture.workbench ) ) {
-                        add_row( tile.furniture, relative, here.impassable( position ) ? 1 : 0 );
-                    }
+                // Ordinary furniture is still a meaningful object. A locker
+                // must not vanish simply because it has no special flags.
+                if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
+                    add_row( tile.furniture, relative, tile.impassable ? 1 : 0 );
                 }
             }
         }
