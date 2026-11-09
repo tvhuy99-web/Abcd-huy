@@ -315,6 +315,53 @@ std::string noteworthy_category( const tile_observation &tile )
     return _( "Noteworthy information" );
 }
 
+// Speak a short, useful event when entering an interesting tile. Ordinary
+// floor tiles stay silent. Use only the already observed information: never
+// reveal items hidden inside a closed container or invisible hazards.
+std::string short_tile_alert( const tile_observation &tile )
+{
+    if( !tile.known_traps.empty() ) {
+        return string_format( _( "Trap: %s." ), tile.known_traps.front() );
+    }
+    if( !tile.seen_creatures.empty() ) {
+        return string_format( _( "Creature: %s." ), tile.seen_creatures.front() );
+    }
+    if( !tile.special_perceptions.empty() ) {
+        return tile.special_perceptions.front();
+    }
+    if( !tile.fields.empty() ) {
+        return string_format( _( "Hazard: %s." ), tile.fields.front() );
+    }
+    if( tile.impassable ) {
+        return string_format( _( "Obstacle: %s." ), tile.terrain );
+    }
+    if( tile.route_feature ) {
+        return string_format( _( "Route feature: %s." ), tile.terrain );
+    }
+    if( !tile.heard_marker.empty() ) {
+        return string_format( _( "Sound marker: %s." ), tile.heard_marker );
+    }
+    if( !tile.vehicle.empty() ) {
+        return string_format( _( "Vehicle: %s." ), tile.vehicle );
+    }
+    if( !tile.seen_items.empty() ) {
+        if( tile.seen_items.size() == 1 ) {
+            return string_format( _( "Item here: %s." ), tile.seen_items.front() );
+        }
+        if( tile.seen_items.size() == 2 ) {
+            return string_format( _( "Items here: %1$s, %2$s." ),
+                                  tile.seen_items[0], tile.seen_items[1] );
+        }
+        return string_format( _( "Items here: %1$s and %2$d other types." ),
+                              tile.seen_items.front(),
+                              static_cast<int>( tile.seen_items.size() - 1 ) );
+    }
+    if( !tile.furniture.empty() ) {
+        return string_format( _( "Furniture: %s." ), tile.furniture );
+    }
+    return noteworthy_category( tile ) + ". " + tile.terrain;
+}
+
 std::string player_status()
 {
     const avatar &viewer = get_avatar();
@@ -542,7 +589,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     here.role = noteworthy_here ? "alert" : "document";
     here.value = current_tile.terrain;
     if( noteworthy_here ) {
-        here.value = noteworthy_category( current_tile ) + ". " + current_tile.terrain;
+        here.value = short_tile_alert( current_tile );
     }
     if( camera_offset ) {
         here.label = _( "Death camera center" );
@@ -550,6 +597,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                             "or accept your fate to finish watching." );
     }
     result.nodes.push_back( std::move( here ) );
+    // A separate, read-only location node lets Android distinguish two
+    // consecutive noteworthy tiles with identical descriptions. This never
+    // appears in the automatic spoken alert, so footsteps remain quiet.
+    const tripoint_abs_ms avatar_position = get_avatar().pos_abs();
+    semantic_node location = document( "world:tile_position", _( "Current position" ), "" );
+    location.value = string_format( "%d,%d,%d",
+                                    avatar_position.x(), avatar_position.y(), avatar_position.z() );
+    location.actions = { "focus" };
+    result.nodes.push_back( std::move( location ) );
     for( int distance = 1; distance <= scan_depth; ++distance ) {
         for( const int dz : { distance, -distance } ) {
             const tile_observation vertical = observe_memory_tile(
