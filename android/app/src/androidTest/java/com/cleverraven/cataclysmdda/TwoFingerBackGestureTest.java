@@ -19,4 +19,13 @@ public final class TwoFingerBackGestureTest {
         assertFalse(TwoFingerBackGesture.isDownSwipe(0, 40, 0, 90, 48));
         assertFalse(TwoFingerBackGesture.isDownSwipe(0, 90, 0, -90, 48));
     }
+    @Test
+    public void upwardConfirmNeedsTwoStraightFingers() {
+        assertTrue(TwoFingerBackGesture.isUpSwipe(-3, -90, 4, -99, 48));
+        assertFalse(TwoFingerBackGesture.isUpSwipe(0, 90, 0, 90, 48));
+        assertFalse(TwoFingerBackGesture.isUpSwipe(0, -90, 0, -12, 48));
+        assertFalse(TwoFingerBackGesture.isUpSwipe(72, -80, 0, -90, 48));
+        assertFalse(TwoFingerBackGesture.isUpSwipe(0, -90, 0, 90, 48));
+    }
+
 }
