@@ -801,10 +801,10 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         }
         if( observed.door != a11y::door_state::none ) {
             name = !observed.furniture.empty() ? observed.furniture : observed.terrain;
-            const char *state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
+            const std::string state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
                                 observed.door == a11y::door_state::closed ? _( "Closed" ) :
                                 _( "Open" );
-            name += " (" + std::string( state ) + ")";
+            name += " (" + state + ")";
         }
         menu.addentry_desc( index, true, -1,
                             string_format( _( "%1$s. %2$s" ), name, directions[i] ),
