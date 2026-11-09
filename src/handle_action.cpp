@@ -507,8 +507,10 @@ input_context game::get_player_input( std::string &action )
             return false;
         }
     };
-    std::unique_ptr<a11y::screen_scope> reader;
-    reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
+    // Keep the DEFAULTMODE frame across turns: an ordinary step must not
+    // temporarily turn the Android swipe surface into a waiting screen.
+    a11y::screen_scope *reader = nullptr;
+    reader = &a11y::bind_world_screen( &ctxt,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         // Multi-finger reads are verified against the live world snapshot.
         // They never enqueue movement, consume moves, or change the turn.
@@ -657,7 +659,24 @@ input_context game::get_player_input( std::string &action )
         if( a11y::enabled() ) {
             const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
             if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
-                reader->update( make_reader_snapshot() );
+                // Sample build and publication separately so the next phone
+                // log can distinguish reader work from regular game turns.
+                const auto started = std::chrono::steady_clock::now();
+                a11y::semantic_snapshot next = make_reader_snapshot();
+                const auto built = std::chrono::steady_clock::now();
+                const std::size_t nodes = next.nodes.size();
+                reader->update( std::move( next ) );
+                const auto published = std::chrono::steady_clock::now();
+                static unsigned int reader_timing_sample = 0;
+                if( ( ++reader_timing_sample % 32 ) == 0 ) {
+                    const auto ms = []( const auto from, const auto to ) {
+                        return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+                    };
+                    a11y::android::diagnostic_event( "WORLD_READER_TIMING",
+                            "build_ms=" + std::to_string( ms( started, built ) ) +
+                            " update_publish_ms=" + std::to_string( ms( built, published ) ) +
+                            " nodes=" + std::to_string( nodes ) );
+                }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
             }
@@ -868,6 +887,8 @@ input_context game::get_player_input( std::string &action )
         ctxt.reset_timeout();
     }
 
+    // Clear the handler referencing this call's local input_context.
+    a11y::unbind_world_screen();
     return ctxt;
 }
 
