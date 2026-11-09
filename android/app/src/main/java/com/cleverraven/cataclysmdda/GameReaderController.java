@@ -606,7 +606,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     if ("YESNO".equals(next.category) && !next.summary.trim().isEmpty()) {
                         introduction += ". " + next.summary.trim();
                     }
-                    feedback(introduction + ". " + nodeText(next.find(focus), false));
+                    // Places intentionally starts speaking at the first actual
+                    // destination: no title, preamble, or item counter.
+                    feedback(("places".equals(next.category) ? "" : introduction + ". ")
+                            + nodeText(next.find(focus), false));
                 } else if (selectionChanged) {
                     readCurrent();
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
