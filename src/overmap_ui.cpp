@@ -3394,6 +3394,15 @@ void ui::omap::display_accessible_places()
     ctxt.register_action( "QUIT" );
     a11y::screen_scope reader( &ctxt, "places",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            // Two-level navigation: return from travel mode selection to
+            // the place list first; another Back then exits to the world.
+            if( selected ) {
+                selected.reset();
+                return std::string( "TIMEOUT" );
+            }
+            return std::string( "QUIT" );
+        }
         if( intent.action == "focus" ) {
             return std::string( "TIMEOUT" );
         }
