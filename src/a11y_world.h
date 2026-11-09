@@ -2,6 +2,8 @@
 #ifndef CATA_SRC_A11Y_WORLD_H
 #define CATA_SRC_A11Y_WORLD_H
 #include <optional>
+#include <string>
+#include <vector>
 #include "a11y_semantics.h"
 #include "coords_fwd.h"
 #include "coordinates.h"
@@ -10,6 +12,20 @@ class input_context;
 namespace a11y
 {
 enum class world_scan_filter { all, known, noteworthy, heard };
+
+// Read-only, unrestricted tile data shared by both assistive map scans.
+// This intentionally examines the loaded map even behind walls.
+struct unrestricted_tile {
+    std::string terrain;
+    std::string furniture;
+    std::string vehicle;
+    bool impassable = false;
+    std::vector<std::string> fields;
+    std::vector<std::string> traps;
+    std::vector<std::string> creatures;
+    std::vector<std::string> items;
+};
+unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position );
 // explore_cursor, when set, is the explore-mode cursor position relative to
 // the avatar. The scan is then centered on the cursor instead of the avatar
 // and the snapshot publishes the explore controls; the cursor is purely a
