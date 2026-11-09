@@ -185,6 +185,10 @@ public final class ReaderSetupActivity extends Activity {
         gestureHeading.setText(R.string.a11yGestureSettingsHeading);
         layout.addView(gestureHeading);
         selfVoiceControls.add(gestureHeading);
+        TextView gestureHelp = new TextView(this);
+        gestureHelp.setText(R.string.a11yGlobalGestureHelp);
+        layout.addView(gestureHelp);
+        selfVoiceControls.add(gestureHelp);
 
         leftHandedNavigation = new CheckBox(this);
         leftHandedNavigation.setId(R.id.a11y_left_handed_navigation);
