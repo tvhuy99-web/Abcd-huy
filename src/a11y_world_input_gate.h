@@ -19,11 +19,17 @@ inline bool is_cardinal_step_node( const std::string &node )
     return node == "UP" || node == "DOWN" || node == "LEFT" || node == "RIGHT";
 }
 
+inline bool is_world_step_node( const std::string &node )
+{
+    return is_cardinal_step_node( node ) || node == "LEFTUP" ||
+           node == "LEFTDOWN" || node == "RIGHTUP" || node == "RIGHTDOWN";
+}
+
 inline bool live_world_walk_command( const semantic_snapshot &snapshot,
                                      const semantic_intent &intent )
 {
     if( snapshot.category != "DEFAULTMODE" || !snapshot.swipe_movement_allowed ||
-        intent.action != "activate" || !is_cardinal_step_node( intent.node ) ||
+        intent.action != "activate" || !is_world_step_node( intent.node ) ||
         !intent.value.empty() || intent.revision == 0 || intent.revision > snapshot.revision ) {
         return false;
     }
