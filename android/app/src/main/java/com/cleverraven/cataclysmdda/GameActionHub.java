@@ -99,7 +99,7 @@ final class GameActionHub {
                     "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",
                     "toggle_prone", "wait", "pause", "auto_travel_mode" },
             { "interact", "open", "close", "examine", "examine_and_pickup",
-                    "pickup", "pickup_all", "smash", "grab", "haul", "haul_toggle",
+                    "reader:pickup_here", "pickup", "pickup_all", "smash", "grab", "haul", "haul_toggle",
                     "butcher", "chat", "peek" },
             { "inventory", "advinv", "pickup", "pickup_all", "drop", "drop_adj",
                     "compare", "organize", "apply", "apply_wielded", "item_action_menu",
