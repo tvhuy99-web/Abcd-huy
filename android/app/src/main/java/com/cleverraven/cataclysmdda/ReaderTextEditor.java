@@ -182,7 +182,8 @@ public final class ReaderTextEditor {
         for (int i = start; i < Math.min(start + 16, items.size()); i++) {
             final int index = i;
             Button button = new Button(activity);
-            button.setText(items.get(i).label);
+            button.setText(items.get(i).label + ", "
+                    + activity.getString(R.string.a11yPosition, i + 1, items.size()));
             button.setSelected(i == selected);
             button.setOnClickListener(view -> { selected = index; activate(); });
             choices.addView(button);
@@ -219,10 +220,9 @@ public final class ReaderTextEditor {
     public void cancelInput() { listener.cancel(); }
 
     public void readCurrent() {
-        // Digit/letter keyboards are repeatedly browsed one entry at a time.
-        // The active character is enough; a full "3 of 11" on every swipe
-        // makes entering even a short quantity unnecessarily slow.
-        listener.speak(items.get(selected).label);
+        // Restore position feedback for all editor and keyboard choices.
+        listener.speak(items.get(selected).label + ", "
+                + activity.getString(R.string.a11yPosition, selected + 1, items.size()));
     }
 
     private BreakIterator boundaries(String text) {
