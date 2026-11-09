@@ -15,7 +15,9 @@ class ExplorePlaces500Tests(unittest.TestCase):
         cls.hub = (ROOT / "android/app/src/main/java/com/cleverraven/"
                    "cataclysmdda/GameActionHub.java").read_text(encoding="utf-8")
         cls.reader = (ROOT / "android/app/src/main/java/com/cleverraven/"
-                      "cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
+                      "cataclysmdda/GameReaderController.java").read_text(
+                          encoding="utf-8"
+                      )
         cls.translations = (ROOT / "lang/po/accessibility/vi.po").read_text(
             encoding="utf-8"
         )
