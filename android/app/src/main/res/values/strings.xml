@@ -100,6 +100,7 @@
     <string name="a11yHubNearby">Actions available here</string>
     <string name="a11yHubExplore">Explore and maps</string>
     <string name="a11yHubMovement">Movement and posture</string>
+    <string name="a11yWorldStepBusy">Game is processing, swipe again.</string>
     <string name="a11yHubChooseDirection">Choose movement direction</string>
     <string name="a11yHubMoveNorth">Move north</string>
     <string name="a11yHubMoveNortheast">Move northeast</string>
