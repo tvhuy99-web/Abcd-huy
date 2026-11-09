@@ -1761,13 +1761,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     /**
-     * Draft editor for numeric and text form fields (R02.3). Submitting only
-     * sends a set_value intent: the engine stores it as an unapplied draft
-     * and the refreshed snapshot speaks it as such. The editor closes as
-     * soon as the intent is accepted by the mailbox; an invalid_value
-     * receipt is matched through formRequest and spoken separately.
+     * Standard fields retain the draft/Apply contract. A checkbox exposing
+     * a bounded integer set_value action without Apply is an explicit
+     * immediate item-quantity picker: each chosen number commits the amount,
+     * closes this panel, and returns to the original item list. The final
+     * inventory CONFIRM remains a separate action.
      */
     private void openFormEditor(ReaderSnapshot.Node node) {
+        final boolean quickQuantity = "checkbox".equals(node.role)
+                && "int".equals(node.fieldType) && node.hasFieldRange
+                && node.fieldMin == 0.0 && node.fieldMax > 1.0 && node.fieldStep == 1.0
+                && node.actions.contains("set_value") && !node.actions.contains("apply");
         formContext = snapshot.contextKey();
         formRequest = 0;
         final String nodeId = node.id;
@@ -1781,7 +1785,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 node.hasFieldRange ? node.fieldMin : null,
                 node.hasFieldRange ? node.fieldMax : null,
                 node.hasFieldRange && node.fieldStep > 0 ? node.fieldStep : null,
-                new ReaderTextEditor.Listener() {
+                quickQuantity, new ReaderTextEditor.Listener() {
                     @Override
                     public void speak(String text) { feedback(text); }
                     @Override
@@ -1805,7 +1809,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 });
         root.cancelGesture();
         render();
-        feedback(activity.getString(R.string.a11yEditorInstructions));
+        feedback(activity.getString(quickQuantity
+                ? R.string.a11yQuantityInstructions : R.string.a11yEditorInstructions));
     }
 
     private long send(String action, String value) {
