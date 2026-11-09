@@ -45,6 +45,9 @@ void dismiss_debug_prompt();
 // information the player is not entitled to hear. Playback is opt-in on
 // the Java side and every cue has a spoken equivalent.
 void cue( const std::string &name );
+// Nearest visible creature or item aligned with the player, in map tiles.
+// -1 cancels the repeating Android sonar cue. Game-thread only.
+void alignment_distance( int distance );
 void status( const std::string &code, const semantic_intent *intent = nullptr );
 } // namespace a11y::android
 #endif // CATA_SRC_A11Y_ANDROID_H
