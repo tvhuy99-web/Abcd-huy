@@ -92,14 +92,34 @@ std::size_t command_group_index( const std::string &action )
     }
     return groups.size() - 1;
 }
+// DEFAULTMODE registrations are stable across ordinary footsteps. Reuse
+// translated command names and key descriptions until a modal or lifecycle
+// transition invalidates them. This cache is accessed only on the game thread.
+std::vector<std::string> cached_world_action_ids;
+semantic_snapshot cached_world_commands;
+bool cached_world_commands_valid = false;
 } // namespace
+
+void invalidate_command_snapshot_cache()
+{
+    cached_world_commands_valid = false;
+    cached_world_action_ids.clear();
+    cached_world_commands = semantic_snapshot{};
+}
 
 semantic_snapshot command_snapshot( const input_context &context, const std::string &title )
 {
+    const auto &actions = context.registered_action_ids();
+    const bool cacheable = context.category_id() == "DEFAULTMODE";
+    if( cacheable && cached_world_commands_valid && cached_world_action_ids == actions ) {
+        semantic_snapshot cached = cached_world_commands;
+        cached.title = title;
+        return cached;
+    }
     semantic_snapshot snapshot;
     snapshot.title = title;
     std::vector<semantic_node> commands;
-    for( const std::string &action : context.registered_action_ids() ) {
+    for( const std::string &action : actions ) {
         if( action == "ANY_INPUT" || action == "COORDINATE" || action == "TIMEOUT" ||
             action == "MOUSE_MOVE" || action == "SELECT" ||
             action.rfind( "A11Y_INTERNAL_", 0 ) == 0 ) {
@@ -148,6 +168,11 @@ semantic_snapshot command_snapshot( const input_context &context, const std::str
     for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
         snapshot.nodes[i].position = i + 1;
         snapshot.nodes[i].total = snapshot.nodes.size();
+    }
+    if( cacheable ) {
+        cached_world_action_ids = actions;
+        cached_world_commands = snapshot;
+        cached_world_commands_valid = true;
     }
     return snapshot;
 }
