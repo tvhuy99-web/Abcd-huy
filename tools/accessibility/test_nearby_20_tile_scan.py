@@ -53,15 +53,21 @@ class NearbySquareScanTests(unittest.TestCase):
             "static bool noteworthy_nearby_feature(", 1
         )[1].split("void surroundings_menu::execute_accessible()", 1)[0])
         self.assertIn("noteworthy_nearby_feature( terrain, position )", s)
-        self.assertIn("noteworthy_nearby_feature( furniture, position )", s)
+        # Mundane terrain remains filtered, but a locker without special
+        # flags is still a meaningful furniture object.
+        self.assertIn("!tile.furniture.empty()", self.reader)
+        self.assertNotIn("noteworthy_nearby_feature( furniture, position )",
+                         self.reader)
 
     def test_detected_objects_only_and_no_category_priority(self):
         code = self.reader
         self.assertIn("a11y::observe_tile( position )", code)
-        self.assertIn("tile.source != a11y::observation_source::visible", code)
-        for field in ("seen_items", "seen_creatures", "known_traps",
-                      "vehicle", "special_perceptions", "heard_marker"):
+        self.assertIn("a11y::scan_unrestricted_tile( position )", code)
+        self.assertNotIn("tile.source != a11y::observation_source::visible", code)
+        for field in ("items", "creatures", "traps", "vehicle", "furniture"):
             self.assertIn("tile." + field, code)
+        self.assertIn("observed.heard_marker", code)
+        self.assertNotIn("add_row( tile.terrain, relative, 0 );", code)
         self.assertIn("seen_vehicles.insert(", code)
         self.assertIn("entry.second.is_dangerous()", code)
         self.assertIn("return lhs.distance < rhs.distance;", code)
