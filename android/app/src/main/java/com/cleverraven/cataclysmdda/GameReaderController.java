@@ -608,7 +608,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                     // Places intentionally starts speaking at the first actual
                     // destination: no title, preamble, or item counter.
-                    if ("places".equals(next.category)) {
+                    if ("places".equals(next.category)
+                            || "nearby-target".equals(next.category)
+                            || "pickup-here".equals(next.category)) {
                         feedback(nodeText(next.find(focus), false));
                     } else {
                         feedback(introduction + ". " + nodeText(next.find(focus), false));
