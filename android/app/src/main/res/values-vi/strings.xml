@@ -100,7 +100,7 @@
     <string name="a11yHubNearby">Việc có thể làm tại đây</string>
     <string name="a11yHubExplore">Quan sát và bản đồ</string>
     <string name="a11yHubMovement">Di chuyển và tư thế</string>
-    <string name="a11yWorldStepBusy">Trò chơi đang xử lý, hãy vuốt lại.</string>
+    <string name="a11yWorldStepBusy">Bận, vuốt lại.</string>
     <string name="a11yHubChooseDirection">Chọn hướng di chuyển</string>
     <string name="a11yHubMoveNorth">Đi Bắc</string>
     <string name="a11yHubMoveNortheast">Đi Đông Bắc</string>
