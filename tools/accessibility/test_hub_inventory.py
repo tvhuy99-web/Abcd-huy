@@ -34,7 +34,11 @@ class InventoryHubTest(unittest.TestCase):
         self.assertIn("Items marked for dropping", self.inv)
         self.assertIn("total_selected += row.entry->chosen_count", self.inv)
         self.assertIn('node.actions = { "focus", "activate", "set_value"', self.inv)
-        self.assertIn('intent.action == "apply"', self.inv)
+        self.assertIn('a11y::selected_quantity( intent.value', self.inv)
+        self.assertIn('multi->toggle_entry( entry, *amount );', self.inv)
+        self.assertIn('entry.get_available_count() == 1', self.inv)
+        self.assertNotIn('intent.action == "apply"', self.inv)
+        self.assertNotIn('"cancel_draft"', self.inv)
 
     def test_advanced_inventory_source_destination(self):
         self.assertIn("Source: %1$s. Destination: %2$s.", self.adv)
