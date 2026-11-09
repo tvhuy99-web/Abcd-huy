@@ -1,6 +1,8 @@
 #include "a11y_android.h"
 
+#include <algorithm>
 #include <atomic>
+#include <chrono>
 #include <deque>
 #include <limits>
 #include <mutex>
@@ -60,6 +62,9 @@ bool enqueue( semantic_intent intent )
         intent.node.size() > 512 || intent.action.size() > 80 || intent.value.size() > 16384 ) {
         return false;
     }
+    intent.received_at_ms = static_cast<std::uint64_t>(
+                                std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch() ).count() );
     inbox.push_back( std::move( intent ) );
 #if defined(__ANDROID__)
     PushWakeEvent();
@@ -82,6 +87,22 @@ void clear()
 {
     const std::lock_guard<std::mutex> lock( inbox_mutex );
     inbox.clear();
+}
+
+std::size_t cancel_pending_world_steps()
+{
+    // The Android-only command hub is not a native modal. Explicitly
+    // discard walking inputs already waiting in the existing mailbox
+    // when the player opens that hub, without touching other actions.
+    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::size_t before = inbox.size();
+    inbox.erase( std::remove_if( inbox.begin(), inbox.end(),
+    []( const semantic_intent & intent ) {
+        return intent.action == "activate" &&
+               ( intent.node == "UP" || intent.node == "DOWN" ||
+                 intent.node == "LEFT" || intent.node == "RIGHT" );
+    } ), inbox.end() );
+    return before - inbox.size();
 }
 
 void publish( const std::string &json )
@@ -547,6 +568,13 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReader(
     JNIEnv *, jclass, jboolean enable, jboolean suspend )
 {
     a11y::android::configure( enable == JNI_TRUE, suspend == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeCancelPendingWorldSteps(
+    JNIEnv *, jclass )
+{
+    return static_cast<jint>( a11y::android::cancel_pending_world_steps() );
 }
 
 extern "C" JNIEXPORT void JNICALL
