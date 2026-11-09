@@ -101,6 +101,19 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
           log-accepted-android-sdk-licenses: false
+      - name: Download Gradle distribution (retry transient network failures)
+        run: |
+          for attempt in 1 2 3; do
+            echo "Gradle bootstrap attempt ${attempt}/3"
+            if bash android/gradlew -p android --version; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Gradle distribution could not be downloaded after 3 attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 20))
+          done
       - name: Compile app and Android instrumentation test Java
         run: |
           bash android/gradlew -p android --no-daemon --console=plain \
