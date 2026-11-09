@@ -109,6 +109,18 @@ bool bound_to( const void *input_owner )
     return enabled() && !screens.empty() && screens.back()->input_owner == input_owner;
 }
 
+void set_world_input_ready( const void *input_owner, const bool ready )
+{
+    synchronize_lifecycle();
+    if( ready && enabled() && !suspended() && !screens.empty() &&
+        screens.back()->input_owner == input_owner &&
+        screens.back()->category == "DEFAULTMODE" ) {
+        android::set_world_step_ready( contexts.active_token(), true );
+    } else {
+        android::set_world_step_ready( std::nullopt, false );
+    }
+}
+
 screen_scope::screen_scope( const void *input_owner, std::string category,
                             intent_handler handler )
     : owner( input_owner ), screen_category( std::move( category ) ),
