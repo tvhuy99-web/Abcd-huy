@@ -92,6 +92,29 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn("update_publish_ms=", engine)
         self.assertIn("reader_timing_sample % 32", engine)
 
+    def test_ordinary_footsteps_do_not_allocate_three_translated_restriction_maps(self):
+        engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
+        action = engine.split("bool game::do_regular_action(", 1)[1]
+        movement = action.split("switch( act ) {", 1)[0]
+        self.assertIn("if( in_shell ) {", movement)
+        self.assertIn("if( player_character.is_mounted() ) {", movement)
+        self.assertIn('if( u.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ) {', movement)
+        self.assertIn("is_move_mode_action( act )", movement)
+        self.assertNotIn("const std::vector<action_id> actions_move_mode", movement)
+        self.assertNotIn("const std::map<action_id, std::string> actions_disabled_mounted =", movement)
+
+    def test_slow_walk_profiler_is_gated_and_reports_map_shift_phases(self):
+        game = (SRC / "game.cpp").read_text(encoding="utf-8")
+        self.assertIn('diagnostic_event( "WORLD_WALK_PROFILE"', game)
+        self.assertIn('diagnostic_event( "WORLD_PLACE_PROFILE"', game)
+        self.assertIn('diagnostic_event( "WORLD_SHIFT_PROFILE"', game)
+        for stage in ("before_place_ms=", "place_player_ms=", "after_place_ms=",
+                      "update_map_ms=", "search_ms=", "map_shift_ms=",
+                      "npcs_ms=", "cache_ms=", "spawn_ms=", "reveal_ms="):
+            self.assertIn(stage, game)
+        self.assertIn("if( total_ms >= 150 )", game)
+
+
 
 if __name__ == "__main__":
     unittest.main()
