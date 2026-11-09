@@ -36,6 +36,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final ReaderFavorites favorites;
     private final ReaderSpeechQueue speech;
     private final ReaderCuePlayer cues;
+    private final AlignmentSonarPlayer sonar;
     private final AccessibilityManager accessibility;
     private final ReaderGestureSurface root;
     private final TextView status;
@@ -152,6 +153,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 feedback(activity.getString(R.string.a11yCueUnavailable));
             }
         });
+        sonar = new AlignmentSonarPlayer(activity);
         documentReader = new ReaderDocumentReader(activity);
         // Document position survives interruptions (R04.4): the queue
         // only reports whether the current paragraph finished or was cut
@@ -241,6 +243,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderDiagnostics.get().event("lifecycle_pause");
         ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
         foreground = false;
+        sonar.setWorldActive(false);
         presentationEpoch++;
         root.cancelGesture();
         // Lifecycle boundary (R20.3): not a plain stop — the queue also
@@ -265,6 +268,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (closed) { return; }
         windowFocused = focused;
         if (!focused) {
+            sonar.setWorldActive(false);
             root.cancelGesture();
             // Losing window focus (lock screen, call, system dialog) is
             // the same speech boundary as onPause (R20.3): pending and
@@ -600,6 +604,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot.Node previousTile = previousSnapshot == null ? null
                         : previousSnapshot.find("world:here");
                 boolean worldView = nextTile != null;
+                sonar.setWorldActive(worldView && !comprehensiveMenu
+                        && foreground && windowFocused && preferences.isEnabled()
+                        && debugReport == null);
                 if (comprehensiveMenu) {
                     if (!worldView) {
                         // A native modal supersedes the action hub; never
@@ -723,6 +730,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message,
                         messageLevel, 15000);
                 ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
+            }
+        });
+    }
+
+    /** Distance-only native callback; only the UI looper touches SoundPool. */
+    public void onAlignmentDistance(int distance) {
+        handler.post(() -> {
+            if (closed) {
+                return;
+            }
+            boolean active = foreground && windowFocused && preferences.isEnabled()
+                    && snapshot != null && snapshot.find("world:here") != null
+                    && !comprehensiveMenu && debugReport == null;
+            sonar.setWorldActive(active);
+            if (active) {
+                sonar.updateDistance(distance);
             }
         });
     }
@@ -1920,6 +1943,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         root.cancelGesture();
         comprehensiveMenu = true;
+        sonar.setWorldActive(false);
         choosingGesture = false;
         bindingItem = null;
         choosingHubAction = false;
@@ -2405,6 +2429,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         documentReader.clear();
         pendingGameMessages.clear();
         cues.close();
+        sonar.close();
         speech.close();
         if (accessibility != null) {
             accessibility.removeTouchExplorationStateChangeListener(explorationListener);
