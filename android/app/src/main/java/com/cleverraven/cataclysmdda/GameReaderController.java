@@ -105,6 +105,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean debugResponsePending;
     // One spoken/TalkBack level at a time, independent of the engine's
     // visual expansion state. Parent IDs are supplied by semantic snapshots.
+    // Global contextual command drawer: native commands stay published and validated,
+    // but never interrupt the primary list of items, answers or form fields.
+    private boolean commandPaletteOpen;
+    private String commandPaletteReturnFocus = "";
+    private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
     private int pendingReaderLayerRevisions;
@@ -890,13 +895,89 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return null;
     }
 
+    /** Only auxiliary screen controls go into the hold menu, never dialogue choices. */
+    private static boolean isAuxiliaryCommand(ReaderSnapshot.Node node) {
+        return "command".equals(node.role) || node.id.startsWith("group:")
+                || node.id.startsWith("action:") || node.id.startsWith("category:")
+                || "filter".equals(node.id) || "filter:clear".equals(node.id);
+    }
+
+    private List<ReaderSnapshot.Node> contextualCommands() {
+        ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
+        if (snapshot != null) {
+            for (ReaderSnapshot.Node node : snapshot.nodes) {
+                if (node.parentId.isEmpty() && isAuxiliaryCommand(node)) {
+                    result.add(node);
+                }
+            }
+        }
+        return result;
+    }
+
     private List<ReaderSnapshot.Node> visibleNodes() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot == null) { return result; }
+        if (commandPaletteOpen) { return contextualCommands(); }
         for (ReaderSnapshot.Node node : snapshot.nodes) {
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
         }
+        // Command-only screens keep their complete list. A mixed screen
+        // announces primary content first and moves all commands to long press.
+        boolean containsContent = false;
+        for (ReaderSnapshot.Node node : result) {
+            if (!isAuxiliaryCommand(node)) { containsContent = true; break; }
+        }
+        if (containsContent) {
+            result.removeIf(GameReaderController::isAuxiliaryCommand);
+        }
         return result;
+    }
+
+    @Override
+    public void openContextActions() {
+        if (debugReport != null || closed) { return; }
+        if (comprehensiveMenu) {
+            showHubActionChoices();
+            return;
+        }
+        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        List<ReaderSnapshot.Node> commands = contextualCommands();
+        boolean hasContent = false;
+        for (ReaderSnapshot.Node node : snapshot.nodes) {
+            if (node.parentId.equals(readerLayerParent) && !isAuxiliaryCommand(node)) {
+                hasContent = true;
+                break;
+            }
+        }
+        if (!hasContent || commands.isEmpty()) {
+            feedback(activity.getString(R.string.a11yNoContextCommands));
+            return;
+        }
+        commandPaletteReturnFocus = focus;
+        commandPaletteReturnParent = readerLayerParent;
+        commandPaletteOpen = true;
+        readerLayerParent = "";
+        focus = commands.get(0).id;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yContextCommands) + ". "
+                + nodeText(commands.get(0), false));
+    }
+
+    private void closeContextActions() {
+        if (!commandPaletteOpen) { return; }
+        commandPaletteOpen = false;
+        readerLayerParent = commandPaletteReturnParent;
+        if (snapshot != null && snapshot.find(commandPaletteReturnFocus) != null) {
+            focus = commandPaletteReturnFocus;
+        } else if (snapshot != null && snapshot.find(snapshot.focus) != null) {
+            focus = snapshot.focus;
+        }
+        commandPaletteReturnFocus = "";
+        commandPaletteReturnParent = "";
+        root.cancelGesture();
+        render();
+        readCurrent();
     }
 
     private boolean enterReaderLayer(ReaderSnapshot.Node parent) {
@@ -934,6 +1015,60 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return false;
     }
 
+    private void renderContextCommands() {
+        TextView heading = new TextView(activity);
+        heading.setText(R.string.a11yContextCommands);
+        heading.setTextColor(0xffeeeeee);
+        heading.setTextSize(20);
+        rows.addView(heading);
+        Button close = new Button(activity);
+        close.setText(R.string.a11yContextCommandsClose);
+        close.setOnClickListener(view -> closeContextActions());
+        rows.addView(close);
+        List<ReaderSnapshot.Node> commands = contextualCommands();
+        int selected = 0;
+        for (int i = 0; i < commands.size(); i++) {
+            if (commands.get(i).id.equals(focus)) { selected = i; break; }
+        }
+        final int start = (selected / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+        final int end = Math.min(start + HUB_PAGE_SIZE, commands.size());
+        if (start > 0) {
+            Button previous = new Button(activity);
+            previous.setText(R.string.a11yPreviousPage);
+            previous.setOnClickListener(view -> {
+                focus = commands.get(start - 1).id;
+                render();
+                readCurrent();
+            });
+            rows.addView(previous);
+        }
+        for (int i = start; i < end; i++) {
+            ReaderSnapshot.Node command = commands.get(i);
+            Button option = new Button(activity);
+            option.setText(nodeText(command, false));
+            option.setSelected(i == selected);
+            option.setEnabled(command.enabled);
+            option.setOnClickListener(view -> {
+                if (!commandPaletteOpen || snapshot == null || snapshot.find(command.id) == null) {
+                    return;
+                }
+                focus = command.id;
+                activate();
+            });
+            rows.addView(option);
+        }
+        if (end < commands.size()) {
+            Button next = new Button(activity);
+            next.setText(R.string.a11yNextPage);
+            next.setOnClickListener(view -> {
+                focus = commands.get(end).id;
+                render();
+                readCurrent();
+            });
+            rows.addView(next);
+        }
+    }
+
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
@@ -967,8 +1102,35 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (comprehensiveMenu) {
             root.setBackgroundColor(0xff161616);
             renderHub();
+        } else if (commandPaletteOpen) {
+            root.setBackgroundColor(0xff161616);
+            renderContextCommands();
         } else {
             root.setBackgroundColor(android.graphics.Color.TRANSPARENT);
+            // Touch exploration lets TalkBack intercept multi-finger gestures.
+            // Offer the same actions as explicit native accessibility buttons.
+            if (usesTouchExploration() && snapshot != null && !directWorldGesturesEnabled()) {
+                Button commands = new Button(activity);
+                commands.setText(R.string.a11yContextCommands);
+                commands.setOnClickListener(view -> openContextActions());
+                commands.setOnLongClickListener(view -> {
+                    openContextActions();
+                    return true;
+                });
+                rows.addView(commands);
+                Button details = new Button(activity);
+                details.setText(R.string.a11yGestureActionDetail);
+                details.setOnClickListener(view -> detail());
+                rows.addView(details);
+                Button accept = new Button(activity);
+                accept.setText(R.string.a11yContextConfirm);
+                accept.setOnClickListener(view -> confirm());
+                rows.addView(accept);
+                Button back = new Button(activity);
+                back.setText(R.string.a11yContextBack);
+                back.setOnClickListener(view -> goBack());
+                rows.addView(back);
+            }
         }
     }
 
