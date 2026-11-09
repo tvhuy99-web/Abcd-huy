@@ -103,6 +103,34 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertNotIn("const std::vector<action_id> actions_move_mode", movement)
         self.assertNotIn("const std::map<action_id, std::string> actions_disabled_mounted =", movement)
 
+    def test_map_shift_skips_empty_uniform_submap_item_scans(self):
+        code = (SRC / "map.cpp").read_text(encoding="utf-8")
+        reconcile = code.split("void map::reconcile_loaded_items(", 1)[1].split(
+            "void map::shift_traps(", 1)[0]
+        self.assertIn("sm == nullptr || sm->is_uniform()", reconcile)
+        self.assertIn("for( int sx = 0; sx < SEEX; ++sx )", reconcile)
+        # Vehicles, the character inventory and NPC inventories remain in
+        # reconciliation even if ground submaps are uniform.
+        self.assertIn("get_vehicles()", reconcile)
+        self.assertIn("walk_character( get_avatar() );", reconcile)
+
+    def test_uniform_inert_submaps_preserve_actualization_bookkeeping(self):
+        code = (SRC / "map.cpp").read_text(encoding="utf-8")
+        actualize = code.split("void map::actualize(", 1)[1].split(
+            "void map::add_tree_tops(", 1)[0]
+        self.assertIn("tmpsub->is_uniform()", actualize)
+        self.assertIn("terrain == ter_t_rock_floor || terrain == ter_t_open_air", actualize)
+        self.assertIn("tmpsub->last_touched = calendar::turn;", actualize)
+        self.assertLess(actualize.index("process_items_in_submap("),
+                        actualize.index("if( tmpsub->is_uniform() )"))
+        self.assertLess(actualize.index("explosion_handler::process_explosions();"),
+                        actualize.index("if( tmpsub->is_uniform() )"))
+        self.assertIn("for( int x = 0; x < SEEX; x++ )", actualize)
+        # The normal scene rebuild must remain; this is not a stale-vision
+        # shortcut and does not remove cache invalidation on a map shift.
+        self.assertIn("void map::build_map_cache(", code)
+        self.assertIn("void map::invalidate_map_cache(", code)
+
     def test_slow_walk_profiler_is_gated_and_reports_map_shift_phases(self):
         game = (SRC / "game.cpp").read_text(encoding="utf-8")
         self.assertIn('diagnostic_event( "WORLD_WALK_PROFILE"', game)
