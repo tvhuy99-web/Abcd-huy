@@ -2366,6 +2366,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
             String information = nodeText(node, true);
+            // Double-tap on an inventory item is reserved for selecting it.
+            // Keep its informational pocket nodes accessible through Detail,
+            // rather than requiring a visit to a read-only child list.
+            if (node.id.startsWith("item:") && node.hasChildren) {
+                for (ReaderSnapshot.Node child : snapshot.nodes) {
+                    if (node.id.equals(child.parentId) && child.id.startsWith("pocket:")) {
+                        information += ". " + nodeText(child, true);
+                    }
+                }
+            }
             if ("YESNO".equals(snapshot.category) && !snapshot.summary.trim().isEmpty()
                     && !"dialog:message".equals(node.id)) {
                 information = snapshot.summary.trim() + ". " + information;
