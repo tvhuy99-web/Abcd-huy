@@ -70,9 +70,8 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn('add(R.string.a11yQuantityOther, () -> open("digits"))', self.editor)
         self.assertIn('add(R.string.a11yQuantityDeselect, () -> listener.submit("0"))',
                       self.editor)
-        self.assertIn("if (formRequest != 0)", self.controller.replace(
-            "if (editor == null || formRequest != 0 || snapshot == null",
-            "if (formRequest != 0)"))  # prevents duplicate commits while pending
+        self.assertIn("if (editor == null || formRequest != 0 || snapshot == null",
+                      self.controller)  # prevents duplicate commits while pending
 
     def test_other_numeric_forms_keep_existing_submit_behavior(self):
         self.assertIn('this(activity, initial, numeric, integer, rangeMin, rangeMax, rangeStep, false, listener)',
