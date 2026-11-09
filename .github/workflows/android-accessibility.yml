@@ -9,6 +9,7 @@ on:
       - integration/reader-vietnamese-20261107
       - perf/character-blueprint-cache-20261108
       - perf/reader-swipe-latency-20261109
+      - feat/one-step-quantity-selection-20261110
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'
