@@ -26,7 +26,7 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn("live_world_walk_command( screen.snapshot, *intent )", runtime)
         self.assertIn("contexts.accepts( intent->token )", runtime)
         self.assertIn("intent->request > screen.last_request", runtime)
-        self.assertIn("intent.revision <= snapshot.revision", gate)
+        self.assertIn("intent.revision > snapshot.revision", gate)
         self.assertIn('snapshot.category != "DEFAULTMODE"', gate)
         self.assertIn("!snapshot.swipe_movement_allowed", gate)
         self.assertIn("!intent.value.empty()", gate)
