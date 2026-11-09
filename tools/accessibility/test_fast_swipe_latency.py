@@ -20,16 +20,36 @@ class FastSwipeLatencyContracts(unittest.TestCase):
             engine,
         )
 
-    def test_stale_revision_grace_is_cardinal_only(self):
+    def test_world_movement_uses_native_permission_not_map_revision(self):
         runtime = (SRC / "a11y_runtime.cpp").read_text(encoding="utf-8")
-        self.assertIn('screen.category == "DEFAULTMODE"', runtime)
-        self.assertIn("screen.snapshot.swipe_movement_allowed", runtime)
-        self.assertIn('intent->action == "activate"', runtime)
-        for direction in ("UP", "DOWN", "LEFT", "RIGHT"):
-            self.assertIn('intent->node == "' + direction + '"', runtime)
-        self.assertIn("screen.revision - intent->revision == 1", runtime)
+        gate = (SRC / "a11y_world_input_gate.h").read_text(encoding="utf-8")
+        self.assertIn("live_world_walk_command( screen.snapshot, *intent )", runtime)
         self.assertIn("contexts.accepts( intent->token )", runtime)
+        self.assertIn("intent->request > screen.last_request", runtime)
+        self.assertIn("intent.revision <= snapshot.revision", gate)
+        self.assertIn('snapshot.category != "DEFAULTMODE"', gate)
+        self.assertIn("!snapshot.swipe_movement_allowed", gate)
+        self.assertIn("!intent.value.empty()", gate)
+        self.assertIn("node->enabled", gate)
+        self.assertNotIn("screen.revision - intent->revision == 1", runtime)
         self.assertIn("retained_world_scope.reset();", runtime)
+
+    def test_hub_cancels_outstanding_footsteps_in_native_mailbox(self):
+        bridge = (SRC / "a11y_android.cpp").read_text(encoding="utf-8")
+        java = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
+        self.assertIn("cancel_pending_world_steps()", bridge)
+        self.assertIn("std::remove_if( inbox.begin(), inbox.end()", bridge)
+        self.assertIn("nativeCancelPendingWorldSteps()", java)
+        self.assertIn("comprehensiveMenu = true;", java)
+
+    def test_native_and_ui_wait_are_sampled(self):
+        runtime = (SRC / "a11y_runtime.cpp").read_text(encoding="utf-8")
+        java = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
+        self.assertIn('"WORLD_INPUT_TIMING"', runtime)
+        self.assertIn("jni_to_poll_ms=", runtime)
+        self.assertIn('"WORLD_JAVA_TIMING"', java)
+        self.assertIn("jni_to_ui_ms=", java)
+        self.assertIn("parse_ms=", java)
 
     def test_stable_gesture_context_during_footsteps(self):
         ctrl = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
