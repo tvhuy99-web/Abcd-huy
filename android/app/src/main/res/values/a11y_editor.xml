@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="a11yQuantityInstructions">Choose a number to select that quantity immediately. Back cancels. Confirm the final item list separately.</string>
+    <string name="a11yQuantityInstructions">Select quantity. Tap a number to mark it immediately. Back cancels.</string>
     <string name="a11yQuantityDeselect">Deselect this item, zero</string>
     <string name="a11yQuantityAll">All available</string>
     <string name="a11yQuantityOther">Enter a different quantity</string>
