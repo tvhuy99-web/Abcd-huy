@@ -355,6 +355,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     choosingHubAction = false;
                     hubActionItem = null;
                     snapshot = null;
+                    commandPaletteOpen = false;
+                    commandPaletteReturnFocus = "";
+                    commandPaletteReturnParent = "";
                     lastLoadingStatus = "";
                                 editor = null;
                     editorRequest = 0;
@@ -498,7 +501,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !snapshot.nodes.isEmpty() && !next.nodes.isEmpty()
                         && (snapshot.nodes.get(0).id.startsWith("tab:")
                                 != next.nodes.get(0).id.startsWith("tab:"));
-                String previous = focus;
+                String previous = commandPaletteOpen && !commandPaletteReturnFocus.isEmpty()
+                        ? commandPaletteReturnFocus : focus;
                 ReaderSnapshot previousSnapshot = snapshot;
                 if (changedContext) {
                     rememberScreenFocus(previousSnapshot, previous);
@@ -509,6 +513,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 replayBufferedGameMessages();
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
+                    commandPaletteOpen = false;
+                    commandPaletteReturnFocus = "";
+                    commandPaletteReturnParent = "";
                     readerLayerParent = "";
                     pendingReaderLayer = "";
                     pendingReaderLayerRevisions = 0;
@@ -539,7 +546,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 : currentParent.parentId;
                     }
                 }
-                if (nativeLayerChanged) {
+                if (commandPaletteOpen && !changedContext && next.find(focus) != null) {
+                    // A screen update must not steal focus from an open command drawer.
+                    readerLayerParent = "";
+                } else if (nativeLayerChanged) {
                     focus = next.find(next.focus) != null ? next.focus
                             : next.nodes.get(0).id;
                 } else if (selectionChanged) {
@@ -553,6 +563,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // A vanished item returns to its closest surviving
                     // ancestor/sibling, never a stale native screen.
                     focus = resolveFocusFallback(previousSnapshot, previous, next);
+                }
+                // The engine may initially focus a hidden command. Start on
+                // primary content instead of reading the long command tail.
+                ReaderSnapshot.Node focusedNode = next.find(focus);
+                if (!commandPaletteOpen && focusedNode != null
+                        && isAuxiliaryCommand(focusedNode)) {
+                    List<ReaderSnapshot.Node> primary = visibleNodes();
+                    if (!primary.isEmpty() && !isAuxiliaryCommand(primary.get(0))) {
+                        focus = primary.get(0).id;
+                    }
                 }
                 ReaderSnapshot.Node currentFocus = next.find(focus);
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
@@ -1210,7 +1230,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         int selected = Math.max(0, Math.min(filtered.size() - 1, index() + delta));
         focus = filtered.get(selected).id;
         render();
-        send("focus", "");
+        // Command focus changes are local: native command scopes do not
+        // handle focus intents and would report unsupported for every swipe.
+        if (!isAuxiliaryCommand(filtered.get(selected))) { send("focus", ""); }
         readCurrent();
     }
 
@@ -1273,6 +1295,63 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void goBack() { onBackPressed(); }
+
+    @Override
+    public void confirm() {
+        if (closed || debugReport != null) { return; }
+        if (editor != null) {
+            editor.submitCurrent();
+            return;
+        }
+        if (comprehensiveMenu || commandPaletteOpen) {
+            activate();
+            return;
+        }
+        if (snapshot == null || directWorldGesturesEnabled()) { return; }
+        ReaderSnapshot.Node chosen = snapshot.find(focus);
+        if (chosen == null) { return; }
+        // Native explicit approval takes priority over the focused "No" option.
+        if ("YESNO".equals(snapshot.category) || "YESNOQUIT".equals(snapshot.category)) {
+            for (ReaderSnapshot.Node candidate : snapshot.nodes) {
+                String label = candidate.label.trim().toLowerCase(Locale.ROOT);
+                if (candidate.enabled && candidate.actions.contains("activate")
+                        && ("YES".equals(candidate.id) || "action:YES".equals(candidate.id)
+                            || label.equals("yes") || label.equals("có")
+                            || label.startsWith("yes ") || label.startsWith("có "))) {
+                    focus = candidate.id;
+                    send("activate", "");
+                    return;
+                }
+            }
+            feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+            return;
+        }
+        if (chosen.hasDraft && chosen.actions.contains("apply")) {
+            send("apply", "");
+            return;
+        }
+        for (String id : new String[] { "CONFIRM", "TEXT.CONFIRM", "confirm",
+                                        "action:CONFIRM", "pickup-here:confirm" }) {
+            ReaderSnapshot.Node accept = snapshot.find(id);
+            if (accept != null && accept.enabled && accept.actions.contains("activate")) {
+                String previous = focus;
+                focus = accept.id;
+                send("activate", "");
+                focus = previous;
+                return;
+            }
+        }
+        // A list selection is the only safe implicit confirmation. Never
+        // fire arbitrary world commands or status/document nodes.
+        if (chosen.enabled && chosen.actions.contains("activate")
+                && ("listitem".equals(chosen.role)
+                    || "dialogue".equals(snapshot.category)
+                    || "MAIN_MENU".equals(snapshot.category))) {
+            activate();
+        } else {
+            feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+        }
+    }
 
     @Override
     public boolean movementPracticeEnabled() {
@@ -1426,6 +1505,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void twoFingerTap(int count) {
+        if (count == 1) { detail(); return; }
         if (!directWorldGesturesEnabled()) { return; }
         if (count == 3) { openActionMenu(); return; }
         ReaderSnapshot.Node document = snapshot.find(count == 1
@@ -2198,7 +2278,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 + " hub=" + comprehensiveMenu);
         if (closed) { return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
-        if (editor != null) { editor.back(); return; }
+        if (editor != null) { editor.cancelInput(); return; }
+        if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
                 choosingHubAction = false;
