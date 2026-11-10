@@ -81,7 +81,8 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         navigation = CTRL.split("private void navigatePocketPicker(", 1)[1].split(
             "private void renderPocketPicker()", 1
         )[0]
-        self.assertIn("choices.size() + (pocketStage == 3 ? 2 : 0)", navigation)
+        self.assertIn("choices.size() + (pocketStage == 3", navigation)
+        self.assertIn("pocketAllowsSelection() ? 2 : 1 : 0", navigation)
         self.assertIn("POCKET_CONFIRM_NODE", navigation)
         self.assertIn("POCKET_CANCEL_NODE", navigation)
         activate = CTRL.split("private void activatePocketPicker()", 1)[1].split(
