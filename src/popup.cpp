@@ -340,15 +340,16 @@ query_popup::result query_popup::query_once()
     reader_snapshot.title = _( "Dialog" );
     reader_snapshot.summary = remove_color_tags( text );
     reader_snapshot.focus = "option:" + std::to_string( cur );
-    // Choices alone do not tell a blind player what they are answering.
-    // Keep the visible question as a separately focusable document so it
-    // remains available after the initial announcement.
-    if( !reader_snapshot.summary.empty() ) {
+    // Yes/No questions are spoken once at entry, then their actual choices
+    // are the whole swipe list (1 of 2, 2 of 2). Do not insert a fictitious
+    // "Dialog message" third item. Detail on either choice can still reread
+    // the exact original question whenever the player requests it.
+    const bool yes_no_prompt = category == "YESNO" || category == "YESNOQUIT";
+    if( !reader_snapshot.summary.empty() && !yes_no_prompt ) {
         a11y::semantic_node question;
         question.id = "dialog:message";
         question.role = "document";
-        question.label = _( "Dialog message" );
-        question.value = reader_snapshot.summary;
+        question.label = reader_snapshot.summary;
         question.actions = { "focus" };
         reader_snapshot.nodes.push_back( std::move( question ) );
     }
@@ -356,6 +357,9 @@ query_popup::result query_popup::query_once()
         a11y::semantic_node node;
         node.id = "option:" + std::to_string( i );
         node.label = ctxt.get_action_name( options[i].action );
+        if( yes_no_prompt ) {
+            node.detail = reader_snapshot.summary;
+        }
         node.selected = cur == i;
         node.position = i + 1;
         node.total = options.size();
