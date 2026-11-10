@@ -4080,6 +4080,17 @@ bool game::handle_action()
 #if defined(__ANDROID__)
     const auto diagnostic_action_started = std::chrono::steady_clock::now();
     const std::string diagnostic_action_name = action_ident( act );
+    // A JNI-accepted direction is not proof of movement. Record the
+    // authoritative position before and after the original game action.
+    const bool diagnostic_walk = act == ACTION_MOVE_FORTH ||
+                                 act == ACTION_MOVE_FORTH_RIGHT ||
+                                 act == ACTION_MOVE_RIGHT ||
+                                 act == ACTION_MOVE_BACK_RIGHT ||
+                                 act == ACTION_MOVE_BACK ||
+                                 act == ACTION_MOVE_BACK_LEFT ||
+                                 act == ACTION_MOVE_LEFT ||
+                                 act == ACTION_MOVE_FORTH_LEFT;
+    const tripoint_abs_ms diagnostic_before_position = player_character.pos_abs();
     if( act != ACTION_TIMEOUT ) {
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "start action=" + diagnostic_action_name );
@@ -4098,6 +4109,11 @@ bool game::handle_action()
     if( !player_character.is_dead_state() ) {
         if( !do_regular_action( act, player_character, mouse_target ) ) {
 #if defined(__ANDROID__)
+            if( diagnostic_walk ) {
+                a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
+                        "action=" + diagnostic_action_name +
+                        " result=action_rejected changed=false" );
+            }
             if( act != ACTION_TIMEOUT ) {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                          std::chrono::steady_clock::now() - diagnostic_action_started ).count();
@@ -4130,6 +4146,27 @@ bool game::handle_action()
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "finished action=" + diagnostic_action_name +
                                          " elapsed_ms=" + std::to_string( elapsed ) );
+        if( diagnostic_walk ) {
+            const tripoint_abs_ms after = player_character.pos_abs();
+            const int dx = after.x() - diagnostic_before_position.x();
+            const int dy = after.y() - diagnostic_before_position.y();
+            const int dz = after.z() - diagnostic_before_position.z();
+            a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
+                    "action=" + diagnostic_action_name +
+                    " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
+                                   std::string( "same_tile" ) ) +
+                    " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
+                                     std::string( "false" ) ) +
+                    " from_x=" + std::to_string( diagnostic_before_position.x() ) +
+                    " from_y=" + std::to_string( diagnostic_before_position.y() ) +
+                    " from_z=" + std::to_string( diagnostic_before_position.z() ) +
+                    " to_x=" + std::to_string( after.x() ) +
+                    " to_y=" + std::to_string( after.y() ) +
+                    " to_z=" + std::to_string( after.z() ) +
+                    " moves_spent=" + std::to_string( before_action_moves -
+                                                     player_character.get_moves() ) +
+                    " action_ms=" + std::to_string( elapsed ) );
+        }
     }
 #endif
     return !player_character.is_dead_state();
