@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <optional>
@@ -15,6 +16,9 @@
 #include <utility>
 
 #include "active_item_cache.h"
+#if defined(__ANDROID__)
+#include "a11y_android.h"
+#endif
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "avatar.h"
@@ -11005,9 +11009,18 @@ std::vector<int> map::vision_parts_key( const tripoint_bub_ms &origin,
 
 void map::build_map_cache( const int zlev, bool skip_lightmap )
 {
+#if defined(__ANDROID__)
+    const bool profile_cache = a11y::android::performance_profiling_enabled();
+    const auto cache_start = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     build_scene_caches();
+#if defined(__ANDROID__)
+    const auto scene_done = profile_cache ? std::chrono::steady_clock::now() :
+                            std::chrono::steady_clock::time_point{};
+#endif
     bool seen_cache_dirty = false;
     bool camera_cache_dirty = false;
     for( int z = minz; z <= maxz; z++ ) {
@@ -11015,6 +11028,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         seen_cache_dirty |= build_vision_transparency_cache( z );
     }
 
+#if defined(__ANDROID__)
+    const auto transparency_done = profile_cache ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+#endif
     avatar &u = get_avatar();
     const Character::moncam_cache_t mcache = u.get_active_moncams();
     // a camera's cast reads its position, range and eye height for ledges; kept
@@ -11065,6 +11082,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         }
 #endif
     }
+#if defined(__ANDROID__)
+    const auto avatar_done = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     if( camera_cache_dirty ) {
         camera_fov_moncams = std::move( moncams );
         for( Character::cached_moncam const &mon : mcache ) {
@@ -11075,6 +11096,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
         }
     }
+#if defined(__ANDROID__)
+    const auto camera_done = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     // Light sources that change with no notice to the lightmap: characters,
     // glowing or burning monsters, and vehicle lamps that lose power or break.
     // A level relights only if its own sources changed.
@@ -11153,6 +11178,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto sources_done = profile_cache ? std::chrono::steady_clock::now() :
+                              std::chrono::steady_clock::time_point{};
+#endif
     if( seen_cache_dirty ) {
         refresh_vision_levels();
     }
@@ -11171,6 +11200,23 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
         }
     }
+#if defined(__ANDROID__)
+    if( profile_cache ) {
+        const auto finished = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_CACHE_PHASE",
+                "skip_lightmap=" + std::string( skip_lightmap ? "true" : "false" ) +
+                " scene_ms=" + std::to_string( ms( cache_start, scene_done ) ) +
+                " transparency_ms=" + std::to_string( ms( scene_done, transparency_done ) ) +
+                " avatar_fov_ms=" + std::to_string( ms( transparency_done, avatar_done ) ) +
+                " camera_ms=" + std::to_string( ms( avatar_done, camera_done ) ) +
+                " light_sources_ms=" + std::to_string( ms( camera_done, sources_done ) ) +
+                " lightmap_ms=" + std::to_string( ms( sources_done, finished ) ) +
+                " total_ms=" + std::to_string( ms( cache_start, finished ) ) );
+    }
+#endif
 }
 
 int map::lowest_vision_level( const int zlev ) const
