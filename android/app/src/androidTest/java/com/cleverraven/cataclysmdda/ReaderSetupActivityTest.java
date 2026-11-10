@@ -110,14 +110,12 @@ public class ReaderSetupActivityTest {
                 CheckBox leftHanded = activity.findViewById(R.id.a11y_left_handed_navigation);
                 SeekBar distance = activity.findViewById(R.id.a11y_swipe_distance);
                 SeekBar duration = activity.findViewById(R.id.a11y_swipe_duration);
-                Button horizontal = activity.findViewById(R.id.a11y_horizontal_swipe_action);
-                Button vertical = activity.findViewById(R.id.a11y_vertical_swipe_action);
-
+                // The old remapping controls are intentionally absent.
+                assertEquals(null, activity.findViewById(R.id.a11y_horizontal_swipe_action));
+                assertEquals(null, activity.findViewById(R.id.a11y_vertical_swipe_action));
                 assertNotNull(leftHanded);
                 assertNotNull(distance);
                 assertNotNull(duration);
-                assertNotNull(horizontal);
-                assertNotNull(vertical);
                 assertEquals(1, distance.getProgress());
                 assertEquals(1, duration.getProgress());
                 assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
@@ -132,16 +130,12 @@ public class ReaderSetupActivityTest {
                 assertEquals(72, preferences.getSwipeDistanceDp());
                 assertEquals(450, preferences.getSwipeDurationLimitMs());
 
-                // The setup edits a draft; the previous mapping remains active
-                // until the user explicitly starts the timed game trial.
-                horizontal.performClick();
-                assertTrue(horizontal.getText().toString().contains(
-                                   activity.getString(R.string.a11yGestureActionDetail)));
+                // All four one-finger directions retain their functions.
+                // Sensitivity and handedness remain user-adjustable.
                 assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
                              preferences.getHorizontalSwipeAction());
-                vertical.performClick();
-                assertTrue(vertical.getText().toString().contains(
-                                   activity.getString(R.string.a11yGestureActionNavigate)));
+                assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                             preferences.getVerticalSwipeAction());
 
                 activity.findViewById(R.id.a11y_restore_gesture_defaults).performClick();
                 assertFalse(preferences.isLeftHandedNavigation());
@@ -153,18 +147,21 @@ public class ReaderSetupActivityTest {
                              preferences.getVerticalSwipeAction());
             });
         }
+        // Even an old saved gesture-map trial cannot override the fixed
+        // navigation directions after this upgrade.
         appPreferences.beginGestureMapTrial(ReaderPreferences.GESTURE_ACTION_DETAIL,
                                             ReaderPreferences.GESTURE_ACTION_NAVIGATE);
         assertTrue(appPreferences.isGestureMapTrialActive());
-        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
-        assertTrue(appPreferences.confirmGestureMapTrial());
-        assertFalse(appPreferences.isGestureMapTrialPending());
-        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
+        assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                     appPreferences.getHorizontalSwipeAction());
+        appPreferences.confirmGestureMapTrial();
+        assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                     appPreferences.getHorizontalSwipeAction());
         appPreferences.beginGestureMapTrial(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
                                             ReaderPreferences.GESTURE_ACTION_READ_CURRENT);
         appPreferences.revertGestureMapTrial();
-        assertEquals(ReaderPreferences.GESTURE_ACTION_DETAIL, appPreferences.getHorizontalSwipeAction());
-        assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE, appPreferences.getVerticalSwipeAction());
+        assertEquals(ReaderPreferences.GESTURE_ACTION_NAVIGATE,
+                     appPreferences.getVerticalSwipeAction());
         appPreferences.restoreGestureDefaults();
     }
 }
