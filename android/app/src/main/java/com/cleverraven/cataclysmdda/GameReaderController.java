@@ -377,12 +377,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     public void receive(String json) {
         final long owner = presentationEpoch;
-        final long receivedAt = SystemClock.elapsedRealtime();
+        final long receivedAt = preferences.isPerformanceProfilingEnabled()
+                ? SystemClock.elapsedRealtime() : 0L;
         handler.post(() -> {
             if (closed || !foreground || !preferences.isEnabled() || owner != presentationEpoch) {
                 return;
             }
-            final long dispatchedAt = SystemClock.elapsedRealtime();
+            final long dispatchedAt = receivedAt != 0L
+                    ? SystemClock.elapsedRealtime() : 0L;
             try {
                 JSONObject object = new JSONObject(json);
                 if (object.has("status")) {
@@ -471,7 +473,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 ReaderSnapshot next = new ReaderSnapshot(object);
-                final long parsedAt = SystemClock.elapsedRealtime();
+                final long parsedAt = receivedAt != 0L
+                        ? SystemClock.elapsedRealtime() : 0L;
                 SessionDebugLog.event("SCREEN", "category=" + next.category
                         + " title=" + next.title + " focus=" + next.focus
                         + " nodes=" + next.nodes.size());
