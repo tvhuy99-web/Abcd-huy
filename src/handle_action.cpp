@@ -3769,6 +3769,48 @@ bool game::handle_action()
     action_id act = ACTION_NULL;
     user_turn current_turn;
     avatar &player_character = get_avatar();
+
+    // The reader's travel buttons are UI-thread requests, never movement
+    // intents. Apply them only here on the game thread, before consuming the
+    // next waypoint. Pausing retains the authoritative route/activity intact,
+    // and does not spend a turn or bypass any safe-mode checks.
+    const int travel_control = a11y::android::take_travel_control();
+    if( !player_character.has_destination() ) {
+        a11y::android::set_travel_state( 0 );
+    } else if( !a11y::enabled() && a11y::android::travel_state() == 2 ) {
+        // Turning the reader off cannot leave the character trapped in an
+        // inaccessible paused state. Recover normal native behavior.
+        a11y::android::set_travel_state( 1 );
+    }
+    if( player_character.has_destination() && travel_control == 3 &&
+        a11y::android::travel_state() != 0 ) {
+        player_character.abort_automove();
+        destination_preview.clear();
+        a11y::android::set_travel_state( 0 );
+        add_msg( m_info, _( "Automatic travel canceled. Returned to the map." ) );
+        return false;
+    }
+    if( player_character.has_destination() && travel_control == 1 &&
+        a11y::android::travel_state() == 1 ) {
+        a11y::android::set_travel_state( 2 );
+        add_msg( m_info, _( "Automatic travel paused. Your route is kept." ) );
+    } else if( player_character.has_destination() && travel_control == 2 &&
+               a11y::android::travel_state() == 2 ) {
+        a11y::android::set_travel_state( 1 );
+        add_msg( m_info, _( "Automatic travel resumed." ) );
+    }
+    if( player_character.has_destination() && a11y::android::travel_state() == 2 ) {
+        // Run the ordinary world reader without consuming the next waypoint.
+        // Its input wait times out quickly, allowing a queued Resume/Cancel
+        // to be processed on the next iteration. Ignore ordinary gameplay
+        // commands while a route is explicitly paused.
+        std::string ignored_action;
+        get_player_input( ignored_action );
+        return false;
+    }
+    if( player_character.has_destination() && a11y::enabled() ) {
+        a11y::android::set_travel_state( 1 );
+    }
     // Check if we have an auto-move destination
     if( player_character.has_destination() ) {
         act = player_character.get_next_auto_move_direction();
