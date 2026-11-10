@@ -1,7 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
@@ -53,19 +52,22 @@ public final class SessionDebugLog {
         if (!directory.exists() && !directory.mkdirs()) {
             Log.w("SessionDebugLog", "Could not create session log directory");
         }
-        activeFile = new File(directory, ACTIVE);
+        File freshJournal = new File(directory, ACTIVE);
 
         // Never resurrect a previous launch, whether it ended normally or
         // crashed. Also clean up legacy crash-recovery files on upgrade.
-        if (activeFile.exists() && !activeFile.delete()) {
-            try (FileOutputStream empty = new FileOutputStream(activeFile, false)) {
+        if (freshJournal.exists() && !freshJournal.delete()) {
+            try (FileOutputStream empty = new FileOutputStream(freshJournal, false)) {
                 empty.flush();
             } catch (IOException error) {
                 Log.e("SessionDebugLog", "Cannot reset previous launch log", error);
-                // Refuse to append into a previous launch's journal.
-                recording = false;
+                // A unique fallback prevents accidentally appending to a
+                // previous launch even if deleting/truncating active.txt
+                // failed on this device.
+                freshJournal = new File(directory, "active-" + launchId + ".txt");
             }
         }
+        activeFile = freshJournal;
         for (String legacy : new String[] {"active.marker", "crash_recovery.txt"}) {
             File oldFile = new File(directory, legacy);
             if (oldFile.exists() && !oldFile.delete()) {
