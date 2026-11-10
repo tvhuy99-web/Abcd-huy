@@ -885,7 +885,7 @@ bool query_yn( const std::string &text )
     return query_popup()
            .preferred_keyboard_mode( keyboard_mode::keycode )
            .context( "YESNO" )
-           .message( force_uc && !is_keycode_mode_supported() ?
+           .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
                      pgettext( "query_yn", "%s (Case Sensitive)" ) :
                      pgettext( "query_yn", "%s" ), text )
            .option( "YES", allow_key )
@@ -906,7 +906,7 @@ query_ynq_result query_ynq( const std::string &text )
     const std::string action =
         query_popup()
         .context( "YESNOQUIT" )
-        .message( force_uc && !is_keycode_mode_supported()
+        .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled()
                   ? pgettext( "query_yn", "%s (Case Sensitive)" )
                   : pgettext( "query_yn", "%s" ), text )
         .option( "YES", allow_key )
