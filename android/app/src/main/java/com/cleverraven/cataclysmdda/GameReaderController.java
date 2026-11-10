@@ -2173,6 +2173,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
             return;
         }
+        // Every native screen publishes the actions its nodes actually
+        // support. A status/heading with only "focus" is informative, not
+        // clickable: never send an invalid activate which the game would
+        // report as "stale" ("Choose the item again"). This applies equally
+        // to skill-category headings, inventory pocket states, tables,
+        // journals, health readouts and all other screen adapters.
+        if (!node.actions.contains("activate")) {
+            feedback(nodeText(node, true));
+            return;
+        }
         send("activate", "");
     }
 
