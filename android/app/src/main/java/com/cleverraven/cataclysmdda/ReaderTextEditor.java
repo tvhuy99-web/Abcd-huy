@@ -30,6 +30,9 @@ public final class ReaderTextEditor {
     // Only item-quantity pickers use one-touch completed numbers. Other
     // numeric and text forms retain their existing draft/Apply workflow.
     private final boolean quantityChoices;
+    // Ordinary text and number fields use the Android IME with two controls.
+    // Completed item quantities keep their dedicated one-step selector.
+    private final boolean nativeInputOnly;
     // Numeric domain from the form contract (R04.2). Null means the source
     // publishes no bound: classic number popups have no min/max at all,
     // only an edit step. The engine stays the authority; these values let
@@ -76,6 +79,7 @@ public final class ReaderTextEditor {
                 && rangeMin != null && rangeMin == 0.0
                 && rangeMax != null && rangeMax > 1.0
                 && rangeStep != null && rangeStep == 1.0;
+        this.nativeInputOnly = !this.quantityChoices;
         this.rangeMin = rangeMin;
         this.rangeMax = rangeMax;
         this.rangeStep = rangeStep;
@@ -83,7 +87,7 @@ public final class ReaderTextEditor {
         root.setOrientation(LinearLayout.VERTICAL);
         TextView instructions = new TextView(activity);
         instructions.setText(this.quantityChoices
-                ? R.string.a11yQuantityInstructions : R.string.a11yEditorInstructions);
+                ? R.string.a11yQuantityInstructions : R.string.a11yNativeInputInstructions);
         instructions.setTextColor(0xffeeeeee);
         root.addView(instructions);
         field = new EditText(activity);
@@ -124,6 +128,17 @@ public final class ReaderTextEditor {
     private void build() {
         revision++;
         items.clear();
+        if (nativeInputOnly) {
+            // TalkBack can focus the actual EditText and the Android IME.
+            // The game does not enable/disable TalkBack; the player does.
+            // No simulated letter/digit keyboard is displayed here.
+            group = "controls";
+            selected = 0;
+            add(R.string.ok, this::submitCurrent);
+            add(R.string.cancel, listener::cancel);
+            render();
+            return;
+        }
         if ("quantities".equals(group)) {
             // Each number is a whole choice, not a digit to be entered
             // into a draft. One double tap commits and returns to the

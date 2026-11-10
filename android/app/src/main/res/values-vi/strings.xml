@@ -201,4 +201,5 @@
     <string name="a11yContextConfirmUnavailable">Màn hình này không có lệnh xác nhận</string>
     <string name="a11yGlobalGestureHelp">Trong menu: nhấn giữ một ngón để mở chức năng màn hình; chạm hai ngón một lần để đọc chi tiết; vuốt hai ngón lên để xác nhận, xuống để hủy hoặc quay lại. Khi nhập số, vuốt một ngón lên xuống để chọn chữ số. Trên bản đồ chính, vuốt hai ngón theo hướng vẫn dùng để quét.</string>
     <string name="a11yNativeInputRangeError">Giá trị phải từ %1$s đến %2$s.</string>
+    <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn OK để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
 </resources>

@@ -61,6 +61,11 @@ class CharacterCreatorSummaryInput(unittest.TestCase):
         self.assertIn('manual.set_value_range( min_value, maximum_affordable );', self.creator)
         self.assertIn('age_query.set_value_range( CHARACTER_AGE_MIN, CHARACTER_AGE_MAX );', self.creator)
         self.assertIn('height_query.set_value_range( min_allowed_height, max_allowed_height );', self.creator)
+        editor = (JAVA / "ReaderTextEditor.java").read_text(encoding="utf-8")
+        self.assertIn('this.nativeInputOnly = !this.quantityChoices;', editor)
+        self.assertIn('add(R.string.ok, this::submitCurrent);', editor)
+        self.assertIn('add(R.string.cancel, listener::cancel);', editor)
+        self.assertIn('R.string.a11yNativeInputInstructions', editor)
 
     def test_no_accessibility_service_toggle(self):
         self.assertNotIn('WRITE_SECURE_SETTINGS', self.native)
