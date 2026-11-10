@@ -240,6 +240,7 @@ public class CataclysmDDA extends SDLActivity {
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
                                                         boolean performanceProfile);
+    static native boolean nativeWorldStepReady();
     static native int nativeCancelPendingWorldSteps();
     static native int nativeTravelState();
     static native boolean nativeTravelControl(int action);
