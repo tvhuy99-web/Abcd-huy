@@ -802,7 +802,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     String introduction = yesNo ? next.summary.trim() : next.title;
                     // Places intentionally starts speaking at the first actual
                     // destination: no title, preamble, or item counter.
-                    if ("places".equals(next.category)
+                    if (next.category.startsWith("character-creator-step-")) {
+                        // A creator step has a deliberately short introduction;
+                        // the first choice is read when the player browses it.
+                        feedback(introduction);
+                    } else if ("places".equals(next.category)
                             || "nearby-target".equals(next.category)
                             || "pickup-here".equals(next.category)) {
                         feedback(nodeText(next.find(focus), false));
@@ -2094,6 +2098,35 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return true;
     }
 
+    // Only the first six character-creation tabs opt in to step gestures.
+    // The summary tab and all unrelated menus keep their existing controls.
+    private boolean isCreatorMainStep() {
+        return snapshot != null
+                && snapshot.category.startsWith("character-creator-step-");
+    }
+
+    private boolean isCreatorMultiChoiceStep() {
+        if (!isCreatorMainStep()) { return false; }
+        return "character-creator-step-3".equals(snapshot.category)
+                || "character-creator-step-4".equals(snapshot.category)
+                || "character-creator-step-5".equals(snapshot.category)
+                || "character-creator-step-6".equals(snapshot.category);
+    }
+
+    private boolean creatorStepAction(String action) {
+        if (!isCreatorMainStep()) { return false; }
+        ReaderSnapshot.Node command = snapshot.find("action:" + action);
+        if (command == null || !command.enabled || !command.actions.contains("activate")) {
+            feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+            return true;
+        }
+        String previous = focus;
+        focus = command.id;
+        send("activate", "");
+        focus = previous;
+        return true;
+    }
+
     @Override
     public void goBack() { onBackPressed(); }
 
@@ -2118,6 +2151,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (travelState() != 0) { activateTravel(); return; }
         if (snapshot == null || directWorldGesturesEnabled()) { return; }
+        // Two fingers up advances the multi-selection/attribute/trait/skill
+        // tabs, instead of confirming whichever row happens to be focused.
+        // On the first two tabs, confirmation still activates the row and
+        // native code advances only after a valid single choice.
+        if (isCreatorMultiChoiceStep() && creatorStepAction("NEXT_TAB")) { return; }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
         // Native explicit approval takes priority over the focused "No" option.
@@ -3332,6 +3370,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (backReaderLayer()) { return; }
+        // On a creator step, two fingers down or Back returns to the
+        // previous step. Nested value/variant lists are different contexts:
+        // their Back is the ordinary cancel, returning to their parent tab.
+        if (creatorStepAction("PREV_TAB")) { return; }
         if (snapshot != null) {
             // A mandatory Yes/No dialog may have no registered Cancel.
             // Treat Back as the native No response, never as Yes.

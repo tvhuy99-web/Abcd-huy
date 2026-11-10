@@ -4026,3 +4026,60 @@ msgstr "Bạn cố thoát khỏi cú tóm %1$s ở %2$s nhưng thất bại!"
 #, c-format
 msgid "You break %s grab on your %s!"
 msgstr "Bạn đã thoát khỏi cú tóm %1$s ở %2$s!"
+
+# Character creator reader steps (1 through 6)
+msgid "Select scenario"
+msgstr "Chọn kịch bản"
+
+msgid "Select profession"
+msgstr "Chọn nghề nghiệp"
+
+msgid "Select background"
+msgstr "Chọn nền tảng"
+
+msgid "Set attributes"
+msgstr "Chỉnh thuộc tính"
+
+msgid "Select traits"
+msgstr "Chọn đặc tính"
+
+msgid "Set skills"
+msgstr "Chỉnh kỹ năng"
+
+#, c-format
+msgid "%1$s. Step %2$d of 7. Points remaining: %3$d."
+msgstr "%1$s. Bước %2$d trên 7. Điểm còn lại: %3$d."
+
+#, c-format
+msgid "Set %s"
+msgstr "Chỉnh %s"
+
+msgid "Enter manually"
+msgstr "Nhập thủ công"
+
+#, c-format
+msgid "Enter %s (from %d to %d):"
+msgstr "Nhập %s (từ %d đến %d):"
+
+#, c-format
+msgid "Choose a value from %1$d to %2$d."
+msgstr "Hãy chọn giá trị từ %1$d đến %2$d."
+
+msgid "Not enough points for this attribute."
+msgstr "Không đủ điểm để tăng thuộc tính này."
+
+msgid "Not enough points for this skill."
+msgstr "Không đủ điểm để tăng kỹ năng này."
+
+#, c-format
+msgid "%1$s set to %2$d."
+msgstr "Đã đặt %1$s thành %2$d."
+
+#, c-format
+msgid "Selected %s."
+msgstr "Đã chọn %s."
+
+#, c-format
+msgid "Unselected %s."
+msgstr "Đã bỏ chọn %s."
+
