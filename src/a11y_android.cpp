@@ -32,6 +32,7 @@ bool has_world_token = false;
 bool world_step_ready = false;
 std::atomic<int> active_travel_state{ 0 };
 std::atomic<int> pending_travel_control{ 0 };
+std::atomic<std::uint64_t> travel_map_return_deadline_ms{ 0 };
 
 bool matches_last_world( const context_token &token )
 {
@@ -69,6 +70,7 @@ void configure( const bool enable, const bool suspend )
     // An intent from the former Android Activity must never control a
     // new owner. The route state itself survives a lifecycle rebind.
     pending_travel_control.store( 0, std::memory_order_release );
+    travel_map_return_deadline_ms.store( 0, std::memory_order_release );
     epoch.fetch_add( 1, std::memory_order_release );
 #if defined(__ANDROID__)
     PushWakeEvent();
@@ -177,10 +179,29 @@ int take_travel_control()
     return pending_travel_control.exchange( 0, std::memory_order_acq_rel );
 }
 
+void request_travel_map_return()
+{
+    const auto now = std::chrono::steady_clock::now();
+    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                        now.time_since_epoch() ).count();
+    travel_map_return_deadline_ms.store( static_cast<std::uint64_t>( ms + 2000 ),
+                                         std::memory_order_release );
+}
+
+bool take_travel_map_return()
+{
+    const std::uint64_t deadline = travel_map_return_deadline_ms.exchange(
+                                       0, std::memory_order_acq_rel );
+    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                         std::chrono::steady_clock::now().time_since_epoch() ).count();
+    return deadline != 0 && static_cast<std::uint64_t>( now ) <= deadline;
+}
+
 void reset_travel_control()
 {
     pending_travel_control.store( 0, std::memory_order_release );
     active_travel_state.store( 0, std::memory_order_release );
+    travel_map_return_deadline_ms.store( 0, std::memory_order_release );
 }
 
 std::size_t cancel_pending_world_steps()
