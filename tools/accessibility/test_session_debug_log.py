@@ -50,7 +50,7 @@ class SessionDebugLogSourceTest(unittest.TestCase):
 
     def test_fresh_file_for_each_launch_and_no_legacy_crash_recovery(self):
         self.assertIn('new File(directory, ACTIVE)', self.log)
-        self.assertIn("activeFile.exists() && !activeFile.delete()", self.log)
+        self.assertIn("freshJournal.exists() && !freshJournal.delete()", self.log)
         self.assertIn('new FileOutputStream(freshJournal, false)', self.log)
         self.assertIn('activeFile = freshJournal;', self.log)
         self.assertIn('{"active.marker", "crash_recovery.txt"}', self.log)
