@@ -4080,6 +4080,10 @@ class inventory_selector::reader_session
                             }
                         }
                         pocket_node.field_type = "text";
+                        // A numeric source value distinguishes a truly empty
+                        // pocket from a populated pocket whose items are not
+                        // selectable in this inventory workflow.
+                        pocket_node.applied_value = std::to_string( pocket->size() );
                         pocket_node.actions = { "focus", "set_value" };
                         pocket_node.has_children = !pocket_items.empty();
                         pocket_node.expanded = !pocket_items.empty();
