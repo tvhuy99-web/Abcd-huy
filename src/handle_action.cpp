@@ -675,10 +675,12 @@ input_context game::get_player_input( std::string &action )
                 const auto started = profile_reader ? std::chrono::steady_clock::now() :
                                      std::chrono::steady_clock::time_point{};
                 a11y::semantic_snapshot next = make_reader_snapshot();
-                const auto built = std::chrono::steady_clock::now();
+                const auto built = profile_reader ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
-                const auto published = std::chrono::steady_clock::now();
+                const auto published = profile_reader ? std::chrono::steady_clock::now() :
+                                       std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
                     static unsigned int reader_timing_sample = 0;
                     const auto ms = []( const auto from, const auto to ) {
@@ -687,10 +689,10 @@ input_context game::get_player_input( std::string &action )
                     const auto build_ms = ms( started, built );
                     const auto publish_ms = ms( built, published );
                     if( build_ms >= 20 || publish_ms >= 20 || ( ++reader_timing_sample % 8 ) == 0 ) {
-                    a11y::android::diagnostic_event( "WORLD_READER_TIMING",
-                            "build_ms=" + std::to_string( build_ms ) +
-                            " update_publish_ms=" + std::to_string( publish_ms ) +
-                            " nodes=" + std::to_string( nodes ) );
+                        a11y::android::diagnostic_event( "WORLD_READER_TIMING",
+                                "build_ms=" + std::to_string( build_ms ) +
+                                " update_publish_ms=" + std::to_string( publish_ms ) +
+                                " nodes=" + std::to_string( nodes ) );
                     }
                 }
                 reader_snapshot_epoch = current_epoch;
