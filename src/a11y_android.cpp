@@ -135,6 +135,16 @@ void performance_reader_sample( const long long ms )
         return;
     }
     if( !pending_walking_step ) {
+        // A menu, blocked move or other action breaks a walking streak.
+        // Do not let a slow unrelated monster turn poison every later
+        // attempt at collecting 48 fresh, fast walking cycles.
+        stable_walking_steps = 0;
+        last_profile_draw_ms = -1;
+        last_profile_sim_ms = -1;
+        last_profile_vision_ms = -1;
+        last_profile_reader_ms = -1;
+        shifted_since_last_step = false;
+        last_profile_busy_epoch = busy_epoch;
         return;
     }
 
