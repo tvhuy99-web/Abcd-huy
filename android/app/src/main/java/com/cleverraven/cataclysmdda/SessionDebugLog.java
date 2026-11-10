@@ -134,6 +134,28 @@ public final class SessionDebugLog {
 
     private static boolean isHighFrequencyTrace(String category, String detail) {
         if (category == null) { return false; }
+        // Auto-pausing is a performance decision, not permission to hide new
+        // failures. Always retain broken footsteps, speech errors, safety
+        // warnings and native crash diagnostics.
+        if (category.equals("WORLD_MOVE_BLOCKED")
+                || category.equals("WORLD_PROFILE_STATE")
+                || category.equals("WORLD_VISUAL_STATE")
+                || category.equals("TTS_STATE")) {
+            return false;
+        }
+        if (category.equals("TTS_EVENT")) {
+            return detail == null || !(detail.contains("event=ERROR")
+                    || detail.contains("event=REJECTED"));
+        }
+        if (category.equals("INTENT_RESULT")) {
+            return detail == null || !(detail.contains("status=stale")
+                    || detail.contains("status=disabled")
+                    || detail.contains("status=unsupported")
+                    || detail.contains("status=invalid_value")
+                    || detail.contains("status=busy")
+                    || detail.contains("status=error")
+                    || detail.contains("status=failed"));
+        }
         if (category.startsWith("WORLD_") || category.startsWith("GESTURE")
                 || category.startsWith("INTENT") || category.startsWith("TTS_")
                 || category.equals("NATIVE_ACTION") || category.equals("SNAPSHOT")
