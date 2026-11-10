@@ -3419,6 +3419,10 @@ msgstr "Ô %1$d, %2$s."
 msgid "Coordinates. X %1$d. Y %2$d. Z %3$d."
 msgstr "X %1$d, Y %2$d, Z %3$d."
 
+#, c-format
+msgid "Area: %1$s. %2$s"
+msgstr "Khu vực: %1$s. %2$s"
+
 msgid "Outside loaded map"
 msgstr "Ngoài bản đồ"
 
