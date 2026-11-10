@@ -138,6 +138,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private volatile long presentationEpoch;
     private int worldJavaTimingSample;
     private long lastWorldBusyNotice;
+    // Travel controls are a local two-button reader panel, with a third
+    // explicit ignore-warning option only when native safe mode blocked the
+    // route. The native game thread exclusively owns route changes.
+    private int travelChoice;
+    private int announcedTravelState;
     // One short-lived *gesture*, never a native movement backlog. When a
     // swipe arrives during the previous turn, try its latest direction once
     // after the next live world publication, then discard it. Native safety,
@@ -700,6 +705,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && "alert".equals(nextTile.role)
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
+                int activeTravel = travelState();
+                if (activeTravel != 0) {
+                    boolean enteredTravel = announcedTravelState != activeTravel
+                            || changedContext;
+                    if (announcedTravelState != activeTravel) { travelChoice = 0; }
+                    announcedTravelState = activeTravel;
+                    render();
+                    clearPendingWorldDirection();
+                    if (enteredTravel) {
+                        feedback(travelStatus(activeTravel) + ". " + travelSpoken(activeTravel));
+                    }
+                    return;
+                }
+                announcedTravelState = 0;
                 render();
                 if (worldView) {
                     retryPendingWorldDirection();
@@ -1639,6 +1658,93 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    private int travelState() {
+        if (snapshot == null || debugReport != null || editor != null
+                || comprehensiveMenu || pocketStage != 0 || commandPaletteOpen
+                || (!"activity".equals(snapshot.category)
+                    && !"DEFAULTMODE".equals(snapshot.category))) {
+            return 0;
+        }
+        try {
+            return CataclysmDDA.nativeTravelState();
+        } catch (UnsatisfiedLinkError unavailable) {
+            return 0;
+        }
+    }
+
+    private int travelChoiceCount(int state) {
+        return state == 3 ? 3 : 2;
+    }
+
+    private int travelLabel(int state, int index) {
+        if (state == 3) {
+            return index == 0 ? R.string.a11yTravelIgnoreWarning
+                    : index == 1 ? R.string.a11yTravelResume
+                    : R.string.a11yTravelCancel;
+        }
+        return index == 0 ? (state == 2 ? R.string.a11yTravelResume
+                : R.string.a11yTravelPause) : R.string.a11yTravelCancel;
+    }
+
+    private String travelStatus(int state) {
+        return activity.getString(state == 3 ? R.string.a11yTravelSafetyStopped
+                : state == 2 ? R.string.a11yTravelPaused
+                : R.string.a11yTravelMoving);
+    }
+
+    private String travelSpoken(int state) {
+        int count = travelChoiceCount(state);
+        travelChoice = Math.max(0, Math.min(travelChoice, count - 1));
+        return activity.getString(travelLabel(state, travelChoice)) + ", "
+                + activity.getString(R.string.a11yPosition, travelChoice + 1, count);
+    }
+
+    private void activateTravel() {
+        int state = travelState();
+        if (state == 0) { return; }
+        int command = state == 3 ? (travelChoice == 0 ? 4
+                : travelChoice == 1 ? 2 : 3)
+                : travelChoice == 0 ? (state == 2 ? 2 : 1) : 3;
+        try {
+            if (CataclysmDDA.nativeTravelControl(command)) {
+                SessionDebugLog.event("TRAVEL_CONTROL",
+                        "command=" + command + " from_state=" + state);
+                feedback(activity.getString(R.string.a11yTravelRequestAccepted));
+            } else {
+                feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
+            }
+        } catch (UnsatisfiedLinkError unavailable) {
+            feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+        }
+    }
+
+    private void renderTravelPanel(int state) {
+        TextView title = new TextView(activity);
+        title.setText(travelStatus(state));
+        title.setTextColor(0xffeeeeee);
+        title.setTextSize(19);
+        title.setPadding(12, 12, 12, 16);
+        rows.addView(title);
+        ReaderSnapshot.Node current = snapshot == null ? null : snapshot.find("activity:current");
+        if (current != null && !current.value.isEmpty()) {
+            TextView progress = new TextView(activity);
+            progress.setText(current.value);
+            progress.setTextColor(0xffdddddd);
+            rows.addView(progress);
+        }
+        for (int i = 0; i < travelChoiceCount(state); i++) {
+            final int choice = i;
+            Button button = new Button(activity);
+            button.setText(travelLabel(state, i));
+            button.setSelected(i == travelChoice);
+            button.setOnClickListener(view -> {
+                travelChoice = choice;
+                activateTravel();
+            });
+            rows.addView(button);
+        }
+    }
+
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
@@ -1678,6 +1784,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (commandPaletteOpen) {
             root.setBackgroundColor(0xff161616);
             renderContextCommands();
+        } else if (travelState() != 0) {
+            root.setBackgroundColor(0xff161616);
+            renderTravelPanel(travelState());
         } else {
             root.setBackgroundColor(android.graphics.Color.TRANSPARENT);
             // Touch exploration lets TalkBack intercept multi-finger gestures.
@@ -1715,6 +1824,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public String gestureContext() {
         if (debugReport != null) { return presentationEpoch + ":debug"; }
+        if (travelState() != 0) {
+            return presentationEpoch + ":travel:" + travelState();
+        }
         if (comprehensiveMenu) {
             return presentationEpoch + ":hub:" + hubSection + ":" + choosingGesture
                     + ":" + choosingHubAction
@@ -1797,6 +1909,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (pocketStage != 0) {
             navigatePocketPicker(delta);
+            return;
+        }
+        if (travelState() != 0) {
+            int state = travelState();
+            travelChoice = Math.floorMod(travelChoice + delta, travelChoiceCount(state));
+            render();
+            readCurrent();
             return;
         }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
@@ -1891,6 +2010,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
+        if (travelState() != 0) { activateTravel(); return; }
         if (snapshot == null || directWorldGesturesEnabled()) { return; }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
@@ -2198,6 +2318,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             activatePocketPicker();
             return;
         }
+        if (travelState() != 0) { activateTravel(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
@@ -2909,6 +3030,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(pocketChoiceSpeech());
             return;
         }
+        if (travelState() != 0) {
+            feedback(travelSpoken(travelState()));
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) {
             if (snapshot == null) {
@@ -3031,6 +3156,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             root.cancelGesture();
             render();
             if (comprehensiveMenu) { readCurrent(); }
+            return;
+        }
+        if (travelState() != 0) {
+            // Back must not silently abandon a route. Move focus to the
+            // explicit Cancel button; only a subsequent activation ends it.
+            travelChoice = travelChoiceCount(travelState()) - 1;
+            render();
+            readCurrent();
             return;
         }
         if (backReaderLayer()) { return; }
