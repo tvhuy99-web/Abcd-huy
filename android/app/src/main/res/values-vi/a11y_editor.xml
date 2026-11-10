@@ -58,4 +58,13 @@
     <string name="a11yPocketRow">%1$s. Chọn %2$d, có %3$d. Mục %4$d trên %5$d.</string>
     <string name="a11yPocketSealed">Ngăn đang niêm phong, không thể mở.</string>
     <string name="a11yPocketInstructions">Chọn vật phẩm rồi xác nhận để trở về danh sách ngoài. Chưa nhặt đồ cho tới khi xác nhận danh sách ngoài. Hủy sẽ bỏ lựa chọn mới trong ngăn.</string>
+    <string name="a11yTravelMoving">Đang di chuyển tự động. Tuyến đường đang hoạt động.</string>
+    <string name="a11yTravelPaused">Đã tạm dừng di chuyển. Tuyến đường vẫn được giữ.</string>
+    <string name="a11yTravelSafetyStopped">Đã dừng vì cảnh báo an toàn. Tuyến đường vẫn được giữ. Chỉ tiếp tục khi an toàn hoặc chủ động bỏ qua kẻ địch.</string>
+    <string name="a11yTravelIgnoreWarning">Bỏ qua cảnh báo kẻ địch lần này</string>
+    <string name="a11yTravelResume">Tiếp tục di chuyển</string>
+    <string name="a11yTravelPause">Tạm dừng di chuyển</string>
+    <string name="a11yTravelCancel">Hủy chuyến đi và trở về bản đồ</string>
+    <string name="a11yTravelRequestAccepted">Đã nhận lệnh điều khiển chuyến đi.</string>
+    <string name="a11yTravelRequestUnavailable">Không thể thực hiện lệnh này trong trạng thái hiện tại.</string>
 </resources>
