@@ -135,6 +135,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean nativeConfigured;
     private boolean lastEnabled;
     private boolean lastSuspended = true;
+    private boolean lastSpokenOnlyWorld;
+    private boolean lastPerformanceProfile;
     private volatile long presentationEpoch;
     private int worldJavaTimingSample;
     private long lastWorldBusyNotice;
@@ -351,12 +353,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!enabled || suspended) {
             sonar.setWorldActive(false);
         }
-        if (force || !nativeConfigured || lastEnabled != enabled || lastSuspended != suspended) {
+        boolean spokenOnlyWorld = preferences.isSpokenOnlyWorldEnabled();
+        boolean profile = preferences.isPerformanceProfilingEnabled();
+        if (force || !nativeConfigured || lastEnabled != enabled || lastSuspended != suspended
+                || lastSpokenOnlyWorld != spokenOnlyWorld || lastPerformanceProfile != profile) {
             try {
-                CataclysmDDA.nativeConfigureReader(enabled, suspended);
+                CataclysmDDA.nativeConfigureReaderPerformance(spokenOnlyWorld, profile);
+                if (force || !nativeConfigured || lastEnabled != enabled
+                        || lastSuspended != suspended) {
+                    CataclysmDDA.nativeConfigureReader(enabled, suspended);
+                }
                 nativeConfigured = true;
                 lastEnabled = enabled;
                 lastSuspended = suspended;
+                lastSpokenOnlyWorld = spokenOnlyWorld;
+                lastPerformanceProfile = profile;
             } catch (UnsatisfiedLinkError unavailable) {
                 nativeConfigured = false;
                 status.setText(R.string.a11yReaderNativeUnavailable);
