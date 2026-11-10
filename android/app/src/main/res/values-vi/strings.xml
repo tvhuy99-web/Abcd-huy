@@ -184,6 +184,8 @@
     <string name="a11yEffectsEnabled">Hiệu ứng âm thanh</string>
     <string name="a11yEffectsVolumeValue">Âm lượng hiệu ứng: %1$d</string>
     <string name="a11yDebugLogTitle">Nhật ký gỡ lỗi</string>
+    <string name="a11ySpokenOnlyWorld">Chỉ đọc bằng giọng nói, không dựng hình bản đồ (ưu tiên tốc độ)</string>
+    <string name="a11yAdaptiveProfiler">Đo hiệu năng tự động, tự tắt khi di chuyển ổn định</string>
     <string name="a11yDebugLogEnabled">Ghi nhật ký</string>
     <string name="a11yDebugLogExport">Xuất nhật ký</string>
     <string name="a11yDebugLogClear">Xóa nhật ký</string>
