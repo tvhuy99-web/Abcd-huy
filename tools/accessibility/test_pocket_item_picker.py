@@ -75,6 +75,21 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         self.assertNotIn('send("set_value"', draft)
         self.assertNotIn('send("activate"', draft)
 
+    def test_confirm_and_cancel_are_reachable_by_swiping(self):
+        self.assertIn('private static final String POCKET_CONFIRM_NODE', CTRL)
+        self.assertIn('private static final String POCKET_CANCEL_NODE', CTRL)
+        navigation = CTRL.split("private void navigatePocketPicker(", 1)[1].split(
+            "private void renderPocketPicker()", 1
+        )[0]
+        self.assertIn("choices.size() + (pocketStage == 3 ? 2 : 0)", navigation)
+        self.assertIn("POCKET_CONFIRM_NODE", navigation)
+        self.assertIn("POCKET_CANCEL_NODE", navigation)
+        activate = CTRL.split("private void activatePocketPicker()", 1)[1].split(
+            "private void navigatePocketPicker(", 1
+        )[0]
+        self.assertIn("commitPocketChoices();", activate)
+        self.assertIn("resetPocketPicker(true);", activate)
+
     def test_native_pockets_validate_live_items_and_preserve_sealed_rules(self):
         self.assertIn('pocket_node.id = "pocket:" + rows[i].id', SRC)
         self.assertIn('contained.id = "pocket-entry:" + pocket_binding.id', SRC)
