@@ -193,15 +193,9 @@ public class CataclysmDDA extends SDLActivity {
 
     /** Native engine diagnostic events do not depend on TTS being enabled. */
     public void onAccessibilityNativeDiagnostic(String category, String detail) {
+        // The manual log switch is the sole authority. Native never changes
+        // it in response to latency thresholds or gameplay conditions.
         SessionDebugLog.event(category, detail);
-        if ("WORLD_PROFILE_STATE".equals(category)
-                && detail != null && detail.startsWith("state=auto_paused")) {
-            // Native profiling has already stopped. Persist that decision
-            // across game resumes and app restarts without disabling crash
-            // recovery or the user's ordinary debug journal.
-            new ReaderPreferences(this).setPerformanceProfilingEnabled(false);
-            SessionDebugLog.setVerboseWorldTrace(this, false);
-        }
     }
 
     /** SDL's confirmed normal quit clears the active journal synchronously. */
