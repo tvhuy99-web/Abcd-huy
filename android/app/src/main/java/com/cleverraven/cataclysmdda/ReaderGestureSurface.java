@@ -39,6 +39,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void scanDirection(int dx, int dy);
         void twoFingerTap(int count);
         void threeFingerTap();
+        /** Fixed shortcut: two three-finger taps read the current character. */
+        default void characterDetails() { }
         /** Three sequential single-finger taps open the native action menu. */
         void openActionMenu();
         boolean handleCustomGesture(String gestureId);
@@ -412,6 +414,11 @@ public final class ReaderGestureSurface extends LinearLayout {
             return;
         }
         if (!listener.directWorldGesturesEnabled()) { return; }
+        if (fingers == 3 && count == 2) {
+            // This built-in cannot be superseded by a shortcut binding.
+            listener.characterDetails();
+            return;
+        }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);
         if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
         if (fingers == 2) {
