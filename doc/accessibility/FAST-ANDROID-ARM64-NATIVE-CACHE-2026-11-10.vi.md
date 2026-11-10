@@ -32,10 +32,13 @@ ELF64 tại `android/app/src/main/jniLibs/arm64-v8a/libmain.so`.
 
 Để native có cùng nhận diện giữa các APK Java-only, mã `VERSION`
 nhúng trong thư viện được đặt theo fingerprint nguồn native, ví dụ
-`native-ab12...`, **không phải SHA commit Java**. APK mới vẫn có
-`versionCode` tăng đơn điệu để cập nhật được bản đã cài, còn
-`build-evidence/commit.txt` cho biết SHA mã nguồn đầy đủ. Người kiểm
-thử cần phân biệt nhãn phiên bản native với commit build APK.
+`native-ab12...`, **không phải SHA commit Java**. Song song, Gradle
+nhận `-Paccessibility_apk_version=<git SHA rút gọn>` để `versionName`
+trong APK và nhật ký vẫn nhận diện được **đúng commit Java đang chạy**.
+APK mới có `versionCode` tăng đơn điệu để cập nhật bản đã cài;
+`build-evidence/commit.txt` ghi SHA đầy đủ. Người kiểm thử có thể
+phân biệt bản APK với fingerprint của `libmain.so` mà không mất
+khả năng dùng lại thư viện cũ.
 
 Không dùng cache native từ nhánh có nguồn khác; hash đã đảm bảo điều
 kiện này. Phiên bản CMake/NDK hoặc phụ thuộc native thay đổi phải làm
