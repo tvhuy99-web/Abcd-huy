@@ -413,8 +413,16 @@ void monmove()
     g->cleanup_dead();
     map &m = get_map();
     avatar &u = get_avatar();
-
+#if defined(__ANDROID__)
+    const bool profile_ai = a11y::android::performance_profiling_enabled();
+    unsigned int active_monsters = 0;
+    unsigned int active_npcs = 0;
+#endif
     for( monster &critter : g->all_monsters() ) {
+#if defined(__ANDROID__)
+        const auto monster_started = profile_ai ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+#endif
         if( !m.inbounds( critter.pos_abs() ) ) {
             continue;
         }
@@ -489,6 +497,20 @@ void monmove()
                 u.wake_up();
             }
         }
+#if defined(__ANDROID__)
+        if( profile_ai ) {
+            ++active_monsters;
+            const auto monster_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::steady_clock::now() - monster_started ).count();
+            if( monster_ms >= 40 ) {
+                a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
+                        "kind=monster name=" + critter.name() +
+                        " elapsed_ms=" + std::to_string( monster_ms ) +
+                        " x=" + std::to_string( critter.pos_abs().x() ) +
+                        " y=" + std::to_string( critter.pos_abs().y() ) );
+            }
+        }
+#endif
     }
 
     g->cleanup_dead();
@@ -500,9 +522,33 @@ void monmove()
 
     // Now, do active NPCs.
     for( npc &guy : g->all_npcs() ) {
+#if defined(__ANDROID__)
+        const auto npc_started = profile_ai ? std::chrono::steady_clock::now() :
+                                 std::chrono::steady_clock::time_point{};
+#endif
         process_npc_turn( m, guy );
+#if defined(__ANDROID__)
+        if( profile_ai ) {
+            ++active_npcs;
+            const auto npc_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now() - npc_started ).count();
+            if( npc_ms >= 40 ) {
+                a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
+                        "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
+                        " x=" + std::to_string( guy.pos_abs().x() ) +
+                        " y=" + std::to_string( guy.pos_abs().y() ) );
+            }
+        }
+#endif
     }
     g->cleanup_dead();
+#if defined(__ANDROID__)
+    if( profile_ai ) {
+        a11y::android::diagnostic_event( "WORLD_AI_COUNTS",
+                "monsters=" + std::to_string( active_monsters ) +
+                " npcs=" + std::to_string( active_npcs ) );
+    }
+#endif
 }
 
 void overmap_npc_move()
