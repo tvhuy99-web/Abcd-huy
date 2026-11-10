@@ -236,11 +236,13 @@ public final class ReaderPreferences {
     }
 
     public int getHorizontalSwipeAction() {
-        return getGestureAction("horizontal_swipe_action", TRIAL_HORIZONTAL_ACTION);
+        // Navigating menus is an essential control, not a remappable action.
+        // Old persisted mappings and gesture trials are intentionally inert.
+        return GESTURE_ACTION_NAVIGATE;
     }
 
     public int getVerticalSwipeAction() {
-        return getGestureAction("vertical_swipe_action", TRIAL_VERTICAL_ACTION);
+        return GESTURE_ACTION_NAVIGATE;
     }
 
     private int getGestureAction(String confirmedKey, String trialKey) {
