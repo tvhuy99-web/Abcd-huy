@@ -143,6 +143,33 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // route. The native game thread exclusively owns route changes.
     private int travelChoice;
     private int announcedTravelState;
+    // Automatic travel does not necessarily publish a new semantic snapshot
+    // on each native step. Poll only the tiny JNI atomic state (never game
+    // data) so Pause/Cancel become visible immediately, even after starting
+    // from the overmap or observation screen. Do not reannounce steady state.
+    private final Runnable travelStatePoll = new Runnable() {
+        @Override
+        public void run() {
+            if (closed) { return; }
+            if (foreground && windowFocused && preferences.isEnabled()
+                    && !lastSuspended) {
+                int state = travelState();
+                if (state != announcedTravelState) {
+                    announcedTravelState = state;
+                    travelChoice = 0;
+                    clearPendingWorldDirection();
+                    root.cancelGesture();
+                    render();
+                    if (state != 0) {
+                        feedback(travelStatus(state) + ". " + travelSpoken(state));
+                    } else if (snapshot != null) {
+                        readCurrent();
+                    }
+                }
+            }
+            handler.postDelayed(this, 200);
+        }
+    };
     // One short-lived *gesture*, never a native movement backlog. When a
     // swipe arrives during the previous turn, try its latest direction once
     // after the next live world publication, then discard it. Native safety,
@@ -232,6 +259,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (accessibility != null) {
             accessibility.addTouchExplorationStateChangeListener(explorationListener);
         }
+        handler.postDelayed(travelStatePoll, 200);
     }
 
     private void onSpeechHealth(AndroidSpeech.State state) {
@@ -1671,7 +1699,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (snapshot == null || debugReport != null || editor != null
                 || comprehensiveMenu || pocketStage != 0 || commandPaletteOpen
                 || (!"activity".equals(snapshot.category)
-                    && !"DEFAULTMODE".equals(snapshot.category))) {
+                    && !"DEFAULTMODE".equals(snapshot.category)
+                    && !"overmap".equals(snapshot.category)
+                    && !"look-around".equals(snapshot.category))) {
             return 0;
         }
         try {
@@ -3114,10 +3144,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
             }
-            if ("YESNO".equals(snapshot.category) && !snapshot.summary.trim().isEmpty()
-                    && !"dialog:message".equals(node.id)) {
-                information = snapshot.summary.trim() + ". " + information;
-            }
+            // Yes/No choices carry the original question in node.detail,
+            // so do not prepend snapshot.summary a second time.
             feedback(information);
         }
     }
