@@ -90,7 +90,8 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn('diagnostic_event( "WORLD_READER_TIMING"', engine)
         self.assertIn("build_ms=", engine)
         self.assertIn("update_publish_ms=", engine)
-        self.assertIn("reader_timing_sample % 32", engine)
+        self.assertIn("reader_timing_sample % 8", engine)
+        self.assertIn("build_ms >= 20 || publish_ms >= 20", engine)
 
     def test_ordinary_footsteps_do_not_allocate_three_translated_restriction_maps(self):
         engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
@@ -140,7 +141,32 @@ class FastSwipeLatencyContracts(unittest.TestCase):
                       "update_map_ms=", "search_ms=", "map_shift_ms=",
                       "npcs_ms=", "cache_ms=", "spawn_ms=", "reveal_ms="):
             self.assertIn(stage, game)
-        self.assertIn("if( total_ms >= 150 )", game)
+        self.assertIn("profile_walk_samples % 8", game)
+        self.assertIn("profile_place_samples % 8", game)
+        self.assertIn("profile_shift_samples % 8", game)
+
+
+
+    def test_native_step_result_uses_real_position(self):
+        engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
+        self.assertIn('diagnostic_event( "WORLD_MOVE_RESULT"', engine)
+        self.assertIn('const tripoint_abs_ms diagnostic_before_position', engine)
+        self.assertIn('const tripoint_abs_ms after = player_character.pos_abs();', engine)
+        self.assertIn('" result=action_rejected changed=false"', engine)
+        self.assertIn('" result=" + ( dx != 0 || dy != 0 || dz != 0', engine)
+        for field in ("from_x=", "from_y=", "from_z=", "to_x=", "to_y=",
+                      "to_z=", "moves_spent=", "action_ms="):
+            self.assertIn(field, engine)
+
+    def test_reader_step_redraws_only_invalidated_widgets(self):
+        code = (SRC / "do_turn.cpp").read_text(encoding="utf-8")
+        self.assertIn('if( a11y::enabled() ) {', code)
+        self.assertIn('ui_manager::redraw_invalidated();', code)
+        self.assertIn('diagnostic_event( "WORLD_DRAW_TIMING"', code)
+        self.assertIn('diagnostic_event( "WORLD_SIM_TIMING"', code)
+        for phase in ("before_cache_ms=", "cache_ms=", "monsters_ms=",
+                      "player_turn_ms="):
+            self.assertIn(phase, code)
 
 
 
