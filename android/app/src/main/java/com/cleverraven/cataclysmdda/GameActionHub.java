@@ -147,7 +147,11 @@ final class GameActionHub {
     // and Favorites, but its current state must never diverge between them.
     private static String spokenNodeLabel(Context context, ReaderSnapshot.Node node) {
         String label = node.label;
-        if (!node.value.isEmpty() && !node.value.equals(label)
+        // The hub is a list of concise actions, not a second document
+        // reader. Read live state for actionable entries, but never inject
+        // an entire long read-only document into its one-line label.
+        if (!"document".equals(node.role) && !"status".equals(node.role)
+                && !node.value.isEmpty() && !node.value.equals(label)
                 && !label.endsWith(". " + node.value)) {
             label += ". " + node.value;
         }

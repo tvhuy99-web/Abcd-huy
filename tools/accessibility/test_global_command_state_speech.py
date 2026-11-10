@@ -42,6 +42,8 @@ class GlobalCommandStateSpeech(unittest.TestCase):
     def test_hub_search_favorites_all_use_semantic_status(self):
         self.assertIn('private static String spokenNodeLabel(', self.hub)
         self.assertIn('label += ". " + node.value;', self.hub)
+        self.assertIn('!"document".equals(node.role)', self.hub)
+        self.assertIn('!"status".equals(node.role)', self.hub)
         self.assertIn('new Entry(spokenNodeLabel(context, node), id, EXECUTE, 0)',
                       self.hub)
         self.assertIn('new Entry(spokenNodeLabel(context, node), node.id, EXECUTE, 0)',
