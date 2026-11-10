@@ -1134,9 +1134,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 focus = pocket.id;
                 render();
             }
-            feedback(pocket.detail.contains("Contains ")
-                    ? activity.getString(R.string.a11yPocketNotSelectable)
-                    : activity.getString(R.string.a11yPocketEmpty));
+            int totalContained;
+            try { totalContained = Integer.parseInt(pocket.appliedValue); }
+            catch (NumberFormatException missing) { totalContained = 0; }
+            feedback(activity.getString(totalContained > 0
+                    ? R.string.a11yPocketNotSelectable : R.string.a11yPocketEmpty));
             return;
         }
         focus = items.get(0).id;
@@ -1152,7 +1154,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? activity.getString(R.string.a11yPocketSelectionError) : item.disabledReason);
             return;
         }
-        if (amount == Integer.parseInt(item.appliedValue)) {
+        int applied;
+        try { applied = Integer.parseInt(item.appliedValue); }
+        catch (NumberFormatException missing) { applied = 0; }
+        if (amount == applied) {
             pocketDrafts.remove(item.id);
         } else {
             pocketDrafts.put(item.id, amount);
@@ -1424,10 +1429,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // "Open pocket", leaving double-tap reserved for selecting the item.
         ReaderSnapshot.Node focused = snapshot.find(focus);
         if ("inventory".equals(snapshot.category) && focused != null
+                && "checkbox".equals(focused.role)
                 && focused.id.startsWith("item:")
-                && !pocketNodes(focused.id).isEmpty()
-                && pocketNodes(focused.id).stream()
-                        .anyMatch(p -> p.actions.contains("set_value"))) {
+                && !pocketNodes(focused.id).isEmpty()) {
             pocketContext = snapshot.contextKey();
             pocketContainerId = focused.id;
             pocketReturnParent = readerLayerParent;
