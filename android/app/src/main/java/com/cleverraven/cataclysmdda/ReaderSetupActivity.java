@@ -226,23 +226,9 @@ public final class ReaderSetupActivity extends Activity {
         selfVoiceControls.add(swipeDuration);
         updateGestureDescriptions();
 
-        TextView mappingHeading = new TextView(this);
-        mappingHeading.setText(R.string.a11yGestureMappingHeading);
-        layout.addView(mappingHeading);
-        selfVoiceControls.add(mappingHeading);
-        ReaderPreferences savedGesturePreferences = new ReaderPreferences(this);
-        horizontalSwipeActionDraft = savedGesturePreferences.getHorizontalSwipeAction();
-        verticalSwipeActionDraft = savedGesturePreferences.getVerticalSwipeAction();
-        horizontalSwipeAction = button(layout, R.string.a11yHorizontalSwipeAction,
-                                       view -> cycleSwipeAction(true));
-        horizontalSwipeAction.setId(R.id.a11y_horizontal_swipe_action);
-        verticalSwipeAction = button(layout, R.string.a11yVerticalSwipeAction,
-                                     view -> cycleSwipeAction(false));
-        verticalSwipeAction.setId(R.id.a11y_vertical_swipe_action);
-        updateGestureMappingDescriptions();
-        button(layout, R.string.a11yTryGestureMapping,
-               view -> tryGestureMapping()).setId(R.id.a11y_try_gesture_mapping);
-
+        // Built-in swipe and tap controls are fixed. Do not offer the old
+        // horizontal/vertical remapping trial in the setup screen. The action
+        // hub still lets users assign shortcuts to UNUSED gestures only.
         button(layout, R.string.a11yRestoreGestureDefaults, view -> restoreGestureDefaults())
                 .setId(R.id.a11y_restore_gesture_defaults);
 
