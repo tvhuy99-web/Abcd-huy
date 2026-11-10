@@ -56,8 +56,9 @@ class NestedMenuNavigationTests(unittest.TestCase):
         self.assertIn("announceAccessibility(spoken);", code)
         self.assertIn("speech.focus(node.id, spoken);", code)
         self.assertNotIn("AccessibilityNodeInfo.ACTION_ACCESSIBILITY_FOCUS", code)
-        self.assertIn('feedback(introduction + ". " + nodeText(', code)
-        self.assertIn('String introduction = next.title;', code)
+        self.assertIn('feedback(introduction.isEmpty()', code)
+        self.assertIn('introduction + ". " + nodeText(', code)
+        self.assertIn('String introduction = yesNo ? next.summary.trim() : next.title;', code)
         self.assertIn("boolean nativeLayerChanged", code)
         self.assertIn("focus = next.find(next.focus)", code)
 
