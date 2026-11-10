@@ -62,6 +62,28 @@ public final class DebugLogActivity extends Activity {
                 SessionDebugLog.setEnabled(this, checked));
         controls.addView(enabled);
 
+        // These are independent of the ordinary crash/session journal. The
+        // visual switch affects only the world scene; native menus still draw.
+        // Adaptive profiling turns itself off after sustained fast walking.
+        CheckBox spokenOnlyWorld = new CheckBox(this);
+        spokenOnlyWorld.setText(R.string.a11ySpokenOnlyWorld);
+        spokenOnlyWorld.setChecked(reader.isSpokenOnlyWorldEnabled());
+        spokenOnlyWorld.setOnCheckedChangeListener((button, checked) -> {
+            reader.setSpokenOnlyWorldEnabled(checked);
+            SessionDebugLog.event("WORLD_VISUAL_STATE", "spoken_only=" + checked);
+        });
+        controls.addView(spokenOnlyWorld);
+
+        CheckBox profiling = new CheckBox(this);
+        profiling.setText(R.string.a11yAdaptiveProfiler);
+        profiling.setChecked(reader.isPerformanceProfilingEnabled());
+        profiling.setOnCheckedChangeListener((button, checked) -> {
+            reader.setPerformanceProfilingEnabled(checked);
+            SessionDebugLog.event("WORLD_PROFILE_STATE",
+                    checked ? "state=manual_enabled" : "state=manual_paused");
+        });
+        controls.addView(profiling);
+
         Button export = new Button(this);
         export.setText(R.string.a11yDebugLogExport);
         export.setOnClickListener(view -> chooseExport());
