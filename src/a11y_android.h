@@ -33,6 +33,10 @@ int travel_state();
 void set_travel_state( int state );
 bool request_travel_control( int control );
 int take_travel_control();
+// One short-lived request to close an observation cursor still active after
+// an interrupted trip was explicitly canceled. Never affects zone pickers.
+void request_travel_map_return();
+bool take_travel_map_return();
 void reset_travel_control();
 void publish( const std::string &json );
 void announce( const std::string &text, int priority );
