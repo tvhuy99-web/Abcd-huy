@@ -321,18 +321,15 @@ std::optional<std::string> poll_input( const void *input_owner )
         screen.last_request = intent->request;
 #if defined(__ANDROID__)
         if( world_walk && android::performance_profiling_enabled() ) {
-            static unsigned int walk_input_samples = 0;
-            if( ( ++walk_input_samples % 16 ) == 0 ) {
-                const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                                        std::chrono::steady_clock::now().time_since_epoch() ).count();
-                const std::uint64_t wait_ms =
-                    intent->received_at_ms > 0 &&
-                    now_ms >= static_cast<std::int64_t>( intent->received_at_ms ) ?
-                    static_cast<std::uint64_t>( now_ms ) - intent->received_at_ms : 0;
-                android::diagnostic_event( "WORLD_INPUT_TIMING",
-                        "jni_to_poll_ms=" + std::to_string( wait_ms ) +
-                        " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
-            }
+            const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch() ).count();
+            const std::uint64_t wait_ms =
+                intent->received_at_ms > 0 &&
+                now_ms >= static_cast<std::int64_t>( intent->received_at_ms ) ?
+                static_cast<std::uint64_t>( now_ms ) - intent->received_at_ms : 0;
+            android::diagnostic_event( "WORLD_INPUT_TIMING",
+                    "jni_to_poll_ms=" + std::to_string( wait_ms ) +
+                    " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
         }
 #endif
         // Only three actions may carry a value at all (R03.1). Every other
