@@ -769,7 +769,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else {
                     clearPendingWorldDirection();
                 }
-                if (worldView && (++worldJavaTimingSample % 16) == 0) {
+                if (worldView && preferences.isPerformanceProfilingEnabled()
+                        && (++worldJavaTimingSample % 8) == 0) {
                     SessionDebugLog.event("WORLD_JAVA_TIMING",
                             "jni_to_ui_ms=" + (dispatchedAt - receivedAt)
                             + " parse_ms=" + (parsedAt - dispatchedAt)
