@@ -320,7 +320,7 @@ std::optional<std::string> poll_input( const void *input_owner )
         }
         screen.last_request = intent->request;
 #if defined(__ANDROID__)
-        if( world_walk ) {
+        if( world_walk && android::performance_profiling_enabled() ) {
             static unsigned int walk_input_samples = 0;
             if( ( ++walk_input_samples % 16 ) == 0 ) {
                 const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
