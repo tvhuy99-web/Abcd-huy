@@ -1,4 +1,4 @@
-"""Guard the approved 16-group menu and 36 latest-wins shortcuts."""
+"""Guard 16 menu groups, 36 recognizers and default-protected shortcuts."""
 import re
 import unittest
 from pathlib import Path
@@ -68,7 +68,7 @@ class ComprehensiveHubRestore(unittest.TestCase):
         self.assertIn("private void searchHub()", self.ctrl)
         self.assertIn("snapshot.find(item.node)", self.ctrl)
         self.assertIn("hubIndex = hubRootIndex", self.ctrl)
-        self.assertIn("ReaderGestureBindings.IDS.length + 2", self.ctrl)
+        self.assertIn("ReaderGestureBindings.CUSTOM_IDS.length + 2", self.ctrl)
 
 
 if __name__ == "__main__":
