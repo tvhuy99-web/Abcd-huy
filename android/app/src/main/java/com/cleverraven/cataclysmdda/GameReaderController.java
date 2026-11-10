@@ -716,12 +716,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredMenu && next.find(focus) != null) {
-                    // YESNO choices are meaningless without the question.
-                    // Announce it once on entry, not again for every swipe.
-                    String introduction = next.title;
-                    if ("YESNO".equals(next.category) && !next.summary.trim().isEmpty()) {
-                        introduction += ". " + next.summary.trim();
-                    }
+                    // Yes/No questions carry their own text. Speak it once
+                    // on entering the modal, then only the actual choice
+                    // and position for subsequent swipes; never prepend the
+                    // generic "Dialog" label or a keyboard case hint.
+                    boolean yesNo = "YESNO".equals(next.category)
+                            || "YESNOQUIT".equals(next.category);
+                    String introduction = yesNo ? next.summary.trim() : next.title;
                     // Places intentionally starts speaking at the first actual
                     // destination: no title, preamble, or item counter.
                     if ("places".equals(next.category)
@@ -729,7 +730,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || "pickup-here".equals(next.category)) {
                         feedback(nodeText(next.find(focus), false));
                     } else {
-                        feedback(introduction + ". " + nodeText(next.find(focus), false));
+                        feedback(introduction.isEmpty()
+                                ? nodeText(next.find(focus), false)
+                                : introduction + ". " + nodeText(next.find(focus), false));
                     }
                 } else if (selectionChanged) {
                     readCurrent();
