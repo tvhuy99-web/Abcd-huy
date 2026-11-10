@@ -4287,7 +4287,7 @@ class inventory_selector::reader_session
                 if( pb == pocket_selections.end() || multi == nullptr || !pb->container ) {
                     return reject_pocket_change();
                 }
-                const std::vector<const item_pocket *> pockets = pb->container->get_container_pockets();
+                const std::vector<item_pocket *> pockets = pb->container->get_container_pockets();
                 if( pb->pocket_index >= pockets.size() || pockets[pb->pocket_index]->sealed() ) {
                     return reject_pocket_change();
                 }
