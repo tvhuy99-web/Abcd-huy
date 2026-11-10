@@ -301,8 +301,17 @@ std::optional<std::string> poll_input( const void *input_owner )
         // lifecycle and foreground transitions, and request IDs are strictly
         // monotonic. Recheck the native walking permission for every step.
         const bool world_walk = live_world_walk_command( screen.snapshot, *intent );
+        // A focus move is read-only. Its node and "focus" permission are
+        // re-resolved below against the *current* snapshot, so an unrelated
+        // sidebar or list redraw must not make swiping sound like a failed
+        // item selection. Mutations (activate/set_value/etc.) still require
+        // an exact revision; no stale user action is silently replayed.
+        const bool live_read_only_focus = intent->action == "focus" &&
+                                          intent->value.empty() && intent->revision > 0 &&
+                                          intent->revision <= screen.revision;
         const bool valid_token = contexts.accepts( intent->token );
-        const bool valid_revision = intent->revision == screen.revision || world_walk;
+        const bool valid_revision = intent->revision == screen.revision || world_walk ||
+                                    live_read_only_focus;
         const bool valid_request = intent->request > screen.last_request;
         if( !valid_token || !valid_revision || !valid_request ) {
             android::status( "stale", &*intent );
