@@ -450,7 +450,12 @@ input_context game::get_player_input( std::string &action )
         ctxt = get_default_mode_input_context();
     }
 
-    here.update_visibility_cache( pos.z() );
+    // In spoken-only mode the reader refresh below owns the cache
+    // rebuild and visibility update. Avoid doing the same visibility
+    // scan once before entering the input loop and again at snapshot.
+    if( !a11y::android::suppress_world_visuals() ) {
+        here.update_visibility_cache( pos.z() );
+    }
     const visibility_variables &cache = here.get_visibility_variables_cache();
     const level_cache &map_cache = here.get_cache_ref( pos.z() );
     const auto &visibility_cache = map_cache.visibility_cache;
@@ -706,6 +711,9 @@ input_context game::get_player_input( std::string &action )
                                    std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
+                // Only speak when the KNOWN overmap terrain changes.
+                // An internal submap cache shift alone is not a new area.
+                a11y::announce_area_transition();
                 const auto published = profile_reader ? std::chrono::steady_clock::now() :
                                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
