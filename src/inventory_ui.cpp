@@ -3707,6 +3707,48 @@ class inventory_selector::reader_session
                     node.id = binding->id;
                     node.role = activation == "TOGGLE_ENTRY" ? "checkbox" : "button";
                     node.label = remove_color_tags( cells.empty() ? location->display_name() : cells.front() );
+                    // The game uses symbolic durability bars ("++") and a
+                    // superscript plus for pickup allow/deny rules. Keep the
+                    // real item unchanged; translate these visual markers
+                    // into meaningful detail instead of reading punctuation.
+                    const std::string durability_bar =
+                        remove_color_tags( location->durability_indicator() );
+                    bool durability_marker_removed = false;
+                    if( !durability_bar.empty() ) {
+                        const std::size_t mark = node.label.find( durability_bar );
+                        // Item stacks may put the count before the caption.
+                        // Do not delete a meaningful plus in an item name.
+                        if( mark != std::string::npos && ( mark == 0 ||
+                            ( mark < 9 && node.label[mark - 1] == ' ' ) ) ) {
+                            node.label.erase( mark, durability_bar.size() );
+                            durability_marker_removed = true;
+                        }
+                    }
+                    const std::string rules_marker = "⁺";
+                    bool pickup_rule_marker_removed = false;
+                    for( std::size_t mark = node.label.find( rules_marker );
+                         mark != std::string::npos;
+                         mark = node.label.find( rules_marker ) ) {
+                        node.label.erase( mark, rules_marker.size() );
+                        pickup_rule_marker_removed = true;
+                    }
+                    // Remove ordinary and non-breaking spaces left by a
+                    // deleted symbol, not the spacing between real words.
+                    for( std::size_t n = 0; n + 1 < node.label.size(); ) {
+                        if( node.label[n] == ' ' && node.label[n + 1] == ' ' ) {
+                            node.label.erase( n, 1 );
+                        } else {
+                            ++n;
+                        }
+                    }
+                    while( !node.label.empty() && ( node.label.front() == ' ' ||
+                           node.label.front() == '\t' ) ) {
+                        node.label.erase( 0, 1 );
+                    }
+                    const std::string nbsp = "\xC2\xA0";
+                    if( node.label.rfind( nbsp, 0 ) == 0 ) {
+                        node.label.erase( 0, nbsp.size() );
+                    }
                     // A plain inventory selection opens the item's action menu;
                     // it does not mark an amount. Do not say "Selected: 0"
                     // in this mode. Multi-select pickup/drop screens still
@@ -3717,6 +3759,16 @@ class inventory_selector::reader_session
                                                    std::to_string( entry->get_available_count() ) );
                     }
                     node.detail = location.describe( &owner.u );
+                    if( durability_marker_removed ) {
+                        node.detail += "\n" + std::string(
+                                           location->damage() < 0 ? _( "Reinforced item." ) :
+                                           location->damage() > 0 || location->degradation() > 0 ?
+                                           _( "Item shows wear or damage." ) :
+                                           _( "Item condition intact." ) );
+                    }
+                    if( pickup_rule_marker_removed ) {
+                        node.detail += "\n" + std::string( _( "Pickup allow or deny rule marker." ) );
+                    }
                     // Physical characteristics and equipment state for every
                     // inventory screen, without changing its selection rules.
                     node.detail += "\n" + string_format(
