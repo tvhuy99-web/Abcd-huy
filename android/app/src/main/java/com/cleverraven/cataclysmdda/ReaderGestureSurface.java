@@ -125,13 +125,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger_long_press"
                             + " context=" + owner);
                     longPressHandled = true;
-                    // World shortcuts retain their existing hold bindings.
-                    // In menus, long-press opens commands; detail is two-finger tap.
-                    if (!listener.directWorldGesturesEnabled()
-                            || !listener.handleCustomGesture(
-                                    ReaderGestureBindings.idForHold(1))) {
-                        listener.openContextActions();
-                    }
+                    // Holding one finger always opens context actions.
+                    // It cannot be overwritten, even by a legacy binding.
+                    listener.openContextActions();
                 }
             }
 
@@ -408,26 +404,27 @@ public final class ReaderGestureSurface extends LinearLayout {
     private void dispatchMultiTap(int fingers, int count) {
         SessionDebugLog.event("GESTURE", "multi_tap fingers=" + fingers
                 + " count=" + count);
-        // Detail belongs to a single two-finger tap on BOTH world and menus.
-        if (fingers == 2 && count == 1) {
-            listener.twoFingerTap(count);
+        // All two-finger taps have built-in actions (one tap also works in
+        // menus); the first two three-finger taps are reserved for location
+        // and character status. Handle these BEFORE custom bindings.
+        if (fingers == 2) {
+            if (count == 1 || listener.directWorldGesturesEnabled()) {
+                listener.twoFingerTap(count);
+            }
             return;
         }
         if (!listener.directWorldGesturesEnabled()) { return; }
+        if (fingers == 3 && count == 1) {
+            listener.threeFingerTap();
+            return;
+        }
         if (fingers == 3 && count == 2) {
-            // This built-in cannot be superseded by a shortcut binding.
             listener.characterDetails();
             return;
         }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);
         if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
-        if (fingers == 2) {
-            listener.twoFingerTap(count);
-        } else if (fingers == 3 && count == 1) {
-            listener.threeFingerTap();
-        } else if (fingers >= 3) {
-            listener.unassignedMultiGesture(gesture);
-        }
+        listener.unassignedMultiGesture(gesture);
     }
 
     private static String cardinal(float dx, float dy, float minimum) {
