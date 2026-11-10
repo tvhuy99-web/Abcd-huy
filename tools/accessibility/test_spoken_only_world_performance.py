@@ -44,6 +44,9 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("vision_map.update_visibility_cache( z );", reader)
         self.assertLess(reader.index("vision_map.update_visibility_cache( z );"),
                         reader.index("make_reader_snapshot()"))
+        self.assertIn("a11y::android::alignment_distance( nearest );", reader)
+        self.assertIn("a11y::observe_tile( target )", reader)
+        self.assertIn("observed.source == a11y::observation_source::visible", reader)
 
     def test_no_headless_redraw_or_animation_loop_before_a_footstep(self):
         turns = native("do_turn.cpp")
@@ -83,11 +86,18 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("last_profile_sim_ms > 120", bridge)
         self.assertIn("last_profile_vision_ms > 60", bridge)
         self.assertIn("last_profile_reader_ms > 35", bridge)
+        self.assertIn("cycle_ms <= cycle_budget_ms", bridge)
+        self.assertIn("cycle_budget_ms = 250", bridge)
+        self.assertIn('diagnostic_event( "WORLD_STEP_PIPELINE"', bridge)
+        self.assertIn("performance_reader_sample( const long long ms )", bridge)
+        self.assertIn("pending_step_completed_at", bridge)
+        self.assertIn("last_profile_sim_ms = std::max(", bridge)
         self.assertIn("performance_vision_sample( vision_ms )", engine)
         self.assertIn("performance_reader_sample( build_ms + publish_ms )", engine)
         self.assertIn("busy_epoch != last_profile_busy_epoch", bridge)
         self.assertIn("shifted_since_last_step", bridge)
         self.assertIn("profile_busy_epoch.fetch_add(", bridge)
+        self.assertIn("!a11y::android::suppress_world_visuals()", native("do_turn.cpp"))
         self.assertIn("performance_profile_active.store( false", bridge)
         self.assertIn("state=auto_paused stable_walks=48", bridge)
         self.assertIn("a11y::android::performance_world_shift();",
