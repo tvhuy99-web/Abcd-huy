@@ -29,6 +29,7 @@ public final class GameMenuGestureDispatchTest {
         int actionMenus;
         int activations;
         int tripleFingerTaps;
+        int characterDetailReads;
         int fourFingerTaps;
         int fourFingerSwipes;
         int unassignedGestures;
@@ -69,6 +70,7 @@ public final class GameMenuGestureDispatchTest {
             if (count == 1) { details++; }
         }
         @Override public void threeFingerTap() { tripleFingerTaps++; }
+        @Override public void characterDetails() { characterDetailReads++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
             if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
@@ -248,6 +250,34 @@ public final class GameMenuGestureDispatchTest {
     }
 
     @Test
+    public void doubleThreeFingerTapReadsDetailsWithoutOverridingOtherTaps() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long now = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, now);
+                endMulti(surface[0], 3, now, 0);
+                startMulti(surface[0], 3, now + 290);
+                endMulti(surface[0], 3, now + 290, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.characterDetailReads);
+                assertEquals(0, actions.tripleFingerTaps);
+                assertEquals(0, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
     public void fourFingerTapAndSwipeReachBindings() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Intent intent = new Intent(context, ReaderSetupActivity.class)
@@ -300,7 +330,7 @@ public final class GameMenuGestureDispatchTest {
     }
 
     @Test
-    public void singleFingerHoldOverridesDetailInWorldButNotMenus() throws Exception {
+    public void singleFingerHoldAlwaysOpensContextActions() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Intent intent = new Intent(context, ReaderSetupActivity.class)
                 .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
@@ -319,7 +349,8 @@ public final class GameMenuGestureDispatchTest {
             });
             Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
             scenario.onActivity(activity -> {
-                assertEquals(1, actions.oneFingerHolds);
+                assertEquals(0, actions.oneFingerHolds);
+                assertEquals(1, actions.contextMenus);
                 assertEquals(0, actions.details);
                 touch(surface[0], down[0], SystemClock.uptimeMillis(),
                         MotionEvent.ACTION_UP, 80, 0, false);
@@ -330,9 +361,9 @@ public final class GameMenuGestureDispatchTest {
             });
             Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
             scenario.onActivity(activity -> {
-                assertEquals(1, actions.oneFingerHolds);
+                assertEquals(0, actions.oneFingerHolds);
                 assertEquals(0, actions.details);
-                assertEquals(1, actions.contextMenus);
+                assertEquals(2, actions.contextMenus);
                 touch(surface[0], down[0], SystemClock.uptimeMillis(),
                         MotionEvent.ACTION_UP, 80, 0, false);
             });
