@@ -4182,11 +4182,16 @@ class inventory_selector::reader_session
                         constexpr std::size_t max_pocket_read_rows = 96;
                         std::vector<a11y::semantic_node> contents_rows;
                         std::set<const item *> visited_contents;
+                        bool truncated_contents = false;
+                        tname::segment_bitset speech_segments = tname::unprefixed_tname;
+                        speech_segments.set( tname::segments::WHITEBLACKLIST, false );
                         std::function<void( const item *, const std::string &, unsigned int )> expose =
                         [&]( const item *child, const std::string &ancestors, unsigned int level ) {
-                            if( child == nullptr || level > 5 ||
-                                contents_rows.size() >= max_pocket_read_rows ||
-                                !visited_contents.insert( child ).second ) {
+                            if( child == nullptr || !visited_contents.insert( child ).second ) {
+                                return;
+                            }
+                            if( level > 5 || contents_rows.size() >= max_pocket_read_rows ) {
+                                truncated_contents = true;
                                 return;
                             }
                             a11y::semantic_node item_node;
@@ -4197,7 +4202,7 @@ class inventory_selector::reader_session
                             item_node.parent_id = pocket_node.id;
                             item_node.depth = pocket_node.depth + 1;
                             item_node.label = remove_color_tags( child->tname(
-                                                1, tname::unprefixed_tname, true ) );
+                                                1, speech_segments, true ) );
                             if( !ancestors.empty() ) {
                                 item_node.label = ancestors + " > " + item_node.label;
                             }
@@ -4219,6 +4224,11 @@ class inventory_selector::reader_session
                         };
                         for( const item *child : pocket->all_items_top() ) {
                             expose( child, "", 0 );
+                        }
+                        if( truncated_contents ) {
+                            pocket_node.detail += "\n" +
+                                                  std::string( _( "Additional nested items not shown. "
+                                                                  "Try a shorter inventory list." ) );
                         }
                         pocket_node.value = "read_only";
                         pocket_node.applied_value = std::to_string( pocket->size() );
