@@ -4083,3 +4083,51 @@ msgstr "Đã chọn %s."
 msgid "Unselected %s."
 msgstr "Đã bỏ chọn %s."
 
+#, c-format
+msgid "Summary. Step 7 of 7. Points remaining: %d."
+msgstr "Tổng quan. Bước 7 trên 7. Điểm còn lại: %d."
+
+msgid "Name"
+msgstr "Tên nhân vật"
+
+msgid "Age"
+msgstr "Tuổi"
+
+msgid "Height"
+msgstr "Chiều cao"
+
+msgid "Gender"
+msgstr "Giới tính"
+
+msgid "Outfit"
+msgstr "Trang phục"
+
+msgid "Blood type"
+msgstr "Nhóm máu"
+
+msgid "Starting city"
+msgstr "Thành phố xuất phát"
+
+msgid "Starting location"
+msgstr "Địa điểm xuất phát"
+
+msgid "Start of cataclysm"
+msgstr "Ngày bắt đầu thảm họa"
+
+msgid "Start of game"
+msgstr "Ngày bắt đầu trò chơi"
+
+msgid "Male"
+msgstr "Nam"
+
+msgid "Female"
+msgstr "Nữ"
+
+msgid "Enter text"
+msgstr "Nhập văn bản"
+
+msgid "Enter number"
+msgstr "Nhập số"
+
+msgid "Done"
+msgstr "Hoàn tất"

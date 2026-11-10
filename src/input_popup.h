@@ -121,6 +121,8 @@ class number_input_popup : public input_popup
                                      const point &pos = point::min, ImGuiWindowFlags flags = ImGuiWindowFlags_None );
         T query();
         void set_step_size( std::optional<T> step, std::optional<T> fast_step );
+        // Optional engine-defined bounds for the native Android editor.
+        void set_value_range( T minimum, T maximum );
         // Opt-in only for an integer item quantity with a real upper bound.
         // Generic number fields (settings, character creation, etc.) retain
         // their existing edit-and-confirm interaction.
@@ -131,6 +133,8 @@ class number_input_popup : public input_popup
     private:
         T value;
         T old_value;
+        std::optional<T> value_min = std::nullopt;
+        std::optional<T> value_max = std::nullopt;
         std::optional<T> step_size = std::nullopt;
         std::optional<T> fast_step_size = std::nullopt;
         std::optional<T> accessible_quantity_max = std::nullopt;

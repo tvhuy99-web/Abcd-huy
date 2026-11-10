@@ -25,6 +25,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void navigate(int delta);
         /** Adjust a focused game setting, if it is a numeric or choice field. */
         boolean adjustFocusedSetting(int delta);
+        /** Optional date/hour navigation in the character creator calendar. */
+        default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
         /** Confirm the current native menu, selection or editor without guessing an action. */
@@ -724,6 +726,12 @@ public final class ReaderGestureSurface extends LinearLayout {
         SessionDebugLog.event("GESTURE", "swipe dx=" + dx + " dy=" + dy
                 + " world_move=" + listener.worldMovementEnabled());
         swipeHandled = true;
+        int horizontal = Math.abs(dx) >= Math.abs(dy) * 1.35f ? (dx > 0 ? 1 : -1) : 0;
+        int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleCreatorCalendarSwipe(horizontal, vertical)) {
+            return;
+        }
         int[] direction = directionForSwipe(dx, dy);
         if (direction != null && listener.movementPracticeEnabled()) {
             listener.practiceMovementDirection(direction[0], direction[1]);

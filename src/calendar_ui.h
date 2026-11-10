@@ -24,7 +24,8 @@ enum class granularity : int {
  */
 time_point select_time_point( time_point initial_value,
                               std::string_view title,
-                              calendar_ui::granularity granularity_level = calendar_ui::granularity::turn );
+                              calendar_ui::granularity granularity_level = calendar_ui::granularity::turn,
+                              bool creator_reader = false );
 } // namespace calendar_ui
 
 #endif // CATA_SRC_CALENDAR_UI_H

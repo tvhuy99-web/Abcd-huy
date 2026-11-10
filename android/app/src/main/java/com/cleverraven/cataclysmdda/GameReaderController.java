@@ -802,7 +802,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     String introduction = yesNo ? next.summary.trim() : next.title;
                     // Places intentionally starts speaking at the first actual
                     // destination: no title, preamble, or item counter.
-                    if (next.category.startsWith("character-creator-step-")) {
+                    if (next.category.startsWith("character-creator-step-")
+                            || "CHARACTER_CREATION".equals(next.category)) {
                         // A creator step has a deliberately short introduction;
                         // the first choice is read when the player browses it.
                         feedback(introduction);
@@ -2113,6 +2114,42 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || "character-creator-step-6".equals(snapshot.category);
     }
 
+    private boolean creatorCalendarAction(String action) {
+        if (snapshot == null || !"character-creator-calendar".equals(snapshot.category)) {
+            return false;
+        }
+        ReaderSnapshot.Node command = snapshot.find("action:" + action);
+        if (command == null || !command.enabled || !command.actions.contains("activate")) {
+            feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+            return true;
+        }
+        String previous = focus;
+        focus = command.id;
+        send("activate", "");
+        focus = previous;
+        return true;
+    }
+
+    @Override
+    public boolean handleCreatorCalendarSwipe(int horizontal, int vertical) {
+        if (snapshot == null || !"character-creator-calendar".equals(snapshot.category)
+                || commandPaletteOpen || editor != null || comprehensiveMenu
+                || !foreground || !windowFocused || lastSuspended) {
+            return false;
+        }
+        if (horizontal != 0) {
+            // The native calendar adjusts the currently highlighted
+            // day/hour in response to its existing LEFT/RIGHT actions.
+            return creatorCalendarAction(horizontal > 0 ? "RIGHT" : "LEFT");
+        }
+        if (vertical != 0) {
+            // Only day and hour are published in the concise creator calendar.
+            navigate(vertical > 0 ? 1 : -1);
+            return true;
+        }
+        return false;
+    }
+
     private boolean creatorStepAction(String action) {
         if (!isCreatorMainStep()) { return false; }
         ReaderSnapshot.Node command = snapshot.find("action:" + action);
@@ -2156,6 +2193,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // On the first two tabs, confirmation still activates the row and
         // native code advances only after a valid single choice.
         if (isCreatorMultiChoiceStep() && creatorStepAction("NEXT_TAB")) { return; }
+        if (creatorCalendarAction("CALENDAR_DONE")) { return; }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
         // Native explicit approval takes priority over the focused "No" option.

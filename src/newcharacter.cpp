@@ -20,6 +20,7 @@
 
 #include "achievement.h"
 #include "a11y_input.h"
+#include "a11y_android.h"
 #include "a11y_runtime.h"
 #include "addiction.h"
 #include "bionics.h"
@@ -3091,7 +3092,28 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
     snapshot.summary = remove_color_tags( string_format( _( "Character: %1$s. Scenario: %2$s. Profession: %3$s." ),
                                      name, scenario_name, profession_name ) );
 
+    // Direct editable controls precede the read-only character review.
+    // Other commands stay in the one-finger long-press action drawer.
+    const std::set<std::string> direct_controls = {
+        "CHANGE_NAME", "CHANGE_AGE", "CHANGE_HEIGHT",
+        "CHANGE_GENDER", "CHANGE_OUTFIT", "CHANGE_BLOOD_TYPE",
+        "CHOOSE_CITY", "CHOOSE_LOCATION",
+        "CHANGE_START_OF_CATACLYSM", "CHANGE_START_OF_GAME"
+    };
     for( a11y::semantic_node &node : snapshot.nodes ) {
+        if( direct_controls.count( node.id ) ) {
+            node.role = "button";
+            if( node.id == "CHANGE_NAME" ) { node.label = _( "Name" ); }
+            if( node.id == "CHANGE_AGE" ) { node.label = _( "Age" ); }
+            if( node.id == "CHANGE_HEIGHT" ) { node.label = _( "Height" ); }
+            if( node.id == "CHANGE_GENDER" ) { node.label = _( "Gender" ); }
+            if( node.id == "CHANGE_OUTFIT" ) { node.label = _( "Outfit" ); }
+            if( node.id == "CHANGE_BLOOD_TYPE" ) { node.label = _( "Blood type" ); }
+            if( node.id == "CHOOSE_CITY" ) { node.label = _( "Starting city" ); }
+            if( node.id == "CHOOSE_LOCATION" ) { node.label = _( "Starting location" ); }
+            if( node.id == "CHANGE_START_OF_CATACLYSM" ) { node.label = _( "Start of cataclysm" ); }
+            if( node.id == "CHANGE_START_OF_GAME" ) { node.label = _( "Start of game" ); }
+        }
         if( node.id == "CHANGE_NAME" ) { node.value = name; }
         if( node.id == "CHANGE_GENDER" ) {
             node.value = remove_color_tags( char_creation::get_gender_string( you.male ) );
@@ -3309,6 +3331,14 @@ static void append_character_reader_summary( a11y::semantic_snapshot &snapshot, 
     add_document( "character:scenario", _( "Scenario description" ), scenario_data->description( you.male ) );
     add_document( "character:profession", _( "Profession description" ), profession_data.description( you.male ) );
     add_document( "character:rating", _( "Character rating" ), cc_uistate.rating_string );
+
+    std::stable_partition( snapshot.nodes.begin(), snapshot.nodes.end(),
+    []( const a11y::semantic_node &node ) {
+        return node.role == "button" || node.role == "document";
+    } );
+    if( !snapshot.nodes.empty() ) {
+        snapshot.focus = snapshot.nodes.front().id;
+    }
 }
 
 bool character_creator_ui::display()
@@ -3372,6 +3402,8 @@ bool character_creator_ui::display()
                 a11y::semantic_snapshot snapshot = a11y::command_snapshot( current_tab_input, _( "Character creation" ) );
                 const avatar &you = get_avatar();
                 append_character_reader_summary( snapshot, you );
+                snapshot.title = string_format( _( "Summary. Step 7 of 7. Points remaining: %d." ),
+                                                multi_pool( you ).skill_points_left );
                 for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
                     snapshot.nodes[i].position = static_cast<int>( i + 1 );
                     snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
@@ -3973,17 +4005,43 @@ bool character_creator_ui::handle_action( const std::string &action )
         you.randomize( false );
         update_uilist_entries();
     } else if( action == "CHANGE_GENDER" ) {
-        you.male = !you.male;
+        if( a11y::enabled() && cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) {
+            uilist choices;
+            choices.title = _( "Gender" );
+            choices.addentry( 0, true, -1, _( "Female" ) );
+            choices.addentry( 1, true, -1, _( "Male" ) );
+            choices.selected = you.male ? 1 : 0;
+            choices.query();
+            if( choices.ret != UILIST_CANCEL && choices.ret != UILIST_ERROR ) {
+                you.male = choices.ret == 1;
+            }
+        } else {
+            you.male = !you.male;
+        }
     } else if( action == "CHANGE_OUTFIT" ) {
-        outfit = !outfit;
+        if( a11y::enabled() && cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) {
+            uilist choices;
+            choices.title = _( "Outfit" );
+            choices.addentry( 0, true, -1, _( "Female" ) );
+            choices.addentry( 1, true, -1, _( "Male" ) );
+            choices.selected = outfit ? 1 : 0;
+            choices.query();
+            if( choices.ret != UILIST_CANCEL && choices.ret != UILIST_ERROR ) {
+                outfit = choices.ret == 1;
+            }
+        } else {
+            outfit = !outfit;
+        }
     } else if( action == "CHANGE_START_OF_CATACLYSM" ) {
         const scenario *scen = get_scenario();
         scen->change_start_of_cataclysm( calendar_ui::select_time_point( scen->start_of_cataclysm(),
-                                         _( "Select cataclysm start date" ), calendar_ui::granularity::hour ) );
+                                         _( "Select cataclysm start date" ), calendar_ui::granularity::hour,
+                                         a11y::enabled() && cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) );
     } else if( action == "CHANGE_START_OF_GAME" ) {
         const scenario *scen = get_scenario();
         scen->change_start_of_game( calendar_ui::select_time_point( scen->start_of_game(),
-                                    _( "Select game start date" ), calendar_ui::granularity::hour ) );
+                                    _( "Select game start date" ), calendar_ui::granularity::hour,
+                                    a11y::enabled() && cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) );
     } else if( action == "RESET_CALENDAR" ) {
         get_scenario()->reset_calendar();
     } else if( action == "CHOOSE_CITY" ) {
@@ -4022,6 +4080,7 @@ bool character_creator_ui::handle_action( const std::string &action )
         number_input_popup<int> age_query( 0, age_current,
                                            string_format( _( "Enter age in years.  Minimum %d, maximum %d" ),
                                                    CHARACTER_AGE_MIN, CHARACTER_AGE_MAX ) );
+        age_query.set_value_range( CHARACTER_AGE_MIN, CHARACTER_AGE_MAX );
         int age_result = age_query.query();
         if( age_result != age_current ) {
             you.set_base_age( clamp( age_result, CHARACTER_AGE_MIN, CHARACTER_AGE_MAX ) );
@@ -4035,12 +4094,30 @@ bool character_creator_ui::handle_action( const std::string &action )
         number_input_popup<int> height_query( 0, height_current,
                                               string_format( _( "Enter height in centimeters.  Minimum %d, maximum %d" ),
                                                       min_allowed_height, max_allowed_height ) );
+        height_query.set_value_range( min_allowed_height, max_allowed_height );
         int height_result = height_query.query();
         if( height_result != height_current ) {
             you.set_base_height( clamp( height_result, min_allowed_height, max_allowed_height ) );
         }
     } else if( action == "CHANGE_BLOOD_TYPE" ) {
-        if( !you.blood_rh_factor ) {
+        if( a11y::enabled() && cc_uistate.selected_tab == CHARCREATOR_SUMMARY ) {
+            uilist choices;
+            choices.title = _( "Blood type" );
+            for( int i = 0; i < static_cast<int>( blood_type::blood_acid ); ++i ) {
+                for( int rh = 0; rh < 2; ++rh ) {
+                    const blood_type group = static_cast<blood_type>( i );
+                    choices.addentry( i * 2 + rh, true, -1,
+                                      io::enum_to_string( group ) + ( rh ? "+" : "-" ) );
+                }
+            }
+            choices.selected = static_cast<int>( you.my_blood_type ) * 2 +
+                               ( you.blood_rh_factor ? 1 : 0 );
+            choices.query();
+            if( choices.ret != UILIST_CANCEL && choices.ret != UILIST_ERROR ) {
+                you.my_blood_type = static_cast<blood_type>( choices.ret / 2 );
+                you.blood_rh_factor = choices.ret % 2 == 1;
+            }
+        } else if( !you.blood_rh_factor ) {
             you.blood_rh_factor = true;
         } else {
             if( static_cast<blood_type>( static_cast<int>( you.my_blood_type ) + 1 ) <
@@ -4103,6 +4180,13 @@ static std::optional<int> choose_accessible_creation_value( const std::string &l
             number_input_popup<int> manual( 0, current,
                                             string_format( _( "Enter %s (from %d to %d):" ),
                                                     label, min_value, max_value ) );
+            // Keep the Android number field open for values that exceed
+            // the remaining creation points, not only hard game limits.
+            int maximum_affordable = max_value;
+            while( maximum_affordable > min_value && validate( maximum_affordable ) ) {
+                --maximum_affordable;
+            }
+            manual.set_value_range( min_value, maximum_affordable );
             candidate = manual.query();
             if( manual.cancelled() ) {
                 continue;

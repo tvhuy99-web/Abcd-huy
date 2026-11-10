@@ -7,6 +7,8 @@
 #include <cstddef>
 #include <cmath>
 #include <locale>
+#include <limits>
+#include <optional>
 #include <sstream>
 #include <type_traits>
 
@@ -23,6 +25,81 @@
 #include "uilist.h"
 #include "ui_manager.h"
 #include "uistate.h"
+
+#if defined(__ANDROID__)
+#include <jni.h>
+#include "sdltiles.h"
+
+// Reuse the standard popup pipeline for every ordinary text/number field.
+// The native Android EditText is accessible to TalkBack, while the original
+// ImGui editor remains in place for non-reader mode and custom callbacks.
+// The optional is empty on Cancel; false means JNI is unavailable and the
+// existing game editor should handle the request instead.
+static bool android_accessible_input( const std::string &title, const std::string &initial,
+                                      int kind, int limit, double minimum, double maximum,
+                                      std::optional<std::string> &result )
+{
+    if( !a11y::enabled() ) {
+        return false;
+    }
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( env == nullptr || activity == nullptr ) {
+        return false;
+    }
+    jclass activity_class = env->GetObjectClass( activity );
+    jmethodID get_native_ui = env->GetMethodID( activity_class, "getNativeUI",
+                              "()Lcom/cleverraven/cataclysmdda/NativeUI;" );
+    if( get_native_ui == nullptr ) {
+        env->ExceptionClear();
+        env->DeleteLocalRef( activity_class );
+        env->DeleteLocalRef( activity );
+        return false;
+    }
+    jobject native_ui = env->CallObjectMethod( activity, get_native_ui );
+    if( native_ui == nullptr || env->ExceptionCheck() ) {
+        env->ExceptionClear();
+        env->DeleteLocalRef( activity_class );
+        env->DeleteLocalRef( activity );
+        return false;
+    }
+    jclass native_class = env->GetObjectClass( native_ui );
+    jmethodID input_text = env->GetMethodID( native_class, "inputText",
+                           "(Ljava/lang/String;Ljava/lang/String;IIDD)Ljava/lang/String;" );
+    if( input_text == nullptr ) {
+        env->ExceptionClear();
+        env->DeleteLocalRef( native_class );
+        env->DeleteLocalRef( native_ui );
+        env->DeleteLocalRef( activity_class );
+        env->DeleteLocalRef( activity );
+        return false;
+    }
+    jstring jtitle = env->NewStringUTF( title.c_str() );
+    jstring jinitial = env->NewStringUTF( initial.c_str() );
+    jstring submitted = static_cast<jstring>( env->CallObjectMethod( native_ui, input_text,
+                        jtitle, jinitial, kind, limit, minimum, maximum ) );
+    const bool success = !env->ExceptionCheck();
+    if( !success ) {
+        env->ExceptionClear();
+    } else if( submitted != nullptr ) {
+        const char *utf8 = env->GetStringUTFChars( submitted, nullptr );
+        if( utf8 != nullptr ) {
+            result = std::string( utf8 );
+            env->ReleaseStringUTFChars( submitted, utf8 );
+        }
+    }
+    if( submitted != nullptr ) {
+        env->DeleteLocalRef( submitted );
+    }
+    env->DeleteLocalRef( jinitial );
+    env->DeleteLocalRef( jtitle );
+    env->DeleteLocalRef( native_class );
+    env->DeleteLocalRef( native_ui );
+    env->DeleteLocalRef( activity_class );
+    env->DeleteLocalRef( activity );
+    return success;
+}
+#endif
 
 input_popup::input_popup( int width, const std::string &title, const point &pos,
                           ImGuiWindowFlags flags ) :
@@ -346,6 +423,25 @@ void string_input_popup_imgui::add_to_history( const std::string &value ) const
 std::string string_input_popup_imgui::query()
 {
     is_cancelled = false;
+#if defined(__ANDROID__)
+    if( callbacks.empty() ) {
+        std::optional<std::string> submitted;
+        const std::string title = reader_title.empty() ?
+                                  ( reader_description().empty() ? _( "Enter text" ) : remove_color_tags( reader_description() ) ) :
+                                  remove_color_tags( reader_title );
+        if( android_accessible_input( title, text, 0, max_input_length,
+                                      std::numeric_limits<double>::quiet_NaN(),
+                                      std::numeric_limits<double>::quiet_NaN(), submitted ) ) {
+            is_cancelled = !submitted.has_value();
+            if( !submitted ) {
+                return old_input;
+            }
+            text = *submitted;
+            add_to_history( text );
+            return text;
+        }
+    }
+#endif
     a11y::screen_scope reader( &ctxt, "STRING_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
@@ -449,6 +545,40 @@ template<typename T>
 T number_input_popup<T>::query()
 {
     last_quantity_cancelled = false;
+#if defined(__ANDROID__)
+    if( callbacks.empty() && !accessible_quantity_max ) {
+        std::ostringstream old_text;
+        old_text.imbue( std::locale::classic() );
+        old_text << value;
+        std::optional<std::string> submitted;
+        if( android_accessible_input( reader_title.empty() ? _( "Enter number" ) :
+                                      remove_color_tags( reader_title ), old_text.str(),
+                                      std::is_integral<T>::value ? 1 : 2, 0,
+                                      value_min ? static_cast<double>( *value_min ) :
+                                      std::numeric_limits<double>::quiet_NaN(),
+                                      value_max ? static_cast<double>( *value_max ) :
+                                      std::numeric_limits<double>::quiet_NaN(), submitted ) ) {
+            last_quantity_cancelled = !submitted.has_value();
+            if( !submitted ) {
+                return old_value;
+            }
+            std::istringstream parsed( *submitted );
+            parsed.imbue( std::locale::classic() );
+            T next{};
+            parsed >> next;
+            if( !parsed.fail() ) {
+                parsed >> std::ws;
+                if( parsed.eof() && std::isfinite( static_cast<double>( next ) ) ) {
+                    value = next;
+                    return value;
+                }
+            }
+            // The Java dialog already validates numeric syntax and bounds
+            // (int / finite float), so this path is defensive only.
+            return old_value;
+        }
+    }
+#endif
     a11y::screen_scope reader( &ctxt, "NUMBER_INPUT",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
         if( intent.action == "cancel" || ( intent.node == "cancel" && intent.action == "activate" ) ) {
@@ -555,6 +685,13 @@ template<typename T>
 bool number_input_popup<T>::quantity_cancelled() const
 {
     return last_quantity_cancelled;
+}
+
+template<typename T>
+void number_input_popup<T>::set_value_range( T minimum, T maximum )
+{
+    value_min = minimum;
+    value_max = maximum;
 }
 
 template<typename T>
