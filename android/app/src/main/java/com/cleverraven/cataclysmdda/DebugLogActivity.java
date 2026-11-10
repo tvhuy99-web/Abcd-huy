@@ -57,8 +57,18 @@ public final class DebugLogActivity extends Activity {
         CheckBox enabled = new CheckBox(this);
         enabled.setText(R.string.a11yDebugLogEnabled);
         enabled.setChecked(SessionDebugLog.enabled(this));
-        enabled.setOnCheckedChangeListener((button, checked) ->
-                SessionDebugLog.setEnabled(this, checked));
+        enabled.setOnCheckedChangeListener((button, checked) -> {
+            SessionDebugLog.setEnabled(this, checked);
+            // Stop/start the native timing switch immediately, even though
+            // the game activity is paused behind this Android settings UI.
+            // This JNI method changes atomics only, not world/game state.
+            try {
+                CataclysmDDA.nativeConfigureReaderPerformance(
+                        reader.isSpokenOnlyWorldEnabled(), checked);
+            } catch (UnsatisfiedLinkError unavailable) {
+                // The next foreground reader rebind also applies the switch.
+            }
+        });
         controls.addView(enabled);
 
         // Graphic suppression is independent of manual diagnostic recording.
