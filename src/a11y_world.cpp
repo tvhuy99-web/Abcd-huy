@@ -32,6 +32,8 @@
 #include "move_mode.h"
 #include "output.h"
 #include "options.h"
+#include "overmap_types.h"
+#include "overmapbuffer.h"
 #include "point.h"
 #include "string_formatter.h"
 #include "trap.h"
@@ -1067,10 +1069,26 @@ void announce_linear_scan( const int dx, const int dy )
 
 void announce_player_coordinates()
 {
-    const tripoint_abs_ms pos = get_avatar().pos_abs();
-    a11y::android::announce(
-        string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
-                       pos.x(), pos.y(), pos.z() ), 1 );
+    const avatar &viewer = get_avatar();
+    const tripoint_abs_ms pos = viewer.pos_abs();
+    std::string spoken = string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
+                                        pos.x(), pos.y(), pos.z() );
+
+    // The overmap already names forests, roads, buildings and other areas.
+    // Use exactly what the character knows; never expose an unseen terrain
+    // or generate new overmap data merely to announce coordinates.
+    const tripoint_abs_omt omt = viewer.pos_abs_omt();
+    const om_vision_level vision = overmap_buffer.seen( omt );
+    if( vision != om_vision_level::unseen ) {
+        const oter_id &terrain = overmap_buffer.ter_existing( omt );
+        if( terrain.is_valid() ) {
+            const std::string area = remove_color_tags( terrain->get_name( vision ) );
+            if( !area.empty() ) {
+                spoken = string_format( _( "Area: %1$s. %2$s" ), area, spoken );
+            }
+        }
+    }
+    a11y::android::announce( spoken, 1 );
 }
 
 semantic_snapshot activity_snapshot( const input_context &context )
