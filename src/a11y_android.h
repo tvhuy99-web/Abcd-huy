@@ -16,6 +16,19 @@ bool enabled();
 bool suspended();
 std::uint64_t lifecycle_epoch();
 void configure( bool enabled, bool suspended );
+// Android reader-only display option. Skip world graphics, never gameplay or
+// the map/visibility caches that the spoken observer needs.
+bool suppress_world_visuals();
+bool performance_profiling_enabled();
+void configure_performance( bool skip_world_visuals, bool profile );
+// Native game-thread observations. Once enough consecutive actual walking
+// steps meet the latency budget without rejected input or shifts, profiling
+// automatically disables itself and persists that choice through Java.
+void performance_draw_sample( long long ms );
+void performance_sim_sample( long long ms );
+void performance_step_sample( bool moved );
+void performance_world_shift();
+
 bool enqueue( semantic_intent intent );
 std::optional<semantic_intent> take();
 void clear();
