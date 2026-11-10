@@ -128,8 +128,8 @@ public final class SessionDebugLog {
         SessionDebugLog log = current();
         if (log == null || log.verboseWorldTrace == enabled) { return; }
         log.verboseWorldTrace = enabled;
-        log.record("WORLD_PROFILE_STATE",
-                enabled ? "journal=verbose_enabled" : "journal=verbose_suspended");
+        log.record("CONTROL",
+                enabled ? "world_trace=verbose_enabled" : "world_trace=verbose_suspended");
     }
 
     private static boolean isHighFrequencyTrace(String category, String detail) {
