@@ -60,6 +60,11 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('std::stable_sort( nearby.begin(), nearby.end()', self.native)
         self.assertIn('return lhs.distance < rhs.distance;', self.native)
         self.assertIn('constexpr std::size_t page_size = 80;', self.native)
+        self.assertIn('const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;',
+                      self.native)
+        self.assertIn('page = ( page + 1 ) % page_count;', self.native)
+        self.assertIn('page = ( page + page_count - 1 ) % page_count;', self.native)
+        self.assertIn('if( filtered.size() > page_size )', self.native)
         self.assertIn('previous.role = "command";', self.native)
         self.assertIn('next.role = "command";', self.native)
 

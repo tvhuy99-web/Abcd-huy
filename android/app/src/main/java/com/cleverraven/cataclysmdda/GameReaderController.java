@@ -487,10 +487,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 boolean changedContext = snapshot == null || !snapshot.contextKey().equals(next.contextKey());
-                boolean nearbyCategoryChanged = !changedContext && previousSnapshot != null
+                boolean nearbyCategoryChanged = !changedContext && snapshot != null
                         && "surroundings".equals(next.category)
-                        && "surroundings".equals(previousSnapshot.category)
-                        && !next.summary.equals(previousSnapshot.summary);
+                        && "surroundings".equals(snapshot.category)
+                        && !next.summary.equals(snapshot.summary);
                 String selectedItemFocus = "";
                 boolean selectionChanged = false;
                 boolean announcesSelection = "targeting".equals(next.category)

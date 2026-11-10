@@ -1375,15 +1375,16 @@ void surroundings_menu::execute_accessible()
             return std::string( "TIMEOUT" );
         }
         const std::vector<std::size_t> filtered = filtered_indices();
-        if( intent.node == "nearby:page:next" ) {
-            if( !filtered.empty() ) {
-                page = std::min( page + 1, ( filtered.size() - 1 ) / page_size );
-                focus_last_on_page = false;
-            }
+        // When there are multiple pages, left/right navigation wraps
+        // across the *entire* filtered list, not inside the last page.
+        const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;
+        if( intent.node == "nearby:page:next" && page_count > 1 ) {
+            page = ( page + 1 ) % page_count;
+            focus_last_on_page = false;
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "nearby:page:previous" ) {
-            page = page > 0 ? page - 1 : 0;
+        if( intent.node == "nearby:page:previous" && page_count > 1 ) {
+            page = ( page + page_count - 1 ) % page_count;
             focus_last_on_page = true;
             return std::string( "TIMEOUT" );
         }
@@ -1487,7 +1488,7 @@ void surroundings_menu::execute_accessible()
         } else {
             const std::size_t start = page * page_size;
             const std::size_t end = std::min( start + page_size, filtered.size() );
-            if( page > 0 ) {
+            if( filtered.size() > page_size ) {
                 a11y::semantic_node previous;
                 previous.id = "nearby:page:previous";
                 previous.role = "command";
@@ -1505,7 +1506,7 @@ void surroundings_menu::execute_accessible()
                 node.value = relative_words( entry.relative );
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            if( end < filtered.size() ) {
+            if( filtered.size() > page_size ) {
                 a11y::semantic_node next;
                 next.id = "nearby:page:next";
                 next.role = "command";
