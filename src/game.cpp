@@ -6413,6 +6413,9 @@ look_around_result game::look_around(
     // recomputes on every iteration before input is handled.
     a11y::screen_scope reader( &ctxt, "look-around",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "look:return_to_map" && intent.action == "activate" ) {
+            return "QUIT";
+        }
         return a11y::registered_intent( ctxt, intent );
     } );
 
@@ -6464,6 +6467,15 @@ look_around_result game::look_around(
         cursor.detail = cursor_text;
         cursor.actions = { "focus" };
         snapshot.nodes.push_back( cursor );
+        if( !select_zone && !is_moving_zone ) {
+            a11y::semantic_node exit;
+            exit.id = "look:return_to_map";
+            exit.label = _( "Return to map" );
+            exit.role = "button";
+            exit.actions = { "focus", "activate" };
+            exit.detail = _( "Close the observation cursor without moving the character." );
+            snapshot.nodes.push_back( std::move( exit ) );
+        }
 
         const auto add_selection = [&]( const tripoint_bub_ms & first,
                                         const tripoint_bub_ms & second ) {
