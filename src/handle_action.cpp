@@ -4152,14 +4152,15 @@ bool game::handle_action()
     const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
     // A JNI-accepted direction is not proof of movement. Record the
     // authoritative position before and after the original game action.
-    const bool diagnostic_walk = diagnostic_profile && ( act == ACTION_MOVE_FORTH ||
-                                 act == ACTION_MOVE_FORTH_RIGHT ||
-                                 act == ACTION_MOVE_RIGHT ||
-                                 act == ACTION_MOVE_BACK_RIGHT ||
-                                 act == ACTION_MOVE_BACK ||
-                                 act == ACTION_MOVE_BACK_LEFT ||
-                                 act == ACTION_MOVE_LEFT ||
-                                 act == ACTION_MOVE_FORTH_LEFT );
+    const bool walking_action = act == ACTION_MOVE_FORTH ||
+                                act == ACTION_MOVE_FORTH_RIGHT ||
+                                act == ACTION_MOVE_RIGHT ||
+                                act == ACTION_MOVE_BACK_RIGHT ||
+                                act == ACTION_MOVE_BACK ||
+                                act == ACTION_MOVE_BACK_LEFT ||
+                                act == ACTION_MOVE_LEFT ||
+                                act == ACTION_MOVE_FORTH_LEFT;
+    const bool diagnostic_walk = diagnostic_profile && walking_action;
     std::optional<tripoint_abs_ms> diagnostic_before_position;
     if( diagnostic_walk ) {
         diagnostic_before_position = player_character.pos_abs();
@@ -4212,6 +4213,13 @@ bool game::handle_action()
     }
 
     gamemode->post_action( act );
+#if defined(__ANDROID__)
+    if( walking_action && a11y::android::enabled() && !a11y::android::suspended() ) {
+        // Covers both manual walking and auto-travel, which may not pass
+        // through a waiting reader screen between successive steps.
+        a11y::announce_area_transition();
+    }
+#endif
 
     player_character.movecounter = ( !player_character.is_dead_state() ? ( before_action_moves -
                                      player_character.get_moves() ) : 0 );
