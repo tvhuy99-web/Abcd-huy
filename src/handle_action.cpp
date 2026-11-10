@@ -4188,6 +4188,12 @@ bool game::handle_action()
                     a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
                             "action=" + diagnostic_action_name +
                             " result=action_rejected changed=false" );
+                } else {
+                    // Exceptional failures remain observable even after the
+                    // high-frequency profiler has automatically stopped.
+                    a11y::android::diagnostic_event( "WORLD_MOVE_BLOCKED",
+                            "action=" + action_ident( act ) +
+                            " result=action_rejected" );
                 }
             }
             if( diagnostic_profile && act != ACTION_TIMEOUT ) {
@@ -4244,6 +4250,11 @@ bool game::handle_action()
                                                      player_character.get_moves() ) +
                     " action_ms=" + std::to_string( elapsed ) );
         }
+    }
+    if( diagnostic_walk && !diagnostic_profile &&
+        player_character.pos_abs() == diagnostic_before_position ) {
+        a11y::android::diagnostic_event( "WORLD_MOVE_BLOCKED",
+                "action=" + action_ident( act ) + " result=same_tile" );
     }
 #endif
     return !player_character.is_dead_state();
