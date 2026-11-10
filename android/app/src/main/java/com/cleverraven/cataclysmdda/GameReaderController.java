@@ -1506,6 +1506,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         for (ReaderSnapshot.Node node : snapshot.nodes) {
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
         }
+        // Look-around is itself a cursor-control dialog. Hiding every
+        // command behind long press leaves only the read-only cursor and
+        // makes every swipe repeat "1 of 36". Keep its controls navigable,
+        // especially its dedicated return-to-map action.
+        if ("look-around".equals(snapshot.category)) { return result; }
         // Command-only screens keep their complete list. A mixed screen
         // announces primary content first and moves all commands to long press.
         boolean containsContent = false;
