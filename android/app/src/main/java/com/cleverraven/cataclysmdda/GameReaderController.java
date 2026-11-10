@@ -1535,6 +1535,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             showHubActionChoices();
             return;
         }
+        if (travelState() != 0) {
+            feedback(travelDetailSpeech(travelState()));
+            return;
+        }
         if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
         // Long-press on an inventory item opens a local action list with
         // "Open pocket", leaving double-tap reserved for selecting the item.
@@ -1721,6 +1725,26 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } catch (UnsatisfiedLinkError unavailable) {
             feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
         }
+    }
+
+    private String travelDetailSpeech(int state) {
+        StringBuilder description = new StringBuilder(travelStatus(state));
+        if (snapshot != null) {
+            ReaderSnapshot.Node active = snapshot.find("activity:current");
+            ReaderSnapshot.Node messages = snapshot.find("world:messages");
+            if (active != null) {
+                if (!active.value.isEmpty()) {
+                    description.append(". ").append(active.value);
+                }
+                if (!active.detail.isEmpty()) {
+                    description.append(". ").append(active.detail);
+                }
+            }
+            if (messages != null && !messages.detail.isEmpty()) {
+                description.append(". ").append(messages.detail);
+            }
+        }
+        return description.toString();
     }
 
     private void renderTravelPanel(int state) {
@@ -3071,6 +3095,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (snapshot == null && !lastLoadingStatus.isEmpty()) {
             feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
+            return;
+        }
+        if (travelState() != 0) {
+            feedback(travelDetailSpeech(travelState()));
             return;
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
