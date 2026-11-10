@@ -25,7 +25,7 @@ class BlockedMoveAndInventorySpeechTest(unittest.TestCase):
                       self.outcome)
         self.assertIn('case action_outcome_kind::blocked:', self.outcome)
         self.assertIn('_( "%s. Cannot move." )', self.outcome)
-        self.assertIn('msgstr "%s, không thể di chuyển."', self.po)
+        self.assertIn('msgstr "Không thể di chuyển do %s."', self.po)
 
     def test_movement_names_visible_blocker(self):
         self.assertIn('blocker = m.obstacle_name( dest_loc );',
