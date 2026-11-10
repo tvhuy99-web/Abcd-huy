@@ -9210,11 +9210,23 @@ void map::shift( const point_rel_sm &sp )
         return;
     }
 
+#if defined(__ANDROID__)
+    const bool shift_profile = a11y::android::performance_profiling_enabled();
+    const auto shift_begin = shift_profile ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+    long long load_new_grids_ms = 0;
+    int newly_loaded_columns = 0;
+#endif
     const tripoint_abs_sm abs = get_abs_sub();
     std::vector<tripoint_rel_sm> loaded_grids;
 
     const int zmin = -OVERMAP_DEPTH;
     const int zmax = OVERMAP_HEIGHT;
+    // A one-submap shift loads at most the incoming edge(s), never the
+    // entire bubble. Reserve these slots up front to avoid reallocations.
+    const int incoming_edges = ( std::abs( sp.x() ) + std::abs( sp.y() ) ) * my_MAPSIZE -
+                               std::abs( sp.x() * sp.y() );
+    loaded_grids.reserve( incoming_edges * ( zmax - zmin + 1 ) );
 
     const int x_start = sp.x() >= 0 ? 0 : my_MAPSIZE - 1;
     const int x_stop = sp.x() >= 0 ? my_MAPSIZE : -1;
@@ -9238,6 +9250,10 @@ void map::shift( const point_rel_sm &sp )
             }
         }
     }
+#if defined(__ANDROID__)
+    const auto unloaded_at = shift_profile ? std::chrono::steady_clock::now() :
+                              std::chrono::steady_clock::time_point{};
+#endif
     set_abs_sub( abs + sp );
 
     g->shift_destination_preview( { -sp.x() * SEEX, -sp.y() * SEEY } );
@@ -9275,6 +9291,10 @@ void map::shift( const point_rel_sm &sp )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto caches_shifted_at = shift_profile ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+#endif
     for( int gridx = x_start; gridx != x_stop; gridx += x_step ) {
         for( int gridy = y_start; gridy != y_stop; gridy += y_step ) {
             if( gridx + sp.x() != x_stop && gridy + sp.y() != y_stop ) {
@@ -9290,7 +9310,18 @@ void map::shift( const point_rel_sm &sp )
                     update_vehicle_list( cur_submap, gridz );
                 }
             } else {
+#if defined(__ANDROID__)
+                const auto load_started = shift_profile ? std::chrono::steady_clock::now() :
+                                          std::chrono::steady_clock::time_point{};
+#endif
                 loadn( { gridx, gridy }, true );
+#if defined(__ANDROID__)
+                if( shift_profile ) {
+                    ++newly_loaded_columns;
+                    load_new_grids_ms += std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             std::chrono::steady_clock::now() - load_started ).count();
+                }
+#endif
 
                 for( int gridz = zmin; gridz <= zmax; gridz++ ) {
                     loaded_grids.emplace_back( gridx, gridy, gridz );
@@ -9299,6 +9330,10 @@ void map::shift( const point_rel_sm &sp )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto loaded_at = shift_profile ? std::chrono::steady_clock::now() :
+                           std::chrono::steady_clock::time_point{};
+#endif
     rebuild_vehicle_level_caches();
 
     g->setremoteveh( remoteveh );
@@ -9310,16 +9345,41 @@ void map::shift( const point_rel_sm &sp )
             support_cache_dirty.insert( pt + point( -sp.x() * SEEX, -sp.y() * SEEY ) );
         }
     }
+#if defined(__ANDROID__)
+    const auto vehicles_at = shift_profile ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     // actualize after loading all submaps to prevent errors
     // with entities at the edges
     for( tripoint_rel_sm loaded_grid : loaded_grids ) {
         actualize( loaded_grid );
     }
+#if defined(__ANDROID__)
+    const auto actualized_at = shift_profile ? std::chrono::steady_clock::now() :
+                               std::chrono::steady_clock::time_point{};
+#endif
     if( !loaded_grids.empty() ) {
         // A shift walks the bubble it now has, so the crafts it scrolled away from are
         // not seen and must keep the claims their leases still cover.
         reconcile_loaded_items( reconcile_scope::additive );
     }
+#if defined(__ANDROID__)
+    if( shift_profile ) {
+        const auto done = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_SUBMAP_SHIFT_PHASE",
+                "unload_ms=" + std::to_string( ms( shift_begin, unloaded_at ) ) +
+                " grid_cache_ms=" + std::to_string( ms( unloaded_at, caches_shifted_at ) ) +
+                " copy_and_load_ms=" + std::to_string( ms( caches_shifted_at, loaded_at ) ) +
+                " new_submaps_ms=" + std::to_string( load_new_grids_ms ) +
+                " loaded_columns=" + std::to_string( newly_loaded_columns ) +
+                " vehicles_ms=" + std::to_string( ms( loaded_at, vehicles_at ) ) +
+                " actualize_ms=" + std::to_string( ms( vehicles_at, actualized_at ) ) +
+                " reconcile_ms=" + std::to_string( ms( actualized_at, done ) ) );
+    }
+#endif
 }
 
 void map::vertical_shift( const int newz )
