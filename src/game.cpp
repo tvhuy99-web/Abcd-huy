@@ -8423,7 +8423,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
     const auto walk_finished = std::chrono::steady_clock::now();
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               walk_finished - walk_started ).count();
-    if( total_ms >= 150 ) {
+    static unsigned int profile_walk_samples = 0;
+    if( total_ms >= 20 || ( ++profile_walk_samples % 8 ) == 0 ) {
         const auto place_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                   after_place - before_place ).count();
         const auto before_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -8960,7 +8961,8 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
     const auto place_finished = std::chrono::steady_clock::now();
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               place_finished - place_started ).count();
-    if( total_ms >= 150 ) {
+    static unsigned int profile_place_samples = 0;
+    if( total_ms >= 20 || ( ++profile_place_samples % 8 ) == 0 ) {
         const auto update_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                    after_map_update - before_map_update ).count();
         const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -10874,7 +10876,8 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     const auto shift_finished = std::chrono::steady_clock::now();
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               shift_finished - shift_started ).count();
-    if( total_ms >= 150 ) {
+    static unsigned int profile_shift_samples = 0;
+    if( total_ms >= 20 || ( ++profile_shift_samples % 8 ) == 0 ) {
         const auto ms = []( const auto from, const auto to ) {
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
