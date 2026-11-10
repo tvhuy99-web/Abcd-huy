@@ -908,7 +908,10 @@ bool game::do_turn()
     }
 #endif
 
-    if( u.get_moves() < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {
+    if( u.get_moves() < 0 && get_option<bool>( "FORCE_REDRAW" )
+        && !a11y::android::suppress_world_visuals() ) {
+        // FORCE_REDRAW is visual-only. Spoken-only walking must not incur
+        // a full SDL present after every simulated world turn.
         ui_manager::redraw();
         refresh_display();
     }
