@@ -487,6 +487,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return;
                 }
                 boolean changedContext = snapshot == null || !snapshot.contextKey().equals(next.contextKey());
+                boolean nearbyCategoryChanged = !changedContext && previousSnapshot != null
+                        && "surroundings".equals(next.category)
+                        && "surroundings".equals(previousSnapshot.category)
+                        && !next.summary.equals(previousSnapshot.summary);
                 String selectedItemFocus = "";
                 boolean selectionChanged = false;
                 boolean announcesSelection = "targeting".equals(next.category)
@@ -677,6 +681,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             : next.nodes.get(0).id;
                 } else if (selectionChanged) {
                     focus = selectedItemFocus;
+                } else if (nearbyCategoryChanged) {
+                    // Even if the old target also exists in the new category
+                    // (notably when switching to All), start at item one.
+                    focus = next.find(next.focus) != null ? next.focus
+                            : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (changedContext) {
                     String remembered = savedScreenFocus.get(nativeScreenKey(next));
                     focus = remembered != null && next.find(remembered) != null
@@ -685,9 +694,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else if (next.find(focus) == null
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
-                    // A vanished item returns to its closest surviving
-                    // ancestor/sibling, never a stale native screen.
-                    focus = resolveFocusFallback(previousSnapshot, previous, next);
+                    // Changing a surroundings page always focuses its native
+                    // first/last entry. Other screens keep their usual
+                    // ancestor/sibling fallback.
+                    focus = "surroundings".equals(next.category)
+                            && next.find(next.focus) != null ? next.focus
+                            : resolveFocusFallback(previousSnapshot, previous, next);
                 }
                 // The engine may initially focus a hidden command. Start on
                 // primary content instead of reading the long command tail.
@@ -792,6 +804,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ReaderSnapshot.Node document = next.find(focus);
                     speakDocument(next.title + ". " + documentReader.open(
                             next.contextKey(), document.id, document.detail));
+                } else if ("surroundings".equals(next.category)
+                        && (enteredMenu || nearbyCategoryChanged)) {
+                    // Announce the active category and its *total* number
+                    // of entries once, not the first item's name. Horizontal
+                    // browsing speaks entries with direction and distance.
+                    feedback((enteredMenu ? next.title + ". " : "") + next.summary);
                 } else if (enteredMenu && next.find(focus) != null) {
                     // Yes/No questions carry their own text. Speak it once
                     // on entering the modal, then only the actual choice
@@ -2032,6 +2050,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         if (filtered.isEmpty()) { return; }
+        // Surroundings uses 80-row native pages to bound snapshot size.
+        // Left/right advance across a page boundary without making the
+        // player navigate artificial "Next page" list items.
+        if ("surroundings".equals(snapshot.category) && !commandPaletteOpen) {
+            if (delta > 0 && index() == filtered.size() - 1
+                    && surroundingsCommand("nearby:page:next")) {
+                return;
+            }
+            if (delta < 0 && index() == 0
+                    && surroundingsCommand("nearby:page:previous")) {
+                return;
+            }
+        }
         // All spoken lists wrap both ways: end -> first, first -> end.
         // This also applies to the contextual command drawer and nested lists.
         int selected = Math.floorMod(index() + delta, filtered.size());
@@ -2146,6 +2177,48 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (vertical != 0) {
             // Only day and hour are published in the concise creator calendar.
             navigate(vertical > 0 ? 1 : -1);
+            return true;
+        }
+        return false;
+    }
+
+    /** Category and page controls are never targets; send a native,
+     * scope-bound activation while preserving the player's current focus.
+     * The engine returns an updated list and is the only owner of routing.
+     */
+    private boolean surroundingsCommand(String id) {
+        if (snapshot == null || !"surroundings".equals(snapshot.category)) {
+            return false;
+        }
+        ReaderSnapshot.Node command = snapshot.find(id);
+        if (command == null || !command.enabled || !command.actions.contains("activate")) {
+            return false;
+        }
+        String previous = focus;
+        focus = command.id;
+        send("activate", "");
+        focus = previous;
+        return true;
+    }
+
+    @Override
+    public boolean handleSurroundingsSwipe(int horizontal, int vertical) {
+        if (snapshot == null || !"surroundings".equals(snapshot.category)
+                || commandPaletteOpen || comprehensiveMenu || editor != null
+                || debugReport != null || !foreground || !windowFocused
+                || lastSuspended || documentReader.isOpen()) {
+            return false;
+        }
+        if (vertical != 0) {
+            // One finger up = next category; down = previous, wrapping
+            // through All, Creatures/NPCs, Places/Environment, and Items.
+            return surroundingsCommand(vertical < 0
+                    ? "nearby:filter:next" : "nearby:filter:previous");
+        }
+        if (horizontal != 0) {
+            // Fixed left/right focus order, independent of movement or
+            // user-configured swipe actions on unrelated screens.
+            navigate(horizontal > 0 ? 1 : -1);
             return true;
         }
         return false;

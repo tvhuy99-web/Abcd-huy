@@ -76,7 +76,11 @@ class NearbySquareScanTests(unittest.TestCase):
     def test_short_spoken_entries_no_preamble(self):
         code = self.reader
         self.assertIn('snapshot.title = _( "Nearby" );', code)
-        self.assertNotIn("snapshot.summary =", code)
+        # Category and total count are announced once on entry/change,
+        # never appended to every focused target's spoken name.
+        self.assertIn("snapshot.summary = filtered.empty() ?", code)
+        self.assertIn('_( "%1$s. %2$d entries." )', code)
+        self.assertIn('_( "%s. No entries." )', code)
         self.assertNotIn("node.detail =", code)
         self.assertNotIn("node.position =", code)
         self.assertIn("node.value = relative_words( entry.relative );", code)

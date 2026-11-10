@@ -4178,3 +4178,28 @@ msgstr "Tấn công một lần, không phải chế độ bật tắt"
 #, c-format
 msgid "Movement mode: %s"
 msgstr "Chế độ di chuyển: %s"
+
+# Nearby exploration, category filtering by swipe
+msgid "All"
+msgstr "Tất cả"
+
+msgid "Creatures and NPCs"
+msgstr "Quái vật và NPC"
+
+msgid "Places and environment"
+msgstr "Địa điểm và môi trường"
+
+msgid "Items"
+msgstr "Vật phẩm"
+
+#, c-format
+msgid "%s. No entries."
+msgstr "%s. Không có mục nào."
+
+#, c-format
+msgid "%1$s. %2$d entries."
+msgstr "%1$s. %2$d mục."
+
+msgid "No entries in this category."
+msgstr "Không có mục nào trong danh mục này."
+

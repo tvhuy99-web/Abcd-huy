@@ -27,6 +27,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean adjustFocusedSetting(int delta);
         /** Optional date/hour navigation in the character creator calendar. */
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
+        /** Nearby exploration: vertical changes category, horizontal changes target. */
+        default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
         /** Confirm the current native menu, selection or editor without guessing an action. */
@@ -740,6 +742,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleCreatorCalendarSwipe(horizontal, vertical)) {
+            return;
+        }
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleSurroundingsSwipe(horizontal, vertical)) {
             return;
         }
         int[] direction = directionForSwipe(dx, dy);
