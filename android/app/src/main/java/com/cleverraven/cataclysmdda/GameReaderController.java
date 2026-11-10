@@ -114,6 +114,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
     private int pendingReaderLayerRevisions;
+    // Inventory container picker: all edits stay local until the parent
+    // pocket receives one atomic native commit. 0=outer, 1=hold menu,
+    // 2=pockets, 3=contents.
+    private int pocketStage;
+    private int pocketMenuChoice;
+    private String pocketContainerId = "";
+    private String pocketCurrentId = "";
+    private String pocketReturnParent = "";
+    private String pocketContext = "";
+    private final LinkedHashMap<String, Integer> pocketDrafts = new LinkedHashMap<>();
     // A native modal may temporarily cover a parent screen. Frame identity
     // survives that push/pop, so return to the last visited item, not item 1.
     private final LinkedHashMap<String, String> savedScreenFocus = new LinkedHashMap<>();
@@ -992,6 +1002,362 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return "command".equals(node.role) || node.id.startsWith("group:")
                 || node.id.startsWith("action:") || node.id.startsWith("category:")
                 || "filter".equals(node.id) || "filter:clear".equals(node.id);
+    }
+
+    private List<ReaderSnapshot.Node> pocketNodes(String parent) {
+        ArrayList<ReaderSnapshot.Node> found = new ArrayList<>();
+        if (snapshot == null) { return found; }
+        for (ReaderSnapshot.Node node : snapshot.nodes) {
+            if (parent.equals(node.parentId) && node.id.startsWith("pocket:")) {
+                found.add(node);
+            }
+        }
+        return found;
+    }
+
+    private List<ReaderSnapshot.Node> pocketItems() {
+        ArrayList<ReaderSnapshot.Node> found = new ArrayList<>();
+        if (snapshot == null || pocketStage != 3) { return found; }
+        for (ReaderSnapshot.Node node : snapshot.nodes) {
+            if (pocketCurrentId.equals(node.parentId) && node.id.startsWith("pocket-entry:")) {
+                found.add(node);
+            }
+        }
+        return found;
+    }
+
+    private int pocketAmount(ReaderSnapshot.Node node) {
+        Integer draft = pocketDrafts.get(node.id);
+        if (draft != null) { return draft; }
+        try { return Integer.parseInt(node.appliedValue); }
+        catch (NumberFormatException invalid) { return 0; }
+    }
+
+    private String pocketItemSpeech(ReaderSnapshot.Node node, int position, int total) {
+        return activity.getString(R.string.a11yPocketRow, node.label,
+                pocketAmount(node), (int) node.fieldMax, position, total)
+                + (node.enabled ? "" : ". " + node.disabledReason);
+    }
+
+    private String pocketChoiceSpeech() {
+        if (pocketStage == 1) {
+            String name = pocketMenuChoice == 0
+                    ? activity.getString(R.string.a11yPocketOpen)
+                    : activity.getString(R.string.a11yPocketOtherActions);
+            return name + ". " + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 2);
+        }
+        if (pocketStage == 2) {
+            List<ReaderSnapshot.Node> pockets = pocketNodes(pocketContainerId);
+            for (ReaderSnapshot.Node pocket : pockets) {
+                if (pocket.id.equals(focus)) {
+                    return nodeText(pocket, false);
+                }
+            }
+        }
+        if (pocketStage == 3) {
+            List<ReaderSnapshot.Node> items = pocketItems();
+            for (int i = 0; i < items.size(); i++) {
+                if (items.get(i).id.equals(focus)) {
+                    return pocketItemSpeech(items.get(i), i + 1, items.size());
+                }
+            }
+        }
+        return activity.getString(R.string.a11yPocketEmpty);
+    }
+
+    private void resetPocketPicker(boolean announce) {
+        String parent = pocketContainerId;
+        String layer = pocketReturnParent;
+        pocketStage = 0;
+        pocketMenuChoice = 0;
+        pocketCurrentId = "";
+        pocketContainerId = "";
+        pocketContext = "";
+        pocketDrafts.clear();
+        pocketReturnParent = "";
+        readerLayerParent = layer;
+        if (snapshot != null && snapshot.find(parent) != null) { focus = parent; }
+        root.cancelGesture();
+        render();
+        if (announce) { readCurrent(); }
+    }
+
+    private void openPocketChoices() {
+        List<ReaderSnapshot.Node> pockets = pocketNodes(pocketContainerId);
+        if (pockets.isEmpty()) {
+            resetPocketPicker(false);
+            feedback(activity.getString(R.string.a11yPocketEmpty));
+            return;
+        }
+        if (pockets.size() == 1) {
+            openPocketContents(pockets.get(0));
+            return;
+        }
+        pocketStage = 2;
+        focus = pockets.get(0).id;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yPocketChoose) + ". " + pocketChoiceSpeech());
+    }
+
+    private void openPocketContents(ReaderSnapshot.Node pocket) {
+        if (!pocket.actions.contains("set_value")) {
+            feedback(activity.getString(R.string.a11yPocketSealed) + ". " + pocket.detail);
+            return;
+        }
+        pocketStage = 3;
+        pocketCurrentId = pocket.id;
+        pocketDrafts.clear();
+        List<ReaderSnapshot.Node> items = pocketItems();
+        if (items.isEmpty()) {
+            boolean onePocket = pocketNodes(pocketContainerId).size() == 1;
+            if (onePocket) {
+                resetPocketPicker(false);
+            } else {
+                pocketStage = 2;
+                focus = pocket.id;
+                render();
+            }
+            feedback(pocket.detail.contains("Contains ")
+                    ? activity.getString(R.string.a11yPocketNotSelectable)
+                    : activity.getString(R.string.a11yPocketEmpty));
+            return;
+        }
+        focus = items.get(0).id;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yPocketItems) + ". " + pocketChoiceSpeech());
+    }
+
+    private void selectPocketAmount(ReaderSnapshot.Node item, int amount) {
+        int maximum = (int) item.fieldMax;
+        if (!item.enabled || amount < 0 || amount > maximum) {
+            feedback(item.disabledReason.isEmpty()
+                    ? activity.getString(R.string.a11yPocketSelectionError) : item.disabledReason);
+            return;
+        }
+        if (amount == Integer.parseInt(item.appliedValue)) {
+            pocketDrafts.remove(item.id);
+        } else {
+            pocketDrafts.put(item.id, amount);
+        }
+        if (pocketItems().size() == 1) {
+            commitPocketChoices();
+        } else {
+            render();
+            readCurrent();
+        }
+    }
+
+    private void openPocketQuantityEditor(ReaderSnapshot.Node item) {
+        final String itemId = item.id;
+        editor = new ReaderTextEditor(activity, Integer.toString(pocketAmount(item)),
+                true, true, 0.0, item.fieldMax, 1.0, true, new ReaderTextEditor.Listener() {
+            @Override
+            public void speak(String text) { feedback(text); }
+            @Override
+            public void submit(String text) {
+                ReaderSnapshot.Node current = snapshot == null ? null : snapshot.find(itemId);
+                if (pocketStage != 3 || current == null || !itemId.equals(focus)) { return; }
+                int amount;
+                try { amount = Integer.parseInt(text); }
+                catch (NumberFormatException invalid) {
+                    feedback(activity.getString(R.string.a11yEditorInvalid));
+                    return;
+                }
+                editor = null;
+                root.cancelGesture();
+                selectPocketAmount(current, amount);
+            }
+            @Override
+            public void cancel() {
+                editor = null;
+                root.cancelGesture();
+                render();
+                readCurrent();
+            }
+        });
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yQuantityInstructions));
+    }
+
+    private void commitPocketChoices() {
+        if (snapshot == null || pocketStage != 3 ||
+                !pocketContext.equals(snapshot.contextKey())) {
+            resetPocketPicker(false);
+            feedback(activity.getString(R.string.a11yPocketSelectionError));
+            return;
+        }
+        StringBuilder payload = new StringBuilder();
+        for (ReaderSnapshot.Node item : pocketItems()) {
+            Integer amount = pocketDrafts.get(item.id);
+            if (amount == null) { continue; }
+            if (!item.enabled || amount < 0 || amount > item.fieldMax) {
+                feedback(activity.getString(R.string.a11yPocketSelectionError));
+                return;
+            }
+            if (payload.length() != 0) { payload.append(';'); }
+            payload.append(item.id).append('=').append(amount);
+        }
+        if (payload.length() == 0) {
+            resetPocketPicker(true);
+            return;
+        }
+        // The native inbox validates every entry and its live item/pocket
+        // before applying any part of this batch. No item is moved here;
+        // ordinary outer CONFIRM still performs the pickup.
+        String previous = focus;
+        focus = pocketCurrentId;
+        long request = send("set_value", payload.toString());
+        focus = previous;
+        if (request == 0) {
+            feedback(activity.getString(R.string.a11yPocketSelectionError));
+            return;
+        }
+        resetPocketPicker(false);
+        feedback(activity.getString(R.string.a11yPocketSelectionSent));
+    }
+
+    private void activatePocketPicker() {
+        if (pocketStage == 1) {
+            if (pocketMenuChoice == 0) {
+                openPocketChoices();
+            } else {
+                resetPocketPicker(false);
+                openGlobalContextActions();
+            }
+        } else if (pocketStage == 2) {
+            ReaderSnapshot.Node pocket = snapshot == null ? null : snapshot.find(focus);
+            if (pocket != null) { openPocketContents(pocket); }
+        } else if (pocketStage == 3) {
+            ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
+            if (item == null) { return; }
+            if (!item.enabled) {
+                feedback(item.disabledReason);
+            } else if (item.fieldMax > 1) {
+                openPocketQuantityEditor(item);
+            } else {
+                selectPocketAmount(item, pocketAmount(item) == 0 ? 1 : 0);
+            }
+        }
+    }
+
+    private void navigatePocketPicker(int delta) {
+        if (pocketStage == 1) {
+            pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 2);
+        } else {
+            List<ReaderSnapshot.Node> choices = pocketStage == 2
+                    ? pocketNodes(pocketContainerId) : pocketItems();
+            if (choices.isEmpty()) { return; }
+            int index = 0;
+            for (int i = 0; i < choices.size(); i++) {
+                if (choices.get(i).id.equals(focus)) { index = i; break; }
+            }
+            focus = choices.get(Math.floorMod(index + delta, choices.size())).id;
+        }
+        render();
+        feedback(pocketChoiceSpeech());
+    }
+
+    private void renderPocketPicker() {
+        TextView title = new TextView(activity);
+        title.setText(pocketStage == 1 ? R.string.a11yPocketActions :
+                pocketStage == 2 ? R.string.a11yPocketChoose : R.string.a11yPocketItems);
+        title.setTextColor(0xffeeeeee);
+        title.setTextSize(20);
+        rows.addView(title);
+        if (pocketStage == 1) {
+            int[] ids = { R.string.a11yPocketOpen, R.string.a11yPocketOtherActions };
+            for (int i = 0; i < ids.length; i++) {
+                final int choice = i;
+                Button option = new Button(activity);
+                option.setText(ids[i]);
+                option.setSelected(i == pocketMenuChoice);
+                option.setOnClickListener(v -> {
+                    pocketMenuChoice = choice;
+                    activatePocketPicker();
+                });
+                rows.addView(option);
+            }
+        } else {
+            List<ReaderSnapshot.Node> items = pocketStage == 2
+                    ? pocketNodes(pocketContainerId) : pocketItems();
+            int selected = 0;
+            for (int i = 0; i < items.size(); i++) {
+                if (items.get(i).id.equals(focus)) { selected = i; break; }
+            }
+            int start = (selected / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+            int end = Math.min(start + HUB_PAGE_SIZE, items.size());
+            if (start > 0) {
+                Button previous = new Button(activity);
+                previous.setText(R.string.a11yPreviousPage);
+                previous.setOnClickListener(v -> {
+                    focus = items.get(start - 1).id;
+                    render();
+                    feedback(pocketChoiceSpeech());
+                });
+                rows.addView(previous);
+            }
+            for (int i = start; i < end; i++) {
+                ReaderSnapshot.Node item = items.get(i);
+                Button button = new Button(activity);
+                button.setText(pocketStage == 2 ? nodeText(item, false)
+                        : pocketItemSpeech(item, i + 1, items.size()));
+                button.setSelected(item.id.equals(focus));
+                button.setEnabled(pocketStage == 2 || item.enabled);
+                button.setOnClickListener(v -> {
+                    focus = item.id;
+                    activatePocketPicker();
+                });
+                rows.addView(button);
+            }
+            if (end < items.size()) {
+                Button next = new Button(activity);
+                next.setText(R.string.a11yNextPage);
+                next.setOnClickListener(v -> {
+                    focus = items.get(end).id;
+                    render();
+                    feedback(pocketChoiceSpeech());
+                });
+                rows.addView(next);
+            }
+            if (pocketStage == 3 && items.size() > 1) {
+                Button confirm = new Button(activity);
+                confirm.setText(R.string.a11yPocketConfirm);
+                confirm.setOnClickListener(v -> commitPocketChoices());
+                rows.addView(confirm);
+            }
+        }
+        Button cancel = new Button(activity);
+        cancel.setText(R.string.a11yPocketCancel);
+        cancel.setOnClickListener(v -> resetPocketPicker(true));
+        rows.addView(cancel);
+    }
+
+    private void openGlobalContextActions() {
+        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        List<ReaderSnapshot.Node> commands = contextualCommands();
+        boolean hasContent = false;
+        for (ReaderSnapshot.Node node : snapshot.nodes) {
+            if (node.parentId.equals(readerLayerParent) && !isAuxiliaryCommand(node)) {
+                hasContent = true;
+                break;
+            }
+        }
+        if (!hasContent || commands.isEmpty()) {
+            feedback(activity.getString(R.string.a11yNoContextCommands));
+            return;
+        }
+        commandPaletteReturnFocus = focus;
+        commandPaletteReturnParent = readerLayerParent;
+        commandPaletteOpen = true;
+        readerLayerParent = "";
+        focus = commands.get(0).id;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yContextCommands) + ". "
+                + nodeText(commands.get(0), false));
     }
 
     private List<ReaderSnapshot.Node> contextualCommands() {
