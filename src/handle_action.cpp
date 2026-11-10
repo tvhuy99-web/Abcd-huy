@@ -3777,11 +3777,13 @@ bool game::handle_action()
     const int travel_control = a11y::android::take_travel_control();
     if( !player_character.has_destination() ) {
         a11y::android::set_travel_state( 0 );
-    } else if( !a11y::enabled() &&
+    } else if( !a11y::android::enabled() &&
                ( a11y::android::travel_state() == 2 ||
                  a11y::android::travel_state() == 3 ) ) {
-        // Turning the reader off cannot leave the character trapped in an
-        // inaccessible paused state. Recover normal native behavior.
+        // Disabling accessibility entirely must not trap native controls.
+        // Merely suspending the reader (screen lock, lost Android focus,
+        // TTS recovery) must NEVER silently resume an explicitly paused
+        // journey, especially one stopped because of danger.
         a11y::android::set_travel_state( 1 );
     }
     if( player_character.has_destination() && travel_control == 3 &&
