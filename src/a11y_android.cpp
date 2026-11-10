@@ -23,6 +23,18 @@ namespace
 {
 std::atomic<bool> reader_enabled{ false };
 std::atomic<bool> reader_suspended{ true };
+// Game-thread check is one atomic read; JNI only changes the selected modes.
+std::atomic<bool> no_world_graphics{ false };
+std::atomic<bool> performance_profile_active{ false };
+std::atomic<unsigned int> profile_configuration_epoch{ 0 };
+std::atomic<unsigned int> profile_busy_epoch{ 0 };
+// Only accessed by the native game thread, never by Java callbacks.
+unsigned int stable_walking_steps = 0;
+unsigned int last_profile_configuration_epoch = 0;
+unsigned int last_profile_busy_epoch = 0;
+long long last_profile_draw_ms = -1;
+long long last_profile_sim_ms = -1;
+bool shifted_since_last_step = false;
 std::atomic<std::uint64_t> epoch{ 1 };
 std::mutex inbox_mutex;
 std::deque<semantic_intent> inbox;
@@ -58,6 +70,77 @@ std::optional<pending_sound_settings> pending_sound;
 bool enabled() { return reader_enabled.load( std::memory_order_acquire ); }
 bool suspended() { return reader_suspended.load( std::memory_order_acquire ); }
 std::uint64_t lifecycle_epoch() { return epoch.load( std::memory_order_acquire ); }
+bool suppress_world_visuals()
+{
+    return enabled() && !suspended() && no_world_graphics.load( std::memory_order_relaxed );
+}
+bool performance_profiling_enabled()
+{
+    return enabled() && !suspended() &&
+           performance_profile_active.load( std::memory_order_relaxed );
+}
+void configure_performance( const bool skip_visuals, const bool profile )
+{
+    no_world_graphics.store( skip_visuals, std::memory_order_release );
+    const bool previous = performance_profile_active.exchange( profile, std::memory_order_acq_rel );
+    if( profile != previous ) {
+        profile_configuration_epoch.fetch_add( 1, std::memory_order_release );
+    }
+}
+
+void performance_draw_sample( const long long ms )
+{
+    if( performance_profiling_enabled() ) {
+        last_profile_draw_ms = ms;
+    }
+}
+void performance_sim_sample( const long long ms )
+{
+    if( performance_profiling_enabled() ) {
+        last_profile_sim_ms = ms;
+    }
+}
+void performance_world_shift()
+{
+    if( performance_profiling_enabled() ) {
+        shifted_since_last_step = true;
+        stable_walking_steps = 0;
+    }
+}
+void performance_step_sample( const bool moved )
+{
+    if( !performance_profiling_enabled() ) {
+        return;
+    }
+    const unsigned int config_epoch = profile_configuration_epoch.load( std::memory_order_acquire );
+    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
+    if( config_epoch != last_profile_configuration_epoch ) {
+        last_profile_configuration_epoch = config_epoch;
+        stable_walking_steps = 0;
+        last_profile_draw_ms = -1;
+        last_profile_sim_ms = -1;
+    }
+    // Stability is based on real movement, not a successful JNI receipt.
+    // A blocked step, map shift or a busy/rejected swipe resets the streak.
+    if( !moved || shifted_since_last_step || busy_epoch != last_profile_busy_epoch ||
+        last_profile_draw_ms < 0 || last_profile_draw_ms > 40 ||
+        last_profile_sim_ms < 0 || last_profile_sim_ms > 120 ) {
+        stable_walking_steps = 0;
+    } else {
+        ++stable_walking_steps;
+    }
+    shifted_since_last_step = false;
+    last_profile_busy_epoch = busy_epoch;
+    // Forty-eight consecutive fast actual steps, no shift and no busy
+    // receipts are required. A slow game never silently disables profiling.
+    if( stable_walking_steps >= 48 ) {
+        performance_profile_active.store( false, std::memory_order_release );
+#if defined(__ANDROID__)
+        diagnostic_event( "WORLD_PROFILE_STATE",
+                          "state=auto_paused stable_walks=48 draw_budget_ms=40 sim_budget_ms=120" );
+#endif
+    }
+}
 
 void configure( const bool enable, const bool suspend )
 {
@@ -92,6 +175,7 @@ bool enqueue( semantic_intent intent )
             std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
             return pending.action == "activate" && is_world_step_node( pending.node );
         } ) ) {
+            profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
             return false;
         }
         // Reserve the one movement input immediately. Subsequent swipes
@@ -682,6 +766,13 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReader(
     JNIEnv *, jclass, jboolean enable, jboolean suspend )
 {
     a11y::android::configure( enable == JNI_TRUE, suspend == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReaderPerformance(
+    JNIEnv *, jclass, jboolean no_world_visuals, jboolean profile )
+{
+    a11y::android::configure_performance( no_world_visuals == JNI_TRUE, profile == JNI_TRUE );
 }
 
 extern "C" JNIEXPORT jint JNICALL
