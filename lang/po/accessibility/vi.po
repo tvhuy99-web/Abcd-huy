@@ -3888,3 +3888,15 @@ msgstr "Chồng vật phẩm này nằm ở nhiều ngăn. Hãy chọn trong dan
 
 msgid "Pocket contents changed or cannot be selected. Please open the pocket again."
 msgstr "Vật phẩm trong ngăn đã thay đổi hoặc không thể chọn. Vui lòng mở lại ngăn chứa."
+
+msgid "Reinforced item."
+msgstr "Vật phẩm đã được gia cố."
+
+msgid "Item shows wear or damage."
+msgstr "Vật phẩm có dấu hiệu hao mòn hoặc hư hại."
+
+msgid "Item condition intact."
+msgstr "Vật phẩm còn nguyên vẹn."
+
+msgid "Pickup allow or deny rule marker."
+msgstr "Vật phẩm có đánh dấu trong quy tắc nhặt đồ tự động."
