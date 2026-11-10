@@ -79,8 +79,9 @@ public final class DebugLogActivity extends Activity {
         profiling.setChecked(reader.isPerformanceProfilingEnabled());
         profiling.setOnCheckedChangeListener((button, checked) -> {
             reader.setPerformanceProfilingEnabled(checked);
-            SessionDebugLog.event("WORLD_PROFILE_STATE",
-                    checked ? "state=manual_enabled" : "state=manual_paused");
+            SessionDebugLog.setVerboseWorldTrace(this, checked);
+            SessionDebugLog.event("CONTROL",
+                    checked ? "profile=manual_enabled" : "profile=manual_paused");
         });
         controls.addView(profiling);
 
