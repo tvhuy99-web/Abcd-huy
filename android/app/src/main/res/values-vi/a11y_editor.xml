@@ -44,4 +44,18 @@
     <string name="a11yEditorNotANumber">Hãy nhập số.</string>
     <string name="a11yEditorOutOfRange">Giá trị phải từ %1$s đến %2$s.</string>
     <string name="a11yEditorStepMismatch">Giá trị phải theo bước %1$s tính từ %2$s.</string>
+    <string name="a11yPocketOpen">Mở ngăn chứa</string>
+    <string name="a11yPocketOtherActions">Các lệnh khác</string>
+    <string name="a11yPocketActions">Thao tác với vật phẩm</string>
+    <string name="a11yPocketChoose">Chọn ngăn chứa</string>
+    <string name="a11yPocketItems">Vật phẩm trong ngăn</string>
+    <string name="a11yPocketEmpty">Không có vật phẩm trong ngăn này.</string>
+    <string name="a11yPocketNotSelectable">Không có vật phẩm có thể chọn trong ngăn này.</string>
+    <string name="a11yPocketConfirm">Xác nhận lựa chọn trong ngăn</string>
+    <string name="a11yPocketCancel">Hủy lựa chọn trong ngăn</string>
+    <string name="a11yPocketSelectionSent">Đã gửi lựa chọn trong ngăn. Trở về danh sách vật phẩm.</string>
+    <string name="a11yPocketSelectionError">Không thể gửi lựa chọn. Vui lòng thử lại.</string>
+    <string name="a11yPocketRow">%1$s. Chọn %2$d, có %3$d. Mục %4$d trên %5$d.</string>
+    <string name="a11yPocketSealed">Ngăn đang niêm phong, không thể mở.</string>
+    <string name="a11yPocketInstructions">Chọn vật phẩm rồi xác nhận để trở về danh sách ngoài. Chưa nhặt đồ cho tới khi xác nhận danh sách ngoài. Hủy sẽ bỏ lựa chọn mới trong ngăn.</string>
 </resources>
