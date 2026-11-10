@@ -3525,8 +3525,7 @@ void game::draw( ui_adaptor &ui )
                 return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
             };
             const auto total_ms = ms( render_started, render_sonar_ready );
-            static unsigned int skipped_render_samples = 0;
-            if( total_ms >= 20 || ( ++skipped_render_samples % 8 ) == 0 ) {
+            if( profile_render ) {
                 a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
                         "mode=headless cache_ms=" + std::to_string(
                             ms( render_started, render_cache_ready ) ) +
@@ -3570,8 +3569,7 @@ void game::draw( ui_adaptor &ui )
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
         const auto total_ms = ms( render_started, render_finished );
-        static unsigned int rendered_samples = 0;
-        if( total_ms >= 20 || ( ++rendered_samples % 8 ) == 0 ) {
+        if( profile_render ) {
             a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
                     "mode=visual cache_ms=" + std::to_string(
                         ms( render_started, render_cache_ready ) ) +
@@ -8497,8 +8495,7 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
                             std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               walk_finished - walk_started ).count();
-    static unsigned int profile_walk_samples = 0;
-    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_walk_samples % 8 ) == 0 ) ) {
+    if( a11y::android::performance_profiling_enabled() ) {
         const auto place_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                   after_place - before_place ).count();
         const auto before_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -9041,8 +9038,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
                             std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               place_finished - place_started ).count();
-    static unsigned int profile_place_samples = 0;
-    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_place_samples % 8 ) == 0 ) ) {
+    if( a11y::android::performance_profiling_enabled() ) {
         const auto update_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                    after_map_update - before_map_update ).count();
         const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -10963,8 +10959,7 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
                             std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               shift_finished - shift_started ).count();
-    static unsigned int profile_shift_samples = 0;
-    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_shift_samples % 8 ) == 0 ) ) {
+    if( a11y::android::performance_profiling_enabled() ) {
         const auto ms = []( const auto from, const auto to ) {
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
