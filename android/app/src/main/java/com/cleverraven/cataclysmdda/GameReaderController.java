@@ -1978,7 +1978,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);
             } else if (choosingGesture) {
                 gestureChoice = Math.floorMod(gestureChoice + delta,
-                        ReaderGestureBindings.IDS.length + 2);
+                        ReaderGestureBindings.CUSTOM_IDS.length + 2);
             } else {
                 List<GameActionHub.Entry> options = hubEntries();
                 if (options.isEmpty()) { return; }
@@ -2203,7 +2203,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean handleCustomGesture(String gestureId) {
-        if (!directWorldGesturesEnabled()) { return false; }
+        if (!directWorldGesturesEnabled() || ReaderGestureBindings.isReserved(gestureId)) {
+            // A fixed control is never replaced by a persisted binding.
+            return false;
+        }
         String target = gestureBindings.targetFor(gestureId);
         SessionDebugLog.event("GESTURE_BINDING", "gesture=" + gestureId
                 + " target=" + target);
@@ -2320,6 +2323,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void threeFingerTap() {
         requestLiveWorldCommand("reader:coordinates");
+    }
+
+    @Override
+    public void characterDetails() {
+        if (!directWorldGesturesEnabled()) { return; }
+        ReaderSnapshot.Node document = snapshot.find("world:character_detail");
+        String spoken = document == null ? "" : document.detail;
+        if (spoken.isEmpty()) {
+            feedback(activity.getString(R.string.a11yReaderWaiting));
+        } else if (usesTouchExploration()) {
+            feedback(spoken);
+        } else {
+            // Read the entire current snapshot without spending a game turn.
+            speech.say("world-character-detail", spoken, ReaderSpeechQueue.LONG_TEXT);
+        }
     }
 
     @Override
@@ -2708,14 +2726,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private String gestureChoiceLabel(int index) {
-        if (index == ReaderGestureBindings.IDS.length) {
+        if (index == ReaderGestureBindings.CUSTOM_IDS.length) {
             return activity.getString(R.string.a11yBindDefault);
         }
-        if (index == ReaderGestureBindings.IDS.length + 1
-                || index < 0 || index >= ReaderGestureBindings.IDS.length) {
+        if (index == ReaderGestureBindings.CUSTOM_IDS.length + 1
+                || index < 0 || index >= ReaderGestureBindings.CUSTOM_IDS.length) {
             return activity.getString(R.string.a11yBindCancel);
         }
-        return activity.getString(ReaderGestureBindings.LABELS[index]);
+        return activity.getString(ReaderGestureBindings.CUSTOM_LABELS[index]);
     }
 
     /** Only render this full-screen layer while the hub is explicitly open. */
@@ -2741,7 +2759,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
         List<GameActionHub.Entry> entries = binding || choosingHubAction ? null : hubEntries();
         int count = choosingHubAction ? 2
-                : binding ? ReaderGestureBindings.IDS.length + 2 : entries.size();
+                : binding ? ReaderGestureBindings.CUSTOM_IDS.length + 2 : entries.size();
         int selected = choosingHubAction ? hubActionChoice : binding ? gestureChoice : hubIndex;
         if (count == 0) {
             TextView empty = new TextView(activity);
@@ -2954,14 +2972,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         bindingItem = selected;
         choosingGesture = true;
         String existing = gestureBindings.gestureFor(target);
-        gestureChoice = existing == null ? 0 : ReaderGestureBindings.indexOf(existing);
+        gestureChoice = existing == null ? 0 : ReaderGestureBindings.customIndexOf(existing);
         if (gestureChoice < 0) { gestureChoice = 0; }
         root.cancelGesture();
         render();
         feedback(activity.getString(R.string.a11yBindTitle, selected.label) + ". "
                 + gestureChoiceLabel(gestureChoice) + ", "
                 + activity.getString(R.string.a11yPosition,
-                        gestureChoice + 1, ReaderGestureBindings.IDS.length + 2));
+                        gestureChoice + 1, ReaderGestureBindings.CUSTOM_IDS.length + 2));
     }
 
     private String describeShortcutTarget(String target) {
@@ -3001,7 +3019,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         GameActionHub.Entry entry = bindingItem;
         String target = entry.shortcutTarget();
         int chosen = gestureChoice;
-        if (chosen == ReaderGestureBindings.IDS.length + 1) {
+        if (chosen == ReaderGestureBindings.CUSTOM_IDS.length + 1) {
             choosingGesture = false;
             bindingItem = null;
             root.cancelGesture();
@@ -3010,12 +3028,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         String message;
-        if (chosen == ReaderGestureBindings.IDS.length) {
+        if (chosen == ReaderGestureBindings.CUSTOM_IDS.length) {
             gestureBindings.restoreDefault(target);
             message = activity.getString(R.string.a11yBindRestored, entry.label);
-        } else if (chosen >= 0 && chosen < ReaderGestureBindings.IDS.length) {
+        } else if (chosen >= 0 && chosen < ReaderGestureBindings.CUSTOM_IDS.length) {
             ReaderGestureBindings.Assignment result = gestureBindings.assign(
-                    ReaderGestureBindings.IDS[chosen], target);
+                    ReaderGestureBindings.CUSTOM_IDS[chosen], target);
             message = activity.getString(R.string.a11yBindSaved,
                     gestureChoiceLabel(chosen), entry.label);
             if (result.displacedTarget != null) {
@@ -3126,7 +3144,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             } else if (choosingGesture) {
                 feedback(gestureChoiceLabel(gestureChoice) + ", "
                         + activity.getString(R.string.a11yPosition, gestureChoice + 1,
-                                ReaderGestureBindings.IDS.length + 2));
+                                ReaderGestureBindings.CUSTOM_IDS.length + 2));
             } else {
                 List<GameActionHub.Entry> items = hubEntries();
                 if (items.isEmpty()) {
