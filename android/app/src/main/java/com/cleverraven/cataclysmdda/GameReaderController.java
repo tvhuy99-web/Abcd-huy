@@ -162,7 +162,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     render();
                     if (state != 0) {
                         feedback(travelStatus(state) + ". " + travelSpoken(state));
-                    } else if (snapshot != null) {
+                    } else if (snapshot != null
+                            && ("DEFAULTMODE".equals(snapshot.category)
+                                || "activity".equals(snapshot.category))) {
+                        // Modal questions have their own one-shot original
+                        // announcement. A travel-state transition must not
+                        // interrupt it with an unrelated focus utterance.
                         readCurrent();
                     }
                 }
