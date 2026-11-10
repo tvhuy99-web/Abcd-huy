@@ -61,14 +61,17 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("refresh_reader();", engine)
         self.assertIn("handle_mouseview( ctxt, action )", engine)
 
-    def test_runtime_switch_default_and_jni_lifecycle(self):
+    def test_runtime_switch_default_and_manual_logger(self):
         prefs = java("ReaderPreferences.java")
         reader = java("GameReaderController.java")
         bridge = native("a11y_android.cpp")
         game = java("CataclysmDDA.java")
+        log = java("SessionDebugLog.java")
         self.assertIn('getBoolean("spoken_only_world", '
                       'BuildConfig.FLAVOR.equals("accessibility"))', prefs)
-        self.assertIn('getBoolean("adaptive_performance_profiling",', prefs)
+        self.assertNotIn("isPerformanceProfilingEnabled", prefs)
+        self.assertIn("boolean profile = SessionDebugLog.isRecording()", reader)
+        self.assertIn('getBoolean("enabled", false)', log)
         self.assertIn("nativeConfigureReaderPerformance(spokenOnlyWorld, profile)", reader)
         self.assertIn("nativeConfigureReaderPerformance(boolean spokenOnlyWorld,", game)
         self.assertIn("nativeConfigureReaderPerformance(", bridge)
@@ -76,64 +79,60 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("performance_profile_active.exchange(", bridge)
         self.assertIn("enabled() && !suspended()", bridge)
 
-    def test_auto_pause_requires_actual_fast_uninterrupted_walking(self):
+    def test_detailed_performance_traces_never_auto_pause(self):
         bridge = native("a11y_android.cpp")
         engine = native("handle_action.cpp")
+        turns = native("do_turn.cpp")
         self.assertIn("performance_step_sample( dx != 0 || dy != 0 || dz != 0 )", engine)
         self.assertIn("performance_step_sample( false );", engine)
-        self.assertIn("stable_walking_steps >= 48", bridge)
-        self.assertIn("last_profile_draw_ms <= 40", bridge)
-        self.assertIn("last_profile_sim_ms <= 120", bridge)
-        self.assertIn("last_profile_vision_ms <= 60", bridge)
-        self.assertIn("last_profile_reader_ms <= 35", bridge)
-        self.assertIn("cycle_ms <= cycle_budget_ms", bridge)
-        self.assertIn("cycle_budget_ms = 250", bridge)
         self.assertIn('diagnostic_event( "WORLD_STEP_PIPELINE"', bridge)
         self.assertIn("performance_reader_sample( const long long ms )", bridge)
         self.assertIn("pending_step_completed_at", bridge)
         self.assertIn("last_profile_sim_ms = std::max(", bridge)
         self.assertIn("performance_vision_sample( vision_ms )", engine)
         self.assertIn("performance_reader_sample( build_ms + publish_ms )", engine)
-        self.assertIn("busy_epoch != last_profile_busy_epoch", bridge)
-        self.assertIn("shifted_since_last_step", bridge)
-        self.assertIn("profile_busy_epoch.fetch_add(", bridge)
-        self.assertIn("!a11y::android::suppress_world_visuals()", native("do_turn.cpp"))
-        self.assertIn("performance_profile_active.store( false", bridge)
-        self.assertIn("state=auto_paused stable_walks=48", bridge)
         self.assertIn("a11y::android::performance_world_shift();",
                       native("game.cpp"))
+        self.assertIn("if( profile_reader ) {", engine)
+        self.assertIn("if( world_profile ) {", turns)
+        self.assertNotIn("stable_walking_steps", bridge)
+        self.assertNotIn("auto_paused", bridge)
+        self.assertNotIn("performance_profile_active.store( false", bridge)
+        self.assertNotIn("reader_timing_sample % 8", engine)
 
-    def test_measurements_and_high_volume_logging_suspend_independently(self):
+    def test_all_measurements_and_writes_stop_on_manual_off(self):
         core = native("do_turn.cpp")
         engine = native("handle_action.cpp")
         runtime = native("a11y_runtime.cpp")
+        bridge = native("a11y_android.cpp")
         log = java("SessionDebugLog.java")
         game = java("CataclysmDDA.java")
+        reader = java("GameReaderController.java")
         self.assertIn("const bool profile = a11y::android::performance_profiling_enabled()", core)
         self.assertIn("const bool world_profile = a11y::android::performance_profiling_enabled()", core)
         self.assertIn("if( profile_reader ) {", engine)
         self.assertIn("android::performance_profiling_enabled()", runtime)
-        self.assertIn("isHighFrequencyTrace(category, detail)", log)
-        self.assertIn('category.equals("SCREEN")', log)
-        self.assertIn("Thread.setDefaultUncaughtExceptionHandler", log)
-        self.assertIn("log.crashFile", log)
-        self.assertIn("setVerboseWorldTrace(this, false)", game)
-        self.assertIn('category.equals("WORLD_MOVE_BLOCKED")', log)
-        self.assertIn('category.equals("TTS_STATE")', log)
-        self.assertIn('detail.contains("event=ERROR")', log)
-        self.assertIn('detail.contains("status=busy")', log)
-        self.assertIn('diagnostic_event( "WORLD_MOVE_BLOCKED"', engine)
+        self.assertIn("log.recording = enabled;", log)
+        self.assertIn("if (!recording || closed) { return; }", log)
+        self.assertIn("SessionDebugLog.isRecording()", reader)
+        self.assertIn("SessionDebugLog.event(category, detail);", game)
+        self.assertNotIn("setVerboseWorldTrace", log)
+        self.assertNotIn("auto_paused", game)
+        self.assertIn('if( !performance_profile_active.load( std::memory_order_acquire ) )',
+                      bridge)
+        self.assertNotIn('diagnostic_event( "WORLD_MOVE_BLOCKED"', engine)
 
-    def test_debug_screen_reversible_controls_are_localized(self):
+    def test_single_manual_log_switch_and_independent_spoken_only_setting(self):
         ui = java("DebugLogActivity.java")
+        self.assertIn("SessionDebugLog.setEnabled(this, checked)", ui)
         self.assertIn("reader.setSpokenOnlyWorldEnabled(checked)", ui)
-        self.assertIn("reader.setPerformanceProfilingEnabled(checked)", ui)
-        self.assertIn("SessionDebugLog.setVerboseWorldTrace(this, checked)", ui)
+        self.assertIn("CataclysmDDA.nativeConfigureReaderPerformance(", ui)
+        self.assertNotIn("CheckBox profiling", ui)
         for locale in ("values", "values-vi"):
             strings = (ROOT / "android/app/src/main/res" / locale / "strings.xml").read_text(
                 encoding="utf-8")
             self.assertIn('name="a11ySpokenOnlyWorld"', strings)
-            self.assertIn('name="a11yAdaptiveProfiler"', strings)
+            self.assertIn('name="a11yDebugLogEnabled"', strings)
 
 
 if __name__ == "__main__":
