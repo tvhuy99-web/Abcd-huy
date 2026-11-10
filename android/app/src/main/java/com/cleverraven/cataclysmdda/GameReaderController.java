@@ -30,6 +30,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
     private static final int HUB_PAGE_SIZE = 30;
+    private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
+    private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
     private final ReaderPreferences preferences;
     private final ReaderGestureBindings gestureBindings;
@@ -598,7 +600,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     focus = remembered != null && next.find(remembered) != null
                             ? remembered : next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
-                } else if (next.find(focus) == null) {
+                } else if (next.find(focus) == null
+                        && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
+                                || POCKET_CANCEL_NODE.equals(focus)))) {
                     // A vanished item returns to its closest surviving
                     // ancestor/sibling, never a stale native screen.
                     focus = resolveFocusFallback(previousSnapshot, previous, next);
@@ -1072,6 +1076,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (pocketStage == 3) {
             List<ReaderSnapshot.Node> items = pocketItems();
+            if (POCKET_CONFIRM_NODE.equals(focus)) {
+                return activity.getString(R.string.a11yPocketConfirm) + ". "
+                        + activity.getString(R.string.a11yPosition, items.size() + 1, items.size() + 2);
+            }
+            if (POCKET_CANCEL_NODE.equals(focus)) {
+                return activity.getString(R.string.a11yPocketCancel) + ". "
+                        + activity.getString(R.string.a11yPosition, items.size() + 2, items.size() + 2);
+            }
             for (int i = 0; i < items.size(); i++) {
                 if (items.get(i).id.equals(focus)) {
                     return pocketItemSpeech(items.get(i), i + 1, items.size());
@@ -1252,6 +1264,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             ReaderSnapshot.Node pocket = snapshot == null ? null : snapshot.find(focus);
             if (pocket != null) { openPocketContents(pocket); }
         } else if (pocketStage == 3) {
+            if (POCKET_CONFIRM_NODE.equals(focus)) {
+                commitPocketChoices();
+                return;
+            }
+            if (POCKET_CANCEL_NODE.equals(focus)) {
+                resetPocketPicker(true);
+                return;
+            }
             ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
             if (item == null) { return; }
             if (!item.enabled) {
@@ -1271,11 +1291,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             List<ReaderSnapshot.Node> choices = pocketStage == 2
                     ? pocketNodes(pocketContainerId) : pocketItems();
             if (choices.isEmpty()) { return; }
+            int count = choices.size() + (pocketStage == 3 ? 2 : 0);
             int index = 0;
-            for (int i = 0; i < choices.size(); i++) {
-                if (choices.get(i).id.equals(focus)) { index = i; break; }
+            if (pocketStage == 3 && POCKET_CONFIRM_NODE.equals(focus)) {
+                index = choices.size();
+            } else if (pocketStage == 3 && POCKET_CANCEL_NODE.equals(focus)) {
+                index = choices.size() + 1;
+            } else {
+                for (int i = 0; i < choices.size(); i++) {
+                    if (choices.get(i).id.equals(focus)) { index = i; break; }
+                }
             }
-            focus = choices.get(Math.floorMod(index + delta, choices.size())).id;
+            int next = Math.floorMod(index + delta, count);
+            focus = next == choices.size() ? POCKET_CONFIRM_NODE
+                    : next == choices.size() + 1 ? POCKET_CANCEL_NODE : choices.get(next).id;
         }
         render();
         feedback(pocketChoiceSpeech());
@@ -1343,15 +1372,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 });
                 rows.addView(next);
             }
-            if (pocketStage == 3 && items.size() > 1) {
+            if (pocketStage == 3) {
                 Button confirm = new Button(activity);
                 confirm.setText(R.string.a11yPocketConfirm);
-                confirm.setOnClickListener(v -> commitPocketChoices());
+                confirm.setSelected(POCKET_CONFIRM_NODE.equals(focus));
+                confirm.setOnClickListener(v -> {
+                    focus = POCKET_CONFIRM_NODE;
+                    commitPocketChoices();
+                });
                 rows.addView(confirm);
             }
         }
         Button cancel = new Button(activity);
         cancel.setText(R.string.a11yPocketCancel);
+        cancel.setSelected(POCKET_CANCEL_NODE.equals(focus));
         cancel.setOnClickListener(v -> resetPocketPicker(true));
         rows.addView(cancel);
     }
