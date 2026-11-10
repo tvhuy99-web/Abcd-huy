@@ -4159,6 +4159,11 @@ bool game::handle_action()
                                  act == ACTION_MOVE_LEFT ||
                                  act == ACTION_MOVE_FORTH_LEFT;
     const tripoint_abs_ms diagnostic_before_position = player_character.pos_abs();
+    if( act != ACTION_TIMEOUT && !diagnostic_walk ) {
+        // A menu/combat/interact action separates walking samples. Only
+        // uninterrupted actual footsteps can auto-pause the profiler.
+        a11y::android::performance_step_sample( false );
+    }
     if( diagnostic_profile && act != ACTION_TIMEOUT ) {
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "start action=" + diagnostic_action_name );
