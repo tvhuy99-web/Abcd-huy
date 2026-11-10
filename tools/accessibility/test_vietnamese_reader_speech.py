@@ -26,19 +26,22 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('"%1$s %2$d tiles, %3$s %4$d tiles"',
                       self.surroundings)
 
-    def test_dialog_question_is_navigable_and_announced(self):
-        self.assertIn('question.id = "dialog:message";', self.dialog)
-        self.assertIn('question.value = reader_snapshot.summary;', self.dialog)
+    def test_yes_no_dialog_speaks_question_without_a_fake_row(self):
+        self.assertIn('const bool yes_no_prompt = category == "YESNO"', self.dialog)
+        self.assertIn('if( !reader_snapshot.summary.empty() && !yes_no_prompt )', self.dialog)
+        self.assertIn('question.label = reader_snapshot.summary;', self.dialog)
+        self.assertIn('node.detail = reader_snapshot.summary;', self.dialog)
+        self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
         self.assertIn('"YESNO".equals(next.category)', self.java)
-        self.assertIn('introduction += ". " + next.summary.trim();', self.java)
-        self.assertIn('!"dialog:message".equals(node.id)', self.java)
+        self.assertIn('String introduction = yesNo ? next.summary.trim() : next.title;', self.java)
+        self.assertIn('introduction.isEmpty()', self.java)
 
     def test_vietnamese_localization(self):
         self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
         self.assertIn('msgid "%1$s, %2$d tiles"\nmsgstr "%1$s, %2$d ô"',
                       self.po)
-        self.assertIn('msgid "Dialog message"\nmsgstr "Nội dung câu hỏi"',
-                      self.po)
+        self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
+        self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
 
 
 if __name__ == "__main__":
