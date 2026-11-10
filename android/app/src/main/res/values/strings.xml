@@ -188,7 +188,7 @@
     <string name="a11yDebugLogEnabled">Record debug log</string>
     <string name="a11yDebugLogExport">Export log</string>
     <string name="a11yDebugLogClear">Delete log</string>
-    <string name="a11yDebugLogConfirmClear">Delete the current game launch's log?</string>
+    <string name="a11yDebugLogConfirmClear">Delete the log for this game session?</string>
     <string name="a11yDebugLogCleared">Log deleted</string>
     <string name="a11yDebugLogEmpty">No log to export</string>
     <string name="a11yDebugLogExportError">Could not export log</string>
