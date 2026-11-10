@@ -4117,8 +4117,69 @@ class inventory_selector::reader_session
                         for( a11y::semantic_node &row : pocket_items ) {
                             pockets_of[i].push_back( std::move( row ) );
                         }
+                    } else if( !pickup_mode && !pocket->sealed() &&
+                               pocket_node.depth >= 0 && pocket_node.depth < a11y::max_tree_depth ) {
+                        // Normal Inventory was only publishing pocket statuses.
+                        // Read the *actual* contents, not just visible selector
+                        // rows: the latter omit collapsed children. Browsing
+                        // never selects, unfolds, transfers or otherwise
+                        // modifies the game's real items or their pockets.
+                        // Flatten nested containers with their path in the
+                        // spoken label so no item disappears behind a closed
+                        // bag within a bag. Respect sealed nested pockets.
+                        constexpr std::size_t max_pocket_read_rows = 96;
+                        std::vector<a11y::semantic_node> contents_rows;
+                        std::set<const item *> visited_contents;
+                        std::function<void( const item *, const std::string &, unsigned int )> expose =
+                        [&]( const item *child, const std::string &ancestors, unsigned int level ) {
+                            if( child == nullptr || level > 5 ||
+                                contents_rows.size() >= max_pocket_read_rows ||
+                                !visited_contents.insert( child ).second ) {
+                                return;
+                            }
+                            a11y::semantic_node item_node;
+                            item_node.id = "pocket-entry:" + pocket_node.id + ":" +
+                                           std::to_string( contents_rows.size() );
+                            item_node.role = "status";
+                            item_node.actions = { "focus" };
+                            item_node.parent_id = pocket_node.id;
+                            item_node.depth = pocket_node.depth + 1;
+                            item_node.label = remove_color_tags( child->tname(
+                                                1, tname::unprefixed_tname, true ) );
+                            if( !ancestors.empty() ) {
+                                item_node.label = ancestors + " > " + item_node.label;
+                            }
+                            item_node.detail = item_node.label;
+                            item_node.enabled = true;
+                            const std::string child_path = item_node.label;
+                            contents_rows.push_back( std::move( item_node ) );
+                            if( level == 5 ) {
+                                return;
+                            }
+                            for( const item_pocket *inner : child->get_container_pockets() ) {
+                                if( inner->sealed() ) {
+                                    continue;
+                                }
+                                for( const item *grandchild : inner->all_items_top() ) {
+                                    expose( grandchild, child_path, level + 1 );
+                                }
+                            }
+                        };
+                        for( const item *child : pocket->all_items_top() ) {
+                            expose( child, "", 0 );
+                        }
+                        pocket_node.value = "read_only";
+                        pocket_node.applied_value = std::to_string( pocket->size() );
+                        pocket_node.has_children = !contents_rows.empty();
+                        pocket_node.expanded = !contents_rows.empty();
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                        for( a11y::semantic_node &row : contents_rows ) {
+                            pockets_of[i].push_back( std::move( row ) );
+                        }
                     } else {
-                        // In other selectors pockets are status-only, as before.
+                        // A sealed or non-browsable pocket remains status-only.
+                        pocket_node.value = pocket->sealed() ? "sealed" : "";
+                        pocket_node.applied_value = std::to_string( pocket->size() );
                         pockets_of[i].push_back( std::move( pocket_node ) );
                     }
                 }
