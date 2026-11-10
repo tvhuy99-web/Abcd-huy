@@ -31,9 +31,11 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn("if( available > 1 )", code)
         self.assertIn('node.actions = { "focus", "activate", "set_value" };', code)
         self.assertIn("entry.get_available_count() == 1", code)
-        self.assertIn("multi->toggle_entry( entry, entry.chosen_count == 0 ? 1 : 0 );", code)
+        self.assertIn("select_count( *multi, binding->column, binding->location,", code)
+        self.assertIn("entry.chosen_count == 0 ? 1 : 0 );", code)
         self.assertIn("a11y::selected_quantity( intent.value", code)
-        self.assertIn("multi->toggle_entry( entry, *amount );", code)
+        self.assertIn("select_count( *multi, binding->column, binding->location, *amount );", code)
+        self.assertIn("multi.toggle_entry( **target, count );", code)
         self.assertNotIn('intent.action == "apply"', code)
         self.assertNotIn('"cancel_draft"', code)
         # Final CONFIRM still belongs to pickup/drop and is not auto-executed.
