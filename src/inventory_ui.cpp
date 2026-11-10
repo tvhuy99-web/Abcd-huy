@@ -3936,9 +3936,10 @@ class inventory_selector::reader_session
                     rows[i].parent_id = rows[parent_row[i]].id;
                 }
             }
-            // R09.2 pocket nodes: one read-only "status" child per container
-            // pocket of a published item. A sealed pocket reports only that
-            // it is sealed: its contents are never listed or counted.
+            // R09.2 pocket statuses stay readable; pickup gains explicit,
+            // locally staged pocket-item rows under each accessible pocket.
+            // A user must long-press the container to enter this list.
+            pocket_selections.clear();
             std::vector<std::vector<a11y::semantic_node>> pockets_of( item_rows );
             std::vector<std::size_t> published_children( item_rows, 0 );
             for( std::size_t i = 0; i < item_rows; ++i ) {
@@ -4012,7 +4013,84 @@ class inventory_selector::reader_session
                         pocket_node.depth = tree_depth[i] + 1;
                         ++published_children[i];
                     }
-                    pockets_of[i].push_back( std::move( pocket_node ) );
+                    // Accessible picker items are separate aliases of native inventory
+                    // rows, not new game objects. Only direct, unsealed contents
+                    // that the current pickup selector already knows may be selected.
+                    // The entire pocket selection is committed in one native intent;
+                    // closing the reader sub-list without Confirm changes nothing.
+                    if( pickup_mode && quantity_form && !pocket->sealed() &&
+                        pocket_node.depth >= 0 && pocket_node.depth < a11y::max_tree_depth ) {
+                        pocket_selection_binding pocket_binding;
+                        pocket_binding.id = pocket_node.id;
+                        pocket_binding.container = published[i].location;
+                        pocket_binding.pocket_index = pi;
+                        const std::list<const item *> contents = pocket->all_items_top();
+                        std::vector<item_location> seen_entries;
+                        std::vector<a11y::semantic_node> pocket_items;
+                        for( inventory_column *column : owner.columns ) {
+                            for( inventory_entry *entry : column->get_entries( return_item, true ) ) {
+                                const item_location &child = entry->any_item();
+                                if( !child || std::find( seen_entries.begin(), seen_entries.end(), child ) !=
+                                    seen_entries.end() ) {
+                                    continue;
+                                }
+                                bool one_inside = false;
+                                bool all_inside = true;
+                                for( const item_location &location : entry->locations ) {
+                                    const item *contained = location.get_item();
+                                    const bool inside = contained != nullptr &&
+                                                        location.parent_item() == published[i].location &&
+                                                        std::find( contents.begin(), contents.end(), contained ) != contents.end();
+                                    one_inside |= inside;
+                                    all_inside &= inside;
+                                }
+                                if( !one_inside ) {
+                                    continue;
+                                }
+                                seen_entries.push_back( child );
+                                entry->cache_denial( owner.preset );
+                                a11y::semantic_node contained;
+                                contained.id = "pocket-entry:" + pocket_binding.id + ":" +
+                                               std::to_string( pocket_items.size() );
+                                contained.role = "checkbox";
+                                contained.label = remove_color_tags( child->display_name(
+                                                                        entry->get_stack_size() ) );
+                                contained.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
+                                                                 std::to_string( entry->chosen_count ),
+                                                                 std::to_string( entry->get_available_count() ) );
+                                contained.detail = remove_color_tags( child.describe( &owner.u ) );
+                                contained.enabled = all_inside && entry->is_selectable() &&
+                                                    entry->get_available_count() > 0;
+                                contained.disabled_reason = !all_inside ?
+                                                            _( "This stack spans multiple pockets. Select it in the main item list." ) :
+                                                            remove_color_tags( entry->denial.value_or( "" ) );
+                                contained.checked = entry->chosen_count > 0;
+                                contained.actions = { "focus" };
+                                contained.parent_id = pocket_binding.id;
+                                contained.depth = pocket_node.depth + 1;
+                                contained.field_type = "int";
+                                contained.has_field_range = true;
+                                contained.field_min = 0;
+                                contained.field_max = entry->get_available_count();
+                                contained.field_step = 1;
+                                contained.applied_value = std::to_string( entry->chosen_count );
+                                pocket_binding.items.push_back( { contained.id, column, child } );
+                                pocket_items.push_back( std::move( contained ) );
+                            }
+                        }
+                        pocket_node.field_type = "text";
+                        pocket_node.actions = { "focus", "set_value" };
+                        pocket_node.has_children = !pocket_items.empty();
+                        pocket_node.expanded = !pocket_items.empty();
+                        pocket_selections.push_back( std::move( pocket_binding ) );
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                        for( a11y::semantic_node &row : pocket_items ) {
+                            pockets_of[i].push_back( std::move( row ) );
+                        }
+                    } else {
+                        // In other selectors pockets are status-only, as before.
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                    }
                 }
             }
             for( std::size_t i = 0; i < item_rows; ++i ) {
@@ -4065,6 +4143,18 @@ class inventory_selector::reader_session
         std::string activation;
         reader_session *previous;
         std::vector<row_binding> bindings;
+        struct pocket_item_binding {
+            std::string id;
+            inventory_column *column;
+            item_location location;
+        };
+        struct pocket_selection_binding {
+            std::string id;
+            item_location container;
+            std::size_t pocket_index = 0;
+            std::vector<pocket_item_binding> items;
+        };
+        std::vector<pocket_selection_binding> pocket_selections;
         std::size_t serial = 0;
         a11y::screen_scope screen;
 
