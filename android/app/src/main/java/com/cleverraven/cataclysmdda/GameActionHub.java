@@ -142,17 +142,34 @@ final class GameActionHub {
         return plain.toLowerCase(Locale.ROOT).trim();
     }
 
-    private static void addNode(List<Entry> result, ReaderSnapshot snapshot, String id,
-                                Set<String> seen) {
+    // Every hub section uses the same semantic value published by the
+    // native game. A command may be repeated in Combat, Automation, Search
+    // and Favorites, but its current state must never diverge between them.
+    private static String spokenNodeLabel(Context context, ReaderSnapshot.Node node) {
+        String label = node.label;
+        if (!node.value.isEmpty() && !node.value.equals(label)
+                && !label.endsWith(". " + node.value)) {
+            label += ". " + node.value;
+        }
+        if ("checkbox".equals(node.role)) {
+            label += ". " + context.getString(node.checked
+                    ? R.string.a11yChecked : R.string.a11yUnchecked);
+        }
+        return label;
+    }
+
+    private static void addNode(List<Entry> result, Context context,
+                                ReaderSnapshot snapshot, String id, Set<String> seen) {
         if (!seen.add(id)) { return; }
         ReaderSnapshot.Node node = snapshot.find(id);
         if (node != null && (node.actions.contains("activate")
                 || "document".equals(node.role) || "world:here".equals(id))) {
-            result.add(new Entry(node.label, id, EXECUTE, 0));
+            result.add(new Entry(spokenNodeLabel(context, node), id, EXECUTE, 0));
         }
     }
 
-    private static void addCommandMatches(List<Entry> result, ReaderSnapshot snapshot,
+    private static void addCommandMatches(List<Entry> result, Context context,
+                                          ReaderSnapshot snapshot,
                                           String query) {
         String needle = normalized(query);
         for (ReaderSnapshot.Node node : snapshot.nodes) {
@@ -163,7 +180,7 @@ final class GameActionHub {
                     + node.detail).contains(needle)) {
                 continue;
             }
-            result.add(new Entry(node.label, node.id, EXECUTE, 0));
+            result.add(new Entry(spokenNodeLabel(context, node), node.id, EXECUTE, 0));
         }
     }
 
@@ -175,7 +192,7 @@ final class GameActionHub {
             ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(action);
             // Preserve saved favorites outside the context where they were
             // selected. Do not claim that an absent command is executable.
-            String label = node == null ? favorite.label : node.label;
+            String label = node == null ? favorite.label : spokenNodeLabel(context, node);
             if (node == null || !node.enabled || (!node.actions.contains("activate")
                     && !"document".equals(node.role))) {
                 label += " (" + context.getString(R.string.a11yHubFavoriteUnavailable) + ")";
@@ -230,7 +247,7 @@ final class GameActionHub {
         }
         if (snapshot == null) { return result; }
         if (section == SEARCH) {
-            addCommandMatches(result, snapshot, query);
+            addCommandMatches(result, context, snapshot, query);
             return result;
         }
         if (section == DIRECTIONS) {
@@ -259,13 +276,13 @@ final class GameActionHub {
         if (section == 2) {
             for (String id : new String[] { "reader:scan:north", "reader:scan:south",
                     "reader:scan:west", "reader:scan:east", "world:here" }) {
-                addNode(result, snapshot, id, seen);
+                addNode(result, context, snapshot, id, seen);
             }
         } else if (section == 14) {
             for (String id : new String[] { "world:status", "world:messages",
                     "reader:coordinates", "world:here", "world:last_outcome",
                     "world:alert_history" }) {
-                addNode(result, snapshot, id, seen);
+                addNode(result, context, snapshot, id, seen);
             }
             result.add(new Entry(context.getString(R.string.a11yHubAllCommands),
                     "", OPEN_ALL, 0));
@@ -275,7 +292,7 @@ final class GameActionHub {
             result.add(new Entry(context.getString(R.string.a11yHubReaderSetup),
                     "", OPEN_READER_SETUP, 0));
         }
-        for (String id : ACTIONS[section]) { addNode(result, snapshot, id, seen); }
+        for (String id : ACTIONS[section]) { addNode(result, context, snapshot, id, seen); }
 
         // Any new native commands remain discoverable via the unfiltered
         // "All commands" catalogue even if they have no curated category.

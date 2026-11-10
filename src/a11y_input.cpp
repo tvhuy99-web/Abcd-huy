@@ -4,6 +4,10 @@
 #include <utility>
 #include <vector>
 #include "input_context.h"
+#include "avatar.h"
+#include "game.h"
+#include "options.h"
+#include "string_formatter.h"
 #include "output.h"
 #include "translations.h"
 namespace a11y
@@ -95,6 +99,66 @@ std::size_t command_group_index( const std::string &action )
 // DEFAULTMODE registrations are stable across ordinary footsteps. Reuse
 // translated command names and key descriptions until a modal or lifecycle
 // transition invalidates them. This cache is accessed only on the game thread.
+// State belongs to the live native game, not to a particular Android menu.
+// Annotate command *values* instead of rewriting action labels/IDs, so the
+// same state is available in combat, automation, search, favorites and any
+// screen using the shared command snapshot. The base command cache is never
+// stateful: these values must be refreshed whenever a snapshot is requested.
+void annotate_live_command_states( semantic_snapshot &snapshot )
+{
+    for( semantic_node &node : snapshot.nodes ) {
+        if( node.role != "command" ||
+            std::find( node.actions.begin(), node.actions.end(), "activate" ) == node.actions.end() ) {
+            continue;
+        }
+        const std::string &id = node.id;
+        if( id == "toggle_auto_features" || id == "toggle_auto_mining" ||
+            id == "toggle_auto_pickup" || id == "autosafe" ) {
+            const char *const setting = id == "toggle_auto_features" ? "AUTO_FEATURES" :
+                                        id == "toggle_auto_mining" ? "AUTO_MINING" :
+                                        id == "toggle_auto_pickup" ? "AUTO_PICKUP" : "AUTOSAFEMODE";
+            const bool enabled = get_option<bool>( setting );
+            node.value = enabled ? _( "Currently on" ) : _( "Currently off" );
+            if( id == "toggle_auto_mining" && enabled && !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.value += ". " + std::string( _( "Inactive: additional auto features are off" ) );
+            }
+        } else if( id == "toggle_auto_pulp_butcher" || id == "toggle_auto_foraging" ) {
+            // These are multi-valued modes, not boolean switches.
+            const char *const setting = id == "toggle_auto_pulp_butcher" ?
+                                        "AUTO_PULP_BUTCHER" : "AUTO_FORAGING";
+            const auto &option = get_options().get_option( setting );
+            node.value = option.getValue() == "off" ? _( "Currently off" ) : option.getValueName();
+            if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.value += ". " + std::string( _( "Inactive: additional auto features are off" ) );
+            }
+        } else if( id == "autoattack" ) {
+            // Despite the translated name, this action makes a single
+            // automatic melee attack. It has no persistent on/off state.
+            node.value = _( "One attack, not an on/off setting" );
+            node.detail = _( "Perform one automatic melee attack. This is not an on/off setting." );
+        } else if( id == "safemode" && g ) {
+            node.value = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
+                         g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) :
+                         _( "Currently on" );
+        } else if( id == "auto_travel_mode" && g ) {
+            node.value = g->auto_travel_mode ? _( "Currently on" ) : _( "Currently off" );
+        } else if( id == "toggle_thief_mode" && g ) {
+            const std::string selected = get_avatar().get_value( "THIEF_MODE" ).str();
+            node.value = selected == "THIEF_HONEST" ? _( "Always honest" ) :
+                         selected == "THIEF_STEAL" ? _( "Always steal" ) :
+                         _( "Ask before taking owned items" );
+        } else if( ( id == "haul" || id == "haul_toggle" ) && g ) {
+            node.value = get_avatar().is_hauling() ? _( "Currently on" ) : _( "Currently off" );
+        } else if( ( id == "toggle_run" || id == "toggle_crouch" ||
+                     id == "toggle_prone" || id == "cycle_move" ||
+                     id == "cycle_move_reverse" || id == "reset_move" ||
+                     id == "open_movement" ) && g ) {
+            node.value = string_format( _( "Movement mode: %s" ),
+                                        get_avatar().get_desired_move_mode()->name() );
+        }
+    }
+}
+
 std::vector<std::string> cached_world_action_ids;
 semantic_snapshot cached_world_commands;
 bool cached_world_commands_valid = false;
@@ -114,6 +178,7 @@ semantic_snapshot command_snapshot( const input_context &context, const std::str
     if( cacheable && cached_world_commands_valid && cached_world_action_ids == actions ) {
         semantic_snapshot cached = cached_world_commands;
         cached.title = title;
+        annotate_live_command_states( cached );
         return cached;
     }
     semantic_snapshot snapshot;
@@ -174,6 +239,7 @@ semantic_snapshot command_snapshot( const input_context &context, const std::str
         cached_world_commands = snapshot;
         cached_world_commands_valid = true;
     }
+    annotate_live_command_states( snapshot );
     return snapshot;
 }
 

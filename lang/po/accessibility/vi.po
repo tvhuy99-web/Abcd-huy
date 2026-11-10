@@ -4171,3 +4171,10 @@ msgstr "Bị cháy hỏng"
 
 msgid "Inactive: additional auto features are off"
 msgstr "Chưa hoạt động: các tính năng tự động bổ sung đang tắt"
+
+msgid "One attack, not an on/off setting"
+msgstr "Tấn công một lần, không phải chế độ bật tắt"
+
+#, c-format
+msgid "Movement mode: %s"
+msgstr "Chế độ di chuyển: %s"

@@ -922,55 +922,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.id == "reset_move" || node.id == "open_movement" ||
             node.id == "toggle_run" || node.id == "toggle_crouch" ||
             node.id == "toggle_prone" ) {
-            // Queued mode and active stance are not necessarily the same.
-            node.label += string_format( _( " (selected: %s)" ), chosen_mode );
+            // All reader screens obtain the selected movement mode from
+            // command_snapshot(); only world-specific detail belongs here.
             node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
                                          active_mode, chosen_mode );
-        } else if( node.id == "toggle_auto_features" || node.id == "toggle_auto_mining" ||
-                   node.id == "toggle_auto_pickup" || node.id == "autosafe" ) {
-            // The command hub must announce the current setting, not just
-            // the name of the key bound to a toggle. Query the engine's
-            // live options on each world snapshot, never a Java-side guess.
-            const char *const setting = node.id == "toggle_auto_features" ? "AUTO_FEATURES" :
-                                        node.id == "toggle_auto_mining" ? "AUTO_MINING" :
-                                        node.id == "toggle_auto_pickup" ? "AUTO_PICKUP" : "AUTOSAFEMODE";
-            const bool is_on = get_option<bool>( setting );
-            const std::string state = is_on ? _( "Currently on" ) : _( "Currently off" );
-            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
-            if( node.id == "toggle_auto_mining" && is_on &&
-                !get_option<bool>( "AUTO_FEATURES" ) ) {
-                node.label += ". " + std::string( _( "Inactive: additional auto features are off" ) );
-                node.detail = _( "Auto mining is enabled but inactive while additional auto features are off." );
-            }
-        } else if( node.id == "toggle_auto_pulp_butcher" ||
-                   node.id == "toggle_auto_foraging" ) {
-            // These are multi-state options (not booleans). Speaking the
-            // translated choice preserves pulp/butcher or foraging mode.
-            const char *const setting = node.id == "toggle_auto_pulp_butcher" ?
-                                        "AUTO_PULP_BUTCHER" : "AUTO_FORAGING";
-            const auto &option = get_options().get_option( setting );
-            const std::string state = option.getValueName();
-            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
-            if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
-                node.label += ". " + std::string( _( "Inactive: additional auto features are off" ) );
-                node.detail = _( "Selected mode is inactive while additional auto features are off." );
-            }
-        } else if( node.id == "toggle_thief_mode" ) {
-            const std::string selected = viewer.get_value( "THIEF_MODE" ).str();
-            const std::string state = selected == "THIEF_HONEST" ? _( "Always honest" ) :
-                                      selected == "THIEF_STEAL" ? _( "Always steal" ) :
-                                      _( "Ask before taking owned items" );
-            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
-        } else if( node.id == "safemode" && g ) {
-            const std::string state = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
-                                      g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) : _( "Currently on" );
-            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
-        } else if( node.id == "autoattack" ) {
-            // Autoattack is one attack, not a persistent auto-combat switch.
-            node.detail = _( "Perform one automatic melee attack. This is not an on/off setting." );
         } else if( node.id == "auto_travel_mode" ) {
-            const bool auto_on = g && g->auto_travel_mode;
-            node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
             node.detail = _( "When on, directional movement may follow a longer path. "
                              "It does not select a destination." );
         } else if( node.id == "grab" ) {
@@ -990,10 +946,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                  "Selecting it grabs it immediately." );
             }
         } else if( node.id == "haul" || node.id == "haul_toggle" ) {
-            node.label = viewer.is_hauling() ? _( "Hauling: on" ) : _( "Hauling: off" );
             node.detail = string_format( _( "Items selected: %1$d. Autohaul: %2$s." ),
-                                          static_cast<int>( viewer.haul_list.size() ),
-                                          viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
+                                         static_cast<int>( viewer.haul_list.size() ),
+                                         viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
         } else if( node.id == "interact" || node.id == "examine" ||
                    node.id == "examine_and_pickup" ) {
             node.detail = _( "Opens a spoken list of visible, nearby objects. "

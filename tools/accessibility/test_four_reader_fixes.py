@@ -14,6 +14,7 @@ class ReaderRegressionFixes(unittest.TestCase):
         cls.controller = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         cls.tts = (JAVA / "TtsSettingsActivity.java").read_text(encoding="utf-8")
         cls.world = (SRC / "a11y_world.cpp").read_text(encoding="utf-8")
+        cls.input = (SRC / "a11y_input.cpp").read_text(encoding="utf-8")
         cls.serialize = (SRC / "a11y_semantics.cpp").read_text(encoding="utf-8")
         cls.android = (SRC / "a11y_android.cpp").read_text(encoding="utf-8")
         cls.perception = (SRC / "a11y_perception.cpp").read_text(encoding="utf-8")
@@ -43,13 +44,14 @@ class ReaderRegressionFixes(unittest.TestCase):
         for action in ("toggle_auto_features", "toggle_auto_mining", "toggle_auto_pickup",
                        "toggle_auto_pulp_butcher", "toggle_auto_foraging", "autosafe",
                        "safemode", "toggle_thief_mode", "autoattack"):
-            self.assertIn('node.id == "' + action + '"', self.world)
-        self.assertIn('get_option<bool>( setting )', self.world)
-        self.assertIn('option.getValueName()', self.world)
-        self.assertIn('get_option<bool>( "AUTO_FEATURES" )', self.world)
-        self.assertIn('_( "Currently on" )', self.world)
-        self.assertIn('_( "Currently off" )', self.world)
-        self.assertIn('This is not an on/off setting.', self.world)
+            self.assertIn('id == "' + action + '"', self.input)
+        self.assertIn('get_option<bool>( setting )', self.input)
+        self.assertIn('option.getValueName()', self.input)
+        self.assertIn('get_option<bool>( "AUTO_FEATURES" )', self.input)
+        self.assertIn('_( "Currently on" )', self.input)
+        self.assertIn('_( "Currently off" )', self.input)
+        self.assertIn('This is not an on/off setting.', self.input)
+        self.assertNotIn('node.id == "toggle_auto_pickup"', self.world)
 
     def test_spoken_markup_removed_centrally_without_mutating_edit_data(self):
         self.assertIn('quote_spoken( node.label )', self.serialize)
