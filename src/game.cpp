@@ -3451,6 +3451,11 @@ void game::draw( ui_adaptor &ui )
         return;
     }
 
+#if defined(__ANDROID__)
+    const bool profile_render = a11y::android::performance_profiling_enabled();
+    const auto render_started = profile_render ? std::chrono::steady_clock::now() :
+                                std::chrono::steady_clock::time_point{};
+#endif
     try_activate_zone_sort_viewport();
 
     // Transient view_offset override for zone sort viewport lock.
@@ -3462,7 +3467,15 @@ void game::draw( ui_adaptor &ui )
 
     ter_view_p.z() = ( u.pos_bub() + u.view_offset ).z();
     here.build_map_cache( ter_view_p.z() );
+#if defined(__ANDROID__)
+    const auto render_cache_ready = profile_render ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
+#endif
     here.update_visibility_cache( ter_view_p.z() );
+#if defined(__ANDROID__)
+    const auto render_vision_ready = profile_render ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+#endif
 
 #if defined(__ANDROID__)
     // Give the Android reader a distance, never an identity or an invisible
@@ -3498,11 +3511,32 @@ void game::draw( ui_adaptor &ui )
 #endif
 
 #if defined(__ANDROID__)
+    const auto render_sonar_ready = profile_render ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
     if( a11y::android::suppress_world_visuals() ) {
         // Spoken-only world mode still runs the cache, visibility and sonar
         // updates above. Skip the expensive terrain, creature, animation and
         // sidebar painting. Modal UI adaptors remain fully operational.
+        // Preserve the cursor contract even when no pixels are painted.
+        ui.set_cursor( w_terrain, -u.view_offset.xy().raw() + point( POSX, POSY ) );
         u.view_offset = real_offset;
+        if( profile_render ) {
+            const auto ms = []( const auto from, const auto to ) {
+                return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+            };
+            const auto total_ms = ms( render_started, render_sonar_ready );
+            static unsigned int skipped_render_samples = 0;
+            if( total_ms >= 20 || ( ++skipped_render_samples % 8 ) == 0 ) {
+                a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
+                        "mode=headless cache_ms=" + std::to_string(
+                            ms( render_started, render_cache_ready ) ) +
+                        " visibility_ms=" + std::to_string(
+                            ms( render_cache_ready, render_vision_ready ) ) +
+                        " sonar_ms=" + std::to_string(
+                            ms( render_vision_ready, render_sonar_ready ) ) +
+                        " total_ms=" + std::to_string( total_ms ) );
+            }
+        }
         return;
     }
 #endif
@@ -3524,8 +3558,35 @@ void game::draw( ui_adaptor &ui )
         draw_blink_curses();
     }
     wnoutrefresh( w_terrain );
-
+#if defined(__ANDROID__)
+    const auto render_terrain_ready = profile_render ? std::chrono::steady_clock::now() :
+                                      std::chrono::steady_clock::time_point{};
+#endif
     draw_panels( true );
+#if defined(__ANDROID__)
+    if( profile_render ) {
+        const auto render_finished = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        const auto total_ms = ms( render_started, render_finished );
+        static unsigned int rendered_samples = 0;
+        if( total_ms >= 20 || ( ++rendered_samples % 8 ) == 0 ) {
+            a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
+                    "mode=visual cache_ms=" + std::to_string(
+                        ms( render_started, render_cache_ready ) ) +
+                    " visibility_ms=" + std::to_string(
+                        ms( render_cache_ready, render_vision_ready ) ) +
+                    " sonar_ms=" + std::to_string(
+                        ms( render_vision_ready, render_sonar_ready ) ) +
+                    " terrain_ms=" + std::to_string(
+                        ms( render_sonar_ready, render_terrain_ready ) ) +
+                    " panels_ms=" + std::to_string(
+                        ms( render_terrain_ready, render_finished ) ) +
+                    " total_ms=" + std::to_string( total_ms ) );
+        }
+    }
+#endif
 
     // Ensure that the cursor lands on the character when everything is drawn.
     // This allows screen readers to describe the area around the player, making it
