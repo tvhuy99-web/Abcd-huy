@@ -15,14 +15,13 @@ import android.widget.Toast;
 import java.io.OutputStream;
 import java.util.Locale;
 
-/** Three visible controls, with an explicit crash-recovery export choice. */
+/** One manual recording switch, spoken-only toggle, export and clear. */
 public final class DebugLogActivity extends Activity {
     private static final int EXPORT_FILE_REQUEST = 1917;
     private BootstrapSelfVoiceSurface surface;
     private AndroidSpeech speech;
     private boolean foreground;
     private byte[] pendingExport;
-    private boolean exportingCrash;
     private long utteranceSequence;
 
     @Override
@@ -62,9 +61,8 @@ public final class DebugLogActivity extends Activity {
                 SessionDebugLog.setEnabled(this, checked));
         controls.addView(enabled);
 
-        // These are independent of the ordinary crash/session journal. The
-        // visual switch affects only the world scene; native menus still draw.
-        // Adaptive profiling turns itself off after sustained fast walking.
+        // Graphic suppression is independent of manual diagnostic recording.
+        // Menus remain available even when the world scene is not drawn.
         CheckBox spokenOnlyWorld = new CheckBox(this);
         spokenOnlyWorld.setText(R.string.a11ySpokenOnlyWorld);
         spokenOnlyWorld.setChecked(reader.isSpokenOnlyWorldEnabled());
@@ -74,20 +72,9 @@ public final class DebugLogActivity extends Activity {
         });
         controls.addView(spokenOnlyWorld);
 
-        CheckBox profiling = new CheckBox(this);
-        profiling.setText(R.string.a11yAdaptiveProfiler);
-        profiling.setChecked(reader.isPerformanceProfilingEnabled());
-        profiling.setOnCheckedChangeListener((button, checked) -> {
-            reader.setPerformanceProfilingEnabled(checked);
-            SessionDebugLog.setVerboseWorldTrace(this, checked);
-            SessionDebugLog.event("CONTROL",
-                    checked ? "profile=manual_enabled" : "profile=manual_paused");
-        });
-        controls.addView(profiling);
-
         Button export = new Button(this);
         export.setText(R.string.a11yDebugLogExport);
-        export.setOnClickListener(view -> chooseExport());
+        export.setOnClickListener(view -> exportLog());
         controls.addView(export);
 
         Button clear = new Button(this);
@@ -110,43 +97,25 @@ public final class DebugLogActivity extends Activity {
             @Override public void onState(AndroidSpeech.State state) {
                 if (state == AndroidSpeech.State.READY && foreground && !usesTalkBack()) {
                     surface.speakFocused();
-                    if (SessionDebugLog.hasCrash(DebugLogActivity.this)) {
-                        speakText(getString(R.string.a11yDebugLogCrashAvailable));
-                    }
                 }
             }
             @Override public void onUtterance(String id, AndroidSpeech.Event event) { }
         });
     }
 
-    private void chooseExport() {
-        if (SessionDebugLog.hasCrash(this)) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.a11yDebugLogExport)
-                    .setItems(new CharSequence[]{
-                            getString(R.string.a11yDebugLogPreviousCrash),
-                            getString(R.string.a11yDebugLogCurrentSession)
-                    }, (dialog, selected) -> exportLog(selected == 0))
-                    .show();
-        } else {
-            exportLog(false);
-        }
-    }
-
-    private void exportLog(boolean crash) {
-        SessionDebugLog.event("CONTROL", "export_requested crash=" + crash);
-        byte[] bytes = SessionDebugLog.snapshot(this, crash);
+    private void exportLog() {
+        // Export includes only events explicitly captured in this launch.
+        // It remains available after recording is manually switched off.
+        byte[] bytes = SessionDebugLog.snapshot(this);
         if (bytes.length == 0) {
             Toast.makeText(this, R.string.a11yDebugLogEmpty, Toast.LENGTH_SHORT).show();
             return;
         }
         pendingExport = bytes;
-        exportingCrash = crash;
         Intent picker = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         picker.addCategory(Intent.CATEGORY_OPENABLE);
         picker.setType("text/plain");
-        picker.putExtra(Intent.EXTRA_TITLE, crash
-                ? "cataclysm-crash-recovery.txt" : "cataclysm-session-debug.txt");
+        picker.putExtra(Intent.EXTRA_TITLE, "cataclysm-session-debug.txt");
         try {
             startActivityForResult(picker, EXPORT_FILE_REQUEST);
         } catch (RuntimeException failure) {
@@ -173,8 +142,7 @@ public final class DebugLogActivity extends Activity {
             if (stream == null) { throw new java.io.IOException("No output stream"); }
             stream.write(bytes);
             stream.flush();
-            SessionDebugLog.event("CONTROL", "export_complete crash="
-                    + exportingCrash + " bytes=" + bytes.length);
+            SessionDebugLog.event("CONTROL", "export_complete bytes=" + bytes.length);
             Toast.makeText(this, R.string.a11yDebugLogExported, Toast.LENGTH_SHORT).show();
         } catch (Exception error) {
             SessionDebugLog.event("ERROR", "export_failed " + error);
