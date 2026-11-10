@@ -168,7 +168,10 @@ jobs:
             task_signing_args=()
           else
             task_build_command=assembleAccessibilityDebug
-            native_args=("-Poverride_version=$NATIVE_VERSION")
+            apk_version="$(git rev-parse --short=8 HEAD)"
+            native_args=("-Poverride_version=$NATIVE_VERSION"
+                         "-Paccessibility_apk_version=$apk_version")
+            echo "apk_revision=$apk_version" >> ../build-evidence/native.txt
             if [[ "$REUSED_NATIVE" == 'true' ]]; then
               # Gradle already has an explicit switch to omit CMake. The
               # restored .so is placed in the standard jniLibs directory.
