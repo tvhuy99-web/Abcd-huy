@@ -168,6 +168,25 @@ public final class ReaderPreferences {
         values.edit().putBoolean("enabled", false).apply();
     }
 
+    /** Spoken-only mode is the default in the dedicated accessibility APK. */
+    public boolean isSpokenOnlyWorldEnabled() {
+        return values.getBoolean("spoken_only_world", BuildConfig.FLAVOR.equals("accessibility"));
+    }
+
+    public void setSpokenOnlyWorldEnabled(boolean enabled) {
+        values.edit().putBoolean("spoken_only_world", enabled).apply();
+    }
+
+    /** Diagnostic profiling is temporary and automatically persists its OFF state. */
+    public boolean isPerformanceProfilingEnabled() {
+        return values.getBoolean("adaptive_performance_profiling",
+                BuildConfig.FLAVOR.equals("accessibility"));
+    }
+
+    public void setPerformanceProfilingEnabled(boolean enabled) {
+        values.edit().putBoolean("adaptive_performance_profiling", enabled).apply();
+    }
+
     public boolean isFastMovementEnabled() {
         return values.getBoolean("fast_movement", false);
     }
