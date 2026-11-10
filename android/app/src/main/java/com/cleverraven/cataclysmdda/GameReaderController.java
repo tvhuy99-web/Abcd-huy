@@ -347,6 +347,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // Receipt outcomes feed the diagnostics counters
                     // (R21.4): codes only, never the intent's contents.
                     ReaderDiagnostics.get().count("receipt_" + code);
+                    // A rejection for an already closed native screen must
+                    // never interrupt speech on a *different* interface.
+                    // This applies to every reader adapter, not just skill
+                    // headings. Do not hide a live rejection on the current
+                    // screen or retry a potentially consequential command.
+                    if (requestId != 0 && ("stale".equals(code)
+                            || "unsupported".equals(code) || "disabled".equals(code))) {
+                        String receiptContext = object.optString("session") + ":"
+                                + object.optString("frame") + ":"
+                                + object.optString("generation");
+                        if (since == null || snapshot == null
+                                || !receiptContext.equals(snapshot.contextKey())) {
+                            SessionDebugLog.event("INTENT_RESULT_IGNORED",
+                                    "request=" + requestId + " reason=former_screen");
+                            return;
+                        }
+                    }
                     if ("invalid_value".equals(code) && formRequest != 0
                             && formReceiptMatches(object)) {
                         // A form draft value was rejected on the game thread
