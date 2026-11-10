@@ -692,12 +692,9 @@ input_context game::get_player_input( std::string &action )
                         const auto vision_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                    std::chrono::steady_clock::now() - vision_started ).count();
                         a11y::android::performance_vision_sample( vision_ms );
-                        static unsigned int vision_samples = 0;
-                        if( vision_ms >= 20 || ( ++vision_samples % 8 ) == 0 ) {
-                            a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
-                                    "cache_visibility_ms=" + std::to_string( vision_ms ) +
-                                    " mode=headless_reader" );
-                        }
+                        a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
+                                "cache_visibility_ms=" + std::to_string( vision_ms ) +
+                                " mode=headless_reader" );
                     }
                 }
 #endif
@@ -712,19 +709,16 @@ input_context game::get_player_input( std::string &action )
                 const auto published = profile_reader ? std::chrono::steady_clock::now() :
                                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
-                    static unsigned int reader_timing_sample = 0;
                     const auto ms = []( const auto from, const auto to ) {
                         return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
                     };
                     const auto build_ms = ms( started, built );
                     const auto publish_ms = ms( built, published );
                     a11y::android::performance_reader_sample( build_ms + publish_ms );
-                    if( build_ms >= 20 || publish_ms >= 20 || ( ++reader_timing_sample % 8 ) == 0 ) {
-                        a11y::android::diagnostic_event( "WORLD_READER_TIMING",
-                                "build_ms=" + std::to_string( build_ms ) +
-                                " update_publish_ms=" + std::to_string( publish_ms ) +
-                                " nodes=" + std::to_string( nodes ) );
-                    }
+                    a11y::android::diagnostic_event( "WORLD_READER_TIMING",
+                            "build_ms=" + std::to_string( build_ms ) +
+                            " update_publish_ms=" + std::to_string( publish_ms ) +
+                            " nodes=" + std::to_string( nodes ) );
                 }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
