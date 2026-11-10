@@ -138,7 +138,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean lastSpokenOnlyWorld;
     private boolean lastPerformanceProfile;
     private volatile long presentationEpoch;
-    private int worldJavaTimingSample;
     private long lastWorldBusyNotice;
     // Travel controls are a local two-button reader panel, with a third
     // explicit ignore-warning option only when native safe mode blocked the
@@ -772,8 +771,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else {
                     clearPendingWorldDirection();
                 }
-                if (worldView && SessionDebugLog.isRecording()
-                        && (++worldJavaTimingSample % 8) == 0) {
+                if (worldView && receivedAt != 0L && SessionDebugLog.isRecording()) {
                     SessionDebugLog.event("WORLD_JAVA_TIMING",
                             "jni_to_ui_ms=" + (dispatchedAt - receivedAt)
                             + " parse_ms=" + (parsedAt - dispatchedAt)
