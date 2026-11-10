@@ -467,6 +467,18 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     /**
+     * Interrupt audible and queued game speech immediately when the player
+     * touches the screen. Return whether an utterance was in progress or
+     * queued so a solitary touch can silence without opening a world tile.
+     * All access is on the Android UI thread, as with every queue operation.
+     */
+    public boolean stopForTouch() {
+        boolean interrupted = active != null || !pending.isEmpty();
+        stop();
+        return interrupted;
+    }
+
+    /**
      * Lifecycle boundary (R20.3): the screen lost the foreground or the
      * window focus, so nothing from before the boundary may be spoken
      * after it. {@link #stop()} alone is not enough for this: it keeps

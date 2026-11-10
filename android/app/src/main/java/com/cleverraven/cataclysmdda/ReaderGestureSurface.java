@@ -92,6 +92,7 @@ public final class ReaderGestureSurface extends LinearLayout {
     private boolean activateOnUp;
     private boolean swipeHandled;
     private boolean longPressHandled;
+    private boolean touchSilencedSpeech;
     private boolean ignoreUntilPointersReleased;
     private final int[] backPointerIds = new int[2];
     private final float[] backPointerStartX = new float[2];
@@ -477,6 +478,15 @@ public final class ReaderGestureSurface extends LinearLayout {
         oneFingerPath.add(new float[] { x, y });
     }
 
+    /**
+     * Activity dispatches ACTION_DOWN first, including for native child
+     * controls. Preserve that answer through the pointer sequence, so a
+     * solitary touch made to silence speech cannot read a world tile on UP.
+     */
+    void setTouchSilencedSpeech(boolean interrupted) {
+        touchSilencedSpeech = interrupted;
+    }
+
     @Override
     public boolean dispatchTouchEvent(MotionEvent event) {
         if (listener.usesTouchExploration()) {
@@ -712,8 +722,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     && !activatedByDoubleTap
                     && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
                     && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
-            previousTapOwner = tap ? owner : null;
-            if (tap && listener.directWorldGesturesEnabled()) {
+            previousTapOwner = tap && !touchSilencedSpeech ? owner : null;
+            if (tap && listener.directWorldGesturesEnabled() && !touchSilencedSpeech) {
                 queueWorldTap(event, owner);
             } else if (!tap) {
                 clearWorldTaps();
@@ -790,6 +800,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         requestParentCapture(false);
         oneFingerPath.clear();
         backPointerCount = 0;
+        touchSilencedSpeech = false;
         ignoreUntilPointersReleased = false;
     }
 }

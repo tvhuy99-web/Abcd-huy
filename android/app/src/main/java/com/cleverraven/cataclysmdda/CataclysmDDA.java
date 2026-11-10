@@ -118,6 +118,12 @@ public class CataclysmDDA extends SDLActivity {
         if (event != null && reader != null && reader.isEnabled()
                 && !reader.usesTouchExploration() && getWindow() != null) {
             int action = event.getActionMasked();
+            if (action == MotionEvent.ACTION_DOWN) {
+                // Always runs before child views receive the finger. Silence
+                // custom speech everywhere in the game, not just on the
+                // reader overlay; the gesture itself continues normally.
+                reader.silenceSpeechOnTouchDown();
+            }
             View decor = getWindow().getDecorView();
             if (decor instanceof ViewGroup) {
                 if (action == MotionEvent.ACTION_POINTER_DOWN
