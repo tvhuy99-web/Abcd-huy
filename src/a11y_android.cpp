@@ -29,7 +29,6 @@ std::atomic<bool> performance_profile_active{ false };
 std::atomic<unsigned int> profile_configuration_epoch{ 0 };
 std::atomic<unsigned int> profile_busy_epoch{ 0 };
 // Only accessed by the native game thread, never by Java callbacks.
-unsigned int stable_walking_steps = 0;
 unsigned int last_profile_configuration_epoch = 0;
 unsigned int last_profile_busy_epoch = 0;
 long long last_profile_draw_ms = -1;
@@ -92,23 +91,44 @@ void configure_performance( const bool skip_visuals, const bool profile )
     }
 }
 
+// This is diagnostic-only state. It is touched exclusively by the native
+// game thread. The Java switch only changes the atomic profile flag/epoch.
+static void reset_profile_if_reconfigured()
+{
+    const unsigned int config_epoch = profile_configuration_epoch.load( std::memory_order_acquire );
+    if( config_epoch == last_profile_configuration_epoch ) {
+        return;
+    }
+    last_profile_configuration_epoch = config_epoch;
+    last_profile_draw_ms = -1;
+    last_profile_sim_ms = -1;
+    last_profile_vision_ms = -1;
+    last_profile_reader_ms = -1;
+    shifted_since_last_step = false;
+    pending_walking_step = false;
+    last_profile_busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
+}
+
 void performance_draw_sample( const long long ms )
 {
     if( performance_profiling_enabled() ) {
+        reset_profile_if_reconfigured();
         last_profile_draw_ms = ms;
     }
 }
 void performance_sim_sample( const long long ms )
 {
     if( performance_profiling_enabled() ) {
-        // Some moves consume more than one simulated turn; keep the slowest
-        // turn until the next real, published world snapshot.
+        reset_profile_if_reconfigured();
+        // Some moves consume several simulated turns. Record the slowest
+        // one until the result is published to the reader.
         last_profile_sim_ms = std::max( last_profile_sim_ms, ms );
     }
 }
 void performance_vision_sample( const long long ms )
 {
     if( performance_profiling_enabled() ) {
+        reset_profile_if_reconfigured();
         last_profile_vision_ms = ms;
     }
 }
@@ -117,69 +137,37 @@ void performance_reader_sample( const long long ms )
     if( !performance_profiling_enabled() ) {
         return;
     }
+    reset_profile_if_reconfigured();
     last_profile_reader_ms = ms;
-    const unsigned int config_epoch = profile_configuration_epoch.load( std::memory_order_acquire );
-    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
-    if( config_epoch != last_profile_configuration_epoch ) {
-        // Manual re-enabling is a fresh measurement campaign, not a reuse
-        // of favorable samples from the previous session.
-        last_profile_configuration_epoch = config_epoch;
-        stable_walking_steps = 0;
-        pending_walking_step = false;
-        last_profile_draw_ms = -1;
-        last_profile_sim_ms = -1;
-        last_profile_vision_ms = -1;
-        last_profile_reader_ms = -1;
-        shifted_since_last_step = false;
-        last_profile_busy_epoch = busy_epoch;
-        return;
-    }
     if( !pending_walking_step ) {
-        // A menu, blocked move or other action breaks a walking streak.
-        // Do not let a slow unrelated monster turn poison every later
-        // attempt at collecting 48 fresh, fast walking cycles.
-        stable_walking_steps = 0;
+        // In logging mode every event is recorded, but a non-walking turn
+        // must not reuse timing samples for the next walking action.
         last_profile_draw_ms = -1;
         last_profile_sim_ms = -1;
         last_profile_vision_ms = -1;
         last_profile_reader_ms = -1;
         shifted_since_last_step = false;
-        last_profile_busy_epoch = busy_epoch;
+        last_profile_busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
         return;
     }
 
-    const auto cycle_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                              std::chrono::steady_clock::now() - pending_step_completed_at ).count();
-    constexpr long long cycle_budget_ms = 250;
-    const bool fast_step = !shifted_since_last_step &&
-                           busy_epoch == last_profile_busy_epoch &&
-                           cycle_ms <= cycle_budget_ms &&
-                           last_profile_draw_ms >= 0 && last_profile_draw_ms <= 40 &&
-                           last_profile_sim_ms >= 0 && last_profile_sim_ms <= 120 &&
-                           last_profile_vision_ms >= 0 && last_profile_vision_ms <= 60 &&
-                           last_profile_reader_ms <= 35;
-    if( fast_step ) {
-        ++stable_walking_steps;
-    } else {
-        stable_walking_steps = 0;
-    }
+    const auto update_after_action_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                            std::chrono::steady_clock::now() -
+                                            pending_step_completed_at ).count();
+    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
 #if defined(__ANDROID__)
-    static unsigned int pipeline_samples = 0;
-    if( !fast_step || ( ++pipeline_samples % 8 ) == 0 ) {
-        diagnostic_event( "WORLD_STEP_PIPELINE",
-                          "cycle_ms=" + std::to_string( cycle_ms ) +
-                          " draw_ms=" + std::to_string( last_profile_draw_ms ) +
-                          " sim_max_ms=" + std::to_string( last_profile_sim_ms ) +
-                          " vision_ms=" + std::to_string( last_profile_vision_ms ) +
-                          " reader_ms=" + std::to_string( last_profile_reader_ms ) +
-                          " shifted=" + ( shifted_since_last_step ? "true" : "false" ) +
-                          " busy=" + ( busy_epoch != last_profile_busy_epoch ? "true" : "false" ) +
-                          " stable_streak=" + std::to_string( stable_walking_steps ) );
-    }
+    // ON is a complete diagnostic capture. Do not sample, skip fast
+    // footsteps or stop after any number of stable turns.
+    diagnostic_event( "WORLD_STEP_PIPELINE",
+                      "after_action_to_reader_ms=" + std::to_string( update_after_action_ms ) +
+                      " draw_ms=" + std::to_string( last_profile_draw_ms ) +
+                      " sim_max_ms=" + std::to_string( last_profile_sim_ms ) +
+                      " vision_ms=" + std::to_string( last_profile_vision_ms ) +
+                      " reader_ms=" + std::to_string( last_profile_reader_ms ) +
+                      " shifted=" + ( shifted_since_last_step ? "true" : "false" ) +
+                      " busy=" + ( busy_epoch != last_profile_busy_epoch ? "true" : "false" ) );
 #endif
 
-    // Never reuse the last step's favorable measurements. The following
-    // action and its simulation must finish and publish a new snapshot.
     pending_walking_step = false;
     shifted_since_last_step = false;
     last_profile_draw_ms = -1;
@@ -187,24 +175,12 @@ void performance_reader_sample( const long long ms )
     last_profile_vision_ms = -1;
     last_profile_reader_ms = -1;
     last_profile_busy_epoch = busy_epoch;
-
-    // Evaluate only after publishing the result of the 48th actual step,
-    // not at the JNI receipt or before that step's monster/world turn.
-    if( stable_walking_steps >= 48 ) {
-        performance_profile_active.store( false, std::memory_order_release );
-#if defined(__ANDROID__)
-        diagnostic_event( "WORLD_PROFILE_STATE",
-                          "state=auto_paused stable_walks=48 cycle_budget_ms=250 "
-                          "draw_budget_ms=40 sim_budget_ms=120 vision_budget_ms=60 "
-                          "reader_budget_ms=35" );
-#endif
-    }
 }
 void performance_world_shift()
 {
     if( performance_profiling_enabled() ) {
+        reset_profile_if_reconfigured();
         shifted_since_last_step = true;
-        stable_walking_steps = 0;
     }
 }
 void performance_step_sample( const bool moved )
@@ -212,18 +188,11 @@ void performance_step_sample( const bool moved )
     if( !performance_profiling_enabled() ) {
         return;
     }
-    if( !moved ) {
-        stable_walking_steps = 0;
-        pending_walking_step = false;
-        return;
+    reset_profile_if_reconfigured();
+    pending_walking_step = moved;
+    if( moved ) {
+        pending_step_completed_at = std::chrono::steady_clock::now();
     }
-    if( pending_walking_step ) {
-        // Multiple actions before one world turn cannot count as multiple
-        // independently verified fast turns.
-        stable_walking_steps = 0;
-    }
-    pending_walking_step = true;
-    pending_step_completed_at = std::chrono::steady_clock::now();
 }
 
 void configure( const bool enable, const bool suspend )
@@ -259,7 +228,9 @@ bool enqueue( semantic_intent intent )
             std::any_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
             return pending.action == "activate" && is_world_step_node( pending.node );
         } ) ) {
-            profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
+            if( performance_profile_active.load( std::memory_order_relaxed ) ) {
+                profile_busy_epoch.fetch_add( 1, std::memory_order_relaxed );
+            }
             return false;
         }
         // Reserve the one movement input immediately. Subsequent swipes
@@ -604,6 +575,11 @@ void apply_pending_sound_settings()
 
 void diagnostic_event( const std::string &category, const std::string &detail )
 {
+    // Manual OFF disables the entire diagnostic bridge, including failures.
+    // Java checks the same manual switch under its file lock before writing.
+    if( !performance_profile_active.load( std::memory_order_acquire ) ) {
+        return;
+    }
     // Called on the native game thread; only ASCII internal action IDs are
     // sent here. User-entered text never crosses this diagnostic bridge.
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
