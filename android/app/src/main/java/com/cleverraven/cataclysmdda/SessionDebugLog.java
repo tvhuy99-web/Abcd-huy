@@ -138,6 +138,8 @@ public final class SessionDebugLog {
         // failures. Always retain broken footsteps, speech errors, safety
         // warnings and native crash diagnostics.
         if (category.equals("WORLD_MOVE_BLOCKED")
+                || category.equals("WORLD_STEP_BUSY")
+                || category.equals("WORLD_STEP_DEFERRED")
                 || category.equals("WORLD_PROFILE_STATE")
                 || category.equals("WORLD_VISUAL_STATE")
                 || category.equals("TTS_STATE")) {
