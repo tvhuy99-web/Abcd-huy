@@ -282,6 +282,18 @@ void set_world_step_ready( const std::optional<context_token> token, const bool 
                        !pending_step;
 }
 
+bool world_step_can_accept()
+{
+    // JNI read-only readiness probe. The game thread is the only writer.
+    // This is not permission to bypass gameplay: enqueue() repeats the
+    // exact same one-step gate under this mutex.
+    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    return world_step_ready && has_world_token && enabled() && !suspended() &&
+           std::none_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
+        return pending.action == "activate" && is_world_step_node( pending.node );
+    } );
+}
+
 int travel_state()
 {
     return active_travel_state.load( std::memory_order_acquire );
@@ -833,6 +845,12 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReaderPerformance(
     JNIEnv *, jclass, jboolean no_world_visuals, jboolean profile )
 {
     a11y::android::configure_performance( no_world_visuals == JNI_TRUE, profile == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeWorldStepReady( JNIEnv *, jclass )
+{
+    return a11y::android::world_step_can_accept() ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT jint JNICALL
