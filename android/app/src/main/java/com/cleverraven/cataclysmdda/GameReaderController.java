@@ -1053,7 +1053,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         catch (NumberFormatException invalid) { return 0; }
     }
 
+    private boolean pocketAllowsSelection() {
+        ReaderSnapshot.Node parent = snapshot == null ? null : snapshot.find(pocketCurrentId);
+        return parent != null && parent.actions.contains("set_value");
+    }
+
     private String pocketItemSpeech(ReaderSnapshot.Node node, int position, int total) {
+        if (!pocketAllowsSelection()) {
+            // Ordinary Inventory is a read-only browse, not a pickup draft.
+            String detail = node.detail.isEmpty() || node.detail.equals(node.label)
+                    ? "" : ". " + node.detail;
+            return node.label + detail + ". "
+                    + activity.getString(R.string.a11yPosition, position, total);
+        }
         return activity.getString(R.string.a11yPocketRow, node.label,
                 pocketAmount(node), (int) node.fieldMax, position, total)
                 + (node.enabled ? "" : ". " + node.disabledReason);
@@ -1129,7 +1141,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void openPocketContents(ReaderSnapshot.Node pocket) {
-        if (!pocket.actions.contains("set_value")) {
+        if ("sealed".equals(pocket.value)) {
             feedback(activity.getString(R.string.a11yPocketSealed) + ". " + pocket.detail);
             return;
         }
@@ -1264,7 +1276,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             ReaderSnapshot.Node pocket = snapshot == null ? null : snapshot.find(focus);
             if (pocket != null) { openPocketContents(pocket); }
         } else if (pocketStage == 3) {
-            if (POCKET_CONFIRM_NODE.equals(focus)) {
+            if (POCKET_CONFIRM_NODE.equals(focus) && pocketAllowsSelection()) {
                 commitPocketChoices();
                 return;
             }
@@ -1274,6 +1286,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
             if (item == null) { return; }
+            if (!pocketAllowsSelection()) {
+                feedback(pocketChoiceSpeech());
+                return;
+            }
             if (!item.enabled) {
                 feedback(item.disabledReason);
             } else if (item.fieldMax > 1) {
@@ -1291,7 +1307,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             List<ReaderSnapshot.Node> choices = pocketStage == 2
                     ? pocketNodes(pocketContainerId) : pocketItems();
             if (choices.isEmpty()) { return; }
-            int count = choices.size() + (pocketStage == 3 ? 2 : 0);
+            int count = choices.size() + (pocketStage == 3
+                    ? pocketAllowsSelection() ? 2 : 1 : 0);
             int index = 0;
             if (pocketStage == 3 && POCKET_CONFIRM_NODE.equals(focus)) {
                 index = choices.size();
@@ -1303,8 +1320,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
             }
             int next = Math.floorMod(index + delta, count);
-            focus = next == choices.size() ? POCKET_CONFIRM_NODE
-                    : next == choices.size() + 1 ? POCKET_CANCEL_NODE : choices.get(next).id;
+            focus = next < choices.size() ? choices.get(next).id
+                    : pocketAllowsSelection() && next == choices.size()
+                    ? POCKET_CONFIRM_NODE : POCKET_CANCEL_NODE;
         }
         render();
         feedback(pocketChoiceSpeech());
@@ -1372,7 +1390,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 });
                 rows.addView(next);
             }
-            if (pocketStage == 3) {
+            if (pocketStage == 3 && pocketAllowsSelection()) {
                 Button confirm = new Button(activity);
                 confirm.setText(R.string.a11yPocketConfirm);
                 confirm.setSelected(POCKET_CONFIRM_NODE.equals(focus));
@@ -1463,7 +1481,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // "Open pocket", leaving double-tap reserved for selecting the item.
         ReaderSnapshot.Node focused = snapshot.find(focus);
         if ("inventory".equals(snapshot.category) && focused != null
-                && "checkbox".equals(focused.role)
+                && ("checkbox".equals(focused.role) || "button".equals(focused.role))
                 && focused.id.startsWith("item:")
                 && !pocketNodes(focused.id).isEmpty()) {
             pocketContext = snapshot.contextKey();
