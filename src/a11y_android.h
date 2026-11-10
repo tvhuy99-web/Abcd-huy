@@ -26,6 +26,8 @@ void configure_performance( bool skip_world_visuals, bool profile );
 // automatically disables itself and persists that choice through Java.
 void performance_draw_sample( long long ms );
 void performance_sim_sample( long long ms );
+void performance_vision_sample( long long ms );
+void performance_reader_sample( long long ms );
 void performance_step_sample( bool moved );
 void performance_world_shift();
 
