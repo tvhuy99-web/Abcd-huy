@@ -118,6 +118,11 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("Thread.setDefaultUncaughtExceptionHandler", log)
         self.assertIn("log.crashFile", log)
         self.assertIn("setVerboseWorldTrace(this, false)", game)
+        self.assertIn('category.equals("WORLD_MOVE_BLOCKED")', log)
+        self.assertIn('category.equals("TTS_STATE")', log)
+        self.assertIn('detail.contains("event=ERROR")', log)
+        self.assertIn('detail.contains("status=busy")', log)
+        self.assertIn('diagnostic_event( "WORLD_MOVE_BLOCKED"', engine)
 
     def test_debug_screen_reversible_controls_are_localized(self):
         ui = java("DebugLogActivity.java")
