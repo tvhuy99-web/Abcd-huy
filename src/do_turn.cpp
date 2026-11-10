@@ -760,12 +760,9 @@ bool game::do_turn()
                         const auto draw_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                  std::chrono::steady_clock::now() - draw_started ).count();
                         a11y::android::performance_draw_sample( draw_ms );
-                        static unsigned int draw_samples = 0;
-                        if( draw_ms >= 20 || ( ++draw_samples % 8 ) == 0 ) {
-                            a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
-                                    "draw_ms=" + std::to_string( draw_ms ) +
-                                    ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
-                        }
+                        a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
+                                "draw_ms=" + std::to_string( draw_ms ) +
+                                ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
                     }
 #else
                     ui_manager::redraw();
@@ -893,18 +890,15 @@ bool game::do_turn()
         };
         const auto total_ms = ms( world_sim_started, now );
         a11y::android::performance_sim_sample( total_ms );
-        static unsigned int world_sim_samples = 0;
-        if( total_ms >= 40 || ( ++world_sim_samples % 8 ) == 0 ) {
-            a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
-                    "total_ms=" + std::to_string( total_ms ) +
-                    " before_cache_ms=" + std::to_string(
-                        ms( world_sim_started, before_monster_cache ) ) +
-                    " cache_ms=" + std::to_string(
-                        ms( before_monster_cache, after_monster_cache ) ) +
-                    " monsters_ms=" + std::to_string(
-                        ms( after_monster_cache, after_monster_turn ) ) +
-                    " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
-        }
+        a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
+                "total_ms=" + std::to_string( total_ms ) +
+                " before_cache_ms=" + std::to_string(
+                    ms( world_sim_started, before_monster_cache ) ) +
+                " cache_ms=" + std::to_string(
+                    ms( before_monster_cache, after_monster_cache ) ) +
+                " monsters_ms=" + std::to_string(
+                    ms( after_monster_cache, after_monster_turn ) ) +
+                " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
     }
 #endif
 
