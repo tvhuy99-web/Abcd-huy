@@ -41,11 +41,10 @@ class ConciseFocusTest(unittest.TestCase):
         self.assertIn("node.disabledReason", body)
 
     def test_screen_title_on_entry_and_full_details_remain_available(self):
-        self.assertIn(
-            'feedback(introduction + ". " + nodeText(next.find(focus), false));',
-            self.reader,
-        )
-        self.assertIn('introduction += ". " + next.summary.trim();',
+        self.assertIn('feedback(introduction.isEmpty()', self.reader)
+        self.assertIn('introduction + ". " + nodeText(next.find(focus), false)',
+                      self.reader)
+        self.assertIn('String introduction = yesNo ? next.summary.trim() : next.title;',
                       self.reader)
         self.assertIn("String information = nodeText(node, true);", self.reader)
         self.assertIn("feedback(information);", self.reader)
