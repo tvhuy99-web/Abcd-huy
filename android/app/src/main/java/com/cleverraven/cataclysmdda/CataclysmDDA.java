@@ -200,6 +200,7 @@ public class CataclysmDDA extends SDLActivity {
             // across game resumes and app restarts without disabling crash
             // recovery or the user's ordinary debug journal.
             new ReaderPreferences(this).setPerformanceProfilingEnabled(false);
+            SessionDebugLog.setVerboseWorldTrace(this, false);
         }
     }
 
