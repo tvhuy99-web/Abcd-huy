@@ -1593,7 +1593,7 @@ bool game::cancel_activity_or_ignore_query( const distraction_type type, const s
     const std::string &action = query_popup()
                                 .preferred_keyboard_mode( keyboard_mode::keycode )
                                 .context( "CANCEL_ACTIVITY_OR_IGNORE_QUERY" )
-                                .message( force_uc && !is_keycode_mode_supported() ?
+                                .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
                                           pgettext( "cancel_activity_or_ignore_query",
                                                   "<color_light_red>%s %s (Case Sensitive)</color>" ) :
                                           pgettext( "cancel_activity_or_ignore_query",
