@@ -12,6 +12,7 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_runtime.h"
 #include "auto_pickup.h"
 #include "calendar.h"
 #include "character.h"
@@ -207,7 +208,7 @@ static bool is_bulk_load( const Pickup::pick_info &lhs, const Pickup::pick_info 
 // Returns false if pickup caused a prompt and the player selected to cancel pickup
 static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool &got_gas,
                          PickupMap &mapPickup, bool autopickup, bool &stash_successful, bool &got_frozen_liquid,
-                         Pickup::pick_info &info )
+                         Pickup::pick_info &info, std::string &failure_reason )
 {
     Character &player_character = get_player_character();
     const map &here = get_map();
@@ -233,16 +234,19 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
     if( !newit.is_owned_by( player_character, true ) ) {
         const std::string thief_mode = player_character.get_value( "THIEF_MODE" ).str();
         if( thief_mode == "THIEF_HONEST" ) {
+            failure_reason = _( "Taking another person's property is disabled." );
             return true;
         } else if( thief_mode != "THIEF_STEAL" ) {
             // Default (THIEF_ASK) - check faction steal_persist
             faction *owner_fac = g->faction_manager_ptr->get( newit.get_owner(), false );
             if( owner_fac && owner_fac->steal_persist.has_value() ) {
                 if( !*owner_fac->steal_persist ) {
+                    failure_reason = _( "Taking this person's property was declined." );
                     return true; // NEVER
                 }
                 // ALWAYS
             } else if( !Pickup::query_thief( newit ) ) {
+                failure_reason = _( "Taking this person's property was declined." );
                 return true;
             }
         }
@@ -261,8 +265,13 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         }
     }
 
-    if( ( info.max_volume != -1_ml && newit.volume() + info.picked_up_volume > info.max_volume ) ||
-        ( info.max_mass != -1_gram && newit.weight() + info.picked_up_mass > info.max_mass ) ) {
+    const bool beyond_volume_limit = info.max_volume != -1_ml &&
+                                     newit.volume() + info.picked_up_volume > info.max_volume;
+    const bool beyond_mass_limit = info.max_mass != -1_gram &&
+                                   newit.weight() + info.picked_up_mass > info.max_mass;
+    if( beyond_volume_limit || beyond_mass_limit ) {
+        failure_reason = beyond_volume_limit ? _( "The pickup volume limit was reached." ) :
+                         _( "The pickup weight limit was reached." );
         stash_successful = false;
         return false;
     }
@@ -278,23 +287,32 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
                 newit.set_flag( json_flag_SHREDDED );
             } else {
                 got_frozen_liquid = true;
+                failure_reason = _( "Frozen liquid needs suitable tools." );
             }
         }
     } else if( newit.made_of_from_type( phase_id::LIQUID ) ) {
         got_water = true;
+        failure_reason = _( "Spilled liquid cannot be collected without a container." );
     } else if( newit.made_of_from_type( phase_id::GAS ) ) {
         got_gas = true;
+        failure_reason = _( "Spilled gas cannot be picked up." );
     } else if( newit.is_bucket_nonempty() ) {
         if( !autopickup ) {
             const std::string &explain = string_format( _( "Can't stash %s while it's not empty" ),
                                          newit.display_name() );
             option = handle_problematic_pickup( newit, explain );
             did_prompt = true;
+            if( option == CANCEL ) {
+                failure_reason = _( "The nonempty container was not picked up." );
+            }
         } else {
             option = CANCEL;
         }
     } else if( !player_character.can_pickWeight_partial( newit, false ) ||
                !player_character.can_stash_partial( newit, false ) ) {
+        failure_reason = !player_character.can_pickWeight_partial( newit, false ) ?
+                         _( "The item is too heavy to carry." ) :
+                         _( "There is not enough usable inventory space." );
         option = CANCEL;
         stash_successful = false;
     } else {
@@ -357,6 +375,9 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
             if( picked_up ) {
                 // Update info
                 info.set_dst( added_it );
+            } else if( !ret.success() && failure_reason.empty() ) {
+                failure_reason = _( "No available pocket accepted this item." );
+                stash_successful = false;
             }
             break;
         }
@@ -399,6 +420,9 @@ static bool pick_one_up( item_location &loc, int quantity, bool &got_water, bool
         }
     }
 
+    if( !picked_up && failure_reason.empty() ) {
+        failure_reason = _( "Pickup was not completed." );
+    }
     return picked_up || !did_prompt;
 }
 
@@ -427,18 +451,50 @@ bool Pickup::do_pickup( std::vector<item_location> &targets, std::vector<int> &q
 
         if( !target ) {
             debugmsg( "lost target item of ACT_PICKUP" );
+            if( a11y::enabled() && !autopickup ) {
+                ++info.a11y_failure_count;
+                if( info.a11y_failures.size() < 24 ) {
+                    info.a11y_failures.push_back( _( "A selected item is no longer available." ) );
+                }
+            }
             continue;
         }
+        const std::string selected_name = target->display_name( quantity > 0 ? quantity : 1 );
+        std::string failure_reason;
         problem = !pick_one_up( target, quantity, got_water, got_gas, mapPickup, autopickup,
-                                stash_successful, got_frozen_liquid, info );
+                                stash_successful, got_frozen_liquid, info, failure_reason );
+        if( a11y::enabled() && !autopickup && !failure_reason.empty() ) {
+            ++info.a11y_failure_count;
+            if( info.a11y_failures.size() < 24 ) {
+                info.a11y_failures.push_back( string_format(
+                                                  _( "%1$s: %2$s" ), selected_name, failure_reason ) );
+            }
+        }
         if( info.total_bulk_volume > 200_ml ) {
-            // Bulk loading is not allowed beyond a certain volume
-            info = Pickup::pick_info();
+            // Reset bulk-load accounting but retain results across turns.
+            Pickup::pick_info fresh;
+            fresh.a11y_successes = std::move( info.a11y_successes );
+            fresh.a11y_failures = std::move( info.a11y_failures );
+            fresh.a11y_success_count = info.a11y_success_count;
+            fresh.a11y_failure_count = info.a11y_failure_count;
+            info = std::move( fresh );
         }
     }
 
     if( !mapPickup.empty() ) {
-        show_pickup_message( mapPickup );
+        if( a11y::enabled() && !autopickup ) {
+            // Do not interrupt speech once per item or once per game turn.
+            // The activity actor speaks one factual result when it ends.
+            for( const auto &entry : mapPickup ) {
+                ++info.a11y_success_count;
+                if( info.a11y_successes.size() < 24 ) {
+                    info.a11y_successes.push_back(
+                        entry.second.first.display_name( entry.second.second ) );
+                }
+            }
+        } else {
+            show_pickup_message( mapPickup );
+        }
     }
     if( got_frozen_liquid ) {
         add_msg( m_info, _( "Chunks of frozen liquid cannot be picked up without the correct tools." ) );
@@ -551,6 +607,10 @@ void Pickup::pick_info::serialize( JsonOut &jsout ) const
     jsout.member( "max_volume", max_volume );
     jsout.member( "picked_up_mass", picked_up_mass );
     jsout.member( "max_mass", max_mass );
+    jsout.member( "a11y_successes", a11y_successes );
+    jsout.member( "a11y_failures", a11y_failures );
+    jsout.member( "a11y_success_count", a11y_success_count );
+    jsout.member( "a11y_failure_count", a11y_failure_count );
     jsout.end_object();
 }
 
@@ -569,6 +629,10 @@ void Pickup::pick_info::deserialize( const JsonObject &jsobj )
     jsobj.read( "max_volume", max_volume );
     jsobj.read( "picked_up_mass", picked_up_mass );
     jsobj.read( "max_mass", max_mass );
+    jsobj.read( "a11y_successes", a11y_successes );
+    jsobj.read( "a11y_failures", a11y_failures );
+    jsobj.read( "a11y_success_count", a11y_success_count );
+    jsobj.read( "a11y_failure_count", a11y_failure_count );
 }
 
 void Pickup::pick_info::set_src( const item_location &src_ )
