@@ -53,7 +53,7 @@ class UniversalBackAndScanContracts(unittest.TestCase):
         nearby = (SRC / "surroundings_menu.cpp").read_text("utf-8")
         self.assertIn("scan_unrestricted_tile( pos )", world)
         self.assertIn("a11y::scan_unrestricted_tile( position )", nearby)
-        self.assertIn("remove_color_tags( obj.tname() )", world)
+        self.assertIn("spoken_item_name( obj )", world)
         self.assertIn('_( "Items:" )', world)
         self.assertIn("!tile.furniture.empty()", nearby)
         self.assertIn("noteworthy_nearby_feature( terrain, position )", nearby)

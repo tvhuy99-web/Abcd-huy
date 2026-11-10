@@ -24,10 +24,16 @@ inline std::string spoken_item_name( const item &it )
     if( damage > 0 ) {
         name += ". " + string_format( _( "Damage level: %d" ), damage );
     } else if( damage < 0 ) {
-        name += ". " + _( "Reinforced" );
+        name += ". ";
+        name += _( "Reinforced" );
     }
     if( it.burnt > 0 ) {
-        name += ". " + _( "Burn damaged" );
+        name += ". ";
+        name += _( "Burn damaged" );
+    }
+    if( it.is_favorite ) {
+        name += ". ";
+        name += _( "Favorite item." );
     }
     return name;
 }

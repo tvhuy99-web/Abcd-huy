@@ -48,7 +48,7 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("here.tername( position )", helper)
         self.assertIn("get_creature_tracker().creature_at( position, true )", helper)
         self.assertIn("here.i_at( position )", helper)
-        self.assertIn("remove_color_tags( obj.tname() )", helper)
+        self.assertIn("spoken_item_name( obj )", helper)
         self.assertIn('_( "Items:" )', scan)
         self.assertNotIn("observe_tile(", scan)
         self.assertIn("A11Y_SCAN:", scan)

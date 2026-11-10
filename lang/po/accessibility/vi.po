@@ -4168,3 +4168,6 @@ msgstr "Được gia cố"
 
 msgid "Burn damaged"
 msgstr "Bị cháy hỏng"
+
+msgid "Inactive: additional auto features are off"
+msgstr "Chưa hoạt động: các tính năng tự động bổ sung đang tắt"

@@ -939,6 +939,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
             if( node.id == "toggle_auto_mining" && is_on &&
                 !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.label += ". " + std::string( _( "Inactive: additional auto features are off" ) );
                 node.detail = _( "Auto mining is enabled but inactive while additional auto features are off." );
             }
         } else if( node.id == "toggle_auto_pulp_butcher" ||
@@ -951,6 +952,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             const std::string state = option.getValueName();
             node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
             if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.label += ". " + std::string( _( "Inactive: additional auto features are off" ) );
                 node.detail = _( "Selected mode is inactive while additional auto features are off." );
             }
         } else if( node.id == "toggle_thief_mode" ) {
