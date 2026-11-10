@@ -269,6 +269,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         lastLoadingStatus = "";
         readerLayerParent = "";
         pendingReaderLayer = "";
+        pocketStage = 0;
+        pocketDrafts.clear();
+        pocketContainerId = "";
+        pocketCurrentId = "";
         editor = null;
         editorRequest = 0;
         formRequest = 0;
@@ -529,6 +533,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot previousSnapshot = snapshot;
                 if (changedContext) {
                     rememberScreenFocus(previousSnapshot, previous);
+                }
+                if (pocketStage != 0 &&
+                        (changedContext || next.find(pocketContainerId) == null
+                         || (pocketStage == 3 && next.find(pocketCurrentId) == null))) {
+                    // A different native screen or disappearing container
+                    // invalidates the entire local draft without committing.
+                    pocketStage = 0;
+                    pocketCurrentId = "";
+                    pocketContainerId = "";
+                    pocketContext = "";
+                    pocketReturnParent = "";
+                    pocketDrafts.clear();
                 }
                 snapshot = next;
                 lastLoadingStatus = "";
@@ -1394,33 +1410,37 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void openContextActions() {
         if (debugReport != null || closed) { return; }
+        if (pocketStage != 0) {
+            resetPocketPicker(true);
+            return;
+        }
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             showHubActionChoices();
             return;
         }
         if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
-        List<ReaderSnapshot.Node> commands = contextualCommands();
-        boolean hasContent = false;
-        for (ReaderSnapshot.Node node : snapshot.nodes) {
-            if (node.parentId.equals(readerLayerParent) && !isAuxiliaryCommand(node)) {
-                hasContent = true;
-                break;
-            }
-        }
-        if (!hasContent || commands.isEmpty()) {
-            feedback(activity.getString(R.string.a11yNoContextCommands));
+        // Long-press on an inventory item opens a local action list with
+        // "Open pocket", leaving double-tap reserved for selecting the item.
+        ReaderSnapshot.Node focused = snapshot.find(focus);
+        if ("inventory".equals(snapshot.category) && focused != null
+                && focused.id.startsWith("item:")
+                && !pocketNodes(focused.id).isEmpty()
+                && pocketNodes(focused.id).stream()
+                        .anyMatch(p -> p.actions.contains("set_value"))) {
+            pocketContext = snapshot.contextKey();
+            pocketContainerId = focused.id;
+            pocketReturnParent = readerLayerParent;
+            pocketCurrentId = "";
+            pocketDrafts.clear();
+            pocketStage = 1;
+            pocketMenuChoice = 0;
+            root.cancelGesture();
+            render();
+            feedback(activity.getString(R.string.a11yPocketActions) + ". " + pocketChoiceSpeech());
             return;
         }
-        commandPaletteReturnFocus = focus;
-        commandPaletteReturnParent = readerLayerParent;
-        commandPaletteOpen = true;
-        readerLayerParent = "";
-        focus = commands.get(0).id;
-        root.cancelGesture();
-        render();
-        feedback(activity.getString(R.string.a11yContextCommands) + ". "
-                + nodeText(commands.get(0), false));
+        openGlobalContextActions();
     }
 
     private void closeContextActions() {
@@ -1561,6 +1581,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (comprehensiveMenu) {
             root.setBackgroundColor(0xff161616);
             renderHub();
+        } else if (pocketStage != 0) {
+            root.setBackgroundColor(0xff161616);
+            renderPocketPicker();
         } else if (commandPaletteOpen) {
             root.setBackgroundColor(0xff161616);
             renderContextCommands();
@@ -1616,6 +1639,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return presentationEpoch + ":screen:" + snapshot.session + ":"
                     + snapshot.frame + ":" + snapshot.generation
                     + ":" + snapshot.category
+                    + (pocketStage == 0 ? "" : ":pocket:" + pocketStage + ":" + pocketCurrentId)
                     + (editor == null ? "" : ":editor:" + editor.contextKey());
         }
         return presentationEpoch + ":waiting";
@@ -1680,6 +1704,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             readCurrent();
             return;
         }
+        if (pocketStage != 0) {
+            navigatePocketPicker(delta);
+            return;
+        }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         if (filtered.isEmpty()) { return; }
         // All spoken lists wrap both ways: end -> first, first -> end.
@@ -1695,7 +1723,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean adjustFocusedSetting(int delta) {
-        if (debugReport != null || comprehensiveMenu) { return false; }
+        if (debugReport != null || comprehensiveMenu || pocketStage != 0) { return false; }
         if (editor != null || snapshot == null || delta == 0
                 || !foreground || !windowFocused || lastSuspended) { return false; }
         ReaderSnapshot.Node node = snapshot.find(focus);
@@ -1762,6 +1790,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (comprehensiveMenu || commandPaletteOpen) {
             activate();
+            return;
+        }
+        if (pocketStage != 0) {
+            if (pocketStage == 3 && pocketItems().size() > 1) {
+                commitPocketChoices();
+            } else {
+                activatePocketPicker();
+            }
             return;
         }
         if (snapshot == null || directWorldGesturesEnabled()) { return; }
@@ -2025,6 +2061,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (choosingHubAction) { applyHubActionChoice(); }
             else if (choosingGesture) { applyGestureChoice(); }
             else { activateHub(); }
+            return;
+        }
+        if (pocketStage != 0) {
+            activatePocketPicker();
             return;
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
@@ -2695,6 +2735,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
+        if (pocketStage != 0) {
+            feedback(pocketChoiceSpeech());
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) {
             if (snapshot == null) {
@@ -2793,6 +2837,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (closed) { return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
+        if (pocketStage != 0) {
+            resetPocketPicker(true); // Back has the same rollback as Cancel.
+            return;
+        }
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
