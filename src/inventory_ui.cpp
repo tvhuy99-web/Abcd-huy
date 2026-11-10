@@ -3948,6 +3948,27 @@ class inventory_selector::reader_session
                     ++published_children[parent_row[i]];
                 }
             }
+            // Index direct child entries once per redraw instead of scanning
+            // every inventory column again for every pocket. Large backpacks
+            // and nearby pickup lists can contain hundreds of entries.
+            struct candidate_pocket_entry {
+                inventory_column *column;
+                inventory_entry *entry;
+            };
+            std::unordered_map<const item *, std::vector<candidate_pocket_entry>> children_by_parent;
+            if( pickup_mode && quantity_form ) {
+                for( inventory_column *column : owner.columns ) {
+                    for( inventory_entry *entry : column->get_entries( return_item, true ) ) {
+                        const item_location &location = entry->any_item();
+                        if( location && location.has_parent() ) {
+                            const item *parent = location.parent_item().get_item();
+                            if( parent != nullptr ) {
+                                children_by_parent[parent].push_back( { column, entry } );
+                            }
+                        }
+                    }
+                }
+            }
             for( std::size_t i = 0; i < item_rows; ++i ) {
                 const item *held = published[i].location.get_item();
                 if( held == nullptr ) {
@@ -4028,8 +4049,11 @@ class inventory_selector::reader_session
                         const std::list<const item *> contents = pocket->all_items_top();
                         std::vector<item_location> seen_entries;
                         std::vector<a11y::semantic_node> pocket_items;
-                        for( inventory_column *column : owner.columns ) {
-                            for( inventory_entry *entry : column->get_entries( return_item, true ) ) {
+                        const auto candidates = children_by_parent.find( held );
+                        if( candidates != children_by_parent.end() ) {
+                            for( const candidate_pocket_entry &candidate : candidates->second ) {
+                                inventory_column *column = candidate.column;
+                                inventory_entry *entry = candidate.entry;
                                 const item_location &child = entry->any_item();
                                 if( !child || std::find( seen_entries.begin(), seen_entries.end(), child ) !=
                                     seen_entries.end() ) {
