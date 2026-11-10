@@ -2297,6 +2297,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // after close() no intent of this controller may reach the game,
         // even if a stray lifecycle callback ran first (R03.4).
         if (closed || owner == null || !foreground || !windowFocused || lastSuspended) { return 0; }
+        // Universal semantic action gate. Every active native adapter owns
+        // the complete set of permitted actions for its current nodes. A
+        // reader heading, status, table cell or disabled command must never
+        // be sent as "activate" simply because Android received a tap.
+        // Cancel is a screen action and deliberately has no node binding.
+        if (!"cancel".equals(action)) {
+            ReaderSnapshot.Node target = owner.find(focus);
+            if (target == null || !target.enabled && !"focus".equals(action)
+                    || target != null && !target.actions.contains(action)) {
+                if (!"focus".equals(action) && target != null) {
+                    feedback(nodeText(target, true));
+                }
+                return 0;
+            }
+        }
         final long request = REQUEST_SEQUENCE.incrementAndGet();
         long begun = SystemClock.elapsedRealtime();
         // Text and number editors can contain user-authored/private values;
