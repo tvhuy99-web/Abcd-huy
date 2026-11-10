@@ -138,6 +138,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private volatile long presentationEpoch;
     private int worldJavaTimingSample;
     private long lastWorldBusyNotice;
+    // One short-lived *gesture*, never a native movement backlog. When a
+    // swipe arrives during the previous turn, try its latest direction once
+    // after the next live world publication, then discard it. Native safety,
+    // context and movement permissions remain authoritative.
+    private String pendingWorldDirection = "";
+    private String pendingWorldContext = "";
+    private long pendingWorldRevision;
+    private long pendingWorldSince;
+    private boolean retryingWorldDirection;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
@@ -554,6 +563,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 replayBufferedGameMessages();
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
+                    clearPendingWorldDirection();
                     commandPaletteOpen = false;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
@@ -674,6 +684,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
                 render();
+                if (worldView) {
+                    retryPendingWorldDirection();
+                } else {
+                    clearPendingWorldDirection();
+                }
                 if (worldView && (++worldJavaTimingSample % 16) == 0) {
                     SessionDebugLog.event("WORLD_JAVA_TIMING",
                             "jni_to_ui_ms=" + (dispatchedAt - receivedAt)
@@ -1921,6 +1936,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return dx < 0 ? 1 << 6 : 1 << 2;
     }
 
+    private static boolean isWorldDirection(String nodeId) {
+        return "UP".equals(nodeId) || "DOWN".equals(nodeId)
+                || "LEFT".equals(nodeId) || "RIGHT".equals(nodeId)
+                || "LEFTUP".equals(nodeId) || "LEFTDOWN".equals(nodeId)
+                || "RIGHTUP".equals(nodeId) || "RIGHTDOWN".equals(nodeId);
+    }
+
     private static String actionForDirection(int dx, int dy) {
         if (dy < 0) { return dx < 0 ? "LEFTUP" : dx > 0 ? "RIGHTUP" : "UP"; }
         if (dy > 0) { return dx < 0 ? "LEFTDOWN" : dx > 0 ? "RIGHTDOWN" : "DOWN"; }
@@ -2083,6 +2105,39 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void openActionMenu() {
         // Two fingers, three taps: the approved 16-section action hub.
         showComprehensiveMenu();
+    }
+
+    private void clearPendingWorldDirection() {
+        pendingWorldDirection = "";
+        pendingWorldContext = "";
+        pendingWorldRevision = 0;
+        pendingWorldSince = 0;
+    }
+
+    private void retryPendingWorldDirection() {
+        if (pendingWorldDirection.isEmpty()) { return; }
+        final long elapsed = SystemClock.elapsedRealtime() - pendingWorldSince;
+        if (snapshot == null || !pendingWorldContext.equals(snapshot.contextKey())
+                || elapsed > 1200 || !worldMovementEnabled()) {
+            clearPendingWorldDirection();
+            return;
+        }
+        // A reader snapshot from the same turn cannot reopen the native
+        // single-flight gate. Wait for a new world state, at most 1.2 s.
+        if (snapshot.revision <= pendingWorldRevision) { return; }
+        String direction = pendingWorldDirection;
+        clearPendingWorldDirection();
+        String oldFocus = focus;
+        focus = direction;
+        retryingWorldDirection = true;
+        try {
+            if (send("activate", "") != 0) {
+                SessionDebugLog.event("WORLD_STEP_RETRIED", "direction=" + direction);
+            }
+        } finally {
+            retryingWorldDirection = false;
+            focus = oldFocus;
+        }
     }
 
     @Override
@@ -2336,11 +2391,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "LEFTUP".equals(focus) || "LEFTDOWN".equals(focus)
                         || "RIGHTUP".equals(focus) || "RIGHTDOWN".equals(focus));
                 if (walking) {
-                    // Native now refuses unserviceable steps immediately
-                    // rather than storing them to execute after a long turn.
+                    // Preserve at most the newest swipe for one bounded
+                    // retry after the next native world snapshot. Never
+                    // queue multiple steps, and never cross screen owners.
                     SessionDebugLog.event("WORLD_STEP_BUSY", "request=" + request);
                     final long now = SystemClock.elapsedRealtime();
-                    if (now - lastWorldBusyNotice >= 2500) {
+                    if (!retryingWorldDirection && worldMovementEnabled()) {
+                        pendingWorldDirection = focus;
+                        pendingWorldContext = owner.contextKey();
+                        pendingWorldRevision = owner.revision;
+                        pendingWorldSince = now;
+                        SessionDebugLog.event("WORLD_STEP_DEFERRED", "request=" + request);
+                    } else if (now - lastWorldBusyNotice >= 2500) {
                         lastWorldBusyNotice = now;
                         feedback(activity.getString(R.string.a11yWorldStepBusy));
                     }
@@ -2348,6 +2410,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     feedback(activity.getString(R.string.a11yReaderStale));
                 }
             } else {
+                if ("activate".equals(action) && "DEFAULTMODE".equals(owner.category)
+                        && isWorldDirection(focus)) {
+                    clearPendingWorldDirection();
+                } else if (!"focus".equals(action) && !retryingWorldDirection) {
+                    clearPendingWorldDirection();
+                }
                 if (pendingIntentTimes.size() > 64) {
                     pendingIntentTimes.remove(pendingIntentTimes.keySet().iterator().next());
                 }
@@ -2518,6 +2586,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } catch (UnsatisfiedLinkError unavailable) {
             SessionDebugLog.event("ERROR", "JNI nativeCancelPendingWorldSteps " + unavailable);
         }
+        clearPendingWorldDirection();
         comprehensiveMenu = true;
         sonar.setWorldActive(false);
         choosingGesture = false;
