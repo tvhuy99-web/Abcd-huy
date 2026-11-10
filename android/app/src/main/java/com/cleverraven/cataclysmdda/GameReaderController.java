@@ -185,6 +185,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private long pendingWorldRevision;
     private long pendingWorldSince;
     private boolean retryingWorldDirection;
+    // The native one-step gate opens only on the next game input wait.
+    // Poll this tiny thread-safe flag only while ONE gesture is pending;
+    // never queue more than the most recent gesture or cross a screen.
+    private final Runnable pendingWorldRetryPoll = this::retryPendingWorldDirection;
 
     public GameReaderController(CataclysmDDA activity, ViewGroup parent) {
         this.activity = activity;
@@ -2325,6 +2329,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void clearPendingWorldDirection() {
+        handler.removeCallbacks(pendingWorldRetryPoll);
         pendingWorldDirection = "";
         pendingWorldContext = "";
         pendingWorldRevision = 0;
@@ -2335,26 +2340,53 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pendingWorldDirection.isEmpty()) { return; }
         final long elapsed = SystemClock.elapsedRealtime() - pendingWorldSince;
         if (snapshot == null || !pendingWorldContext.equals(snapshot.contextKey())
-                || elapsed > 1200 || !worldMovementEnabled()) {
+                || elapsed > 1200 || !worldMovementEnabled() || closed
+                || !foreground || !windowFocused || lastSuspended) {
+            SessionDebugLog.event("WORLD_STEP_EXPIRED",
+                    "reason=context_or_timeout elapsed_ms=" + elapsed);
             clearPendingWorldDirection();
             return;
         }
-        // A reader snapshot from the same turn cannot reopen the native
-        // single-flight gate. Wait for a new world state, at most 1.2 s.
-        if (snapshot.revision <= pendingWorldRevision) { return; }
+        // Publishing a snapshot does NOT mean the native game loop is ready.
+        // Wait for both a new world frame and the authoritative input gate.
+        if (snapshot.revision <= pendingWorldRevision) {
+            schedulePendingWorldRetry();
+            return;
+        }
+        final boolean ready;
+        try {
+            ready = CataclysmDDA.nativeWorldStepReady();
+        } catch (UnsatisfiedLinkError unavailable) {
+            clearPendingWorldDirection();
+            return;
+        }
+        if (!ready) {
+            schedulePendingWorldRetry();
+            return;
+        }
         String direction = pendingWorldDirection;
-        clearPendingWorldDirection();
         String oldFocus = focus;
         focus = direction;
         retryingWorldDirection = true;
         try {
             if (send("activate", "") != 0) {
                 SessionDebugLog.event("WORLD_STEP_RETRIED", "direction=" + direction);
+                clearPendingWorldDirection();
+            } else {
+                // The game thread can close the gate after our ready probe.
+                // Keep the same latest swipe for the next bounded attempt.
+                schedulePendingWorldRetry();
             }
         } finally {
             retryingWorldDirection = false;
             focus = oldFocus;
         }
+    }
+
+    private void schedulePendingWorldRetry() {
+        if (pendingWorldDirection.isEmpty()) { return; }
+        handler.removeCallbacks(pendingWorldRetryPoll);
+        handler.postDelayed(pendingWorldRetryPoll, 30);
     }
 
     @Override
@@ -2620,6 +2652,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         pendingWorldRevision = owner.revision;
                         pendingWorldSince = now;
                         SessionDebugLog.event("WORLD_STEP_DEFERRED", "request=" + request);
+                        schedulePendingWorldRetry();
                     } else if (now - lastWorldBusyNotice >= 2500) {
                         lastWorldBusyNotice = now;
                         feedback(activity.getString(R.string.a11yWorldStepBusy));
@@ -2630,6 +2663,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             } else {
                 if ("activate".equals(action) && "DEFAULTMODE".equals(owner.category)
                         && isWorldDirection(focus)) {
+                    if (!retryingWorldDirection && !pendingWorldDirection.isEmpty()) {
+                        SessionDebugLog.event("WORLD_STEP_SUPERSEDED",
+                                "direction=" + pendingWorldDirection + " by=" + focus);
+                    }
                     clearPendingWorldDirection();
                 } else if (!"focus".equals(action) && !retryingWorldDirection) {
                     clearPendingWorldDirection();
