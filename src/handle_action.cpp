@@ -654,13 +654,15 @@ input_context game::get_player_input( std::string &action )
                 reader->update( std::move( next ) );
                 const auto published = std::chrono::steady_clock::now();
                 static unsigned int reader_timing_sample = 0;
-                if( ( ++reader_timing_sample % 32 ) == 0 ) {
-                    const auto ms = []( const auto from, const auto to ) {
-                        return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
-                    };
+                const auto ms = []( const auto from, const auto to ) {
+                    return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+                };
+                const auto build_ms = ms( started, built );
+                const auto publish_ms = ms( built, published );
+                if( build_ms >= 20 || publish_ms >= 20 || ( ++reader_timing_sample % 8 ) == 0 ) {
                     a11y::android::diagnostic_event( "WORLD_READER_TIMING",
-                            "build_ms=" + std::to_string( ms( started, built ) ) +
-                            " update_publish_ms=" + std::to_string( ms( built, published ) ) +
+                            "build_ms=" + std::to_string( build_ms ) +
+                            " update_publish_ms=" + std::to_string( publish_ms ) +
                             " nodes=" + std::to_string( nodes ) );
                 }
                 reader_snapshot_epoch = current_epoch;
