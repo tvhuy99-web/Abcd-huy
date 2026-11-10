@@ -30,6 +30,8 @@ std::deque<semantic_intent> inbox;
 context_token last_world_token;
 bool has_world_token = false;
 bool world_step_ready = false;
+std::atomic<int> active_travel_state{ 0 };
+std::atomic<int> pending_travel_control{ 0 };
 
 bool matches_last_world( const context_token &token )
 {
@@ -64,6 +66,9 @@ void configure( const bool enable, const bool suspend )
     inbox.clear();
     world_step_ready = false;
     has_world_token = false;
+    // An intent from the former Android Activity must never control a
+    // new owner. The route state itself survives a lifecycle rebind.
+    pending_travel_control.store( 0, std::memory_order_release );
     epoch.fetch_add( 1, std::memory_order_release );
 #if defined(__ANDROID__)
     PushWakeEvent();
@@ -134,6 +139,47 @@ void set_world_step_ready( const std::optional<context_token> token, const bool 
     } );
     world_step_ready = ready && token.has_value() && enabled() && !suspended() &&
                        !pending_step;
+}
+
+int travel_state()
+{
+    return active_travel_state.load( std::memory_order_acquire );
+}
+
+void set_travel_state( const int state )
+{
+    active_travel_state.store( state >= 0 && state <= 2 ? state : 0,
+                               std::memory_order_release );
+}
+
+bool request_travel_control( const int control )
+{
+    const int current = travel_state();
+    if( !enabled() || suspended() ||
+        ( control == 1 && current != 1 ) ||
+        ( control == 2 && current != 2 ) ||
+        ( control == 3 && current == 0 ) ||
+        control < 1 || control > 3 ) {
+        return false;
+    }
+    // Only the latest explicit control is retained. The game thread checks
+    // the actual route before applying it; no async operation touches game.
+    pending_travel_control.store( control, std::memory_order_release );
+#if defined(__ANDROID__)
+    PushWakeEvent();
+#endif
+    return true;
+}
+
+int take_travel_control()
+{
+    return pending_travel_control.exchange( 0, std::memory_order_acq_rel );
+}
+
+void reset_travel_control()
+{
+    pending_travel_control.store( 0, std::memory_order_release );
+    active_travel_state.store( 0, std::memory_order_release );
 }
 
 std::size_t cancel_pending_world_steps()
@@ -621,6 +667,19 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeCancelPendingWorldSteps(
     JNIEnv *, jclass )
 {
     return static_cast<jint>( a11y::android::cancel_pending_world_steps() );
+}
+
+extern "C" JNIEXPORT jint JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelState( JNIEnv *, jclass )
+{
+    return static_cast<jint>( a11y::android::travel_state() );
+}
+
+extern "C" JNIEXPORT jboolean JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelControl(
+    JNIEnv *, jclass, jint control )
+{
+    return a11y::android::request_travel_control( control ) ? JNI_TRUE : JNI_FALSE;
 }
 
 extern "C" JNIEXPORT void JNICALL
