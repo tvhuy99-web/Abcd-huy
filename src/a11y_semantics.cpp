@@ -1,4 +1,5 @@
 #include "a11y_semantics.h"
+#include "output.h"
 
 #include <algorithm>
 #include <cmath>
@@ -34,6 +35,13 @@ std::string quote( const std::string &text )
         }
     }
     return result + '"';
+}
+
+// All semantic display strings share this sanitizing boundary. Never
+// rewrite node IDs or raw edit values: those are data, not spoken markup.
+std::string quote_spoken( const std::string &value )
+{
+    return quote( remove_color_tags( value ) );
 }
 
 std::string boolean( const bool value )
@@ -298,8 +306,8 @@ bool validate_snapshot( const semantic_snapshot &snapshot, std::string &reason )
 std::string snapshot_content_json( const semantic_snapshot &snapshot )
 {
     std::string result = "\"category\":" + quote( snapshot.category ) +
-                         ",\"title\":" + quote( snapshot.title ) +
-                         ",\"summary\":" + quote( snapshot.summary ) +
+                         ",\"title\":" + quote_spoken( snapshot.title ) +
+                         ",\"summary\":" + quote_spoken( snapshot.summary ) +
                          ",\"focus\":" + quote( snapshot.focus ) +
                          ",\"swipeMovementAllowed\":" + boolean( snapshot.swipe_movement_allowed ) +
                          ",\"tables\":[";
@@ -316,8 +324,8 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                 result += ',';
             }
             first_column = false;
-            result += "{\"id\":" + quote( column.id ) + ",\"header\":" + quote( column.header ) +
-                      ",\"unit\":" + quote( column.unit ) + '}';
+            result += "{\"id\":" + quote( column.id ) + ",\"header\":" + quote_spoken( column.header ) +
+                      ",\"unit\":" + quote_spoken( column.unit ) + '}';
         }
         result += "]}";
     }
@@ -329,9 +337,10 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
         }
         first = false;
         result += "{\"id\":" + quote( node.id ) + ",\"role\":" + quote( node.role ) +
-                  ",\"label\":" + quote( node.label ) + ",\"value\":" + quote( node.value ) +
-                  ",\"detail\":" + quote( node.detail ) +
-                  ",\"disabledReason\":" + quote( node.disabled_reason ) +
+                  ",\"label\":" + quote_spoken( node.label ) + ",\"value\":" + ( node.role == "text" || node.role == "number" || !node.field_type.empty() ?
+                                    quote( node.value ) : quote_spoken( node.value ) ) +
+                  ",\"detail\":" + quote_spoken( node.detail ) +
+                  ",\"disabledReason\":" + quote_spoken( node.disabled_reason ) +
                   ",\"enabled\":" + boolean( node.enabled ) +
                   ",\"selected\":" + boolean( node.selected ) +
                   ",\"checked\":" + boolean( node.checked ) +
@@ -353,8 +362,8 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                     result += ',';
                 }
                 first_cell = false;
-                result += "{\"column\":" + quote( cell.column ) + ",\"value\":" + quote( cell.value ) +
-                          ",\"unit\":" + quote( cell.unit ) + ",\"compare\":" + quote( cell.compare ) + '}';
+                result += "{\"column\":" + quote( cell.column ) + ",\"value\":" + quote_spoken( cell.value ) +
+                          ",\"unit\":" + quote_spoken( cell.unit ) + ",\"compare\":" + quote_spoken( cell.compare ) + '}';
             }
             result += ']';
         }
@@ -378,14 +387,14 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
                     result += ',';
                 }
                 first_choice = false;
-                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote( choice.label ) + '}';
+                result += "{\"value\":" + quote( choice.value ) + ",\"label\":" + quote_spoken( choice.label ) + '}';
             }
             result += ']';
             if( node.has_draft ) {
                 result += ",\"draftValue\":" + quote( node.draft_value );
             }
             if( !node.field_error.empty() ) {
-                result += ",\"fieldError\":" + quote( node.field_error );
+                result += ",\"fieldError\":" + quote_spoken( node.field_error );
             }
             if( !node.depends_on.empty() ) {
                 result += ",\"dependsOn\":[";

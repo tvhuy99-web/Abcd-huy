@@ -19,7 +19,7 @@ import java.util.Objects;
 
 /**
  * Dedicated, self-voiced TTS settings. All edits are drafts until Save.
- * A successful preview is required before enabling a changed voice.
+ * Voice preview is optional and never blocks saving a configuration.
  */
 public final class TtsSettingsActivity extends Activity {
     private final ArrayList<AndroidSpeech.EngineOption> engines = new ArrayList<>();
@@ -434,10 +434,6 @@ public final class TtsSettingsActivity extends Activity {
         }
         if (enabled.isChecked() && selectedVolume() <= 0.0f) {
             announce(getString(R.string.a11yTtsVolumeTooLow));
-            return;
-        }
-        if (enabled.isChecked() && !previewPassed) {
-            announce(getString(R.string.a11yTtsTestFirst));
             return;
         }
         new ReaderPreferences(this).saveTtsSettings(enabled.isChecked(), engineName,

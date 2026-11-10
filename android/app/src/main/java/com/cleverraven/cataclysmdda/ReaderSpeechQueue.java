@@ -338,6 +338,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         if (!isReady() || text == null || text.trim().isEmpty()) {
             return;
         }
+        text = ReaderSpokenText.clean(text);
+        if (text.trim().isEmpty()) { return; }
         // Focus is user-directed, even when it repeats the same label.
         // For other speech, suppress only duplicate requests still active
         // or waiting in this context; never suppress based on elapsed time.

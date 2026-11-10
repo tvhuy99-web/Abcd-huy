@@ -13,6 +13,7 @@
 #include <jni.h>
 #include "catacharset.h"
 #include "options.h"
+#include "output.h"
 #include "sdltiles.h"
 #include "sdl_wrappers.h"
 #endif
@@ -419,6 +420,8 @@ void announce( const std::string &text, const int priority )
     if( text.empty() || text.size() > 16384 || ( priority != 1 && priority != 3 ) ) {
         return;
     }
+    const std::string spoken = remove_color_tags( text );
+    if( spoken.empty() ) { return; }
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
     if( env == nullptr ) {
         return;
@@ -439,7 +442,7 @@ void announce( const std::string &text, const int priority )
                 // Use UTF-16 instead of JNI modified UTF-8 for Vietnamese and
                 // codepoints outside the Basic Multilingual Plane.
                 std::u16string utf16;
-                for( const char32_t cp : utf8_to_utf32( text ) ) {
+                for( const char32_t cp : utf8_to_utf32( spoken ) ) {
                     if( cp > 0x10ffff || ( cp >= 0xd800 && cp <= 0xdfff ) ) {
                         utf16.push_back( 0xfffd );
                     } else if( cp <= 0xffff ) {

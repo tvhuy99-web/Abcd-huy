@@ -835,8 +835,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final String message = text;
         final boolean loading = message.startsWith("A11Y_LOADING:");
         final boolean extendedScan = message.startsWith("A11Y_SCAN:");
-        final String spokenMessage = loading ? message.substring("A11Y_LOADING:".length())
-                : extendedScan ? message.substring("A11Y_SCAN:".length()) : message;
+        final String spokenMessage = ReaderSpokenText.clean(
+                loading ? message.substring("A11Y_LOADING:".length())
+                : extendedScan ? message.substring("A11Y_SCAN:".length()) : message);
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         handler.post(() -> {
@@ -890,7 +891,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.GAME_EVENT;
                 SessionDebugLog.event("GAME_MESSAGE_POLICY", "priority=" + messageLevel
                         + " text=" + message);
-                speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), message,
+                speech.say("game-message:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(), spokenMessage,
                         messageLevel, 15000);
                 ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
             }
@@ -2194,6 +2195,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // native code advances only after a valid single choice.
         if (isCreatorMultiChoiceStep() && creatorStepAction("NEXT_TAB")) { return; }
         if (creatorCalendarAction("CALENDAR_DONE")) { return; }
+        // Summary publishes native command IDs, not UILIST action: IDs.
+        // Two fingers up must invoke the same native NEXT_TAB validation
+        // and Yes/No completion prompt as the visible Finish control.
+        if ("CHARACTER_CREATION".equals(snapshot.category)) {
+            ReaderSnapshot.Node finish = snapshot.find("NEXT_TAB");
+            if (finish != null && finish.enabled && finish.actions.contains("activate")) {
+                String previous = focus;
+                focus = finish.id;
+                send("activate", "");
+                focus = previous;
+                return;
+            }
+        }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
         // Native explicit approval takes priority over the focused "No" option.
@@ -3339,6 +3353,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void feedback(String text) {
         if (!foreground || closed) { return; }
+        text = ReaderSpokenText.clean(text);
+        if (text.isEmpty()) { return; }
         if (usesTouchExploration()) {
             status.setText(text);
             announceAccessibility(text);
@@ -3350,7 +3366,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     /** Document speech stays at LONG_TEXT priority: warnings may cut it
      *  off, and the document reader then resumes at the same paragraph. */
     private void speakDocument(String text) {
-        if (text == null || text.isEmpty()) { return; }
+        text = ReaderSpokenText.clean(text);
+        if (text.isEmpty()) { return; }
         if (usesTouchExploration()) {
             feedback(text);
         } else {

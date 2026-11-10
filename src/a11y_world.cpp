@@ -11,6 +11,7 @@
 #include <vector>
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_body.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
@@ -925,6 +926,46 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.label += string_format( _( " (selected: %s)" ), chosen_mode );
             node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
                                          active_mode, chosen_mode );
+        } else if( node.id == "toggle_auto_features" || node.id == "toggle_auto_mining" ||
+                   node.id == "toggle_auto_pickup" || node.id == "autosafe" ) {
+            // The command hub must announce the current setting, not just
+            // the name of the key bound to a toggle. Query the engine's
+            // live options on each world snapshot, never a Java-side guess.
+            const char *const setting = node.id == "toggle_auto_features" ? "AUTO_FEATURES" :
+                                        node.id == "toggle_auto_mining" ? "AUTO_MINING" :
+                                        node.id == "toggle_auto_pickup" ? "AUTO_PICKUP" : "AUTOSAFEMODE";
+            const bool is_on = get_option<bool>( setting );
+            const std::string state = is_on ? _( "Currently on" ) : _( "Currently off" );
+            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
+            if( node.id == "toggle_auto_mining" && is_on &&
+                !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.detail = _( "Auto mining is enabled but inactive while additional auto features are off." );
+            }
+        } else if( node.id == "toggle_auto_pulp_butcher" ||
+                   node.id == "toggle_auto_foraging" ) {
+            // These are multi-state options (not booleans). Speaking the
+            // translated choice preserves pulp/butcher or foraging mode.
+            const char *const setting = node.id == "toggle_auto_pulp_butcher" ?
+                                        "AUTO_PULP_BUTCHER" : "AUTO_FORAGING";
+            const auto &option = get_options().get_option( setting );
+            const std::string state = option.getValueName();
+            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
+            if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
+                node.detail = _( "Selected mode is inactive while additional auto features are off." );
+            }
+        } else if( node.id == "toggle_thief_mode" ) {
+            const std::string selected = viewer.get_value( "THIEF_MODE" ).str();
+            const std::string state = selected == "THIEF_HONEST" ? _( "Always honest" ) :
+                                      selected == "THIEF_STEAL" ? _( "Always steal" ) :
+                                      _( "Ask before taking owned items" );
+            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
+        } else if( node.id == "safemode" && g ) {
+            const std::string state = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
+                                      g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) : _( "Currently on" );
+            node.label = string_format( _( "%1$s. %2$s" ), node.label, state );
+        } else if( node.id == "autoattack" ) {
+            // Autoattack is one attack, not a persistent auto-combat switch.
+            node.detail = _( "Perform one automatic melee attack. This is not an on/off setting." );
         } else if( node.id == "auto_travel_mode" ) {
             const bool auto_on = g && g->auto_travel_mode;
             node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
@@ -1032,7 +1073,7 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     }
     std::map<std::string, int> counts;
     for( const item &obj : here.i_at( position ) ) {
-        const std::string name = remove_color_tags( obj.tname() );
+        const std::string name = spoken_item_name( obj );
         if( !name.empty() ) {
             ++counts[name];
         }

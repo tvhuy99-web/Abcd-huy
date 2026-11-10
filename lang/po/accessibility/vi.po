@@ -4131,3 +4131,40 @@ msgstr "Nhập số"
 
 msgid "Done"
 msgstr "Hoàn tất"
+
+msgid "Currently on"
+msgstr "Đang bật"
+
+msgid "Currently off"
+msgstr "Đang tắt"
+
+msgid "On, danger detected"
+msgstr "Đang bật, phát hiện nguy hiểm"
+
+msgid "Auto mining is enabled but inactive while additional auto features are off."
+msgstr "Tự động đào đang bật nhưng chưa hoạt động vì các tính năng tự động bổ sung đang tắt."
+
+msgid "Selected mode is inactive while additional auto features are off."
+msgstr "Chế độ đã chọn chưa hoạt động vì các tính năng tự động bổ sung đang tắt."
+
+msgid "Always honest"
+msgstr "Luôn tôn trọng quyền sở hữu"
+
+msgid "Always steal"
+msgstr "Luôn lấy tài sản của người khác"
+
+msgid "Ask before taking owned items"
+msgstr "Hỏi trước khi lấy vật phẩm có chủ"
+
+msgid "Perform one automatic melee attack. This is not an on/off setting."
+msgstr "Thực hiện một đòn tấn công cận chiến tự động. Đây không phải chế độ bật hoặc tắt."
+
+#, c-format
+msgid "Damage level: %d"
+msgstr "Mức hư hỏng: %d"
+
+msgid "Reinforced"
+msgstr "Được gia cố"
+
+msgid "Burn damaged"
+msgstr "Bị cháy hỏng"

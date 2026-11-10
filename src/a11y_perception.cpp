@@ -1,4 +1,5 @@
 #include "a11y_perception.h"
+#include "a11y_item_text.h"
 
 #include <map>
 #include <unordered_set>
@@ -33,7 +34,7 @@ namespace
 {
 void add_known_items( std::map<std::string, int> &names, const item &value )
 {
-    ++names[value.tname()];
+    ++names[spoken_item_name( value )];
     // This is the same knowledge-aware container traversal as tile information.
     // all_items_ptr() would expose contents the character has not discovered.
     for( const item *content : value.all_known_contents() ) {
