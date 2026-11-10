@@ -3985,3 +3985,18 @@ msgstr "Chế độ an toàn đã dừng chuyến đi. Tuyến đường vẫn �
 
 msgid "Entering area: %s."
 msgstr "Đã vào khu vực: %s."
+
+msgid "Character information. %s."
+msgstr "Thông tin nhân vật. %s."
+
+msgid "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d."
+msgstr "Sức mạnh: %1$d. Khéo léo: %2$d. Trí tuệ: %3$d. Nhận thức: %4$d."
+
+msgid "Wielding: %s."
+msgstr "Đang cầm: %s."
+
+msgid "End of character information."
+msgstr "Hết thông tin nhân vật."
+
+msgid "Character information"
+msgstr "Thông tin nhân vật"
