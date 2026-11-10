@@ -3981,3 +3981,7 @@ msgstr "Đóng con trỏ quan sát mà không di chuyển nhân vật."
 
 msgid "Travel stopped by safe mode. Route kept."
 msgstr "Chế độ an toàn đã dừng chuyến đi. Tuyến đường vẫn được giữ."
+
+
+msgid "Entering area: %s."
+msgstr "Đã vào khu vực: %s."
