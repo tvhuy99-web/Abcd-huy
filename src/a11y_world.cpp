@@ -1,6 +1,7 @@
 #include "a11y_world.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
 #include <map>
