@@ -58,4 +58,13 @@
     <string name="a11yPocketRow">%1$s. Selected %2$d, available %3$d. Item %4$d of %5$d.</string>
     <string name="a11yPocketSealed">This pocket is sealed and cannot be opened.</string>
     <string name="a11yPocketInstructions">Choose items here, then confirm to return to the main item list. Nothing is picked up until you confirm the main list. Cancel discards changes made here.</string>
+    <string name="a11yTravelMoving">Automatic travel in progress. Route is active.</string>
+    <string name="a11yTravelPaused">Automatic travel paused. Route retained.</string>
+    <string name="a11yTravelSafetyStopped">Travel stopped by safe mode. Route retained. Continue only when safe, or deliberately ignore this threat.</string>
+    <string name="a11yTravelIgnoreWarning">Ignore this enemy warning</string>
+    <string name="a11yTravelResume">Resume travel</string>
+    <string name="a11yTravelPause">Pause travel</string>
+    <string name="a11yTravelCancel">Cancel trip and return to map</string>
+    <string name="a11yTravelRequestAccepted">Travel command received.</string>
+    <string name="a11yTravelRequestUnavailable">Travel command unavailable in the current state.</string>
 </resources>
