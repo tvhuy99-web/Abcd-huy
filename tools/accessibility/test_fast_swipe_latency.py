@@ -85,13 +85,13 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn('if( screen_category != "DEFAULTMODE" )', runtime)
         self.assertIn("invalidate_command_snapshot_cache();", runtime)
 
-    def test_timing_samples_are_bounded(self):
+    def test_detailed_reader_timing_is_manual_only(self):
         engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
         self.assertIn('diagnostic_event( "WORLD_READER_TIMING"', engine)
         self.assertIn("build_ms=", engine)
         self.assertIn("update_publish_ms=", engine)
-        self.assertIn("reader_timing_sample % 8", engine)
-        self.assertIn("build_ms >= 20 || publish_ms >= 20", engine)
+        self.assertIn("if( profile_reader ) {", engine)
+        self.assertNotIn("reader_timing_sample % 8", engine)
 
     def test_ordinary_footsteps_do_not_allocate_three_translated_restriction_maps(self):
         engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
@@ -141,16 +141,18 @@ class FastSwipeLatencyContracts(unittest.TestCase):
                       "update_map_ms=", "search_ms=", "map_shift_ms=",
                       "npcs_ms=", "cache_ms=", "spawn_ms=", "reveal_ms="):
             self.assertIn(stage, game)
-        self.assertIn("profile_walk_samples % 8", game)
-        self.assertIn("profile_place_samples % 8", game)
-        self.assertIn("profile_shift_samples % 8", game)
+        self.assertIn("if( a11y::android::performance_profiling_enabled() ) {", game)
+        self.assertNotIn("profile_walk_samples % 8", game)
+        self.assertNotIn("profile_place_samples % 8", game)
+        self.assertNotIn("profile_shift_samples % 8", game)
 
 
 
     def test_native_step_result_uses_real_position(self):
         engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
         self.assertIn('diagnostic_event( "WORLD_MOVE_RESULT"', engine)
-        self.assertIn('const tripoint_abs_ms diagnostic_before_position', engine)
+        self.assertIn('std::optional<tripoint_abs_ms> diagnostic_before_position', engine)
+        self.assertIn("if( diagnostic_walk ) {", engine)
         self.assertIn('const tripoint_abs_ms after = player_character.pos_abs();', engine)
         self.assertIn('" result=action_rejected changed=false"', engine)
         self.assertIn('" result=" + ( dx != 0 || dy != 0 || dz != 0', engine)
