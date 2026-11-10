@@ -1108,8 +1108,7 @@ void announce_area_transition()
         return;
     }
     if( previous_tile && !previous_area.empty() && area != previous_area ) {
-        a11y::android::announce( "A11Y_AREA:" +
-                                 string_format( _( "Entering area: %s." ), area ), 1 );
+        a11y::android::announce( string_format( _( "Entering area: %s." ), area ), 1 );
 #if defined(__ANDROID__)
         a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
                 "from=" + previous_area + " to=" + area );
