@@ -3104,7 +3104,47 @@ void pickup_activity_actor::do_turn( player_activity &, Character &who )
     // If there are items left we ran out of moves, so continue the activity
     // Otherwise, we are done.
     if( !keep_going || target_items.empty() ) {
-        if( !stash_successful && !autopickup ) {
+        if( a11y::enabled() && !autopickup ) {
+            // The old "Some items were not picked up!" did not identify a
+            // single failed item or its reason. Collect across all turns
+            // before speaking once, and name only transfers verified by
+            // Pickup::do_pickup(), not merely selected items.
+            if( !keep_going ) {
+                for( const item_location &leftover : target_items ) {
+                    ++info.a11y_failure_count;
+                    if( info.a11y_failures.size() < 24 ) {
+                        info.a11y_failures.push_back( leftover ?
+                            string_format( _( "%s: Pickup stopped before this item." ),
+                                           leftover->display_name() ) :
+                            _( "A selected item is no longer available." ) );
+                    }
+                }
+            }
+            const int failed = info.a11y_failure_count;
+            const int collected = info.a11y_success_count;
+            if( failed > 0 || collected > 0 || !stash_successful ) {
+                std::string result = string_format(
+                    _( "Pickup finished. Collected %1$d item groups; failed %2$d item groups." ),
+                    collected, failed );
+                if( !info.a11y_successes.empty() ) {
+                    result += " " + std::string( _( "Collected:" ) );
+                    for( const std::string &name : info.a11y_successes ) {
+                        result += " " + name + ".";
+                    }
+                }
+                if( !info.a11y_failures.empty() ) {
+                    result += " " + std::string( _( "Not collected:" ) );
+                    for( const std::string &failure : info.a11y_failures ) {
+                        result += " " + failure + ".";
+                    }
+                }
+                if( failed > static_cast<int>( info.a11y_failures.size() ) ||
+                    collected > static_cast<int>( info.a11y_successes.size() ) ) {
+                    result += " " + std::string( _( "Some additional item details were omitted from this summary." ) );
+                }
+                add_msg( failed > 0 || !stash_successful ? m_bad : m_good, "%s", result );
+            }
+        } else if( !stash_successful && !autopickup ) {
             add_msg( m_bad, _( "Some items were not picked up!" ) );
         }
 
