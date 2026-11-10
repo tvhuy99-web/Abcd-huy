@@ -63,7 +63,7 @@ class ComprehensiveHubRestore(unittest.TestCase):
 
     def test_search_and_gameplay_are_safely_separated(self):
         self.assertIn("Normalizer.normalize(source", self.hub)
-        self.assertIn("addCommandMatches(result, snapshot, query)", self.hub)
+        self.assertIn("addCommandMatches(result, context, snapshot, query)", self.hub)
         self.assertIn("R.string.a11yHubAllCommands", self.hub)
         self.assertIn("private void searchHub()", self.ctrl)
         self.assertIn("snapshot.find(item.node)", self.ctrl)
