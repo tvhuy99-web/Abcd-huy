@@ -44,6 +44,8 @@ class CharacterCreatorSummaryInput(unittest.TestCase):
         self.assertIn('return initial_value;', self.calendar)
         self.assertIn('handleCreatorCalendarSwipe(int horizontal, int vertical)', self.controller)
         self.assertIn('creatorCalendarAction("CALENDAR_DONE")', self.controller)
+        self.assertIn('"CHARACTER_CREATION".equals(snapshot.category)', self.controller)
+        self.assertIn('ReaderSnapshot.Node previousTab = snapshot.find("PREV_TAB");', self.controller)
         self.assertIn('listener.handleCreatorCalendarSwipe(horizontal, vertical)', self.gestures)
 
     def test_reusable_text_and_number_android_editor(self):

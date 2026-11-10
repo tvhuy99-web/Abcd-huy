@@ -3412,6 +3412,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // previous step. Nested value/variant lists are different contexts:
         // their Back is the ordinary cancel, returning to their parent tab.
         if (creatorStepAction("PREV_TAB")) { return; }
+        // Summary is the seventh creator step. Its command snapshot uses
+        // plain action IDs rather than action: prefixes; Back must return
+        // to skills instead of invoking the global Quit confirmation.
+        if (snapshot != null && "CHARACTER_CREATION".equals(snapshot.category)) {
+            ReaderSnapshot.Node previousTab = snapshot.find("PREV_TAB");
+            if (previousTab != null && previousTab.enabled
+                    && previousTab.actions.contains("activate")) {
+                String oldFocus = focus;
+                focus = previousTab.id;
+                send("activate", "");
+                focus = oldFocus;
+                return;
+            }
+        }
         if (snapshot != null) {
             // A mandatory Yes/No dialog may have no registered Cancel.
             // Treat Back as the native No response, never as Yes.
