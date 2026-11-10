@@ -3900,3 +3900,6 @@ msgstr "Vật phẩm còn nguyên vẹn."
 
 msgid "Pickup allow or deny rule marker."
 msgstr "Vật phẩm có đánh dấu trong quy tắc nhặt đồ tự động."
+
+msgid "Additional nested items not shown. Try a shorter inventory list."
+msgstr "Vẫn còn vật phẩm lồng bên trong chưa hiển thị. Hãy thử xem danh sách túi đồ ngắn hơn."
