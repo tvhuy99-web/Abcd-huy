@@ -367,11 +367,20 @@ std::string short_tile_alert( const tile_observation &tile )
 std::string player_status()
 {
     const avatar &viewer = get_avatar();
-    std::string result = display::time_string( viewer ) + ". " +
-                         string_format( _( "Hunger: %s" ), display::hunger_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Thirst: %s" ), display::thirst_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Sleepiness: %s" ), display::sleepiness_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Pain: %s" ), display::pain_text_color( viewer ).first );
+    std::string result = display::time_string( viewer );
+    // The native sidebar uses an empty label for neutral statuses. Spoken
+    // summaries must not say "Hunger: . Pain: ." or invent a severity;
+    // keep only readings the game actually supplies.
+    const auto append_if_present = [&result]( const char *heading, const std::string &reading ) {
+        const std::string clean = remove_color_tags( reading );
+        if( !clean.empty() ) {
+            result += ". " + string_format( heading, clean );
+        }
+    };
+    append_if_present( _( "Hunger: %s" ), display::hunger_text_color( viewer ).first );
+    append_if_present( _( "Thirst: %s" ), display::thirst_text_color( viewer ).first );
+    append_if_present( _( "Sleepiness: %s" ), display::sleepiness_text_color( viewer ).first );
+    append_if_present( _( "Pain: %s" ), display::pain_text_color( viewer ).first );
     const int stamina = viewer.get_stamina_max() > 0 ? 100 * viewer.get_stamina() / viewer.get_stamina_max() : 0;
     result += ". " + string_format( _( "Stamina: %d%%" ), stamina );
     // R10.1: the remaining sidebar facts. Temperature and weariness are
