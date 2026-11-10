@@ -1,116 +1,94 @@
-# Chế độ chỉ đọc thế giới và nhật ký hiệu năng tự dừng (PR #7)
+# Chế độ chỉ đọc và nhật ký chẩn đoán thủ công (PR #7)
 
-## Mục tiêu
+> Lưu ý: tài liệu này thay thế hoàn toàn thiết kế cũ từng dùng cơ chế
+> "đo thích ứng, tự tắt". **Không còn bất kỳ chế độ tự tắt hoặc tự bật nhật ký
+> dựa trên kết quả hiệu năng nào.**
 
-Bản Android **accessibility** ưu tiên phản hồi vuốt, TTS và dữ liệu trợ năng.
-Không được rút ngắn lượt chơi bằng cách bỏ qua AI, thời tiết, bản đồ,
-Safe Mode hoặc thời gian di chuyển. Khi không cần hình ảnh bản đồ, tránh gọi
-đường vẽ SDL/ImGui không cần thiết trước mỗi hành động đi bộ.
+## Nguyên tắc người dùng quyết định
 
-## Bật/tắt tại điện thoại
+1. **Mỗi lần khởi động game tạo một phiên nhật ký hoàn toàn mới.**
+   Tệp chẩn đoán của phiên trước bị xóa/trống khi khởi động phiên mới.
+   Không ghép `crash_recovery.txt`, `debug.log` hoặc nhật ký phiên khác
+   vào tệp xuất. Cần xuất nhật ký của phiên hiện tại trước khi mở game lại.
+2. **Ghi nhật ký: Bật.** Ghi toàn bộ sự kiện do bộ ghi chẩn đoán gửi tới,
+   đo chi phí hành động, mô phỏng thế giới, xử lý tầm nhìn, TTS, nhập liệu,
+   dựng hình và chuyển vùng bản đồ. Không lấy mẫu theo chu kỳ 8/16 bước
+   và không tự ngừng vì máy đã nhanh.
+3. **Ghi nhật ký: Tắt.** Không ghi thêm bất kỳ sự kiện nào, kể cả lỗi,
+   cảnh báo game bận, TTS hoặc crash. Các đồng hồ đo hiệu năng bổ sung
+   do chúng ta thiết kế không được khởi động; native không chuyển sự kiện
+   chẩn đoán qua JNI. Tình trạng tắt vẫn có hiệu lực khi mở game sau.
+4. **Bật giữa phiên:** bắt đầu ghi tại đúng thời điểm người dùng bật.
+   Không hồi tố các sự kiện trước khi bật. Bật/tắt nhiều lần trong một
+   lần mở game chỉ có một nhật ký, với những khoảng trống là lúc người
+   dùng đã tắt ghi.
+5. **Tắt giữa phiên:** dữ liệu đã ghi được giữ để người dùng chọn **Xuất
+   nhật ký** nếu muốn. Khi tắt, không tự xuất hoặc tự xóa dữ liệu.
+   **Xóa nhật ký** là thao tác riêng do người dùng chủ động xác nhận.
+6. **Mặc định:** nếu chưa từng lựa chọn, công tắc **Ghi nhật ký** tắt.
+   Lựa chọn thủ công được giữ trong SharedPreferences qua các lần mở game.
+   Không có công tắc profiler thứ hai.
 
-Từ menu chính vào **Nhật ký gỡ lỗi**, trong đó có:
+## Điều khiển
 
-- **Chỉ đọc bằng giọng nói, không dựng hình bản đồ (ưu tiên tốc độ)**:
-  mặc định bật trên biến thể APK `accessibility`. Bật để bỏ qua đường vẽ
-  thế giới thông thường; tắt để khôi phục hiển thị đồ họa.
-- **Đo hiệu năng tự động, tự tắt khi di chuyển ổn định**:
-  mặc định bật trong bản `accessibility` khi chưa từng chọn. Bật thủ công
-  để bắt đầu một đợt đo mới. Tắt để dừng đo và các dòng log tần suất cao.
-- **Ghi nhật ký**: công tắc nhật ký chung **độc lập** với profiler.
-  Nhật ký thông thường giữ thông tin lỗi, vòng đời và sự kiện cần điều tra;
-  profiler điều khiển phần đo chi tiết, không tự xóa nhật ký đã ghi.
+Vào **Nhật ký gỡ lỗi** trong menu chính. Có:
+- **Ghi nhật ký:** công tắc thủ công duy nhất điều khiển mọi phép đo.
+- **Chỉ đọc bằng giọng nói, không dựng hình bản đồ:** độc lập với nhật ký;
+  vẫn bật mặc định trong biến thể APK trợ năng.
+- **Xuất nhật ký:** chỉ xuất tệp của lần mở game hiện tại.
+- **Xóa nhật ký:** xóa những gì đã ghi của phiên hiện tại.
 
-Hai tùy chọn trên lưu trong `internal_reader` (SharedPreferences), có hiệu
-lực khi quay về màn hình game và được giữ sau khi mở lại ứng dụng.
-Chỉ bản có trình đọc đang bật và ở foreground mới bỏ dựng hình thế giới.
+Khi thay đổi công tắc ghi, Java cập nhật cờ ghi ngay và gửi cờ
+bật/tắt đo vào native qua JNI mà không đợi màn hình game mở lại.
+Native cũng nhận lại giá trị khi game tiếp tục foreground.
 
-## Những gì được bỏ qua và những gì vẫn giữ
+## Những gì còn hoạt động trong chế độ chỉ đọc
 
-- Vòng lặp chơi ở màn hình thế giới không yêu cầu vẽ lại tất cả UI trước
-  mỗi lần chờ thao tác; cũng không chạy vòng hoạt ảnh, mưa/bụi, minimap.
-- Nếu có callback vẽ thế giới do màn hình khác yêu cầu, `game::draw()`
-  vẫn cập nhật `build_map_cache`, `update_visibility_cache` và cảm biến
-  định hướng rồi bỏ qua `draw_ter`, hiệu ứng và panel khi chế độ chỉ đọc bật.
-- Trước khi dựng bản dữ liệu cho trình đọc (`make_reader_snapshot`),
-  đường chỉ đọc bảo đảm `build_map_cache` và `update_visibility_cache`.
-  Điều này **không** được bỏ: danh sách vật phẩm, quái vật và tầm nhìn của
-  TTS phải tuân theo luật quan sát bình thường.
-- Cảm biến sonar về khoảng cách tới sinh vật hoặc vật phẩm thẳng hướng
-  được cập nhật riêng ở đường trình đọc theo chu kỳ 300 ms, không còn
-  lệ thuộc callback vẽ khi bật chế độ chỉ đọc.
-- Menu, lựa chọn vật phẩm, hộp thoại và UI Android vẫn hoạt động. SDL và
-  vòng đời renderer vẫn tồn tại để xử lý input, lỗi và chuyển màn hình.
-- Không sửa logic `monmove`, `do_regular_action`, di chuyển bình thường,
-  trừ điểm hiển thị. Không tự tắt Safe Mode.
+- Xử lý lượt, quái vật, Safe Mode và tính toán gameplay không bị bỏ.
+- Bộ nhớ đệm bản đồ và tầm nhìn phục vụ TTS vẫn cập nhật trước snapshot.
+- Sonar thẳng hướng tiếp tục đọc vị trí có thể quan sát theo chu kỳ 300 ms.
+- Menu, hộp thoại, điều khiển và cơ chế lỗi renderer vẫn có thể hoạt động.
+- Tắt dựng hình không đồng nghĩa tắt SDL hay phá chức năng game.
 
-Đây là chế độ cắt phần hiển thị, không phải bản chuyển game sang một engine
-không có SDL. Một số repaint từ menu hay cơ chế renderer vẫn có thể xảy ra.
+## Sự kiện khi người dùng bật nhật ký
 
-## Đo hiệu năng thích ứng, tự dừng
-
-Khi profiler bật, native phát các sự kiện:
-
-| Tên sự kiện | Dữ liệu |
+| Sự kiện | Nội dung |
 | --- | --- |
-| `WORLD_MOVE_RESULT` | Lệnh, tọa độ trước/sau, đã đổi ô, điểm di chuyển, thời gian hành động |
-| `WORLD_MOVE_BLOCKED` | Cảnh báo bước đi không đổi ô / hành động bị từ chối; vẫn giữ khi profiler tự tắt |
-| `WORLD_STEP_PIPELINE` | Một chu kỳ di chuyển hoàn tất: từ sau hành động tới lúc snapshot TTS tiếp theo được xuất bản; kèm chi phí từng phần và chuỗi bước ổn định |
-| `WORLD_DRAW_TIMING` | Thời gian cập nhật UI và `mode=headless_skip` hoặc chế độ vẽ |
-| `WORLD_RENDER_BREAKDOWN` | Chi phí cụ thể của cache, visibility, sonar, địa hình và panel nếu có vẽ |
-| `WORLD_VISION_TIMING` | Chi phí cập nhật map cache và visibility phục vụ TTS |
-| `WORLD_SIM_TIMING` | Tổng mô phỏng, cache, monster/NPC, phần cập nhật nhân vật |
-| `WORLD_READER_TIMING` | Tạo snapshot và gửi snapshot |
-| `WORLD_WALK_PROFILE` | Đi bộ trong bản đồ / cập nhật bản đồ / hoàn tất lượt |
-| `WORLD_PLACE_PROFILE` | Đặt nhân vật vào vị trí và cập nhật map |
-| `WORLD_SHIFT_PROFILE` | Dịch submap, cache, NPC, spawn, reveal |
-| `WORLD_INPUT_TIMING` | Thời gian từ nhận JNI đến native poll |
-| `WORLD_JAVA_TIMING` | Đưa dữ liệu qua Java, parse, cập nhật UI |
-| `WORLD_PROFILE_STATE` | Profiler tự dừng và ngưỡng được dùng |
+| `SESSION` | Mở game / bắt đầu ghi, mã phiên và bản ứng dụng |
+| `GESTURE_ACTION`, `INTENT_RESULT` | Vuốt và việc native có chấp nhận lệnh không |
+| `WORLD_INPUT_TIMING` | Thời gian từ JNI tới lần native poll |
+| `WORLD_MOVE_RESULT` | Trước/sau tọa độ, bước thực sự thành công, điểm di chuyển, thời gian |
+| `WORLD_STEP_PIPELINE` | Sau hành động đến khi bản dữ liệu đọc tiếp theo được xuất bản, kèm các công đoạn |
+| `WORLD_DRAW_TIMING` | Thời gian đường giao diện; chế độ vẽ đầy đủ hoặc bỏ qua |
+| `WORLD_RENDER_BREAKDOWN` | Cache, visibility, sonar, địa hình, các panel |
+| `WORLD_VISION_TIMING` | Cache và tầm nhìn riêng cho chế độ chỉ đọc |
+| `WORLD_SIM_TIMING` | Mô phỏng, bộ nhớ đệm, lượt quái vật/NPC |
+| `WORLD_READER_TIMING`, `WORLD_JAVA_TIMING` | Tạo/đăng snapshot, phân tích và cập nhật giao diện Android |
+| `WORLD_WALK_PROFILE`, `WORLD_PLACE_PROFILE`, `WORLD_SHIFT_PROFILE` | Đi bộ, đặt nhân vật và dịch chuyển submap |
+| `TTS_REQUEST`, `TTS_EVENT`, `TTS_STATE` | Yêu cầu nói, độ trễ, trạng thái giọng nói |
 
-Để **tự dừng**, phải có **48 lần di chuyển liên tiếp thực sự đổi tọa độ**
-trong khi: thời gian cập nhật đồ họa của lượt quan sát gần nhất không quá
-40 ms; thời gian mô phỏng **của chính lượt đó** không quá 120 ms;
-làm mới tầm nhìn không quá 60 ms và cập nhật dữ liệu trình đọc không quá
-35 ms; **chu kỳ từ sau hành động đến khi xuất bản snapshot TTS kế tiếp**
-không quá 250 ms; không gặp lệnh thế giới bị từ chối vì busy; không
-chuyển vùng bản đồ; không gặp bước đi không đổi vị trí. Bộ đo kiểm tra
-sau khi lượt được mô phỏng và dữ liệu TTS đã xuất bản, không suy ra từ
-việc JNI chấp nhận cử chỉ. Đây là **điều kiện dừng đo mang tính kỹ thuật**,
-không phải khẳng định APK đã đạt một mức hiệu năng nào đó. Khi game còn
-chậm hoặc có cú vuốt thất bại thì profiler tiếp tục đo.
+Các phép đo bổ sung chỉ chạy khi bật, nên có thể tạo ra chút độ trễ do
+việc ghi tệp và đo. Tắt để chơi bình thường mà không phải trả chi phí
+chẩn đoán. Tệp được giới hạn 5 MiB; nếu ghi quá nhiều, những dòng đầu
+tiên có thể bị loại để bảo toàn dung lượng. Xuất trước khi tắt/mở game
+lại nếu cần nghiên cứu một phiên đầy đủ.
 
-Native phát `WORLD_PROFILE_STATE state=auto_paused ...`, sau đó Java lưu
-`adaptive_performance_profiling=false`, dừng các đồng hồ đo tần suất cao và
-ngừng ghi những dòng trace thường xuyên như SNAPSHOT/GESTURE/WORLD_*.
-Nhật ký sẵn có vẫn giữ nguyên; các lỗi TTS, trạng thái giọng nói,
-lệnh bị từ chối và cảnh báo di chuyển không thành công vẫn được ghi khi
-nhật ký chung đang bật. Các dòng đo hiệu năng tần suất cao thì dừng.
-Lần mở app sau không tự bật profiler
-lại. Để điều tra lỗi mới, vào Nhật ký gỡ lỗi và bật lại profiler.
+## Các kịch bản hồi quy cần kiểm tra trên APK ARM64
 
-Khi profiler tắt, các đường hot-path không tạo chuỗi nội dung timing hoặc
-gửi chúng qua JNI. Một số sự kiện trạng thái/lỗi thông thường vẫn diễn ra;
-điều này được chủ ý giữ riêng để tránh mất dấu crash.
+1. Mở game lúc ghi tắt: không có tệp ghi mới phát sinh; mọi hoạt động
+   TTS/di chuyển vẫn bình thường.
+2. Bật ghi ở màn hình Nhật ký gỡ lỗi, quay lại và đi vài ô: các mục
+   `WORLD_MOVE_RESULT`, `WORLD_STEP_PIPELINE`, `WORLD_SIM_TIMING`
+   phải xuất hiện ngay cho mọi bước được xử lý.
+3. Tắt ghi khi đang chơi: số dòng/tệp không tăng thêm dù tiếp tục vuốt,
+   TTS đọc, bị chặn bởi Safe Mode hoặc gặp lỗi. Không tự bật lại.
+4. Xuất sau khi đã tắt: giữ đúng những dòng đã ghi trong phiên đó.
+5. Bật lần nữa trong cùng phiên: tiếp tục ghi nối vào nhật ký hiện tại.
+6. Đóng game, mở lại: tệp mới không có dữ liệu từ phiên trước; nếu
+   công tắc vẫn bật, phiên mới bắt đầu ghi từ đầu; nếu tắt, hoàn toàn
+   không ghi.
+7. Kiểm tra chế độ chỉ đọc: không mất sonar, thông tin tầm nhìn, menu,
+   hộp thoại hoặc cử chỉ.
 
-## Kịch bản kiểm tra thực tế
-
-1. Đứng ở 2 ô trống, kiểm tra mô tả **Ô hiện tại** và hướng quét; chặn bằng
-   Safe Mode phải có cùng quy tắc như bản cũ.
-2. Vuốt 30 lần đi/đi lại trong vùng bản đồ không dịch submap. So sánh
-   `WORLD_MOVE_RESULT`, `WORLD_DRAW_TIMING`,
-   `WORLD_VISION_TIMING`, `WORLD_SIM_TIMING` và thời gian từ
-   `INTENT` đến `SCREEN` trong hai cấu hình.
-3. Đi qua ranh giới submap; kiểm tra `WORLD_SHIFT_PROFILE` và chắc chắn
-   không coi lượt nặng là ổn định.
-4. Vào menu mở vật phẩm, hộp thoại, bản đồ, danh sách xung quanh; TTS phải
-   phát đầy đủ và menu phải dùng được dù không dựng hình bản đồ.
-5. Nếu profiler chưa tự dừng vì vẫn có lượt > ngưỡng, **không** tắt cưỡng
-   bức. Nếu đã tự dừng, mở lại Nhật ký gỡ lỗi để bật đo đợt mới.
-
-## Giới hạn kiểm chứng
-
-Kiểm thử Python trong nguồn xác nhận đường nối và điều kiện bảo vệ.
-Hiệu năng, lỗi rendering, tầm nhìn và TalkBack trên OnePlus cần nhật ký
-thiết bị sau khi build ARM64 và thử nghiệm. Không coi kiểm thử cấu trúc là
-bằng chứng đã đạt mục tiêu dưới 100 ms/bước.
+CI tĩnh kiểm tra đường nối và giới hạn. Hiệu quả thực tế trên OnePlus
+cần nhật ký phiên thử mới; không mặc định rằng đã đạt mức dưới 100 ms/bước.
