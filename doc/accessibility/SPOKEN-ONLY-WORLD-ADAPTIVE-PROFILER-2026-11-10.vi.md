@@ -36,6 +36,9 @@ Chỉ bản có trình đọc đang bật và ở foreground mới bỏ dựng h
   đường chỉ đọc bảo đảm `build_map_cache` và `update_visibility_cache`.
   Điều này **không** được bỏ: danh sách vật phẩm, quái vật và tầm nhìn của
   TTS phải tuân theo luật quan sát bình thường.
+- Cảm biến sonar về khoảng cách tới sinh vật hoặc vật phẩm thẳng hướng
+  được cập nhật riêng ở đường trình đọc theo chu kỳ 300 ms, không còn
+  lệ thuộc callback vẽ khi bật chế độ chỉ đọc.
 - Menu, lựa chọn vật phẩm, hộp thoại và UI Android vẫn hoạt động. SDL và
   vòng đời renderer vẫn tồn tại để xử lý input, lỗi và chuyển màn hình.
 - Không sửa logic `monmove`, `do_regular_action`, di chuyển bình thường,
@@ -51,6 +54,8 @@ Khi profiler bật, native phát các sự kiện:
 | Tên sự kiện | Dữ liệu |
 | --- | --- |
 | `WORLD_MOVE_RESULT` | Lệnh, tọa độ trước/sau, đã đổi ô, điểm di chuyển, thời gian hành động |
+| `WORLD_MOVE_BLOCKED` | Cảnh báo bước đi không đổi ô / hành động bị từ chối; vẫn giữ khi profiler tự tắt |
+| `WORLD_STEP_PIPELINE` | Một chu kỳ di chuyển hoàn tất: từ sau hành động tới lúc snapshot TTS tiếp theo được xuất bản; kèm chi phí từng phần và chuỗi bước ổn định |
 | `WORLD_DRAW_TIMING` | Thời gian cập nhật UI và `mode=headless_skip` hoặc chế độ vẽ |
 | `WORLD_RENDER_BREAKDOWN` | Chi phí cụ thể của cache, visibility, sonar, địa hình và panel nếu có vẽ |
 | `WORLD_VISION_TIMING` | Chi phí cập nhật map cache và visibility phục vụ TTS |
@@ -65,18 +70,23 @@ Khi profiler bật, native phát các sự kiện:
 
 Để **tự dừng**, phải có **48 lần di chuyển liên tiếp thực sự đổi tọa độ**
 trong khi: thời gian cập nhật đồ họa của lượt quan sát gần nhất không quá
-40 ms; thời gian mô phỏng được đo gần nhất không quá 120 ms;
+40 ms; thời gian mô phỏng **của chính lượt đó** không quá 120 ms;
 làm mới tầm nhìn không quá 60 ms và cập nhật dữ liệu trình đọc không quá
-35 ms; không gặp lệnh thế giới bị từ chối vì busy; không chuyển vùng
-bản đồ; không gặp bước đi không đổi vị trí. Đây là **điều kiện dừng đo mang tính kỹ thuật**,
+35 ms; **chu kỳ từ sau hành động đến khi xuất bản snapshot TTS kế tiếp**
+không quá 250 ms; không gặp lệnh thế giới bị từ chối vì busy; không
+chuyển vùng bản đồ; không gặp bước đi không đổi vị trí. Bộ đo kiểm tra
+sau khi lượt được mô phỏng và dữ liệu TTS đã xuất bản, không suy ra từ
+việc JNI chấp nhận cử chỉ. Đây là **điều kiện dừng đo mang tính kỹ thuật**,
 không phải khẳng định APK đã đạt một mức hiệu năng nào đó. Khi game còn
 chậm hoặc có cú vuốt thất bại thì profiler tiếp tục đo.
 
 Native phát `WORLD_PROFILE_STATE state=auto_paused ...`, sau đó Java lưu
 `adaptive_performance_profiling=false`, dừng các đồng hồ đo tần suất cao và
 ngừng ghi những dòng trace thường xuyên như SNAPSHOT/GESTURE/WORLD_*.
-Nhật ký sẵn có vẫn giữ nguyên, sự cố hoặc lỗi quan trọng vẫn có thể được
-ghi khi chế độ nhật ký chung đang bật. Lần mở app sau không tự bật profiler
+Nhật ký sẵn có vẫn giữ nguyên; các lỗi TTS, trạng thái giọng nói,
+lệnh bị từ chối và cảnh báo di chuyển không thành công vẫn được ghi khi
+nhật ký chung đang bật. Các dòng đo hiệu năng tần suất cao thì dừng.
+Lần mở app sau không tự bật profiler
 lại. Để điều tra lỗi mới, vào Nhật ký gỡ lỗi và bật lại profiler.
 
 Khi profiler tắt, các đường hot-path không tạo chuỗi nội dung timing hoặc
