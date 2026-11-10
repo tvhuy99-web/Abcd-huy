@@ -44,9 +44,13 @@ public final class SessionDebugLog {
     private final Thread.UncaughtExceptionHandler previousHandler;
     private final AtomicBoolean fatal = new AtomicBoolean();
     private volatile boolean closed;
+    // Once native walking has proved stable, preserve important lifecycle
+    // and crash events but stop recording high-frequency performance traces.
+    private volatile boolean verboseWorldTrace;
 
     private SessionDebugLog(Context context) {
         app = context.getApplicationContext();
+        verboseWorldTrace = new ReaderPreferences(app).isPerformanceProfilingEnabled();
         directory = new File(app.getFilesDir(), "session_debug");
         directory.mkdirs();
         activeFile = new File(directory, ACTIVE);
@@ -117,6 +121,29 @@ public final class SessionDebugLog {
     public static void event(String category, String detail) {
         SessionDebugLog log = current();
         if (log != null) { log.record(category, detail); }
+    }
+
+    public static void setVerboseWorldTrace(Context context, boolean enabled) {
+        start(context);
+        SessionDebugLog log = current();
+        if (log == null || log.verboseWorldTrace == enabled) { return; }
+        log.verboseWorldTrace = enabled;
+        log.record("WORLD_PROFILE_STATE",
+                enabled ? "journal=verbose_enabled" : "journal=verbose_suspended");
+    }
+
+    private static boolean isHighFrequencyTrace(String category, String detail) {
+        if (category == null) { return false; }
+        if (category.startsWith("WORLD_") || category.startsWith("GESTURE")
+                || category.startsWith("INTENT") || category.startsWith("TTS_")
+                || category.equals("NATIVE_ACTION") || category.equals("SNAPSHOT")
+                || category.equals("NAVIGATE")) {
+            return true;
+        }
+        // Retain modal/menu transitions for recovery but suppress the
+        // repeated world screen update on each footstep.
+        return category.equals("SCREEN") && detail != null
+                && detail.contains("category=DEFAULTMODE");
     }
 
     public static boolean enabled(Context context) {
@@ -227,6 +254,7 @@ public final class SessionDebugLog {
 
     private void record(String category, String detail) {
         if (closed || !enabled(app)) { return; }
+        if (!verboseWorldTrace && isHighFrequencyTrace(category, detail)) { return; }
         recordForce(category, detail);
     }
 
