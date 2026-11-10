@@ -177,16 +177,6 @@ public final class ReaderPreferences {
         values.edit().putBoolean("spoken_only_world", enabled).apply();
     }
 
-    /** Diagnostic profiling is temporary and automatically persists its OFF state. */
-    public boolean isPerformanceProfilingEnabled() {
-        return values.getBoolean("adaptive_performance_profiling",
-                BuildConfig.FLAVOR.equals("accessibility"));
-    }
-
-    public void setPerformanceProfilingEnabled(boolean enabled) {
-        values.edit().putBoolean("adaptive_performance_profiling", enabled).apply();
-    }
-
     public boolean isFastMovementEnabled() {
         return values.getBoolean("fast_movement", false);
     }
