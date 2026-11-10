@@ -3497,6 +3497,15 @@ void game::draw( ui_adaptor &ui )
     }
 #endif
 
+#if defined(__ANDROID__)
+    if( a11y::android::suppress_world_visuals() ) {
+        // Spoken-only world mode still runs the cache, visibility and sonar
+        // updates above. Skip the expensive terrain, creature, animation and
+        // sidebar painting. Modal UI adaptors remain fully operational.
+        u.view_offset = real_offset;
+        return;
+    }
+#endif
     werase( w_terrain );
     void_blink_curses();
     draw_ter();
@@ -8037,7 +8046,8 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
                       const bool furniture_move )
 {
 #if defined(__ANDROID__)
-    const auto walk_started = std::chrono::steady_clock::now();
+    const auto walk_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     if( u.has_flag( json_flag_PHASE_MOVEMENT ) ) {
         place_player( dest_loc );
@@ -8343,11 +8353,13 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
     bool moving = dest_loc != oldpos;
 
 #if defined(__ANDROID__)
-    const auto before_place = std::chrono::steady_clock::now();
+    const auto before_place = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_sm submap_shift = place_player( dest_loc );
 #if defined(__ANDROID__)
-    const auto after_place = std::chrono::steady_clock::now();
+    const auto after_place = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_ms ms_shift = coords::project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift.raw();
@@ -8420,11 +8432,12 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
     on_move_effects();
 
 #if defined(__ANDROID__)
-    const auto walk_finished = std::chrono::steady_clock::now();
+    const auto walk_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               walk_finished - walk_started ).count();
     static unsigned int profile_walk_samples = 0;
-    if( total_ms >= 20 || ( ++profile_walk_samples % 8 ) == 0 ) {
+    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_walk_samples % 8 ) == 0 ) ) {
         const auto place_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                   after_place - before_place ).count();
         const auto before_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -8598,7 +8611,8 @@ static void autopulp_or_butcher( avatar &u )
 point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 {
 #if defined(__ANDROID__)
-    const auto place_started = std::chrono::steady_clock::now();
+    const auto place_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     map &here = get_map();
     const optional_vpart_position vp1 = here.veh_at( dest_loc );
@@ -8776,11 +8790,13 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         here.creature_in_field( *mon );
     }
 #if defined(__ANDROID__)
-    const auto before_map_update = std::chrono::steady_clock::now();
+    const auto before_map_update = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     point_rel_sm submap_shift = update_map( u, z_level_changed );
 #if defined(__ANDROID__)
-    const auto after_map_update = std::chrono::steady_clock::now();
+    const auto after_map_update = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     // Important: don't use dest_loc after this line. `update_map` may have shifted the map
     // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
@@ -8846,11 +8862,13 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
     // Traps!
     // Try to detect.
 #if defined(__ANDROID__)
-    const auto before_search = std::chrono::steady_clock::now();
+    const auto before_search = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     u.search_surroundings();
 #if defined(__ANDROID__)
-    const auto after_search = std::chrono::steady_clock::now();
+    const auto after_search = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     if( u.is_mounted() ) {
         here.creature_on_trap( *u.mounted_creature );
@@ -8958,11 +8976,12 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         add_msg( _( "There are vehicle controls here but you cannot reach them whilst mounted." ) );
     }
 #if defined(__ANDROID__)
-    const auto place_finished = std::chrono::steady_clock::now();
+    const auto place_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               place_finished - place_started ).count();
     static unsigned int profile_place_samples = 0;
-    if( total_ms >= 20 || ( ++profile_place_samples % 8 ) == 0 ) {
+    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_place_samples % 8 ) == 0 ) ) {
         const auto update_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                    after_map_update - before_map_update ).count();
         const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
@@ -10802,7 +10821,9 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     }
 
 #if defined(__ANDROID__)
-    const auto shift_started = std::chrono::steady_clock::now();
+    a11y::android::performance_world_shift();
+    const auto shift_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
@@ -10815,7 +10836,8 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     }
 
 #if defined(__ANDROID__)
-    const auto after_map_shift = std::chrono::steady_clock::now();
+    const auto after_map_shift = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     // Shift monsters
     shift_monsters( { shift, 0 } );
@@ -10852,7 +10874,8 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     load_npcs();
 
 #if defined(__ANDROID__)
-    const auto after_npc_load = std::chrono::steady_clock::now();
+    const auto after_npc_load = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
     // Make sure map cache is consistent since it may have shifted.
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
@@ -10860,24 +10883,27 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     }
     here.build_map_cache( here.get_abs_sub().z() );
 #if defined(__ANDROID__)
-    const auto after_cache_build = std::chrono::steady_clock::now();
+    const auto after_cache_build = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
     // Spawn monsters if appropriate
     // This call will generate new monsters in addition to loading, so it's placed after NPC loading
     here.spawn_monsters( false ); // Static monsters
 #if defined(__ANDROID__)
-    const auto after_monster_spawn = std::chrono::steady_clock::now();
+    const auto after_monster_spawn = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
 #endif
 
     // Update what parts of the world map we can see
     update_overmap_seen();
 #if defined(__ANDROID__)
-    const auto shift_finished = std::chrono::steady_clock::now();
+    const auto shift_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
     const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                               shift_finished - shift_started ).count();
     static unsigned int profile_shift_samples = 0;
-    if( total_ms >= 20 || ( ++profile_shift_samples % 8 ) == 0 ) {
+    if( a11y::android::performance_profiling_enabled() && ( total_ms >= 20 || ( ++profile_shift_samples % 8 ) == 0 ) ) {
         const auto ms = []( const auto from, const auto to ) {
             return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
         };
