@@ -37,6 +37,7 @@ long long last_profile_sim_ms = -1;
 long long last_profile_vision_ms = -1;
 long long last_profile_reader_ms = -1;
 bool shifted_since_last_step = false;
+bool pending_walking_step = false;
 std::atomic<std::uint64_t> epoch{ 1 };
 std::mutex inbox_mutex;
 std::deque<semantic_intent> inbox;
@@ -98,8 +99,52 @@ void performance_draw_sample( const long long ms )
 }
 void performance_sim_sample( const long long ms )
 {
-    if( performance_profiling_enabled() ) {
-        last_profile_sim_ms = ms;
+    if( !performance_profiling_enabled() ) {
+        return;
+    }
+    last_profile_sim_ms = ms;
+
+    const unsigned int config_epoch = profile_configuration_epoch.load( std::memory_order_acquire );
+    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
+    if( config_epoch != last_profile_configuration_epoch ) {
+        // Starting another diagnostic session requires fresh render/reader
+        // measurements. Stale fast samples must never certify this session.
+        last_profile_configuration_epoch = config_epoch;
+        stable_walking_steps = 0;
+        last_profile_draw_ms = -1;
+        last_profile_vision_ms = -1;
+        last_profile_reader_ms = -1;
+        pending_walking_step = false;
+    } else if( !pending_walking_step || shifted_since_last_step ||
+               busy_epoch != last_profile_busy_epoch ||
+               last_profile_draw_ms < 0 || last_profile_draw_ms > 40 ||
+               last_profile_sim_ms > 120 ||
+               last_profile_vision_ms < 0 || last_profile_vision_ms > 60 ||
+               last_profile_reader_ms < 0 || last_profile_reader_ms > 35 ) {
+        stable_walking_steps = 0;
+    } else {
+        ++stable_walking_steps;
+    }
+
+    // The next walking turn must contribute its own fresh draw/reader data.
+    // Automatic travel with no foreground input frame cannot reuse metrics.
+    last_profile_draw_ms = -1;
+    last_profile_vision_ms = -1;
+    last_profile_reader_ms = -1;
+    shifted_since_last_step = false;
+    pending_walking_step = false;
+    last_profile_busy_epoch = busy_epoch;
+
+    // Evaluate AFTER the world simulation, never at the action receipt.
+    // Otherwise an expensive monster turn immediately after the 48th
+    // swipe would be invisible and profiling would stop prematurely.
+    if( stable_walking_steps >= 48 ) {
+        performance_profile_active.store( false, std::memory_order_release );
+#if defined(__ANDROID__)
+        diagnostic_event( "WORLD_PROFILE_STATE",
+                          "state=auto_paused stable_walks=48 draw_budget_ms=40 sim_budget_ms=120 "
+                          "vision_budget_ms=60 reader_budget_ms=35" );
+#endif
     }
 }
 void performance_vision_sample( const long long ms )
@@ -126,39 +171,17 @@ void performance_step_sample( const bool moved )
     if( !performance_profiling_enabled() ) {
         return;
     }
-    const unsigned int config_epoch = profile_configuration_epoch.load( std::memory_order_acquire );
-    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
-    if( config_epoch != last_profile_configuration_epoch ) {
-        last_profile_configuration_epoch = config_epoch;
+    if( !moved ) {
         stable_walking_steps = 0;
-        last_profile_draw_ms = -1;
-        last_profile_sim_ms = -1;
-        last_profile_vision_ms = -1;
-        last_profile_reader_ms = -1;
+        pending_walking_step = false;
+        return;
     }
-    // Stability is based on real movement, not a successful JNI receipt.
-    // A blocked step, map shift or a busy/rejected swipe resets the streak.
-    if( !moved || shifted_since_last_step || busy_epoch != last_profile_busy_epoch ||
-        last_profile_draw_ms < 0 || last_profile_draw_ms > 40 ||
-        last_profile_sim_ms < 0 || last_profile_sim_ms > 120 ||
-        last_profile_vision_ms < 0 || last_profile_vision_ms > 60 ||
-        last_profile_reader_ms < 0 || last_profile_reader_ms > 35 ) {
+    // This reports only the authoritative coordinate change. Final
+    // certification waits until do_turn completes the simulation.
+    if( pending_walking_step ) {
         stable_walking_steps = 0;
-    } else {
-        ++stable_walking_steps;
     }
-    shifted_since_last_step = false;
-    last_profile_busy_epoch = busy_epoch;
-    // Forty-eight consecutive fast actual steps, no shift and no busy
-    // receipts are required. A slow game never silently disables profiling.
-    if( stable_walking_steps >= 48 ) {
-        performance_profile_active.store( false, std::memory_order_release );
-#if defined(__ANDROID__)
-        diagnostic_event( "WORLD_PROFILE_STATE",
-                          "state=auto_paused stable_walks=48 draw_budget_ms=40 sim_budget_ms=120 "
-                          "vision_budget_ms=60 reader_budget_ms=35" );
-#endif
-    }
+    pending_walking_step = true;
 }
 
 void configure( const bool enable, const bool suspend )
