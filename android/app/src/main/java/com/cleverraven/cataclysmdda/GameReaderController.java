@@ -354,7 +354,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             sonar.setWorldActive(false);
         }
         boolean spokenOnlyWorld = preferences.isSpokenOnlyWorldEnabled();
-        boolean profile = preferences.isPerformanceProfilingEnabled();
+        boolean profile = SessionDebugLog.isRecording();
         if (force || !nativeConfigured || lastEnabled != enabled || lastSuspended != suspended
                 || lastSpokenOnlyWorld != spokenOnlyWorld || lastPerformanceProfile != profile) {
             try {
@@ -377,7 +377,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     public void receive(String json) {
         final long owner = presentationEpoch;
-        final long receivedAt = preferences.isPerformanceProfilingEnabled()
+        final long receivedAt = SessionDebugLog.isRecording()
                 ? SystemClock.elapsedRealtime() : 0L;
         handler.post(() -> {
             if (closed || !foreground || !preferences.isEnabled() || owner != presentationEpoch) {
@@ -772,7 +772,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 } else {
                     clearPendingWorldDirection();
                 }
-                if (worldView && preferences.isPerformanceProfilingEnabled()
+                if (worldView && SessionDebugLog.isRecording()
                         && (++worldJavaTimingSample % 8) == 0) {
                     SessionDebugLog.event("WORLD_JAVA_TIMING",
                             "jni_to_ui_ms=" + (dispatchedAt - receivedAt)
