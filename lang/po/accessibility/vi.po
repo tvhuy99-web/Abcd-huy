@@ -3885,3 +3885,6 @@ msgstr "%1$s. %2$s"
 msgid "This stack spans multiple pockets. Select it in the main item list."
 msgstr "Chồng vật phẩm này nằm ở nhiều ngăn. Hãy chọn trong danh sách vật phẩm bên ngoài."
 
+
+msgid "Pocket contents changed or cannot be selected. Please open the pocket again."
+msgstr "Vật phẩm trong ngăn đã thay đổi hoặc không thể chọn. Vui lòng mở lại ngăn chứa."
