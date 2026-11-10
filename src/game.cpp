@@ -1568,6 +1568,10 @@ static bool cancel_auto_move( Character &you, const std::string &text )
     if( query_yn( _( "%s Cancel auto move?" ), text ) )  {
         add_msg( m_warning, _( "%s Auto move canceled." ), text );
         you.abort_automove();
+        if( a11y::enabled() ) {
+            a11y::android::set_travel_state( 0 );
+            a11y::android::request_travel_map_return();
+        }
         return true;
     }
     return false;
@@ -6524,6 +6528,16 @@ look_around_result game::look_around(
     mark_main_ui_adaptor_resize();
 #endif
     do {
+        // The player explicitly canceled an automatic route from a modal.
+        // A leftover look-around cursor must not capture the return to the
+        // map. The request expires in two seconds if no such cursor exists.
+        // Zone selection is a different consequential workflow: never close
+        // it implicitly.
+        if( a11y::enabled() && !select_zone && !is_moving_zone &&
+            !u.has_destination() && a11y::android::take_travel_map_return() ) {
+            action = "QUIT";
+            break;
+        }
         u.view_offset = center - u.pos_bub();
         if( select_zone ) {
             if( has_first_point ) {
