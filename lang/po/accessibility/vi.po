@@ -3903,3 +3903,78 @@ msgstr "Vật phẩm có đánh dấu trong quy tắc nhặt đồ tự động.
 
 msgid "Additional nested items not shown. Try a shorter inventory list."
 msgstr "Vẫn còn vật phẩm lồng bên trong chưa hiển thị. Hãy thử xem danh sách túi đồ ngắn hơn."
+
+msgid "Taking another person's property is disabled."
+msgstr "Chế độ hiện tại không cho phép lấy đồ của người khác."
+
+msgid "Taking this person's property was declined."
+msgstr "Bạn đã từ chối lấy đồ thuộc sở hữu của người khác."
+
+msgid "The pickup volume limit was reached."
+msgstr "Đã chạm giới hạn thể tích khi nhặt đồ."
+
+msgid "The pickup weight limit was reached."
+msgstr "Đã chạm giới hạn khối lượng khi nhặt đồ."
+
+msgid "Frozen liquid needs suitable tools."
+msgstr "Chất lỏng đông cứng cần dụng cụ thích hợp để nhặt."
+
+msgid "Spilled liquid cannot be collected without a container."
+msgstr "Không thể nhặt chất lỏng đổ ra nếu không có vật chứa phù hợp."
+
+msgid "Spilled gas cannot be picked up."
+msgstr "Không thể nhặt khí đã thoát ra."
+
+msgid "The nonempty container was not picked up."
+msgstr "Không nhặt vật chứa đang có đồ bên trong."
+
+msgid "The item is too heavy to carry."
+msgstr "Vật phẩm quá nặng để mang theo."
+
+msgid "There is not enough usable inventory space."
+msgstr "Không còn đủ chỗ chứa phù hợp trong hành trang."
+
+msgid "No available pocket accepted this item."
+msgstr "Không có ngăn chứa nào nhận được vật phẩm này."
+
+msgid "Pickup was not completed."
+msgstr "Thao tác nhặt vật phẩm chưa hoàn tất."
+
+msgid "A selected item is no longer available."
+msgstr "Một vật phẩm đã chọn không còn ở vị trí cũ."
+
+msgid "%s: Pickup stopped before this item."
+msgstr "%s: Đã dừng nhặt đồ trước khi đến vật phẩm này."
+
+msgid "Pickup finished. Collected %1$d item groups; failed %2$d item groups."
+msgstr "Đã kết thúc nhặt đồ. Nhặt thành công %1$d nhóm vật phẩm; thất bại %2$d nhóm."
+
+msgid "Collected:"
+msgstr "Đã nhặt:"
+
+msgid "Not collected:"
+msgstr "Chưa nhặt được:"
+
+msgid "Some additional item details were omitted from this summary."
+msgstr "Có thêm chi tiết vật phẩm không thể đọc hết trong bản tóm tắt này."
+
+msgid "Automatic travel canceled. Returned to the map."
+msgstr "Đã hủy chuyến đi tự động. Trở về bản đồ."
+
+msgid "Automatic travel paused. Your route is kept."
+msgstr "Đã tạm dừng đi tự động. Tuyến đường vẫn được giữ."
+
+msgid "Automatic travel resumed."
+msgstr "Đã tiếp tục đi tự động."
+
+msgid "Cannot resume: safe mode still blocks the route."
+msgstr "Không thể tiếp tục vì chế độ an toàn vẫn đang chặn tuyến đường."
+
+msgid "Travel paused because safe mode detected a threat."
+msgstr "Đã dừng chuyến đi vì chế độ an toàn phát hiện mối nguy hiểm."
+
+msgid "Return to map"
+msgstr "Trở về bản đồ"
+
+msgid "Close the observation cursor without moving the character."
+msgstr "Đóng con trỏ quan sát mà không di chuyển nhân vật."
