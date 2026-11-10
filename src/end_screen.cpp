@@ -71,6 +71,12 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
     end_screen_ui_impl p_impl;
     a11y::screen_scope reader( &ctxt, "end_screen",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        // The end screen is complete only after Continue. Back must never
+        // strand a screen-reader user with an unsupported cancel receipt.
+        if( intent.action == "cancel" ||
+            ( intent.action == "activate" && intent.node == "end:continue" ) ) {
+            return "TEXT.CONFIRM";
+        }
         if( intent.action == "set_text" && intent.node == "end:last_words" ) {
             p_impl.text = intent.value;
             return "TIMEOUT";
@@ -81,7 +87,8 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
     while( true ) {
         ui_manager::redraw_invalidated();
         if( a11y::enabled() ) {
-            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "The End" ) );
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot(
+                    ctxt, actually_dead ? _( "Your character has died" ) : _( "The End" ) );
             snapshot.summary = p_impl.accessibility_description;
             a11y::append_document( snapshot, "end:details", _( "End-screen details" ),
                                    p_impl.accessibility_description );
@@ -94,9 +101,16 @@ void end_screen_data::draw_end_screen_ui( bool actually_dead )
                 last_words.actions = { "focus", "set_text" };
                 snapshot.nodes.push_back( std::move( last_words ) );
             }
-            if( !snapshot.nodes.empty() ) {
-                snapshot.focus = "end:details";
-            }
+            // A primary action, not an auxiliary command hidden behind
+            // a hold gesture. Browsing to this button never advances
+            // the death sequence; activation and Back do.
+            a11y::semantic_node continue_button;
+            continue_button.id = "end:continue";
+            continue_button.role = "button";
+            continue_button.label = _( "Continue" );
+            continue_button.actions = { "focus", "activate" };
+            snapshot.nodes.push_back( std::move( continue_button ) );
+            snapshot.focus = "end:details";
             reader.update( std::move( snapshot ) );
         }
         std::string action = ctxt.handle_input();

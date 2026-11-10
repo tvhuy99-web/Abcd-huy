@@ -1217,7 +1217,7 @@ msgstr "Bị chặn bởi %s."
 
 #, c-format
 msgid "%s. Cannot move."
-msgstr "%s, không thể di chuyển."
+msgstr "Không thể di chuyển do %s."
 
 msgid "your condition"
 msgstr "tình trạng hiện tại của bạn"
@@ -4000,3 +4000,29 @@ msgstr "Hết thông tin nhân vật."
 
 msgid "Character information"
 msgstr "Thông tin nhân vật"
+
+msgid "Your character has died"
+msgstr "Nhân vật của bạn đã chết"
+
+msgid "Completed"
+msgstr "Đã hoàn thành"
+
+msgid "Failed"
+msgstr "Đã thất bại"
+
+msgid "In progress"
+msgstr "Đang thực hiện"
+
+msgid "Score details"
+msgstr "Chi tiết điểm số"
+
+msgid "Generating a new map area. Please wait."
+msgstr "Đang tạo khu vực bản đồ mới. Vui lòng chờ."
+
+#, c-format
+msgid "You try to break %s grab on your %s, but fail!"
+msgstr "Bạn cố thoát khỏi cú tóm %1$s ở %2$s nhưng thất bại!"
+
+#, c-format
+msgid "You break %s grab on your %s!"
+msgstr "Bạn đã thoát khỏi cú tóm %1$s ở %2$s!"

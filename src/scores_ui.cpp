@@ -90,7 +90,9 @@ class scores_ui_impl : public cataimgui::window
         bool npc_group_collapsed = false;
 
         std::vector<std::string> achievements_text;
+        std::vector<std::string> achievements_labels;
         std::vector<std::string> conducts_text;
+        std::vector<std::string> conducts_labels;
         std::vector<std::string> scores_text;
         std::string memorial_text;
         std::vector<std::tuple<int, std::string, nc_color, std::string>> monster_kills_data;
@@ -168,9 +170,16 @@ void scores_ui_impl::init_data()
     std::sort( sortable_achievements.begin(), sortable_achievements.end(), localized_compare );
     for( const sortable_achievement &entry : sortable_achievements ) {
         const achievement *ach = std::get<const achievement *>( entry );
+        const achievement_completion completion = std::get<achievement_completion>( entry );
+        const std::string state = completion == achievement_completion::completed ?
+                                  _( "Completed" ) : completion == achievement_completion::failed ?
+                                  _( "Failed" ) : _( "In progress" );
+        const std::string spoken_label = ach->name().translated() + ". " + state;
         if( ach->is_conduct() ) {
+            conducts_labels.emplace_back( spoken_label );
             conducts_text.emplace_back( achievements.ui_text_for( ach ) );
         } else {
+            achievements_labels.emplace_back( spoken_label );
             achievements_text.emplace_back( achievements.ui_text_for( ach ) );
         }
     }
@@ -353,6 +362,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
         case scores_ui_tab::conducts: {
             const bool use_conducts = selected_tab == scores_ui_tab::conducts;
             const std::vector<std::string> &entries = use_conducts ? conducts_text : achievements_text;
+            const std::vector<std::string> &labels = use_conducts ? conducts_labels :
+                                                     achievements_labels;
             snapshot.summary = use_conducts ? _( "Conducts" ) : _( "Achievements" );
             if( !g->achievements().is_enabled() ) {
                 append_entry( "scores:empty:achievements", _( "Achievements and conducts are disabled" ),
@@ -366,9 +377,8 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
                 const int total = static_cast<int>( entries.size() + 1 );
                 for( std::size_t i = 0; i < entries.size(); ++i ) {
                     const int position = static_cast<int>( i + 1 );
-                    const std::string label = string_format( use_conducts ? _( "Conduct %d" ) :
-                                               _( "Achievement %d" ), position );
-                    append_entry( "scores:entry:" + std::to_string( i ), label, entries[i], position, total );
+                    append_entry( "scores:entry:" + std::to_string( i ), labels[i],
+                                  entries[i], position, total );
                 }
                 append_entry( "scores:note:achievements", _( "About this list" ),
                               use_conducts ?
@@ -386,8 +396,14 @@ a11y::semantic_snapshot scores_ui_impl::reader_snapshot( const input_context &ct
                 const int total = static_cast<int>( scores_text.size() + 1 );
                 for( std::size_t i = 0; i < scores_text.size(); ++i ) {
                     const int position = static_cast<int>( i + 1 );
+                    // Read the actual scoring criterion rather than "Score 1".
+                    // The full value remains available in the document detail.
+                    const std::string score_text = remove_color_tags( scores_text[i] );
+                    const std::size_t line_break = score_text.find( '\n' );
+                    const std::string label = score_text.substr( 0, line_break );
                     append_entry( "scores:entry:" + std::to_string( i ),
-                                  string_format( _( "Score %d" ), position ), scores_text[i], position, total );
+                                  label.empty() ? _( "Score details" ) : label,
+                                  scores_text[i], position, total );
                 }
                 append_entry( "scores:note:scores", _( "About this list" ),
                               _( "Note that only scores that existed when you started this game and still exist now will appear here." ),

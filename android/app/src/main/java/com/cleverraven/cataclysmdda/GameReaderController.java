@@ -784,6 +784,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
+                } else if (enteredMenu && "SCROLLABLE_TEXT".equals(next.category)
+                        && next.find(focus) != null
+                        && "document".equals(next.find(focus).role)) {
+                    // Narrative screens such as "Your followers" should not
+                    // speak only their title and wait for a hidden activation.
+                    ReaderSnapshot.Node document = next.find(focus);
+                    speakDocument(next.title + ". " + documentReader.open(
+                            next.contextKey(), document.id, document.detail));
                 } else if (enteredMenu && next.find(focus) != null) {
                     // Yes/No questions carry their own text. Speak it once
                     // on entering the modal, then only the actual choice
@@ -1779,21 +1787,30 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    private static void appendTravelSentence(StringBuilder description, String content) {
+        if (content == null || content.trim().isEmpty()) { return; }
+        String sentence = content.trim();
+        if (description.length() > 0) {
+            char last = description.charAt(description.length() - 1);
+            if (last != '.' && last != '!' && last != '?') {
+                description.append('.');
+            }
+            description.append(' ');
+        }
+        description.append(sentence);
+    }
+
     private String travelDetailSpeech(int state) {
         StringBuilder description = new StringBuilder(travelStatus(state));
         if (snapshot != null) {
             ReaderSnapshot.Node active = snapshot.find("activity:current");
             ReaderSnapshot.Node messages = snapshot.find("world:messages");
             if (active != null) {
-                if (!active.value.isEmpty()) {
-                    description.append(". ").append(active.value);
-                }
-                if (!active.detail.isEmpty()) {
-                    description.append(". ").append(active.detail);
-                }
+                appendTravelSentence(description, active.value);
+                appendTravelSentence(description, active.detail);
             }
-            if (messages != null && !messages.detail.isEmpty()) {
-                description.append(". ").append(messages.detail);
+            if (messages != null) {
+                appendTravelSentence(description, messages.detail);
             }
         }
         return description.toString();
@@ -1997,6 +2014,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             travelChoice = Math.floorMod(travelChoice + delta, travelChoiceCount(state));
             render();
             readCurrent();
+            return;
+        }
+        // Once a long document is open, ordinary left/right and up/down
+        // navigation advances the document itself, not the single parent
+        // item. Back returns to that parent list without closing the screen.
+        if (documentReader.isOpen() && !commandPaletteOpen) {
+            speakDocument(delta > 0 ? documentReader.nextParagraph()
+                    : documentReader.previousParagraph());
             return;
         }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
@@ -3297,6 +3322,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // explicit Cancel button; only a subsequent activation ends it.
             travelChoice = travelChoiceCount(travelState()) - 1;
             render();
+            readCurrent();
+            return;
+        }
+        if (documentReader.isOpen()) {
+            documentReader.clear();
+            speech.stop();
             readCurrent();
             return;
         }

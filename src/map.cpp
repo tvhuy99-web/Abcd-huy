@@ -9502,11 +9502,36 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
     }
 
     if( map_incomplete ) {
+#if defined(__ANDROID__)
+        // Missing submaps may require a full overmap tile to be generated.
+        // Let the screen reader announce that expensive operation before
+        // it blocks the game thread; at most one notice per five seconds.
+        if( this == &bubble_map && a11y::android::enabled() ) {
+            static std::chrono::steady_clock::time_point last_mapgen_notice;
+            const auto now = std::chrono::steady_clock::now();
+            if( now - last_mapgen_notice >= std::chrono::seconds( 5 ) ) {
+                a11y::android::announce( _( "Generating a new map area. Please wait." ), 1 );
+                last_mapgen_notice = now;
+            }
+        }
+        const bool profile_mapgen = a11y::android::performance_profiling_enabled();
+        const auto generation_started = profile_mapgen ? std::chrono::steady_clock::now() :
+                                        std::chrono::steady_clock::time_point{};
+#endif
         smallmap tmp_map;
         swap_map swap( *tmp_map.cast_to_map() );
         tmp_map.main_cleanup_override( false );
         tmp_map.generate( grid_abs_omt, calendar::turn, true );
         _main_requires_cleanup |= main_inbounds && tmp_map.is_main_cleanup_queued();
+#if defined(__ANDROID__)
+        if( profile_mapgen ) {
+            const auto generation_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::steady_clock::now() - generation_started ).count();
+            a11y::android::diagnostic_event( "WORLD_MAPGEN_PHASE",
+                    "generate_ms=" + std::to_string( generation_ms ) +
+                    " omt=" + grid_abs_omt.to_string() );
+        }
+#endif
 
         for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
             const tripoint_abs_sm pos = {grid_sm_base.xy(), gridz };
@@ -9522,6 +9547,9 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
     const int stop_z = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
 
     submap *tmpsub;
+    // Weather is constant during this synchronous load. Resolve the
+    // generator once rather than once for every loaded Z level.
+    const weather_generator &wgen = get_weather().get_cur_weather_gen();
 
     for( int z = start_z; z <= stop_z; z++ ) {
         const tripoint_abs_sm pos = { grid_abs_sub.xy(), z };
@@ -9579,7 +9607,6 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
         }
         // When a submap is loaded into the reality bubble, apply
         // temperature-based phase changes
-        const weather_generator &wgen = get_weather().get_cur_weather_gen();
         const tripoint_abs_sm pos_sm = { grid_abs_sub.xy(), z };
         const tripoint_abs_ms sm_abs_ms = project_to<coords::ms>( pos_sm );
         const tripoint_bub_ms sm_origin = get_bub( sm_abs_ms );
