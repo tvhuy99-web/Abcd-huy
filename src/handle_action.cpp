@@ -4150,18 +4150,19 @@ bool game::handle_action()
     const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
     // A JNI-accepted direction is not proof of movement. Record the
     // authoritative position before and after the original game action.
-    const bool diagnostic_walk = act == ACTION_MOVE_FORTH ||
+    const bool diagnostic_walk = diagnostic_profile && ( act == ACTION_MOVE_FORTH ||
                                  act == ACTION_MOVE_FORTH_RIGHT ||
                                  act == ACTION_MOVE_RIGHT ||
                                  act == ACTION_MOVE_BACK_RIGHT ||
                                  act == ACTION_MOVE_BACK ||
                                  act == ACTION_MOVE_BACK_LEFT ||
                                  act == ACTION_MOVE_LEFT ||
-                                 act == ACTION_MOVE_FORTH_LEFT;
-    const tripoint_abs_ms diagnostic_before_position = player_character.pos_abs();
-    if( act != ACTION_TIMEOUT && !diagnostic_walk ) {
-        // A menu/combat/interact action separates walking samples. Only
-        // uninterrupted actual footsteps can auto-pause the profiler.
+                                 act == ACTION_MOVE_FORTH_LEFT );
+    std::optional<tripoint_abs_ms> diagnostic_before_position;
+    if( diagnostic_walk ) {
+        diagnostic_before_position = player_character.pos_abs();
+    }
+    if( diagnostic_profile && act != ACTION_TIMEOUT && !diagnostic_walk ) {
         a11y::android::performance_step_sample( false );
     }
     if( diagnostic_profile && act != ACTION_TIMEOUT ) {
@@ -4188,12 +4189,6 @@ bool game::handle_action()
                     a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
                             "action=" + diagnostic_action_name +
                             " result=action_rejected changed=false" );
-                } else {
-                    // Exceptional failures remain observable even after the
-                    // high-frequency profiler has automatically stopped.
-                    a11y::android::diagnostic_event( "WORLD_MOVE_BLOCKED",
-                            "action=" + action_ident( act ) +
-                            " result=action_rejected" );
                 }
             }
             if( diagnostic_profile && act != ACTION_TIMEOUT ) {
@@ -4230,9 +4225,9 @@ bool game::handle_action()
                                          " elapsed_ms=" + std::to_string( elapsed ) );
         if( diagnostic_walk ) {
             const tripoint_abs_ms after = player_character.pos_abs();
-            const int dx = after.x() - diagnostic_before_position.x();
-            const int dy = after.y() - diagnostic_before_position.y();
-            const int dz = after.z() - diagnostic_before_position.z();
+            const int dx = after.x() - diagnostic_before_position->x();
+            const int dy = after.y() - diagnostic_before_position->y();
+            const int dz = after.z() - diagnostic_before_position->z();
             a11y::android::performance_step_sample( dx != 0 || dy != 0 || dz != 0 );
             a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
                     "action=" + diagnostic_action_name +
@@ -4240,9 +4235,9 @@ bool game::handle_action()
                                    std::string( "same_tile" ) ) +
                     " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
                                      std::string( "false" ) ) +
-                    " from_x=" + std::to_string( diagnostic_before_position.x() ) +
-                    " from_y=" + std::to_string( diagnostic_before_position.y() ) +
-                    " from_z=" + std::to_string( diagnostic_before_position.z() ) +
+                    " from_x=" + std::to_string( diagnostic_before_position->x() ) +
+                    " from_y=" + std::to_string( diagnostic_before_position->y() ) +
+                    " from_z=" + std::to_string( diagnostic_before_position->z() ) +
                     " to_x=" + std::to_string( after.x() ) +
                     " to_y=" + std::to_string( after.y() ) +
                     " to_z=" + std::to_string( after.z() ) +
@@ -4250,11 +4245,6 @@ bool game::handle_action()
                                                      player_character.get_moves() ) +
                     " action_ms=" + std::to_string( elapsed ) );
         }
-    }
-    if( diagnostic_walk && !diagnostic_profile &&
-        player_character.pos_abs() == diagnostic_before_position ) {
-        a11y::android::diagnostic_event( "WORLD_MOVE_BLOCKED",
-                "action=" + action_ident( act ) + " result=same_tile" );
     }
 #endif
     return !player_character.is_dead_state();
