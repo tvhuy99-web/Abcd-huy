@@ -741,23 +741,30 @@ bool game::do_turn()
                     && ( !u.has_distant_destination() || calendar::once_every( 10_seconds ) ) ) {
                     wait_popup_reset();
 #if defined(__ANDROID__)
-                    const auto draw_started = std::chrono::steady_clock::now();
-                    if( a11y::enabled() ) {
-                        // The world UI invalidates its changed regions. Do not
-                        // force a full top-level redraw before every ordinary
-                        // reader walking input when nothing was invalidated.
-                        ui_manager::redraw_invalidated();
-                    } else {
-                        ui_manager::redraw();
+                    const bool headless = a11y::android::suppress_world_visuals();
+                    const bool profile = a11y::android::performance_profiling_enabled();
+                    const auto draw_started = profile ? std::chrono::steady_clock::now() :
+                                              std::chrono::steady_clock::time_point{};
+                    if( !headless ) {
+                        // Menus and the ordinary renderer still redraw normally.
+                        // The spoken-only world does not need an ImGui/SDL frame
+                        // before every walking input: snapshot and input are
+                        // maintained independently.
+                        if( a11y::enabled() ) {
+                            ui_manager::redraw_invalidated();
+                        } else {
+                            ui_manager::redraw();
+                        }
                     }
-                    if( a11y::enabled() ) {
+                    if( profile ) {
                         const auto draw_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                                  std::chrono::steady_clock::now() - draw_started ).count();
+                        a11y::android::performance_draw_sample( draw_ms );
                         static unsigned int draw_samples = 0;
-                        if( draw_ms >= 20 || ( ++draw_samples % 16 ) == 0 ) {
+                        if( draw_ms >= 20 || ( ++draw_samples % 8 ) == 0 ) {
                             a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
                                     "draw_ms=" + std::to_string( draw_ms ) +
-                                    " mode=invalidated_only" );
+                                    ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
                         }
                     }
 #else
@@ -825,7 +832,9 @@ bool game::do_turn()
     }
 
 #if defined(__ANDROID__)
-    const auto world_sim_started = std::chrono::steady_clock::now();
+    const bool world_profile = a11y::android::performance_profiling_enabled();
+    const auto world_sim_started = world_profile ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
 #endif
     scent_map &scent = get_scent();
     // No-scent debug mutation has to be processed here or else it takes time to start working
@@ -851,17 +860,20 @@ bool game::do_turn()
     // Update vision caches for monsters. If this turns out to be expensive,
     // consider a stripped down cache just for monsters.
 #if defined(__ANDROID__)
-    const auto before_monster_cache = std::chrono::steady_clock::now();
+    const auto before_monster_cache = world_profile ? std::chrono::steady_clock::now() :
+                                      std::chrono::steady_clock::time_point{};
 #endif
     m.build_map_cache( levz, true );
 #if defined(__ANDROID__)
-    const auto after_monster_cache = std::chrono::steady_clock::now();
+    const auto after_monster_cache = world_profile ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
 #endif
 
     // process monster and npc turn
     monmove();
 #if defined(__ANDROID__)
-    const auto after_monster_turn = std::chrono::steady_clock::now();
+    const auto after_monster_turn = world_profile ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
 #endif
 
     if( calendar::once_every( time_between_npc_OM_moves ) ) {
@@ -874,12 +886,13 @@ bool game::do_turn()
     // replenish avatar moves
     u.process_turn();
 #if defined(__ANDROID__)
-    if( a11y::enabled() ) {
+    if( world_profile ) {
         const auto now = std::chrono::steady_clock::now();
         const auto ms = []( const auto start, const auto end ) {
             return std::chrono::duration_cast<std::chrono::milliseconds>( end - start ).count();
         };
         const auto total_ms = ms( world_sim_started, now );
+        a11y::android::performance_sim_sample( total_ms );
         static unsigned int world_sim_samples = 0;
         if( total_ms >= 40 || ( ++world_sim_samples % 8 ) == 0 ) {
             a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
