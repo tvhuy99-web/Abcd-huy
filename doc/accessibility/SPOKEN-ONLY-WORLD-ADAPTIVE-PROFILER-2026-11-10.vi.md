@@ -52,6 +52,7 @@ Khi profiler bật, native phát các sự kiện:
 | --- | --- |
 | `WORLD_MOVE_RESULT` | Lệnh, tọa độ trước/sau, đã đổi ô, điểm di chuyển, thời gian hành động |
 | `WORLD_DRAW_TIMING` | Thời gian cập nhật UI và `mode=headless_skip` hoặc chế độ vẽ |
+| `WORLD_RENDER_BREAKDOWN` | Chi phí cụ thể của cache, visibility, sonar, địa hình và panel nếu có vẽ |
 | `WORLD_VISION_TIMING` | Chi phí cập nhật map cache và visibility phục vụ TTS |
 | `WORLD_SIM_TIMING` | Tổng mô phỏng, cache, monster/NPC, phần cập nhật nhân vật |
 | `WORLD_READER_TIMING` | Tạo snapshot và gửi snapshot |
@@ -64,9 +65,10 @@ Khi profiler bật, native phát các sự kiện:
 
 Để **tự dừng**, phải có **48 lần di chuyển liên tiếp thực sự đổi tọa độ**
 trong khi: thời gian cập nhật đồ họa của lượt quan sát gần nhất không quá
-40 ms; thời gian mô phỏng được đo gần nhất không quá 120 ms; không gặp
-lệnh thế giới bị từ chối vì busy; không chuyển vùng bản đồ; không gặp
-bước đi không đổi vị trí. Đây là **điều kiện dừng đo mang tính kỹ thuật**,
+40 ms; thời gian mô phỏng được đo gần nhất không quá 120 ms;
+làm mới tầm nhìn không quá 60 ms và cập nhật dữ liệu trình đọc không quá
+35 ms; không gặp lệnh thế giới bị từ chối vì busy; không chuyển vùng
+bản đồ; không gặp bước đi không đổi vị trí. Đây là **điều kiện dừng đo mang tính kỹ thuật**,
 không phải khẳng định APK đã đạt một mức hiệu năng nào đó. Khi game còn
 chậm hoặc có cú vuốt thất bại thì profiler tiếp tục đo.
 
