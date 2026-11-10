@@ -712,7 +712,10 @@ input_context game::get_player_input( std::string &action )
 
     user_turn current_turn;
 
-    if( get_option<bool>( "ANIMATIONS" ) ) {
+    // Nothing in this animation loop is required for speech or gameplay.
+    // Avoid weather, minimap and tile-animation redraws while waiting for
+    // footsteps in the spoken-only world.
+    if( get_option<bool>( "ANIMATIONS" ) && !a11y::android::suppress_world_visuals() ) {
         const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
         point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
                       ( TERRAIN_WINDOW_HEIGHT > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_HEIGHT - TOTAL_VIEW ) / 2 :
