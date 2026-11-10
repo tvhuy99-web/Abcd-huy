@@ -185,15 +185,11 @@
     <string name="a11yEffectsVolumeValue">Effects volume: %1$d</string>
     <string name="a11yDebugLogTitle">Debug log</string>
     <string name="a11ySpokenOnlyWorld">Spoken-only world, skip world graphics (faster)</string>
-    <string name="a11yAdaptiveProfiler">Adaptive performance profiling (auto-pauses when walking is stable)</string>
     <string name="a11yDebugLogEnabled">Record debug log</string>
     <string name="a11yDebugLogExport">Export log</string>
     <string name="a11yDebugLogClear">Delete log</string>
-    <string name="a11yDebugLogConfirmClear">Delete this session\'s log and the previous crash log?</string>
+    <string name="a11yDebugLogConfirmClear">Delete the current game launch's log?</string>
     <string name="a11yDebugLogCleared">Log deleted</string>
-    <string name="a11yDebugLogCrashAvailable">A crash log from the previous session is available for export.</string>
-    <string name="a11yDebugLogPreviousCrash">Previous crash</string>
-    <string name="a11yDebugLogCurrentSession">Current session</string>
     <string name="a11yDebugLogEmpty">No log to export</string>
     <string name="a11yDebugLogExportError">Could not export log</string>
     <string name="a11yDebugLogExported">Log saved</string>
