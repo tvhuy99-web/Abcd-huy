@@ -194,6 +194,13 @@ public class CataclysmDDA extends SDLActivity {
     /** Native engine diagnostic events do not depend on TTS being enabled. */
     public void onAccessibilityNativeDiagnostic(String category, String detail) {
         SessionDebugLog.event(category, detail);
+        if ("WORLD_PROFILE_STATE".equals(category)
+                && detail != null && detail.startsWith("state=auto_paused")) {
+            // Native profiling has already stopped. Persist that decision
+            // across game resumes and app restarts without disabling crash
+            // recovery or the user's ordinary debug journal.
+            new ReaderPreferences(this).setPerformanceProfilingEnabled(false);
+        }
     }
 
     /** SDL's confirmed normal quit clears the active journal synchronously. */
@@ -236,6 +243,8 @@ public class CataclysmDDA extends SDLActivity {
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
+    static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
+                                                        boolean performanceProfile);
     static native int nativeCancelPendingWorldSteps();
     static native int nativeTravelState();
     static native boolean nativeTravelControl(int action);
