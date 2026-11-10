@@ -41,7 +41,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
     def test_long_press_opens_commands_and_two_finger_tap_reads_detail(self):
         self.assertIn('listener.openContextActions();', self.surface)
         self.assertIn('listener.twoFingerTap(count);', self.surface)
-        self.assertIn('if (fingers == 2 && count == 1)', self.surface)
+        self.assertIn('if (fingers == 2)', self.surface)
         self.assertIn('if (count == 1) { detail(); return; }', self.controller)
         self.assertIn('public void openContextActions()', self.controller)
 
