@@ -74,7 +74,11 @@ class TravelDialogPickupContracts(unittest.TestCase):
 
     def test_travel_panel_is_accessible_and_modal_warnings_take_priority(self):
         src = self.controller
-        self.assertIn('&& !"DEFAULTMODE".equals(snapshot.category)))', src)
+        self.assertIn('&& !"DEFAULTMODE".equals(snapshot.category)', src)
+        self.assertIn('&& !"overmap".equals(snapshot.category)', src)
+        self.assertIn('&& !"look-around".equals(snapshot.category)', src)
+        self.assertIn("handler.postDelayed(travelStatePoll, 200);", src)
+        self.assertIn("if (state != announcedTravelState)", src)
         self.assertIn('|| (!"activity".equals(snapshot.category)', src)
         self.assertIn("private void renderTravelPanel(int state)", src)
         self.assertIn("else if (travelState() != 0)", src)
