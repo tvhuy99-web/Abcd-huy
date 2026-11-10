@@ -647,23 +647,51 @@ input_context game::get_player_input( std::string &action )
             if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
                 // Sample build and publication separately so the next phone
                 // log can distinguish reader work from regular game turns.
-                const auto started = std::chrono::steady_clock::now();
+#if defined(__ANDROID__)
+                // Headless world rendering must still rebuild vision before
+                // the snapshot reads tiles. This is gameplay/reader state,
+                // never visual rendering and never skipped to gain speed.
+                if( a11y::android::suppress_world_visuals() ) {
+                    const bool profile = a11y::android::performance_profiling_enabled();
+                    const auto vision_started = profile ? std::chrono::steady_clock::now() :
+                                                std::chrono::steady_clock::time_point{};
+                    map &vision_map = get_map();
+                    const int z = get_avatar().posz();
+                    vision_map.build_map_cache( z );
+                    vision_map.update_visibility_cache( z );
+                    if( profile ) {
+                        const auto vision_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                   std::chrono::steady_clock::now() - vision_started ).count();
+                        static unsigned int vision_samples = 0;
+                        if( vision_ms >= 20 || ( ++vision_samples % 8 ) == 0 ) {
+                            a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
+                                    "cache_visibility_ms=" + std::to_string( vision_ms ) +
+                                    " mode=headless_reader" );
+                        }
+                    }
+                }
+#endif
+                const bool profile_reader = a11y::android::performance_profiling_enabled();
+                const auto started = profile_reader ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
                 a11y::semantic_snapshot next = make_reader_snapshot();
                 const auto built = std::chrono::steady_clock::now();
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
                 const auto published = std::chrono::steady_clock::now();
-                static unsigned int reader_timing_sample = 0;
-                const auto ms = []( const auto from, const auto to ) {
-                    return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
-                };
-                const auto build_ms = ms( started, built );
-                const auto publish_ms = ms( built, published );
-                if( build_ms >= 20 || publish_ms >= 20 || ( ++reader_timing_sample % 8 ) == 0 ) {
+                if( profile_reader ) {
+                    static unsigned int reader_timing_sample = 0;
+                    const auto ms = []( const auto from, const auto to ) {
+                        return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+                    };
+                    const auto build_ms = ms( started, built );
+                    const auto publish_ms = ms( built, published );
+                    if( build_ms >= 20 || publish_ms >= 20 || ( ++reader_timing_sample % 8 ) == 0 ) {
                     a11y::android::diagnostic_event( "WORLD_READER_TIMING",
                             "build_ms=" + std::to_string( build_ms ) +
                             " update_publish_ms=" + std::to_string( publish_ms ) +
                             " nodes=" + std::to_string( nodes ) );
+                    }
                 }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
@@ -4080,8 +4108,10 @@ bool game::handle_action()
 
     // This has no action unless we're in a special game mode.
 #if defined(__ANDROID__)
-    const auto diagnostic_action_started = std::chrono::steady_clock::now();
-    const std::string diagnostic_action_name = action_ident( act );
+    const bool diagnostic_profile = a11y::android::performance_profiling_enabled();
+    const auto diagnostic_action_started = diagnostic_profile ? std::chrono::steady_clock::now() :
+                                            std::chrono::steady_clock::time_point{};
+    const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
     // A JNI-accepted direction is not proof of movement. Record the
     // authoritative position before and after the original game action.
     const bool diagnostic_walk = act == ACTION_MOVE_FORTH ||
@@ -4093,7 +4123,7 @@ bool game::handle_action()
                                  act == ACTION_MOVE_LEFT ||
                                  act == ACTION_MOVE_FORTH_LEFT;
     const tripoint_abs_ms diagnostic_before_position = player_character.pos_abs();
-    if( act != ACTION_TIMEOUT ) {
+    if( diagnostic_profile && act != ACTION_TIMEOUT ) {
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "start action=" + diagnostic_action_name );
     }
@@ -4112,11 +4142,14 @@ bool game::handle_action()
         if( !do_regular_action( act, player_character, mouse_target ) ) {
 #if defined(__ANDROID__)
             if( diagnostic_walk ) {
-                a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
-                        "action=" + diagnostic_action_name +
-                        " result=action_rejected changed=false" );
+                a11y::android::performance_step_sample( false );
+                if( diagnostic_profile ) {
+                    a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
+                            "action=" + diagnostic_action_name +
+                            " result=action_rejected changed=false" );
+                }
             }
-            if( act != ACTION_TIMEOUT ) {
+            if( diagnostic_profile && act != ACTION_TIMEOUT ) {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                          std::chrono::steady_clock::now() - diagnostic_action_started ).count();
                 a11y::android::diagnostic_event( "NATIVE_ACTION",
@@ -4142,7 +4175,7 @@ bool game::handle_action()
                                     to_turn<int>( calendar::turn ), before_action_moves, player_character.movecounter,
                                     player_character.get_moves() );
 #if defined(__ANDROID__)
-    if( act != ACTION_TIMEOUT ) {
+    if( diagnostic_profile && act != ACTION_TIMEOUT ) {
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                  std::chrono::steady_clock::now() - diagnostic_action_started ).count();
         a11y::android::diagnostic_event( "NATIVE_ACTION",
@@ -4153,6 +4186,7 @@ bool game::handle_action()
             const int dx = after.x() - diagnostic_before_position.x();
             const int dy = after.y() - diagnostic_before_position.y();
             const int dz = after.z() - diagnostic_before_position.z();
+            a11y::android::performance_step_sample( dx != 0 || dy != 0 || dz != 0 );
             a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
                     "action=" + diagnostic_action_name +
                     " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
