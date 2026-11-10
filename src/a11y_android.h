@@ -25,6 +25,15 @@ void set_world_step_ready( std::optional<context_token> token, bool ready );
 // Called by Android on entering its UI-only command hub; the native
 // modal/lifecycle boundaries already invalidate older context tokens.
 std::size_t cancel_pending_world_steps();
+// Automatic travel is controlled from an Android-only reader panel. JNI
+// queues bounded requests; the game thread alone changes the character's
+// route. States: 0=inactive, 1=moving, 2=paused. Requests: 1=pause,
+// 2=resume, 3=cancel. No direct game/Character access from JNI.
+int travel_state();
+void set_travel_state( int state );
+bool request_travel_control( int control );
+int take_travel_control();
+void reset_travel_control();
 void publish( const std::string &json );
 void announce( const std::string &text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
