@@ -640,7 +640,25 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( std::move( node ) );
         }
     }
-    result.nodes.push_back( document( "world:status", _( "Character status" ), player_status() ) );
+    // Both shortcuts read the exact same captured turn. Avoid computing
+    // the fairly detailed health/effects summary twice per footstep.
+    const std::string status_summary = player_status();
+    result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
+    const avatar &character = get_avatar();
+    std::string character_details = string_format(
+                                        _( "Character information. %s." ), character.get_name() );
+    character_details += " " + string_format(
+                             _( "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d." ),
+                             character.get_str(), character.get_dex(),
+                             character.get_int(), character.get_per() );
+    character_details += " " + status_summary;
+    const std::string held_item = remove_color_tags( character.weapname_simple() );
+    if( !held_item.empty() ) {
+        character_details += " " + string_format( _( "Wielding: %s." ), held_item );
+    }
+    character_details += " " + std::string( _( "End of character information." ) );
+    result.nodes.push_back( document( "world:character_detail", _( "Character information" ),
+                                      std::move( character_details ) ) );
     if( !status_alert_history.empty() ) {
         // Session alert history (R10.4): the last status transitions the
         // monitor announced, newest last, with approximate ages. This is a
