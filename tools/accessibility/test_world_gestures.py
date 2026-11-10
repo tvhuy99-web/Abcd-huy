@@ -56,6 +56,27 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("intent.node == \"reader:scan:north\"", handler)
         self.assertIn("a11y::announce_player_coordinates()", handler)
 
+    def test_coordinate_readout_uses_known_overmap_area_with_safe_fallback(self):
+        world = WORLD.read_text(encoding="utf-8")
+        reader = world.split("void announce_player_coordinates()", 1)[1].split(
+            "semantic_snapshot activity_snapshot(", 1
+        )[0]
+        # The player's absolute X/Y/Z remain the existing numbers. The
+        # overmap name is optional, drawn only from previously known data.
+        self.assertIn('_( "Coordinates. X %1$d. Y %2$d. Z %3$d." )', reader)
+        self.assertIn("viewer.pos_abs_omt()", reader)
+        self.assertIn("overmap_buffer.seen( omt )", reader)
+        self.assertIn("vision != om_vision_level::unseen", reader)
+        self.assertIn("overmap_buffer.ter_existing( omt )", reader)
+        self.assertNotIn("overmap_buffer.ter( omt )", reader)
+        self.assertIn("terrain.is_valid()", reader)
+        self.assertIn("terrain->get_name( vision )", reader)
+        self.assertIn('_( "Area: %1$s. %2$s" )', reader)
+        self.assertIn("a11y::android::announce( spoken, 1 );", reader)
+        po = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
+        self.assertIn('msgid "Area: %1$s. %2$s"', po)
+        self.assertIn('msgstr "Khu vực: %1$s. %2$s"', po)
+
     def test_reader_hub_is_on_demand_without_the_old_dashboard(self):
         controller = CONTROLLER.read_text(encoding="utf-8")
         self.assertTrue((JAVA / "GameActionHub.java").exists())
