@@ -1076,6 +1076,49 @@ void announce_linear_scan( const int dx, const int dy )
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
 }
 
+void announce_area_transition()
+{
+    // Game thread only. The absolute overmap tile is independent of map
+    // bubble shifts: walking across an internal submap boundary is not
+    // itself a new area. Reset across world loads/lifecycle generations.
+    static std::uint64_t previous_epoch = 0;
+    static std::optional<tripoint_abs_omt> previous_tile;
+    static std::string previous_area;
+    const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
+    if( current_epoch != previous_epoch ) {
+        previous_epoch = current_epoch;
+        previous_tile.reset();
+        previous_area.clear();
+    }
+    const tripoint_abs_omt omt = get_avatar().pos_abs_omt();
+    if( previous_tile && *previous_tile == omt ) {
+        return;
+    }
+    const om_vision_level vision = overmap_buffer.seen( omt );
+    if( vision == om_vision_level::unseen ) {
+        // Never announce unseen terrain. Recheck when the observer learns it.
+        return;
+    }
+    const oter_id &terrain = overmap_buffer.ter_existing( omt );
+    if( !terrain.is_valid() ) {
+        return;
+    }
+    const std::string area = remove_color_tags( terrain->get_name( vision ) );
+    if( area.empty() ) {
+        return;
+    }
+    if( previous_tile && !previous_area.empty() && area != previous_area ) {
+        a11y::android::announce( "A11Y_AREA:" +
+                                 string_format( _( "Entering area: %s." ), area ), 1 );
+#if defined(__ANDROID__)
+        a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
+                "from=" + previous_area + " to=" + area );
+#endif
+    }
+    previous_tile = omt;
+    previous_area = area;
+}
+
 void announce_player_coordinates()
 {
     const avatar &viewer = get_avatar();
