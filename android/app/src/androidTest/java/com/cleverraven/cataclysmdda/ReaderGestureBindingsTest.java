@@ -3,6 +3,8 @@ package com.cleverraven.cataclysmdda;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.fail;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -32,22 +34,28 @@ public final class ReaderGestureBindingsTest {
             ReaderGestureBindings bindings = new ReaderGestureBindings(context);
             assertEquals(36, ReaderGestureBindings.IDS.length);
             assertEquals(36, ReaderGestureBindings.LABELS.length);
+            assertEquals(26, ReaderGestureBindings.CUSTOM_IDS.length);
+            assertEquals(26, ReaderGestureBindings.CUSTOM_LABELS.length);
+            assertTrue(ReaderGestureBindings.isReserved("tap_3_2"));
+            assertTrue(ReaderGestureBindings.isReserved("swipe_up"));
+            assertTrue(ReaderGestureBindings.isReserved("hold_1"));
+            assertFalse(ReaderGestureBindings.isReserved("tap_3_3"));
 
-            bindings.assign("tap_3_2", "action:open");
-            assertEquals("action:open", bindings.targetFor("tap_3_2"));
+            bindings.assign("tap_3_3", "action:open");
+            assertEquals("action:open", bindings.targetFor("tap_3_3"));
 
             // Newest wins the gesture; the former action has no custom mapping.
             ReaderGestureBindings.Assignment conflict = bindings.assign(
-                    "tap_3_2", "action:fire");
+                    "tap_3_3", "action:fire");
             assertEquals("action:open", conflict.displacedTarget);
             assertNull(bindings.gestureFor("action:open"));
-            assertEquals("action:fire", bindings.targetFor("tap_3_2"));
+            assertEquals("action:fire", bindings.targetFor("tap_3_3"));
 
             // Reassigning an action also frees its previous gesture.
             ReaderGestureBindings.Assignment move = bindings.assign(
                     "swipe_3_up", "action:fire");
-            assertEquals("tap_3_2", move.displacedGesture);
-            assertNull(bindings.targetFor("tap_3_2"));
+            assertEquals("tap_3_3", move.displacedGesture);
+            assertNull(bindings.targetFor("tap_3_3"));
             assertEquals("action:fire", bindings.targetFor("swipe_3_up"));
 
             // Persist across instances and restore original behavior.
@@ -63,6 +71,26 @@ public final class ReaderGestureBindingsTest {
             assertEquals("hold_2", replaced.displacedGesture);
             assertNull(bindings.targetFor("hold_2"));
             assertEquals("hold_3", bindings.gestureFor("action:open"));
+
+            // Fixed gameplay gestures cannot be remapped by this storage API.
+            for (String locked : new String[]{"swipe_up", "swipe_down",
+                    "swipe_left", "swipe_right", "tap_2_1", "tap_2_2",
+                    "tap_2_3", "tap_3_1", "tap_3_2", "hold_1"}) {
+                assertNull(bindings.targetFor(locked));
+                assertEquals(-1, ReaderGestureBindings.customIndexOf(locked));
+                try {
+                    bindings.assign(locked, "action:open");
+                    fail("Should reject reserved gesture: " + locked);
+                } catch (IllegalArgumentException expected) {
+                    // The original built-in action remains available.
+                }
+            }
+            // A pre-upgrade binding is discarded, never activated.
+            store.edit().putString(KEY, "{\"tap_3_2\":\"action:fire\","
+                    + "\"swipe_3_up\":\"action:open\"}").commit();
+            ReaderGestureBindings migrated = new ReaderGestureBindings(context);
+            assertNull(migrated.targetFor("tap_3_2"));
+            assertEquals("action:open", migrated.targetFor("swipe_3_up"));
         } finally {
             SharedPreferences.Editor edit = store.edit();
             if (old == null) { edit.remove(KEY); }
