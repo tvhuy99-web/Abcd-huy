@@ -2908,6 +2908,22 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 const tripoint_bub_ms pos_before = player_character.pos_bub();
                 const tripoint_bub_ms dest_tile = pos_before +
                                                   tripoint_rel_ms( dest_delta, 0 );
+                const auto keep_safety_stopped_route = [&]() {
+                    if( !a11y::enabled() || safe_mode != SAFE_MODE_STOP ||
+                        a11y::android::travel_state() != 1 ||
+                        !player_character.is_auto_moving() ) {
+                        return false;
+                    }
+                    // get_next_auto_move_direction() consumed this waypoint
+                    // before the move failed. Put that exact tile back so
+                    // "No, keep traveling" never loses or skips the dangerous
+                    // step, and require an explicit safe-mode decision later.
+                    player_character.get_auto_move_route().insert(
+                        player_character.get_auto_move_route().begin(), dest_tile );
+                    a11y::android::set_travel_state( 3 );
+                    add_msg( m_warning, _( "Travel stopped by safe mode. Route kept." ) );
+                    return true;
+                };
                 const ter_id ter_before = here.ter( dest_tile );
                 const furn_id furn_before = here.furn( dest_tile );
                 int veh_door_part_before = -1;
@@ -2921,7 +2937,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                                    "auto_move: move(%d,%d) FAILED at pos=(%d,%d), aborting",
                                    dest_delta.x(), dest_delta.y(),
                                    player_character.pos_bub().x(), player_character.pos_bub().y() );
-                    player_character.abort_automove();
+                    if( !keep_safety_stopped_route() ) {
+                        player_character.abort_automove();
+                    }
                 } else if( player_character.pos_bub() == pos_before &&
                            dest_delta != point_rel_ms::zero ) {
                     // General auto-move safety: catches cases where move() returns true
@@ -2949,7 +2967,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                                        "auto_move: move(%d,%d) returned OK but pos unchanged at (%d,%d), aborting",
                                        dest_delta.x(), dest_delta.y(),
                                        pos_before.x(), pos_before.y() );
-                        player_character.abort_automove();
+                        if( !keep_safety_stopped_route() ) {
+                            player_character.abort_automove();
+                        }
                     }
                 }
 
