@@ -121,7 +121,7 @@ jobs:
           lib = Path('android/app/src/main/jniLibs/arm64-v8a/libmain.so')
           if not lib.is_file() or lib.stat().st_size < 100000:
               raise SystemExit('Cached native library missing or suspiciously small')
-          if lib.open('rb').read(5) != b'\\x7fELF\\x02':
+          if lib.open('rb').read(5) != b'\x7fELF\x02':
               raise SystemExit('Cached native library is not ELF64')
           print(f'Exact native-cache hit: {lib.stat().st_size} bytes')
           PY
@@ -241,7 +241,7 @@ jobs:
               raise SystemExit(f'Expected one ARM64 APK, got {len(apks)}')
           with zipfile.ZipFile(apks[0]) as archive:
               native = archive.read('lib/arm64-v8a/libmain.so')
-          if not native.startswith(b'\\x7fELF\\x02') or len(native) < 100000:
+          if not native.startswith(b'\x7fELF\x02') or len(native) < 100000:
               raise SystemExit('Native APK library failed ELF64 sanity check')
           destination = Path('android/app/src/main/jniLibs/arm64-v8a/libmain.so')
           destination.parent.mkdir(parents=True, exist_ok=True)
