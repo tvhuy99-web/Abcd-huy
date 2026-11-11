@@ -91,9 +91,9 @@ jobs:
           cp android/gradle.properties build-evidence/gradle.properties
           echo "Build: $BUILD_KIND" >> "$GITHUB_STEP_SUMMARY"
           cat build-evidence/commit.txt >> "$GITHUB_STEP_SUMMARY"
-      # A Java/translation/asset-only commit can reuse the exact ARM64
-      # full native library set built from the same native inputs. Never restore a library
-      # from an inexact key or when any source/header/build flag has changed.
+      # A Java/translation/asset-only commit can reuse the full native ARM64
+      # library set built from the exact same inputs. Never restore a library
+      # when any native source/header/build flag has changed.
       # VERSION is derived from these inputs (not the git SHA) so the
       # compiled native version remains correct on Java-only APK updates.
       - name: Fingerprint native inputs

@@ -86,9 +86,11 @@ class WorldAreaAndNativeBuildTest(unittest.TestCase):
         yaml = read(WORKFLOW)
         self.assertIn("- name: Fingerprint native inputs", yaml)
         self.assertIn("hashFiles('src/**', 'android/app/jni/**'", yaml)
-        self.assertIn("a11y-native-libmain-v1-ndk28-arm64-", yaml)
+        self.assertIn("a11y-native-libs-v2-ndk28-arm64-", yaml)
+        self.assertNotIn("a11y-native-libmain-v1-ndk28-arm64-", yaml)
+        self.assertIn("path: android/app/src/main/jniLibs/arm64-v8a/", yaml)
         self.assertNotIn("restore-keys:", yaml.split("id: cached-native")[1].split(
-            "- name: Validate native library", 1)[0])
+            "- name: Validate native libraries", 1)[0])
         self.assertIn("steps.cached-native.outputs.cache-hit == 'true'", yaml)
         self.assertIn("-PEXCLUDE_NATIVE_LIBS=true", yaml)
         self.assertIn("-Poverride_version=$NATIVE_VERSION", yaml)
@@ -98,7 +100,13 @@ class WorldAreaAndNativeBuildTest(unittest.TestCase):
         self.assertIn("-Pj=3", yaml)
         self.assertIn("CCACHE_MAXSIZE: 3G", yaml)
         self.assertIn("ccache --show-stats --verbose", yaml)
-        self.assertIn("archive.read('lib/arm64-v8a/libmain.so')", yaml)
+        self.assertIn("native = archive.read('lib/arm64-v8a/' + name)", yaml)
+        self.assertIn("(directory / name).write_bytes(native)", yaml)
+        self.assertIn("required_libs = (", yaml)
+        for library in ("libmain.so", "libSDL3.so", "libSDL3_image.so",
+                        "libSDL3_ttf.so", "libSDL3_mixer.so", "libc++_shared.so"):
+            self.assertIn(f"\'{library}\'", yaml)
+        self.assertIn("missing runtime library", yaml)
         self.assertIn("Signer #1 certificate SHA-256 digest:", yaml)
         self.assertIn("Incorrect monotonically increasing versionCode", yaml)
         self.assertIn("native_mode=prebuilt_verified", yaml)
