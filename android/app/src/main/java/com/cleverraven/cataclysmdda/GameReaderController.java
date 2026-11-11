@@ -67,6 +67,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
 
+    // Do not repeat a menu title already contained in its first item.
+    // Preserve position, current value and disabled reason as originally read.
+    static String menuEntrySpeech(String introduction, String entry) {
+        String title = introduction == null ? "" : introduction.trim();
+        String item = entry == null ? "" : entry.trim();
+        if (title.isEmpty() || item.equals(title)
+                || item.startsWith(title + ". ") || item.startsWith(title + ": ")) {
+            return item;
+        }
+        if (item.isEmpty()) { return title; }
+        return title + ". " + item;
+    }
+
     private void replayBufferedGameMessages() {
         while (!pendingGameMessages.isEmpty()) {
             // A quick-shot failure can originate in a transient targeting
@@ -861,9 +874,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || "pickup-here".equals(next.category)) {
                         feedback(nodeText(next.find(focus), false));
                     } else {
-                        feedback(introduction.isEmpty()
-                                ? nodeText(next.find(focus), false)
-                                : introduction + ". " + nodeText(next.find(focus), false));
+                        feedback(menuEntrySpeech(introduction,
+                                nodeText(next.find(focus), false)));
                     }
                 } else if (selectionChanged) {
                     readCurrent();

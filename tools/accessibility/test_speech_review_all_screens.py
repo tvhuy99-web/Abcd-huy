@@ -33,6 +33,7 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
         cls.perception = (ROOT / "src/a11y_perception.cpp").read_text("utf-8")
         cls.world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
         cls.normalizer = (JAVA / "ReaderSpokenText.java").read_text("utf-8")
+        cls.reader = (JAVA / "GameReaderController.java").read_text("utf-8")
 
     def test_all_single_line_vietnamese_translations_keep_printf_values(self):
         pairs = re.findall(r'^msgid "([^"\n]+)"\nmsgstr "([^"\n]+)"',
@@ -85,6 +86,15 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
         self.assertIn("observation.known_traps", text)
         self.assertIn("observation.seen_creatures", text)
         self.assertIn("observation.seen_items", text)
+
+    def test_menu_title_is_read_once_without_losing_choice_data(self):
+        self.assertIn("static String menuEntrySpeech(String introduction, String entry)", self.reader)
+        self.assertIn("item.equals(title)", self.reader)
+        self.assertIn('item.startsWith(title + ". ")', self.reader)
+        self.assertIn('return title + ". " + item;', self.reader)
+        self.assertIn("ReaderMenuSpeechTest.java",
+                      str(ROOT / "android/app/src/androidTest/java/com/cleverraven/"
+                          "cataclysmdda/ReaderMenuSpeechTest.java"))
 
     def test_speech_cleanup_keeps_data_and_deliberate_ellipses(self):
         self.assertIn("DUPLICATE_STOP", self.normalizer)
