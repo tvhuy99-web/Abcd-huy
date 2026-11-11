@@ -968,9 +968,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             enemy_report += " ";
         }
         enemy_report += string_format(
-                            _( "%1$s, %2$s, health %3$d percent." ),
+                            _( "%1$s, %2$s, %3$d HP remaining." ),
                             enemy->disp_name(), relative_name( relative.x(), relative.y() ),
-                            enemy->hp_percentage() );
+                            std::max( 0, enemy->get_hp() ) );
     }
     if( enemy_report.empty() ) {
         enemy_report = _( "No visible hostile creatures nearby." );

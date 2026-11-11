@@ -100,7 +100,18 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("hit.second.second", self.ranged)
         self.assertIn("Your shot did not hit any creature.", self.ranged)
         self.assertIn("Your shot hit %s but dealt no damage.", self.ranged)
-        self.assertIn("reducing health by %3$d percent", self.ranged)
+        self.assertIn("You grazed %1$s. %2$d damage. %3$d HP remaining.", self.ranged)
+        self.assertIn("COMBAT_SHOT", self.ranged)
+        self.assertIn("COMBAT_BALLISTIC", creature)
+        self.assertNotIn("reducing health by %3$d percent", self.ranged)
+        self.assertNotIn("lost %2$d percent health", melee)
+        self.assertIn("original_melee_hit( is_avatar() && t.is_monster() )", melee)
+        self.assertIn("unrelated_special_attack( !target->is_avatar() )",
+                      load(ROOT / "src/mattack_actors.cpp"))
+        self.assertIn("You lose %3$d HP.", monster)
+        self.assertIn("%3$d HP remaining.", self.world)
+        self.assertNotIn("enemy->hp_percentage()", self.world)
+        self.assertIn('action == "A11Y_INTERNAL_FIRE_DIRECTION"', self.ranged)
         self.assertIn("nkiller->is_npc()", monster)
         self.assertIn("last_target.lock().get() == this", monster)
         self.assertIn("Your current target %s was killed.", monster)
@@ -121,7 +132,12 @@ class CombatRepairContracts(unittest.TestCase):
                 "Loaded %1$d %2$s into %3$s. %4$d rounds in gun.",
                 "Fighting unarmed.",
                 "Wielding %s.",
-                "%1$s, %2$s, health %3$d percent.",
+                "%1$s, %2$s, %3$d HP remaining.",
+                "%1$s hits your %2$s. You lose %3$d HP.",
+                "Critical hit on %1$s. %2$d damage. %3$d HP remaining.",
+                "Hit %1$s. %2$d damage. %3$d HP remaining.",
+                "You grazed %1$s. %2$d damage. %3$d HP remaining.",
+                "You shot %1$s. %2$d damage. %3$d HP remaining.",
         ):
             self.assertIn('msgid "' + msg + '"', self.po)
 

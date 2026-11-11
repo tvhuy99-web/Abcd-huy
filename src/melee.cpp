@@ -892,18 +892,16 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
             sfx::generate_melee_sound( cur_weap, pos_bub(), t.pos_bub(), true, t.is_monster(), material );
             int dam = dealt_dam.total_damage();
             if( is_avatar() && a11y::enabled() && t.is_monster() ) {
-                const int max_hp = std::max( 1, t.get_hp_max() );
-                const int remaining_hp = std::clamp( t.get_hp(), 0, max_hp );
-                const int previous_hp = std::clamp( remaining_hp + dam, 0, max_hp );
-                const int lost_percent = static_cast<int>( std::lround( 100.0 *
-                                         ( previous_hp - remaining_hp ) / max_hp ) );
-                const int remains_percent = static_cast<int>( std::lround( 100.0 *
-                                            remaining_hp / max_hp ) );
-                if( dam > 0 ) {
-                    add_msg( m_info, _( "%1$s lost %2$d percent health from your melee attack; %3$d percent remains." ),
-                             t.disp_name(), lost_percent, remains_percent );
+                const int remaining_hp = std::max( 0, t.get_hp() );
+                if( dam > 0 && critical_hit ) {
+                    add_msg( m_good, _( "Critical hit on %1$s. %2$d damage. %3$d HP remaining." ),
+                             t.disp_name(), dam, remaining_hp );
+                } else if( dam > 0 ) {
+                    add_msg( m_good, _( "Hit %1$s. %2$d damage. %3$d HP remaining." ),
+                             t.disp_name(), dam, remaining_hp );
                 } else {
-                    add_msg( m_info, _( "Your melee attack hit %s but dealt no damage." ), t.disp_name() );
+                    add_msg( m_info, _( "Your melee attack hit %s but dealt no damage." ),
+                             t.disp_name() );
                 }
             }
             melee::melee_stats.damage_amount += dam;
@@ -916,6 +914,9 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
             // Treat monster as seen if we see it before or after the attack
             if( seen || player_character.sees( here, t ) ) {
                 std::string message = melee_message( technique, *this, dealt_dam );
+                // The original detailed result stays in the native log, but
+                // the accessibility summary above is the only spoken hit.
+                Messages::mute_combat_speech original_melee_hit( is_avatar() && t.is_monster() );
                 player_hit_message( this, message, t, dam, critical_hit, technique.id != tec_none,
                                     dealt_dam.wp_hit );
             } else {

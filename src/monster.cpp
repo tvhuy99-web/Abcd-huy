@@ -2332,13 +2332,11 @@ bool monster::melee_attack( Creature &target, float accuracy )
                 }
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
                 if( a11y::enabled() && !is_hallucination() ) {
-                    const int max_hp = std::max( 1, target.get_hp_max( dealt_dam.bp_hit ) );
-                    const int remaining_hp = std::clamp( target.get_hp( dealt_dam.bp_hit ), 0, max_hp );
-                    const int remaining_percent = static_cast<int>( std::lround( 100.0 *
-                                                  remaining_hp / max_hp ) );
-                    add_msg( m_bad, _( "%1$s hits your %2$s for %3$d damage. %4$d percent health remains." ),
+                    // The attack's post-armor damage is authoritative. Do not
+                    // read a small bodypart's HP as if it were the parent limb.
+                    add_msg( m_bad, _( "%1$s hits your %2$s. You lose %3$d HP." ),
                              u_see_me ? disp_name( false, true ) : _( "Something" ),
-                             body_part_name_accusative( dealt_dam.bp_hit ), total_dealt, remaining_percent );
+                             body_part_name_accusative( dealt_dam.bp_hit ), total_dealt );
                 } else {
                     add_msg( m_bad, _( "%1$s hits your %2$s." ),
                              u_see_me ? disp_name( false, true ) : _( "Something" ),
@@ -2384,9 +2382,15 @@ bool monster::melee_attack( Creature &target, float accuracy )
         if( u_see_my_spot ) {
             if( target.is_avatar() ) {
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative, 3$s is armor name
-                add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( false,
-                         true ) : _( "Something" ),
-                         body_part_name_accusative( dealt_dam.bp_hit ), target.skin_name() );
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "%1$s hits your %2$s. Armor blocks the damage." ),
+                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             body_part_name_accusative( dealt_dam.bp_hit ) );
+                } else {
+                    add_msg( _( "%1$s hits your %2$s, but your %3$s protects you." ), u_see_me ? disp_name( false,
+                             true ) : _( "Something" ),
+                             body_part_name_accusative( dealt_dam.bp_hit ), target.skin_name() );
+                }
             } else if( target.is_npc() ) {
                 //~ $1s is monster name, %2$s is that monster target name,
                 //~ $3s is target bodypart name in accusative, $4s is the monster target name,

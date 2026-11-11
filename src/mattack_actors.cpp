@@ -851,6 +851,10 @@ bool melee_actor::call( monster &z ) const
     if( target == nullptr ) {
         return false;
     }
+    // Special bites, grabs and dodge messages do not go through
+    // monster::melee_attack. Silence live speech only for non-avatar victims.
+    // Native messages, damage and status effects remain unchanged.
+    Messages::mute_combat_speech unrelated_special_attack( !target->is_avatar() );
 
     if( z.is_underwater() && !target->is_underwater() &&
         here.has_flag_ter_or_furn( ter_furn_flag::TFLAG_SWIM_UNDER, z.pos_bub() ) ) {

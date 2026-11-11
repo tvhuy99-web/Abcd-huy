@@ -4399,3 +4399,31 @@ msgstr "%1$s đánh trúng %2$s của bạn, gây %3$d sát thương. Bộ phậ
 #, c-format
 msgid "Your current target %s was killed."
 msgstr "Mục tiêu %s bạn đang tấn công đã chết."
+
+#, c-format
+msgid "%1$s, %2$s, %3$d HP remaining."
+msgstr "%1$s, %2$s, còn %3$d máu."
+
+#, c-format
+msgid "%1$s hits your %2$s. You lose %3$d HP."
+msgstr "%1$s đánh trúng %2$s của bạn. Mất %3$d máu."
+
+#, c-format
+msgid "%1$s hits your %2$s. Armor blocks the damage."
+msgstr "%1$s đánh vào %2$s của bạn. Giáp chặn hết."
+
+#, c-format
+msgid "Critical hit on %1$s. %2$d damage. %3$d HP remaining."
+msgstr "Đòn chí mạng trúng %1$s. Gây %2$d sát thương. Còn %3$d máu."
+
+#, c-format
+msgid "Hit %1$s. %2$d damage. %3$d HP remaining."
+msgstr "Đánh trúng %1$s. Gây %2$d sát thương. Còn %3$d máu."
+
+#, c-format
+msgid "You grazed %1$s. %2$d damage. %3$d HP remaining."
+msgstr "Bắn sượt %1$s. Gây %2$d sát thương. Còn %3$d máu."
+
+#, c-format
+msgid "You shot %1$s. %2$d damage. %3$d HP remaining."
+msgstr "Bắn trúng %1$s. Gây %2$d sát thương. Còn %3$d máu."

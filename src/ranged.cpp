@@ -1259,6 +1259,13 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         dispersion_sources dispersion = total_gun_dispersion( gun, recoil_total(), proj.shot_spread );
 
         dealt_projectile_attack shot;
+        if( is_avatar() && a11y::android::performance_profiling_enabled() ) {
+            a11y::android::diagnostic_event( "COMBAT_SHOT",
+                                             string_format( "weapon=%s ammo=%s range=%d recoil=%d raw_impact=%.1f",
+                                                            gun.typeId().str(), projectile_use_ammo_id.str(),
+                                                            rl_dist( pos_bub( here ), aim ), recoil_total(),
+                                                            static_cast<double>( proj.impact.total_damage() ) ) );
+        }
         // Only the redundant impact narration is muted in
         // Creature::messaging_projectile_attack. Keep all other warnings
         // during projectile simulation, including collateral player damage.
@@ -1275,21 +1282,19 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
                 if( actual_damage <= 0 ) {
                     add_msg( m_info, _( "Your shot hit %s but dealt no damage." ), victim.disp_name() );
                 } else if( victim.is_monster() ) {
-                    const int max_hp = std::max( 1, victim.get_hp_max() );
-                    const int remaining_hp = std::clamp( victim.get_hp(), 0, max_hp );
-                    // The shot result supplies the actual post-armor damage;
-                    // clamp overkill so percentages never exceed real health.
-                    const int prior_hp = std::clamp( remaining_hp + actual_damage, 0, max_hp );
-                    const int lost_percent = static_cast<int>( std::lround( 100.0 *
-                                             ( prior_hp - remaining_hp ) / max_hp ) );
-                    const int remaining_percent = static_cast<int>( std::lround( 100.0 *
-                                                  remaining_hp / max_hp ) );
+                    const int remaining_hp = std::max( 0, victim.get_hp() );
                     if( victim.is_dead_state() ) {
                         add_msg( m_good, _( "You shot and killed %1$s. %2$d damage." ),
                                  victim.disp_name(), actual_damage );
+                    } else if( shot.targets_hit.size() == 1 &&
+                               shot.missed_by >= accuracy_standard ) {
+                        // A grazing hit can reduce a powerful bullet to a
+                        // point of damage. Tell the user that it was a graze.
+                        add_msg( m_info, _( "You grazed %1$s. %2$d damage. %3$d HP remaining." ),
+                                 victim.disp_name(), actual_damage, remaining_hp );
                     } else {
-                        add_msg( m_good, _( "You shot %1$s for %2$d damage, reducing health by %3$d percent. %4$d percent remains." ),
-                                 victim.disp_name(), actual_damage, lost_percent, remaining_percent );
+                        add_msg( m_good, _( "You shot %1$s. %2$d damage. %3$d HP remaining." ),
+                                 victim.disp_name(), actual_damage, remaining_hp );
                     }
                 } else {
                     add_msg( m_good, _( "You shot %1$s for %2$d damage." ),
@@ -3180,7 +3185,12 @@ target_handler::trajectory target_ui::run()
         reader->update( reader_snapshot() );
     };
     for( ;; action.clear() ) {
-        refresh_reader();
+        // The direct combat swipe has already chosen a firing direction.
+        // Do not publish the targeting screen's default "North" focus for
+        // a modal that will immediately fire and close.
+        if( !( automatic_combat_shot && action == "A11Y_INTERNAL_FIRE_DIRECTION" ) ) {
+            refresh_reader();
+        }
         if( !skip_redraw ) {
             g->invalidate_main_ui_adaptor();
             ui_manager::redraw();
