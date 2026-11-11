@@ -23,6 +23,7 @@ public final class GameMenuGestureDispatchTest {
         boolean combatMode;
         boolean customThreeFingerSwipe;
         int combatMoves;
+        String lastCombatDirection = "";
         int savedThreeFingerSwipes;
         int backs;
         int confirms;
@@ -79,8 +80,13 @@ public final class GameMenuGestureDispatchTest {
         @Override public void toggleCombatMode() { combatModeToggles++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
-            if ("swipe_3_right".equals(id)) {
-                if (combatMode) { combatMoves++; return true; }
+            if ("swipe_3_right".equals(id) || "swipe_3_left".equals(id)
+                    || "swipe_3_up".equals(id) || "swipe_3_down".equals(id)) {
+                if (combatMode) {
+                    combatMoves++;
+                    lastCombatDirection = id;
+                    return true;
+                }
                 if (customThreeFingerSwipe) { savedThreeFingerSwipes++; return true; }
             }
             if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
@@ -126,6 +132,12 @@ public final class GameMenuGestureDispatchTest {
     private static void multiTouch(ReaderGestureSurface surface, long downTime,
                                    long eventTime, int action, int pointers,
                                    float offsetX) {
+        multiTouch(surface, downTime, eventTime, action, pointers, offsetX, 0);
+    }
+
+    private static void multiTouch(ReaderGestureSurface surface, long downTime,
+                                   long eventTime, int action, int pointers,
+                                   float offsetX, float offsetY) {
         MotionEvent.PointerProperties[] properties =
                 new MotionEvent.PointerProperties[pointers];
         MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointers];
@@ -136,7 +148,7 @@ public final class GameMenuGestureDispatchTest {
             properties[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
             coords[i] = new MotionEvent.PointerCoords();
             coords[i].x = 50 + i * 45 + offsetX;
-            coords[i].y = 140;
+            coords[i].y = 140 + offsetY;
             coords[i].pressure = 1.0f;
             coords[i].size = 1.0f;
         }
@@ -159,13 +171,18 @@ public final class GameMenuGestureDispatchTest {
 
     private static void endMulti(ReaderGestureSurface surface, int count,
                                  long time, float dx) {
+        endMulti(surface, count, time, dx, 0);
+    }
+
+    private static void endMulti(ReaderGestureSurface surface, int count,
+                                 long time, float dx, float dy) {
         for (int fingers = count; fingers >= 2; fingers--) {
             multiTouch(surface, time, time + 180 + (count - fingers) * 20L,
                     MotionEvent.ACTION_POINTER_UP
                             | ((fingers - 1) << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
-                    fingers, dx);
+                    fingers, dx, dy);
         }
-        multiTouch(surface, time, time + 280, MotionEvent.ACTION_UP, 1, dx);
+        multiTouch(surface, time, time + 280, MotionEvent.ACTION_UP, 1, dx, dy);
     }
 
     private static void swipeTwoDown(ReaderGestureSurface surface) {
@@ -400,6 +417,49 @@ public final class GameMenuGestureDispatchTest {
                 assertEquals("No combat movement after returning to map",
                         1, actions.combatMoves);
                 assertEquals(0, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void allFourThreeFingerCombatDirectionsAreDetectedWithoutWalkingOnMap() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                String[] ids = {
+                    "swipe_3_up", "swipe_3_right", "swipe_3_down", "swipe_3_left"
+                };
+                float[] offsetsX = { 0, 120, 0, -120 };
+                float[] offsetsY = { -120, 0, 120, 0 };
+                for (int i = 0; i < ids.length; i++) {
+                    long start = SystemClock.uptimeMillis() + i * 400L;
+                    startMulti(surface, 3, start);
+                    multiTouch(surface, start, start + 145,
+                            MotionEvent.ACTION_MOVE, 3, offsetsX[i], offsetsY[i]);
+                    endMulti(surface, 3, start, offsetsX[i], offsetsY[i]);
+                    assertEquals("Every combat direction must reach its own native handler",
+                            ids[i], actions.lastCombatDirection);
+                    assertEquals(i + 1, actions.combatMoves);
+                    assertEquals(0, actions.unassignedGestures);
+                }
+                actions.combatMode = false;
+                actions.customThreeFingerSwipe = true;
+                long mapStart = SystemClock.uptimeMillis() + 2200L;
+                startMulti(surface, 3, mapStart);
+                multiTouch(surface, mapStart, mapStart + 145,
+                        MotionEvent.ACTION_MOVE, 3, 0, -120);
+                endMulti(surface, 3, mapStart, 0, -120);
+                assertEquals("Saved map gesture must resume outside combat",
+                        1, actions.savedThreeFingerSwipes);
+                assertEquals("No combat move after leaving combat mode", 4, actions.combatMoves);
             });
         }
     }
