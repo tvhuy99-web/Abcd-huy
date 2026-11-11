@@ -1616,8 +1616,13 @@ bool game::cancel_activity_or_ignore_query( const distraction_type type, const s
     }
     if( action == "NO" || action == "IGNORE" ) {
         // Declining an interruption means keep doing the current activity.
-        // The same distraction must not ask again during this activity.
-        // A new activity or a different distraction remains independent.
+        // After NO (including Android Back), suppress subsequent interruption
+        // dialogs of *any* category for this same activity. A new player
+        // action starts with fresh confirmations; an automatic reload step
+        // inherits this decision via player_activity::inherit_distractions.
+        if( action == "NO" ) {
+            u.activity.ignore_followup_interruptions();
+        }
         u.activity.ignore_distraction( type );
         for( player_activity &activity : u.backlog ) {
             activity.ignore_distraction( type );
