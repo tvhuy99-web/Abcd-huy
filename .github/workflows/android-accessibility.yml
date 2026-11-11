@@ -92,7 +92,7 @@ jobs:
           echo "Build: $BUILD_KIND" >> "$GITHUB_STEP_SUMMARY"
           cat build-evidence/commit.txt >> "$GITHUB_STEP_SUMMARY"
       # A Java/translation/asset-only commit can reuse the exact ARM64
-      # libmain.so built from the same native inputs. Never restore a library
+      # full native library set built from the same native inputs. Never restore a library
       # from an inexact key or when any source/header/build flag has changed.
       # VERSION is derived from these inputs (not the git SHA) so the
       # compiled native version remains correct on Java-only APK updates.
@@ -106,24 +106,32 @@ jobs:
           echo "fingerprint=$NATIVE_FINGERPRINT" >> "$GITHUB_OUTPUT"
           echo "native_version=native-${NATIVE_FINGERPRINT:0:12}" >> "$GITHUB_OUTPUT"
           printf 'native_inputs_sha256=%s\n' "$NATIVE_FINGERPRINT" > build-evidence/native.txt
-      - name: Reuse verified native ARM64 library when source is unchanged
+      # Cache the ENTIRE runtime library set, not only libmain.so. With
+      # EXCLUDE_NATIVE_LIBS, CMake does not copy SDL3 and libc++ dependencies.
+      # A previous libmain-only cache produced an APK that passed CI but
+      # failed on device with dlopen: libSDL3.so not found.
+      - name: Reuse verified native ARM64 library set when source is unchanged
         if: matrix.name == 'candidate'
         id: cached-native
         uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
-          path: android/app/src/main/jniLibs/arm64-v8a/libmain.so
-          key: a11y-native-libmain-v1-ndk28-arm64-${{ steps.native-inputs.outputs.fingerprint }}
-      - name: Validate native library restored from exact fingerprint
+          path: android/app/src/main/jniLibs/arm64-v8a/
+          key: a11y-native-libs-v2-ndk28-arm64-${{ steps.native-inputs.outputs.fingerprint }}
+      - name: Validate native libraries restored from exact fingerprint
         if: matrix.name == 'candidate' && steps.cached-native.outputs.cache-hit == 'true'
         run: |
           python3 - <<'PY'
           from pathlib import Path
-          lib = Path('android/app/src/main/jniLibs/arm64-v8a/libmain.so')
-          if not lib.is_file() or lib.stat().st_size < 100000:
-              raise SystemExit('Cached native library missing or suspiciously small')
-          if lib.open('rb').read(5) != b'\x7fELF\x02':
-              raise SystemExit('Cached native library is not ELF64')
-          print(f'Exact native-cache hit: {lib.stat().st_size} bytes')
+          directory = Path('android/app/src/main/jniLibs/arm64-v8a')
+          required = ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                      'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+          for name in required:
+              lib = directory / name
+              if not lib.is_file() or lib.stat().st_size < 100000:
+                  raise SystemExit(f'Cached native runtime library missing: {lib}')
+              if lib.open('rb').read(5) != b'\x7fELF\x02':
+                  raise SystemExit(f'Cached native runtime library is not ELF64: {lib}')
+              print(f'Exact native-cache hit: {name}: {lib.stat().st_size} bytes')
           PY
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
@@ -173,9 +181,9 @@ jobs:
                          "-Paccessibility_apk_version=$apk_version")
             echo "apk_revision=$apk_version" >> ../build-evidence/native.txt
             if [[ "$REUSED_NATIVE" == 'true' ]]; then
-              # Gradle already has an explicit switch to omit CMake. The
-              # restored .so is placed in the standard jniLibs directory.
-              test -s app/src/main/jniLibs/arm64-v8a/libmain.so
+              # The exact-fingerprint cache contains libmain.so plus all
+              # SDL3/C++ dependencies. Validation above checked each file.
+              test -s app/src/main/jniLibs/arm64-v8a/libSDL3.so
               native_args+=("-PEXCLUDE_NATIVE_LIBS=true")
               echo 'native_mode=prebuilt_verified' >> ../build-evidence/native.txt
             else
@@ -208,8 +216,19 @@ jobs:
               for apk in apks:
                   with zipfile.ZipFile(apk) as archive:
                       names = archive.namelist()
-                      for required in ('lib/arm64-v8a/libmain.so', 'assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
-                                         'assets/data/shaders/grayscale.frag.spv'):
+                      # An APK with just libmain.so is NOT installable:
+                      # Android's dlopen also needs all five dependent libs.
+                      required_libs = (
+                          'libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                          'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+                      for lib in required_libs:
+                          required = 'lib/arm64-v8a/' + lib
+                          if required not in names:
+                              raise SystemExit(f'{apk}: missing runtime library {required}')
+                          if not archive.read(required).startswith(b'\x7fELF\x02'):
+                              raise SystemExit(f'{apk}: invalid ARM64 ELF {required}')
+                      for required in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
+                                       'assets/data/shaders/grayscale.frag.spv'):
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
@@ -242,14 +261,17 @@ jobs:
           apks = sorted(Path('android/app/build/outputs/apk').rglob('*.apk'))
           if len(apks) != 1:
               raise SystemExit(f'Expected one ARM64 APK, got {len(apks)}')
+          required = ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                      'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+          directory = Path('android/app/src/main/jniLibs/arm64-v8a')
+          directory.mkdir(parents=True, exist_ok=True)
           with zipfile.ZipFile(apks[0]) as archive:
-              native = archive.read('lib/arm64-v8a/libmain.so')
-          if not native.startswith(b'\x7fELF\x02') or len(native) < 100000:
-              raise SystemExit('Native APK library failed ELF64 sanity check')
-          destination = Path('android/app/src/main/jniLibs/arm64-v8a/libmain.so')
-          destination.parent.mkdir(parents=True, exist_ok=True)
-          destination.write_bytes(native)
-          print(f'Seeded verified native library: {len(native)} bytes')
+              for name in required:
+                  native = archive.read('lib/arm64-v8a/' + name)
+                  if not native.startswith(b'\x7fELF\x02') or len(native) < 100000:
+                      raise SystemExit(f'Native APK library failed ELF64 sanity check: {name}')
+                  (directory / name).write_bytes(native)
+                  print(f'Seeded verified native runtime: {name}: {len(native)} bytes')
           PY
       - name: Summarize stable test identity and artifact
         if: success() && matrix.name == 'candidate'
