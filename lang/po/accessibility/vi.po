@@ -4271,3 +4271,27 @@ msgstr "Nạp đạn tự động đã dừng tại giới hạn an toàn."
 
 msgid "Reload the gun to capacity"
 msgstr "Nạp súng đến đầy"
+
+msgid "North"
+msgstr "Bắc"
+
+msgid "Northeast"
+msgstr "Đông Bắc"
+
+msgid "East"
+msgstr "Đông"
+
+msgid "Southeast"
+msgstr "Đông Nam"
+
+msgid "South"
+msgstr "Nam"
+
+msgid "Southwest"
+msgstr "Tây Nam"
+
+msgid "West"
+msgstr "Tây"
+
+msgid "Northwest"
+msgstr "Tây Bắc"

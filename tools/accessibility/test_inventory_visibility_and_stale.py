@@ -20,19 +20,21 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
     def test_normal_inventory_exposes_collapsed_and_nested_contents(self):
         self.assertIn("else if( !pickup_mode && !pocket->sealed()", INV)
         self.assertIn("for( const item *child : pocket->all_items_top() )", INV)
-        self.assertIn("std::function<void( const item *, const std::string &, unsigned int )> expose", INV)
+        self.assertIn("std::function<void( const item *, const item_location &,", INV)
+        self.assertIn("const item_location contained( parent_location, const_cast<item *>( child ) );", INV)
         self.assertIn("for( const item_pocket *inner : child->get_container_pockets() )", INV)
         self.assertIn("if( inner->sealed() )", INV)
-        self.assertIn('item_node.actions = { "focus" };', INV)
-        self.assertIn('pocket_node.value = "read_only";', INV)
+        self.assertIn('item_node.actions = actionable ? std::vector<std::string>{ "focus", "activate" }', INV)
+        self.assertIn("pocket_node.value.clear();", INV)
+        self.assertIn("const bool actionable = pocket_item_actions", INV)
         self.assertIn('pocket_node.has_children = !contents_rows.empty();', INV)
         self.assertIn('item_node.label = ancestors + " > " + item_node.label;', INV)
-        browsing = INV.split("// Normal Inventory was only publishing pocket statuses.", 1)[1]
+        browsing = INV.split("// Ordinary Inventory now exposes real actionable", 1)[1]
         browsing = browsing.split("// A sealed or non-browsable pocket", 1)[0]
         for mutator in ("toggle_entry(", "set_collapsed(", "store(", "obtain_item("):
             self.assertNotIn(mutator, browsing)
 
-    def test_normal_item_and_pickup_pocket_share_hold_menu_not_double_tap(self):
+    def test_parent_hold_opens_pocket_and_child_double_tap_opens_native_menu(self):
         hold = CTRL.split("public void openContextActions()", 1)[1].split(
             "private void closeContextActions()", 1
         )[0]
@@ -44,6 +46,7 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
         self.assertIn("private boolean pocketAllowsSelection()", CTRL)
         self.assertIn('if ("sealed".equals(pocket.value))', CTRL)
         self.assertIn('if (!pocketAllowsSelection())', CTRL)
+        self.assertIn('if (item.enabled && item.actions.contains("activate"))', CTRL)
         self.assertIn('if (pocketStage == 3 && pocketAllowsSelection())', CTRL)
 
     def test_noninteractive_nodes_do_not_generate_stale_tap_receipts(self):
