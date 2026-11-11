@@ -14,6 +14,7 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
         cls.world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
         cls.game = (ROOT / "src/game.cpp").read_text("utf-8")
         cls.output = (ROOT / "src/output.cpp").read_text("utf-8")
+        cls.popup = (ROOT / "src/popup.cpp").read_text("utf-8")
         cls.activity = (ROOT / "src/activity_actor.cpp").read_text("utf-8")
         cls.actor = (ROOT / "src/player_activity.cpp").read_text("utf-8")
         cls.po = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
@@ -65,6 +66,10 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
         self.assertIn('if( action == "NO" && in_reader_activity', self.output)
         self.assertIn("query_ynq_result::no", self.output)
         self.assertIn("a11y::enabled() && g != nullptr && get_avatar().activity", self.output)
+        self.assertIn('option.action == "NO"', self.popup)
+        self.assertIn('"popup:" + category + ":"', self.popup)
+        self.assertIn('return { false, "NO", {} };', self.popup)
+        self.assertIn('get_avatar().activity.dismiss_prompt( warning_key );', self.popup)
 
     def test_one_spoken_reload_update_with_round_count(self):
         self.assertIn("Loaded %1$d %2$s into %3$s. %4$d rounds in gun.", self.activity)

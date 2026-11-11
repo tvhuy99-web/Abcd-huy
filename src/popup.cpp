@@ -5,13 +5,16 @@
 #include <array>
 #include <memory>
 
+#include "avatar.h"
 #include "cached_options.h"
 #include "cata_imgui.h"
 #include "catacharset.h"
 #include "color.h"
+#include "game.h"
 #include "imgui/imgui.h"
 #include "input_context.h"
 #include "output.h"
+#include "player_activity.h"
 #include "string_formatter.h"
 #include "ui_manager.h"
 
@@ -452,12 +455,31 @@ std::shared_ptr<query_popup_impl> query_popup::create_or_get_impl()
 }
 query_popup::result query_popup::query()
 {
+    // The common confirmation layer handles explicit "NO" refusals for
+    // dialogs beyond the built-in interruption prompts. Remember only an
+    // identical question during the SAME ongoing task, never across new
+    // player actions. This does not apply to ordinary confirmation dialogs
+    // outside an activity, irreversible operations or prompts without NO.
+    const bool has_no_option = std::any_of( options.begin(), options.end(),
+    []( const query_option &option ) {
+        return option.action == "NO";
+    } );
+    const bool remember_no = a11y::enabled() && g != nullptr &&
+                             get_avatar().activity && has_no_option && !text.empty();
+    const std::string warning_key = "popup:" + category + ":" + remove_color_tags( text );
+    if( remember_no && get_avatar().activity.is_prompt_dismissed( warning_key ) ) {
+        return { false, "NO", {} };
+    }
+
     std::shared_ptr<query_popup_impl> ui = create_or_get_impl();
 
     result res;
     do {
         res = query_once();
     } while( res.wait_input );
+    if( remember_no && res.action == "NO" && get_avatar().activity ) {
+        get_avatar().activity.dismiss_prompt( warning_key );
+    }
     return res;
 }
 
