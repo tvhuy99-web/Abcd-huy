@@ -2324,6 +2324,10 @@ static void fire()
             if( !you.is_wielding( *selected ) ) {
                 // Standard location-aware wield validates conflicts and
                 // spends retrieval time, including when nested in holsters.
+                a11y::set_weapon_auto_stow( true );
+                const auto reset_auto_stow = on_out_of_scope( []() {
+                    a11y::set_weapon_auto_stow( false );
+                } );
                 if( !you.wield( selected ) ) {
                     return;
                 }

@@ -44,5 +44,9 @@ void announce_area_transition();
 // Speak only meaningful transitions, while a live world input scope exists.
 void announce_status_changes();
 void reset_status_monitor();
+// Scope-limited auto-stow for the accessible Fire/weapon-cycle workflows.
+// Only stores a held item when the original inventory action permits it.
+void set_weapon_auto_stow( bool enabled );
+bool weapon_auto_stow_enabled();
 } // namespace a11y
 #endif // CATA_SRC_A11Y_WORLD_H
