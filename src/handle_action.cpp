@@ -15,6 +15,7 @@
 #include "action.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_outcome.h"
 #include "a11y_perception.h"
 #include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
@@ -81,6 +82,7 @@
 #include "mdarray.h"
 #include "messages.h"
 #include "monster.h"
+#include "npc.h"
 #include "move_mode.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -198,6 +200,13 @@ static bool has_vehicle_control( avatar &player_character );
 
 namespace
 {
+// These flags are set from a registered accessibility-only world action and
+// consumed by the normal per-turn action switch. Reset on every new command;
+// they never modify the existing native keyboard action bindings.
+int combat_attack_direction = -1;
+int combat_cycle_direction = 0;
+bool combat_reload_to_full = false;
+
 class user_turn
 {
 
@@ -2321,7 +2330,7 @@ static void fire()
     }
 
     const item_location weapon = you.get_wielded_item();
-    if( a11y::enabled() ) {
+    if( a11y::enabled() && combat_attack_direction < 0 ) {
         // The accessible Fire action is a gun chooser, not the generic
         // holster "use" menu. A selected firearm is equipped with the
         // engine's normal wield/location cost before aiming begins.
@@ -2407,6 +2416,11 @@ static void fire()
     }
     // try firing gun
     if( weapon && weapon->is_gun() && !weapon->gun_current_mode().melee() ) {
+        if( combat_attack_direction >= 0 ) {
+            // Queued once for the next native aim activity. No gun chooser
+            // or separate target confirmation for a combat swipe.
+            target_handler::queue_accessible_combat_shot( combat_attack_direction );
+        }
         avatar_action::fire_wielded_weapon( you );
         return;
     }
@@ -3402,6 +3416,39 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_WIELD: {
+            if( combat_cycle_direction != 0 ) {
+                // Unarmed is a real entry in the cycle. Weapons retain the
+                // game's location-aware wield rules, retrieval costs and
+                // safe auto-stow when the former weapon fits in inventory.
+                std::vector<item_location> options;
+                for( item_location loc : player_character.all_items_loc() ) {
+                    if( loc && ( loc->is_gun() || loc->is_melee() ) &&
+                        player_character.can_wield( *loc ).success() ) {
+                        options.push_back( loc );
+                    }
+                }
+                const int total = static_cast<int>( options.size() ) + 1;
+                int current = 0; // index zero = unarmed
+                for( std::size_t i = 0; i < options.size(); ++i ) {
+                    if( player_character.is_wielding( *options[i] ) ) {
+                        current = static_cast<int>( i ) + 1;
+                        break;
+                    }
+                }
+                const int chosen = ( current + total + combat_cycle_direction ) % total;
+                a11y::set_weapon_auto_stow( true );
+                const auto clear_auto_stow = on_out_of_scope( []() {
+                    a11y::set_weapon_auto_stow( false );
+                } );
+                if( chosen == 0 ) {
+                    if( player_character.unwield() ) {
+                        add_msg( m_info, _( "Fighting unarmed." ) );
+                    }
+                } else if( player_character.wield( options[chosen - 1] ) ) {
+                    add_msg( m_info, _( "Wielding %s." ), player_character.weapname_simple() );
+                }
+                break;
+            }
             item_location loc = game_menus::inv::wield();
             if( loc ) {
                 player_character.wield( loc );
@@ -3422,7 +3469,16 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_RELOAD_WIELDED:
-            reload_wielded();
+            if( combat_reload_to_full ) {
+                const item_location held = player_character.get_wielded_item();
+                if( held && held->is_gun() ) {
+                    auto_reload_wielded();
+                } else {
+                    add_msg( m_info, _( "Wield a gun before reloading." ) );
+                }
+            } else {
+                reload_wielded();
+            }
             break;
 
         case ACTION_UNLOAD:
@@ -3927,6 +3983,53 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_AUTOATTACK:
+            if( combat_attack_direction >= 0 && combat_attack_direction < 8 ) {
+                const int offsets[8][2] = {
+                    { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+                    { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+                };
+                const int dir = combat_attack_direction;
+                const tripoint_bub_ms tile = player_character.pos_bub() +
+                                             tripoint_rel_ms( offsets[dir][0], offsets[dir][1], 0 );
+                Creature *enemy = get_creature_tracker().creature_at( tile, true );
+                // Never call avatar_action::move() for a combat swipe.
+                // A missing, hidden, neutral or friendly creature means no
+                // attack and NO step into an empty neighboring tile.
+                if( enemy == nullptr || enemy->is_dead_state() ||
+                    !player_character.sees( here, *enemy ) ||
+                    enemy->attitude_to( player_character ) != Creature::Attitude::HOSTILE ) {
+                    add_msg( m_info, _( "No visible hostile creature in that direction. You did not move." ) );
+                    break;
+                }
+                if( player_character.has_flag( json_flag_CANNOT_ATTACK ) ) {
+                    add_msg( m_info, _( "You are incapable of attacking!" ) );
+                    break;
+                }
+                if( !player_character.try_break_relax_gas(
+                        _( "Your willpower asserts itself, and so do you!" ),
+                        _( "You're too pacified to strike anything…" ) ) ) {
+                    break;
+                }
+                if( !player_character.move_effects( true ) ) {
+                    player_character.set_moves( 0 );
+                    a11y::record_action_outcome( a11y::action_outcome_kind::blocked,
+                                                 _( "your condition" ) );
+                    break;
+                }
+                const std::string enemy_name = enemy->disp_name();
+                if( player_character.melee_attack( *enemy, true ) ) {
+                    a11y::record_action_outcome( a11y::action_outcome_kind::attacked, enemy_name );
+                }
+                if( monster *mon = dynamic_cast<monster *>( enemy ) ) {
+                    if( mon->is_hallucination() ) {
+                        mon->die( &here, &player_character );
+                    }
+                    draw_hit_mon( tile, *mon, mon->is_dead() );
+                } else if( npc *np = dynamic_cast<npc *>( enemy ) ) {
+                    np->make_angry();
+                }
+                break;
+            }
             avatar_action::autoattack( player_character, here );
             break;
 
@@ -3946,6 +4049,10 @@ bool game::handle_action()
     action_id act = ACTION_NULL;
     user_turn current_turn;
     avatar &player_character = get_avatar();
+
+    combat_attack_direction = -1;
+    combat_cycle_direction = 0;
+    combat_reload_to_full = false;
 
     // The reader's travel buttons are UI-thread requests, never movement
     // intents. Apply them only here on the game thread, before consuming the
@@ -4063,7 +4170,34 @@ bool game::handle_action()
     }
 
     if( act == ACTION_NULL ) {
-        act = look_up_action( action );
+        // World combat commands are distinct from walking and never pass
+        // through the generic movement action lookup. The normal action
+        // pipeline below still handles costs, safemode and game turns.
+        if( a11y::enabled() && action.rfind( "A11Y_INTERNAL_COMBAT_ATTACK_", 0 ) == 0 ) {
+            const std::string direction = action.substr( 28 );
+            if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
+                combat_attack_direction = direction[0] - '0';
+                const item_location held = player_character.get_wielded_item();
+                act = held && held->is_gun() && !held->gun_current_mode().melee() ?
+                      ACTION_FIRE : ACTION_AUTOATTACK;
+            }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_NEXT" ) {
+            combat_cycle_direction = 1;
+            act = ACTION_WIELD;
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_PREV" ) {
+            combat_cycle_direction = -1;
+            act = ACTION_WIELD;
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_RELOAD" ) {
+            combat_reload_to_full = true;
+            act = ACTION_RELOAD_WIELDED;
+        }
+        if( act != ACTION_NULL ) {
+            user_action_counter += 1;
+            a11y::android::diagnostic_event( "COMBAT_NATIVE",
+                    "action=" + action );
+        } else {
+            act = look_up_action( action );
+        }
 
         if( act == ACTION_KEYBINDINGS ) {
             // already handled by input context
