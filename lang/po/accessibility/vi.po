@@ -11,7 +11,7 @@ msgid "Commands for the current screen"
 msgstr "Các lệnh của màn hình hiện tại"
 
 msgid "These are registered commands. Screen contents may require a dedicated reader."
-msgstr "Đây là các lệnh đã đăng ký. Nội dung màn hình có thể cần bộ đọc riêng."
+msgstr "Đây là các lệnh đã đăng ký. Nội dung màn hình có thể cần trình đọc riêng."
 
 msgid "This entry cannot be selected."
 msgstr "Không thể chọn mục này."
@@ -186,7 +186,7 @@ msgid "Map offset from player: %s"
 msgstr "Vị trí so với nhân vật: %s"
 
 msgid "Selecting a map tile only moves the cursor; travel is a separate command."
-msgstr "Chọn ô bản đồ chỉ di chuyển con trỏ; muốn đi phải dùng lệnh du lịch riêng."
+msgstr "Chọn ô chỉ di chuyển con trỏ. Muốn đi phải dùng lệnh riêng."
 
 #, c-format
 msgid "Map note: %s"
@@ -260,7 +260,7 @@ msgid "Show visible or remembered tiles and tiles with a sound marker."
 msgstr "Hiện ô đang thấy, ô đã nhớ và ô có dấu âm thanh."
 
 msgid "Show visible fields, traps, creatures, special perceptions, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers."
-msgstr "Hiện ô có trường, bẫy, sinh vật, cảm nhận đặc biệt, vật phẩm, phương tiện, chướng ngại vật, cửa và cầu thang đã biết, đồ đạc đã nhớ và dấu âm thanh đã nghe."
+msgstr "Hiện ô có trường, bẫy, sinh vật, cảm nhận đặc biệt, vật phẩm, xe, vật cản, cửa, cầu thang, đồ đạc đã nhớ hoặc dấu âm thanh."
 
 msgid "Special perception: %s"
 msgstr "Cảm nhận đặc biệt: %s"
@@ -269,7 +269,7 @@ msgid "You sense something here."
 msgstr "Có gì đó gần đây."
 
 msgid "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position."
-msgstr "Chỉ hiện dấu âm thanh mà game đã cho nghe. Dấu chỉ vị trí ước lượng, không tiết lộ vị trí thật của sinh vật."
+msgstr "Chỉ hiện dấu âm thanh đã nghe. Vị trí dấu chỉ là ước lượng, không phải vị trí thật của sinh vật."
 
 #, c-format
 msgid "Near this marker, you heard %s. The marker is approximate and may not be the sound source's position."
@@ -313,7 +313,7 @@ msgid "Noteworthy information"
 msgstr "Thông tin đáng chú ý"
 
 msgid "This scan reads only remembered terrain and furniture on other levels. Reading the map does not advance game time."
-msgstr "Lần quét này chỉ đọc địa hình và đồ đạc đã nhớ ở tầng khác. Đọc bản đồ không làm thời gian trong game trôi qua."
+msgstr "Chỉ quét địa hình và đồ đạc đã nhớ ở tầng khác. Không tốn lượt."
 
 msgid "Current activity"
 msgstr "Hoạt động hiện tại"
@@ -325,7 +325,7 @@ msgid "Ongoing activity."
 msgstr "Đang thực hiện."
 
 msgid "Pause can request interruption; the game will ask before canceling."
-msgstr "Lệnh Tạm dừng có thể yêu cầu ngắt hoạt động; game sẽ hỏi trước khi hủy."
+msgstr "Có thể tạm dừng; game sẽ hỏi trước khi hủy hoạt động."
 
 msgid "Pause cannot interrupt this activity right now."
 msgstr "Không thể tạm dừng."
@@ -443,7 +443,7 @@ msgid "No nearby location meets the construction conditions."
 msgstr "Không có vị trí xây dựng."
 
 msgid "Read a direction, then activate it to choose. Reading does not act."
-msgstr "Đọc một hướng, sau đó kích hoạt để chọn hướng đó. Chỉ đọc chưa thực hiện hành động."
+msgstr "Nghe hướng rồi kích hoạt để chọn. Chỉ nghe không thực hiện lệnh."
 
 msgid "This location is valid for the selected construction."
 msgstr "Vị trí này phù hợp với công trình đã chọn."
@@ -620,7 +620,7 @@ msgid "World selection"
 msgstr "Chọn thế giới"
 
 msgid "Activate a world to select it. Confirm enters the selected world."
-msgstr "Kích hoạt một thế giới để chọn. Xác nhận riêng để vào thế giới đã chọn."
+msgstr "Chọn thế giới rồi xác nhận để vào."
 
 #, c-format
 msgid "%lu save"
@@ -660,7 +660,7 @@ msgstr "Tổng quan nhân vật"
 
 #, c-format
 msgid "Name: %1$s. Gender: %2$s. Outfit: %3$s. Scenario: %4$s. Profession: %5$s. Age: %6$s. Height: %7$s. Blood type: %8$s%9$s."
-msgstr "Tên: %1$s. Giới tính: %2$s. Trang phục: %3$s. Kịch bản: %4$s. Nghề nghiệp: %5$s. Tuổi: %6$s. Chiều cao: %7$s. Nhóm máu: %8$s%9$s."
+msgstr "Tên %1$s. Giới tính %2$s. Trang phục %3$s. Kịch bản %4$s. Nghề %5$s. Tuổi %6$s. Cao %7$s. Nhóm máu %8$s%9$s."
 
 #, c-format
 msgid "Backgrounds: %s."
@@ -711,7 +711,7 @@ msgstr "Địa điểm và thời điểm bắt đầu"
 
 #, c-format
 msgid "Location: %1$s. City: %2$s. Start of cataclysm: %3$s. Start of game: %4$s. Starting vehicle: %5$s."
-msgstr "Địa điểm: %1$s. Thành phố: %2$s. Thời điểm thảm họa bắt đầu: %3$s. Thời điểm bắt đầu cuộc chơi: %4$s. Xe khởi đầu: %5$s."
+msgstr "Địa điểm: %1$s. Thành phố: %2$s. Bắt đầu thảm họa: %3$s. Bắt đầu chơi: %4$s. Xe ban đầu: %5$s."
 
 msgid "Scenario description"
 msgstr "Mô tả kịch bản"
@@ -793,7 +793,7 @@ msgid "World options"
 msgstr "Tùy chọn thế giới"
 
 msgid "Focus an option to hear its current value and description. Use previous or next value to change it, or activate to open its editor. The game's normal options flow handles saving when applicable."
-msgstr "Đặt tiêu điểm vào một tùy chọn để nghe giá trị và mô tả hiện tại. Dùng giá trị trước hoặc tiếp theo để đổi, hoặc kích hoạt để mở trình chỉnh sửa. Trò chơi xử lý lưu theo luồng tùy chọn thông thường khi phù hợp."
+msgstr "Chọn tùy chọn để nghe giá trị và mô tả. Dùng Giá trị trước/sau để đổi hoặc kích hoạt để chỉnh sửa. Game sẽ lưu khi cần."
 
 msgid "Activate to return to world mod selection."
 msgstr "Kích hoạt để quay lại phần chọn mod thế giới."
@@ -822,7 +822,7 @@ msgid "Activate to select the next value."
 msgstr "Kích hoạt để chọn giá trị tiếp theo."
 
 msgid "Browse mod categories. Activate an available mod to add it, or an active mod to remove it. Move commands change load order."
-msgstr "Duyệt các nhóm mod. Kích hoạt mod khả dụng để thêm hoặc mod đang bật để gỡ. Dùng lệnh di chuyển để đổi thứ tự nạp."
+msgstr "Duyệt nhóm mod. Kích hoạt mod chưa dùng để thêm hoặc mod đang bật để gỡ. Dùng lệnh di chuyển để đổi thứ tự nạp."
 
 msgid "Activate to show the mods in this category."
 msgstr "Kích hoạt để xem mod trong nhóm này."
@@ -870,7 +870,7 @@ msgid "Load order position %1$lu of %2$lu"
 msgstr "Vị trí nạp %1$lu trên tổng %2$lu"
 
 msgid "Read the mods enabled for this world and their load order. This list does not change the world."
-msgstr "Đọc các mod đang bật cho thế giới này và thứ tự nạp. Danh sách này không làm thay đổi thế giới."
+msgstr "Xem mod đang bật và thứ tự nạp. Chỉ đọc, không thay đổi thế giới."
 
 msgid "No active mods"
 msgstr "Không có mod đang bật"
@@ -894,10 +894,10 @@ msgid "No filter is active."
 msgstr "Hiện không bật bộ lọc nào."
 
 msgid "Real-time turns are enabled. Monsters may act periodically while you listen, read menus, or prepare an action. Yes keeps them enabled, No turns them off and saves the setting, and Quit returns to the main menu."
-msgstr "Đang bật lượt thời gian thực. Quái vật có thể hành động định kỳ trong lúc bạn nghe, đọc menu hoặc chuẩn bị hành động. Có để giữ bật, Không để tắt và lưu thiết lập, Thoát để quay lại menu chính."
+msgstr "Đang bật thời gian thực. Quái vật vẫn có thể hành động khi bạn nghe, mở menu hoặc chuẩn bị. Có: giữ bật; Không: tắt và lưu; Thoát: về menu chính."
 
 msgid "Real-time turns are off for this session, but the setting could not be saved. They may be enabled again next time."
-msgstr "Lượt thời gian thực đã tắt trong phiên này nhưng không lưu được thiết lập. Chế độ này có thể bật lại vào lần sau."
+msgstr "Đã tắt thời gian thực cho phiên này nhưng không lưu được thiết lập; lần sau có thể tự bật lại."
 
 msgid "Dialogue"
 msgstr "Hội thoại"
@@ -909,7 +909,7 @@ msgid "This response is unavailable because its condition is not met."
 msgstr "Lựa chọn này hiện không khả dụng vì chưa đáp ứng điều kiện."
 
 msgid "Your offer: %1$s item units, estimated value %2$s. NPC offer: %3$s item units, estimated value %4$s. Current balance: %5$s."
-msgstr "Phần hàng bạn đưa: %1$s đơn vị, giá ước tính %2$s. Phần hàng NPC đưa: %3$s đơn vị, giá ước tính %4$s. Số dư hiện tại: %5$s."
+msgstr "Bạn đưa %1$s đơn vị, giá %2$s. NPC đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
 
 msgid "Balance is acceptable to the trader."
 msgstr "Có thể giao dịch."
@@ -992,10 +992,10 @@ msgid "About this list"
 msgstr "Thông tin về danh sách này"
 
 msgid "Note that only conducts that existed when you started this game and still exist now will appear here."
-msgstr "Chỉ những quy tắc đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+msgstr "Chỉ hiện quy tắc đã có từ lúc bắt đầu và vẫn còn tồn tại."
 
 msgid "Note that only achievements that existed when you started this game and still exist now will appear here."
-msgstr "Chỉ những thành tựu đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+msgstr "Chỉ hiện thành tựu đã có từ lúc bắt đầu và vẫn còn tồn tại."
 
 msgid "No scores"
 msgstr "Không có điểm số"
@@ -1008,7 +1008,7 @@ msgid "Score %d"
 msgstr "Điểm số %d"
 
 msgid "Note that only scores that existed when you started this game and still exist now will appear here."
-msgstr "Chỉ những loại điểm đã tồn tại khi bạn bắt đầu trò chơi và vẫn còn tồn tại mới xuất hiện ở đây."
+msgstr "Chỉ hiện loại điểm đã có từ lúc bắt đầu và vẫn còn tồn tại."
 
 #, c-format
 msgid "%1$d total kills: %2$d monsters and %3$d NPCs."
@@ -1064,7 +1064,7 @@ msgid "Death camera center"
 msgstr "Tâm camera tử vong"
 
 msgid "Death camera is active. Use Look to inspect the view, move or center the camera, or accept your fate to finish watching."
-msgstr "Đang xem những khoảnh khắc cuối. Dùng lệnh Quan sát để xem khu vực, di chuyển hoặc căn giữa camera, hoặc chấp nhận số phận để kết thúc."
+msgstr "Đang xem cảnh sau khi chết. Dùng Quan sát để xem, di chuyển hoặc căn giữa camera; chọn Chấp nhận số phận để kết thúc."
 
 msgid "Pages"
 msgstr "Trang"
@@ -1112,13 +1112,13 @@ msgid "Entry: %1$d/%2$d, %3$s"
 msgstr "Mục: %1$d/%2$d, %3$s"
 
 msgid "Sleeping advances game time. You cannot issue ordinary commands until you wake; scheduled events and world changes may occur."
-msgstr "Ngủ làm thời gian trong game tiếp tục trôi. Bạn không thể dùng lệnh thông thường cho đến khi tỉnh; sự kiện theo lịch và thay đổi trong thế giới vẫn có thể diễn ra."
+msgstr "Khi ngủ, thời gian trôi và các sự kiện vẫn diễn ra. Bạn không thể điều khiển đến khi tỉnh."
 
 msgid "Real-time turns are enabled. The world may continue to update while you listen to this activity screen."
-msgstr "Đang bật lượt thời gian thực. Thế giới vẫn có thể tiếp tục thay đổi trong lúc bạn nghe màn hình hoạt động này."
+msgstr "Đang bật thời gian thực. Thế giới vẫn thay đổi khi bạn nghe màn hình này."
 
 msgid "Waiting advances game time. The world may change while you wait."
-msgstr "Chờ làm thời gian trong game tiếp tục trôi. Thế giới có thể thay đổi trong lúc bạn chờ."
+msgstr "Chờ làm thời gian trôi và thế giới có thể thay đổi."
 
 #, c-format
 msgid "Category: %s."
@@ -1163,7 +1163,7 @@ msgid "This scenario starts in a city, but cities are disabled."
 msgstr "Kịch bản này bắt đầu ở thành phố, nhưng thành phố đang bị tắt."
 
 msgid "This trait is locked by your scenario, profession or background and cannot be removed."
-msgstr "Đặc tính này bị khóa bởi kịch bản, nghề hoặc nền tảng của bạn và không thể gỡ bỏ."
+msgstr "Đặc tính bị khóa bởi kịch bản, nghề hoặc xuất thân, không thể gỡ."
 
 #, c-format
 msgid "The character template \"%s\" could not be loaded. Its file may be missing or damaged."
@@ -1252,7 +1252,7 @@ msgid "Auto travel: off"
 msgstr "Tự động di chuyển: tắt"
 
 msgid "When on, directional movement may follow a longer path. It does not select a destination."
-msgstr "Khi bật, di chuyển theo hướng có thể tự tìm đường xa hơn. Chế độ này không chọn điểm đến."
+msgstr "Khi bật, di chuyển theo hướng có thể tự tìm đường xa hơn nhưng không chọn điểm đến."
 
 msgid "Stand still for one turn"
 msgstr "Đứng yên một lượt"
@@ -1312,7 +1312,7 @@ msgid "Explore mode"
 msgstr "Chế độ thăm dò"
 
 msgid "Move a read-only cursor away from your character to inspect distant tiles. Exploring never moves your character and does not use game time."
-msgstr "Di chuyển một con trỏ chỉ đọc ra xa nhân vật để xem các ô ở xa. Thăm dò không bao giờ di chuyển nhân vật của bạn và không tốn thời gian trong trò chơi."
+msgstr "Dùng con trỏ thăm dò ô ở xa. Nhân vật đứng yên, không tốn lượt."
 
 msgid "Explore cursor"
 msgstr "Con trỏ thăm dò"
@@ -1322,7 +1322,7 @@ msgid "Relative to you: %s"
 msgstr "So với vị trí của bạn: %s"
 
 msgid "Moves only the explore cursor. Your character does not move and no game time passes."
-msgstr "Chỉ di chuyển con trỏ thăm dò. Nhân vật của bạn không di chuyển và thời gian trong trò chơi không trôi qua."
+msgstr "Chỉ di chuyển con trỏ thăm dò, không di chuyển nhân vật hoặc tốn lượt."
 
 #, c-format
 msgid "Move explore cursor: %s"
@@ -1485,7 +1485,7 @@ msgid "Smart Engine Controller"
 msgstr "Bộ điều khiển động cơ thông minh"
 
 msgid "Smart engine controller: %1$s. Battery low threshold: %2$d%%. Battery high threshold: %3$d%%."
-msgstr "Bộ điều khiển động cơ thông minh: %1$s. Ngưỡng pin thấp: %2$d%%. Ngưỡng pin cao: %3$d%%."
+msgstr "Bộ điều khiển động cơ: %1$s. Ngưỡng pin thấp %2$d%%, cao %3$d%%."
 
 msgid "Open the smart engine controller user manual."
 msgstr "Mở hướng dẫn sử dụng bộ điều khiển động cơ thông minh."
@@ -1497,13 +1497,13 @@ msgid " %1$s: %2$d%%."
 msgstr " %1$s: %2$d%%."
 
 msgid "Vehicle: %1$s. Status: %2$s. Mass: %3$.0f %4$s. Cargo: %5$s of %6$s %7$s."
-msgstr "Xe: %1$s. Trạng thái: %2$s. Khối lượng: %3$.0f %4$s. Hàng hóa: %5$s trên %6$s %7$s."
+msgstr "Xe %1$s. %2$s. Nặng %3$.0f %4$s. Hàng %5$s/%6$s %7$s."
 
 msgid "Hard limit: at or below this battery charge, the controller forbids discharging the battery for the electric motors."
-msgstr "Giới hạn cứng: khi mức pin bằng hoặc dưới ngưỡng này, bộ điều khiển cấm xả pin cho động cơ điện."
+msgstr "Giới hạn cứng: từ ngưỡng này trở xuống, không cho xả pin cấp cho động cơ điện."
 
 msgid "Soft limit: at or below this battery charge, the controller charges the battery toward this level and limits discharging; above it, discharging is allowed."
-msgstr "Giới hạn mềm: khi mức pin bằng hoặc dưới ngưỡng này, bộ điều khiển sạc pin hướng tới mức này và hạn chế xả pin; trên mức này, xả pin được phép."
+msgstr "Giới hạn mềm: từ ngưỡng này trở xuống, ưu tiên sạc lên ngưỡng và hạn chế xả pin; trên ngưỡng có thể xả."
 
 msgid "The save for \"%1$s\" in world \"%2$s\" could not be loaded because the world could not be prepared. The save was not changed, overwritten, or deleted. You can try another save or world from the main menu."
 msgstr "Không tải được bản lưu của \"%1$s\" trong thế giới \"%2$s\" vì không chuẩn bị được thế giới. Bản lưu không bị thay đổi, ghi đè hay xóa. Bạn có thể thử bản lưu hoặc thế giới khác từ menu chính."
@@ -1545,13 +1545,13 @@ msgid "Message history"
 msgstr "Lịch sử thông báo"
 
 msgid "The game could not be saved. You are still in the game; nothing was quit."
-msgstr "Không lưu được trò chơi. Bạn vẫn đang ở trong trò chơi; chưa thoát gì cả."
+msgstr "Lưu thất bại. Trò chơi vẫn đang mở, chưa thoát."
 
 msgid "Quicksave failed. The game was not saved."
 msgstr "Lưu nhanh thất bại. Trò chơi chưa được lưu."
 
 msgid "Your character's memorial file was written, and the character's save was moved to the graveyard folder."
-msgstr "Tệp tưởng niệm của nhân vật đã được ghi, và bản lưu của nhân vật đã được chuyển vào thư mục nghĩa địa (graveyard)."
+msgstr "Đã lưu tệp tưởng niệm và chuyển bản lưu nhân vật vào thư mục nghĩa địa."
 
 
 msgid ""
@@ -1795,7 +1795,7 @@ msgid "Activate an action row to add a keybinding that applies everywhere."
 msgstr "Kích hoạt một hàng hành động để thêm gán phím áp dụng ở mọi nơi."
 
 msgid "Activate an action row to add a keybinding that applies only on this screen."
-msgstr "Kích hoạt một hàng hành động để thêm gán phím chỉ áp dụng trên màn hình này."
+msgstr "Kích hoạt hành động để gán phím riêng cho màn hình này."
 
 msgid "Activate an action row to remove its keybinding."
 msgstr "Kích hoạt một hàng hành động để xóa gán phím của nó."
@@ -1804,7 +1804,7 @@ msgid "Activate an action row to reset it to its default keybinding."
 msgstr "Kích hoạt một hàng hành động để đặt lại gán phím mặc định của nó."
 
 msgid "Activate an action row to run that action and leave this menu."
-msgstr "Kích hoạt một hàng hành động để chạy hành động đó và rời khỏi menu này."
+msgstr "Kích hoạt mục để thực hiện hành động và đóng menu."
 
 msgid "Activate this field to clear both filters."
 msgstr "Kích hoạt trường này để xóa cả hai bộ lọc."
@@ -2163,7 +2163,7 @@ msgid "Direction"
 msgstr "Hướng"
 
 msgid "Disable the selected rule, marking it inactive so it no longer takes effect."
-msgstr "Tắt quy tắc đang chọn, đánh dấu nó không hoạt động để nó không còn tác dụng."
+msgstr "Tắt quy tắc đang chọn; quy tắc sẽ không còn hiệu lực."
 
 #, c-format
 msgid "Disable the selected zone, %s."
@@ -2206,7 +2206,7 @@ msgid "Effects: %s"
 msgstr "Hiệu ứng: %s"
 
 msgid "Enable the selected rule, marking it active so it takes effect."
-msgstr "Bật quy tắc đang chọn, đánh dấu nó đang hoạt động để nó có tác dụng."
+msgstr "Bật quy tắc đang chọn để áp dụng."
 
 #, c-format
 msgid "Enable the selected zone, %s."
@@ -3154,7 +3154,7 @@ msgstr "Thời gian học: %s"
 
 #, c-format
 msgid "Toggle whether the selected zone, %s, is shown on the map."
-msgstr "Bật/tắt việc vùng đang chọn, %s, có được hiển thị trên bản đồ hay không."
+msgstr "Bật hoặc tắt hiển thị vùng %s trên bản đồ."
 
 msgid "Too dark: the crafter cannot see well enough to craft."
 msgstr "Quá tối: người chế tạo không nhìn đủ rõ để chế tạo."
@@ -3365,7 +3365,7 @@ msgstr "%d thông báo."
 
 #, c-format
 msgid "Showing the newest %1$d of %2$d messages. Older messages are not included; use the filter to narrow the list."
-msgstr "Đang hiển thị %1$d thông báo mới nhất trong %2$d thông báo. Các thông báo cũ hơn không được đưa vào; dùng bộ lọc để thu hẹp danh sách."
+msgstr "Đang hiển thị %1$d trên %2$d thông báo mới nhất. Lọc danh sách để tìm các thông báo khác."
 
 #: src/study_zone_ui.cpp
 msgid "No more entries in this direction."
@@ -3468,7 +3468,7 @@ msgid "Nothing noteworthy nearby."
 msgstr "Không có mục đáng chú ý ở gần."
 
 msgid "Select an entry to walk toward it. The game avoids dangerous tiles and reports unreachable targets."
-msgstr "Chọn một mục để tự đi đến đó. Game tránh ô nguy hiểm và báo nếu không có đường."
+msgstr "Chọn mục để đi đến. Game tránh ô nguy hiểm và báo khi không có đường."
 
 msgid "Terrain or furniture"
 msgstr "Địa hình hoặc nội thất"
@@ -3530,7 +3530,7 @@ msgid "Weather: %s"
 msgstr "Thời tiết: %s"
 
 msgid "No visible objects here can be examined or interacted with."
-msgstr "Không có đối tượng nhìn thấy nào ở gần để kiểm tra hoặc tương tác."
+msgstr "Không có đối tượng nhìn thấy để kiểm tra hoặc tương tác."
 
 msgid "Nearby objects. Choose an entry to interact; cancel to do nothing."
 msgstr "Các đối tượng ở gần. Chọn mục để tương tác, hoặc hủy để bỏ qua."
@@ -3567,22 +3567,22 @@ msgid "Items selected: %1$d. Autohaul: %2$s."
 msgstr "Đã chọn %1$d món để kéo. Tự kéo: %2$s."
 
 msgid "Opens a spoken list of visible, nearby objects. Browse freely; selecting an object uses the original game action."
-msgstr "Mở danh sách những đối tượng nhìn thấy ở gần. Duyệt không gây hành động, chọn mục mới thực hiện lệnh gốc."
+msgstr "Mở danh sách đối tượng nhìn thấy ở gần. Duyệt không tốn lượt; chọn mục để thực hiện hành động gốc."
 
 msgid "Choose a target, then listen for the result. The action may spend time or damage property."
-msgstr "Chọn mục tiêu rồi nghe kết quả. Hành động có thể tốn lượt hoặc làm hỏng tài sản."
+msgstr "Chọn mục tiêu rồi nghe kết quả. Có thể tốn lượt hoặc làm hỏng tài sản."
 
 msgid "Choose one tile, mark the items and quantities, then confirm."
 msgstr "Chọn một ô, đánh dấu đồ và số lượng rồi xác nhận."
 
 msgid "Mark items from your tile and all eight neighboring tiles, then confirm. Browsing does not pick anything up."
-msgstr "Chọn đồ ở ô đang đứng và tám ô xung quanh rồi xác nhận. Chỉ duyệt danh sách không nhặt đồ."
+msgstr "Chọn đồ ở ô hiện tại và tám ô quanh đó rồi xác nhận. Duyệt không nhặt đồ."
 
 msgid "Process corpses or disassemble items on your current tile. Requirements and time depend on the selected work."
-msgstr "Xử lý xác hoặc tháo dỡ đồ trên ô hiện tại. Dụng cụ và thời gian phụ thuộc công việc."
+msgstr "Xử lý xác hoặc tháo dỡ đồ ở ô hiện tại. Điều kiện và thời gian tùy công việc."
 
 msgid "Choose items and quantities, then confirm to pick them up. Browsing never picks items up."
-msgstr "Chọn đồ và số lượng rồi xác nhận nhặt. Duyệt danh sách không nhặt đồ."
+msgstr "Chọn đồ và số lượng rồi xác nhận để nhặt. Duyệt không nhặt."
 
 #, c-format
 msgid ", located: %s"
@@ -3598,7 +3598,7 @@ msgstr "Tổng số món đã đánh dấu để nhặt: %d."
 
 #, c-format
 msgid "Available for processing: %1$d corpses, %2$d disassembly groups, %3$d cutting groups. Check each menu option for estimated time."
-msgstr "Có %1$d xác, %2$d nhóm đồ tháo dỡ, %3$d nhóm đồ cắt. Đọc từng lựa chọn để biết thời gian dự kiến."
+msgstr "Có %1$d xác, %2$d nhóm tháo dỡ, %3$d nhóm cắt. Xem từng mục để biết thời gian."
 
 #, c-format
 msgid "Weight: %1$s. Volume: %2$s."
@@ -3618,10 +3618,10 @@ msgid "Inventory shortcut: %c."
 msgstr "Phím tắt trong hành trang: %c."
 
 msgid "Select two items to compare. Each selected item is announced before the comparison opens."
-msgstr "Chọn hai món đồ để so sánh. Mỗi món được đọc trước khi hiện thông số so sánh."
+msgstr "Chọn hai món để so sánh. Mỗi món sẽ được đọc trước khi so sánh."
 
 msgid "Choose items and quantities to put in the selected container. The game checks capacity before inserting."
-msgstr "Chọn đồ và số lượng để cất vào vật chứa. Game kiểm tra sức chứa trước khi cất."
+msgstr "Chọn đồ và số lượng để cất vào vật chứa. Game kiểm tra sức chứa."
 
 msgid "Choose items and quantities to drop. The chosen destination is announced before the drop activity begins."
 msgstr "Chọn đồ và số lượng để thả. Game đọc vị trí trước khi bắt đầu thả."
@@ -3635,13 +3635,13 @@ msgid "Items marked for dropping: %d."
 msgstr "Số món đánh dấu để thả: %d."
 
 msgid "Move the selected item from source to destination. First choose an amount; the game checks space and ownership."
-msgstr "Chuyển món đã chọn từ nguồn đến đích. Hãy chọn số lượng; game sẽ kiểm tra chỗ chứa và quyền sở hữu."
+msgstr "Chọn số lượng để chuyển đồ từ nguồn đến đích. Game kiểm tra chỗ chứa và quyền sở hữu."
 
 msgid "Move one item from the source pane to the destination pane."
 msgstr "Chuyển một món từ nơi lấy đến nơi đặt."
 
 msgid "Move a stack or all selected items to the destination. The game checks whether each transfer is possible."
-msgstr "Chuyển nhóm đồ hoặc toàn bộ đồ đã chọn đến đích. Game sẽ kiểm tra từng lần chuyển."
+msgstr "Chuyển một nhóm hoặc tất cả đồ đã chọn. Game kiểm tra từng lần chuyển."
 
 msgid "Switch source and destination panes without moving items."
 msgstr "Đổi nơi lấy và nơi đặt, không chuyển đồ."
@@ -3682,32 +3682,32 @@ msgstr "Đã chọn vật chứa: %s. Hãy chọn đồ và số lượng để 
 
 #, c-format
 msgid "Unloading %1$d item stacks onto %2$s. Favorite items and liquids remain in their containers."
-msgstr "Đang lấy %1$d nhóm đồ ra tại %2$s. Đồ yêu thích và chất lỏng được để lại trong vật chứa."
+msgstr "Đang lấy %1$d nhóm đồ ra tại %2$s. Đồ yêu thích và chất lỏng vẫn ở trong vật chứa."
 
 #, c-format
 msgid "Dropping %1$d items at %2$s. The game will confirm each move when it completes."
-msgstr "Đã yêu cầu thả %1$d món tại %2$s. Game sẽ thông báo khi thực hiện xong."
+msgstr "Đang thả %1$d món tại %2$s. Game sẽ báo khi xong."
 
 msgid "Browse carried items. Select an item for its original action menu. Browsing never uses or drops an item."
-msgstr "Duyệt đồ đang mang. Chọn một món để mở menu hành động. Chỉ duyệt sẽ không dùng hay thả đồ."
+msgstr "Duyệt đồ đang mang. Chọn món để mở hành động; duyệt không dùng hay thả đồ."
 
 msgid "Transfer items between a source and destination. Review both panes and the amount before moving."
-msgstr "Chuyển đồ giữa nơi lấy và nơi đặt. Xem kỹ hai nơi và số lượng trước khi chuyển."
+msgstr "Chuyển đồ giữa hai nơi. Kiểm tra nguồn, đích và số lượng trước khi chuyển."
 
 msgid "Choose items and amounts, then choose or confirm the destination. Only the game activity moves them."
-msgstr "Chọn đồ và số lượng, rồi chọn hoặc xác nhận nơi đặt. Chỉ hành động game mới chuyển đồ."
+msgstr "Chọn đồ, số lượng và nơi đặt. Chỉ lệnh xác nhận mới chuyển đồ."
 
 msgid "Choose two items. Each side will be read separately with its full item statistics."
 msgstr "Chọn hai món đồ. Từng bên được đọc riêng với đầy đủ thông số."
 
 msgid "Assign or clear inventory shortcut letters. This does not move items."
-msgstr "Đặt hoặc xóa phím tắt của đồ trong hành trang. Lệnh này không chuyển đồ."
+msgstr "Gán hoặc xóa phím tắt đồ trong hành trang. Không chuyển vật phẩm."
 
 msgid "Use a selected or wielded item. Its effects and resource costs depend on that item."
-msgstr "Dùng món đã chọn hoặc đang cầm. Tác dụng và tài nguyên tiêu hao tùy vật phẩm."
+msgstr "Dùng món đã chọn hoặc đang cầm. Tác dụng và tiêu hao tùy món."
 
 msgid "Browse available item actions, with their original requirements and disabled choices."
-msgstr "Duyệt hành động của vật phẩm, có thông tin điều kiện và những lựa chọn không khả dụng."
+msgstr "Duyệt hành động vật phẩm, gồm điều kiện và lựa chọn không khả dụng."
 
 msgid "Select a container and items to put inside. The game checks capacity before inserting."
 msgstr "Chọn vật chứa và đồ cần cất. Game kiểm tra sức chứa trước khi cất."
@@ -3716,7 +3716,7 @@ msgid "Take eligible contents out of containers and drop them at a chosen nearby
 msgstr "Lấy những món phù hợp ra khỏi vật chứa và thả xuống ô gần đó."
 
 msgid "Choose a usable item action. The list announces each action, its item and any resource requirements before activation."
-msgstr "Chọn hành động vật phẩm. Danh sách đọc tên hành động, món đồ và điều kiện tài nguyên trước khi dùng."
+msgstr "Chọn hành động vật phẩm. Mỗi mục cho biết món đồ và điều kiện cần trước khi dùng."
 
 #, c-format
 msgid "Using %1$s: %2$s."
@@ -3730,7 +3730,7 @@ msgid "No item is currently held."
 msgstr "Hiện không cầm vật phẩm nào."
 
 msgid "Body parts in a list. Select a part to hear its condition. Browsing never treats wounds."
-msgstr "Các bộ phận cơ thể được liệt kê. Chọn bộ phận để nghe tình trạng. Chỉ duyệt không chữa thương."
+msgstr "Chọn bộ phận để nghe tình trạng. Chỉ xem, không điều trị."
 
 msgid "Body part absent."
 msgstr "Không có bộ phận cơ thể này."
@@ -3746,7 +3746,7 @@ msgid "No reported wounds need attention."
 msgstr "Không có vết thương nào được ghi nhận cần chú ý."
 
 msgid "Select a limb to see treatments; inspecting alone does not treat it."
-msgstr "Chọn bộ phận để xem cách điều trị. Chỉ kiểm tra không tự chữa thương."
+msgstr "Chọn bộ phận để xem cách chữa. Chỉ xem không điều trị."
 
 #, c-format
 msgid "Priority injury: %s"
@@ -3754,7 +3754,7 @@ msgstr "Thương tích ưu tiên: %s"
 
 #, c-format
 msgid "Treatment selected for %s. Follow the game's treatment progress and result messages."
-msgstr "Đã chọn điều trị cho %s. Theo dõi tiến trình và kết quả do game thông báo."
+msgstr "Đã chọn điều trị cho %s. Game sẽ báo tiến độ và kết quả."
 
 msgid "Infected"
 msgstr "Nhiễm trùng"
@@ -3794,22 +3794,22 @@ msgstr "Cảnh báo khi dùng: %s"
 
 #, c-format
 msgid "Consumable entries in this list: %d. Review each item before consuming it."
-msgstr "Danh sách có %d lựa chọn ăn uống hoặc dùng thuốc. Hãy kiểm tra kỹ trước khi dùng."
+msgstr "Có %d mục ăn uống hoặc dùng thuốc. Kiểm tra trước khi dùng."
 
 #, c-format
 msgid "Before sleep. Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. Location: %4$s."
 msgstr "Trước khi ngủ. Buồn ngủ: %1$s. Khát: %2$s. Đau: %3$s. Vị trí: %4$s."
 
 msgid "Light uses the least stamina; high intensity is the most tiring. Choose a level, then enter the number of minutes. Cancel either step to avoid exercising."
-msgstr "Tập nhẹ ít tốn sức nhất, cường độ cao mệt nhất. Chọn mức độ rồi nhập số phút. Hủy ở bất kỳ bước nào để không tập."
+msgstr "Tập nhẹ ít tốn sức nhất, tập nặng mệt nhất. Chọn mức độ rồi nhập số phút. Có thể hủy ở mỗi bước."
 
 #, c-format
 msgid "Workout started: intensity %1$d of 4, duration %2$d minutes. Watch for thirst and exhaustion."
-msgstr "Đã bắt đầu tập mức %1$d trên 4, trong %2$d phút. Chú ý khát và kiệt sức."
+msgstr "Bắt đầu tập mức %1$d/4 trong %2$d phút. Chú ý khát và kiệt sức."
 
 #, c-format
 msgid "Awake at %1$s. Sleepiness: %2$s. Thirst: %3$s. Check your health summary for changes during sleep."
-msgstr "Đã tỉnh lúc %1$s. Buồn ngủ: %2$s. Khát: %3$s. Xem tóm tắt sức khỏe để biết thay đổi sau khi ngủ."
+msgstr "Tỉnh lúc %1$s. Buồn ngủ: %2$s. Khát: %3$s. Xem sức khỏe để biết thay đổi khi ngủ."
 
 #, c-format
 msgid "Waiting: about %s remaining."
@@ -3883,11 +3883,11 @@ msgstr "%1$s. %2$s"
 
 
 msgid "This stack spans multiple pockets. Select it in the main item list."
-msgstr "Chồng vật phẩm này nằm ở nhiều ngăn. Hãy chọn trong danh sách vật phẩm bên ngoài."
+msgstr "Nhóm đồ nằm trong nhiều ngăn. Hãy chọn từ danh sách chính."
 
 
 msgid "Pocket contents changed or cannot be selected. Please open the pocket again."
-msgstr "Vật phẩm trong ngăn đã thay đổi hoặc không thể chọn. Vui lòng mở lại ngăn chứa."
+msgstr "Đồ trong ngăn đã thay đổi hoặc không chọn được. Hãy mở lại ngăn."
 
 msgid "Reinforced item."
 msgstr "Vật phẩm đã được gia cố."
@@ -3902,7 +3902,7 @@ msgid "Pickup allow or deny rule marker."
 msgstr "Vật phẩm có đánh dấu trong quy tắc nhặt đồ tự động."
 
 msgid "Additional nested items not shown. Try a shorter inventory list."
-msgstr "Vẫn còn vật phẩm lồng bên trong chưa hiển thị. Hãy thử xem danh sách túi đồ ngắn hơn."
+msgstr "Còn đồ trong ngăn chưa hiện. Hãy rút gọn danh sách túi đồ."
 
 msgid "Taking another person's property is disabled."
 msgstr "Chế độ hiện tại không cho phép lấy đồ của người khác."
@@ -3947,7 +3947,7 @@ msgid "%s: Pickup stopped before this item."
 msgstr "%s: Đã dừng nhặt đồ trước khi đến vật phẩm này."
 
 msgid "Pickup finished. Collected %1$d item groups; failed %2$d item groups."
-msgstr "Đã kết thúc nhặt đồ. Nhặt thành công %1$d nhóm vật phẩm; thất bại %2$d nhóm."
+msgstr "Đã nhặt %1$d nhóm đồ, thất bại %2$d nhóm."
 
 msgid "Collected:"
 msgstr "Đã nhặt:"
@@ -4142,10 +4142,10 @@ msgid "On, danger detected"
 msgstr "Đang bật, phát hiện nguy hiểm"
 
 msgid "Auto mining is enabled but inactive while additional auto features are off."
-msgstr "Tự động đào đang bật nhưng chưa hoạt động vì các tính năng tự động bổ sung đang tắt."
+msgstr "Tự đào đang bật nhưng chưa hoạt động vì tính năng tự động bổ sung đang tắt."
 
 msgid "Selected mode is inactive while additional auto features are off."
-msgstr "Chế độ đã chọn chưa hoạt động vì các tính năng tự động bổ sung đang tắt."
+msgstr "Chế độ chưa hoạt động vì tính năng tự động bổ sung đang tắt."
 
 msgid "Always honest"
 msgstr "Luôn tôn trọng quyền sở hữu"
@@ -4157,7 +4157,7 @@ msgid "Ask before taking owned items"
 msgstr "Hỏi trước khi lấy vật phẩm có chủ"
 
 msgid "Perform one automatic melee attack. This is not an on/off setting."
-msgstr "Thực hiện một đòn tấn công cận chiến tự động. Đây không phải chế độ bật hoặc tắt."
+msgstr "Tự động đánh cận chiến một lần, không phải nút bật tắt."
 
 #, c-format
 msgid "Damage level: %d"
@@ -4223,7 +4223,7 @@ msgid "No visible creature. You can still fire in this direction."
 msgstr "Không thấy sinh vật. Vẫn có thể bắn theo hướng này."
 
 msgid "Double tap to fire once toward this direction without choosing a tile. Hold one finger for all original aiming controls."
-msgstr "Chạm hai lần để bắn một lần theo hướng này, không cần chọn ô. Nhấn giữ một ngón để mở tất cả nút ngắm bắn gốc."
+msgstr "Chạm hai lần để bắn một phát theo hướng này. Nhấn giữ một ngón để mở điều khiển ngắm gốc."
 
 msgid "There is no valid tile in this direction within weapon range."
 msgstr "Không có ô hợp lệ theo hướng này trong tầm bắn."
@@ -4301,7 +4301,7 @@ msgstr "Không thể sử dụng chế độ bắn hiện tại."
 
 #, c-format
 msgid "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons."
-msgstr "Không thể bắn: %1$s. Súng còn %2$d viên. Hãy nạp đạn hoặc đổi vũ khí."
+msgstr "Không thể bắn: %1$s. Còn %2$d viên. Hãy nạp đạn hoặc đổi súng."
 
 #, c-format
 msgid "Cannot fire in that direction. Weapon range: %d tiles."
@@ -4359,4 +4359,4 @@ msgid "Your %s is empty!"
 msgstr "%s đã hết đạn!"
 
 msgid "No visible hostile creature in that direction. You did not move."
-msgstr "Không thấy kẻ địch thù địch theo hướng đó. Nhân vật không di chuyển."
+msgstr "Không thấy kẻ địch theo hướng đó. Nhân vật đứng yên."
