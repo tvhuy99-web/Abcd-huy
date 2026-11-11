@@ -20,6 +20,8 @@
 #include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
+#include "avatar.h"
+#include "player_activity.h"
 #include "cached_options.h" // IWYU pragma: keep
 #include "cata_imgui.h"
 #include "cata_utility.h"
@@ -858,6 +860,14 @@ int border_helper::border_connection::as_curses_line() const
 
 bool query_yn( const std::string &text )
 {
+    // Repeating the same yes/no warning during a single native activity
+    // must not force a blind player to answer "No" again. Do not cache
+    // outside active activities: a separately initiated action may have
+    // very different consequences, even if its warning text matches.
+    const bool in_reader_activity = a11y::enabled() && g != nullptr && get_avatar().activity;
+    if( in_reader_activity && get_avatar().activity.is_prompt_dismissed( text ) ) {
+        return false;
+    }
 #if defined(__ANDROID__)
     if( get_option<bool>( "ANDROID_NATIVE_UI" ) && !a11y::enabled() ) {
         JNIEnv *env = ( JNIEnv * )GetAndroidJNIEnv();
@@ -882,7 +892,7 @@ bool query_yn( const std::string &text )
     const auto &allow_key = force_uc ? input_context::disallow_lower_case_or_non_modified_letters
                             : input_context::allow_all_keys;
 
-    return query_popup()
+    const std::string action = query_popup()
            .preferred_keyboard_mode( keyboard_mode::keycode )
            .context( "YESNO" )
            .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
@@ -893,11 +903,19 @@ bool query_yn( const std::string &text )
            .cursor( 1 )
            .default_color( c_light_red )
            .query()
-           .action == "YES";
+           .action;
+    if( action == "NO" && in_reader_activity && get_avatar().activity ) {
+        get_avatar().activity.dismiss_prompt( text );
+    }
+    return action == "YES";
 }
 
 query_ynq_result query_ynq( const std::string &text )
 {
+    const bool in_reader_activity = a11y::enabled() && g != nullptr && get_avatar().activity;
+    if( in_reader_activity && get_avatar().activity.is_prompt_dismissed( text ) ) {
+        return query_ynq_result::no;
+    }
     // TODO: android native UI
     const bool force_uc = get_option<bool>( "FORCE_CAPITAL_YN" );
     const auto &allow_key = force_uc ? input_context::disallow_lower_case_or_non_modified_letters
@@ -918,6 +936,9 @@ query_ynq_result query_ynq( const std::string &text )
         .query()
         .action;
     if( action == "NO" ) {
+        if( in_reader_activity && get_avatar().activity ) {
+            get_avatar().activity.dismiss_prompt( text );
+        }
         return query_ynq_result::no;
     } else if( action == "YES" ) {
         return query_ynq_result::yes;
