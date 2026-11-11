@@ -2417,6 +2417,25 @@ static void fire()
     // try firing gun
     if( weapon && weapon->is_gun() && !weapon->gun_current_mode().melee() ) {
         if( combat_attack_direction >= 0 ) {
+            // Quick combat shots must verify the actual *current firing
+            // mode* before starting an aim activity. An empty magazine,
+            // insufficient charges, an unavailable power source, blocked
+            // firing mode or unusable weapon is NOT a zero-range target.
+            // Leave the user on the world screen and speak the engine's
+            // specific reason instead of flashing a targeting menu.
+            const gun_mode selected_mode = weapon->gun_current_mode();
+            std::vector<std::string> reasons;
+            const bool mode_blocked = weapon->firing_mode_blocked( weapon->gun_get_mode_id() );
+            const bool usable = gunmode_checks_common( you, here, reasons, selected_mode );
+            const bool ammunition_ready = gunmode_checks_weapon( you, here, reasons, selected_mode );
+            if( mode_blocked || !usable || !ammunition_ready ) {
+                const std::string reason = reasons.empty() ?
+                                           _( "This firing mode cannot be used right now." ) :
+                                           reasons.front();
+                add_msg( m_bad, _( "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons." ),
+                         reason, weapon->ammo_remaining() );
+                return;
+            }
             // Queued once for the next native aim activity. No gun chooser
             // or separate target confirmation for a combat swipe.
             target_handler::queue_accessible_combat_shot( combat_attack_direction );

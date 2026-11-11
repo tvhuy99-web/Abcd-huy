@@ -63,8 +63,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
+
     private void replayBufferedGameMessages() {
         while (!pendingGameMessages.isEmpty()) {
+            // A quick-shot failure can originate in a transient targeting
+            // frame. Speak it only after returning to the world, so the
+            // reader's setContext() cannot cancel the warning immediately.
+            BufferedGameMessage first = pendingGameMessages.peekFirst();
+            if (first.text.startsWith(COMBAT_ALERT_PREFIX)
+                    && (snapshot == null || !"DEFAULTMODE".equals(snapshot.category))) {
+                return;
+            }
             BufferedGameMessage buffered = pendingGameMessages.removeFirst();
             if (SystemClock.elapsedRealtime() - buffered.created < 15000) {
                 // The new screen context must be set before speech is sent:
@@ -877,16 +887,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final String message = text;
         final boolean loading = message.startsWith("A11Y_LOADING:");
         final boolean extendedScan = message.startsWith("A11Y_SCAN:");
+        final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
         final String spokenMessage = ReaderSpokenText.clean(
                 loading ? message.substring("A11Y_LOADING:".length())
-                : extendedScan ? message.substring("A11Y_SCAN:".length()) : message);
+                : extendedScan ? message.substring("A11Y_SCAN:".length())
+                : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         handler.post(() -> {
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
-            if (snapshot == null && !loading) {
+            if (!loading && (snapshot == null
+                    || (combatAlert && !"DEFAULTMODE".equals(snapshot.category)))) {
+                // A combat failure produced in targeting must wait until
+                // the world reappears before speaking. Do not lose it to
+                // the immediate modal-to-world context change.
                 // An action intentionally publishes an inactive snapshot
                 // while the native command executes. In the supplied log,
                 // "Nothing to open here" arrived in exactly this gap.

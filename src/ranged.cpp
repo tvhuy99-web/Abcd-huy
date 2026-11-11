@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
@@ -3175,17 +3176,32 @@ target_handler::trajectory target_ui::run()
             }
             const tripoint_bub_ms shot = directional_shot_target( steps[chosen][0], steps[chosen][1] );
             if( shot == src ) {
-                add_msg( m_info, _( "There is no valid tile in this direction within weapon range." ) );
+                const std::string why = string_format(
+                                            _( "Cannot fire in that direction. Weapon range: %d tiles." ), range );
                 if( automatic_combat_shot ) {
+                    // This modal is about to close. Defer speech until the
+                    // stable world snapshot, or its context change cuts it off.
+                    a11y::android::announce( "A11Y_COMBAT_ALERT:" + why, 3 );
                     loop_exit_code = ExitCode::Abort;
                     break;
                 }
+                add_msg( m_info, "%s", why );
                 continue;
             }
             set_cursor_pos( shot );
-            if( status != Status::Good || !confirm_non_enemy_target() ) {
-                // An invalid or refused quick shot must return to the map,
-                // rather than unexpectedly opening the aim-selection UI.
+            if( status != Status::Good ) {
+                const std::string why = _( "The weapon cannot fire right now. Check ammunition and firing mode." );
+                if( automatic_combat_shot ) {
+                    a11y::android::announce( "A11Y_COMBAT_ALERT:" + why, 3 );
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
+                add_msg( m_info, "%s", why );
+                continue;
+            }
+            if( !confirm_non_enemy_target() ) {
+                // The existing friendly/neutral target confirmation still
+                // applies. A refusal never fires and never moves the avatar.
                 if( automatic_combat_shot ) {
                     loop_exit_code = ExitCode::Abort;
                     break;
@@ -3511,7 +3527,15 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                 }
             }
             direction.value = string_format( _( "Weapon range: %d tiles." ), range );
-            if( creature_count > 0 ) {
+            if( relevant != nullptr ) {
+                direction.value += " " + string_format(
+                                       _( "Ammunition remaining: %d." ), relevant->ammo_remaining() );
+            }
+            if( !direction.enabled ) {
+                // Never say 'You can still fire' for a disabled direction.
+                // This used to contradict the following disabled_reason.
+                direction.value += " " + direction.disabled_reason;
+            } else if( creature_count > 0 ) {
                 direction.value += " " + seen;
                 if( creature_count > 3 ) {
                     direction.value += string_format( _( " and %d more visible creatures." ),

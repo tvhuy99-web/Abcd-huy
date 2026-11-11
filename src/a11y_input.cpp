@@ -249,6 +249,13 @@ std::optional<std::string> registered_intent( const input_context &context,
 {
     const auto &actions = context.registered_action_ids();
     if( intent.action == "cancel" ) {
+        if( context.category_id() == "CANCEL_ACTIVITY_OR_IGNORE_QUERY" &&
+            std::find( actions.begin(), actions.end(), "NO" ) != actions.end() ) {
+            // Escape/back means "do not interrupt the activity". The
+            // original game's NO action is the safe, non-destructive
+            // way out of this four-choice distraction confirmation.
+            return "NO";
+        }
         for( const char *const candidate : { "QUIT", "UILIST.QUIT", "TEXT.QUIT", "CANCEL" } ) {
             if( std::find( actions.begin(), actions.end(), candidate ) != actions.end() ) {
                 return candidate;
