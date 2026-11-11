@@ -51,6 +51,10 @@ class NearbyCategoryGestures(unittest.TestCase):
 
     def test_left_right_focus_near_to_far_and_browse_pages(self):
         self.assertIn('navigate(horizontal > 0 ? 1 : -1);', self.reader)
+        self.assertIn('nearbyFirstItemPending = true;', self.reader)
+        self.assertIn('if (horizontal > 0 && nearbyFirstItemPending)', self.reader)
+        self.assertIn('nearbyFirstItemPending = false;', self.reader)
+        self.assertIn('readCurrent();', self.reader)
         self.assertIn('nearby:page:next', self.reader)
         self.assertIn('nearby:page:previous', self.reader)
         self.assertIn('index() == filtered.size() - 1', self.reader)

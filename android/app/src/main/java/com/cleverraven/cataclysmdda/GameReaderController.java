@@ -88,6 +88,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String formContext = "";
     private long formRequest;
     private String focus = "";
+    // Switching a nearby category speaks its name/count first. The first
+    // right swipe then reads item one, instead of silently skipping it.
+    private boolean nearbyFirstItemPending;
     // Only the requested comprehensive menu appears as an Android overlay;
     // routine gameplay keeps the transparent, dashboard-free surface.
     private boolean comprehensiveMenu;
@@ -634,6 +637,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     pocketDrafts.clear();
                 }
                 snapshot = next;
+                if (!"surroundings".equals(next.category)) {
+                    nearbyFirstItemPending = false;
+                } else if (changedContext || nearbyCategoryChanged) {
+                    nearbyFirstItemPending = true;
+                }
                 lastLoadingStatus = "";
                 speech.setContext(next.contextKey());
                 replayBufferedGameMessages();
@@ -2216,6 +2224,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? "nearby:filter:next" : "nearby:filter:previous");
         }
         if (horizontal != 0) {
+            // The category heading was read on entry. The first right
+            // swipe reads item one, then later swipes move to item two.
+            // Left immediately wraps to the last item in the category.
+            if (horizontal > 0 && nearbyFirstItemPending) {
+                nearbyFirstItemPending = false;
+                readCurrent();
+                return true;
+            }
+            nearbyFirstItemPending = false;
             // Fixed left/right focus order, independent of movement or
             // user-configured swipe actions on unrelated screens.
             navigate(horizontal > 0 ? 1 : -1);
@@ -3309,6 +3326,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void readCurrent() {
+        if (snapshot != null && "surroundings".equals(snapshot.category)
+                && !comprehensiveMenu && !commandPaletteOpen) {
+            nearbyFirstItemPending = false;
+        }
         if (debugReport != null) {
             if (debugFocus == 0) {
                 if (usesTouchExploration()) {
@@ -3373,6 +3394,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void detail() {
+        if (snapshot != null && "surroundings".equals(snapshot.category)
+                && !comprehensiveMenu && !commandPaletteOpen) {
+            nearbyFirstItemPending = false;
+        }
         if (debugReport != null) {
             if (usesTouchExploration()) { announceAccessibility(debugReport); }
             else { speech.say("debug-detail", debugReport, ReaderSpeechQueue.LONG_TEXT); }
