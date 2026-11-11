@@ -768,6 +768,61 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
     result.nodes.push_back( button( "reader:pickup_here", _( "Pick up here" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
+    // Combat commands are separate from walking/scan controls. All eight
+    // directions are explicit single-action nodes; there is no movement
+    // fallback even if the target disappears before native execution.
+    // The same world eligibility gate disables combat in vehicles, death
+    // cameras, sleeping, auto-travel and read-only explore mode.
+    const int combat_steps[8][2] = {
+        { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+        { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+    };
+    for( int i = 0; i < 8; ++i ) {
+        semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
+                                       string_format( _( "Attack %s" ),
+                                               relative_name( combat_steps[i][0], combat_steps[i][1] ) ),
+                                       _( "One attack in this direction. Never moves the player." ) );
+        attack.enabled = result.swipe_movement_allowed;
+        result.nodes.push_back( std::move( attack ) );
+    }
+    for( const std::pair<std::string, std::string> &command : {
+                std::pair<std::string, std::string>{ "reader:combat:weapon-next", _( "Next weapon" ) },
+                { "reader:combat:weapon-prev", _( "Previous weapon" ) },
+                { "reader:combat:reload", _( "Reload wielded gun" ) }
+            } ) {
+        semantic_node node = button( command.first, command.second,
+                                     _( "Uses the native weapon and ammunition rules. No walking." ) );
+        node.enabled = result.swipe_movement_allowed;
+        result.nodes.push_back( std::move( node ) );
+    }
+    // Names, hostility, distance and health come exclusively from the
+    // game's visible/targetable creature set. Never reveal hidden enemies.
+    std::vector<Creature *> enemies = viewer.get_targetable_creatures( 16, false );
+    enemies.erase( std::remove_if( enemies.begin(), enemies.end(), [&]( const Creature *enemy ) {
+        return enemy == nullptr || enemy == &viewer ||
+               enemy->attitude_to( viewer ) != Creature::Attitude::HOSTILE;
+    } ), enemies.end() );
+    std::sort( enemies.begin(), enemies.end(), [&]( const Creature *first, const Creature *second ) {
+        return rl_dist( viewer.pos_bub(), first->pos_bub() ) <
+               rl_dist( viewer.pos_bub(), second->pos_bub() );
+    } );
+    std::string enemy_report;
+    for( const Creature *enemy : enemies ) {
+        const tripoint_rel_ms relative = enemy->pos_bub() - viewer.pos_bub();
+        if( !enemy_report.empty() ) {
+            enemy_report += " ";
+        }
+        enemy_report += string_format(
+                            _( "%1$s, %2$s, distance %3$d tiles, health %4$d percent." ),
+                            enemy->disp_name(), relative_name( relative.x(), relative.y() ),
+                            rl_dist( viewer.pos_bub(), enemy->pos_bub() ),
+                            enemy->hp_percentage() );
+    }
+    if( enemy_report.empty() ) {
+        enemy_report = _( "No visible hostile creatures nearby." );
+    }
+    result.nodes.push_back( document( "reader:combat:enemies",
+                                      _( "Visible hostile creatures" ), enemy_report ) );
     // Nearby observations are read-only. A tile selection never walks, attacks
     // or constructs a route. Direction commands below use the normal engine.
     struct nearby_tile_node {

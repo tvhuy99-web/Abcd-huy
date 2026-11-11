@@ -450,6 +450,20 @@ input_context game::get_player_input( std::string &action )
         ctxt = get_default_mode_input_context();
     }
 
+    // Only engine-internal combat dispatch identifiers are registered:
+    // world_snapshot publishes separate semantic nodes and validates their
+    // enabled state. These names never appear in the ordinary action menu.
+    for( int i = 0; i < 8; ++i ) {
+        ctxt.register_action( "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i ),
+                              to_translation( "Attack a direction without walking" ) );
+    }
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_WEAPON_NEXT",
+                          to_translation( "Select next weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_WEAPON_PREV",
+                          to_translation( "Select previous weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
+                          to_translation( "Reload current weapon" ) );
+
     // In spoken-only mode the reader refresh below owns the cache
     // rebuild and visibility update. Avoid doing the same visibility
     // scan once before entering the input loop and again at snapshot.
@@ -503,6 +517,29 @@ input_context game::get_player_input( std::string &action )
     a11y::screen_scope *reader = nullptr;
     reader = &a11y::bind_world_screen( &ctxt,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 ) {
+            // Revalidate the native gate at dispatch time; a stale Android
+            // snapshot cannot attack during travel, activity or death cam.
+            if( !make_reader_snapshot().swipe_movement_allowed ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            for( int i = 0; i < 8; ++i ) {
+                if( intent.node == "reader:combat:attack:" + std::to_string( i ) ) {
+                    return "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i );
+                }
+            }
+            if( intent.node == "reader:combat:weapon-next" ) {
+                return "A11Y_INTERNAL_COMBAT_WEAPON_NEXT";
+            }
+            if( intent.node == "reader:combat:weapon-prev" ) {
+                return "A11Y_INTERNAL_COMBAT_WEAPON_PREV";
+            }
+            if( intent.node == "reader:combat:reload" ) {
+                return "A11Y_INTERNAL_COMBAT_RELOAD";
+            }
+            return std::nullopt;
+        }
         // Multi-finger reads are verified against the live world snapshot.
         // They never enqueue movement, consume moves, or change the turn.
         if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
