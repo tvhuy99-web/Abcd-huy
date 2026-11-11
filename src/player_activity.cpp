@@ -506,6 +506,17 @@ void player_activity::inherit_distractions( const player_activity &other )
     for( const distraction_type &type : other.ignored_distractions ) {
         ignore_distraction( type );
     }
+    dismissed_prompts.insert( other.dismissed_prompts.begin(), other.dismissed_prompts.end() );
+}
+
+bool player_activity::is_prompt_dismissed( const std::string &prompt ) const
+{
+    return dismissed_prompts.count( prompt ) != 0;
+}
+
+void player_activity::dismiss_prompt( const std::string &prompt )
+{
+    dismissed_prompts.insert( prompt );
 }
 
 std::map<distraction_type, std::string> player_activity::get_distractions() const

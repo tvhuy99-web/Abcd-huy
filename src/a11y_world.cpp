@@ -968,9 +968,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             enemy_report += " ";
         }
         enemy_report += string_format(
-                            _( "%1$s, %2$s, distance %3$d tiles, health %4$d percent." ),
+                            _( "%1$s, %2$s, health %3$d percent." ),
                             enemy->disp_name(), relative_name( relative.x(), relative.y() ),
-                            rl_dist( viewer.pos_bub(), enemy->pos_bub() ),
                             enemy->hp_percentage() );
     }
     if( enemy_report.empty() ) {

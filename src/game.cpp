@@ -1614,7 +1614,10 @@ bool game::cancel_activity_or_ignore_query( const distraction_type type, const s
         u.cancel_activity();
         return true;
     }
-    if( action == "IGNORE" ) {
+    if( action == "NO" || action == "IGNORE" ) {
+        // Declining an interruption means keep doing the current activity.
+        // The same distraction must not ask again during this activity.
+        // A new activity or a different distraction remains independent.
         u.activity.ignore_distraction( type );
         for( player_activity &activity : u.backlog ) {
             activity.ignore_distraction( type );
@@ -1686,12 +1689,22 @@ bool game::cancel_activity_query( const std::string &text )
     if( !u.activity ) {
         return false;
     }
+    // A generic cancellation warning also belongs to this *one* activity,
+    // not to the lifetime of the game. Refusing it twice must not keep
+    // interrupting the same task, but a new question or task can still ask.
+    const std::string prompt = text + " " + u.activity.get_stop_phrase();
+    if( a11y::enabled() && u.activity.is_prompt_dismissed( prompt ) ) {
+        return false;
+    }
     g->invalidate_main_ui_adaptor();
     if( query_yn( "%s %s", text, u.activity.get_stop_phrase() ) ) {
         u.cancel_activity();
         u.abort_automove();
         u.resume_backlog_activity();
         return true;
+    }
+    if( a11y::enabled() && u.activity ) {
+        u.activity.dismiss_prompt( prompt );
     }
     return false;
 }

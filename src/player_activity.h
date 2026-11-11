@@ -38,6 +38,9 @@ class player_activity
         std::set<distraction_type> ignored_distractions; // NOLINT(cata-serialize)
 
         bool ignoreQuery = false; // NOLINT(cata-serialize)
+        // Same-question refusal is scoped to this activity instance, not
+        // globally: a new user action must still request confirmation.
+        std::set<std::string> dismissed_prompts; // NOLINT(cata-serialize)
 
     public:
         cata::clone_ptr<activity_actor> actor;
@@ -182,6 +185,8 @@ class player_activity
         void ignore_distraction( distraction_type );
         void allow_distractions();
         void inherit_distractions( const player_activity & );
+        bool is_prompt_dismissed( const std::string &prompt ) const;
+        void dismiss_prompt( const std::string &prompt );
 
         float exertion_level() const;
 

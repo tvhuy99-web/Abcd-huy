@@ -4343,6 +4343,14 @@ msgstr "Hãy cầm súng trước khi nạp đạn."
 msgid "%1$s, %2$s, distance %3$d tiles, health %4$d percent."
 msgstr "%1$s, %2$s, cách %3$d ô, sức khỏe còn %4$d phần trăm."
 
+#, c-format
+msgid "%1$s, %2$s, health %3$d percent."
+msgstr "%1$s, %2$s, sức khỏe còn %3$d phần trăm."
+
+#, c-format
+msgid "Loaded %1$d %2$s into %3$s. %4$d rounds in gun."
+msgstr "Đã nạp %1$d viên %2$s vào %3$s. Súng có %4$d viên."
+
 msgid "No visible hostile creatures nearby."
 msgstr "Không thấy kẻ địch thù địch nào ở gần."
 

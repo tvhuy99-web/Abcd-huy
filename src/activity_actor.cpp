@@ -8430,7 +8430,12 @@ void reload_activity_actor::reload_msg( Character &who, bool finished )
         if( reloadable.has_flag( flag_RELOAD_ONE ) && !ammo_uses_speedloader &&
             !ammo_uses_speedloader_clip ) {
 
-            add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+            if( a11y::enabled() ) {
+                add_msg( m_neutral, _( "Loaded %1$d %2$s into %3$s. %4$d rounds in gun." ),
+                         qty, ammo_name, reloadable_name, reloadable.ammo_remaining() );
+            } else {
+                add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+            }
         } else if( finished && a11y::enabled() ) {
             // Most gun reloads previously produced only a sound at finish.
             // Report completion after ammunition has actually been moved.
@@ -8562,6 +8567,12 @@ void reload_activity_actor::finish( player_activity &act, Character &who )
     reload( act, who, quantity - already_loaded );
     already_loaded += quantity - already_loaded;
     reload_msg( who, true );
+    // One automatic reload consists of successive native timed activities.
+    // Preserve any user-declined interruption across those steps, otherwise
+    // every new cartridge may open the same warning again.
+    const std::optional<player_activity> earlier_activity =
+        auto_reload_steps > 0 && who.is_avatar() ?
+        std::optional<player_activity>( act ) : std::nullopt;
     act.set_to_null();
 
     if( auto_reload_steps > 0 && who.is_avatar() ) {
@@ -8573,12 +8584,17 @@ void reload_activity_actor::finish( player_activity &act, Character &who )
         if( progressed && gun && gun->is_gun() ) {
             // This is the actual count after the engine's timed reload;
             // report progress from the gun, never an estimated quantity.
-            add_msg( m_info, _( "Reload progress: %d rounds loaded." ), gun->ammo_remaining() );
+            // The reload event above already announces the actual count;
+            // do not repeat it with an extra per-round progress sentence.
             // One completed native reload, then schedule another if required.
             // This never creates ammo or bypasses the action's move cost.
             g->auto_reload_wielded( auto_reload_steps - 1 );
+            if( earlier_activity && who.activity ) {
+                who.activity.inherit_distractions( *earlier_activity );
+            }
         } else {
-            add_msg( m_info, _( "Automatic reloading stopped because no more ammunition was loaded." ) );
+            // The final count is sufficient: avoid an additional duplicate
+            // narration about the same reload failure.
             if( gun && gun->is_gun() ) {
                 add_msg( m_info, _( "Reload ended with %d rounds loaded." ), gun->ammo_remaining() );
             }
