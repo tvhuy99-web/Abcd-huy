@@ -59,10 +59,42 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertNotIn('" " + _( "No visible creature. You can still fire in this direction." )', self.gun)
         self.assertIn('direction.value += " ";\n                direction.value += _(', self.gun)
 
+    def test_direct_gun_chooser_and_auto_reload_keep_native_game_rules(self):
+        handler = (ROOT / "src/handle_action.cpp").read_text(encoding="utf-8")
+        game = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
+        aim_actor = (ROOT / "src/activity_actor.cpp").read_text(encoding="utf-8")
+        game_header = (ROOT / "src/game.h").read_text(encoding="utf-8")
+        self.assertIn('you.all_items_loc()', handler)
+        self.assertIn('Choose a gun to fire', handler)
+        self.assertIn('you.wield( selected )', handler)
+        self.assertIn('avatar_action::fire_wielded_weapon( you )', handler)
+        self.assertIn('reload.id = "target:auto-reload"', self.gun)
+        self.assertIn('A11Y_INTERNAL_AUTO_RELOAD', self.gun)
+        self.assertIn('void game::auto_reload_wielded(', game)
+        self.assertIn('void auto_reload_wielded(', game_header)
+        self.assertIn('u.list_ammo( gun, choices, false, true )', game)
+        self.assertIn('reload_activity_actor( std::move( *selected )', game)
+        self.assertIn('g->auto_reload_wielded( auto_reload_steps - 1 )', aim_actor)
+        self.assertIn('jsout.member( "auto_reload_steps", auto_reload_steps )', aim_actor)
+        self.assertIn('jsout.member( "auto_reload_requested", auto_reload_requested )', aim_actor)
+
+    def test_nested_pocket_items_open_original_inventory_item_menu(self):
+        native = (ROOT / "src/inventory_ui.cpp").read_text(encoding="utf-8")
+        inventory = (ROOT / "src/game_inventory.cpp").read_text(encoding="utf-8")
+        self.assertIn('contained_item_bindings.emplace_back( item_node.id, contained )', native)
+        self.assertIn('pending_contained_item = item->second;', native)
+        self.assertIn('return "A11Y_PICK_POCKET_ITEM";', native)
+        self.assertIn('reader.take_contained_item()', native)
+        self.assertIn('inv_s.open_contained_item_menu = true;', inventory)
+        self.assertIn('res = g->inventory_item_menu( location );', inventory)
+        self.assertIn('item.actions.contains("activate")', self.reader)
+        self.assertNotIn('pocket_node.value = "read_only";', native)
+
     def test_holding_restores_original_commands_without_deleting_them(self):
         self.assertIn("targetingOriginalControls = !targetingOriginalControls", self.reader)
         self.assertIn("if (targetingOriginalControls) { return result; }", self.reader)
-        self.assertIn('result.removeIf(node -> !node.id.startsWith("target:fire-direction:"));', self.reader)
+        self.assertIn('result.removeIf(node -> !node.id.startsWith("target:fire-direction:")', self.reader)
+        self.assertIn('&& !"target:auto-reload".equals(node.id)', self.reader)
         self.assertIn('focus = "target:fire-direction:0";', self.reader)
         self.assertIn('return "A11Y_INTERNAL_FIRE_DIRECTION";', self.gun)
 

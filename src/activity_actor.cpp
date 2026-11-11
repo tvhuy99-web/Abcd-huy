@@ -552,7 +552,12 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     avatar &you = get_avatar();
 
     item_location weapon = get_weapon();
-    if( !weapon || !avatar_action::can_fire_weapon( you, here, *weapon ) ) {
+    // Permit opening the accessible aim menu with an empty gun so its
+    // Reload button is reachable. No shooting rule is relaxed: the native
+    // target status still blocks the Fire command until ammo is available.
+    const bool empty_gun_menu = a11y::enabled() && weapon && weapon->is_gun() &&
+                                weapon->ammo_remaining() == 0;
+    if( !weapon || ( !empty_gun_menu && !avatar_action::can_fire_weapon( you, here, *weapon ) ) ) {
         aborted = true;
         act.moves_left = 0;
         return;
