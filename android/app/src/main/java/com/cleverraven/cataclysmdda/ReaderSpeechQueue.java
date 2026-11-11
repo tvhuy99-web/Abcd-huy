@@ -17,10 +17,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public static final int LONG_TEXT = 0;
     public static final int INFORMATION = 1;
     public static final int FOCUS = 2;
-    // GAME_EVENT is the stored metadata priority only. Native game events
-    // follow their own strict FIFO queue: a newer event can never interrupt
-    // an older one, irrespective of engine severity. Navigation focus retains
-    // its separate, interruptible behavior for fast menu browsing.
+    // Normal game events remain FIFO. Urgent player warnings take the next
+    // available speech turn ahead of older nonurgent messages, but do not
+    // cut off speech that is already playing. Focus remains independent.
     public static final int GAME_EVENT = FOCUS;
     public static final int URGENT = 3;
 
@@ -51,10 +50,11 @@ public final class ReaderSpeechQueue implements AutoCloseable {
 
     private static final int MAX_PENDING = 8;
     private static final String GAME_EVENT_CONTEXT = "__reader_game_event__";
-    // Game messages must never be evicted just because a long battle or
-    // repeated reload generates more than eight events. The queue is cleared
-    // by explicit Stop, lifecycle loss, or voice-engine shutdown.
+    // Game messages survive temporary screen changes and retain order
+    // *within* their own urgency level. Active speech is never cut off by a
+    // newer event, but warnings do not wait behind long ordinary chatter.
     private final ArrayDeque<Request> orderedGameEvents = new ArrayDeque<>();
+    private final ArrayDeque<Request> urgentGameEvents = new ArrayDeque<>();
 
     private static boolean isOrderedGameEvent(Request request) {
         return request != null && GAME_EVENT_CONTEXT.equals(request.context);
@@ -179,7 +179,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public Stats snapshotStats() {
         return new Stats(statSpoken, statInterrupted, statDroppedDuplicate, statDroppedExpired,
                 statEvicted, statLastStartLatencyMs, statMaxStartLatencyMs,
-                pending.size() + orderedGameEvents.size(), active != null);
+                pending.size() + orderedGameEvents.size() + urgentGameEvents.size(),
+                active != null);
     }
 
     public ReaderSpeechQueue(Context context, Listener listener) {
@@ -369,12 +370,31 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         text = ReaderSpokenText.clean(text);
         if (text.trim().isEmpty()) { return; }
         if (key != null && key.startsWith("game-message:")) {
-            // The only speech route for native gameplay announcements.
-            // Preserve original arrival order, without deduplication,
-            // preemption, a short TTL or priority sorting. A player may
-            // explicitly silence the queue using Stop/single tap.
-            orderedGameEvents.addLast(new Request(GAME_EVENT_CONTEXT, key,
-                    text, GAME_EVENT, 365L * 24 * 60 * 60 * 1000));
+            // Urgent warnings must reach the player before older, nonurgent
+            // chatter. Preserve FIFO within each severity; never interrupt
+            // an active message. Keep normal damage reports even when equal.
+            Request request = new Request(GAME_EVENT_CONTEXT, key, text,
+                    priority >= URGENT ? URGENT : GAME_EVENT,
+                    365L * 24 * 60 * 60 * 1000);
+            if (request.priority >= URGENT) {
+                // A persistent status can fire several times in one turn.
+                // Only coalesce identical urgent messages that are already
+                // being spoken or waiting; distinct threat changes survive.
+                if (active != null && isOrderedGameEvent(active)
+                        && active.priority >= URGENT && active.text.equals(text)) {
+                    statDroppedDuplicate++;
+                    return;
+                }
+                for (Request old : urgentGameEvents) {
+                    if (old.text.equals(text)) {
+                        statDroppedDuplicate++;
+                        return;
+                    }
+                }
+                urgentGameEvents.addLast(request);
+            } else {
+                orderedGameEvents.addLast(request);
+            }
             advance();
             return;
         }
@@ -452,9 +472,11 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         if (active != null || !isReady()) {
             return;
         }
-        if (!orderedGameEvents.isEmpty()) {
-            // No event ever jumps ahead of a previously received game event.
-            active = orderedGameEvents.removeFirst();
+        if (!urgentGameEvents.isEmpty() || !orderedGameEvents.isEmpty()) {
+            // An urgent health warning outranks queued nonurgent chatter.
+            // Already-playing game speech is allowed to finish first.
+            active = !urgentGameEvents.isEmpty()
+                    ? urgentGameEvents.removeFirst() : orderedGameEvents.removeFirst();
             chunkIndex = 0;
             lastText = active.text;
             lastKey = active.key;
@@ -523,7 +545,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
      */
     public boolean stopForTouch() {
         boolean interrupted = active != null || !pending.isEmpty()
-                || !orderedGameEvents.isEmpty();
+                || !orderedGameEvents.isEmpty() || !urgentGameEvents.isEmpty();
         stop();
         return interrupted;
     }
@@ -558,6 +580,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         removeCompletionTimeout();
         pending.clear();
         orderedGameEvents.clear();
+        urgentGameEvents.clear();
         Request interrupted = active;
         active = null;
         activeChunk = null;

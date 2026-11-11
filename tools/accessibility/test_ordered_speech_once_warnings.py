@@ -1,4 +1,4 @@
-"""Source-level contracts for strict speech FIFO and one-time activity warnings."""
+"""Source-level contracts for urgent combat speech and one-time activity warnings."""
 from pathlib import Path
 import unittest
 
@@ -19,16 +19,20 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
         cls.actor = (ROOT / "src/player_activity.cpp").read_text("utf-8")
         cls.po = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
 
-    def test_new_native_message_never_preempts_older_native_message(self):
+    def test_urgent_game_warnings_go_first_without_preempting_active_speech(self):
         q = self.queue
         assert "GAME_EVENT_CONTEXT" in q
         assert 'key.startsWith("game-message:")' in q
         assert "orderedGameEvents.addLast(" in q
+        assert "urgentGameEvents.addLast(request)" in q
+        assert "urgentGameEvents.removeFirst()" in q
         assert "orderedGameEvents.removeFirst()" in q
         assert "if (active != null && !isOrderedGameEvent(active)" in q
         assert "|| active.context.equals(contextKey)" in q
         assert "orderedGameEvents.clear();" in q
-        assert q.index("orderedGameEvents.removeFirst()") < q.index("Request best = null;")
+        assert "urgentGameEvents.clear();" in q
+        assert 'old.text.equals(text)' in q
+        assert q.index("urgentGameEvents.removeFirst()") < q.index("Request best = null;")
         assert q.index('key.startsWith("game-message:")') < q.index("if (priority != FOCUS)")
 
     def test_screen_context_and_temporary_snapshot_never_discard_game_message(self):
@@ -46,11 +50,12 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
     def test_world_enemy_report_omits_only_repeated_distance_keeps_hp(self):
         body = self.world.split('std::string enemy_report;', 1)[1].split(
             'result.nodes.push_back( document( "reader:combat:enemies"', 1)[0]
-        self.assertIn('_( "%1$s, %2$s, health %3$d percent." )', body)
+        self.assertIn('_( "%1$s, %2$s, %3$d HP remaining." )', body)
         self.assertIn("relative_name( relative.x(), relative.y() )", body)
-        self.assertIn("enemy->hp_percentage()", body)
+        self.assertIn("std::max( 0, enemy->get_hp() )", body)
+        self.assertNotIn("enemy->hp_percentage()", body)
         self.assertNotIn("distance %3$d tiles", body)
-        self.assertIn('msgstr "%1$s, %2$s, sức khỏe còn %3$d phần trăm."', self.po)
+        self.assertIn('msgstr "%1$s, %2$s, còn %3$d máu."', self.po)
 
     def test_declined_distraction_suppressed_per_activity_and_carried_across_reload(self):
         self.assertIn('if( action == "NO" || action == "IGNORE" )', self.game)
