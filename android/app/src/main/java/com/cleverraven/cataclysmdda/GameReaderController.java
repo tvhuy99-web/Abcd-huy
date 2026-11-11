@@ -724,6 +724,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         focus = primary.get(0).id;
                     }
                 }
+                // Re-entering targeting must start at the simplified eight
+                // directions, even if an old aiming cursor was remembered
+                // or a native selected-target event changed the focus.
+                if ("targeting".equals(next.category)
+                        && next.find("target:fire-direction:0") != null
+                        && !targetingOriginalControls
+                        && !focus.startsWith("target:fire-direction:")) {
+                    focus = "target:fire-direction:0";
+                }
                 ReaderSnapshot.Node currentFocus = next.find(focus);
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
                     // The engine may open a new tree branch directly, or
