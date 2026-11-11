@@ -69,6 +69,20 @@ class CombatRepairContracts(unittest.TestCase):
         safe = adapter.split("CANCEL_ACTIVITY_OR_IGNORE_QUERY", 1)[1].split("return \"NO\";", 1)[0]
         self.assertNotIn('return "YES";', safe)
 
+    def test_one_refusal_suppresses_all_followup_distractions_in_same_activity(self):
+        header = load(ROOT / "src/player_activity.h")
+        impl = load(ROOT / "src/player_activity.cpp")
+        interrupt = self.game.split("bool game::cancel_activity_or_ignore_query(", 1)[1]
+        interrupt = interrupt.split("bool game::portal_storm_query(", 1)[0]
+        self.assertIn("bool ignore_followup_distractions = false", header)
+        self.assertIn("ignore_followup_distractions ||", impl)
+        self.assertIn("ignore_followup_distractions = true;", impl)
+        self.assertIn("ignore_followup_distractions = false;", impl)
+        self.assertIn("other.ignore_followup_distractions", impl)
+        self.assertIn('if( action == "NO" )', interrupt)
+        self.assertIn("u.activity.ignore_followup_interruptions();", interrupt)
+        self.assertIn("u.activity.ignore_distraction( type );", interrupt)
+
     def test_ammunition_progress_is_from_engine_not_guessed(self):
         self.assertIn("Ammunition remaining: %d.", self.world)
         self.assertIn("held->ammo_remaining()", self.world)
