@@ -94,7 +94,6 @@ public final class ReaderGestureSurface extends LinearLayout {
     private boolean activateOnUp;
     private boolean swipeHandled;
     private boolean longPressHandled;
-    private boolean touchSilencedSpeech;
     private boolean ignoreUntilPointersReleased;
     private final int[] backPointerIds = new int[2];
     private final float[] backPointerStartX = new float[2];
@@ -110,6 +109,18 @@ public final class ReaderGestureSurface extends LinearLayout {
         detector = new GestureDetector(context, new GestureDetector.SimpleOnGestureListener() {
             @Override
             public boolean onDown(MotionEvent event) { return true; }
+
+            @Override
+            public boolean onSingleTapConfirmed(MotionEvent event) {
+                // Do not consume the first tap while game speech is playing.
+                // Only a *confirmed* solitary tap stops narration; a double
+                // tap, swipe or hold must retain its own gesture action.
+                if( !listener.directWorldGesturesEnabled() && previousTapOwner != null
+                        && previousTapOwner.equals(listener.gestureContext()) ) {
+                    listener.stopSpeech();
+                }
+                return true;
+            }
 
             @Override
             public boolean onDoubleTap(MotionEvent event) {
@@ -364,10 +375,16 @@ public final class ReaderGestureSurface extends LinearLayout {
                 int count = worldTapCount;
                 String expectedOwner = worldTapOwner;
                 clearWorldTaps();
-                if (count == 2 && expectedOwner != null
-                        && expectedOwner.equals(listener.gestureContext())
+                if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
                         && listener.directWorldGesturesEnabled()) {
-                    listener.activate();
+                    if (count == 1) {
+                        // Resolve single tap only after excluding two and
+                        // three taps, so a tap used to silence TTS never
+                        // blocks activation or the triple-tap action hub.
+                        listener.stopSpeech();
+                    } else if (count == 2) {
+                        listener.activate();
+                    }
                 }
             };
             handler.postDelayed(worldTapTimeout, ViewConfiguration.getDoubleTapTimeout());
@@ -478,15 +495,6 @@ public final class ReaderGestureSurface extends LinearLayout {
     private void recordOneFinger(float x, float y) {
         if (oneFingerPath.size() >= 256) { return; }
         oneFingerPath.add(new float[] { x, y });
-    }
-
-    /**
-     * Activity dispatches ACTION_DOWN first, including for native child
-     * controls. Preserve that answer through the pointer sequence, so a
-     * solitary touch made to silence speech cannot read a world tile on UP.
-     */
-    void setTouchSilencedSpeech(boolean interrupted) {
-        touchSilencedSpeech = interrupted;
     }
 
     @Override
@@ -724,8 +732,10 @@ public final class ReaderGestureSurface extends LinearLayout {
                     && !activatedByDoubleTap
                     && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
                     && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
-            previousTapOwner = tap && !touchSilencedSpeech ? owner : null;
-            if (tap && listener.directWorldGesturesEnabled() && !touchSilencedSpeech) {
+            // Retain the first tap even when TTS was active. The second
+            // tap must still activate the focused item.
+            previousTapOwner = tap ? owner : null;
+            if (tap && listener.directWorldGesturesEnabled()) {
                 queueWorldTap(event, owner);
             } else if (!tap) {
                 clearWorldTaps();
@@ -806,7 +816,6 @@ public final class ReaderGestureSurface extends LinearLayout {
         requestParentCapture(false);
         oneFingerPath.clear();
         backPointerCount = 0;
-        touchSilencedSpeech = false;
         ignoreUntilPointersReleased = false;
     }
 }

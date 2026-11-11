@@ -3512,20 +3512,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void stopSpeech() { speech.stop(); }
 
-    /**
-     * The Activity receives the first finger's ACTION_DOWN before the
-     * reader surface or any Android dialog. Silence custom game TTS on that
-     * down event rather than waiting for UP, tap recognition or a swipe.
-     * TalkBack owns its own speech and is never stopped by this method.
-     */
-    public void silenceSpeechOnTouchDown() {
-        if (closed || !foreground || !windowFocused || !preferences.isEnabled()
-                || usesTouchExploration()) {
-            return;
-        }
-        root.setTouchSilencedSpeech(speech.stopForTouch());
-    }
-
     public void onBackPressed() {
         SessionDebugLog.event("ACTION", "back focus=" + focus
                 + " hub=" + comprehensiveMenu);

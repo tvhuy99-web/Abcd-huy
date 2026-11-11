@@ -1,4 +1,4 @@
-"""Regression contract: one finger immediately silences game speech everywhere."""
+"""Gesture contracts: single-tap silence must never swallow double-tap activation."""
 import unittest
 from pathlib import Path
 
@@ -14,47 +14,47 @@ class TouchToSilenceTest(unittest.TestCase):
         cls.gesture = (JAVA / "ReaderGestureSurface.java").read_text(encoding="utf-8")
         cls.queue = (JAVA / "ReaderSpeechQueue.java").read_text(encoding="utf-8")
 
-    def test_activity_stops_on_initial_down_before_dispatch(self):
+    def test_activity_does_not_treat_every_finger_down_as_pause(self):
         dispatch = self.activity.split(
             "public boolean dispatchTouchEvent(MotionEvent event)", 1)[1].split(
             "public void onBackPressed()", 1)[0]
-        self.assertIn("action == MotionEvent.ACTION_DOWN", dispatch)
-        self.assertIn("reader.silenceSpeechOnTouchDown();", dispatch)
-        self.assertLess(dispatch.index("reader.silenceSpeechOnTouchDown();"),
-                        dispatch.index("return super.dispatchTouchEvent(event);"))
-        self.assertNotIn("ACTION_UP) {\n                reader.silenceSpeechOnTouchDown", dispatch)
+        self.assertNotIn("silenceSpeechOnTouchDown()", dispatch)
         self.assertIn("!reader.usesTouchExploration()", dispatch)
 
-    def test_speech_queue_interrupts_active_and_queued_audio(self):
-        touch = self.queue.split("public boolean stopForTouch()", 1)[1].split(
-            "public void clearForLifecycle()", 1)[0]
-        self.assertIn("active != null || !pending.isEmpty()", touch)
-        self.assertIn("stop();", touch)
-        self.assertIn("return interrupted;", touch)
+    def test_silence_only_after_confirmed_single_tap_in_menu(self):
+        surface = self.gesture
+        single = surface.split("public boolean onSingleTapConfirmed(MotionEvent event)", 1)[1].split(
+            "public boolean onDoubleTap(MotionEvent event)", 1)[0]
+        self.assertIn("!listener.directWorldGesturesEnabled()", single)
+        self.assertIn("previousTapOwner.equals(listener.gestureContext())", single)
+        self.assertIn("listener.stopSpeech();", single)
+        self.assertNotIn("listener.activate();", single)
+        self.assertIn("previousTapOwner = tap ? owner : null;", surface)
+        self.assertNotIn("touchSilencedSpeech", surface)
+
+    def test_world_single_double_triple_tap_are_exclusive(self):
+        world = self.gesture.split("private void queueWorldTap(", 1)[1].split(
+            "private void queueMultiTap(", 1)[0]
+        self.assertIn("if (count == 1)", world)
+        self.assertIn("listener.stopSpeech();", world)
+        self.assertIn("else if (count == 2)", world)
+        self.assertIn("listener.activate();", world)
+        self.assertIn("worldTapCount >= 3", world)
+        self.assertIn("listener.openActionMenu();", world)
+        self.assertIn("queueWorldTap(event, owner)", self.gesture)
+
+    def test_swipe_and_hold_remain_separate_gestures(self):
+        self.assertIn("listener.openContextActions();", self.gesture)
+        self.assertIn("listener.confirm();", self.gesture)
+        self.assertIn("listener.goBack();", self.gesture)
+        self.assertIn("handleSwipe(event.getX() - firstX", self.gesture)
+
+    def test_speech_stop_clears_queue_and_audio(self):
         stop = self.queue.split("public void stop()", 1)[1].split(
             "public boolean stopForTouch()", 1)[0]
         self.assertIn("clearRequests();", stop)
         self.assertIn("speech.cancel();", stop)
-
-    def test_controller_does_not_interrupt_talkback(self):
-        touch = self.controller.split("public void silenceSpeechOnTouchDown()", 1)[1].split(
-            "public void onBackPressed()", 1)[0]
-        self.assertIn("!preferences.isEnabled()", touch)
-        self.assertIn("usesTouchExploration()", touch)
-        self.assertIn("root.setTouchSilencedSpeech(speech.stopForTouch());", touch)
-
-    def test_stopping_touch_does_not_trigger_world_tap(self):
-        self.assertIn("void setTouchSilencedSpeech(boolean interrupted)", self.gesture)
-        self.assertIn("previousTapOwner = tap && !touchSilencedSpeech ? owner : null;",
-                      self.gesture)
-        self.assertIn("listener.directWorldGesturesEnabled() && !touchSilencedSpeech",
-                      self.gesture)
-        self.assertIn("queueWorldTap(event, owner)", self.gesture)
-        self.assertIn("touchSilencedSpeech = false;", self.gesture)
-        # Gestures remain intact for swipes and future taps.
-        self.assertIn("listener.confirm();", self.gesture)
-        self.assertIn("listener.goBack();", self.gesture)
-        self.assertIn("handleSwipe(event.getX() - firstX", self.gesture)
+        self.assertIn("public void stopSpeech() { speech.stop(); }", self.controller)
 
 
 if __name__ == "__main__":
