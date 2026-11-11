@@ -1,5 +1,7 @@
-#include "a11y_android.h"
 #include "creature.h"
+
+#include "a11y_android.h"
+#include "a11y_runtime.h"
 
 #include <algorithm>
 #include <array>

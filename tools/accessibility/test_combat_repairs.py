@@ -103,6 +103,7 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("You grazed %1$s. %2$d damage. %3$d HP remaining.", self.ranged)
         self.assertIn("COMBAT_SHOT", self.ranged)
         self.assertIn("COMBAT_BALLISTIC", creature)
+        self.assertIn('#include "a11y_runtime.h"', creature)
         self.assertNotIn("reducing health by %3$d percent", self.ranged)
         self.assertNotIn("lost %2$d percent health", melee)
         self.assertIn("original_melee_hit( is_avatar() && t.is_monster() )", melee)
