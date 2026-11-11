@@ -49,6 +49,9 @@ static const efftype_id effect_weed_high( "weed_high" );
 namespace
 {
 
+// Scoped on the native game thread; never filters saved message history.
+thread_local int muted_combat_speech_depth = 0;
+
 struct game_message {
     std::string       message;
     time_point timestamp_in_turns = calendar::turn_zero;
@@ -434,7 +437,7 @@ messages_impl player_messages;
 
 void announce_message( const std::optional<game_message> &message )
 {
-    if( !message || message->type == m_debug ) {
+    if( !message || message->type == m_debug || muted_combat_speech_depth > 0 ) {
         return;
     }
     const bool urgent = message->type == m_bad || message->type == m_warning ||
@@ -449,6 +452,20 @@ bool message_exceeds_ttl( const game_message &message )
 }
 
 } //namespace
+
+Messages::mute_combat_speech::mute_combat_speech( const bool mute ) : muted( mute && a11y::enabled() )
+{
+    if( muted ) {
+        ++muted_combat_speech_depth;
+    }
+}
+
+Messages::mute_combat_speech::~mute_combat_speech()
+{
+    if( muted ) {
+        --muted_combat_speech_depth;
+    }
+}
 
 std::vector<std::pair<std::string, std::string>> Messages::recent_messages( const size_t count )
 {

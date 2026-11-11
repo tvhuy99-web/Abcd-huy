@@ -83,6 +83,27 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("u.activity.ignore_followup_interruptions();", interrupt)
         self.assertIn("u.activity.ignore_distraction( type );", interrupt)
 
+    def test_player_combat_speech_uses_real_hit_damage_and_suppresses_npc_chatter(self):
+        messages = load(ROOT / "src/messages.cpp")
+        header = load(ROOT / "src/messages.h")
+        creature = load(ROOT / "src/creature.cpp")
+        melee = load(ROOT / "src/melee.cpp")
+        monster = load(ROOT / "src/monster.cpp")
+        self.assertIn("class mute_combat_speech", header)
+        self.assertIn("muted_combat_speech_depth > 0", messages)
+        self.assertIn("player_messages.add_msg_string", messages)
+        self.assertIn("!source->is_avatar() && !is_avatar()", creature)
+        self.assertIn("!is_avatar() && !t.is_avatar()", melee)
+        self.assertIn("!target.is_avatar()", monster)
+        self.assertIn("Messages::mute_combat_speech original_impact_speech( is_avatar() )", self.ranged)
+        self.assertIn("hit.second.second", self.ranged)
+        self.assertIn("Your shot did not hit any creature.", self.ranged)
+        self.assertIn("Your shot hit %s but dealt no damage.", self.ranged)
+        self.assertIn("reducing health by %3$d percent", self.ranged)
+        self.assertIn("nkiller->is_npc()", monster)
+        self.assertIn("last_target.lock().get() == this", monster)
+        self.assertIn("Your current target %s was killed.", monster)
+
     def test_ammunition_progress_is_from_engine_not_guessed(self):
         self.assertIn("Ammunition remaining: %d.", self.world)
         self.assertIn("held->ammo_remaining()", self.world)

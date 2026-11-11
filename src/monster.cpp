@@ -12,6 +12,8 @@
 #include <tuple>
 #include <unordered_map>
 
+#include "a11y_android.h"
+#include "a11y_runtime.h"
 #include "ascii_art.h"
 #include "avatar.h"
 #include "basecamp.h"
@@ -2232,6 +2234,9 @@ bool monster::melee_attack( Creature &target )
 
 bool monster::melee_attack( Creature &target, float accuracy )
 {
+    // NPC and monster fights still occur in full, but their combat chatter
+    // does not delay the player's own attack and defense announcements.
+    Messages::mute_combat_speech unrelated_speech( !target.is_avatar() );
     map &here = get_map();
     // Note: currently this method must consume move even if attack hasn't actually happen
     // otherwise infinite loop will happen
@@ -2326,8 +2331,19 @@ bool monster::melee_attack( Creature &target, float accuracy )
                     sfx::do_player_death_hurt( dynamic_cast<Character &>( target ), false );
                 }
                 //~ 1$s is attacker name, 2$s is bodypart name in accusative.
-                add_msg( m_bad, _( "%1$s hits your %2$s." ), u_see_me ? disp_name( false, true ) : _( "Something" ),
-                         body_part_name_accusative( dealt_dam.bp_hit ) );
+                if( a11y::enabled() && !is_hallucination() ) {
+                    const int max_hp = std::max( 1, target.get_hp_max( dealt_dam.bp_hit ) );
+                    const int remaining_hp = std::clamp( target.get_hp( dealt_dam.bp_hit ), 0, max_hp );
+                    const int remaining_percent = static_cast<int>( std::lround( 100.0 *
+                                                  remaining_hp / max_hp ) );
+                    add_msg( m_bad, _( "%1$s hits your %2$s for %3$d damage. %4$d percent health remains." ),
+                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             body_part_name_accusative( dealt_dam.bp_hit ), total_dealt, remaining_percent );
+                } else {
+                    add_msg( m_bad, _( "%1$s hits your %2$s." ),
+                             u_see_me ? disp_name( false, true ) : _( "Something" ),
+                             body_part_name_accusative( dealt_dam.bp_hit ) );
+                }
             } else if( target.is_npc() ) {
                 if( has_effect( effect_ridden ) && has_flag( mon_flag_RIDEABLE_MECH ) &&
                     pos_bub() == player_character.pos_bub() ) {
@@ -3123,6 +3139,14 @@ void monster::die( map *here, Creature *nkiller )
     // We were carrying a creature, deposit the rider
     if( has_effect( effect_ridden ) && mounted_player ) {
         mounted_player->forced_dismount();
+    }
+    // A nearby NPC may finish the exact creature the player last targeted.
+    // Report only that the target died, not the unrelated NPC's attack log.
+    // Gate this on visibility to avoid revealing a death outside perception.
+    if( a11y::enabled() && nkiller && nkiller->is_npc() &&
+        get_avatar().last_target.lock().get() == this &&
+        get_player_view().sees( *here, *this ) ) {
+        a11y::android::announce( string_format( _( "Your current target %s was killed." ), name() ), 2 );
     }
     g->set_critter_died();
     dead = true;

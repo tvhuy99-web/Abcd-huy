@@ -25,6 +25,19 @@ class window;
 namespace Messages
 {
 
+// Mute only live screen-reader announcements during unrelated combat.
+// Messages remain in the native log and the game simulation is unchanged.
+class mute_combat_speech
+{
+    public:
+        explicit mute_combat_speech( bool mute );
+        ~mute_combat_speech();
+        mute_combat_speech( const mute_combat_speech & ) = delete;
+        mute_combat_speech &operator=( const mute_combat_speech & ) = delete;
+    private:
+        bool muted;
+};
+
 std::vector<std::pair<std::string, std::string>> recent_messages( size_t count );
 bool has_debug_filter( debugmode::debug_filter type );
 void add_msg( std::string msg );

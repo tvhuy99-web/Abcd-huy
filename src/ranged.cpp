@@ -1259,7 +1259,50 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         dispersion_sources dispersion = total_gun_dispersion( gun, recoil_total(), proj.shot_spread );
 
         dealt_projectile_attack shot;
-        projectile_attack( shot, proj, &here, pos_bub( here ), aim, dispersion, this, in_veh, wp_attack );
+        {
+            // The engine's projectile hit messages are preserved in history.
+            // Replace their overlapping speech with one complete real result
+            // per target below, including actual after-armor damage.
+            Messages::mute_combat_speech original_impact_speech( is_avatar() );
+            projectile_attack( shot, proj, &here, pos_bub( here ), aim, dispersion, this, in_veh, wp_attack );
+        }
+        if( is_avatar() && a11y::enabled() ) {
+            bool struck_creature = false;
+            for( const auto &hit : shot.targets_hit ) {
+                if( hit.second.first <= 0 || !hit.first ) {
+                    continue;
+                }
+                struck_creature = true;
+                const Creature &victim = *hit.first;
+                const int actual_damage = hit.second.second;
+                if( actual_damage <= 0 ) {
+                    add_msg( m_info, _( "Your shot hit %s but dealt no damage." ), victim.disp_name() );
+                } else if( victim.is_monster() ) {
+                    const int max_hp = std::max( 1, victim.get_hp_max() );
+                    const int remaining_hp = std::clamp( victim.get_hp(), 0, max_hp );
+                    // The shot result supplies the actual post-armor damage;
+                    // clamp overkill so percentages never exceed real health.
+                    const int prior_hp = std::clamp( remaining_hp + actual_damage, 0, max_hp );
+                    const int lost_percent = static_cast<int>( std::lround( 100.0 *
+                                             ( prior_hp - remaining_hp ) / max_hp ) );
+                    const int remaining_percent = static_cast<int>( std::lround( 100.0 *
+                                                  remaining_hp / max_hp ) );
+                    if( victim.is_dead_state() ) {
+                        add_msg( m_good, _( "You shot and killed %1$s. %2$d damage." ),
+                                 victim.disp_name(), actual_damage );
+                    } else {
+                        add_msg( m_good, _( "You shot %1$s for %2$d damage, reducing health by %3$d percent. %4$d percent remains." ),
+                                 victim.disp_name(), actual_damage, lost_percent, remaining_percent );
+                    }
+                } else {
+                    add_msg( m_good, _( "You shot %1$s for %2$d damage." ),
+                             victim.disp_name(), actual_damage );
+                }
+            }
+            if( !struck_creature ) {
+                add_msg( m_info, _( "Your shot did not hit any creature." ) );
+            }
+        }
         if( !shot.targets_hit.empty() ) {
             hits++;
         }

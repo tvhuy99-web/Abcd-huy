@@ -4364,3 +4364,38 @@ msgstr "Không thấy kẻ địch theo hướng đó. Nhân vật đứng yên.
 #, c-format
 msgid "Heard near here: %s. Position approximate."
 msgstr "Nghe gần đây: %s. Vị trí chỉ ước lượng."
+
+#, c-format
+msgid "You shot %1$s for %2$d damage, reducing health by %3$d percent. %4$d percent remains."
+msgstr "Bạn bắn trúng %1$s, gây %2$d sát thương, giảm %3$d phần trăm máu. Còn %4$d phần trăm."
+
+#, c-format
+msgid "You shot and killed %1$s. %2$d damage."
+msgstr "Bạn bắn hạ %1$s, gây %2$d sát thương."
+
+#, c-format
+msgid "Your shot hit %s but dealt no damage."
+msgstr "Bạn bắn trúng %s nhưng không gây sát thương."
+
+#, c-format
+msgid "You shot %1$s for %2$d damage."
+msgstr "Bạn bắn trúng %1$s, gây %2$d sát thương."
+
+msgid "Your shot did not hit any creature."
+msgstr "Bạn đã bắn nhưng không trúng sinh vật nào."
+
+#, c-format
+msgid "%1$s lost %2$d percent health from your melee attack; %3$d percent remains."
+msgstr "Bạn đánh trúng %1$s, giảm %2$d phần trăm máu. Còn %3$d phần trăm."
+
+#, c-format
+msgid "Your melee attack hit %s but dealt no damage."
+msgstr "Bạn đánh trúng %s nhưng không gây sát thương."
+
+#, c-format
+msgid "%1$s hits your %2$s for %3$d damage. %4$d percent health remains."
+msgstr "%1$s đánh trúng %2$s của bạn, gây %3$d sát thương. Bộ phận còn %4$d phần trăm máu."
+
+#, c-format
+msgid "Your current target %s was killed."
+msgstr "Mục tiêu %s bạn đang tấn công đã chết."

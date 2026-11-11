@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -608,6 +609,7 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
                                        const matec_id &force_technique,
                                        bool allow_unarmed, int forced_movecost )
 {
+    Messages::mute_combat_speech unrelated_speech( !is_avatar() && !t.is_avatar() );
     map &here = get_map();
 
     // Prevent player from melee-attacking creatures that are swimming under terrain.
@@ -889,6 +891,21 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
             }
             sfx::generate_melee_sound( cur_weap, pos_bub(), t.pos_bub(), true, t.is_monster(), material );
             int dam = dealt_dam.total_damage();
+            if( is_avatar() && a11y::enabled() && t.is_monster() ) {
+                const int max_hp = std::max( 1, t.get_hp_max() );
+                const int remaining_hp = std::clamp( t.get_hp(), 0, max_hp );
+                const int previous_hp = std::clamp( remaining_hp + dam, 0, max_hp );
+                const int lost_percent = static_cast<int>( std::lround( 100.0 *
+                                         ( previous_hp - remaining_hp ) / max_hp ) );
+                const int remains_percent = static_cast<int>( std::lround( 100.0 *
+                                            remaining_hp / max_hp ) );
+                if( dam > 0 ) {
+                    add_msg( m_info, _( "%1$s lost %2$d percent health from your melee attack; %3$d percent remains." ),
+                             t.disp_name(), lost_percent, remains_percent );
+                } else {
+                    add_msg( m_info, _( "Your melee attack hit %s but dealt no damage." ), t.disp_name() );
+                }
+            }
             melee::melee_stats.damage_amount += dam;
 
             if( can_train_melee ) {
