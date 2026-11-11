@@ -34,7 +34,7 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertNotIn('question.label = _( "Dialog message" );', self.dialog)
         self.assertIn('"YESNO".equals(next.category)', self.java)
         self.assertIn('String introduction = yesNo ? next.summary.trim() : next.title;', self.java)
-        self.assertIn('introduction.isEmpty()', self.java)
+        self.assertIn('menuEntrySpeech(introduction,', self.java)
 
     def test_vietnamese_localization(self):
         self.assertIn('msgid "northwest"\nmsgstr "tây bắc"', self.po)
