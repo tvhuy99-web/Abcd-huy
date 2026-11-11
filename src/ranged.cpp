@@ -3454,7 +3454,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                                        _( "No visible creature. %1$s at %2$d tiles. You can fire." ),
                                        here.tername( shot ), dist_fn( shot ) );
             } else {
-                direction.value += " " + _( "No visible creature. You can still fire in this direction." );
+                direction.value += " ";
+                direction.value += _( "No visible creature. You can still fire in this direction." );
             }
             direction.detail = _( "Double tap to fire once toward this direction without choosing a tile. "
                                   "Hold one finger for all original aiming controls." );

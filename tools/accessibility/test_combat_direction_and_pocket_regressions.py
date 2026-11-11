@@ -56,6 +56,8 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertNotIn("guaranteed_hostile", targeting)
         self.assertNotIn("Attitude::HOSTILE", targeting)
         self.assertIn('No visible creature. You can still fire in this direction.', self.gun)
+        self.assertNotIn('" " + _( "No visible creature. You can still fire in this direction." )', self.gun)
+        self.assertIn('direction.value += " ";\n                direction.value += _(', self.gun)
 
     def test_holding_restores_original_commands_without_deleting_them(self):
         self.assertIn("targetingOriginalControls = !targetingOriginalControls", self.reader)
