@@ -16,11 +16,13 @@ class WorldGestureContracts(unittest.TestCase):
         controller = CONTROLLER.read_text(encoding="utf-8")
         self.assertIn("listener.moveDirection(dx > 0 ? 1 : -1, 0)", gestures)
         self.assertIn("listener.moveDirection(0, dy > 0 ? 1 : -1)", gestures)
-        guard = controller.split("public boolean worldMovementEnabled()", 1)[1]
+        guard = controller.split("private boolean worldStepAllowed()", 1)[1]
         guard = guard.split(
             "private static boolean hasCardinalDirections", 1
         )[0]
         self.assertIn("snapshot.swipeMovementAllowed", guard)
+        self.assertIn("hasCardinalDirections(snapshot)", guard)
+        self.assertIn("return !combatMode && worldStepAllowed();", guard)
         self.assertNotIn("preferences.isFastMovementEnabled()", guard)
         self.assertNotIn("hasCompletedMovementPractice()", guard)
 
