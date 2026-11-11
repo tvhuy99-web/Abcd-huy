@@ -102,7 +102,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertNotIn("combatMode ? 1 :", c)
         device = (ANDROID_TEST / "GameMenuGestureDispatchTest.java").read_text("utf-8")
         self.assertIn("threeFingerSwipeMovesOnlyInCombatAndRestoresCustomBindingOnMap", device)
-        self.assertIn("assertEquals(1, actions.savedThreeFingerSwipes)", device)
+        self.assertIn("1, actions.savedThreeFingerSwipes);", device)
 
     def test_swipe_mapping_ui_removed_and_old_prefs_ignored(self):
         self.assertIn("return GESTURE_ACTION_NAVIGATE;", self.prefs)
