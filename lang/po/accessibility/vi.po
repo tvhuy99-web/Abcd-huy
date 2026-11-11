@@ -4427,3 +4427,12 @@ msgstr "Bắn sượt %1$s. Gây %2$d sát thương. Còn %3$d máu."
 #, c-format
 msgid "You shot %1$s. %2$d damage. %3$d HP remaining."
 msgstr "Bắn trúng %1$s. Gây %2$d sát thương. Còn %3$d máu."
+
+msgid "Aim carefully and fire"
+msgstr "Ngắm kỹ rồi bắn"
+
+msgid "Aim at the current target and fire when steady. Uses normal aiming time and ammunition."
+msgstr "Ngắm vào mục tiêu hiện tại rồi bắn khi đã ổn định. Tốn thời gian ngắm và đạn như bình thường."
+
+msgid "Select an aim point and a loaded gun first."
+msgstr "Hãy chọn điểm ngắm và súng đã nạp đạn trước."

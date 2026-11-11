@@ -116,6 +116,15 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("last_target.lock().get() == this", monster)
         self.assertIn("Your current target %s was killed.", monster)
 
+    def test_deliberate_aimed_fire_is_available_beside_quick_fire(self):
+        self.assertIn('intent.node == "target:aimed-shot"', self.ranged)
+        self.assertIn('return "AIMED_SHOT";', self.ranged)
+        self.assertIn('aimed.id = "target:aimed-shot";', self.ranged)
+        self.assertIn('aimed.enabled = status == Status::Good && dst != src;', self.ranged)
+        self.assertIn('aimed.label = _( "Aim carefully and fire" );', self.ranged)
+        self.assertIn('action_aim_and_shoot( action )', self.ranged)
+        self.assertIn('msgstr "Ngắm kỹ rồi bắn"', self.po)
+
     def test_ammunition_progress_is_from_engine_not_guessed(self):
         self.assertIn("Ammunition remaining: %d.", self.world)
         self.assertIn("held->ammo_remaining()", self.world)

@@ -3129,6 +3129,11 @@ target_handler::trajectory target_ui::run()
              &accessible_auto_reload]( const a11y::semantic_intent &intent )
             -> std::optional<std::string> {
                 if( intent.action == "activate" && mode == TargetMode::Fire ) {
+                    if( intent.node == "target:aimed-shot" ) {
+                        // Use the engine's existing multi-turn aimed-shot
+                        // state machine, not a made-up damage bonus.
+                        return "AIMED_SHOT";
+                    }
                     if( intent.node == "target:auto-reload" ) {
                         accessible_auto_reload = true;
                         return "A11Y_INTERNAL_AUTO_RELOAD";
@@ -3603,6 +3608,22 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                                   "Hold one finger for all original aiming controls." );
             snapshot.nodes.push_back( std::move( direction ) );
         }
+        // Deliberate aimed fire is a separate choice from the instant
+        // directional shot. First select a visible target or move the aim
+        // cursor, then activate this node. Aimed fire consumes normal turns,
+        // recoil and ammunition through action_aim_and_shoot().
+        a11y::semantic_node aimed;
+        aimed.id = "target:aimed-shot";
+        aimed.role = "button";
+        aimed.label = _( "Aim carefully and fire" );
+        aimed.detail = _( "Aim at the current target and fire when steady. Uses normal aiming time and ammunition." );
+        aimed.enabled = status == Status::Good && dst != src;
+        aimed.actions = { "focus", "activate" };
+        if( !aimed.enabled ) {
+            aimed.disabled_reason = _( "Select an aim point and a loaded gun first." );
+        }
+        snapshot.nodes.push_back( std::move( aimed ) );
+
         a11y::semantic_node reload;
         reload.id = "target:auto-reload";
         reload.role = "button";
