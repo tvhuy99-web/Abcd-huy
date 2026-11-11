@@ -601,6 +601,9 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
 void aim_activity_actor::finish( player_activity &act, Character &who )
 {
     map &here = get_map();
+    // A one-gesture combat shot returns to the world after firing even
+    // when AIM_AFTER_FIRING is enabled. Normal targeting keeps its setting.
+    const bool quick_combat_shot = target_handler::take_accessible_combat_shot_completed();
 
     act.set_to_null();
     item_location weapon = get_weapon();
@@ -625,7 +628,7 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     gun_mode gun = weapon->gun_current_mode();
     who.fire_gun( here, fin_trajectory.back(), gun.qty, *gun, reload_loc );
 
-    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ||
+    if( quick_combat_shot || !get_option<bool>( "AIM_AFTER_FIRING" ) ||
         weapon.get_item()->has_fault_of_type( gun_mechanical_simple ) ) {
         restore_view();
         return;

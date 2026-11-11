@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_RANGED_H
 #define CATA_SRC_RANGED_H
 
+#include <optional>
 #include <string>
 #include <vector>
 
@@ -25,6 +26,12 @@ constexpr double MIN_RECOIL_IMPROVEMENT = 0.01;
 
 namespace target_handler
 {
+// A single combat swipe requests one native shot direction. The request is
+// consumed only by the next firearm aiming activity, never by a map swipe.
+void queue_accessible_combat_shot( int direction );
+std::optional<int> take_accessible_combat_shot();
+bool take_accessible_combat_shot_completed();
+
 // Trajectory to target. Empty if selection was aborted or player ran out of moves
 using trajectory = std::vector<tripoint_bub_ms>;
 

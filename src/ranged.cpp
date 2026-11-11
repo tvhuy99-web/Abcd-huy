@@ -2881,6 +2881,32 @@ double Character::gun_value( const item &weap, int ammo ) const
     return std::max( 0.0, gun_value );
 }
 
+namespace
+{
+std::optional<int> pending_accessible_combat_shot;
+bool accessible_combat_shot_completed = false;
+} // namespace
+
+void target_handler::queue_accessible_combat_shot( int direction )
+{
+    pending_accessible_combat_shot = direction;
+    accessible_combat_shot_completed = false;
+}
+
+std::optional<int> target_handler::take_accessible_combat_shot()
+{
+    std::optional<int> pending = pending_accessible_combat_shot;
+    pending_accessible_combat_shot.reset();
+    return pending;
+}
+
+bool target_handler::take_accessible_combat_shot_completed()
+{
+    const bool completed = accessible_combat_shot_completed;
+    accessible_combat_shot_completed = false;
+    return completed;
+}
+
 target_handler::trajectory target_ui::run()
 {
     if( mode == TargetMode::Spell && !no_mana && !casting->can_cast( *you ) ) {
@@ -3011,6 +3037,16 @@ target_handler::trajectory target_ui::run()
     std::optional<tripoint_rel_ms> accessible_cursor_delta;
     std::optional<int> accessible_fire_direction;
     bool accessible_auto_reload = false;
+    // A direct combat swipe supplies the same internal fire-direction
+    // command used by the eight-direction targeting screen, without waiting
+    // for another tap. The engine still owns ammo, recoil, ballistics and
+    // safety confirmations.
+    const std::optional<int> automatic_combat_shot = mode == TargetMode::Fire ?
+            target_handler::take_accessible_combat_shot() : std::nullopt;
+    if( automatic_combat_shot ) {
+        accessible_fire_direction = *automatic_combat_shot;
+        action = "A11Y_INTERNAL_FIRE_DIRECTION";
+    }
     std::unique_ptr<a11y::screen_scope> reader;
     const auto refresh_reader = [this, &reader, &accessible_target_selection,
                                  &accessible_cursor_delta, &accessible_fire_direction, &accessible_auto_reload]() {
@@ -3140,16 +3176,29 @@ target_handler::trajectory target_ui::run()
             const tripoint_bub_ms shot = directional_shot_target( steps[chosen][0], steps[chosen][1] );
             if( shot == src ) {
                 add_msg( m_info, _( "There is no valid tile in this direction within weapon range." ) );
+                if( automatic_combat_shot ) {
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
                 continue;
             }
             set_cursor_pos( shot );
-            if( status != Status::Good ) {
+            if( status != Status::Good || !confirm_non_enemy_target() ) {
+                // An invalid or refused quick shot must return to the map,
+                // rather than unexpectedly opening the aim-selection UI.
+                if( automatic_combat_shot ) {
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
                 continue;
             }
-            // Choosing the direction is the user's one-step confirmation.
-            // No friendly/hostile/empty-target restriction is added. The
-            // original ACT_AIM firing, ammo and ballistics pipeline runs.
+            // Direction is the one-step confirmation, except when the
+            // engine requires its existing non-enemy/friendly warning.
+            // Actual firing remains inside ACT_AIM with normal turn costs.
             set_last_target();
+            if( automatic_combat_shot ) {
+                accessible_combat_shot_completed = true;
+            }
             loop_exit_code = ExitCode::Fire;
             break;
         } else if( action == "A11Y_INTERNAL_AUTO_RELOAD" ) {
