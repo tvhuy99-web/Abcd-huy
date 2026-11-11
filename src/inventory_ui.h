@@ -1038,6 +1038,10 @@ class inventory_pick_selector : public inventory_selector
             drag_enabled = false;
         }
         bool drag_enabled;
+        // Only the ordinary Inventory screen opens actions on an item found
+        // through a read-only pocket view. Other selectors retain their own
+        // selection/quantity semantics.
+        bool open_contained_item_menu = false;
         item_location execute();
 };
 

@@ -1446,7 +1446,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
             if (item == null) { return; }
             if (!pocketAllowsSelection()) {
-                feedback(pocketChoiceSpeech());
+                // Inventory pocket entries publish an activate action only
+                // when their live item_location can open the normal item menu.
+                // Other contexts remain informational as before.
+                if (item.enabled && item.actions.contains("activate")) {
+                    send("activate", "");
+                } else {
+                    feedback(pocketChoiceSpeech());
+                }
                 return;
             }
             if (!item.enabled) {

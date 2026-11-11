@@ -3567,6 +3567,16 @@ class inventory_selector::reader_session
                 return handle( intent );
             } ) {
             owner.active_reader = this;
+            context.register_action( "A11Y_PICK_POCKET_ITEM",
+                                     to_translation( "Open contained item actions" ) );
+        }
+
+        // The ordinary inventory loop consumes this validated item location,
+        // then opens the exact same inventory_item_menu as an ordinary row.
+        item_location take_contained_item() {
+            item_location selected = std::move( pending_contained_item );
+            pending_contained_item = item_location();
+            return selected;
         }
 
         ~reader_session() {
@@ -3578,6 +3588,12 @@ class inventory_selector::reader_session
                 return;
             }
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context, owner.title );
+            // Internal reader selection is not a displayed native command.
+            snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+            []( const a11y::semantic_node & node ) {
+                return node.id == "A11Y_PICK_POCKET_ITEM";
+            } ), snapshot.nodes.end() );
+            contained_item_bindings.clear();
             // R14.2 trade hook (trade_selector sessions only; every other
             // selector keeps the plain command snapshot). The trade actions
             // are registered on _ctxt_trade in the trade_selector
@@ -3593,6 +3609,10 @@ class inventory_selector::reader_session
             const trade_preset *trade_pricing =
                 dynamic_cast<const trade_preset *>( &owner.preset );
             const bool pickup_mode = dynamic_cast<const pickup_selector *>( &owner ) != nullptr;
+            const inventory_pick_selector *pick_owner =
+                dynamic_cast<const inventory_pick_selector *>( &owner );
+            const bool pocket_item_actions = pick_owner != nullptr &&
+                                             pick_owner->open_contained_item_menu;
             const bool drop_mode = dynamic_cast<const inventory_drop_selector *>( &owner ) != nullptr;
             const bool insert_mode = dynamic_cast<const inventory_insert_selector *>( &owner ) != nullptr;
             const bool compare_mode = dynamic_cast<const inventory_compare_selector *>( &owner ) != nullptr;
@@ -4171,11 +4191,12 @@ class inventory_selector::reader_session
                         }
                     } else if( !pickup_mode && !pocket->sealed() &&
                                pocket_node.depth >= 0 && pocket_node.depth < a11y::max_tree_depth ) {
-                        // Normal Inventory was only publishing pocket statuses.
-                        // Read the *actual* contents, not just visible selector
-                        // rows: the latter omit collapsed children. Browsing
-                        // never selects, unfolds, transfers or otherwise
-                        // modifies the game's real items or their pockets.
+                        // Ordinary Inventory now exposes real actionable
+                        // item locations from each unsealed pocket. The
+                        // selection is still processed by inventory_item_menu,
+                        // not by a synthetic item-use or transfer action.
+                        // Other selector modes remain read-only here.
+                        // Include collapsed children for spoken navigation.
                         // Flatten nested containers with their path in the
                         // spoken label so no item disappears behind a closed
                         // bag within a bag. Respect sealed nested pockets.
@@ -4185,8 +4206,10 @@ class inventory_selector::reader_session
                         bool truncated_contents = false;
                         tname::segment_bitset speech_segments = tname::unprefixed_tname;
                         speech_segments.set( tname::segments::WHITEBLACKLIST, false );
-                        std::function<void( const item *, const std::string &, unsigned int )> expose =
-                        [&]( const item *child, const std::string &ancestors, unsigned int level ) {
+                        std::function<void( const item *, const item_location &,
+                                            const std::string &, unsigned int )> expose =
+                        [&]( const item *child, const item_location &parent_location,
+                             const std::string &ancestors, unsigned int level ) {
                             if( child == nullptr || !visited_contents.insert( child ).second ) {
                                 return;
                             }
@@ -4194,11 +4217,17 @@ class inventory_selector::reader_session
                                 truncated_contents = true;
                                 return;
                             }
+                            const item_location contained( parent_location, const_cast<item *>( child ) );
+                            const bool actionable = pocket_item_actions && static_cast<bool>( contained );
                             a11y::semantic_node item_node;
                             item_node.id = "pocket-entry:" + pocket_node.id + ":" +
                                            std::to_string( contents_rows.size() );
-                            item_node.role = "status";
-                            item_node.actions = { "focus" };
+                            item_node.role = actionable ? "button" : "status";
+                            item_node.actions = actionable ? std::vector<std::string>{ "focus", "activate" }
+                                                : std::vector<std::string>{ "focus" };
+                            if( actionable ) {
+                                contained_item_bindings.emplace_back( item_node.id, contained );
+                            }
                             item_node.parent_id = pocket_node.id;
                             item_node.depth = pocket_node.depth + 1;
                             item_node.label = remove_color_tags( child->tname(
@@ -4218,19 +4247,21 @@ class inventory_selector::reader_session
                                     continue;
                                 }
                                 for( const item *grandchild : inner->all_items_top() ) {
-                                    expose( grandchild, child_path, level + 1 );
+                                    expose( grandchild, contained, child_path, level + 1 );
                                 }
                             }
                         };
                         for( const item *child : pocket->all_items_top() ) {
-                            expose( child, "", 0 );
+                            expose( child, published[i].location, "", 0 );
                         }
                         if( truncated_contents ) {
                             pocket_node.detail += "\n" +
                                                   std::string( _( "Additional nested items not shown. "
                                                                   "Try a shorter inventory list." ) );
                         }
-                        pocket_node.value = "read_only";
+                        // The raw internal "read_only" marker is not user-
+                        // facing language and must not be spoken by TTS.
+                        pocket_node.value.clear();
                         pocket_node.applied_value = std::to_string( pocket->size() );
                         pocket_node.has_children = !contents_rows.empty();
                         pocket_node.expanded = !contents_rows.empty();
@@ -4308,6 +4339,8 @@ class inventory_selector::reader_session
             std::vector<pocket_item_binding> items;
         };
         std::vector<pocket_selection_binding> pocket_selections;
+        std::vector<std::pair<std::string, item_location>> contained_item_bindings;
+        item_location pending_contained_item;
         std::size_t serial = 0;
         a11y::screen_scope screen;
 
@@ -4476,10 +4509,27 @@ class inventory_selector::reader_session
                 return "TIMEOUT";
             }
             if( intent.node.rfind( "pocket-entry:", 0 ) == 0 ) {
-                // Entry aliases are read-only until the local picker sends
-                // its validated, atomic selection via the parent pocket.
-                return intent.action == "focus" ?
-                       std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
+                if( intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+                // Normal Inventory can open a contained item's *original*
+                // action menu. Resolve a live item_location from this
+                // snapshot, not a name/index saved across inventory redraws.
+                if( intent.action == "activate" &&
+                    dynamic_cast<const inventory_pick_selector *>( &owner ) != nullptr ) {
+                    const auto item = std::find_if( contained_item_bindings.begin(),
+                                                   contained_item_bindings.end(),
+                    [&]( const std::pair<std::string, item_location> &binding ) {
+                        return binding.first == intent.node;
+                    } );
+                    if( item != contained_item_bindings.end() && item->second ) {
+                        pending_contained_item = item->second;
+                        return "A11Y_PICK_POCKET_ITEM";
+                    }
+                }
+                // Pickup/drop quantity forms keep their existing atomic
+                // parent-pocket selection model.
+                return std::nullopt;
             }
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
             [&]( const row_binding &b ) { return b.id == intent.node; } );
@@ -4973,6 +5023,12 @@ item_location inventory_pick_selector::execute()
                 }
                 on_input( input );
             }
+        } else if( input.action == "A11Y_PICK_POCKET_ITEM" ) {
+            item_location contained = reader.take_contained_item();
+            if( contained && contained.get_item() != nullptr ) {
+                return contained;
+            }
+            add_msg( m_info, _( "That item is no longer in the pocket." ) );
         } else if( input.action == "ORGANIZE_MENU" ) {
             u.worn.organize_items_menu( u );
             return item_location();
