@@ -7685,6 +7685,72 @@ void game::reload_wielded( bool prompt )
     reload( weapon, prompt );
 }
 
+void game::auto_reload_wielded( int steps_remaining )
+{
+    item_location gun = u.get_wielded_item();
+    if( !gun || !gun->is_gun() ) {
+        add_msg( m_info, _( "You must be holding a gun to reload it." ) );
+        return;
+    }
+    if( gun->has_flag( flag_RELOAD_AND_SHOOT ) ) {
+        add_msg( m_info, _( "This gun loads ammunition when fired. Use its normal ammo selection." ) );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    // A loaded magazine or integral cylinder that has no free space is
+    // already full. Empty guns with no inserted magazine are not full.
+    if( gun->ammo_remaining() > 0 && gun->remaining_ammo_capacity() == 0 ) {
+        add_msg( m_info, _( "The selected gun is already fully loaded." ) );
+        avatar_action::fire_wielded_weapon( u );
+        return;
+    }
+
+    if( steps_remaining <= 0 ) {
+        add_msg( m_info, _( "Automatic reloading stopped at its safety limit." ) );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    std::vector<item::reload_option> choices;
+    u.list_ammo( gun, choices, false, true );
+
+    // If the weapon accepts a detachable magazine but only empty magazines
+    // are available, first load a compatible magazine via the same normal
+    // reload activity, then return to the gun.
+    if( choices.empty() ) {
+        for( item_location magazine : u.find_reloadables() ) {
+            if( !magazine || !magazine->is_magazine() ||
+                !gun->is_compatible( *magazine ).success() ) {
+                continue;
+            }
+            u.list_ammo( magazine, choices, false );
+            if( !choices.empty() ) {
+                break;
+            }
+        }
+    }
+    auto selected = std::find_if( choices.begin(), choices.end(),
+    []( const item::reload_option &opt ) {
+        return static_cast<bool>( opt ) && opt.qty() > 0 && opt.target && opt.ammo;
+    } );
+    if( selected == choices.end() ) {
+        add_msg( m_info, _( "Automatic reload finished. No more compatible ammunition can be loaded." ) );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    const int extra_moves = selected->target->get_var( "dirt", 0 ) > 7800 ? 2500 : 0;
+    u.assign_activity( reload_activity_actor( std::move( *selected ), extra_moves,
+                       steps_remaining ) );
+}
+
 void game::reload_weapon( bool try_everything )
 {
     map &here = get_map();

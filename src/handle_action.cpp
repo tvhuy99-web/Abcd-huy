@@ -2284,6 +2284,54 @@ static void fire()
     }
 
     const item_location weapon = you.get_wielded_item();
+    if( a11y::enabled() ) {
+        // The accessible Fire action is a gun chooser, not the generic
+        // holster "use" menu. A selected firearm is equipped with the
+        // engine's normal wield/location cost before aiming begins.
+        // This also works when a melee weapon is currently wielded.
+        std::vector<item_location> guns;
+        std::vector<std::string> labels;
+        for( item_location &loc : you.all_items_loc() ) {
+            if( loc && loc->is_gun() && !loc->is_gunmod() ) {
+                guns.push_back( loc );
+                labels.push_back( string_format( _( "%1$s. %2$d rounds loaded." ),
+                                                 loc->tname(), loc->ammo_remaining() ) );
+            }
+        }
+        if( !guns.empty() ) {
+            int choice = uilist( _( "Choose a gun to fire" ), labels );
+            if( choice < 0 || static_cast<std::size_t>( choice ) >= guns.size() ) {
+                return;
+            }
+            item_location selected = guns[choice];
+            if( !selected ) {
+                add_msg( m_info, _( "That gun is no longer available." ) );
+                return;
+            }
+            if( you.has_trait( trait_BRAWLER ) ) {
+                add_msg( m_bad, _( "You refuse to use ranged weapons." ) );
+                return;
+            }
+            if( you.has_trait( trait_GUNSHY ) && selected->is_firearm() ) {
+                add_msg( m_bad, _( "You refuse to use firearms." ) );
+                return;
+            }
+            if( you.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ||
+                ( you.has_flag( json_flag_HANDS_CANNOT_USE_FIREARMS ) && selected->is_firearm() ) ) {
+                add_msg( m_bad, _( "Your hands aren't suited for using firearms!" ) );
+                return;
+            }
+            if( !you.is_wielding( *selected ) ) {
+                // Standard location-aware wield validates conflicts and
+                // spends retrieval time, including when nested in holsters.
+                if( !you.wield( selected ) ) {
+                    return;
+                }
+            }
+            avatar_action::fire_wielded_weapon( you );
+            return;
+        }
+    }
     // try reach weapon
     // used_weapon() returns null location if force unarmed is selected
     if( weapon && !you.used_weapon() && !weapon->is_gun() ) {

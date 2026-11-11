@@ -1004,6 +1004,8 @@ class game
 
         void reload_item(); // Reload an item
         void reload_wielded( bool prompt = false );
+        // Native ACT_RELOAD chain for the accessible aiming reload button.
+        void auto_reload_wielded( int steps_remaining = 256 );
         void reload_weapon( bool try_everything = true ); // Reload a wielded gun/tool  'r'
         void insert_item(); // Insert items to container  'v'
         void insert_item( drop_locations &targets );

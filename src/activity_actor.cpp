@@ -606,9 +606,12 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     if( aborted ) {
         unload_RAS_weapon();
         if( reload_requested ) {
-            // Reload the gun / select different arrows
-            // May assign ACT_RELOAD
-            g->reload_wielded( true );
+            // Both reload paths retain the engine's time-costed activity.
+            if( auto_reload_requested ) {
+                g->auto_reload_wielded();
+            } else {
+                g->reload_wielded( true );
+            }
         }
         restore_view();
         return;
@@ -658,6 +661,7 @@ void aim_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "initial_view_offset", initial_view_offset );
     jsout.member( "aborted", aborted );
     jsout.member( "reload_requested", reload_requested );
+    jsout.member( "auto_reload_requested", auto_reload_requested );
     jsout.member( "abort_if_no_targets", abort_if_no_targets );
     jsout.member( "should_unload_RAS", should_unload_RAS );
 
@@ -681,6 +685,7 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonValue &jsin
     data.read( "initial_view_offset", actor.initial_view_offset );
     data.read( "aborted", actor.aborted );
     data.read( "reload_requested", actor.reload_requested );
+    data.read( "auto_reload_requested", actor.auto_reload_requested );
     data.read( "abort_if_no_targets", actor.abort_if_no_targets );
     data.read( "should_unload_RAS", actor.should_unload_RAS );
 
@@ -8353,8 +8358,10 @@ std::unique_ptr<activity_actor> insert_item_activity_actor::deserialize( JsonVal
     return actor.clone();
 }
 
-reload_activity_actor::reload_activity_actor( item::reload_option &&opt, int extra_moves )
+reload_activity_actor::reload_activity_actor( item::reload_option &&opt, int extra_moves,
+        int auto_steps )
 {
+    auto_reload_steps = auto_steps;
     moves_total = opt.moves() + extra_moves;
     quantity = opt.qty();
     pocket_index = opt.pocket_index;
@@ -8382,10 +8389,16 @@ bool reload_activity_actor::can_reload() const
     return true;
 }
 
-void reload_activity_actor::start( player_activity &act, Character &/*who*/ )
+void reload_activity_actor::start( player_activity &act, Character &who )
 {
     act.moves_total = moves_total;
     act.moves_left = moves_total;
+    if( auto_reload_steps > 0 ) {
+        const item_location gun = who.get_wielded_item();
+        initial_weapon_ammo = gun ? gun->ammo_remaining() : 0;
+        initial_weapon_has_magazine = gun && gun->magazine_current() != nullptr;
+        initial_target_ammo = target_loc ? target_loc->ammo_remaining() : 0;
+    }
 }
 
 void reload_activity_actor::reload_msg( Character &who, bool finished )
@@ -8543,6 +8556,25 @@ void reload_activity_actor::finish( player_activity &act, Character &who )
     reload_msg( who, true );
     act.set_to_null();
 
+    if( auto_reload_steps > 0 && who.is_avatar() ) {
+        const item_location gun = who.get_wielded_item();
+        const bool progressed = ( target_loc && target_loc->ammo_remaining() > initial_target_ammo ) ||
+                                ( gun && ( gun->ammo_remaining() > initial_weapon_ammo ||
+                                           ( !initial_weapon_has_magazine &&
+                                             gun->magazine_current() != nullptr ) ) );
+        if( progressed && gun && gun->is_gun() ) {
+            // One completed native reload, then schedule another if required.
+            // This never creates ammo or bypasses the action's move cost.
+            g->auto_reload_wielded( auto_reload_steps - 1 );
+        } else {
+            add_msg( m_info, _( "Automatic reloading stopped because no more ammunition was loaded." ) );
+            if( gun && gun->is_gun() && gun->ammo_remaining() > 0 ) {
+                avatar_action::fire_wielded_weapon( get_avatar() );
+            }
+        }
+        return;
+    }
+
     // Auto-chain sibling wells so the player is not prompted once per well.
     // Inventory only - map items were not part of the player's original pick
     // and walking them can surface debugmsgs on unrelated nearby items.
@@ -8606,6 +8638,10 @@ void reload_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "ammo_loc", ammo_loc );
     jsout.member( "seconds_per_round", seconds_per_round );
     jsout.member( "already_loaded", already_loaded );
+    jsout.member( "auto_reload_steps", auto_reload_steps );
+    jsout.member( "initial_weapon_ammo", initial_weapon_ammo );
+    jsout.member( "initial_target_ammo", initial_target_ammo );
+    jsout.member( "initial_weapon_has_magazine", initial_weapon_has_magazine );
 
     jsout.end_object();
 }
@@ -8626,6 +8662,10 @@ std::unique_ptr<activity_actor> reload_activity_actor::deserialize( JsonValue &j
     data.read( "ammo_loc", actor.ammo_loc );
     data.read( "seconds_per_round", actor.seconds_per_round );
     data.read( "already_loaded", actor.already_loaded );
+    data.read( "auto_reload_steps", actor.auto_reload_steps );
+    data.read( "initial_weapon_ammo", actor.initial_weapon_ammo );
+    data.read( "initial_target_ammo", actor.initial_target_ammo );
+    data.read( "initial_weapon_has_magazine", actor.initial_weapon_has_magazine );
     if( actor.ammo_loc ) {
         actor.ammo_id = actor.ammo_loc->type->id;
     }

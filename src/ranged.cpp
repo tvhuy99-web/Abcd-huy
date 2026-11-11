@@ -3010,9 +3010,10 @@ target_handler::trajectory target_ui::run()
     std::optional<tripoint_bub_ms> accessible_target_selection;
     std::optional<tripoint_rel_ms> accessible_cursor_delta;
     std::optional<int> accessible_fire_direction;
+    bool accessible_auto_reload = false;
     std::unique_ptr<a11y::screen_scope> reader;
     const auto refresh_reader = [this, &reader, &accessible_target_selection,
-                                 &accessible_cursor_delta, &accessible_fire_direction]() {
+                                 &accessible_cursor_delta, &accessible_fire_direction, &accessible_auto_reload]() {
         if( !a11y::enabled() ) {
             reader.reset();
             return;
@@ -3034,12 +3035,22 @@ target_handler::trajectory target_ui::run()
             ctxt.register_action( "A11Y_INTERNAL_FIRE_DIRECTION",
                                   to_translation( "Fire once in a selected direction" ) );
         }
+        if( std::find( actions.begin(), actions.end(),
+                       "A11Y_INTERNAL_AUTO_RELOAD" ) == actions.end() ) {
+            ctxt.register_action( "A11Y_INTERNAL_AUTO_RELOAD",
+                                  to_translation( "Reload the gun to capacity" ) );
+        }
         if( !reader ) {
             reader = std::make_unique<a11y::screen_scope>( &ctxt, "targeting",
             [this, &accessible_target_selection,
-             &accessible_cursor_delta, &accessible_fire_direction]( const a11y::semantic_intent &intent )
+             &accessible_cursor_delta, &accessible_fire_direction,
+             &accessible_auto_reload]( const a11y::semantic_intent &intent )
             -> std::optional<std::string> {
                 if( intent.action == "activate" && mode == TargetMode::Fire ) {
+                    if( intent.node == "target:auto-reload" ) {
+                        accessible_auto_reload = true;
+                        return "A11Y_INTERNAL_AUTO_RELOAD";
+                    }
                     for( int i = 0; i < 8; ++i ) {
                         if( intent.node == "target:fire-direction:" + std::to_string( i ) ) {
                             accessible_fire_direction = i;
@@ -3141,6 +3152,14 @@ target_handler::trajectory target_ui::run()
             set_last_target();
             loop_exit_code = ExitCode::Fire;
             break;
+        } else if( action == "A11Y_INTERNAL_AUTO_RELOAD" ) {
+            if( accessible_auto_reload && mode == TargetMode::Fire && activity != nullptr ) {
+                accessible_auto_reload = false;
+                activity->auto_reload_requested = true;
+                loop_exit_code = ExitCode::Reload;
+                break;
+            }
+            accessible_auto_reload = false;
         } else if( action == "A11Y_INTERNAL_SELECT_TARGET" ) {
             if( accessible_target_selection &&
                 std::find( targets.begin(), targets.end(), *accessible_target_selection ) != targets.end() ) {
@@ -3461,6 +3480,15 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                                   "Hold one finger for all original aiming controls." );
             snapshot.nodes.push_back( std::move( direction ) );
         }
+        a11y::semantic_node reload;
+        reload.id = "target:auto-reload";
+        reload.role = "button";
+        reload.label = _( "Reload until full" );
+        reload.value = string_format( _( "Ammunition remaining: %d." ), relevant->ammo_remaining() );
+        reload.detail = _( "Double tap to reload using the game's normal timed activities. "
+                           "It stops when the gun is full or no compatible ammunition remains." );
+        reload.actions = { "focus", "activate" };
+        snapshot.nodes.push_back( std::move( reload ) );
     }
 
     if( mode == TargetMode::Fire && relevant != nullptr ) {
@@ -3676,7 +3704,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
     snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
     []( const a11y::semantic_node &node ) {
         return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR" ||
-               node.id == "A11Y_INTERNAL_FIRE_DIRECTION";
+               node.id == "A11Y_INTERNAL_FIRE_DIRECTION" ||
+               node.id == "A11Y_INTERNAL_AUTO_RELOAD";
     } ), snapshot.nodes.end() );
     snapshot.focus = mode == TargetMode::Fire ? "target:fire-direction:0" : "target:cursor";
     if( mode != TargetMode::Fire ) {

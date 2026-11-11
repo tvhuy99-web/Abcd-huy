@@ -1623,7 +1623,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
             if (targetingOriginalControls) { return result; }
-            result.removeIf(node -> !node.id.startsWith("target:fire-direction:"));
+            result.removeIf(node -> !node.id.startsWith("target:fire-direction:")
+                    && !"target:auto-reload".equals(node.id));
             return result;
         }
         // Look-around is itself a cursor-control dialog. Hiding every

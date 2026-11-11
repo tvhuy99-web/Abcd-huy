@@ -4230,3 +4230,44 @@ msgstr "Không có ô hợp lệ theo hướng này trong tầm bắn."
 
 msgid "Fire once in a selected direction"
 msgstr "Bắn một lần theo hướng đã chọn"
+
+#, c-format
+msgid "%1$s. %2$d rounds loaded."
+msgstr "%1$s. Đã nạp %2$d viên."
+
+msgid "Choose a gun to fire"
+msgstr "Chọn súng để bắn"
+
+msgid "That gun is no longer available."
+msgstr "Khẩu súng này không còn trong túi đồ."
+
+msgid "Reload until full"
+msgstr "Nạp đạn đến đầy"
+
+#, c-format
+msgid "Ammunition remaining: %d."
+msgstr "Đạn còn lại: %d viên."
+
+msgid "Double tap to reload using the game's normal timed activities. It stops when the gun is full or no compatible ammunition remains."
+msgstr "Chạm hai lần để tự động nạp theo thời gian thao tác của game, đến khi đầy hoặc hết đạn phù hợp."
+
+msgid "Automatic reload finished. No more compatible ammunition can be loaded."
+msgstr "Nạp đạn tự động kết thúc. Không còn đạn phù hợp để nạp thêm."
+
+msgid "Automatic reloading stopped because no more ammunition was loaded."
+msgstr "Đã dừng nạp đạn tự động vì không nạp thêm được viên nào."
+
+msgid "The selected gun is already fully loaded."
+msgstr "Súng đang được nạp đầy."
+
+msgid "You must be holding a gun to reload it."
+msgstr "Bạn phải cầm súng để nạp đạn."
+
+msgid "This gun loads ammunition when fired. Use its normal ammo selection."
+msgstr "Súng này nạp đạn khi bắn. Hãy dùng lệnh chọn đạn gốc."
+
+msgid "Automatic reloading stopped at its safety limit."
+msgstr "Nạp đạn tự động đã dừng tại giới hạn an toàn."
+
+msgid "Reload the gun to capacity"
+msgstr "Nạp súng đến đầy"
