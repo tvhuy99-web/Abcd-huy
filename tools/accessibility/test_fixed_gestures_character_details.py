@@ -75,6 +75,35 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("listener.scanDirection(", s)
         self.assertIn("listener.openActionMenu();", s)
 
+    def test_combat_three_finger_swipes_reuse_world_movement_without_cap(self):
+        c = self.controller
+        # All four combat movements must be selected before the persisted
+        # custom bindings. The same IDs remain editable in map mode.
+        segment = c.split("public boolean handleCustomGesture(", 1)[1]
+        segment = segment.split("gestureBindings.targetFor(gestureId)", 1)[0]
+        for gesture, direction in (
+            ("swipe_3_up", "0, -1"),
+            ("swipe_3_down", "0, 1"),
+            ("swipe_3_left", "-1, 0"),
+            ("swipe_3_right", "1, 0"),
+        ):
+            self.assertIn(f'case "{gesture}": moveInCombat({direction}); return true;', segment)
+            self.assertNotIn(f'"{gesture}".equals(gesture)', self.bindings)
+        self.assertIn("private boolean worldStepAllowed()", c)
+        self.assertIn("return !combatMode && worldStepAllowed();", c)
+        self.assertIn("private void moveInCombat(int dx, int dy)", c)
+        self.assertIn("boolean enabled = combatMode && worldStepAllowed();", c)
+        self.assertIn("dispatchWorldMovement(dx, dy);", c)
+        normal = c.split("public void moveDirection(int dx, int dy)", 1)[1]
+        self.assertIn("dispatchWorldMovement(dx, dy);", normal)
+        retry = c.split("private void retryPendingWorldDirection()", 1)[1]
+        self.assertIn("!worldStepAllowed()", retry)
+        self.assertIn("!retryingWorldDirection && worldStepAllowed()", c)
+        self.assertNotIn("combatMode ? 1 :", c)
+        device = (ANDROID_TEST / "GameMenuGestureDispatchTest.java").read_text("utf-8")
+        self.assertIn("threeFingerSwipeMovesOnlyInCombatAndRestoresCustomBindingOnMap", device)
+        self.assertIn("assertEquals(1, actions.savedThreeFingerSwipes)", device)
+
     def test_swipe_mapping_ui_removed_and_old_prefs_ignored(self):
         self.assertIn("return GESTURE_ACTION_NAVIGATE;", self.prefs)
         self.assertNotIn("getGestureAction(\"horizontal_swipe_action\"", self.prefs)
