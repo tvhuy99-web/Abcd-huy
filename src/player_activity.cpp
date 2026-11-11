@@ -488,7 +488,8 @@ bool player_activity::is_interruptible_with_kb() const
 
 bool player_activity::is_distraction_ignored( distraction_type distraction ) const
 {
-    return !is_interruptible() || ignored_distractions.count( distraction );
+    return !is_interruptible() || ignore_followup_distractions ||
+           ignored_distractions.count( distraction );
 }
 
 void player_activity::ignore_distraction( distraction_type type )
@@ -496,9 +497,15 @@ void player_activity::ignore_distraction( distraction_type type )
     ignored_distractions.emplace( type );
 }
 
+void player_activity::ignore_followup_interruptions()
+{
+    ignore_followup_distractions = true;
+}
+
 void player_activity::allow_distractions()
 {
     ignored_distractions.clear();
+    ignore_followup_distractions = false;
 }
 
 void player_activity::inherit_distractions( const player_activity &other )
@@ -506,6 +513,7 @@ void player_activity::inherit_distractions( const player_activity &other )
     for( const distraction_type &type : other.ignored_distractions ) {
         ignore_distraction( type );
     }
+    ignore_followup_distractions = ignore_followup_distractions || other.ignore_followup_distractions;
     dismissed_prompts.insert( other.dismissed_prompts.begin(), other.dismissed_prompts.end() );
 }
 
