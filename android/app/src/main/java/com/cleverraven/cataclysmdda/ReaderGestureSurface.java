@@ -45,6 +45,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void threeFingerTap();
         /** Fixed shortcut: two three-finger taps read the current character. */
         default void characterDetails() { }
+        /** Reserved three-finger triple tap: switch live-world combat/map mode. */
+        default void toggleCombatMode() { }
         /** Three sequential single-finger taps open the native action menu. */
         void openActionMenu();
         boolean handleCustomGesture(String gestureId);
@@ -442,6 +444,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if (fingers == 3 && count == 2) {
             listener.characterDetails();
+            return;
+        }
+        if (fingers == 3 && count == 3) {
+            listener.toggleCombatMode();
             return;
         }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);

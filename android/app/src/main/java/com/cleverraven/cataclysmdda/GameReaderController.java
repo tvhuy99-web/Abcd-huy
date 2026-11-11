@@ -116,6 +116,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean commandPaletteOpen;
     // A hold exposes every original aim/cursor command; the default is eight directions.
     private boolean targetingOriginalControls;
+    // Local to the accessible world. Custom map bindings remain untouched.
+    private boolean combatMode;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -2423,7 +2425,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean worldMovementEnabled() {
         // Native gameplay owns the safety gate (no vehicle, automation,
         // sleep, modal or death camera). No practice or opt-in is required.
-        return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
+        return !combatMode && directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
                 && hasCardinalDirections(snapshot);
     }
 
@@ -2452,6 +2454,33 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        if (combatMode && directWorldGesturesEnabled()) {
+            // Combat owns one-finger actions before the map's persisted
+            // bindings. No combat swipe may fall through into walking.
+            int direction = -1;
+            switch (gestureId) {
+                case "swipe_up": direction = 0; break;
+                case "swipe_right": direction = 2; break;
+                case "swipe_down": direction = 4; break;
+                case "swipe_left": direction = 6; break;
+                case "swipe_up_down":
+                    requestCombatCommand("reader:combat:weapon-next");
+                    return true;
+                case "swipe_down_up":
+                    requestCombatCommand("reader:combat:weapon-prev");
+                    return true;
+                case "swipe_left_right":
+                case "swipe_right_left":
+                    requestCombatCommand("reader:combat:reload");
+                    return true;
+                default:
+                    break;
+            }
+            if (direction >= 0) {
+                requestCombatCommand("reader:combat:attack:" + direction);
+                return true;
+            }
+        }
         if (!directWorldGesturesEnabled() || ReaderGestureBindings.isReserved(gestureId)) {
             // A fixed control is never replaced by a persisted binding.
             return false;
@@ -2545,6 +2574,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void scanDirection(int dx, int dy) {
         SessionDebugLog.event("GESTURE_ACTION", "scan dx=" + dx + " dy=" + dy);
         if (Math.abs(dx) + Math.abs(dy) != 1) { return; }
+        if (combatMode && directWorldGesturesEnabled()) {
+            // Two-finger cardinal swipes attack diagonally, never scan or walk:
+            // up=NE, right=SE, down=SW, left=NW.
+            int direction = dy < 0 ? 1 : dx > 0 ? 3 : dy > 0 ? 5 : 7;
+            requestCombatCommand("reader:combat:attack:" + direction);
+            return;
+        }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
                 : dx < 0 ? "reader:scan:west" : "reader:scan:east";
         requestLiveWorldCommand(id);
@@ -2552,6 +2588,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void twoFingerTap(int count) {
+        if (count == 1 && combatMode && directWorldGesturesEnabled()) {
+            ReaderSnapshot.Node node = snapshot.find("reader:combat:enemies");
+            String report = node == null ? activity.getString(R.string.a11yCombatNoEnemies)
+                    : node.detail;
+            if (report == null || report.isEmpty()) {
+                report = activity.getString(R.string.a11yCombatNoEnemies);
+            }
+            feedback(report);
+            return;
+        }
         if (count == 1) { detail(); return; }
         if (!directWorldGesturesEnabled()) { return; }
         if (count == 3) { openActionMenu(); return; }
@@ -2572,6 +2618,38 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void threeFingerTap() {
         requestLiveWorldCommand("reader:coordinates");
+    }
+
+    @Override
+    public void toggleCombatMode() {
+        if (!directWorldGesturesEnabled()) { return; }
+        // The native world-step gate also rejects vehicle, activity, death
+        // camera, travel, and explore. Do not enter combat in those modes.
+        if (!combatMode && !snapshot.swipeMovementAllowed) {
+            feedback(activity.getString(R.string.a11yCombatUnavailable));
+            return;
+        }
+        combatMode = !combatMode;
+        CataclysmDDA.nativeCancelPendingWorldSteps();
+        clearPendingWorldDirection();
+        root.cancelGesture();
+        SessionDebugLog.event("COMBAT_MODE", "enabled=" + combatMode);
+        feedback(activity.getString(combatMode ? R.string.a11yCombatOn : R.string.a11yCombatOff));
+    }
+
+    private void requestCombatCommand(String id) {
+        if (!combatMode || !directWorldGesturesEnabled()) { return; }
+        if (!snapshot.swipeMovementAllowed) {
+            feedback(activity.getString(R.string.a11yCombatUnavailable));
+            return;
+        }
+        ReaderSnapshot.Node node = snapshot.find(id);
+        if (node == null || !node.enabled) {
+            feedback(activity.getString(R.string.a11yCombatUnavailable));
+            return;
+        }
+        SessionDebugLog.event("COMBAT_ACTION", "node=" + id);
+        requestLiveWorldCommand(id);
     }
 
     @Override
@@ -3662,6 +3740,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void close() {
         if (closed) { return; }
+        combatMode = false;
         closed = true;
         foreground = false;
         presentationEpoch++;

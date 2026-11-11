@@ -30,6 +30,7 @@ public final class GameMenuGestureDispatchTest {
         int activations;
         int tripleFingerTaps;
         int characterDetailReads;
+        int combatModeToggles;
         int fourFingerTaps;
         int fourFingerSwipes;
         int unassignedGestures;
@@ -71,6 +72,7 @@ public final class GameMenuGestureDispatchTest {
         }
         @Override public void threeFingerTap() { tripleFingerTaps++; }
         @Override public void characterDetails() { characterDetailReads++; }
+        @Override public void toggleCombatMode() { combatModeToggles++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
             if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
@@ -273,6 +275,34 @@ public final class GameMenuGestureDispatchTest {
                 assertEquals(1, actions.characterDetailReads);
                 assertEquals(0, actions.tripleFingerTaps);
                 assertEquals(0, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void threeFingerTripleTapTogglesCombatNotUnassigned() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long now = SystemClock.uptimeMillis();
+                for (int i = 0; i < 3; ++i) {
+                    startMulti(surface[0], 3, now + i * 180);
+                    endMulti(surface[0], 3, now + i * 180, 0);
+                }
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.combatModeToggles);
+                assertEquals(0, actions.unassignedGestures);
+                assertEquals(0, actions.characterDetailReads);
             });
         }
     }
