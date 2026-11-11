@@ -1237,8 +1237,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         + activity.getString(R.string.a11yPosition, items.size() + 1, items.size() + 2);
             }
             if (POCKET_CANCEL_NODE.equals(focus)) {
+                int cancelPosition = items.size() + (pocketAllowsSelection() ? 2 : 1);
                 return activity.getString(R.string.a11yPocketCancel) + ". "
-                        + activity.getString(R.string.a11yPosition, items.size() + 2, items.size() + 2);
+                        + activity.getString(R.string.a11yPosition, cancelPosition, cancelPosition);
             }
             for (int i = 0; i < items.size(); i++) {
                 if (items.get(i).id.equals(focus)) {
@@ -1457,7 +1458,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (pocketStage == 3 && POCKET_CONFIRM_NODE.equals(focus)) {
                 index = choices.size();
             } else if (pocketStage == 3 && POCKET_CANCEL_NODE.equals(focus)) {
-                index = choices.size() + 1;
+                // Read-only pockets have no Confirm row. Their Cancel row
+                // follows the items immediately, not an invisible button.
+                index = choices.size() + (pocketAllowsSelection() ? 1 : 0);
             } else {
                 for (int i = 0; i < choices.size(); i++) {
                     if (choices.get(i).id.equals(focus)) { index = i; break; }

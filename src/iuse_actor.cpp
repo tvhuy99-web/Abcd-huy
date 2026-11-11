@@ -2957,12 +2957,17 @@ std::optional<int> holster_actor::use( Character *you, item &it, map *here,
             pos = -2;
         } else {
             pos += ret;
-            if( opts.size() != it.num_item_stacks() ) {
-                ret--;
-            }
-            // If the action selected is Holster item / sheath item, then don't pick an item to use.
-            if( ret >= 0 ) {
-                auto iter = std::next( all_items.begin(), ret );
+            // The first menu entry is always the "Holster item" action.
+            // The number of other pocket stacks is unrelated to that offset.
+            // Using num_item_stacks() here could select past all_items and
+            // pass an invalid pointer to Character::wield_contents().
+            if( ret > 0 ) {
+                const size_t item_index = static_cast<size_t>( ret - 1 );
+                if( item_index >= all_items.size() ) {
+                    you->add_msg_if_player( m_info, _( "The selected holstered item is no longer available." ) );
+                    return std::nullopt;
+                }
+                auto iter = std::next( all_items.begin(), ret - 1 );
                 internal_item = *iter;
             }
         }
