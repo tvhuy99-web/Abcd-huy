@@ -25,18 +25,18 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         cls.setup = source("ReaderSetupActivity.java")
         cls.world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
 
-    def test_only_26_unused_gestures_remain_customizable(self):
+    def test_only_25_unused_gestures_remain_customizable(self):
         b = self.bindings
         block = b.split("static final String[] IDS = {", 1)[1].split("};", 1)[0]
         ids = re.findall(r'"([^"]+)"', block)
         self.assertEqual(len(ids), 36)
         locked = ["swipe_up", "swipe_down", "swipe_left", "swipe_right",
                   "tap_2_1", "tap_2_2", "tap_2_3", "tap_3_1",
-                  "tap_3_2", "hold_1"]
-        self.assertEqual(len(locked), 10)
+                  "tap_3_2", "tap_3_3", "hold_1"]
+        self.assertEqual(len(locked), 11)
         for gesture in locked:
             self.assertIn('"' + gesture + '".equals(gesture)', b)
-        for free in ("tap_3_3", "tap_4_1", "tap_4_2", "tap_4_3",
+        for free in ("tap_4_1", "tap_4_2", "tap_4_3",
                      "hold_2", "hold_3", "swipe_3_up", "swipe_4_right",
                      "swipe_up_left", "swipe_down_up"):
             self.assertIn(f'"{free}"', block)
@@ -113,7 +113,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("doubleThreeFingerTapReadsDetails", gesture_device)
         self.assertIn("singleFingerHoldAlwaysOpensContextActions", gesture_device)
         self.assertIn("Should reject reserved gesture", bindings_device)
-        self.assertIn('assertEquals(26, ReaderGestureBindings.CUSTOM_IDS.length)', bindings_device)
+        self.assertIn('assertEquals(25, ReaderGestureBindings.CUSTOM_IDS.length)', bindings_device)
 
 
 if __name__ == "__main__":

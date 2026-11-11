@@ -1,4 +1,4 @@
-"""Regression contracts for 36 recognized gestures, only 26 customizable."""
+"""Regression contracts for 36 recognized gestures, only 25 customizable."""
 import re
 import unittest
 from pathlib import Path

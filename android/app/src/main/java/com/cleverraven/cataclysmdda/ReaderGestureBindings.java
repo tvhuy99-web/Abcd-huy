@@ -98,7 +98,8 @@ final class ReaderGestureBindings {
             R.string.a11yBindHold3
     };
 
-    // Fixed live-world gestures never enter the customizable picker, and
+    // Fixed live-world gestures, including the combat-mode toggle on a
+    // three-finger triple tap, never enter the customizable picker, and
     // a saved pre-upgrade assignment is ignored and removed at read time.
     // Two-finger directional swipes and one-finger double/triple taps are
     // built into ReaderGestureSurface, not into this configurable array.
@@ -107,7 +108,8 @@ final class ReaderGestureBindings {
                 || "swipe_left".equals(gesture) || "swipe_right".equals(gesture)
                 || "tap_2_1".equals(gesture) || "tap_2_2".equals(gesture)
                 || "tap_2_3".equals(gesture) || "tap_3_1".equals(gesture)
-                || "tap_3_2".equals(gesture) || "hold_1".equals(gesture);
+                || "tap_3_2".equals(gesture) || "tap_3_3".equals(gesture)
+                || "hold_1".equals(gesture);
     }
 
     static final String[] CUSTOM_IDS;

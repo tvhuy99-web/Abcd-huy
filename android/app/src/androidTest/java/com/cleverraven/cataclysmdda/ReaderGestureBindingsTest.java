@@ -34,28 +34,30 @@ public final class ReaderGestureBindingsTest {
             ReaderGestureBindings bindings = new ReaderGestureBindings(context);
             assertEquals(36, ReaderGestureBindings.IDS.length);
             assertEquals(36, ReaderGestureBindings.LABELS.length);
-            assertEquals(26, ReaderGestureBindings.CUSTOM_IDS.length);
-            assertEquals(26, ReaderGestureBindings.CUSTOM_LABELS.length);
+            assertEquals(25, ReaderGestureBindings.CUSTOM_IDS.length);
+            assertEquals(25, ReaderGestureBindings.CUSTOM_LABELS.length);
             assertTrue(ReaderGestureBindings.isReserved("tap_3_2"));
             assertTrue(ReaderGestureBindings.isReserved("swipe_up"));
             assertTrue(ReaderGestureBindings.isReserved("hold_1"));
-            assertFalse(ReaderGestureBindings.isReserved("tap_3_3"));
+            assertTrue(ReaderGestureBindings.isReserved("tap_3_3"));
+            assertFalse(ReaderGestureBindings.isReserved("swipe_up_down"));
+            assertFalse(ReaderGestureBindings.isReserved("swipe_down_up"));
 
-            bindings.assign("tap_3_3", "action:open");
-            assertEquals("action:open", bindings.targetFor("tap_3_3"));
+            bindings.assign("swipe_up_down", "action:open");
+            assertEquals("action:open", bindings.targetFor("swipe_up_down"));
 
             // Newest wins the gesture; the former action has no custom mapping.
             ReaderGestureBindings.Assignment conflict = bindings.assign(
-                    "tap_3_3", "action:fire");
+                    "swipe_up_down", "action:fire");
             assertEquals("action:open", conflict.displacedTarget);
             assertNull(bindings.gestureFor("action:open"));
-            assertEquals("action:fire", bindings.targetFor("tap_3_3"));
+            assertEquals("action:fire", bindings.targetFor("swipe_up_down"));
 
             // Reassigning an action also frees its previous gesture.
             ReaderGestureBindings.Assignment move = bindings.assign(
                     "swipe_3_up", "action:fire");
-            assertEquals("tap_3_3", move.displacedGesture);
-            assertNull(bindings.targetFor("tap_3_3"));
+            assertEquals("swipe_up_down", move.displacedGesture);
+            assertNull(bindings.targetFor("swipe_up_down"));
             assertEquals("action:fire", bindings.targetFor("swipe_3_up"));
 
             // Persist across instances and restore original behavior.
@@ -63,6 +65,9 @@ public final class ReaderGestureBindingsTest {
                     new ReaderGestureBindings(context).gestureFor("action:fire"));
             bindings.restoreDefault("action:fire");
             assertNull(bindings.gestureFor("action:fire"));
+            // Direction-changing swipes remain customizable outside combat.
+            bindings.assign("swipe_down_up", "action:reload");
+            assertEquals("action:reload", bindings.targetFor("swipe_down_up"));
             // Holds share the same newest-assignment-wins persistence.
             bindings.assign("hold_2", "action:open");
             assertEquals("action:open", bindings.targetFor("hold_2"));
@@ -75,7 +80,7 @@ public final class ReaderGestureBindingsTest {
             // Fixed gameplay gestures cannot be remapped by this storage API.
             for (String locked : new String[]{"swipe_up", "swipe_down",
                     "swipe_left", "swipe_right", "tap_2_1", "tap_2_2",
-                    "tap_2_3", "tap_3_1", "tap_3_2", "hold_1"}) {
+                    "tap_2_3", "tap_3_1", "tap_3_2", "tap_3_3", "hold_1"}) {
                 assertNull(bindings.targetFor(locked));
                 assertEquals(-1, ReaderGestureBindings.customIndexOf(locked));
                 try {
@@ -86,10 +91,12 @@ public final class ReaderGestureBindingsTest {
                 }
             }
             // A pre-upgrade binding is discarded, never activated.
-            store.edit().putString(KEY, "{\"tap_3_2\":\"action:fire\","
+            store.edit().putString(KEY, "{\"tap_3_2\":\"action:fire\",\"tap_3_3\":\"action:open\","
                     + "\"swipe_3_up\":\"action:open\"}").commit();
             ReaderGestureBindings migrated = new ReaderGestureBindings(context);
             assertNull(migrated.targetFor("tap_3_2"));
+            assertNull(migrated.targetFor("tap_3_3"));
+            // A retired triple tap must not erase any other custom shortcut.
             assertEquals("action:open", migrated.targetFor("swipe_3_up"));
         } finally {
             SharedPreferences.Editor edit = store.edit();
