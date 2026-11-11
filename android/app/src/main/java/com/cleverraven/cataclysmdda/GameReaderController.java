@@ -80,7 +80,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             BufferedGameMessage buffered = pendingGameMessages.removeFirst();
             // Game events are FIFO and survive temporary screen transitions.
             // Do not evict an older message because a newer one arrived.
-            announceGameMessage(buffered.text, buffered.priority);
+            announceGameMessage(buffered.text, buffered.priority, true);
         }
     }
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
@@ -880,6 +880,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     public void announceGameMessage(String text, int priority) {
+        announceGameMessage(text, priority, false);
+    }
+
+    private void announceGameMessage(String text, int priority, boolean immediate) {
         if (text == null || text.trim().isEmpty() || text.length() > 16000) { return; }
         final String message = text;
         final boolean loading = message.startsWith("A11Y_LOADING:");
@@ -891,7 +895,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
-        handler.post(() -> {
+        Runnable deliver = () -> {
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
@@ -945,7 +949,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         messageLevel, 15000);
                 ReaderDiagnostics.get().setSpeechStats(speech.snapshotStats());
             }
-        });
+        };
+        if (immediate) {
+            // Snapshot callbacks already run on the UI looper. Replaying an
+            // older buffered event by posting a SECOND runnable lets a new
+            // native event overtake it. Dispatch synchronously to the FIFO.
+            deliver.run();
+        } else {
+            handler.post(deliver);
+        }
     }
 
     /** Distance-only native callback; only the UI looper touches SoundPool. */

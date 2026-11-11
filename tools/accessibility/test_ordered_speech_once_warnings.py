@@ -37,6 +37,8 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
         c = self.controller
         self.assertIn("pendingGameMessages.addLast", c)
         self.assertIn("replayBufferedGameMessages", c)
+        self.assertIn("announceGameMessage(buffered.text, buffered.priority, true);", c)
+        self.assertIn("deliver.run();", c)
         self.assertNotIn("MAX_BUFFERED_MESSAGES = 8", c)
         self.assertNotIn("SystemClock.elapsedRealtime() - buffered.created < 15000", c)
 
