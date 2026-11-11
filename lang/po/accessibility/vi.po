@@ -3365,7 +3365,7 @@ msgstr "%d thông báo."
 
 #, c-format
 msgid "Showing the newest %1$d of %2$d messages. Older messages are not included; use the filter to narrow the list."
-msgstr "Đang hiển thị %1$d trên %2$d thông báo mới nhất. Lọc danh sách để tìm các thông báo khác."
+msgstr "Đang hiển thị %1$d/%2$d thông báo mới nhất. Thông báo cũ không có trong danh sách; có thể lọc để thu hẹp."
 
 #: src/study_zone_ui.cpp
 msgid "No more entries in this direction."

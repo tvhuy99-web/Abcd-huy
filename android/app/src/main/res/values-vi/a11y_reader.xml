@@ -147,7 +147,7 @@
     <string name="a11yBackupCancelRestore">Hủy khôi phục và giữ dữ liệu hiện tại của tôi</string>
     <string name="a11yBackupRestoreDone">Đã khôi phục xong. %1$d tệp đã được khôi phục. Hãy khởi động lại game để game đọc các bản lưu và thiết lập vừa khôi phục.</string>
     <string name="a11yBackupRestoreCancelled">Đã hủy khôi phục. Bản sao lưu đã dàn dựng đã bị loại bỏ và các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn.</string>
-    <string name="a11yBackupNoSpace">Không đủ dung lượng để sao lưu. Chưa có gì thay đổi; bản lưu và thiết lập vẫn được giữ.</string>
+    <string name="a11yBackupNoSpace">Không đủ dung lượng cho thao tác này. Chưa thay đổi bản lưu hoặc thiết lập.</string>
     <string name="a11yBackupInvalid">Tệp không phải bản sao lưu hợp lệ. Chưa thay đổi bản lưu hoặc thiết lập.</string>
     <string name="a11yBackupVerifyFailed">Bản sao lưu không qua được kiểm tra tính đầy đủ. Chưa có gì thay đổi; các bản lưu và thiết lập hiện tại của bạn vẫn nguyên vẹn.</string>
     <string name="a11yBackupEmpty">Chưa có bản lưu hay thiết lập nào để xuất. Chưa xuất gì cả.</string>
