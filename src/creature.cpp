@@ -1343,10 +1343,11 @@ projectile_attack_results Creature::select_body_part_projectile_attack(
 void Creature::messaging_projectile_attack( const Creature *source,
         const projectile_attack_results &hit_selection, const int total_damage ) const
 {
-    // The gunner and the victim are known here: avoid narrating NPC-vs-NPC
-    // projectile impacts while retaining them in the original message log.
-    Messages::mute_combat_speech unrelated_speech( source != nullptr &&
-            !source->is_avatar() && !is_avatar() );
+    // Keep the original projectile impact in message history, but let the
+    // player's actual-damage summary replace redundant hit speech. The
+    // player as victim is never muted, regardless of who fired the shot.
+    // Unrelated NPC-to-creature hits are muted at the same structured point.
+    Messages::mute_combat_speech impact_speech( source != nullptr && !is_avatar() );
     const map &here = get_map();
 
     const tripoint_bub_ms pos = pos_bub( here );

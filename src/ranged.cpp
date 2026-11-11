@@ -1259,13 +1259,10 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         dispersion_sources dispersion = total_gun_dispersion( gun, recoil_total(), proj.shot_spread );
 
         dealt_projectile_attack shot;
-        {
-            // The engine's projectile hit messages are preserved in history.
-            // Replace their overlapping speech with one complete real result
-            // per target below, including actual after-armor damage.
-            Messages::mute_combat_speech original_impact_speech( is_avatar() );
-            projectile_attack( shot, proj, &here, pos_bub( here ), aim, dispersion, this, in_veh, wp_attack );
-        }
+        // Only the redundant impact narration is muted in
+        // Creature::messaging_projectile_attack. Keep all other warnings
+        // during projectile simulation, including collateral player damage.
+        projectile_attack( shot, proj, &here, pos_bub( here ), aim, dispersion, this, in_veh, wp_attack );
         if( is_avatar() && a11y::enabled() ) {
             bool struck_creature = false;
             for( const auto &hit : shot.targets_hit ) {
