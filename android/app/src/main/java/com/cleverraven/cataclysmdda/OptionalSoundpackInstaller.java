@@ -19,23 +19,23 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 /**
- * Installs the upstream Otopack once, outside the APK.
+ * Installs the pinned Bl@ck Edition soundpack once, outside the APK.
  *
  * The archive is pinned to one audited Git commit; no untrusted URL,
  * in-place game data edits, or automatic soundpack replacement are allowed.
  * Downloading and extraction are both streaming, bounded, and cancellable.
- * Only the Otopack+ModsUpdates directory is copied into data/sound.
+ * The repository-root soundpack files are copied into data/sound.
  */
 public final class OptionalSoundpackInstaller {
-    public static final String PACK_DIRECTORY = "Otopack+ModsUpdates";
-    public static final String PACK_ID = "otopack";
-    public static final String SOURCE_COMMIT = "508da9f0e38ec996f14c930c58848024680ca2be";
+    public static final String PACK_DIRECTORY = "Bl@ck Edition soundpack";
+    public static final String PACK_ID = "Bl@ck Edition soundpack";
+    public static final String SOURCE_COMMIT = "061d784e5e98ad4e1fc847f22b5fd8a389e2954d";
     private static final String ARCHIVE_URL =
-            "https://codeload.github.com/Kenan2000/Otopack-Mods-Updates/zip/" + SOURCE_COMMIT;
-    private static final String ARCHIVE_FOLDER = "Otopack-Mods-Updates-";
+            "https://codeload.github.com/chronicpayne/Bl-ck-Edition-Soundpack/zip/" + SOURCE_COMMIT;
+    private static final String ARCHIVE_FOLDER = "Bl-ck-Edition-Soundpack-";
     private static final long MIB = 1024L * 1024L;
-    // Source tree is ~580 MB of sound/audio; do not guess a ZIP percent.
-    private static final long MIN_FREE_BYTES = 950L * MIB;
+    // Pinned tree is ~274 MB uncompressed; reserve extra storage for installation.
+    private static final long MIN_FREE_BYTES = 600L * MIB;
     private static final long MIN_REMAINING_BYTES = 160L * MIB;
     private static final long MAX_COMPRESSED_BYTES = 1000L * MIB;
     private static final long MAX_EXTRACTED_BYTES = 1500L * MIB;
@@ -61,7 +61,7 @@ public final class OptionalSoundpackInstaller {
     public static boolean isInstalled(File gameRoot) {
         if (gameRoot == null) { return false; }
         File target = destination(gameRoot);
-        // Respect a user-installed Otopack as well as our own downloaded copy.
+        // Respect a user-installed copy of this soundpack as well as our download.
         File definition = new File(target, "soundpack.txt");
         File effects = new File(target, "effects.json");
         File player = new File(target, "player.json");
@@ -89,13 +89,13 @@ public final class OptionalSoundpackInstaller {
         File destination = destination(gameRoot);
         if (destination.exists()) {
             // A user-owned partial/custom installation must never be deleted.
-            throw new IOException("Otopack directory already exists but is incomplete; "
+            throw new IOException("Soundpack directory already exists but is incomplete; "
                     + "please rename that directory before retrying");
         }
         if (soundRoot.getUsableSpace() < MIN_FREE_BYTES) {
-            throw new IOException("Not enough storage space; at least 950 MB free is required");
+            throw new IOException("Not enough storage space; at least 600 MB free is required");
         }
-        File staging = new File(soundRoot, ".reader_otopack_staging");
+        File staging = new File(soundRoot, ".reader_black_edition_staging");
         if (staging.exists()) { removeStaging(staging); }
         if (!staging.mkdirs()) {
             throw new IOException("Could not prepare temporary Otopack directory");
@@ -124,8 +124,8 @@ public final class OptionalSoundpackInstaller {
             if (advertised > MAX_COMPRESSED_BYTES) {
                 throw new IOException("Soundpack download exceeds size limit");
             }
-            // GitHub codeload emits a parent folder before Otopack+ModsUpdates.
-            // Only copy that child; never extract root files into the game.
+            // GitHub codeload wraps the soundpack in a repository-root directory.
+            // Extract its children only, never directly into the game root.
             try (InputStream network = new BufferedInputStream(connection.getInputStream());
                  InputStream raw = new FilterInputStream(network) {
                      private long bytes;
@@ -211,7 +211,7 @@ public final class OptionalSoundpackInstaller {
             }
             if (audioFiles < MIN_AUDIO_FILES || totalFiles < MIN_AUDIO_FILES
                     || !isValidStaging(staging)) {
-                throw new IOException("Incomplete soundpack download; nothing was installed");
+                throw new IOException("Incomplete Bl@ck Edition download; nothing was installed");
             }
             File marker = new File(staging, ".reader_install_source.txt");
             try (FileOutputStream out = new FileOutputStream(marker)) {
@@ -246,9 +246,7 @@ public final class OptionalSoundpackInstaller {
         if (!archiveName.startsWith(ARCHIVE_FOLDER)) { return null; }
         int rootEnd = archiveName.indexOf('/');
         if (rootEnd < 0) { return null; }
-        String inside = archiveName.substring(rootEnd + 1);
-        String prefix = PACK_DIRECTORY + "/";
-        return inside.startsWith(prefix) ? inside.substring(prefix.length()) : null;
+        return archiveName.substring(rootEnd + 1);
     }
 
     private static boolean safePath(String relative) {
@@ -266,7 +264,7 @@ public final class OptionalSoundpackInstaller {
 
     private static void removeStaging(File location) throws IOException {
         if (!location.exists()) { return; }
-        if (!".reader_otopack_staging".equals(location.getName())) {
+        if (!".reader_black_edition_staging".equals(location.getName())) {
             throw new IOException("Refusing to remove a non-staging path");
         }
         removeChildren(location);

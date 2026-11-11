@@ -707,7 +707,7 @@ public class SplashScreen extends Activity {
                     showSoundpackFailure(result == null ? "incomplete archive" : result);
                 }
             });
-        }, "otopack-download").start();
+        }, "black-edition-download").start();
     }
 
     private void showSoundpackProgress() {

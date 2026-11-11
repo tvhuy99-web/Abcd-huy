@@ -1764,15 +1764,17 @@ void options_manager::add_options_general()
 
 
         std::vector<id_and_option> const soundpacks = build_soundpacks_list();
+        const bool has_black_edition = std::any_of( soundpacks.begin(), soundpacks.end(),
+        []( const id_and_option & option ) { return option.first == "Bl@ck Edition soundpack"; } );
         const bool has_otopack = std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) { return option.first == "otopack"; } );
         add( "SOUNDPACKS", page_id, to_translation( "Choose soundpack" ),
              to_translation( "Choose the soundpack you want to use.  Requires restart." ),
-             soundpacks, has_otopack ? "otopack" : (
+             soundpacks, has_black_edition ? "Bl@ck Edition soundpack" : ( has_otopack ? "otopack" : (
                  std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) {
             return option.first == "CC-Sounds";
-        } )  ? "CC-Sounds" : "basic" ),
+        } )  ? "CC-Sounds" : "basic" ) ),
         COPT_NO_SOUND_HIDE
            ); // populate the options dynamically
 
@@ -4744,13 +4746,13 @@ void options_manager::load()
     }
 #endif
 
-    // Automatically use the optional Otopack only when the player has not
-    // selected a different soundpack. The downloader installs it before the
-    // native engine loads its sound configuration.
-    if( SOUNDPACKS.find( "otopack" ) != SOUNDPACKS.end() &&
+    // Use the soundpack installed by Android before the native engine starts.
+    // Migrate the previous auto-downloaded Otopack, but preserve other choices.
+    if( SOUNDPACKS.find( "Bl@ck Edition soundpack" ) != SOUNDPACKS.end() &&
         ( get_option( "SOUNDPACKS" ).getValue() == "basic" ||
-          get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ) ) {
-        get_option( "SOUNDPACKS" ).setValue( "otopack" );
+          get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ||
+          get_option( "SOUNDPACKS" ).getValue() == "otopack" ) ) {
+        get_option( "SOUNDPACKS" ).setValue( "Bl@ck Edition soundpack" );
     }
 
     update_global_locale();

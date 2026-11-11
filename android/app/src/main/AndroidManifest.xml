@@ -7,7 +7,7 @@
     android:versionName="1.0"
     android:installLocation="auto">
 
-    <!-- Otopack is fetched directly from GitHub on first launch; Wi-Fi auto,
+    <!-- Bl@ck Edition is fetched directly from GitHub on first launch; Wi-Fi auto,
          metered downloads require an accessible confirmation. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
