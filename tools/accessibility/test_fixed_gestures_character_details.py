@@ -104,6 +104,21 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("threeFingerSwipeMovesOnlyInCombatAndRestoresCustomBindingOnMap", device)
         self.assertIn("1, actions.savedThreeFingerSwipes);", device)
 
+    def test_native_combat_buttons_obey_computed_world_gate(self):
+        world = self.world
+        # A default snapshot starts with swipe_movement_allowed=False.
+        # The eight combat buttons must be constructed only AFTER the native
+        # world eligibility gate has been computed.
+        gate = world.index("result.swipe_movement_allowed =")
+        attack = world.index("attack.enabled = result.swipe_movement_allowed;")
+        weapon = world.index("node.enabled = result.swipe_movement_allowed;")
+        self.assertLess(gate, attack)
+        self.assertLess(gate, weapon)
+        self.assertIn('reader:combat:attack:', world)
+        self.assertIn('reader:combat:weapon-next', world)
+        self.assertIn('reader:combat:weapon-prev', world)
+        self.assertIn('reader:combat:reload', world)
+
     def test_swipe_mapping_ui_removed_and_old_prefs_ignored(self):
         self.assertIn("return GESTURE_ACTION_NAVIGATE;", self.prefs)
         self.assertNotIn("getGestureAction(\"horizontal_swipe_action\"", self.prefs)
