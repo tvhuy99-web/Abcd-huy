@@ -71,10 +71,8 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
           log-accepted-android-sdk-licenses: false
-      - name: Install build dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext ccache glslang-tools
+      - name: Install build dependencies with Ubuntu mirror fallback
+        run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
       - name: Compile Vulkan shader artifacts for Android assets
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
