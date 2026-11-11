@@ -4295,3 +4295,60 @@ msgstr "Tây"
 
 msgid "Northwest"
 msgstr "Tây Bắc"
+
+msgid "This firing mode cannot be used right now."
+msgstr "Không thể sử dụng chế độ bắn hiện tại."
+
+#, c-format
+msgid "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons."
+msgstr "Không thể bắn: %1$s. Súng còn %2$d viên. Hãy nạp đạn hoặc đổi vũ khí."
+
+#, c-format
+msgid "Cannot fire in that direction. Weapon range: %d tiles."
+msgstr "Không thể bắn theo hướng này. Tầm bắn của súng: %d ô."
+
+msgid "The weapon cannot fire right now. Check ammunition and firing mode."
+msgstr "Vũ khí hiện không thể bắn. Hãy kiểm tra đạn và chế độ bắn."
+
+msgid "No gun wielded."
+msgstr "Chưa cầm súng."
+
+#, c-format
+msgid "Automatic reload complete. %d rounds loaded."
+msgstr "Đã nạp đầy súng. Hiện có %d viên."
+
+#, c-format
+msgid "Automatic reload stopped. %d rounds loaded; no compatible ammunition available."
+msgstr "Đã dừng nạp đạn. Súng còn %d viên; không có thêm đạn phù hợp."
+
+#, c-format
+msgid "Reload progress: %d rounds loaded."
+msgstr "Tiến độ nạp đạn: súng hiện có %d viên."
+
+#, c-format
+msgid "Reload ended with %d rounds loaded."
+msgstr "Đã dừng nạp. Súng hiện có %d viên."
+
+msgid "Fighting unarmed."
+msgstr "Đang chiến đấu bằng tay không."
+
+#, c-format
+msgid "Wielding %s."
+msgstr "Đang cầm %s."
+
+msgid "Wield a gun before reloading."
+msgstr "Hãy cầm súng trước khi nạp đạn."
+
+#, c-format
+msgid "%1$s, %2$s, distance %3$d tiles, health %4$d percent."
+msgstr "%1$s, %2$s, cách %3$d ô, sức khỏe còn %4$d phần trăm."
+
+msgid "No visible hostile creatures nearby."
+msgstr "Không thấy kẻ địch thù địch nào ở gần."
+
+#, c-format
+msgid "Your %s is empty!"
+msgstr "Súng %s đã hết đạn!"
+
+msgid "No visible hostile creature in that direction. You did not move."
+msgstr "Không thấy kẻ địch thù địch theo hướng đó. Nhân vật không di chuyển."

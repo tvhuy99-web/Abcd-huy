@@ -29,6 +29,7 @@
 #include "game.h"
 #include "input_context.h"
 #include "item.h"
+#include "item_location.h"
 #include "map.h"
 #include "messages.h"
 #include "move_mode.h"
@@ -941,6 +942,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         semantic_node node = button( command.first, command.second,
                                      _( "Uses the native weapon and ammunition rules. No walking." ) );
         node.enabled = result.swipe_movement_allowed;
+        if( node.id == "reader:combat:reload" ) {
+            const item_location held = viewer.get_wielded_item();
+            node.value = held && held->is_gun() ?
+                         string_format( _( "Ammunition remaining: %d." ), held->ammo_remaining() ) :
+                         _( "No gun wielded." );
+        }
         result.nodes.push_back( std::move( node ) );
     }
     // Names, hostility, distance and health come exclusively from the

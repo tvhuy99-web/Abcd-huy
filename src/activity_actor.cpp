@@ -8571,11 +8571,17 @@ void reload_activity_actor::finish( player_activity &act, Character &who )
                                            ( !initial_weapon_has_magazine &&
                                              gun->magazine_current() != nullptr ) ) );
         if( progressed && gun && gun->is_gun() ) {
+            // This is the actual count after the engine's timed reload;
+            // report progress from the gun, never an estimated quantity.
+            add_msg( m_info, _( "Reload progress: %d rounds loaded." ), gun->ammo_remaining() );
             // One completed native reload, then schedule another if required.
             // This never creates ammo or bypasses the action's move cost.
             g->auto_reload_wielded( auto_reload_steps - 1 );
         } else {
             add_msg( m_info, _( "Automatic reloading stopped because no more ammunition was loaded." ) );
+            if( gun && gun->is_gun() ) {
+                add_msg( m_info, _( "Reload ended with %d rounds loaded." ), gun->ammo_remaining() );
+            }
             if( gun && gun->is_gun() && gun->ammo_remaining() > 0 ) {
                 avatar_action::fire_wielded_weapon( get_avatar() );
             }

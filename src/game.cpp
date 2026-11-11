@@ -7703,7 +7703,8 @@ void game::auto_reload_wielded( int steps_remaining )
     // A loaded magazine or integral cylinder that has no free space is
     // already full. Empty guns with no inserted magazine are not full.
     if( gun->ammo_remaining() > 0 && gun->remaining_ammo_capacity() == 0 ) {
-        add_msg( m_info, _( "The selected gun is already fully loaded." ) );
+        add_msg( m_info, _( "Automatic reload complete. %d rounds loaded." ),
+                 gun->ammo_remaining() );
         avatar_action::fire_wielded_weapon( u );
         return;
     }
@@ -7739,7 +7740,8 @@ void game::auto_reload_wielded( int steps_remaining )
         return static_cast<bool>( opt ) && opt.qty() > 0 && opt.target && opt.ammo;
     } );
     if( selected == choices.end() ) {
-        add_msg( m_info, _( "Automatic reload finished. No more compatible ammunition can be loaded." ) );
+        add_msg( m_info, _( "Automatic reload stopped. %d rounds loaded; no compatible ammunition available." ),
+                 gun->ammo_remaining() );
         if( gun->ammo_remaining() > 0 ) {
             avatar_action::fire_wielded_weapon( u );
         }
