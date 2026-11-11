@@ -193,6 +193,8 @@
     <string name="a11yDebugLogEmpty">No log to export</string>
     <string name="a11yDebugLogExportError">Could not export log</string>
     <string name="a11yDebugLogExported">Log saved</string>
+    <string name="a11yTargetOriginalControls">All original aiming controls</string>
+    <string name="a11yTargetDirections">Eight shooting directions</string>
     <string name="a11yContextCommands">Screen commands</string>
     <string name="a11yContextCommandsClose">Back to current item</string>
     <string name="a11yNoContextCommands">No additional commands on this screen</string>

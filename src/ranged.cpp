@@ -402,6 +402,10 @@ class target_ui
         // Updates 'targets' for current range
         void update_target_list();
 
+        // Aim at the first visible creature on this ray, or at the range edge.
+        // Do not filter friendlies or require any creature to be present.
+        tripoint_bub_ms directional_shot_target( int dx, int dy );
+
         // Semantic view of targets the game currently permits and knows how to aim at.
         a11y::semantic_snapshot reader_snapshot();
 
@@ -3005,9 +3009,10 @@ target_handler::trajectory target_ui::run()
     bool skip_redraw = false;
     std::optional<tripoint_bub_ms> accessible_target_selection;
     std::optional<tripoint_rel_ms> accessible_cursor_delta;
+    std::optional<int> accessible_fire_direction;
     std::unique_ptr<a11y::screen_scope> reader;
     const auto refresh_reader = [this, &reader, &accessible_target_selection,
-                                 &accessible_cursor_delta]() {
+                                 &accessible_cursor_delta, &accessible_fire_direction]() {
         if( !a11y::enabled() ) {
             reader.reset();
             return;
@@ -3024,11 +3029,24 @@ target_handler::trajectory target_ui::run()
             ctxt.register_action( "A11Y_INTERNAL_MOVE_CURSOR",
                                   to_translation( "Move the aim point from the reader" ) );
         }
+        if( std::find( actions.begin(), actions.end(),
+                       "A11Y_INTERNAL_FIRE_DIRECTION" ) == actions.end() ) {
+            ctxt.register_action( "A11Y_INTERNAL_FIRE_DIRECTION",
+                                  to_translation( "Fire once in a selected direction" ) );
+        }
         if( !reader ) {
             reader = std::make_unique<a11y::screen_scope>( &ctxt, "targeting",
             [this, &accessible_target_selection,
-             &accessible_cursor_delta]( const a11y::semantic_intent &intent )
+             &accessible_cursor_delta, &accessible_fire_direction]( const a11y::semantic_intent &intent )
             -> std::optional<std::string> {
+                if( intent.action == "activate" && mode == TargetMode::Fire ) {
+                    for( int i = 0; i < 8; ++i ) {
+                        if( intent.node == "target:fire-direction:" + std::to_string( i ) ) {
+                            accessible_fire_direction = i;
+                            return "A11Y_INTERNAL_FIRE_DIRECTION";
+                        }
+                    }
+                }
                 if( intent.action == "activate" && status != Status::OutOfAmmo ) {
                     for( std::size_t i = 0; i < targets.size(); ++i ) {
                         if( intent.node == "target:" + std::to_string( i ) ) {
@@ -3095,6 +3113,34 @@ target_handler::trajectory target_ui::run()
         // Handle received input
         if( handle_cursor_movement( action, skip_redraw ) ) {
             continue;
+        } else if( action == "A11Y_INTERNAL_FIRE_DIRECTION" ) {
+            if( !accessible_fire_direction || mode != TargetMode::Fire ) {
+                continue;
+            }
+            const int steps[8][2] = {
+                { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+                { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+            };
+            const int chosen = *accessible_fire_direction;
+            accessible_fire_direction.reset();
+            if( chosen < 0 || chosen >= 8 ) {
+                continue;
+            }
+            const tripoint_bub_ms shot = directional_shot_target( steps[chosen][0], steps[chosen][1] );
+            if( shot == src ) {
+                add_msg( m_info, _( "There is no valid tile in this direction within weapon range." ) );
+                continue;
+            }
+            set_cursor_pos( shot );
+            if( status != Status::Good ) {
+                continue;
+            }
+            // Choosing the direction is the user's one-step confirmation.
+            // No friendly/hostile/empty-target restriction is added. The
+            // original ACT_AIM firing, ammo and ballistics pipeline runs.
+            set_last_target();
+            loop_exit_code = ExitCode::Fire;
+            break;
         } else if( action == "A11Y_INTERNAL_SELECT_TARGET" ) {
             if( accessible_target_selection &&
                 std::find( targets.begin(), targets.end(), *accessible_target_selection ) != targets.end() ) {
@@ -3244,6 +3290,24 @@ target_handler::trajectory target_ui::run()
     return traj;
 }
 
+tripoint_bub_ms target_ui::directional_shot_target( int dx, int dy )
+{
+    map &here = get_map();
+    tripoint_bub_ms fallback = src;
+    for( int step = 1; step <= range; ++step ) {
+        const tripoint_bub_ms tile = src + tripoint_rel_ms( dx * step, dy * step, 0 );
+        if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
+            break;
+        }
+        fallback = tile;
+        Creature *creature = get_creature_tracker().creature_at( tile, true );
+        if( creature != nullptr && creature != you && pl_sees( *creature ) ) {
+            return tile;
+        }
+    }
+    return fallback;
+}
+
 a11y::semantic_snapshot target_ui::reader_snapshot()
 {
     constexpr std::size_t max_accessible_targets = 256;
@@ -3331,6 +3395,72 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         }
     }
     snapshot.nodes.push_back( std::move( cursor ) );
+
+    if( mode == TargetMode::Fire ) {
+        // The primary Android reader view shows eight directions. All other
+        // original targeting nodes and engine commands remain in this
+        // snapshot for the long-press advanced view.
+        const int steps[8][2] = {
+            { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+            { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+        };
+        const std::string names[8] = {
+            _( "North" ), _( "Northeast" ), _( "East" ), _( "Southeast" ),
+            _( "South" ), _( "Southwest" ), _( "West" ), _( "Northwest" )
+        };
+        map &here = get_map();
+        for( int i = 0; i < 8; ++i ) {
+            a11y::semantic_node direction;
+            direction.id = "target:fire-direction:" + std::to_string( i );
+            direction.role = "button";
+            direction.label = names[i];
+            direction.actions = { "focus", "activate" };
+            const tripoint_bub_ms shot = directional_shot_target( steps[i][0], steps[i][1] );
+            direction.enabled = shot != src && status != Status::OutOfAmmo;
+            if( !direction.enabled ) {
+                direction.disabled_reason = _( "The current gun cannot fire in this direction." );
+            }
+            // Describe visible creatures regardless of attitude. Do not reveal
+            // an unseen creature or forbid firing when the ray looks empty.
+            std::string seen;
+            int creature_count = 0;
+            for( int step = 1; step <= range; ++step ) {
+                const tripoint_bub_ms tile = src + tripoint_rel_ms( steps[i][0] * step,
+                                                                   steps[i][1] * step, 0 );
+                if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
+                    break;
+                }
+                Creature *creature = get_creature_tracker().creature_at( tile, true );
+                if( creature == nullptr || creature == you || !pl_sees( *creature ) ) {
+                    continue;
+                }
+                ++creature_count;
+                if( creature_count <= 3 ) {
+                    if( !seen.empty() ) {
+                        seen += ", ";
+                    }
+                    seen += string_format( _( "%1$s, %2$d tiles" ), creature->disp_name(), dist_fn( tile ) );
+                }
+            }
+            direction.value = string_format( _( "Weapon range: %d tiles." ), range );
+            if( creature_count > 0 ) {
+                direction.value += " " + seen;
+                if( creature_count > 3 ) {
+                    direction.value += string_format( _( " and %d more visible creatures." ),
+                                                     creature_count - 3 );
+                }
+            } else if( shot != src && you->sees( here, shot ) ) {
+                direction.value += " " + string_format(
+                                       _( "No visible creature. %1$s at %2$d tiles. You can fire." ),
+                                       here.tername( shot ), dist_fn( shot ) );
+            } else {
+                direction.value += " " + _( "No visible creature. You can still fire in this direction." );
+            }
+            direction.detail = _( "Double tap to fire once toward this direction without choosing a tile. "
+                                  "Hold one finger for all original aiming controls." );
+            snapshot.nodes.push_back( std::move( direction ) );
+        }
+    }
 
     if( mode == TargetMode::Fire && relevant != nullptr ) {
         const gun_mode gun = relevant->gun_current_mode();
@@ -3544,13 +3674,16 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
     // These engine-only dispatch results are never player commands.
     snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
     []( const a11y::semantic_node &node ) {
-        return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR";
+        return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR" ||
+               node.id == "A11Y_INTERNAL_FIRE_DIRECTION";
     } ), snapshot.nodes.end() );
-    snapshot.focus = "target:cursor";
-    for( std::size_t i = 0; i < count; ++i ) {
-        if( targets[i] == dst ) {
-            snapshot.focus = "target:" + std::to_string( i );
-            break;
+    snapshot.focus = mode == TargetMode::Fire ? "target:fire-direction:0" : "target:cursor";
+    if( mode != TargetMode::Fire ) {
+        for( std::size_t i = 0; i < count; ++i ) {
+            if( targets[i] == dst ) {
+                snapshot.focus = "target:" + std::to_string( i );
+                break;
+            }
         }
     }
     return snapshot;

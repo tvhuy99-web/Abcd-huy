@@ -114,6 +114,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Global contextual command drawer: native commands stay published and validated,
     // but never interrupt the primary list of items, answers or form fields.
     private boolean commandPaletteOpen;
+    // A hold exposes every original aim/cursor command; the default is eight directions.
+    private boolean targetingOriginalControls;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -326,6 +328,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         lastLoadingStatus = "";
         readerLayerParent = "";
         pendingReaderLayer = "";
+        targetingOriginalControls = false;
         pocketStage = 0;
         pocketDrafts.clear();
         pocketContainerId = "";
@@ -467,6 +470,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     hubActionItem = null;
                     snapshot = null;
                     commandPaletteOpen = false;
+                    targetingOriginalControls = false;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
                     lastLoadingStatus = "";
@@ -649,6 +653,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (changedContext) {
                     clearPendingWorldDirection();
                     commandPaletteOpen = false;
+                    targetingOriginalControls = false;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
                     readerLayerParent = "";
@@ -1599,6 +1604,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         for (ReaderSnapshot.Node node : snapshot.nodes) {
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
         }
+        if ("targeting".equals(snapshot.category)
+                && snapshot.find("target:fire-direction:0") != null) {
+            if (targetingOriginalControls) { return result; }
+            result.removeIf(node -> !node.id.startsWith("target:fire-direction:"));
+            return result;
+        }
         // Look-around is itself a cursor-control dialog. Hiding every
         // command behind long press leaves only the read-only cursor and
         // makes every swipe repeat "1 of 36". Keep its controls navigable,
@@ -1626,6 +1637,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             showHubActionChoices();
+            return;
+        }
+        if (snapshot != null && "targeting".equals(snapshot.category)
+                && snapshot.find("target:fire-direction:0") != null) {
+            targetingOriginalControls = !targetingOriginalControls;
+            focus = targetingOriginalControls ? "target:cursor" : "target:fire-direction:0";
+            readerLayerParent = "";
+            root.cancelGesture();
+            render();
+            ReaderSnapshot.Node selected = snapshot.find(focus);
+            feedback(activity.getString(targetingOriginalControls
+                    ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections)
+                    + (selected == null ? "" : ". " + nodeText(selected, false)));
             return;
         }
         if (travelState() != 0) {

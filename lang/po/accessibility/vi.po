@@ -4203,3 +4203,30 @@ msgstr "%1$s. %2$d mục."
 msgid "No entries in this category."
 msgstr "Không có mục nào trong danh mục này."
 
+
+msgid "The current gun cannot fire in this direction."
+msgstr "Súng hiện tại không thể bắn theo hướng này."
+
+#, c-format
+msgid "Weapon range: %d tiles."
+msgstr "Tầm bắn của vũ khí: %d ô."
+
+#, c-format
+msgid " and %d more visible creatures."
+msgstr " và %d sinh vật đang nhìn thấy khác."
+
+#, c-format
+msgid "No visible creature. %1$s at %2$d tiles. You can fire."
+msgstr "Không thấy sinh vật. %1$s cách %2$d ô. Vẫn có thể bắn."
+
+msgid "No visible creature. You can still fire in this direction."
+msgstr "Không thấy sinh vật. Vẫn có thể bắn theo hướng này."
+
+msgid "Double tap to fire once toward this direction without choosing a tile. Hold one finger for all original aiming controls."
+msgstr "Chạm hai lần để bắn một lần theo hướng này, không cần chọn ô. Nhấn giữ một ngón để mở tất cả nút ngắm bắn gốc."
+
+msgid "There is no valid tile in this direction within weapon range."
+msgstr "Không có ô hợp lệ theo hướng này trong tầm bắn."
+
+msgid "Fire once in a selected direction"
+msgstr "Bắn một lần theo hướng đã chọn"
