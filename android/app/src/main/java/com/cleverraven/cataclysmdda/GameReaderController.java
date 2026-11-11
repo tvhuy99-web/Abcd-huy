@@ -47,7 +47,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final LinkedHashMap<Long, Long> pendingIntentTimes = new LinkedHashMap<>();
     // Native actions invalidate their snapshot briefly. Messages arriving in
     // this gap must be read after the next snapshot instead of disappearing.
-    private static final int MAX_BUFFERED_MESSAGES = 8;
+    // A native action can temporarily hide the world snapshot. Retain all
+    // game events until the next stable screen instead of dropping the ninth
+    // message (or deleting a message after an arbitrary fifteen seconds).
     private final ArrayDeque<BufferedGameMessage> pendingGameMessages =
             new ArrayDeque<>();
 
@@ -76,14 +78,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             BufferedGameMessage buffered = pendingGameMessages.removeFirst();
-            if (SystemClock.elapsedRealtime() - buffered.created < 15000) {
-                // The new screen context must be set before speech is sent:
-                // setContext() deliberately cancels the previous context.
-                announceGameMessage(buffered.text, buffered.priority);
-            } else {
-                SessionDebugLog.event("GAME_MESSAGE_DROPPED", "reason=expired"
-                        + " text=" + buffered.text);
-            }
+            // Game events are FIFO and survive temporary screen transitions.
+            // Do not evict an older message because a newer one arrived.
+            announceGameMessage(buffered.text, buffered.priority);
         }
     }
     private final AccessibilityManager.TouchExplorationStateChangeListener explorationListener;
@@ -906,11 +903,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // An action intentionally publishes an inactive snapshot
                 // while the native command executes. In the supplied log,
                 // "Nothing to open here" arrived in exactly this gap.
-                if (pendingGameMessages.size() >= MAX_BUFFERED_MESSAGES) {
-                    BufferedGameMessage discarded = pendingGameMessages.removeFirst();
-                    SessionDebugLog.event("GAME_MESSAGE_DROPPED",
-                            "reason=overflow text=" + discarded.text);
-                }
                 pendingGameMessages.addLast(new BufferedGameMessage(message, priority));
                 SessionDebugLog.event("GAME_MESSAGE_BUFFERED", "text=" + message);
                 return;
@@ -941,10 +933,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 speech.say("world-scan:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
                         spokenMessage, ReaderSpeechQueue.LONG_TEXT);
             } else {
-                // Every new game message has priority over currently
-                // focused text: waiting behind navigation speech and an
-                // eight-second TTL previously silenced ordinary messages
-                // such as "Nothing to open here." Urgent events still win.
+                // Native game announcements are read in strict arrival order
+                // by ReaderSpeechQueue. No newer hit, sound, status or
+                // reload message may interrupt an older game announcement.
+                // The priority value is retained only for diagnostics.
                 final int messageLevel = level == ReaderSpeechQueue.URGENT
                         ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.GAME_EVENT;
                 SessionDebugLog.event("GAME_MESSAGE_POLICY", "priority=" + messageLevel

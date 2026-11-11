@@ -17,9 +17,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public static final int LONG_TEXT = 0;
     public static final int INFORMATION = 1;
     public static final int FOCUS = 2;
-    // Ordinary *new* game messages should interrupt stale focus speech;
-    // informational loading progress remains lower priority. The existing
-    // queue de-duplicates repeats and bounds the backlog.
+    // GAME_EVENT is the stored metadata priority only. Native game events
+    // follow their own strict FIFO queue: a newer event can never interrupt
+    // an older one, irrespective of engine severity. Navigation focus retains
+    // its separate, interruptible behavior for fast menu browsing.
     public static final int GAME_EVENT = FOCUS;
     public static final int URGENT = 3;
 
@@ -49,6 +50,16 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     private static final int MAX_PENDING = 8;
+    private static final String GAME_EVENT_CONTEXT = "__reader_game_event__";
+    // Game messages must never be evicted just because a long battle or
+    // repeated reload generates more than eight events. The queue is cleared
+    // by explicit Stop, lifecycle loss, or voice-engine shutdown.
+    private final ArrayDeque<Request> orderedGameEvents = new ArrayDeque<>();
+
+    private static boolean isOrderedGameEvent(Request request) {
+        return request != null && GAME_EVENT_CONTEXT.equals(request.context);
+    }
+
     // Only identical in-flight informational messages are coalesced.
     // A focus gesture must always announce its newly selected item, even if
     // the same text was spoken moments ago.
@@ -168,7 +179,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public Stats snapshotStats() {
         return new Stats(statSpoken, statInterrupted, statDroppedDuplicate, statDroppedExpired,
                 statEvicted, statLastStartLatencyMs, statMaxStartLatencyMs,
-                pending.size(), active != null);
+                pending.size() + orderedGameEvents.size(), active != null);
     }
 
     public ReaderSpeechQueue(Context context, Listener listener) {
@@ -181,6 +192,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                     initRetries = 0;
                     cancelInitRetry();
                     listener.onHealth(state);
+                    advance();
                     return;
                 }
                 clearRequests();
@@ -244,13 +256,14 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                 if (event == AndroidSpeech.Event.DONE) {
                     chunkIndex++;
                     if (active != null && chunkIndex < active.chunks.size()
-                            && active.context.equals(contextKey)) {
+                            && (isOrderedGameEvent(active) || active.context.equals(contextKey))) {
                         speakChunk();
                     } else {
                         Request finished = active;
                         active = null;
                         statSpoken++;
-                        if (finished != null && finished.context.equals(contextKey)) {
+                        if (finished != null && (isOrderedGameEvent(finished)
+                                || finished.context.equals(contextKey))) {
                             fireFinished(finished.key);
                         } else if (finished != null) {
                             fireInterrupted(finished.key);
@@ -258,7 +271,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                         advance();
                     }
                 } else {
-                    // Never advance through a backlog after a cancellation/error.
+                    // An unexpected voice-engine cancellation must not erase
+                    // *other* game messages. Only explicit Stop or lifecycle
+                    // clearing deliberately empties the FIFO.
                     Request interrupted = active;
                     active = null;
                     for (Request dropped : pending) {
@@ -270,6 +285,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                     if (interrupted != null) {
                         fireInterrupted(interrupted.key);
                     }
+                    advance();
                 }
             }
         });
@@ -310,10 +326,22 @@ public final class ReaderSpeechQueue implements AutoCloseable {
 
     public void setContext(String key) {
         if (!contextKey.equals(key)) {
-            stop();
             contextKey = key;
+            // Only UI focus belongs to a screen. An ongoing game event
+            // survives transient aiming/activity screens and keeps talking
+            // until complete, never getting erased by another snapshot.
+            pending.clear();
+            if (active != null && !isOrderedGameEvent(active)) {
+                Request interrupted = active;
+                active = null;
+                activeChunk = null;
+                removeCompletionTimeout();
+                speech.cancel();
+                fireInterrupted(interrupted.key);
+            }
             lastText = "";
             lastKey = "";
+            advance();
         }
     }
 
@@ -340,6 +368,16 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         }
         text = ReaderSpokenText.clean(text);
         if (text.trim().isEmpty()) { return; }
+        if (key != null && key.startsWith("game-message:")) {
+            // The only speech route for native gameplay announcements.
+            // Preserve original arrival order, without deduplication,
+            // preemption, a short TTL or priority sorting. A player may
+            // explicitly silence the queue using Stop/single tap.
+            orderedGameEvents.addLast(new Request(GAME_EVENT_CONTEXT, key,
+                    text, GAME_EVENT, 365L * 24 * 60 * 60 * 1000));
+            advance();
+            return;
+        }
         // Focus is user-directed, even when it repeats the same label.
         // For other speech, suppress only duplicate requests still active
         // or waiting in this context; never suppress based on elapsed time.
@@ -367,8 +405,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                 iterator.remove();
             }
         }
-        if (active != null && (priority > active.priority ||
-                (priority == FOCUS && active.priority == FOCUS))) {
+        if (active != null && !isOrderedGameEvent(active)
+                && (priority > active.priority
+                    || (priority == FOCUS && active.priority == FOCUS))) {
             Request preempted = active;
             active = null;
             activeChunk = null;
@@ -413,6 +452,15 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         if (active != null || !isReady()) {
             return;
         }
+        if (!orderedGameEvents.isEmpty()) {
+            // No event ever jumps ahead of a previously received game event.
+            active = orderedGameEvents.removeFirst();
+            chunkIndex = 0;
+            lastText = active.text;
+            lastKey = active.key;
+            speakChunk();
+            return;
+        }
         Request best = null;
         long now = SystemClock.elapsedRealtime();
         for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
@@ -437,7 +485,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     private void speakChunk() {
-        if (active == null || !active.context.equals(contextKey) || !isReady()) {
+        if (active == null || !(isOrderedGameEvent(active)
+                || active.context.equals(contextKey)) || !isReady()) {
             return;
         }
         activeChunk = "reader-" + (++sequence);
@@ -473,7 +522,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
      * All access is on the Android UI thread, as with every queue operation.
      */
     public boolean stopForTouch() {
-        boolean interrupted = active != null || !pending.isEmpty();
+        boolean interrupted = active != null || !pending.isEmpty()
+                || !orderedGameEvents.isEmpty();
         stop();
         return interrupted;
     }
@@ -507,6 +557,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private void clearRequests() {
         removeCompletionTimeout();
         pending.clear();
+        orderedGameEvents.clear();
         Request interrupted = active;
         active = null;
         activeChunk = null;
