@@ -276,7 +276,10 @@ std::string describe_tile( const tile_observation &observation )
                                       _( "Open" );
             result += ". " + string_format( _( "Door: %s" ), state );
         }
-        if( observation.source == observation_source::visible && observation.impassable ) {
+        if( observation.source == observation_source::visible && observation.impassable &&
+            observation.door != door_state::closed && observation.door != door_state::locked ) {
+            // A locked/closed door already explains why this tile cannot
+            // be crossed. Avoid reading "Door: closed. Impassable" twice.
             result += ". " + std::string( _( "Impassable" ) );
         }
         for( const auto &field : observation.fields ) { result += ". " + field; }
@@ -291,8 +294,7 @@ std::string describe_tile( const tile_observation &observation )
         for( const auto &perception : observation.special_perceptions ) { result += ". " + perception; }
     }
     if( !observation.heard_marker.empty() ) {
-        result += ". " + string_format( _( "Near this marker, you heard %s. "
-                                            "The marker is approximate and may not be the sound source's position." ),
+        result += ". " + string_format( _( "Heard near here: %s. Position approximate." ),
                                          observation.heard_marker );
     }
     return remove_color_tags( result );

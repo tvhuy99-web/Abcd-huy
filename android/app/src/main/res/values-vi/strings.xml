@@ -7,7 +7,7 @@
     <string name="helpTitle">Trợ giúp và điều khiển</string>
     <string name="helpMessage">"Vuốt" để di chuyển theo hướng (nhấn giữ để dùng cần điều khiển ảo). "Chạm" để xác nhận lựa chọn trong trình đơn hoặc đứng yên và chờ qua một lượt khi đang chơi (nhấn giữ để chờ qua nhiều lượt). "Chạm hai lần" để hủy hoặc quay lại trong trình đơn (tương tự phím Escape). "Chụm hai ngón" để phóng to hoặc thu nhỏ (trong trò chơi). Dùng nút "Quay lại" trên thiết bị để bật hoặc tắt bàn phím ảo (nhấn giữ để bật hoặc tắt các nút phím tắt).</string>
     <string name="accessibilityServicesTitle">Cảnh báo về dịch vụ trợ năng</string>
-    <string name="accessibilityServicesMessage">Một số dịch vụ trợ năng cảm ứng có thể ảnh hưởng cử chỉ trong game. Hãy giữ trình đọc màn hình khi thử phần thiết lập giọng. Bộ đọc gameplay vẫn đang được phát triển. Bạn có thể tiếp tục với điều khiển hiện có, hoặc mở thiết lập trợ năng và giọng đọc:\n%1$s</string>
+    <string name="accessibilityServicesMessage">Dịch vụ trợ năng có thể chiếm cử chỉ game. Hãy giữ TalkBack khi thiết lập giọng. Bạn có thể tiếp tục chơi hoặc mở cài đặt trợ năng và giọng đọc: \n%1$s</string>
     <string name="ignoreFalsePostives">Đánh dấu là cảnh báo nhầm</string>
     <string name="softwareRendering">Kết xuất bằng phần mềm</string>
     <string name="forceFullscreen">Buộc hiển thị toàn màn hình</string>
@@ -34,7 +34,7 @@
     <string name="unavailable">Không khả dụng</string>
     <string name="unavailableOption">Tùy chọn bạn chọn hiện không khả dụng.</string>
     <string name="a11yReaderSetup">Cài đặt trình đọc và giọng nói</string>
-    <string name="a11yReaderSetupExplanation">Trình đọc nội bộ tự bật khi mở trò chơi, không cần bước xác nhận thủ công. Cài đặt giọng là tùy chọn. Nếu chưa nghe được, hãy kiểm tra giọng tiếng Việt trên Android và giữ TalkBack làm phương án dự phòng.</string>
+    <string name="a11yReaderSetupExplanation">Bộ đọc tự bật khi mở game. Cài giọng là tùy chọn. Nếu không nghe được, hãy kiểm tra giọng tiếng Việt trên Android; vẫn có thể dùng TalkBack.</string>
     <string name="a11yTestVietnamese">Nghe giọng đang chọn</string>
     <string name="a11yStopSpeech">Dừng lời đọc</string>
     <string name="a11yAndroidVoiceSettings">Mở cài đặt giọng đọc Android</string>
@@ -201,10 +201,10 @@
     <string name="a11yContextConfirm">Xác nhận</string>
     <string name="a11yContextBack">Hủy hoặc quay lại</string>
     <string name="a11yContextConfirmUnavailable">Màn hình này không có lệnh xác nhận</string>
-    <string name="a11yGlobalGestureHelp">Trong menu: nhấn giữ một ngón để mở chức năng màn hình; chạm hai ngón một lần để đọc chi tiết; vuốt hai ngón lên để xác nhận, xuống để hủy hoặc quay lại. Khi nhập số, vuốt một ngón lên xuống để chọn chữ số. Trên bản đồ chính, vuốt hai ngón theo hướng vẫn dùng để quét.</string>
+    <string name="a11yGlobalGestureHelp">Menu: giữ một ngón để mở chức năng, chạm hai ngón để đọc chi tiết, vuốt hai ngón lên để xác nhận hoặc xuống để quay lại. Khi nhập số, vuốt một ngón lên/xuống để chọn chữ số. Trên bản đồ, vuốt hai ngón để quét.</string>
     <string name="a11yNativeInputRangeError">Giá trị phải từ %1$s đến %2$s.</string>
     <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn OK để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
-    <string name="a11yCombatOn">Đã bật chế độ chiến đấu. Vuốt một ngón để đánh bốn hướng, hai ngón để đánh hướng chéo, ba ngón để di chuyển theo cơ chế bản đồ bình thường.</string>
+    <string name="a11yCombatOn">Đã bật chiến đấu. Vuốt một ngón đánh bốn hướng chính; hai ngón đánh hướng chéo; ba ngón di chuyển theo bản đồ.</string>
     <string name="a11yCombatOff">Đã bật chế độ bản đồ. Các cử chỉ tùy chỉnh được giữ nguyên.</string>
     <string name="a11yCombatUnavailable">Không thể thực hiện lệnh chiến đấu lúc này. Nhân vật không di chuyển.</string>
     <string name="a11yCombatNoEnemies">Không có kẻ địch thù địch nào nhìn thấy ở gần.</string>

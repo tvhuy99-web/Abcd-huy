@@ -11,10 +11,17 @@ import java.util.regex.Pattern;
 final class ReaderSpokenText {
     private static final Pattern COLOR_TAG = Pattern.compile(
             "(?i)</?color(?:_[a-z0-9_]+)?>");
+    // Separately joined status sentences can create "5/5..". Remove
+    // that stray second full stop, but preserve intentional ellipses
+    // (...), decimal points, names, numbers and all substantive text.
+    private static final Pattern DUPLICATE_STOP = Pattern.compile(
+            "(?<!\\.)\\.{2}(?!\\.)");
 
     private ReaderSpokenText() { }
 
     static String clean(String text) {
-        return text == null ? "" : COLOR_TAG.matcher(text).replaceAll("");
+        if (text == null) { return ""; }
+        return DUPLICATE_STOP.matcher(COLOR_TAG.matcher(text).replaceAll(""))
+                .replaceAll(".");
     }
 }
