@@ -20,6 +20,10 @@ import static org.junit.Assert.assertEquals;
 public final class GameMenuGestureDispatchTest {
     private static final class Actions implements ReaderGestureSurface.Listener {
         boolean playing;
+        boolean combatMode;
+        boolean customThreeFingerSwipe;
+        int combatMoves;
+        int savedThreeFingerSwipes;
         int backs;
         int confirms;
         int contextMenus;
@@ -75,6 +79,10 @@ public final class GameMenuGestureDispatchTest {
         @Override public void toggleCombatMode() { combatModeToggles++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
+            if ("swipe_3_right".equals(id)) {
+                if (combatMode) { combatMoves++; return true; }
+                if (customThreeFingerSwipe) { savedThreeFingerSwipes++; return true; }
+            }
             if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
             if ("hold_2".equals(id)) { twoFingerHolds++; return true; }
             if ("hold_3".equals(id)) { threeFingerHolds++; return true; }
@@ -355,6 +363,43 @@ public final class GameMenuGestureDispatchTest {
                         MotionEvent.ACTION_MOVE, 3, 110);
                 endMulti(surface, 3, start, 110);
                 assertEquals(1, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void threeFingerSwipeMovesOnlyInCombatAndRestoresCustomBindingOnMap() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long first = SystemClock.uptimeMillis();
+                startMulti(surface, 3, first);
+                multiTouch(surface, first, first + 145,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+                endMulti(surface, 3, first, 110);
+                assertEquals("Combat swipe dispatches one normal map movement request",
+                        1, actions.combatMoves);
+                assertEquals(0, actions.unassignedGestures);
+                actions.combatMode = false;
+                actions.customThreeFingerSwipe = true;
+                long second = SystemClock.uptimeMillis() + 400;
+                startMulti(surface, 3, second);
+                multiTouch(surface, second, second + 145,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+                endMulti(surface, 3, second, 110);
+                assertEquals("Map swipe uses its saved custom binding",
+                        1, actions.savedThreeFingerSwipes);
+                assertEquals("No combat movement after returning to map",
+                        1, actions.combatMoves);
+                assertEquals(0, actions.unassignedGestures);
             });
         }
     }

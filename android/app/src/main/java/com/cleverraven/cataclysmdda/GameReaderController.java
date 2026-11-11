@@ -2421,12 +2421,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return dx < 0 ? "LEFT" : "RIGHT";
     }
 
+    private boolean worldStepAllowed() {
+        // A three-finger combat move must go through the EXACT same native
+        // gate and dispatch path as normal map walking. This includes the
+        // existing movement/auto-travel settings; no one-tile cap is added.
+        return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
+                && hasCardinalDirections(snapshot);
+    }
+
     @Override
     public boolean worldMovementEnabled() {
-        // Native gameplay owns the safety gate (no vehicle, automation,
-        // sleep, modal or death camera). No practice or opt-in is required.
-        return !combatMode && directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
-                && hasCardinalDirections(snapshot);
+        // One-finger walking must stay disabled during combat. Three-finger
+        // combat movement is dispatched separately, with the same game rules.
+        return !combatMode && worldStepAllowed();
     }
 
     private static boolean hasCardinalDirections(ReaderSnapshot snapshot) {
@@ -2455,8 +2462,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public boolean handleCustomGesture(String gestureId) {
         if (combatMode && directWorldGesturesEnabled()) {
-            // Combat owns one-finger actions before the map's persisted
-            // bindings. No combat swipe may fall through into walking.
+            // Only while combat is active, three-finger cardinal swipes
+            // route through the ORIGINAL map movement. Outside combat,
+            // these four gesture IDs keep their saved custom assignments.
+            switch (gestureId) {
+                case "swipe_3_up": moveInCombat(0, -1); return true;
+                case "swipe_3_down": moveInCombat(0, 1); return true;
+                case "swipe_3_left": moveInCombat(-1, 0); return true;
+                case "swipe_3_right": moveInCombat(1, 0); return true;
+                default: break;
+            }
+            // Combat owns one- and two-finger attacks before the map's
+            // persisted bindings. No attack may fall through into walking.
             int direction = -1;
             switch (gestureId) {
                 case "swipe_up": direction = 0; break;
@@ -2685,7 +2702,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pendingWorldDirection.isEmpty()) { return; }
         final long elapsed = SystemClock.elapsedRealtime() - pendingWorldSince;
         if (snapshot == null || !pendingWorldContext.equals(snapshot.contextKey())
-                || elapsed > 1200 || !worldMovementEnabled() || closed
+                || elapsed > 1200 || !worldStepAllowed() || closed
                 || !foreground || !windowFocused || lastSuspended) {
             SessionDebugLog.event("WORLD_STEP_EXPIRED",
                     "reason=context_or_timeout elapsed_ms=" + elapsed);
@@ -2739,6 +2756,24 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("GESTURE_ACTION", "move dx=" + dx + " dy=" + dy
                 + " enabled=" + worldMovementEnabled());
         if (!worldMovementEnabled()) { return; }
+        dispatchWorldMovement(dx, dy);
+    }
+
+    private void moveInCombat(int dx, int dy) {
+        boolean enabled = combatMode && worldStepAllowed();
+        SessionDebugLog.event("GESTURE_ACTION", "combat_move dx=" + dx + " dy=" + dy
+                + " enabled=" + enabled);
+        if (!enabled) {
+            feedback(activity.getString(R.string.a11yFastMovementUnavailable));
+            return;
+        }
+        // Deliberately no movement distance, speed or step count override:
+        // use the same direction command, native safety checks and retry
+        // semantics as an ordinary world-map swipe.
+        dispatchWorldMovement(dx, dy);
+    }
+
+    private void dispatchWorldMovement(int dx, int dy) {
         String action = actionForDirection(dx, dy);
         ReaderSnapshot.Node node = snapshot.find(action);
         if (node == null || !node.enabled) {
@@ -2991,7 +3026,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // queue multiple steps, and never cross screen owners.
                     SessionDebugLog.event("WORLD_STEP_BUSY", "request=" + request);
                     final long now = SystemClock.elapsedRealtime();
-                    if (!retryingWorldDirection && worldMovementEnabled()) {
+                    if (!retryingWorldDirection && worldStepAllowed()) {
                         pendingWorldDirection = focus;
                         pendingWorldContext = owner.contextKey();
                         pendingWorldRevision = owner.revision;
