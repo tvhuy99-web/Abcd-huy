@@ -4436,3 +4436,13 @@ msgstr "Ngắm vào mục tiêu hiện tại rồi bắn khi đã ổn định. 
 
 msgid "Select an aim point and a loaded gun first."
 msgstr "Hãy chọn điểm ngắm và súng đã nạp đạn trước."
+
+msgid "Your hands are empty."
+msgstr "Bạn không cầm vũ khí."
+
+#, c-format
+msgid "Wielding %1$s. %2$d rounds loaded."
+msgstr "Đang cầm %1$s. Còn %2$d viên đạn."
+
+msgid "Wielded weapon"
+msgstr "Vũ khí đang cầm"

@@ -950,6 +950,20 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         result.nodes.push_back( std::move( node ) );
     }
+    // Read the actual wielded item without activating it or using ammo.
+    // A right-left one-finger gesture speaks this read-only status node.
+    const item_location wielded = viewer.get_wielded_item();
+    std::string weapon_report;
+    if( !wielded ) {
+        weapon_report = _( "Your hands are empty." );
+    } else if( wielded->is_gun() ) {
+        weapon_report = string_format( _( "Wielding %1$s. %2$d rounds loaded." ),
+                                       wielded->tname(), wielded->ammo_remaining() );
+    } else {
+        weapon_report = string_format( _( "Wielding %s." ), wielded->tname() );
+    }
+    result.nodes.push_back( document( "reader:combat:weapon-status",
+                                      _( "Wielded weapon" ), weapon_report ) );
     // Names, hostility, distance and health come exclusively from the
     // game's visible/targetable creature set. Never reveal hidden enemies.
     std::vector<Creature *> enemies = viewer.get_targetable_creatures( 16, false );

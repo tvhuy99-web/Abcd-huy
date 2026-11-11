@@ -204,7 +204,7 @@
     <string name="a11yGlobalGestureHelp">Menu: giữ một ngón để mở chức năng, chạm hai ngón để đọc chi tiết, vuốt hai ngón lên để xác nhận hoặc xuống để quay lại. Khi nhập số, vuốt một ngón lên/xuống để chọn chữ số. Trên bản đồ, vuốt hai ngón để quét.</string>
     <string name="a11yNativeInputRangeError">Giá trị phải từ %1$s đến %2$s.</string>
     <string name="a11yNativeInputInstructions">Nhập bằng bàn phím Android. Chọn OK để lưu hoặc Hủy để bỏ qua. Bạn có thể tự bật hoặc tắt TalkBack.</string>
-    <string name="a11yCombatOn">Đã bật chiến đấu. Vuốt một ngón đánh bốn hướng chính; hai ngón đánh hướng chéo; ba ngón di chuyển theo bản đồ.</string>
+    <string name="a11yCombatOn">Đã bật chiến đấu. Vuốt thẳng một ngón để đánh bốn hướng chính; vuốt lên hoặc xuống rồi sang trái hoặc phải để đánh chéo. Vuốt hai ngón để di chuyển. Vuốt trái rồi phải để nạp đạn, phải rồi trái để đọc vũ khí và số đạn.</string>
     <string name="a11yCombatOff">Đã bật chế độ bản đồ. Các cử chỉ tùy chỉnh được giữ nguyên.</string>
     <string name="a11yCombatUnavailable">Không thể thực hiện lệnh chiến đấu lúc này. Nhân vật không di chuyển.</string>
     <string name="a11yCombatNoEnemies">Không có kẻ địch thù địch nào nhìn thấy ở gần.</string>

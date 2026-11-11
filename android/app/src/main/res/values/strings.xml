@@ -204,7 +204,7 @@
     <string name="a11yGlobalGestureHelp">Menus: hold one finger for screen commands; tap two fingers once for details; swipe two fingers up to confirm, down to cancel or back. In number entry, swipe vertically to choose digits. On the world map, two-finger directional swipes still scan.</string>
     <string name="a11yNativeInputRangeError">Value must be between %1$s and %2$s.</string>
     <string name="a11yNativeInputInstructions">Edit with the Android keyboard. Use OK to save or Cancel to discard. You can turn TalkBack on or off yourself.</string>
-    <string name="a11yCombatOn">Combat mode on. Swipe one finger to attack cardinal directions, two fingers for diagonals, and three fingers to move using normal map controls.</string>
+    <string name="a11yCombatOn">Combat mode on. One-finger straight swipes attack four directions; one-finger up/down then left/right attacks diagonally. Two-finger swipes move. Left then right reloads, right then left reads the current weapon and ammunition.</string>
     <string name="a11yCombatOff">Map mode on. Your original gesture assignments are restored.</string>
     <string name="a11yCombatUnavailable">Combat command unavailable. No movement was performed.</string>
     <string name="a11yCombatNoEnemies">No visible hostile creatures nearby.</string>

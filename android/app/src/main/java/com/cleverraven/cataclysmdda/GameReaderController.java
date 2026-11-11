@@ -2454,17 +2454,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private boolean worldStepAllowed() {
-        // A three-finger combat move must go through the EXACT same native
-        // gate and dispatch path as normal map walking. This includes the
-        // existing movement/auto-travel settings; no one-tile cap is added.
+        // Two-finger combat moves pass through the same native walking
+        // gate, with the normal activity, vehicle and travel safety checks.
         return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
                 && hasCardinalDirections(snapshot);
     }
 
     @Override
     public boolean worldMovementEnabled() {
-        // One-finger walking must stay disabled during combat. Three-finger
-        // combat movement is dispatched separately, with the same game rules.
+        // One finger attacks during combat; two fingers move. Outside
+        // combat, the original one-finger map movement is unchanged.
         return !combatMode && worldStepAllowed();
     }
 
@@ -2494,24 +2493,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public boolean handleCustomGesture(String gestureId) {
         if (combatMode && directWorldGesturesEnabled()) {
-            // Only while combat is active, three-finger cardinal swipes
-            // route through the ORIGINAL map movement. Outside combat,
-            // these four gesture IDs keep their saved custom assignments.
+            // Old three-finger movement is disabled during combat.
+            // On the normal map, saved three-finger shortcuts still work.
             switch (gestureId) {
-                case "swipe_3_up": moveInCombat(0, -1); return true;
-                case "swipe_3_down": moveInCombat(0, 1); return true;
-                case "swipe_3_left": moveInCombat(-1, 0); return true;
-                case "swipe_3_right": moveInCombat(1, 0); return true;
+                case "swipe_3_up":
+                case "swipe_3_down":
+                case "swipe_3_left":
+                case "swipe_3_right":
+                    return true;
                 default: break;
             }
-            // Combat owns one- and two-finger attacks before the map's
-            // persisted bindings. No attack may fall through into walking.
+            // Straight one-finger strokes attack the four cardinal
+            // directions; bent strokes now attack the four diagonals.
             int direction = -1;
             switch (gestureId) {
                 case "swipe_up": direction = 0; break;
                 case "swipe_right": direction = 2; break;
                 case "swipe_down": direction = 4; break;
                 case "swipe_left": direction = 6; break;
+                case "swipe_up_left": direction = 7; break;
+                case "swipe_up_right": direction = 1; break;
+                case "swipe_down_left": direction = 5; break;
+                case "swipe_down_right": direction = 3; break;
                 case "swipe_up_down":
                     requestCombatCommand("reader:combat:weapon-next");
                     return true;
@@ -2519,8 +2522,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     requestCombatCommand("reader:combat:weapon-prev");
                     return true;
                 case "swipe_left_right":
-                case "swipe_right_left":
                     requestCombatCommand("reader:combat:reload");
+                    return true;
+                case "swipe_right_left":
+                    readCombatWieldedWeapon();
                     return true;
                 default:
                     break;
@@ -2624,10 +2629,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("GESTURE_ACTION", "scan dx=" + dx + " dy=" + dy);
         if (Math.abs(dx) + Math.abs(dy) != 1) { return; }
         if (combatMode && directWorldGesturesEnabled()) {
-            // Two-finger cardinal swipes attack diagonally, never scan or walk:
-            // up=NE, right=SE, down=SW, left=NW.
-            int direction = dy < 0 ? 1 : dx > 0 ? 3 : dy > 0 ? 5 : 7;
-            requestCombatCommand("reader:combat:attack:" + direction);
+            // Two fingers now move cardinally using the ordinary
+            // native walk action. They never fire a weapon.
+            moveInCombat(dx, dy);
             return;
         }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
@@ -2684,6 +2688,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         SessionDebugLog.event("COMBAT_MODE", "enabled=" + combatMode);
         feedback(activity.getString(combatMode ? R.string.a11yCombatOn : R.string.a11yCombatOff));
+    }
+
+    private void readCombatWieldedWeapon() {
+        if (!combatMode || !directWorldGesturesEnabled()) { return; }
+        ReaderSnapshot.Node node = snapshot.find("reader:combat:weapon-status");
+        if (node == null || node.detail == null || node.detail.isEmpty()) {
+            feedback(activity.getString(R.string.a11yCombatUnavailable));
+            return;
+        }
+        SessionDebugLog.event("COMBAT_ACTION", "read_wielded_weapon");
+        // Reading the current item and ammunition costs no game turn.
+        feedback(node.detail);
     }
 
     private void requestCombatCommand(String id) {
