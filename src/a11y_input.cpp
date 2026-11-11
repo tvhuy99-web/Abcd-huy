@@ -6,6 +6,7 @@
 #include "input_context.h"
 #include "avatar.h"
 #include "game.h"
+#include "move_mode.h"
 #include "options.h"
 #include "string_formatter.h"
 #include "output.h"
