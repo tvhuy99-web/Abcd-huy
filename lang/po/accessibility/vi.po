@@ -4356,7 +4356,7 @@ msgstr "Không thấy kẻ địch thù địch nào ở gần."
 
 #, c-format
 msgid "Your %s is empty!"
-msgstr "Súng %s đã hết đạn!"
+msgstr "%s đã hết đạn!"
 
 msgid "No visible hostile creature in that direction. You did not move."
 msgstr "Không thấy kẻ địch thù địch theo hướng đó. Nhân vật không di chuyển."

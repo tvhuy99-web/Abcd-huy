@@ -72,7 +72,8 @@ class CombatRepairContracts(unittest.TestCase):
     def test_ammunition_progress_is_from_engine_not_guessed(self):
         self.assertIn("Ammunition remaining: %d.", self.world)
         self.assertIn("held->ammo_remaining()", self.world)
-        self.assertIn("Reload progress: %d rounds loaded.", self.activity)
+        self.assertIn("Loaded %1$d %2$s into %3$s. %4$d rounds in gun.", self.activity)
+        self.assertNotIn('add_msg( m_info, _( "Reload progress:', self.activity)
         self.assertIn("gun->ammo_remaining()", self.activity)
         self.assertIn("Automatic reload complete. %d rounds loaded.", self.game)
         self.assertIn("Automatic reload stopped. %d rounds loaded;", self.game)
@@ -81,10 +82,10 @@ class CombatRepairContracts(unittest.TestCase):
         for msg in (
                 "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons.",
                 "The weapon cannot fire right now. Check ammunition and firing mode.",
-                "Reload progress: %d rounds loaded.",
+                "Loaded %1$d %2$s into %3$s. %4$d rounds in gun.",
                 "Fighting unarmed.",
                 "Wielding %s.",
-                "%1$s, %2$s, distance %3$d tiles, health %4$d percent.",
+                "%1$s, %2$s, health %3$d percent.",
         ):
             self.assertIn('msgid "' + msg + '"', self.po)
 
