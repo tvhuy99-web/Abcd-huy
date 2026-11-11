@@ -5,7 +5,7 @@
     <string name="installTitle">Đang cài đặt dữ liệu trò chơi…</string>
     <string name="upgradeTitle">Đang nâng cấp dữ liệu trò chơi…</string>
     <string name="helpTitle">Trợ giúp và điều khiển</string>
-    <string name="helpMessage">"Vuốt" để di chuyển theo hướng (nhấn giữ để dùng cần điều khiển ảo). "Chạm" để xác nhận lựa chọn trong trình đơn hoặc đứng yên và chờ qua một lượt khi đang chơi (nhấn giữ để chờ qua nhiều lượt). "Chạm hai lần" để hủy hoặc quay lại trong trình đơn (tương tự phím Escape). "Chụm hai ngón" để phóng to hoặc thu nhỏ (trong trò chơi). Dùng nút "Quay lại" trên thiết bị để bật hoặc tắt bàn phím ảo (nhấn giữ để bật hoặc tắt các nút phím tắt).</string>
+    <string name="helpMessage">Vuốt để di chuyển; nhấn giữ để dùng cần điều khiển ảo. Chạm để chọn mục hoặc chờ một lượt; nhấn giữ để chờ nhiều lượt. Chạm hai lần để quay lại trong menu. Chụm hai ngón để thu phóng. Nút Quay lại bật/tắt bàn phím ảo; giữ nút để bật/tắt các phím tắt.</string>
     <string name="accessibilityServicesTitle">Cảnh báo về dịch vụ trợ năng</string>
     <string name="accessibilityServicesMessage">Dịch vụ trợ năng có thể chiếm cử chỉ game. Hãy giữ TalkBack khi thiết lập giọng. Bạn có thể tiếp tục chơi hoặc mở cài đặt trợ năng và giọng đọc: \n%1$s</string>
     <string name="ignoreFalsePostives">Đánh dấu là cảnh báo nhầm</string>

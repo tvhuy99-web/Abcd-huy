@@ -21,7 +21,7 @@ def xml_strings(path):
 
 def format_types(text):
     return sorted(m[-1] for m in re.findall(
-        r"%(?:\\d+\\$)?[-+.#0-9]*[sdf]", text))
+        r"%(?:\d+\$)?[-+.#0-9]*[sdf]", text))
 
 
 class VietnameseSpokenContentAudit(unittest.TestCase):
@@ -35,7 +35,7 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
         cls.normalizer = (JAVA / "ReaderSpokenText.java").read_text("utf-8")
 
     def test_all_single_line_vietnamese_translations_keep_printf_values(self):
-        pairs = re.findall(r'^msgid "([^"\\n]+)"\\nmsgstr "([^"\\n]+)"',
+        pairs = re.findall(r'^msgid "([^"\n]+)"\nmsgstr "([^"\n]+)"',
                            self.po, re.MULTILINE)
         self.assertGreater(len(pairs), 1100)
         for original, translated in pairs:
