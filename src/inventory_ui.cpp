@@ -8,6 +8,7 @@
 
 #include "activity_actor_definitions.h"
 #include "a11y_android.h"
+#include "a11y_item_text.h"
 #include "a11y_input.h"
 #include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
@@ -3910,10 +3911,12 @@ class inventory_selector::reader_session
                             // One completed number commits the selection.
                             // Global CONFIRM performs the eventual item
                             // transfer, never the number picker.
-                            node.actions = { "focus", "activate", "set_value" };
+                            node.actions = { "focus", "activate", "set_value", "read_detail" };
                         } else {
-                            node.actions = { "focus", "activate" };
+                            node.actions = { "focus", "activate", "read_detail" };
                         }
+                    } else {
+                        node.actions = { "focus", "activate", "read_detail" };
                     }
                     rows.push_back( std::move( node ) );
                     published.push_back( { entry, location } );
@@ -4163,7 +4166,7 @@ class inventory_selector::reader_session
                                                             _( "This stack spans multiple pockets. Select it in the main item list." ) :
                                                             remove_color_tags( entry->denial.value_or( "" ) );
                                 contained.checked = entry->chosen_count > 0;
-                                contained.actions = { "focus" };
+                                contained.actions = { "focus", "read_detail" };
                                 contained.parent_id = pocket_binding.id;
                                 contained.depth = pocket_node.depth + 1;
                                 contained.field_type = "int";
@@ -4223,9 +4226,10 @@ class inventory_selector::reader_session
                             item_node.id = "pocket-entry:" + pocket_node.id + ":" +
                                            std::to_string( contents_rows.size() );
                             item_node.role = actionable ? "button" : "status";
-                            item_node.actions = actionable ? std::vector<std::string>{ "focus", "activate" }
-                                                : std::vector<std::string>{ "focus" };
-                            if( actionable ) {
+                            item_node.actions = actionable ?
+                                                std::vector<std::string>{ "focus", "activate", "read_detail" } :
+                                                std::vector<std::string>{ "focus", "read_detail" };
+                            if( contained ) {
                                 contained_item_bindings.emplace_back( item_node.id, contained );
                             }
                             item_node.parent_id = pocket_node.id;
@@ -4509,6 +4513,48 @@ class inventory_selector::reader_session
                 return "TIMEOUT";
             }
             if( intent.node.rfind( "pocket-entry:", 0 ) == 0 ) {
+                if( intent.action == "read_detail" ) {
+                    // Ordinary Inventory's nested pocket rows and pickup's
+                    // staged selection rows both resolve to real item locations.
+                    const auto contained = std::find_if( contained_item_bindings.begin(),
+                                                        contained_item_bindings.end(),
+                    [&]( const std::pair<std::string, item_location> &binding ) {
+                        return binding.first == intent.node;
+                    } );
+                    if( contained != contained_item_bindings.end() && contained->second ) {
+                        a11y::announce_full_item_info( *contained->second );
+                        return "TIMEOUT";
+                    }
+                    for( const pocket_selection_binding &pocket : pocket_selections ) {
+                        const auto choice = std::find_if( pocket.items.begin(), pocket.items.end(),
+                        [&]( const pocket_item_binding &entry ) {
+                            return entry.id == intent.node;
+                        } );
+                        if( choice == pocket.items.end() || !pocket.container ) {
+                            continue;
+                        }
+                        const auto rows = choice->column->get_entries( return_item, true );
+                        const auto live = std::find_if( rows.begin(), rows.end(),
+                        [&]( const inventory_entry *entry ) {
+                            return entry->any_item() == choice->location;
+                        } );
+                        const std::vector<const item_pocket *> pockets =
+                            pocket.container->get_container_pockets();
+                        if( live != rows.end() && choice->location &&
+                            choice->location.parent_item() == pocket.container &&
+                            pocket.pocket_index < pockets.size() &&
+                            !pockets[pocket.pocket_index]->sealed() ) {
+                            const std::list<const item *> contents =
+                                pockets[pocket.pocket_index]->all_items_top();
+                            if( std::find( contents.begin(), contents.end(),
+                                           choice->location.get_item() ) != contents.end() ) {
+                                a11y::announce_full_item_info( *choice->location );
+                            }
+                        }
+                        return "TIMEOUT";
+                    }
+                    return "TIMEOUT";
+                }
                 if( intent.action == "focus" ) {
                     return "TIMEOUT";
                 }
@@ -4545,6 +4591,13 @@ class inventory_selector::reader_session
                 return std::nullopt;
             }
             inventory_entry &entry = **found;
+            if( intent.action == "read_detail" ) {
+                const item_location live = entry.any_item();
+                if( live ) {
+                    a11y::announce_full_item_info( *live );
+                }
+                return "TIMEOUT";
+            }
             if( intent.action == "focus" ) {
                 owner.highlight( binding->location );
                 return "TIMEOUT";
