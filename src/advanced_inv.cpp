@@ -2213,7 +2213,8 @@ class advanced_inventory::reader_session
             if( intent.action == "read_detail" ) {
                 const item_location live = found->items.front();
                 if( live ) {
-                    a11y::announce_full_item_info( *live );
+                    a11y::announce_full_item_info( *live,
+                                                   live.describe( &get_player_character() ) );
                 }
                 return "TIMEOUT";
             }
