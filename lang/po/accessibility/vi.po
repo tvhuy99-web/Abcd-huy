@@ -4472,3 +4472,41 @@ msgstr "Đã bật tự ngắm chính xác."
 
 msgid "Combat quick fire enabled."
 msgstr "Đã bật bắn nhanh."
+
+msgid "Preparing a new world. Please wait."
+msgstr "Đang chuẩn bị thế giới mới. Vui lòng chờ."
+
+msgid "Creating your character and starting the game."
+msgstr "Đang tạo nhân vật và bắt đầu trò chơi."
+
+msgid "Currently active fighting style."
+msgstr "Đang sử dụng thế võ này."
+
+msgid "Not currently active."
+msgstr "Chưa sử dụng thế võ này."
+
+#, c-format
+msgid "Active fighting style: %s."
+msgstr "Thế võ đang sử dụng: %s."
+
+msgid "Personal"
+msgstr "Cá nhân"
+
+msgid "tiles"
+msgstr "ô"
+
+msgid "Jump to beginning"
+msgstr "Đến đầu danh sách"
+
+msgid "Jump to end"
+msgstr "Đến cuối danh sách"
+
+msgid "Showing all zones"
+msgstr "Đang hiển thị tất cả các vùng"
+
+msgid "Hiding distant zones"
+msgstr "Đang ẩn các vùng ở xa"
+
+msgctxt "zones manager"
+msgid "Personal"
+msgstr "Cá nhân"
