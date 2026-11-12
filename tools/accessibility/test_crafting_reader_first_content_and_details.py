@@ -49,12 +49,13 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         )[0]
         self.assertIn('prefix = "craft:";', linked)
         self.assertIn('prefix = "construction:";', linked)
-        self.assertIn("documentReader.open(snapshot.contextKey(),", linked)
-        self.assertIn("speakDocument(full.toString());", linked)
-        self.assertIn("speech.say(documentReader.speechKey(), text, ReaderSpeechQueue.LONG_TEXT);",
-                      self.controller)
-        self.assertIn("speakDocument(information);", self.controller)
-        self.assertIn('node.id + ":detail", information', self.controller)
+        # Two fingers still read every native section, but no longer
+        # hijack list swipes with an implicit paragraph-reader screen.
+        self.assertIn("speakInlineDetail(full.toString());", linked)
+        self.assertNotIn("documentReader.open(", linked)
+        self.assertIn("speakInlineDetail(information);", self.controller)
+        self.assertIn("ReaderSpeechQueue.LONG_TEXT, 600000L", self.controller)
+        self.assertIn("private void speakDocument(String text)", self.controller)
         self.assertIn('full.insert(0, nodeText(selected, true) + "\\n\\n");', self.controller)
 
     def test_disassembly_light_reason_is_accurate_and_translated(self):
