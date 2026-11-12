@@ -29,6 +29,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
+        /** Crafting only: one finger horizontally explores recipes. */
+        default boolean handleCraftingRecipeSwipe(int horizontal) { return false; }
         /** Crafting only: one finger vertically switches the active subcategory. */
         default boolean handleCraftingSubcategorySwipe(int vertical) { return false; }
         /** Crafting only: two fingers vertically switch main categories, including All. */
@@ -796,6 +798,9 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleSurroundingsSwipe(horizontal, vertical)) {
+            return;
+        }
+        if (horizontal != 0 && listener.handleCraftingRecipeSwipe(horizontal)) {
             return;
         }
         if (vertical != 0 && listener.handleCraftingSubcategorySwipe(vertical)) {
