@@ -468,6 +468,10 @@ class crafting_ui_impl : public cataimgui::window
         int crafter_i;
 
         // --- Recipe list ---
+        // A first snapshot may land on an empty Favorites/Recent/hidden
+        // subcategory even though the player knows recipes. Recover once,
+        // but never silently reset a filter that the player requested.
+        bool initial_accessible_recipe_check_done = false;
         std::vector<const recipe *> current;
         std::vector<int> indent_vec;
         std::vector<availability> available;
@@ -2536,6 +2540,45 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     if( recalc && !crafting_cats.empty() ) {
         recalculate_recipes();
     }
+    if( !initial_accessible_recipe_check_done ) {
+        initial_accessible_recipe_check_done = true;
+        if( current.empty() && available_recipes && !available_recipes->empty() &&
+            filterstring.empty() && !batch && !crafting_cats.empty() ) {
+            // The reader must not announce "no recipes" just because
+            // the opening subtab is a special empty list. Prefer the
+            // category's native All subtab and try other known categories.
+            for( std::size_t cat_index = 0; cat_index < crafting_cats.size(); ++cat_index ) {
+                if( cat_index != 0 ) {
+                    tab.next();
+                }
+                const std::vector<std::string> &subcategories =
+                    crafting_category_id( tab.cur() )->subcategories;
+                subtab = tab_list( subcategories );
+                for( std::size_t sub_index = 0; sub_index < subcategories.size(); ++sub_index ) {
+                    if( subtab.cur() == "CSC_ALL" ) {
+                        break;
+                    }
+                    subtab.next();
+                }
+                recalculate_recipes();
+                if( !current.empty() ) {
+                    force_select_tab = true;
+                    force_select_subtab = true;
+                    break;
+                }
+            }
+        }
+        // The log now distinguishes genuinely unknown recipes from a
+        // category/filter that happens to show none. Do not manufacture
+        // starter knowledge or award recipes outside native game rules.
+        a11y::android::diagnostic_event( "CRAFT_RECIPE_SCOPE",
+                                         string_format( "learned=%d group=%d categories=%d visible=%d filtered=%d",
+                                                 static_cast<int>( crafter->get_learned_recipes().size() ),
+                                                 static_cast<int>( available_recipes->size() ),
+                                                 static_cast<int>( crafting_cats.size() ),
+                                                 static_cast<int>( current.size() ),
+                                                 filterstring.empty() ? 0 : 1 ) );
+    }
     auto snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
     if( crafting_cats.empty() ) {
@@ -2584,11 +2627,23 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                  std::make_move_iterator( snapshot.nodes.end() ) );
     snapshot.nodes = std::move( rows );
     if( current.empty() ) {
-        // An empty recipe category is content, not a command-only screen.
-        // Keep the long-press drawer separate even with no craftable items.
+        // "No recipes in this subcategory" is not the same as knowing
+        // nothing. Give the actual native recipe count and a meaningful
+        // way to distinguish an empty filter from missing knowledge.
+        std::string reason;
+        if( available_recipes->empty() ) {
+            reason = _( "No recipes learned or available to this crafter yet." );
+        } else if( !filterstring.empty() ) {
+            reason = string_format(
+                         _( "No recipes match this filter. %d recipes are available in the crafting group." ),
+                         static_cast<int>( available_recipes->size() ) );
+        } else {
+            reason = string_format(
+                         _( "No recipes in this category. %d recipes are available in the crafting group." ),
+                         static_cast<int>( available_recipes->size() ) );
+        }
         a11y::append_document( snapshot, "craft:no-recipes",
-                               _( "No recipes available." ),
-                               _( "No recipes available in the selected category or filter." ) );
+                               _( "No recipes shown." ), reason );
         snapshot.focus = "craft:no-recipes";
         return snapshot;
     }
