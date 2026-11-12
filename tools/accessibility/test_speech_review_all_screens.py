@@ -64,8 +64,8 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
         self.assertLess(len(combat), 135)
         for word in ("một ngón", "hai ngón", "lên/xuống",
                      "trái/phải", "nạp đạn", "vũ khí"):
-            self.assertIn(word, combat)
-        self.assertNotIn("ba ngón", combat)
+            self.assertIn(word, combat.lower())
+        self.assertNotIn("ba ngón", combat.lower())
         self.assertIn("chỗ chứa và quyền sở hữu", self.po)
         self.assertIn("tốn lượt hoặc làm hỏng tài sản", self.po)
 
