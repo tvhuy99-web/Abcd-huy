@@ -1,7 +1,8 @@
-"""Static regression checks for full two-finger detail, without an APK build.
+"""Source-contract regression tests for optional complete two-finger details.
 
-These tests guard the native/Android read-only intent contract. They do NOT
-replace an instrumented screen-reader test with a real inventory or mod.
+These tests do not claim that a real APK was compiled or that TalkBack has
+been tested on a device. They protect native read-only intents and Java
+presentation against common accessibility regressions.
 """
 import unittest
 from pathlib import Path
@@ -23,70 +24,91 @@ class FullDetailOnDemandTests(unittest.TestCase):
         cls.runtime = (SRC / "a11y_runtime.cpp").read_text("utf-8")
         cls.java = JAVA.read_text("utf-8")
 
-    def test_native_item_info_is_complete_and_demand_driven(self):
-        self.assertIn("remove_color_tags( it.info( true ) )", self.item_text)
-        self.assertIn('android::announce( "A11Y_DETAIL:"', self.item_text)
-        self.assertIn("constexpr std::size_t max_chunk = 11000", self.item_text)
-        self.assertIn("std::string item::info( bool showtext ) const", self.item_info)
-        self.assertIn("return info( showtext, dummy );", self.item_info)
-        self.assertIn("return info( iteminfo, showtext ? &iteminfo_query::all", self.item_info)
-        self.assertIn("return format_item_info( info, {} );", self.item_info)
+    def test_item_details_reuse_all_native_info_categories(self):
+        for value in (
+            "remove_color_tags( it.info( true ) )",
+            "std::string item::info( bool showtext ) const",
+            "return info( showtext, dummy );",
+            "return info( iteminfo, showtext ? &iteminfo_query::all",
+            "return format_item_info( info, {} );",
+        ):
+            self.assertIn(value, self.item_text + self.item_info)
 
-    def test_inventory_every_selector_exposes_details_without_eager_building(self):
+    def test_full_details_are_computed_only_on_explicit_request(self):
+        self.assertIn("announce_full_detail_text", self.item_text)
+        self.assertIn("constexpr std::size_t max_chunk = 11000", self.item_text)
+        self.assertIn("inline void announce_full_item_info(", self.item_text)
         self.assertIn('{ "focus", "activate", "set_value", "read_detail" }', self.inventory)
         self.assertIn('{ "focus", "activate", "read_detail" }', self.inventory)
         build, handler = self.inventory.split("class inventory_selector::reader_session", 1)[1].split(
             "std::optional<std::string> handle( const a11y::semantic_intent &intent )", 1
         )
-        self.assertNotIn("announce_full_item_info", build)
+        self.assertNotIn("announce_full_item_info(", build)
         self.assertIn('if( intent.action == "read_detail" )', handler)
-        self.assertIn("a11y::announce_full_item_info( *live );", handler)
+        self.assertIn("a11y::announce_full_item_info( *live, live.describe( &owner.u ) );", handler)
         self.assertIn('return "TIMEOUT";', handler)
 
-    def test_pocket_contents_are_resolved_without_selection(self):
-        self.assertIn('contained.actions = { "focus", "read_detail" };', self.inventory)
-        self.assertIn('"focus", "activate", "read_detail"', self.inventory)
-        self.assertIn("pocket.container->get_container_pockets()", self.inventory)
-        self.assertIn("!pockets[pocket.pocket_index]->sealed()", self.inventory)
-        self.assertIn("a11y::announce_full_item_info( *choice->location );", self.inventory)
-        self.assertIn("contained_item_bindings.emplace_back( item_node.id, contained )", self.inventory)
+    def test_pocket_item_detail_is_read_only_and_rechecked(self):
+        for phrase in (
+            'contained.actions = { "focus", "read_detail" };',
+            '"focus", "activate", "read_detail"',
+            "pocket.container->get_container_pockets()",
+            "!pockets[pocket.pocket_index]->sealed()",
+            "a11y::announce_full_item_info( *choice->location,",
+            "contained_item_bindings.emplace_back( item_node.id, contained )",
+        ):
+            self.assertIn(phrase, self.inventory)
+        self.assertIn("POCKET_CONFIRM_NODE.equals(focus)", self.java)
+        self.assertIn("feedback(pocketChoiceSpeech());", self.java)
 
-    def test_advanced_inventory_and_armor_use_validated_live_objects(self):
+    def test_advanced_inventory_and_armor_resolve_live_items(self):
         self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.advanced)
-        self.assertIn("a11y::announce_full_item_info( *live );", self.advanced)
+        self.assertIn("a11y::announce_full_item_info( *live,", self.advanced)
         self.assertIn("std::find_if( spane.items.begin(), spane.items.end()", self.advanced)
         self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.armor)
         self.assertIn("std::find( shown.begin(), shown.end(), binding->worn_it )", self.armor)
-        self.assertIn("a11y::announce_full_item_info( **found );", self.armor)
+        self.assertIn("a11y::announce_full_item_info( **found,", self.armor)
 
-    def test_nearby_items_read_the_real_visible_stack(self):
-        self.assertIn('#include "a11y_item_text.h"', self.nearby)
-        self.assertIn('node.actions.push_back( "read_detail" );', self.nearby)
-        self.assertIn('intent.action == "read_detail" && target.kind == nearby_kind::item', self.nearby)
-        self.assertIn('a11y::scan_unrestricted_tile( target.target )', self.nearby)
-        self.assertIn('std::find( visible.items.begin(), visible.items.end()', self.nearby)
-        self.assertIn('a11y::announce_full_item_info( obj );', self.nearby)
-        self.assertIn('return std::string( "TIMEOUT" );', self.nearby)
+    def test_nearby_item_details_do_not_trigger_travel(self):
+        for phrase in (
+            'node.actions.push_back( "read_detail" );',
+            'intent.action == "read_detail" && target.kind == nearby_kind::item',
+            "a11y::scan_unrestricted_tile( target.target )",
+            "std::find( visible.items.begin(), visible.items.end()",
+            "a11y::announce_full_detail_text( full );",
+        ):
+            self.assertIn(phrase, self.nearby)
+        first = self.nearby.index('if( intent.action == "read_detail" && target.kind')
+        read_end = self.nearby.index('return std::string( "TIMEOUT" );', first)
+        self.assertLess(read_end, self.nearby.index('g->safe_route_to(', first))
 
-    def test_read_only_detail_does_not_need_item_to_be_selectable(self):
+    def test_read_detail_allowed_even_if_selection_is_disabled(self):
         self.assertIn('intent->action != "read_detail" && !node->enabled', self.runtime)
         self.assertIn('&& !"read_detail".equals(action)', self.java)
         self.assertIn('if (node.actions.contains("read_detail")) {', self.java)
-        self.assertIn('send("read_detail", "");', self.java)
+        self.assertIn('send("read_detail", "") == 0', self.java)
         self.assertIn('if( intent.node.rfind( "pocket-entry:", 0 ) == 0 )', self.inventory)
 
-    def test_long_speech_and_linked_native_documents(self):
-        self.assertIn('message.startsWith("A11Y_DETAIL:")', self.java)
-        self.assertIn('"item-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet()', self.java)
-        self.assertIn("ReaderSpeechQueue.LONG_TEXT, 600000L", self.java)
-        self.assertIn('ReaderSpeechQueue.LONG_TEXT', self.java)
-        self.assertIn('private boolean readLinkedDetails(ReaderSnapshot.Node selected)', self.java)
-        for scope in (
-            '"crafting"', '"construction"', '"missions"', '"faction"',
-            '"companion_missions"', '"proficiencies"',
-        ):
-            self.assertIn(scope, self.java)
+    def test_utf8_chunks_are_reassembled_before_tts(self):
+        for marker in ("A11Y_DETAIL:", "A11Y_DETAIL_BEGIN:",
+                       "A11Y_DETAIL_PART:", "A11Y_DETAIL_END:"):
+            self.assertIn(marker, self.item_text)
+            self.assertIn(marker, self.java)
+        self.assertIn("static_cast<unsigned char>( full[end] )", self.item_text)
+        self.assertIn("pendingItemDetailParts.append(part)", self.java)
+        self.assertIn('announceGameMessage("A11Y_DETAIL:" + assembled, priority, true)', self.java)
         self.assertIn("documentReader.open(snapshot.contextKey(),", self.java)
+        self.assertIn("speakDocument(spokenMessage);", self.java)
+        self.assertIn('pendingItemDetailNode.equals(focus)', self.java)
+
+    def test_linked_detail_waits_for_native_selected_row(self):
+        self.assertIn("private boolean readLinkedDetails(ReaderSnapshot.Node selected)", self.java)
+        self.assertIn("!selected.selected || !id.equals(snapshot.focus)", self.java)
+        self.assertIn('pendingLinkedDetail.equals(focus)', self.java)
+        self.assertIn("ready != null && ready.selected", self.java)
+        for scope in ('"crafting"', '"construction"', '"missions"', '"faction"',
+                      '"companion_missions"', '"proficiencies"'):
+            self.assertIn(scope, self.java)
         self.assertIn('if ("document".equals(node.role) && !node.detail.isEmpty())', self.java)
 
 
