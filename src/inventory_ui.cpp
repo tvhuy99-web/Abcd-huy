@@ -4522,7 +4522,8 @@ class inventory_selector::reader_session
                         return binding.first == intent.node;
                     } );
                     if( contained != contained_item_bindings.end() && contained->second ) {
-                        a11y::announce_full_item_info( *contained->second );
+                        a11y::announce_full_item_info( *contained->second,
+                                                       contained->second.describe( &owner.u ) );
                         return "TIMEOUT";
                     }
                     for( const pocket_selection_binding &pocket : pocket_selections ) {
@@ -4548,7 +4549,8 @@ class inventory_selector::reader_session
                                 pockets[pocket.pocket_index]->all_items_top();
                             if( std::find( contents.begin(), contents.end(),
                                            choice->location.get_item() ) != contents.end() ) {
-                                a11y::announce_full_item_info( *choice->location );
+                                a11y::announce_full_item_info( *choice->location,
+                                                               choice->location.describe( &owner.u ) );
                             }
                         }
                         return "TIMEOUT";
@@ -4594,7 +4596,7 @@ class inventory_selector::reader_session
             if( intent.action == "read_detail" ) {
                 const item_location live = entry.any_item();
                 if( live ) {
-                    a11y::announce_full_item_info( *live );
+                    a11y::announce_full_item_info( *live, live.describe( &owner.u ) );
                 }
                 return "TIMEOUT";
             }
