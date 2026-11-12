@@ -125,7 +125,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertNotIn("getGestureAction(\"horizontal_swipe_action\"", self.prefs)
         self.assertNotIn("getGestureAction(\"vertical_swipe_action\"", self.prefs)
         # The obsolete setup screen is now a compatibility redirect.
-        self.assertIn("GameSettingsActivity.class", self.setup)
+        self.assertIn("AccessibilitySettingsActivity.class", self.setup)
         self.assertNotIn("cycleSwipeAction(true)", self.setup)
         self.assertNotIn("cycleSwipeAction(false)", self.setup)
         self.assertNotIn("view -> tryGestureMapping()", self.setup)

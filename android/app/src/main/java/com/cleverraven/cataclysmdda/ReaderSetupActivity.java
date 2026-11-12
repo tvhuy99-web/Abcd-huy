@@ -12,7 +12,8 @@ public final class ReaderSetupActivity extends Activity {
 
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
-        startActivity(new Intent(this, GameSettingsActivity.class));
+        // Compatibility with old shortcuts without recreating the old setup UI.
+        startActivity(new Intent(this, AccessibilitySettingsActivity.class));
         finish();
     }
 }

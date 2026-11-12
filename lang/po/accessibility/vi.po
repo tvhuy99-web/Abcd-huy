@@ -3453,6 +3453,14 @@ msgctxt "Main Menu|Settings"
 msgid "Sound Settings"
 msgstr "Cài đặt âm thanh"
 
+msgctxt "Main Menu|Settings"
+msgid "Accessibility Settings"
+msgstr "Cài đặt trợ năng"
+
+msgctxt "Main Menu|Settings"
+msgid "Backup and Restore"
+msgstr "Sao lưu và khôi phục"
+
 # Tenth game main-menu option on Android.
 msgctxt "Main Menu"
 msgid "<D|d>ebug Log"

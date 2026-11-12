@@ -27,7 +27,7 @@ public class BootstrapSelfVoiceSurfaceTest {
     @Test
     public void doubleTapRunsTheFocusedStartupActionExactlyOnce() {
         AtomicInteger clicks = new AtomicInteger();
-        try (ActivityScenario<GameSettingsActivity> scenario = launchSettings()) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = launchSettings()) {
             scenario.onActivity(activity -> {
                 Context context = activity;
                 BootstrapSelfVoiceSurface surface = new BootstrapSelfVoiceSurface(context,
@@ -70,7 +70,7 @@ public class BootstrapSelfVoiceSurfaceTest {
     public void swipingRightReadsNextItemAndInterruptsPreviousFocus() {
         AtomicReference<String> spoken = new AtomicReference<>("");
         AtomicInteger interrupted = new AtomicInteger();
-        try (ActivityScenario<GameSettingsActivity> scenario = launchSettings()) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = launchSettings()) {
             scenario.onActivity(activity -> {
                 BootstrapSelfVoiceSurface surface = new BootstrapSelfVoiceSurface(activity,
                         new BootstrapSelfVoiceSurface.Listener() {
@@ -108,7 +108,7 @@ public class BootstrapSelfVoiceSurfaceTest {
 
     @Test
     public void doubleTapOnVoiceSelectorOpensNavigableChoicesInsteadOfCycling() {
-        try (ActivityScenario<GameSettingsActivity> scenario = launchSettings()) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = launchSettings()) {
             scenario.onActivity(activity -> {
                 BootstrapSelfVoiceSurface surface = new BootstrapSelfVoiceSurface(activity,
                         new BootstrapSelfVoiceSurface.Listener() {
@@ -162,9 +162,9 @@ public class BootstrapSelfVoiceSurfaceTest {
         event.recycle();
     }
 
-    private ActivityScenario<GameSettingsActivity> launchSettings() {
+    private ActivityScenario<AccessibilitySettingsActivity> launchSettings() {
         android.content.Intent intent = new android.content.Intent(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(), GameSettingsActivity.class);
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), AccessibilitySettingsActivity.class);
         return ActivityScenario.launch(intent);
     }
 

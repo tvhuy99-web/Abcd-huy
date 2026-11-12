@@ -11,9 +11,8 @@ class ExternalScreenGestures(unittest.TestCase):
     def test_two_finger_down_goes_back_without_one_finger_fallthrough(self):
         detector = (JAVA / "TwoFingerBackGesture.java").read_text(encoding="utf-8")
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
-        # The retired ReaderSetupActivity now redirects to GameSettingsActivity.
-        # All new settings screens use the shared, tested voice surface.
-        settings = (JAVA / "GameSettingsActivity.java").read_text(encoding="utf-8")
+        # The retired ReaderSetupActivity redirects to AccessibilitySettingsActivity.
+        # The two new screens use the shared, tested voice surface.
         accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
         backup = (JAVA / "BackupRestoreActivity.java").read_text(encoding="utf-8")
         self.assertIn("dy1 >= minimumDistance && dy2 >= minimumDistance", detector)
@@ -23,7 +22,7 @@ class ExternalScreenGestures(unittest.TestCase):
         self.assertIn("ignoreUntilPointersReleased", surface)
         self.assertIn("ACTION_POINTER_UP", surface)
         self.assertIn("listener.goBack();", surface)
-        for code in (settings, accessibility, backup):
+        for code in (accessibility, backup):
             self.assertIn("BootstrapSelfVoiceSurface", code)
             self.assertIn("surface.setContent(controls);", code)
             self.assertIn("@Override public void goBack() { finish(); }", code)

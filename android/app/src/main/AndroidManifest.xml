@@ -75,9 +75,6 @@
         <activity android:name="ReaderSetupActivity"
                   android:exported="false"
                   android:label="@string/a11yGameSettingsTitle" />
-        <activity android:name="GameSettingsActivity"
-                  android:exported="false"
-                  android:label="@string/a11yGameSettingsTitle" />
         <activity android:name="AccessibilitySettingsActivity"
                   android:exported="false"
                   android:label="@string/a11yAccessibilitySettingsTitle" />

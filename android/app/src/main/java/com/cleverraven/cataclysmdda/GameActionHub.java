@@ -20,8 +20,7 @@ final class GameActionHub {
     static final int OPEN_GROUP = 1;
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
-    // The old duplicate TTS/setup entry kinds have been retired.
-    static final int OPEN_SETTINGS = 9;
+    // The second Android Settings hub has been removed.
     static final int OPEN_DEBUG_LOG = 10;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
@@ -50,7 +49,6 @@ final class GameActionHub {
                 case OPEN_GROUP: return "hub:group:" + group;
                 case OPEN_SEARCH: return "hub:search";
                 case OPEN_ALL: return "hub:all";
-                case OPEN_SETTINGS: return "hub:settings";
                 case OPEN_DEBUG_LOG: return "hub:debug_log";
                 case OPEN_DIRECTIONS: return "hub:directions";
                 case OPEN_FAVORITES: return "hub:favorites";
@@ -217,12 +215,18 @@ final class GameActionHub {
                 return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
             case "hub:all":
                 return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
-            // Previously saved favorites open the consolidated settings hub.
+            // Convert only a favorite for the retired duplicate Settings hub
+            // into the already published Options action, when available.
+            case "hub:settings":
+                ReaderSnapshot.Node options = snapshot == null
+                        ? null : snapshot.find("open_options");
+                if (options == null || !options.enabled
+                        || !options.actions.contains("activate")) { return null; }
+                return new Entry(spokenNodeLabel(context, options),
+                        "open_options", EXECUTE, 0);
             case "hub:tts":
             case "hub:reader_setup":
-            case "hub:settings":
-                return new Entry(context.getString(R.string.a11yGameSettingsTitle),
-                        "", OPEN_SETTINGS, 0);
+                return null;
             case "hub:debug_log":
                 return new Entry(context.getString(R.string.a11yDebugLogTitle),
                         "", OPEN_DEBUG_LOG, 0);
@@ -299,8 +303,6 @@ final class GameActionHub {
         if (section == 15) {
             result.add(new Entry(context.getString(R.string.a11yDebugLogTitle),
                     "", OPEN_DEBUG_LOG, 0));
-            result.add(new Entry(context.getString(R.string.a11yGameSettingsTitle),
-                    "", OPEN_SETTINGS, 0));
         }
 
         // Any new native commands remain discoverable via the unfiltered

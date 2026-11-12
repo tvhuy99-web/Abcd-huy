@@ -12,7 +12,7 @@ class Group16SettingsCleanup(unittest.TestCase):
     def setUpClass(cls):
         cls.hub = (JAVA / "GameActionHub.java").read_text("utf-8")
         cls.reader = (JAVA / "GameReaderController.java").read_text("utf-8")
-        cls.settings = (JAVA / "GameSettingsActivity.java").read_text("utf-8")
+        cls.settings = (ROOT / "src/main_menu.cpp").read_text("utf-8")
         cls.accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text("utf-8")
         cls.backup = (JAVA / "BackupRestoreActivity.java").read_text("utf-8")
         cls.old_setup = (JAVA / "ReaderSetupActivity.java").read_text("utf-8")
@@ -31,7 +31,8 @@ class Group16SettingsCleanup(unittest.TestCase):
             self.assertNotIn('"' + removed + '"', group)
         self.assertEqual(group.count('"debug"'), 1)
         self.assertIn("OPEN_DEBUG_LOG", self.hub)
-        self.assertIn("OPEN_SETTINGS", self.hub)
+        self.assertNotIn("OPEN_SETTINGS", self.hub)
+        self.assertNotIn("GameSettingsActivity.class", self.reader)
         self.assertIn("onAccessibilityOpenDebugLog()", self.reader)
 
     def test_existing_native_options_and_tts_are_preserved(self):
@@ -40,13 +41,16 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn('snapshot.title = world_options_only ?', game_options)
         self.assertIn('"options:page:"', game_options)
         self.assertIn("saveTtsSettings(", tts)
-        self.assertIn("TtsSettingsActivity.class", self.settings)
-        self.assertIn("AccessibilitySettingsActivity.class", self.settings)
-        self.assertIn("BackupRestoreActivity.class", self.settings)
-        self.assertNotIn("ReaderSetupActivity.class", self.settings)
+        self.assertIn('"Main Menu|Settings", "TTS Settings"', self.settings)
+        self.assertIn('"Main Menu|Settings", "Sound Settings"', self.settings)
+        self.assertIn('"Main Menu|Settings", "Accessibility Settings"', self.settings)
+        self.assertIn('"Main Menu|Settings", "Backup and Restore"', self.settings)
+        self.assertIn("a11y::android::open_accessibility_settings()", self.settings)
+        self.assertIn("a11y::android::open_backup_restore()", self.settings)
+        self.assertNotIn("GameSettingsActivity.class", self.reader)
 
     def test_removed_reader_setup_has_no_duplicate_controls(self):
-        self.assertIn("GameSettingsActivity.class", self.old_setup)
+        self.assertIn("AccessibilitySettingsActivity.class", self.old_setup)
         for legacy in ("new CheckBox(", "new SeekBar(", "probeVoices(",
                        "new ReaderBackupArchive(", "setSpokenOnlyWorldEnabled("):
             self.assertNotIn(legacy, self.old_setup)

@@ -222,6 +222,23 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
+    /** Open the two added entries in the original native game Settings list. */
+    public void onAccessibilityOpenAccessibilitySettings() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, AccessibilitySettingsActivity.class));
+            }
+        });
+    }
+
+    public void onAccessibilityOpenBackupRestore() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, BackupRestoreActivity.class));
+            }
+        });
+    }
+
     /** Launch the separate native game-audio controls from Settings. */
     public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
         runOnUiThread(() -> {

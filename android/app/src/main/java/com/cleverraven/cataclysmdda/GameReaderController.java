@@ -905,6 +905,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 loading ? message.substring("A11Y_LOADING:".length())
                 : extendedScan ? message.substring("A11Y_SCAN:".length())
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
+        // During movement, generating a new map area can emit this repeatedly.
+        // Keep the actual map generation and all other gameplay messages;
+        // do not let this one sentence enter the buffered or spoken FIFO.
+        if ("Đang tạo khu vực bản đồ mới. Vui lòng chờ.".equals(spokenMessage)
+                || "Creating a new map area. Please wait.".equals(spokenMessage)) {
+            SessionDebugLog.event("MAPGEN_SPEECH_SUPPRESSED", "movement_mapgen_notice");
+            return;
+        }
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         Runnable deliver = () -> {
@@ -2631,10 +2639,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 readCurrent();
             }
             return;
-        } else if ("hub:settings".equals(target) || "hub:tts".equals(target)
-                || "hub:reader_setup".equals(target)) {
-            // Preserve old custom gestures without displaying the retired setup UI.
-            activity.startActivity(new Intent(activity, GameSettingsActivity.class));
+        } else if ("hub:settings".equals(target)) {
+            // The retired duplicate Settings shortcut now invokes the existing
+            // native Options action instead of creating another Settings screen.
+            executeShortcutTarget("action:open_options");
+            return;
+        } else if ("hub:tts".equals(target)) {
+            activity.onAccessibilityOpenTtsSettings();
+            return;
+        } else if ("hub:reader_setup".equals(target)) {
+            activity.onAccessibilityOpenAccessibilitySettings();
             return;
         } else if ("hub:debug_log".equals(target)) {
             activity.onAccessibilityOpenDebugLog();
@@ -3454,9 +3468,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("hub:search".equals(target)) { return activity.getString(R.string.a11yHubSearch); }
         if ("hub:all".equals(target)) { return activity.getString(R.string.a11yHubAllCommands); }
-        if ("hub:tts".equals(target) || "hub:reader_setup".equals(target)
-                || "hub:settings".equals(target)) {
+        if ("hub:settings".equals(target)) {
             return activity.getString(R.string.a11yGameSettingsTitle);
+        }
+        if ("hub:tts".equals(target)) { return activity.getString(R.string.a11yHubTts); }
+        if ("hub:reader_setup".equals(target)) {
+            return activity.getString(R.string.a11yAccessibilitySettingsTitle);
         }
         if ("hub:debug_log".equals(target)) {
             return activity.getString(R.string.a11yDebugLogTitle);
@@ -3541,9 +3558,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 root.cancelGesture();
                 render();
                 readCurrent();
-                return;
-            case GameActionHub.OPEN_SETTINGS:
-                activity.startActivity(new Intent(activity, GameSettingsActivity.class));
                 return;
             case GameActionHub.OPEN_DEBUG_LOG:
                 activity.onAccessibilityOpenDebugLog();

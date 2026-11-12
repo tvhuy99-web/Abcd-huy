@@ -588,6 +588,9 @@ void main_menu::init_strings()
 #if defined(__ANDROID__)
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "TTS Settings" ) );
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Sound Settings" ) );
+    // Append to the ORIGINAL game Settings list, preserving every old entry.
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Accessibility Settings" ) );
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Backup and Restore" ) );
 #endif
 
     vSettingsHotkeys.clear();
@@ -1160,6 +1163,10 @@ bool main_menu::opening_screen()
                             get_option<int>( "MUSIC_VOLUME" ),
                             get_option<int>( "SOUND_EFFECT_VOLUME" ),
                             get_option<bool>( "SOUND_ENABLED" ) );
+                    } else if( sel2 == 9 ) { // Native accessibility preferences
+                        a11y::android::open_accessibility_settings();
+                    } else if( sel2 == 10 ) { // Native backup and restore controls
+                        a11y::android::open_backup_restore();
 #endif
                     }
                     break;

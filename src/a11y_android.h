@@ -62,6 +62,8 @@ void open_tts_settings();
 #if defined(__ANDROID__)
 // Main menu controls for the bounded, per-launch Android diagnostic journal.
 void open_debug_log();
+void open_accessibility_settings();
+void open_backup_restore();
 void normal_exit();
 void diagnostic_event( const std::string &category, const std::string &detail );
 // Sound settings are queued by the Java UI, then applied on the C++ game

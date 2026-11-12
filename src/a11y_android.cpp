@@ -638,6 +638,43 @@ void open_debug_log()
     env->PopLocalFrame( nullptr );
 }
 
+// Open the requested screen from the original game Settings submenu.
+void open_accessibility_settings()
+{
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityOpenAccessibilitySettings", "()V" );
+        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+}
+
+void open_backup_restore()
+{
+    JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
+    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+        if( env != nullptr && env->ExceptionCheck() ) { env->ExceptionClear(); }
+        return;
+    }
+    jobject activity = static_cast<jobject>( GetAndroidActivity() );
+    if( activity != nullptr ) {
+        jclass cls = env->GetObjectClass( activity );
+        jmethodID method = cls == nullptr ? nullptr :
+                           env->GetMethodID( cls, "onAccessibilityOpenBackupRestore", "()V" );
+        if( method != nullptr ) { env->CallVoidMethod( activity, method ); }
+    }
+    if( env->ExceptionCheck() ) { env->ExceptionClear(); }
+    env->PopLocalFrame( nullptr );
+}
+
 void normal_exit()
 {
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
