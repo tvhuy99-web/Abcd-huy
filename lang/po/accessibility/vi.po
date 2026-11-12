@@ -4554,3 +4554,17 @@ msgstr "Bắn khẩu súng đang cầm theo hướng này."
 
 msgid "Use normal movement: attack or interact if occupied, otherwise walk."
 msgstr "Sử dụng di chuyển thông thường: tấn công hoặc tương tác nếu ô có sinh vật, nếu không thì bước đi."
+
+msgid "No recipes learned or available to this crafter yet."
+msgstr "Nhân vật đang chế tạo chưa học hoặc chưa có công thức nào có thể sử dụng."
+
+#, c-format
+msgid "No recipes match this filter. %d recipes are available in the crafting group."
+msgstr "Bộ lọc hiện tại không có công thức. Nhóm chế tạo có %d công thức trong các mục khác."
+
+#, c-format
+msgid "No recipes in this category. %d recipes are available in the crafting group."
+msgstr "Danh mục hiện tại không có công thức. Nhóm chế tạo có %d công thức ở các danh mục khác."
+
+msgid "No recipes shown."
+msgstr "Không có công thức trong danh sách hiện tại."
