@@ -958,7 +958,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // event. Read as long text, so short focus changes and
                 // gameplay alerts do not turn the description into a flood.
                 speech.say("item-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
-                        spokenMessage, ReaderSpeechQueue.LONG_TEXT);
+                        spokenMessage, ReaderSpeechQueue.LONG_TEXT, 600000L);
             } else if (extendedScan) {
                 // Reading sixteen unrestricted map cells may outlive the
                 // eight-second event TTL; use the document-length channel.
