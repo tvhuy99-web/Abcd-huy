@@ -65,7 +65,7 @@ Danh sách tình huống cần thử với người dùng máy thật:
 15. Nhật ký: chọn trang bất kỳ và đọc nội dung mà không vào ô sửa.
 16. Mô tả dài hơn 11 KB và ký tự UTF-8 tiếng Việt qua ranh giới mảnh dữ liệu; kiểm tra không mất đoạn.
 
-Các kiểm tra Python chỉ xác minh hợp đồng mã nguồn. Cần biên dịch C++/Java và thử APK sau khi có quy trình thử phù hợp; không tự động tạo APK trong đợt này.
+Các kiểm tra Python chỉ xác minh hợp đồng mã nguồn. Workflow hiện có của nhánh có thể tự động biên dịch APK để kiểm tra mã sau mỗi lần đẩy commit, nhưng không yêu cầu người chơi cài đặt APK sau mỗi lần sửa. Việc biên dịch Java/C++ và thử TalkBack thật phải được xác nhận riêng trước khi kết luận hoàn tất.
 
 ## Kết quả rà soát đợt hai
 
