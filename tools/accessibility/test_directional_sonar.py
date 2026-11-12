@@ -9,18 +9,37 @@ RAW = ROOT / "android/app/src/main/res/raw"
 
 
 class DirectionalSonarContracts(unittest.TestCase):
-    def test_independent_visible_creature_and_item_rays(self):
+    def test_eight_unrestricted_rays_keep_original_range_and_nearest_targets(self):
         header = (SRC / "a11y_perception.h").read_text()
         scan = (SRC / "a11y_perception.cpp").read_text()
+        sonar = scan.split("directional_sonar_result scan_directional_sonar(", 1)[1]
+        sonar = sonar.split("tile_observation observe_memory_tile(", 1)[0]
         self.assertIn("std::array<int, 8> creatures;", header)
         self.assertIn("std::array<int, 8> items;", header)
-        self.assertIn("distance <= 16", scan)
-        self.assertIn("direction < 8", scan)
-        self.assertIn("dx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 }", scan)
-        self.assertIn("dy[8] = { -1, -1, 0, 1, 1, 1, 0, -1 }", scan)
-        self.assertIn("seen.source != observation_source::visible", scan)
-        self.assertIn("!seen.seen_creatures.empty()", scan)
-        self.assertIn("!seen.seen_items.empty()", scan)
+        self.assertIn("distance <= 16", sonar)
+        self.assertIn("direction < 8", sonar)
+        self.assertIn("dx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 }", sonar)
+        self.assertIn("dy[8] = { -1, -1, 0, 1, 1, 1, 0, -1 }", sonar)
+        self.assertIn("const unrestricted_tile tile = scan_unrestricted_tile( target );", sonar)
+        self.assertIn("!tile.creatures.empty()", sonar)
+        self.assertIn("!tile.items.empty()", sonar)
+        self.assertIn("result.creatures[direction] < 0", sonar)
+        self.assertIn("result.items[direction] < 0", sonar)
+        # A chair, wall, closed door or poor visibility must never end the
+        # ray or suppress items/creatures on later cells.
+        self.assertNotIn("observe_tile( target )", sonar)
+        self.assertNotIn("seen.source != observation_source::visible", sonar)
+        self.assertNotIn("tile.impassable", sonar)
+        self.assertIn("if( !here.inbounds( target ) )", sonar)
+        self.assertIn("result.creatures[direction] > 0 && result.items[direction] > 0", sonar)
+
+    def test_uses_same_unrestricted_tile_reader_as_manual_scan(self):
+        assistive = (SRC / "a11y_world.cpp").read_text()
+        sonar = (SRC / "a11y_perception.cpp").read_text()
+        self.assertIn("unrestricted_tile scan_unrestricted_tile(", assistive)
+        self.assertIn("const unrestricted_tile tile = scan_unrestricted_tile( pos );", assistive)
+        self.assertIn("const unrestricted_tile tile = scan_unrestricted_tile( target );", sonar)
+        self.assertIn('#include "a11y_world.h"', sonar)
 
     def test_both_native_paths_use_same_observer(self):
         game = (SRC / "game.cpp").read_text()
