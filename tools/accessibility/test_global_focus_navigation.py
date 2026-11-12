@@ -78,7 +78,7 @@ class GlobalFocusNavigationTest(unittest.TestCase):
         self.assertIn("manager.isTouchExplorationEnabled()", self.tts)
         self.assertIn("manager.isTouchExplorationEnabled()", self.sound)
         self.assertIn("manager.isTouchExplorationEnabled()", self.splash)
-        self.assertIn("manager.isTouchExplorationEnabled()", self.controller)
+        self.assertIn("accessibility.isTouchExplorationEnabled()", self.controller)
 
 
 if __name__ == "__main__":
