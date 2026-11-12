@@ -2529,12 +2529,22 @@ void crafting_ui_impl::invalidate_info_panels()
 
 a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &ctxt )
 {
+    // The first reader snapshot can precede ImGui draw_controls() in headless
+    // Android mode. Rebuild first so the spoken list starts with recipes,
+    // never with the native keybinding/command tail.
+    if( recalc && !crafting_cats.empty() ) {
+        recalculate_recipes();
+    }
     auto snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
-    snapshot.summary += batch ? _( "Batch" ) :
-                        !filterstring.empty() ? string_format( _( "Filter: %s" ), filterstring ) :
-                        std::string( _( get_cat_unprefixed( tab.cur() ) ) ) + ". " +
-                        _( get_subcat_unprefixed( tab.cur(), subtab.cur() ) );
+    if( crafting_cats.empty() ) {
+        snapshot.summary += _( "No recipes available." );
+    } else {
+        snapshot.summary += batch ? _( "Batch" ) :
+                            !filterstring.empty() ? string_format( _( "Filter: %s" ), filterstring ) :
+                            std::string( _( get_cat_unprefixed( tab.cur() ) ) ) + ". " +
+                            _( get_subcat_unprefixed( tab.cur(), subtab.cur() ) );
+    }
     std::vector<a11y::semantic_node> rows;
     for( std::size_t i = 0; i < current.size(); ++i ) {
         const recipe &rec = *current[i];
@@ -2571,6 +2581,15 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
                  std::make_move_iterator( snapshot.nodes.end() ) );
     snapshot.nodes = std::move( rows );
+    if( current.empty() ) {
+        // An empty recipe category is content, not a command-only screen.
+        // Keep the long-press drawer separate even with no craftable items.
+        a11y::append_document( snapshot, "craft:no-recipes",
+                               _( "No recipes available." ),
+                               _( "No recipes available in the selected category or filter." ) );
+        snapshot.focus = "craft:no-recipes";
+        return snapshot;
+    }
     if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
         static_cast<std::size_t>( line ) >= available.size() ) {
         return snapshot;
@@ -2607,8 +2626,27 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 text += part + "\n";
             }
             a11y::append_document( documents, "craft:details", _( "Recipe details" ), text );
+            // Do not depend on the visual ImGui panel having been drawn.
+            // Headless spoken mode can publish the recipe before that panel
+            // fills displayed_description; derive its real text directly.
+            std::string description;
+            if( rec.is_nested() || rec.is_practice() ) {
+                description = rec.get_description( *crafter );
+            } else if( rec.result() ) {
+                if( !rec.variant().empty() ) {
+                    item result( rec.result() );
+                    result.set_itype_variant( rec.variant() );
+                    description = result.variant_description();
+                }
+                if( description.empty() ) {
+                    description = item::find_type( rec.result() )->description.translated();
+                }
+                if( description == "generic item template" ) {
+                    description.clear();
+                }
+            }
             a11y::append_document( documents, "craft:description", _( "Description" ),
-                                   displayed_description_recipe == &rec ? displayed_description : "" );
+                                   description );
             const temp_crafting_inventory &inventory = avail.inv_override ?
                     *avail.inv_override : crafter->crafting_inventory();
             a11y::append_requirements( documents, "craft:requirements", rec.simple_requirements(),

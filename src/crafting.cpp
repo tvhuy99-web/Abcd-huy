@@ -5204,9 +5204,10 @@ ret_val<void> Character::can_disassemble( const item &obj,
     const recipe &r = recipe_dictionary::get_uncraft( ( obj.typeId() == itype_disassembly ) ?
                       obj.components.only_item().typeId() : obj.typeId() );
 
-    // check sufficient light
-    if( lighting_craft_speed_multiplier( r ) == 0.0f ) {
-        return ret_val<void>::make_failure( _( "You can't see to craft!" ) );
+    // Disassembly is still subject to the engine lighting rules. Explain
+    // this as a disassembly limitation, not as an unrelated crafting error.
+    if( lighting_craft_speed_multiplier( r ) <= 0.0f ) {
+        return ret_val<void>::make_failure( _( "Too dark to disassemble this item. Move to a brighter area or turn on a light." ) );
     }
 
     // refuse to disassemble rotten items

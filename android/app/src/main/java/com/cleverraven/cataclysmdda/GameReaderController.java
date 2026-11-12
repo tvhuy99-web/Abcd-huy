@@ -1711,6 +1711,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (containsContent) {
             result.removeIf(GameReaderController::isAuxiliaryCommand);
+        } else if ("crafting".equals(snapshot.category)
+                || "construction".equals(snapshot.category)
+                || "inventory".equals(snapshot.category)
+                || "zones".equals(snapshot.category)
+                || "surroundings".equals(snapshot.category)) {
+            // Content-first screens must not become a command palette during
+            // an empty/early snapshot. Native adapters publish an explicit
+            // empty-state item; auxiliary commands stay behind long press.
+            result.clear();
         }
         return result;
     }
@@ -3705,8 +3714,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             full.append(document.label).append(".\n").append(document.detail);
         }
         if (full.length() == 0) { return false; }
-        speakDocument(documentReader.open(snapshot.contextKey(),
-                selected.id + ":linked-details", full.toString()));
+        documentReader.open(snapshot.contextKey(),
+                selected.id + ":linked-details", full.toString());
+        // This explicit two-finger request reads every linked section.
+        // LONG_TEXT is chunked by ReaderSpeechQueue for Android TTS; a
+        // normal focus move still announces only the concise row summary.
+        speakDocument(full.toString());
         return true;
     }
 
@@ -3764,7 +3777,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             // Yes/No choices carry the original question in node.detail,
             // so do not prepend snapshot.summary a second time.
-            feedback(information);
+            if (!node.detail.isEmpty() || information.length() > 320) {
+                // Explicit details belong in the long-text queue so short
+                // focus notifications cannot silently truncate them.
+                speakDocument(information);
+            } else {
+                feedback(information);
+            }
         }
     }
 

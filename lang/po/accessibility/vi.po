@@ -414,6 +414,15 @@ msgstr "Chưa thể chế tạo"
 msgid "Recipe details"
 msgstr "Chi tiết công thức"
 
+msgid "No recipes available."
+msgstr "Không có công thức nào."
+
+msgid "No recipes available in the selected category or filter."
+msgstr "Không có công thức trong nhóm hoặc bộ lọc đang chọn."
+
+msgid "Too dark to disassemble this item. Move to a brighter area or turn on a light."
+msgstr "Quá tối để tháo rã vật phẩm này. Hãy đến nơi sáng hơn hoặc bật đèn."
+
 msgid "Character requirements:"
 msgstr "Yêu cầu về nhân vật:"
 
