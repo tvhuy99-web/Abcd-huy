@@ -4589,3 +4589,12 @@ msgstr "Trang công thức trước"
 
 msgid "Next recipe page"
 msgstr "Trang công thức tiếp"
+
+msgid "Apply handbrake"
+msgstr "Kéo phanh tay"
+
+msgid "Apply the vehicle handbrake. This is not an attack."
+msgstr "Kéo phanh tay của phương tiện. Đây không phải là đòn tấn công."
+
+msgid "Process corpses, cut up materials or disassemble items on your current tile. Requirements and time depend on the work."
+msgstr "Xử lý xác, cắt nhỏ vật liệu hoặc tháo rã đồ ở ô hiện tại. Điều kiện và thời gian tùy công việc."

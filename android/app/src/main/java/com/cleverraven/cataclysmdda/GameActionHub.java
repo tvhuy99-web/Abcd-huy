@@ -92,8 +92,10 @@ final class GameActionHub {
 
     private static final String[][] ACTIONS = {
             {},
-            { "interact", "open", "close", "examine", "pickup", "pickup_all", "chat",
-                    "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash" },
+            { "interact", "open", "close", "examine", "examine_and_pickup",
+                    "reader:pickup_here", "pickup", "pickup_all", "chat",
+                    "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
+                    "butcher", "loot", "control_vehicle", "smash" },
             { "listitems", "reader:places", "map", "sky", "center", "zones" },
             { "LEVEL_UP", "LEVEL_DOWN", "open_movement", "cycle_move",
                     "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",

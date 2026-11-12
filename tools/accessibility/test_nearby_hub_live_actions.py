@@ -54,6 +54,31 @@ class NearbyHubLiveActionsTest(unittest.TestCase):
         self.assertIn('if (node.id.startsWith("reader:nearby:available:")) { continue; }',
                       self.reader)
 
+    def test_contextual_actions_cover_native_interaction_group(self):
+        group = self.hub.split("if (section == 1) {", 1)[0].split(
+            'private static final String[][] ACTIONS', 1)[1]
+        for action in ('"examine_and_pickup"', '"reader:pickup_here"',
+                       '"haul"', '"haul_toggle"', '"loot"', '"control_vehicle"'):
+            self.assertIn(action, group)
+            self.assertIn(action, self.world)
+
+    def test_native_checks_real_context_and_handbrake(self):
+        for token in ('viewer.is_hauling()', '"haul_toggle"',
+                      'viewer.in_vehicle', 'part_with_feature( "CONTROLS", true )',
+                      'ordinary_mount && id == "close"',
+                      'node.id == "smash" && viewer.controlling_vehicle',
+                      '!viewer.controlling_vehicle &&',
+                      'can_interact_at( ACTION_EXAMINE_AND_PICKUP, nearby_map, target )',
+                      'target == player_pos', '"reader:pickup_here"'):
+            self.assertIn(token, self.world)
+        self.assertIn('get_actions_disabled_mounted()', self.handle)
+
+    def test_salvage_only_and_sealed_butchery_are_detected(self):
+        self.assertIn('TFLAG_SEALED, p', self.action)
+        self.assertIn('valid_to_cut_up( nullptr, candidate )', self.action)
+        self.assertIn('for( item *tool : player_character.items_with(', self.action)
+        self.assertIn('salvage_actor', self.action)
+
     def test_short_accurate_no_target_feedback(self):
         self.assertIn('_( "Nothing to examine." )', self.game)
         self.assertIn('_( "No direct interaction." )', self.handle)

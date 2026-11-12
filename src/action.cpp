@@ -28,6 +28,8 @@
 #include "input_enums.h"
 #include "item.h"
 #include "item_location.h"
+#include "iuse.h"
+#include "iuse_actor.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -616,6 +618,10 @@ std::optional<input_event> hotkey_for_action( const action_id action,
 
 bool can_butcher_at( map &here, const tripoint_bub_ms &p )
 {
+    // The native butcher action refuses inaccessible sealed tiles.
+    if( here.has_flag( ter_furn_flag::TFLAG_SEALED, p ) ) {
+        return false;
+    }
     map_stack items = here.i_at( p );
     // Early exit when there's definitely nothing to butcher
     if( items.empty() ) {
@@ -638,7 +644,29 @@ bool can_butcher_at( map &here, const tripoint_bub_ms &p )
             has_item = true;
         }
     }
-    return has_corpse || has_item;
+    if( has_corpse || has_item ) {
+        return true;
+    }
+    // Native game::butcher also cuts salvageable items with a salvage tool.
+    // Match that capability instead of hiding the action on salvage-only tiles.
+    static const std::string salvage_string = "salvage";
+    const auto has_salvage_use = []( const item & tool ) {
+        return tool.get_usable_item( salvage_string ) != nullptr;
+    };
+    for( item *tool : player_character.items_with( has_salvage_use ) ) {
+        item *usable = tool->get_usable_item( salvage_string );
+        const salvage_actor *actor = dynamic_cast<const salvage_actor *>(
+                                          usable->get_use( salvage_string )->get_actor_ptr() );
+        if( actor == nullptr ) {
+            continue;
+        }
+        for( item &candidate : items ) {
+            if( actor->valid_to_cut_up( nullptr, candidate ) ) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool can_move_vertical_at( const map &here, const tripoint_bub_ms &p, int movez )

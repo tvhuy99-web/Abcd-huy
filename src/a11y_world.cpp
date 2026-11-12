@@ -35,6 +35,7 @@
 #include "map.h"
 #include "messages.h"
 #include "move_mode.h"
+#include "monster.h"
 #include "npc.h"
 #include "output.h"
 #include "options.h"
@@ -1053,6 +1054,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                    node.id == "examine_and_pickup" ) {
             node.detail = _( "Opens a spoken list of visible, nearby objects. "
                              "Browse freely; selecting an object uses the original game action." );
+        } else if( node.id == "smash" && viewer.controlling_vehicle ) {
+            // When driving, the native Smash key engages the handbrake.
+            // The contextual menu must never call that "Smash".
+            node.label = _( "Apply handbrake" );
+            node.detail = _( "Apply the vehicle handbrake. This is not an attack." );
         } else if( node.id == "open" || node.id == "close" || node.id == "smash" ) {
             node.detail = _( "Choose a target, then listen for the result. "
                              "The action may spend time or damage property." );
@@ -1062,8 +1068,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.detail = _( "Mark items from your tile and all eight neighboring tiles, "
                              "then confirm. Browsing does not pick anything up." );
         } else if( node.id == "butcher" ) {
-            node.detail = _( "Process corpses or disassemble items on your current tile. "
-                             "Requirements and time depend on the selected work." );
+            node.detail = _( "Process corpses, cut up materials or disassemble items on "
+                             "your current tile. Requirements and time depend on the work." );
         } else if( node.id == "inventory" ) {
             node.detail = _( "Browse carried items. Select an item for its original action "
                              "menu. Browsing never uses or drops an item." );
@@ -1109,23 +1115,40 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         const bool incorporeal = viewer.has_effect( effect_incorporeal_nearby );
         const bool handless = viewer.has_flag( no_hands_nearby );
         const bool mounted = viewer.is_mounted();
+        const bool ordinary_mount = mounted &&
+                                    ( !viewer.mounted_creature ||
+                                      !viewer.mounted_creature->has_flag( mon_flag_RIDEABLE_MECH ) );
         const auto permitted = [&]( const std::string & id ) {
             if( in_shell && ( id == "open" || id == "close" || id == "smash" ||
-                              id == "examine" || id == "pickup" || id == "pickup_all" ||
-                              id == "grab" || id == "butcher" ) ) {
+                              id == "examine" || id == "examine_and_pickup" ||
+                              id == "pickup" || id == "pickup_all" ||
+                              id == "reader:pickup_here" || id == "grab" ||
+                              id == "haul" || id == "haul_toggle" ||
+                              id == "butcher" || id == "loot" ||
+                              id == "control_vehicle" ) ) {
                 return false;
             }
             if( incorporeal && ( id == "open" || id == "close" || id == "smash" ||
                                  id == "pickup" || id == "pickup_all" ||
-                                 id == "grab" || id == "butcher" ) ) {
+                                 id == "reader:pickup_here" || id == "grab" ||
+                                 id == "haul" || id == "haul_toggle" ||
+                                 id == "butcher" || id == "loot" ) ) {
                 return false;
             }
             if( handless && ( id == "open" || id == "close" || id == "pickup" ||
-                              id == "pickup_all" || id == "grab" || id == "butcher" ) ) {
+                              id == "pickup_all" || id == "reader:pickup_here" ||
+                              id == "grab" || id == "haul" ||
+                              id == "haul_toggle" || id == "butcher" ||
+                              id == "loot" || id == "control_vehicle" ) ) {
                 return false;
             }
             if( mounted && ( id == "open" || id == "pickup" || id == "pickup_all" ||
-                             id == "grab" || id == "butcher" ) ) {
+                             id == "reader:pickup_here" || id == "grab" ||
+                             id == "haul" || id == "haul_toggle" ||
+                             id == "butcher" || id == "loot" ) ) {
+                return false;
+            }
+            if( ordinary_mount && id == "close" ) {
                 return false;
             }
             return true;
@@ -1137,6 +1160,20 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         };
         if( viewer.get_grab_type() != object_type::NONE ) {
             offer( "grab", "" );
+        }
+        if( viewer.is_hauling() ) {
+            offer( "haul_toggle", "" );
+        }
+        // Native Smash is repurposed as the handbrake while driving.
+        if( viewer.controlling_vehicle ) {
+            offer( "smash", "" );
+        }
+        if( viewer.in_vehicle ) {
+            if( const optional_vpart_position vp = nearby_map.veh_at( player_pos ) ) {
+                if( vp.part_with_feature( "CONTROLS", true ) ) {
+                    offer( "control_vehicle", vp->vehicle().name );
+                }
+            }
         }
         for( int dy = -1; dy <= 1; ++dy ) {
             for( int dx = -1; dx <= 1; ++dx ) {
@@ -1160,9 +1197,20 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 if( can_interact_at( ACTION_EXAMINE, nearby_map, target ) ) {
                     offer_interact( "examine" );
                 }
+                if( can_interact_at( ACTION_EXAMINE_AND_PICKUP, nearby_map, target ) ) {
+                    offer_interact( "examine_and_pickup" );
+                }
                 if( can_interact_at( ACTION_PICKUP, nearby_map, target ) ) {
                     offer_interact( "pickup" );
                     offer( "pickup_all", hint );
+                    offer( "haul", hint );
+                    offer( "haul_toggle", hint );
+                    // Loot is a zone-based activity. The game still checks whether
+                    // suitable zones and items are available when launched.
+                    offer( "loot", hint );
+                    if( target == player_pos ) {
+                        offer( "reader:pickup_here", hint );
+                    }
                 }
                 if( can_interact_at( ACTION_OPEN, nearby_map, target ) ) {
                     offer_interact( "open" );
@@ -1188,7 +1236,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                         offer( "interact", hint );
                     }
                 }
-                if( can_interact_at( ACTION_SMASH, nearby_map, target ) ) {
+                if( !viewer.controlling_vehicle &&
+                    can_interact_at( ACTION_SMASH, nearby_map, target ) ) {
                     offer( "smash", hint );
                 }
                 if( target != player_pos &&
@@ -1202,8 +1251,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
         }
         for( const std::string &id : {
-                    "interact", "open", "close", "examine", "pickup", "pickup_all",
-                    "chat", "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash"
+                    "interact", "open", "close", "examine", "examine_and_pickup",
+                    "reader:pickup_here", "pickup", "pickup_all", "chat",
+                    "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
+                    "butcher", "loot", "control_vehicle", "smash"
                 } ) {
             semantic_node marker;
             marker.id = "reader:nearby:available:" + id;
