@@ -2460,12 +2460,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
-    public boolean handleCraftingMainCategorySwipe(int vertical) {
-        if (vertical == 0 || snapshot == null || !"crafting".equals(snapshot.category)
+    public boolean handleCraftingMainCategorySwipe(int horizontal) {
+        if (horizontal == 0 || snapshot == null || !"crafting".equals(snapshot.category)
                 || commandPaletteOpen || comprehensiveMenu || editor != null
                 || debugReport != null || !foreground || !windowFocused
                 || lastSuspended || documentReader.isOpen()) { return false; }
-        return craftingCommand(vertical < 0 ? "PREV_TAB" : "NEXT_TAB");
+        return craftingCommand(horizontal < 0 ? "PREV_TAB" : "NEXT_TAB");
     }
 
     @Override
