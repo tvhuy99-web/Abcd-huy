@@ -1,5 +1,6 @@
 #include "a11y_perception.h"
 #include "a11y_item_text.h"
+#include "a11y_world.h"
 
 #include <map>
 #include <unordered_set>
@@ -241,7 +242,9 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
 
 directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin )
 {
-    // Scan only visible tiles on eight straight compass rays, 16 steps each.
+    // Keep the existing eight compass rays and 16-tile range. Match the
+    // unrestricted assistive map scan: furniture, walls and closed doors
+    // must not hide creatures or items on later tiles of the same ray.
     static constexpr int dx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
     static constexpr int dy[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
     directional_sonar_result result;
@@ -253,14 +256,11 @@ directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin )
             if( !here.inbounds( target ) ) {
                 break;
             }
-            const tile_observation seen = observe_tile( target );
-            if( seen.source != observation_source::visible ) {
-                continue;
-            }
-            if( result.creatures[direction] < 0 && !seen.seen_creatures.empty() ) {
+            const unrestricted_tile tile = scan_unrestricted_tile( target );
+            if( result.creatures[direction] < 0 && !tile.creatures.empty() ) {
                 result.creatures[direction] = distance;
             }
-            if( result.items[direction] < 0 && !seen.seen_items.empty() ) {
+            if( result.items[direction] < 0 && !tile.items.empty() ) {
                 result.items[direction] = distance;
             }
             if( result.creatures[direction] > 0 && result.items[direction] > 0 ) {
