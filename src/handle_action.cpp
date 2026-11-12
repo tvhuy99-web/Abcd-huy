@@ -4037,53 +4037,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_AUTOATTACK:
-            if( combat_attack_direction >= 0 && combat_attack_direction < 8 ) {
-                const int offsets[8][2] = {
-                    { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
-                    { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
-                };
-                const int dir = combat_attack_direction;
-                const tripoint_bub_ms tile = player_character.pos_bub() +
-                                             tripoint_rel_ms( offsets[dir][0], offsets[dir][1], 0 );
-                Creature *enemy = get_creature_tracker().creature_at( tile, true );
-                // Never call avatar_action::move() for a combat swipe.
-                // A missing, hidden, neutral or friendly creature means no
-                // attack and NO step into an empty neighboring tile.
-                if( enemy == nullptr || enemy->is_dead_state() ||
-                    !player_character.sees( here, *enemy ) ||
-                    enemy->attitude_to( player_character ) != Creature::Attitude::HOSTILE ) {
-                    add_msg( m_info, _( "No visible hostile creature in that direction. You did not move." ) );
-                    break;
-                }
-                if( player_character.has_flag( json_flag_CANNOT_ATTACK ) ) {
-                    add_msg( m_info, _( "You are incapable of attacking!" ) );
-                    break;
-                }
-                if( !player_character.try_break_relax_gas(
-                        _( "Your willpower asserts itself, and so do you!" ),
-                        _( "You're too pacified to strike anything…" ) ) ) {
-                    break;
-                }
-                if( !player_character.move_effects( true ) ) {
-                    player_character.set_moves( 0 );
-                    a11y::record_action_outcome( a11y::action_outcome_kind::blocked,
-                                                 _( "your condition" ) );
-                    break;
-                }
-                const std::string enemy_name = enemy->disp_name();
-                if( player_character.melee_attack( *enemy, true ) ) {
-                    a11y::record_action_outcome( a11y::action_outcome_kind::attacked, enemy_name );
-                }
-                if( monster *mon = dynamic_cast<monster *>( enemy ) ) {
-                    if( mon->is_hallucination() ) {
-                        mon->die( &here, &player_character );
-                    }
-                    draw_hit_mon( tile, *mon, mon->is_dead() );
-                } else if( npc *np = dynamic_cast<npc *>( enemy ) ) {
-                    np->make_angry();
-                }
-                break;
-            }
+            // The game's original Autoattack command remains automatic:
+            // it chooses the best target in reach using native rules.
             avatar_action::autoattack( player_character, here );
             break;
 
@@ -4230,10 +4185,30 @@ bool game::handle_action()
         if( a11y::enabled() && action.rfind( "A11Y_INTERNAL_COMBAT_ATTACK_", 0 ) == 0 ) {
             const std::string direction = action.substr( 28 );
             if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
-                combat_attack_direction = direction[0] - '0';
+                const int dir = direction[0] - '0';
                 const item_location held = player_character.get_wielded_item();
-                act = held && held->is_gun() && !held->gun_current_mode().melee() ?
-                      ACTION_FIRE : ACTION_AUTOATTACK;
+                if( held && held->is_gun() && !held->gun_current_mode().melee() ) {
+                    // Gun gestures retain their native directional firing
+                    // path and aim mode, unchanged.
+                    combat_attack_direction = dir;
+                    act = ACTION_FIRE;
+                } else {
+                    // CDDA's ordinary eight-direction movement is also its
+                    // melee control. Walking into a creature lets the game
+                    // decide whether to attack, displace, talk, or refuse;
+                    // an empty square follows the game's walking rules.
+                    // Do not invent a hostile-only filter or a no-move
+                    // fallback. Use the normal action pipeline so safety,
+                    // status effects, terrain, isometric rotation and turn
+                    // costs behave exactly as with a native movement key.
+                    constexpr action_id step_actions[8] = {
+                        ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT,
+                        ACTION_MOVE_RIGHT, ACTION_MOVE_BACK_RIGHT,
+                        ACTION_MOVE_BACK, ACTION_MOVE_BACK_LEFT,
+                        ACTION_MOVE_LEFT, ACTION_MOVE_FORTH_LEFT
+                    };
+                    act = step_actions[dir];
+                }
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_NEXT" ) {
             combat_cycle_direction = 1;
