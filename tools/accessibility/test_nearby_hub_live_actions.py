@@ -34,7 +34,9 @@ class NearbyHubLiveActionsTest(unittest.TestCase):
         self.assertIn("available == null || !available.enabled", group)
         self.assertIn("return result;", group)
         self.assertIn("for (String id : ACTIONS[section]) { addNode(", self.hub)
-        self.assertIn('"grab", "butcher", "smash"', self.hub)
+        for action in ('"grab"', '"butcher"', '"smash"',
+                       '"haul"', '"haul_toggle"', '"loot"'):
+            self.assertIn(action, self.hub)
 
     def test_native_only_publishes_current_visible_usable_actions(self):
         section = self.world.split(
