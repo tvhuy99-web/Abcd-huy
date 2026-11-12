@@ -2644,8 +2644,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 default: break;
             }
-            // Straight one-finger strokes attack the four cardinal
-            // directions; bent strokes now attack the four diagonals.
+            // Eight directional strokes use native gameplay. Gun swipes
+            // fire; unarmed or melee swipes use the matching regular move
+            // key (including the game's bump-to-attack and interactions).
+            // Bent strokes retain the four diagonals.
             int direction = -1;
             switch (gestureId) {
                 case "swipe_up": direction = 0; break;
