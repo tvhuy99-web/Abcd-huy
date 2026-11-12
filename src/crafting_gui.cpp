@@ -2887,7 +2887,12 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         const int page = line / page_size;
         const int first = ( page + ( intent.node == "craft:page:next" ? 1 : -1 ) ) * page_size;
         if( first >= 0 && first < static_cast<int>( current.size() ) ) {
-            line = first;
+            // Next starts at the beginning of the next page. Previous lands
+            // on the last recipe of the previous page so a single swipe
+            // backward never skips 79 recipes.
+            line = intent.node == "craft:page:previous" ?
+                   std::min( first + page_size - 1, static_cast<int>( current.size() ) - 1 ) :
+                   first;
             invalidate_info_panels();
         }
         return "TIMEOUT";
