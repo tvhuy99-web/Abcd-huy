@@ -126,8 +126,9 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn("if (!quantityRow) {", ctrl)
         self.assertIn("R.string.a11yPosition, selected + 1, entries.size()", ctrl)
         self.assertIn(
-            'listener.speak(items.get(selected).label + ", "',
+            'listener.speak(items.get(selected).label + ". "',
             self.editor)
+        self.assertIn('R.string.a11yControlButton', self.editor)
         native = (ROOT / "src/inventory_ui.cpp").read_text(encoding="utf-8")
         self.assertIn('node.detail = location.describe( &owner.u );', native)
         self.assertIn('node.field_type = "int";', native)
