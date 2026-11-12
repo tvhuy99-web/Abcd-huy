@@ -27,6 +27,18 @@ class CombatRepairContracts(unittest.TestCase):
         cls.controller = load(ANDROID / "GameReaderController.java")
         cls.po = load(ROOT / "lang/po/accessibility/vi.po")
 
+    def test_combat_shot_debug_log_formats_float_recoil_correctly(self):
+        # Character::recoil_total() returns double, not an integer.
+        # A %%d formatter here opens a native debug error during gunfire.
+        shot_log = self.ranged.split('diagnostic_event( "COMBAT_SHOT"', 1)[1]
+        shot_log = shot_log.split(");", 1)[0]
+        self.assertIn(
+            "weapon=%s ammo=%s range=%d recoil=%.1f raw_impact=%.1f",
+            shot_log,
+        )
+        self.assertNotIn("recoil=%d", shot_log)
+        self.assertIn("recoil_total()", shot_log)
+
     def test_quick_fire_checks_real_gunmode_before_opening_aim(self):
         fire = self.handler.split("static void fire()", 1)[1].split(
             "// try firing turrets", 1)[0]

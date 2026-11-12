@@ -1261,7 +1261,7 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         dealt_projectile_attack shot;
         if( is_avatar() && a11y::android::performance_profiling_enabled() ) {
             a11y::android::diagnostic_event( "COMBAT_SHOT",
-                                             string_format( "weapon=%s ammo=%s range=%d recoil=%d raw_impact=%.1f",
+                                             string_format( "weapon=%s ammo=%s range=%d recoil=%.1f raw_impact=%.1f",
                                                             gun.typeId().str(), projectile_use_ammo_id.str(),
                                                             rl_dist( pos_bub( here ), aim ), recoil_total(),
                                                             static_cast<double>( proj.impact.total_damage() ) ) );
