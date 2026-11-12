@@ -4568,3 +4568,24 @@ msgstr "Danh mục hiện tại không có công thức. Nhóm chế tạo có %
 
 msgid "No recipes shown."
 msgstr "Không có công thức trong danh sách hiện tại."
+
+msgid "Estimated time: %s"
+msgstr "Thời gian dự kiến: %s"
+
+msgid "All categories"
+msgstr "Tất cả"
+
+msgid "%d recipes"
+msgstr "%d công thức"
+
+msgid "Recipe group: %s"
+msgstr "Nhóm công thức: %s"
+
+msgid "(recipe %1$d of %2$d)"
+msgstr "(công thức %1$d trên %2$d)"
+
+msgid "Previous recipe page"
+msgstr "Trang công thức trước"
+
+msgid "Next recipe page"
+msgstr "Trang công thức tiếp"
