@@ -3854,6 +3854,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(travelDetailSpeech(travelState()));
             return;
         }
+        // The pocket chooser has synthetic controls that are not native
+        // nodes. Speak the actual focused control, not the underlying
+        // container item, while still allowing real pocket/item rows to
+        // use their full native detail request.
+        if (pocketStage == 1 || (pocketStage == 3 &&
+                (POCKET_CONFIRM_NODE.equals(focus) || POCKET_CANCEL_NODE.equals(focus)))) {
+            feedback(pocketChoiceSpeech());
+            return;
+        }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
             // Native item information is fetched only on explicit request.
