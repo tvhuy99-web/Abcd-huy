@@ -1093,6 +1093,24 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
             }
         }
+        // Expose the actual control type, in addition to the value and position.
+        // The live world cursor is descriptive, not a menu button.
+        int roleLabel = 0;
+        if (!"DEFAULTMODE".equals(snapshot == null ? "" : snapshot.category)) {
+            if ("checkbox".equals(node.role)) {
+                roleLabel = R.string.a11yControlCheckbox;
+            } else if ("choice".equals(node.fieldType) || "combobox".equals(node.role)) {
+                roleLabel = R.string.a11yControlChoice;
+            } else if ("int".equals(node.fieldType) || "float".equals(node.fieldType)
+                    || "slider".equals(node.role)) {
+                roleLabel = R.string.a11yControlSlider;
+            } else if ("string".equals(node.fieldType) || "textbox".equals(node.role)) {
+                roleLabel = R.string.a11yControlTextField;
+            } else if ("button".equals(node.role) && node.actions.contains("activate")) {
+                roleLabel = R.string.a11yControlButton;
+            }
+        }
+        if (roleLabel != 0) { text.append(". ").append(activity.getString(roleLabel)); }
         if (spokenPosition > 0 && spokenTotal > 0) {
             text.append(", ").append(activity.getString(
                     R.string.a11yPosition, spokenPosition, spokenTotal));
@@ -3133,7 +3151,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (entries.isEmpty() || selected < 0 || selected >= entries.size()) {
             return "";
         }
-        return entries.get(selected).label + ", "
+        return entries.get(selected).label + ". "
+                + activity.getString(R.string.a11yControlButton) + ", "
                 + activity.getString(R.string.a11yPosition, selected + 1, entries.size());
     }
 

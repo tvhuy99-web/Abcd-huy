@@ -77,7 +77,9 @@ public final class TtsSettingsActivity extends Activity {
             }
 
             @Override
-            public void goBack() { TtsSettingsActivity.this.finish(); }
+            public void goBack() {
+                if (!surface.dismissChoiceList()) { TtsSettingsActivity.this.finish(); }
+            }
 
             @Override
             public boolean leftHandedNavigation() {
@@ -446,7 +448,7 @@ public final class TtsSettingsActivity extends Activity {
     private boolean usesTalkBack() {
         AccessibilityManager manager = (AccessibilityManager)
                 getSystemService(ACCESSIBILITY_SERVICE);
-        return manager != null && manager.isEnabled();
+        return manager != null && manager.isTouchExplorationEnabled();
     }
 
     private void speakLocal(String text) {
@@ -463,6 +465,11 @@ public final class TtsSettingsActivity extends Activity {
         } else {
             speakLocal(message);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!surface.dismissChoiceList()) { super.onBackPressed(); }
     }
 
     @Override

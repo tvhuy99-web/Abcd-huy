@@ -6,6 +6,8 @@ import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.accessibility.AccessibilityNodeInfo;
+import android.widget.Button;
 import android.widget.CompoundButton;
 import android.widget.LinearLayout;
 import android.widget.ScrollView;
@@ -21,6 +23,8 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         boolean isActive();
         void speak(String id, String text);
         void stopSpeech();
+        /** A new focused control supersedes the previous spoken control. */
+        default void interruptForFocus() { stopSpeech(); }
         /** Return from this outer Android screen without saving draft settings. */
         void goBack();
         boolean leftHandedNavigation();
@@ -31,6 +35,9 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     private final Listener listener;
     private final GestureDetector detector;
     private final ArrayList<View> items = new ArrayList<>();
+    private View primaryContent;
+    private Spinner choosingSpinner;
+    private int previousFormFocus;
     private int focus;
     private int downFocus = -1;
     private int previousTapFocus = -1;
@@ -92,6 +99,13 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     }
 
     public void setContent(View content) {
+        // The caller's real form remains intact when a spoken choice list opens.
+        choosingSpinner = null;
+        primaryContent = content;
+        showContent(content, 0);
+    }
+
+    private void showContent(View content, int initialFocus) {
         removeAllViews();
         items.clear();
         LinearLayout column = new LinearLayout(getContext());
@@ -106,11 +120,81 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         addView(column, new ScrollView.LayoutParams(
                 ViewGroup.LayoutParams.MATCH_PARENT, ViewGroup.LayoutParams.WRAP_CONTENT));
         collect(content);
-        focus = 0;
+        annotateTalkBackPositions();
+        focus = items.isEmpty() ? 0 : Math.max(0, Math.min(initialFocus, items.size() - 1));
         previousTapFocus = -1;
         activateOnDoubleTap = false;
         contentGeneration++;
         post(this::speakFocused);
+    }
+
+    /** Keep native Android semantics, adding the same item index as the spoken reader. */
+    private void annotateTalkBackPositions() {
+        final int total = items.size();
+        for (int i = 0; i < total; i++) {
+            final View item = items.get(i);
+            final String position = getContext().getString(R.string.a11yPosition, i + 1, total);
+            item.setAccessibilityDelegate(new View.AccessibilityDelegate() {
+                @Override public void onInitializeAccessibilityNodeInfo(
+                        View host, AccessibilityNodeInfo info) {
+                    super.onInitializeAccessibilityNodeInfo(host, info);
+                    CharSequence text = info.getContentDescription();
+                    if (text == null || text.length() == 0) { text = info.getText(); }
+                    if ((text == null || text.length() == 0) && host instanceof Spinner) {
+                        Object selected = ((Spinner) host).getSelectedItem();
+                        text = selected == null ? "" : selected.toString();
+                    }
+                    if (text != null && text.length() > 0) {
+                        info.setContentDescription(text + ", " + position);
+                    }
+                }
+            });
+        }
+    }
+
+    private int controlRole(View view) {
+        if (view instanceof Spinner) { return R.string.a11yControlChoice; }
+        if (view instanceof SeekBar) { return R.string.a11yControlSlider; }
+        if (view instanceof CompoundButton) { return R.string.a11yControlCheckbox; }
+        if (view instanceof Button) { return R.string.a11yControlButton; }
+        return R.string.a11yControlText;
+    }
+
+    /** The same select-by-list interaction as TalkBack's native Spinner popup. */
+    private void openChoiceList(Spinner spinner) {
+        if (spinner.getCount() == 0 || choosingSpinner != null) { return; }
+        previousFormFocus = focus;
+        choosingSpinner = spinner;
+        LinearLayout choices = new LinearLayout(getContext());
+        choices.setOrientation(LinearLayout.VERTICAL);
+        TextView title = new TextView(getContext());
+        title.setText(spinner.getPrompt());
+        title.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        choices.addView(title);
+        final int selected = Math.max(0, spinner.getSelectedItemPosition());
+        for (int i = 0; i < spinner.getCount(); i++) {
+            final int option = i;
+            Button entry = new Button(getContext());
+            entry.setText(spinner.getItemAtPosition(i).toString());
+            entry.setOnClickListener(v -> {
+                spinner.setSelection(option);
+                dismissChoiceList();
+            });
+            choices.addView(entry);
+        }
+        Button cancel = new Button(getContext());
+        cancel.setText(R.string.a11yTtsCancel);
+        cancel.setOnClickListener(v -> dismissChoiceList());
+        choices.addView(cancel);
+        showContent(choices, selected);
+    }
+
+    /** Back closes a nested choice list before leaving the settings screen. */
+    public boolean dismissChoiceList() {
+        if (choosingSpinner == null) { return false; }
+        choosingSpinner = null;
+        showContent(primaryContent, previousFormFocus);
+        return true;
     }
 
     private void collect(View view) {
@@ -149,15 +233,22 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         } else {
             text = view.toString();
         }
-        if (!view.isEnabled()) { text += ". " + getContext().getString(R.string.a11yReaderDisabledEntry); }
+        text += ". " + getContext().getString(controlRole(view))
+                + ", " + getContext().getString(R.string.a11yPosition, focus + 1, items.size());
+        if (!view.isEnabled()) {
+            text += ". " + getContext().getString(R.string.a11yReaderDisabledEntry);
+        }
         view.requestRectangleOnScreen(new Rect(0, 0, view.getWidth(), view.getHeight()), true);
+        // Without the interruption the speech session rejects a rapid focus change.
+        listener.interruptForFocus();
         listener.speak("bootstrap-focus-" + focus, text);
     }
 
     private void navigate(int delta) {
         if (items.isEmpty()) { return; }
-        int direction = listener.leftHandedNavigation() ? -delta : delta;
-        focus = Math.floorMod(focus + direction, items.size());
+        // Fixed menu rule throughout the app: right = next, left = previous.
+        // Left-handed preferences may affect other gestures, never list order.
+        focus = Math.floorMod(focus + delta, items.size());
         speakFocused();
     }
 
@@ -173,7 +264,7 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
 
     private void handleSwipe(float dx, float dy) {
         if (Math.abs(dx) > Math.abs(dy)) {
-            navigate(dx < 0 ? 1 : -1);
+            navigate(dx > 0 ? 1 : -1);
         } else {
             adjustFocusedSetting(dy < 0 ? 1 : -1);
         }
@@ -183,14 +274,8 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         if (items.isEmpty()) { return; }
         View view = items.get(focus);
         if (view instanceof Spinner && view.isEnabled()) {
-            // For self-voicing gestures, activating a dropdown selects the
-            // next item. With TalkBack, Android shows the normal popup list.
-            Spinner spinner = (Spinner) view;
-            if (spinner.getCount() > 0) {
-                spinner.setSelection((spinner.getSelectedItemPosition() + 1)
-                        % spinner.getCount());
-                post(this::speakFocused);
-            }
+            // Do not silently rotate choices: display every available option.
+            openChoiceList((Spinner) view);
         } else if (view.isEnabled() && view.isClickable()) {
             view.performClick();
         } else {

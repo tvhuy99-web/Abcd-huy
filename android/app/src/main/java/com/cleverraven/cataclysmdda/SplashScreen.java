@@ -101,7 +101,7 @@ public class SplashScreen extends Activity {
             return false;
         }
         AccessibilityManager manager = (AccessibilityManager) getSystemService(ACCESSIBILITY_SERVICE);
-        return manager == null || !manager.isEnabled();
+        return manager == null || !manager.isTouchExplorationEnabled();
     }
 
     private void ensureBootstrapSpeech() {
@@ -330,6 +330,13 @@ public class SplashScreen extends Activity {
 
             @Override
             public void goBack() { SplashScreen.this.onBackPressed(); }
+
+            @Override
+            public void interruptForFocus() {
+                // Focus navigation must not set the persistent manual mute flag.
+                pendingBootstrapSpeech = null;
+                if (bootstrapSpeech != null) { bootstrapSpeech.cancel(); }
+            }
 
             @Override
             public void stopSpeech() {

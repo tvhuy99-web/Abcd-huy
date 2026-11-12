@@ -183,6 +183,12 @@
     <string name="a11yMusicVolumeValue">Music volume: %1$d</string>
     <string name="a11yEffectsEnabled">Sound effects</string>
     <string name="a11yEffectsVolumeValue">Effects volume: %1$d</string>
+    <string name="a11yControlButton">Button</string>
+    <string name="a11yControlCheckbox">Checkbox</string>
+    <string name="a11yControlSlider">Slider</string>
+    <string name="a11yControlChoice">Choice list</string>
+    <string name="a11yControlTextField">Text field</string>
+    <string name="a11yControlText">Text</string>
     <string name="a11yGameSettingsTitle">Settings</string>
     <string name="a11yGameSettingsExplanation">All existing game options remain in Options in the System menu. Voice, accessibility, and backup settings are below.</string>
     <string name="a11yAccessibilitySettingsTitle">Accessibility settings</string>

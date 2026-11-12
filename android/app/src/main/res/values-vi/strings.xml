@@ -183,6 +183,12 @@
     <string name="a11yMusicVolumeValue">Âm lượng nhạc: %1$d</string>
     <string name="a11yEffectsEnabled">Hiệu ứng âm thanh</string>
     <string name="a11yEffectsVolumeValue">Âm lượng hiệu ứng: %1$d</string>
+    <string name="a11yControlButton">Nút</string>
+    <string name="a11yControlCheckbox">Hộp kiểm</string>
+    <string name="a11yControlSlider">Thanh trượt</string>
+    <string name="a11yControlChoice">Danh sách lựa chọn</string>
+    <string name="a11yControlTextField">Trường nhập văn bản</string>
+    <string name="a11yControlText">Văn bản</string>
     <string name="a11yGameSettingsTitle">Cài đặt</string>
     <string name="a11yGameSettingsExplanation">Tất cả tùy chọn trò chơi hiện có vẫn ở mục Tùy chọn của menu Hệ thống. Cài đặt TTS, trợ năng và sao lưu nằm bên dưới.</string>
     <string name="a11yAccessibilitySettingsTitle">Cài đặt trợ năng</string>

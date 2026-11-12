@@ -180,8 +180,9 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     static int navigationDeltaForHorizontalSwipe(float dx, boolean leftHanded) {
-        int delta = dx > 0 ? 1 : -1;
-        return leftHanded ? -delta : delta;
+        // Spoken lists keep one direction policy regardless of handedness.
+        // World movement and other directional gestures remain untouched.
+        return dx > 0 ? 1 : -1;
     }
 
     private boolean valid() {

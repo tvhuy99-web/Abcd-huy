@@ -23,7 +23,7 @@ public class BootstrapSelfVoiceSurfaceTest {
     @Test
     public void doubleTapRunsTheFocusedStartupActionExactlyOnce() {
         AtomicInteger clicks = new AtomicInteger();
-        try (ActivityScenario<ReaderSetupActivity> scenario = launchSetup()) {
+        try (ActivityScenario<GameSettingsActivity> scenario = launchSettings()) {
             scenario.onActivity(activity -> {
                 Context context = activity;
                 BootstrapSelfVoiceSurface surface = new BootstrapSelfVoiceSurface(context,
@@ -62,10 +62,9 @@ public class BootstrapSelfVoiceSurfaceTest {
         }
     }
 
-    private ActivityScenario<ReaderSetupActivity> launchSetup() {
+    private ActivityScenario<GameSettingsActivity> launchSettings() {
         android.content.Intent intent = new android.content.Intent(
-                InstrumentationRegistry.getInstrumentation().getTargetContext(), ReaderSetupActivity.class);
-        intent.putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true);
+                InstrumentationRegistry.getInstrumentation().getTargetContext(), GameSettingsActivity.class);
         return ActivityScenario.launch(intent);
     }
 
