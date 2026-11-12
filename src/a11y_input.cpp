@@ -256,6 +256,13 @@ std::optional<std::string> registered_intent( const input_context &context,
             // way out of this four-choice distraction confirmation.
             return "NO";
         }
+        // World creation registers its own QUIT action instead of the
+        // generic one. Back must reach the existing "abort world generation?"
+        // confirmation, not report the screen as unsupported.
+        if( context.category_id() == "WORLDGEN_CONFIRM_DIALOG" &&
+            std::find( actions.begin(), actions.end(), "WORLDGEN_CONFIRM.QUIT" ) != actions.end() ) {
+            return "WORLDGEN_CONFIRM.QUIT";
+        }
         for( const char *const candidate : { "QUIT", "UILIST.QUIT", "TEXT.QUIT", "CANCEL" } ) {
             if( std::find( actions.begin(), actions.end(), candidate ) != actions.end() ) {
                 return candidate;

@@ -4660,3 +4660,16 @@ msgstr "Hình phạt do làm việc quá sức: %s"
 #, c-format
 msgid "Sound level: %d"
 msgstr "Mức âm thanh: %d"
+
+msgid "Create New World"
+msgstr "Tạo thế giới mới"
+
+msgid "Active mod load order"
+msgstr "Thứ tự nạp mod đang bật"
+
+msgid "Mod selection commands"
+msgstr "Các lệnh quản lý mod"
+
+#, c-format
+msgid "Options group: %s"
+msgstr "Nhóm tùy chọn: %s"
