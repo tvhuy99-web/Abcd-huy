@@ -159,8 +159,10 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("speakInlineDetail(details.toString());", detail)
         self.assertNotIn("showHubActionChoices();", detail)
         # The explicit hold gesture still owns gesture assignment/favorites.
-        self.assertIn("if (comprehensiveMenu) {\\n            showHubActionChoices();",
-                      self.java)
+        context_menu = self.java.split("public void openContextActions() {", 1)[1].split(
+            "private void closeContextActions()", 1
+        )[0]
+        self.assertIn("showHubActionChoices();", context_menu)
 
     def test_linked_detail_waits_for_native_selected_row(self):
         self.assertIn("private boolean readLinkedDetails(ReaderSnapshot.Node selected)", self.java)
