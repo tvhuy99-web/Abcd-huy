@@ -2299,6 +2299,47 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         List<ReaderSnapshot.Node> filtered = visibleNodes();
         if (filtered.isEmpty()) { return; }
+        // The recipe list and the detail documents share one native snapshot,
+        // but one-finger LEFT/RIGHT means recipes ONLY. Never wrap from the
+        // first recipe to "Crafting conditions"/tool requirements at the end.
+        if ("crafting".equals(snapshot.category) && !commandPaletteOpen) {
+            List<ReaderSnapshot.Node> recipeNodes = new ArrayList<>();
+            for (ReaderSnapshot.Node node : filtered) {
+                if (node.id.startsWith("recipe:")) { recipeNodes.add(node); }
+            }
+            if (!recipeNodes.isEmpty()) {
+                int recipeIndex = -1;
+                for (int i = 0; i < recipeNodes.size(); i++) {
+                    if (recipeNodes.get(i).id.equals(focus)) {
+                        recipeIndex = i;
+                        break;
+                    }
+                }
+                if (recipeIndex < 0) {
+                    focus = recipeNodes.get(0).id;
+                    render();
+                    send("focus", "");
+                    readCurrent();
+                    return;
+                }
+                int nextRecipe = recipeIndex + (delta > 0 ? 1 : -1);
+                if (nextRecipe >= recipeNodes.size()) {
+                    if (craftingCommand("craft:page:next")) { return; }
+                    readCurrent(); // Already at the last recipe.
+                    return;
+                }
+                if (nextRecipe < 0) {
+                    if (craftingCommand("craft:page:previous")) { return; }
+                    readCurrent(); // Already at the first recipe.
+                    return;
+                }
+                focus = recipeNodes.get(nextRecipe).id;
+                render();
+                send("focus", "");
+                readCurrent();
+                return;
+            }
+        }
         // Surroundings uses 80-row native pages to bound snapshot size.
         // Left/right advance across a page boundary without making the
         // player navigate artificial "Next page" list items.
@@ -2310,19 +2351,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (delta < 0 && index() == 0
                     && surroundingsCommand("nearby:page:previous")) {
                 return;
-            }
-        }
-        // Global All can contain many recipes. A horizontal swipe at the
-        // last/first recipe moves seamlessly across native 80-recipe pages.
-        if ("crafting".equals(snapshot.category) && !commandPaletteOpen
-                && focus.startsWith("recipe:")) {
-            ReaderSnapshot.Node selectedRecipe = snapshot.find(focus);
-            if (selectedRecipe != null && selectedRecipe.position > 0) {
-                if (delta > 0 && selectedRecipe.position % 80 == 0
-                        && craftingCommand("craft:page:next")) { return; }
-                if (delta < 0 && selectedRecipe.position > 1
-                        && (selectedRecipe.position - 1) % 80 == 0
-                        && craftingCommand("craft:page:previous")) { return; }
             }
         }
         // All spoken lists wrap both ways: end -> first, first -> end.
