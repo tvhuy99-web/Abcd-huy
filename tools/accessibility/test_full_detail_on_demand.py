@@ -144,7 +144,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("speakInlineDetail(full.toString());", linked)
         self.assertNotIn("documentReader.open(", linked)
         detail = self.java.split("public void detail() {", 1)[1].split(
-            "public void spellFocused()", 1
+            "private void announceAccessibility(", 1
         )[0]
         self.assertIn("speakInlineDetail(node.detail);", detail)
         self.assertIn("speakInlineDetail(information);", detail)
