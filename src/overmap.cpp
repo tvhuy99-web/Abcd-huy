@@ -1403,7 +1403,7 @@ void overmap::migrate_camps( const std::vector<tripoint_abs_omt> &points ) const
         // through overmap_buffer.find_camp(). Check its own camp registry
         // first: an old-world camp must never be added twice during the
         // legacy terrain migration. Keep the existing named camp intact.
-        if( camps.find( point ) != camps.end() ) {
+        if( camps.find( point.xy() ) != camps.end() ) {
             continue;
         }
         std::optional<basecamp *> bcp = overmap_buffer.find_camp( point.xy() );

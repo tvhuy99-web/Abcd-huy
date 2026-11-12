@@ -26,8 +26,15 @@ class SessionDebugLogFixes(unittest.TestCase):
         migration = self.overmap.split("void overmap::migrate_camps(", 1)[1].split(
             "oter_id overmap::get_or_migrate_oter(", 1
         )[0]
-        self.assertIn("camps.find( point ) != camps.end()", migration)
-        self.assertLess(migration.index("camps.find( point ) != camps.end()"),
+        # Camp registry keys are point_abs_omt, not tripoint_abs_omt.
+        # The original 3-D lookup compiled in source-only tests but failed
+        # the Android NDK build. Keep a type-safe 2-D lookup before inserting.
+        header = (SRC / "overmap.h").read_text("utf-8")
+        self.assertIn("std::map<point_abs_omt, basecamp> camps;", header)
+        self.assertIn("const tripoint_abs_omt &point : points", migration)
+        self.assertIn("camps.find( point.xy() ) != camps.end()", migration)
+        self.assertNotIn("camps.find( point )", migration)
+        self.assertLess(migration.index("camps.find( point.xy() ) != camps.end()"),
                         migration.index('get_map().add_camp( point, "faction_camp", false );'))
         # Keep genuine conflicting-camp diagnostics intact elsewhere.
         insertion = self.overmap.split("void overmap::add_camp(", 1)[1].split(
