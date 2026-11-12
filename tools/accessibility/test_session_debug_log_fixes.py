@@ -63,7 +63,7 @@ class SessionDebugLogFixes(unittest.TestCase):
     def test_crafting_discriminates_empty_filter_from_no_known_recipes(self):
         self.assertIn("initial_accessible_recipe_check_done", self.crafting)
         self.assertIn('subtab.cur() == "CSC_ALL"', self.crafting)
-        self.assertIn("if( current.empty() && available_recipes && !available_recipes->empty()", self.crafting)
+        self.assertIn("if( current.empty() && available_recipes && available_recipes->size() > 0", self.crafting)
         self.assertIn('diagnostic_event( "CRAFT_RECIPE_SCOPE"', self.crafting)
         self.assertIn("crafter->get_learned_recipes().size()", self.crafting)
         for phrase in (
