@@ -7,6 +7,7 @@
 #include <imgui/imgui_internal.h>
 #include <iterator>
 #include <list>
+#include <map>
 #include <memory>
 #include <set>
 #include <tuple>
