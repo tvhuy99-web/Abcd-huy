@@ -11,8 +11,8 @@ class ExternalScreenGestures(unittest.TestCase):
     def test_two_finger_down_goes_back_without_one_finger_fallthrough(self):
         detector = (JAVA / "TwoFingerBackGesture.java").read_text(encoding="utf-8")
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
-        // The retired ReaderSetupActivity now redirects to GameSettingsActivity.
-        // All new settings screens use the shared, tested voice surface.
+        # The retired ReaderSetupActivity now redirects to GameSettingsActivity.
+        # All new settings screens use the shared, tested voice surface.
         settings = (JAVA / "GameSettingsActivity.java").read_text(encoding="utf-8")
         accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
         backup = (JAVA / "BackupRestoreActivity.java").read_text(encoding="utf-8")
