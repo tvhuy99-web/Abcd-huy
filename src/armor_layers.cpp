@@ -854,7 +854,9 @@ struct armor_layers_reader {
                     return std::nullopt;
                 }
                 if( intent.action == "read_detail" ) {
-                    a11y::announce_full_item_info( **found );
+                    a11y::announce_full_item_info( **found,
+                                                   item_detail( **found, current_tab(),
+                                                   static_cast<int>( std::distance( shown.begin(), found ) ) ) );
                     return "TIMEOUT";
                 }
                 leftListIndex = static_cast<int>( std::distance( shown.begin(), found ) );
