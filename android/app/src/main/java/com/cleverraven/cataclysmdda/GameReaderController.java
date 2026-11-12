@@ -1033,12 +1033,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
             } else if (requestedDetail) {
-                // A request names one live item, not a gameplay message. The
-                // original text is one document, assembled before speech so
-                // no paragraphs can be evicted by the bounded queue.
-                documentReader.open(snapshot.contextKey(),
-                        pendingItemDetailNode + ":full-info", spokenMessage);
-                speakDocument(spokenMessage);
+                // Two fingers request speech, not a new navigation mode.
+                // ReaderSpeechQueue chunks this ONE request internally,
+                // so the whole item description can be heard without
+                // changing the focused row or requiring an extra Back.
+                speakInlineDetail(spokenMessage);
             } else if (extendedScan) {
                 // Reading sixteen unrestricted map cells may outlive the
                 // eight-second event TTL; use the document-length channel.
@@ -3827,12 +3826,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Begin with the focused row identity and its concise state, then
         // speak all accompanying native detail documents in order.
         full.insert(0, nodeText(selected, true) + "\n\n");
-        documentReader.open(snapshot.contextKey(),
-                selected.id + ":linked-details", full.toString());
-        // This explicit two-finger request reads every linked section.
-        // LONG_TEXT is chunked by ReaderSpeechQueue for Android TTS; a
-        // normal focus move still announces only the concise row summary.
-        speakDocument(full.toString());
+        // Keep the selected row active. These facts belong to the current
+        // row, not to a nested document screen that hijacks left/right swipes.
+        speakInlineDetail(full.toString());
         return true;
     }
 
@@ -3887,11 +3883,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (readLinkedDetails(node)) { return; }
-            // A two-finger request on a native long document reads the actual
-            // text through the resumable paragraph reader. The ordinary
-            // focus utterance remains short.
+            // Detail on a document node speaks its original content without
+            // entering document-navigation mode. Explicit document-reader
+            // commands elsewhere still provide paragraph navigation.
             if ("document".equals(node.role) && !node.detail.isEmpty()) {
-                speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
+                speakInlineDetail(node.detail);
                 return;
             }
             String information = nodeText(node, true);
@@ -3908,11 +3904,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // Yes/No choices carry the original question in node.detail,
             // so do not prepend snapshot.summary a second time.
             if (!node.detail.isEmpty() || information.length() > 320) {
-                // Give even standalone detail text a document owner; an old
-                // document key must never be reused for an unrelated item.
-                documentReader.open(snapshot.contextKey(),
-                        node.id + ":detail", information);
-                speakDocument(information);
+                speakInlineDetail(information);
             } else {
                 feedback(information);
             }
@@ -3941,6 +3933,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             announceAccessibility(text);
         } else {
             speech.say("feedback", text, ReaderSpeechQueue.FOCUS);
+        }
+    }
+
+    /**
+     * Spoken, on-demand facts are not a separate screen. A single long
+     * request is split into safe TTS chunks by ReaderSpeechQueue; the next
+     * focus swipe interrupts it and navigates the original list normally.
+     * Only explicit document-reading actions open ReaderDocumentReader.
+     */
+    private void speakInlineDetail(String text) {
+        text = ReaderSpokenText.clean(text);
+        if (text.isEmpty()) { return; }
+        if (usesTouchExploration()) {
+            feedback(text);
+        } else {
+            speech.say("inline-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
+                    text, ReaderSpeechQueue.LONG_TEXT, 600000L);
         }
     }
 
