@@ -47,7 +47,7 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn("choice.available == 1 && intent.action == \"activate\"", code)
         self.assertIn("a11y::selected_quantity( intent.value", code)
         self.assertIn("choice.selected = static_cast<int>( *amount );", code)
-        self.assertIn('node.actions = { "focus", "activate", "set_value" };', code)
+        self.assertIn('node.actions = { "focus", "activate", "set_value", "read_detail" };', code)
         self.assertNotIn("choice.draft", code)
         self.assertNotIn('intent.action == "apply"', code)
         self.assertIn('confirm.id = "pickup-here:confirm"', code)
