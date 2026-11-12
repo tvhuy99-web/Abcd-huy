@@ -34,12 +34,14 @@ class SessionDebugLogSourceTest(unittest.TestCase):
 
     def test_single_recording_switch_starts_and_stops_all_diagnostics(self):
         ordered = ["enabled = new CheckBox(this)",
-                   "spokenOnlyWorld = new CheckBox(this)",
                    "export = new Button(this)",
                    "clear = new Button(this)"]
         indexes = [self.activity.index(name) for name in ordered]
         self.assertEqual(indexes, sorted(indexes))
         self.assertNotIn("CheckBox profiling", self.activity)
+        self.assertNotIn("spokenOnlyWorld = new CheckBox(this)", self.activity)
+        accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text("utf-8")
+        self.assertIn("setSpokenOnlyWorldEnabled(spokenOnly)", accessibility)
         self.assertIn("SessionDebugLog.setEnabled(this, checked)", self.activity)
         self.assertIn("CataclysmDDA.nativeConfigureReaderPerformance(", self.activity)
         self.assertIn("reader.isSpokenOnlyWorldEnabled(), checked", self.activity)

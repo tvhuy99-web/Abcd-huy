@@ -71,17 +71,6 @@ public final class DebugLogActivity extends Activity {
         });
         controls.addView(enabled);
 
-        // Graphic suppression is independent of manual diagnostic recording.
-        // Menus remain available even when the world scene is not drawn.
-        CheckBox spokenOnlyWorld = new CheckBox(this);
-        spokenOnlyWorld.setText(R.string.a11ySpokenOnlyWorld);
-        spokenOnlyWorld.setChecked(reader.isSpokenOnlyWorldEnabled());
-        spokenOnlyWorld.setOnCheckedChangeListener((button, checked) -> {
-            reader.setSpokenOnlyWorldEnabled(checked);
-            SessionDebugLog.event("WORLD_VISUAL_STATE", "spoken_only=" + checked);
-        });
-        controls.addView(spokenOnlyWorld);
-
         Button export = new Button(this);
         export.setText(R.string.a11yDebugLogExport);
         export.setOnClickListener(view -> exportLog());

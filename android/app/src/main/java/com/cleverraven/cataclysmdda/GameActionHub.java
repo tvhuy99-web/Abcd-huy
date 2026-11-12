@@ -20,8 +20,9 @@ final class GameActionHub {
     static final int OPEN_GROUP = 1;
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
-    static final int OPEN_TTS = 4;
-    static final int OPEN_READER_SETUP = 5;
+    // The old duplicate TTS/setup entry kinds have been retired.
+    static final int OPEN_SETTINGS = 9;
+    static final int OPEN_DEBUG_LOG = 10;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
     static final int OPEN_FAVORITES = 8;
@@ -48,8 +49,8 @@ final class GameActionHub {
                 case OPEN_GROUP: return "hub:group:" + group;
                 case OPEN_SEARCH: return "hub:search";
                 case OPEN_ALL: return "hub:all";
-                case OPEN_TTS: return "hub:tts";
-                case OPEN_READER_SETUP: return "hub:reader_setup";
+                case OPEN_SETTINGS: return "hub:settings";
+                case OPEN_DEBUG_LOG: return "hub:debug_log";
                 case OPEN_DIRECTIONS: return "hub:directions";
                 case OPEN_FAVORITES: return "hub:favorites";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
@@ -127,12 +128,8 @@ final class GameActionHub {
                     "open_distraction_manager" },
             { "messages", "help", "HELP_KEYBINDINGS", "look", "map",
                     "player_data", "diary" },
-            { "save", "quicksave", "quickload", "main_menu", "open_options",
-                    "open_autopickup", "open_autonotes", "open_safemode",
-                    "open_color", "open_world_mods", "open_distraction_manager",
-                    "help", "HELP_KEYBINDINGS", "debug", "debug",
-                    "toggle_panel_adm", "toggle_pixel_minimap", "toggle_fullscreen",
-                    "zoom_in", "zoom_out" }
+            { "save", "quicksave", "quickload", "open_options",
+                    "open_world_mods", "open_distraction_manager", "help", "debug" }
     };
 
     private static String normalized(String source) {
@@ -218,10 +215,15 @@ final class GameActionHub {
                 return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
             case "hub:all":
                 return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
+            // Previously saved favorites open the consolidated settings hub.
             case "hub:tts":
-                return new Entry(context.getString(R.string.a11yHubTts), "", OPEN_TTS, 0);
             case "hub:reader_setup":
-                return new Entry(context.getString(R.string.a11yHubReaderSetup), "", OPEN_READER_SETUP, 0);
+            case "hub:settings":
+                return new Entry(context.getString(R.string.a11yGameSettingsTitle),
+                        "", OPEN_SETTINGS, 0);
+            case "hub:debug_log":
+                return new Entry(context.getString(R.string.a11yDebugLogTitle),
+                        "", OPEN_DEBUG_LOG, 0);
             case "hub:directions":
                 return new Entry(context.getString(R.string.a11yHubChooseDirection), "",
                         OPEN_DIRECTIONS, 0);
@@ -290,13 +292,14 @@ final class GameActionHub {
             }
             result.add(new Entry(context.getString(R.string.a11yHubAllCommands),
                     "", OPEN_ALL, 0));
-        } else if (section == 15) {
-            result.add(new Entry(context.getString(R.string.a11yHubTts),
-                    "", OPEN_TTS, 0));
-            result.add(new Entry(context.getString(R.string.a11yHubReaderSetup),
-                    "", OPEN_READER_SETUP, 0));
         }
         for (String id : ACTIONS[section]) { addNode(result, context, snapshot, id, seen); }
+        if (section == 15) {
+            result.add(new Entry(context.getString(R.string.a11yDebugLogTitle),
+                    "", OPEN_DEBUG_LOG, 0));
+            result.add(new Entry(context.getString(R.string.a11yGameSettingsTitle),
+                    "", OPEN_SETTINGS, 0));
+        }
 
         // Any new native commands remain discoverable via the unfiltered
         // "All commands" catalogue even if they have no curated category.

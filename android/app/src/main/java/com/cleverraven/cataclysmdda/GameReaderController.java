@@ -2603,11 +2603,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 readCurrent();
             }
             return;
-        } else if ("hub:tts".equals(target)) {
-            activity.onAccessibilityOpenTtsSettings();
+        } else if ("hub:settings".equals(target) || "hub:tts".equals(target)
+                || "hub:reader_setup".equals(target)) {
+            // Preserve old custom gestures without displaying the retired setup UI.
+            activity.startActivity(new Intent(activity, GameSettingsActivity.class));
             return;
-        } else if ("hub:reader_setup".equals(target)) {
-            activity.startActivity(new Intent(activity, ReaderSetupActivity.class));
+        } else if ("hub:debug_log".equals(target)) {
+            activity.onAccessibilityOpenDebugLog();
             return;
         }
         feedback(activity.getString(R.string.a11yBindUnavailable));
@@ -3417,9 +3419,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("hub:search".equals(target)) { return activity.getString(R.string.a11yHubSearch); }
         if ("hub:all".equals(target)) { return activity.getString(R.string.a11yHubAllCommands); }
-        if ("hub:tts".equals(target)) { return activity.getString(R.string.a11yHubTts); }
-        if ("hub:reader_setup".equals(target)) {
-            return activity.getString(R.string.a11yHubReaderSetup);
+        if ("hub:tts".equals(target) || "hub:reader_setup".equals(target)
+                || "hub:settings".equals(target)) {
+            return activity.getString(R.string.a11yGameSettingsTitle);
+        }
+        if ("hub:debug_log".equals(target)) {
+            return activity.getString(R.string.a11yDebugLogTitle);
         }
         return target;
     }
@@ -3502,12 +3507,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 render();
                 readCurrent();
                 return;
-            case GameActionHub.OPEN_TTS:
-                // Preserve the menu location across Android settings screens.
-                activity.onAccessibilityOpenTtsSettings();
+            case GameActionHub.OPEN_SETTINGS:
+                activity.startActivity(new Intent(activity, GameSettingsActivity.class));
                 return;
-            case GameActionHub.OPEN_READER_SETUP:
-                activity.startActivity(new Intent(activity, ReaderSetupActivity.class));
+            case GameActionHub.OPEN_DEBUG_LOG:
+                activity.onAccessibilityOpenDebugLog();
                 return;
             case GameActionHub.EXECUTE:
                 ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(item.node);

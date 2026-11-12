@@ -183,6 +183,12 @@
     <string name="a11yMusicVolumeValue">Music volume: %1$d</string>
     <string name="a11yEffectsEnabled">Sound effects</string>
     <string name="a11yEffectsVolumeValue">Effects volume: %1$d</string>
+    <string name="a11yGameSettingsTitle">Settings</string>
+    <string name="a11yGameSettingsExplanation">All existing game options remain in Options in the System menu. Voice, accessibility, and backup settings are below.</string>
+    <string name="a11yAccessibilitySettingsTitle">Accessibility settings</string>
+    <string name="a11yBackupRestoreTitle">Backup and restore</string>
+    <string name="a11yWorldGraphics">Display world graphics</string>
+    <string name="a11yWorldGraphicsExplanation">On: draw the game map. Off: spoken-only world for faster navigation. Menus and speech remain available.</string>
     <string name="a11yDebugLogTitle">Debug log</string>
     <string name="a11ySpokenOnlyWorld">Spoken-only world, skip world graphics (faster)</string>
     <string name="a11yDebugLogEnabled">Record debug log</string>

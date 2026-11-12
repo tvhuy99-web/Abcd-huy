@@ -183,6 +183,12 @@
     <string name="a11yMusicVolumeValue">Âm lượng nhạc: %1$d</string>
     <string name="a11yEffectsEnabled">Hiệu ứng âm thanh</string>
     <string name="a11yEffectsVolumeValue">Âm lượng hiệu ứng: %1$d</string>
+    <string name="a11yGameSettingsTitle">Cài đặt</string>
+    <string name="a11yGameSettingsExplanation">Tất cả tùy chọn trò chơi hiện có vẫn ở mục Tùy chọn của menu Hệ thống. Cài đặt TTS, trợ năng và sao lưu nằm bên dưới.</string>
+    <string name="a11yAccessibilitySettingsTitle">Cài đặt trợ năng</string>
+    <string name="a11yBackupRestoreTitle">Sao lưu và khôi phục</string>
+    <string name="a11yWorldGraphics">Hiển thị hình ảnh thế giới</string>
+    <string name="a11yWorldGraphicsExplanation">Bật để hiển thị bản đồ. Tắt để chỉ đọc bằng giọng nói và tăng tốc độ. Menu và lời đọc vẫn hoạt động.</string>
     <string name="a11yDebugLogTitle">Nhật ký gỡ lỗi</string>
     <string name="a11ySpokenOnlyWorld">Chỉ đọc bằng giọng nói, không dựng hình bản đồ (ưu tiên tốc độ)</string>
     <string name="a11yDebugLogEnabled">Ghi nhật ký</string>

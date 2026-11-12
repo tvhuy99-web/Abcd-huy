@@ -74,7 +74,16 @@
         </activity>
         <activity android:name="ReaderSetupActivity"
                   android:exported="false"
-                  android:label="@string/a11yReaderSetup" />
+                  android:label="@string/a11yGameSettingsTitle" />
+        <activity android:name="GameSettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yGameSettingsTitle" />
+        <activity android:name="AccessibilitySettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yAccessibilitySettingsTitle" />
+        <activity android:name="BackupRestoreActivity"
+                  android:exported="false"
+                  android:label="@string/a11yBackupRestoreTitle" />
         <activity android:name="TtsSettingsActivity"
                   android:exported="false"
                   android:label="@string/a11yTtsSettingsTitle" />

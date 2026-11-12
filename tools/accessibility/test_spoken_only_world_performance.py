@@ -124,9 +124,11 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
 
     def test_single_manual_log_switch_and_independent_spoken_only_setting(self):
         ui = java("DebugLogActivity.java")
+        graphics = java("AccessibilitySettingsActivity.java")
         self.assertIn("SessionDebugLog.setEnabled(this, checked)", ui)
-        self.assertIn("reader.setSpokenOnlyWorldEnabled(checked)", ui)
-        self.assertIn("CataclysmDDA.nativeConfigureReaderPerformance(", ui)
+        self.assertNotIn("spokenOnlyWorld = new CheckBox(this)", ui)
+        self.assertIn("prefs.setSpokenOnlyWorldEnabled(spokenOnly)", graphics)
+        self.assertIn("CataclysmDDA.nativeConfigureReaderPerformance(", graphics)
         self.assertNotIn("CheckBox profiling", ui)
         for locale in ("values", "values-vi"):
             strings = (ROOT / "android/app/src/main/res" / locale / "strings.xml").read_text(
