@@ -2542,7 +2542,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     }
     if( !initial_accessible_recipe_check_done ) {
         initial_accessible_recipe_check_done = true;
-        if( current.empty() && available_recipes && !available_recipes->empty() &&
+        if( current.empty() && available_recipes && available_recipes->size() > 0 &&
             filterstring.empty() && !batch && !crafting_cats.empty() ) {
             // The reader must not announce "no recipes" just because
             // the opening subtab is a special empty list. Prefer the
@@ -2631,7 +2631,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         // nothing. Give the actual native recipe count and a meaningful
         // way to distinguish an empty filter from missing knowledge.
         std::string reason;
-        if( available_recipes->empty() ) {
+        if( available_recipes->size() == 0 ) {
             reason = _( "No recipes learned or available to this crafter yet." );
         } else if( !filterstring.empty() ) {
             reason = string_format(
