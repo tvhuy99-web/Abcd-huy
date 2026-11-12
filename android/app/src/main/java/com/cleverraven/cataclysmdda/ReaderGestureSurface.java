@@ -29,6 +29,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
+        /** Crafting only: one finger vertically switches the active subcategory. */
+        default boolean handleCraftingSubcategorySwipe(int vertical) { return false; }
+        /** Crafting only: two fingers vertically switch main categories, including All. */
+        default boolean handleCraftingMainCategorySwipe(int vertical) { return false; }
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
         /** Confirm the current native menu, selection or editor without guessing an action. */
@@ -601,6 +605,30 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
                 cancelMultiHold();
             }
+            // In crafting, reserve two-finger vertical swipes for main
+            // categories. In every other modal keep Up=confirm and Down=Back.
+            if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
+                    && !cancelled && owner != null && owner.equals(listener.gestureContext())
+                    && !listener.directWorldGesturesEnabled()
+                    && event.getEventTime() - downTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())) {
+                boolean up = TwoFingerBackGesture.matchesUp(event, backPointerIds,
+                        backPointerStartX, backPointerStartY, backPointerCount,
+                        listener.swipeDistancePx());
+                boolean down = !up && TwoFingerBackGesture.matches(event, backPointerIds,
+                        backPointerStartX, backPointerStartY, backPointerCount,
+                        listener.swipeDistancePx());
+                if ((up || down) && listener.handleCraftingMainCategorySwipe(up ? -1 : 1)) {
+                    ignoreUntilPointersReleased = true;
+                    multiple = false;
+                    backPointerCount = 0;
+                    cancelled = true;
+                    owner = null;
+                    previousTapOwner = null;
+                    clearMultiTap();
+                    return true;
+                }
+            }
             // Two fingers up confirms on native menus and number editors only.
             // Keep the world map's existing 16-tile directional scan intact.
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
@@ -768,6 +796,9 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleSurroundingsSwipe(horizontal, vertical)) {
+            return;
+        }
+        if (vertical != 0 && listener.handleCraftingSubcategorySwipe(vertical)) {
             return;
         }
         int[] direction = directionForSwipe(dx, dy);
