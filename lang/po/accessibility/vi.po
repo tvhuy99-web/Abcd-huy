@@ -4534,3 +4534,17 @@ msgstr "Đặt máy trò chơi điện tử"
 
 msgid "Remove Linoleum Tiles"
 msgstr "Bóc gạch lát sàn vải sơn"
+
+#, c-format
+msgid "Fire %s"
+msgstr "Bắn về hướng %s"
+
+#, c-format
+msgid "Move or attack %s"
+msgstr "Di chuyển hoặc tấn công về hướng %s"
+
+msgid "Fire the wielded gun in this direction."
+msgstr "Bắn khẩu súng đang cầm theo hướng này."
+
+msgid "Use normal movement: attack or interact if occupied, otherwise walk."
+msgstr "Sử dụng di chuyển thông thường: tấn công hoặc tương tác nếu ô có sinh vật, nếu không thì bước đi."
