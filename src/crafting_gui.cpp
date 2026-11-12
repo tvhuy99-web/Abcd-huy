@@ -2867,7 +2867,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         if( reader_all_categories && ( intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
             a11y::android::announce(
                 _( "All categories has no subcategories. Swipe left or right with two fingers to select a main category." ),
-                false );
+                1 );
             a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV", "ignored=global_all_subcategory" );
             return "TIMEOUT";
         }
