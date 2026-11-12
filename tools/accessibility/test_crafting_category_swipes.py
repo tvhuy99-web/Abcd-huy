@@ -38,6 +38,8 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
     def test_two_finger_main_one_finger_sub_and_horizontal_recipe(self):
         self.assertIn("handleCraftingMainCategorySwipe(up ? -1 : 1)", GESTURES)
         self.assertIn("handleCraftingSubcategorySwipe(vertical)", GESTURES)
+        self.assertIn("handleCraftingRecipeSwipe(horizontal)", GESTURES)
+        self.assertIn("navigate(horizontal > 0 ? 1 : -1);", READER)
         self.assertIn('"crafting".equals(snapshot.category)', READER)
         self.assertIn('vertical < 0 ? "PREV_TAB" : "NEXT_TAB"', READER)
         self.assertIn('vertical < 0 ? "LEFT" : "RIGHT"', READER)
