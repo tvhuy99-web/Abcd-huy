@@ -66,6 +66,26 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("if( a11y::enabled() )", self.menu)
         self.assertIn("execute_accessible();", self.menu)
 
+    def test_out_of_sight_nearby_destinations_can_be_routed_safely(self):
+        # Only the spoken nearby list relaxes the direct visibility gate.
+        # The path still uses the game's obstacle and danger avoidance.
+        call = self.menu.split(
+            "g->safe_route_to( you, target.target", 1
+        )[1].split("if( !route )", 1)[0]
+        self.assertIn("}, false );", call)
+        header = (SRC / "game.h").read_text("utf-8")
+        self.assertIn("bool require_visible_destination = true", header)
+        self.assertIn(
+            "require_visible_destination && !who.sees( here, target )",
+            self.game,
+        )
+        self.assertIn("if( is_dangerous_tile( p ) )", self.game)
+        self.assertIn("who.get_pathfinding_settings()", self.game)
+        self.assertIn("you.set_destination( *route );", self.menu)
+        # Preserve the non-accessible behavior.
+        self.assertIn('} else if( action == "TRAVEL_TO" && path_end )', self.menu)
+        self.assertIn("if( !you.sees( get_map(), *path_end ) )", self.menu)
+
     def test_current_tile_alert_is_readable(self):
         self.assertIn('here.role = noteworthy_here ? "alert" : "document"',
                       self.world)

@@ -6229,10 +6229,11 @@ bool game::is_zones_manager_open() const
 
 std::optional<std::vector<tripoint_bub_ms>> game::safe_route_to( Character &who,
         const tripoint_bub_ms &target, int threshold,
-        const std::function<void( const std::string &msg )> &report ) const
+        const std::function<void( const std::string &msg )> &report,
+        bool require_visible_destination ) const
 {
     map &here = get_map();
-    if( !who.sees( here, target ) ) {
+    if( require_visible_destination && !who.sees( here, target ) ) {
         report( _( "You can't see the destination." ) );
         return std::nullopt;
     }

@@ -1396,13 +1396,14 @@ void surroundings_menu::execute_accessible()
                 continue;
             }
             const nearby_row &target = nearby[row_index];
-            // Use the engine's own hazard-aware route finder. A creature or
-            // impassable tile is approached to one tile away, never entered.
+            // Find a real hazard-aware route even when the selected nearby
+            // object is behind a wall or outside current line of sight.
+            // Creatures and obstacles are still approached one tile away.
             const std::optional<std::vector<tripoint_bub_ms>> route =
             g->safe_route_to( you, target.target, target.stop_distance,
             []( const std::string & reason ) {
                 add_msg( m_info, "%s", reason );
-            } );
+            }, false );
             if( !route ) {
                 return std::string( "TIMEOUT" );
             }
