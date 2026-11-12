@@ -13,6 +13,7 @@
 #include <utility>
 
 #include "a11y_perception.h"
+#include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "a11y_semantics.h"
 #include "a11y_world.h"
@@ -1363,7 +1364,7 @@ void surroundings_menu::execute_accessible()
         if( intent.action == "focus" ) {
             return std::string( "TIMEOUT" );
         }
-        if( intent.action != "activate" ) {
+        if( intent.action != "activate" && intent.action != "read_detail" ) {
             return std::nullopt;
         }
         if( intent.node == "nearby:filter:next" ||
@@ -1396,6 +1397,37 @@ void surroundings_menu::execute_accessible()
                 continue;
             }
             const nearby_row &target = nearby[row_index];
+            if( intent.action == "read_detail" && target.kind == nearby_kind::item ) {
+                // Re-observe this precise tile before reading. A nearby row
+                // is a stack label, not an item pointer, and must never
+                // resolve to a different stack after a world update.
+                const a11y::unrestricted_tile visible = a11y::scan_unrestricted_tile( target.target );
+                if( std::find( visible.items.begin(), visible.items.end(),
+                               target.label ) == visible.items.end() ||
+                    !here.inbounds( target.target ) ) {
+                    return std::string( "TIMEOUT" );
+                }
+                std::map<std::string, int> counts;
+                for( const item &obj : here.i_at( target.target ) ) {
+                    ++counts[a11y::spoken_item_name( obj )];
+                }
+                std::set<std::string> spoken_descriptions;
+                for( const item &obj : here.i_at( target.target ) ) {
+                    const std::string name = a11y::spoken_item_name( obj );
+                    const int count = counts[name];
+                    const std::string grouped = count == 1 ? name :
+                                                string_format( _( "%1$s [%2$d]" ), name, count );
+                    if( grouped == target.label &&
+                        spoken_descriptions.insert( obj.info( true ) ).second ) {
+                        // Distinct versions of the same named item retain
+                        // their distinct original facts. Exact duplicates
+                        // are read only once; the stack count stays in the
+                        // list's spoken label.
+                        a11y::announce_full_item_info( obj );
+                    }
+                }
+                return std::string( "TIMEOUT" );
+            }
             // Find a real hazard-aware route even when the selected nearby
             // object is behind a wall or outside current line of sight.
             // Creatures and obstacles are still approached one tile away.
@@ -1503,6 +1535,9 @@ void surroundings_menu::execute_accessible()
                 node.id = "nearby:target:" + std::to_string( row_index );
                 node.role = "listitem";
                 node.label = entry.label;
+                if( entry.kind == nearby_kind::item ) {
+                    node.actions.push_back( "read_detail" );
+                }
                 // Direction already includes tile count.
                 node.value = relative_words( entry.relative );
                 snapshot.nodes.push_back( std::move( node ) );
