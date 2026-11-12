@@ -44,9 +44,9 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         }
         for english, vietnamese in pairs.items():
             with self.subTest(english=english):
-                self.assertIn('msgid "' + english + '"\\nmsgstr "' + vietnamese + '"',
+                self.assertIn('msgid "' + english + '"\nmsgstr "' + vietnamese + '"',
                               self.po)
-        self.assertIn('msgctxt "zones manager"\\nmsgid "Personal"\\nmsgstr "Cá nhân"',
+        self.assertIn('msgctxt "zones manager"\nmsgid "Personal"\nmsgstr "Cá nhân"',
                       self.po)
 
     def test_reader_commands_translate_crafting_navigation_and_zone_units(self):
