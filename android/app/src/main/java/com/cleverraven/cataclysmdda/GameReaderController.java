@@ -143,6 +143,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String readerLayerParent = "";
     private String pendingReaderLayer = "";
     private int pendingReaderLayerRevisions;
+    // Read the correct selected-row document after the game thread has
+    // acknowledged its focus. Never speak the previous row's details.
+    private String pendingLinkedDetail = "";
+    private String pendingLinkedDetailContext = "";
     // Inventory container picker: all edits stay local until the parent
     // pocket receives one atomic native commit. 0=outer, 1=hold menu,
     // 2=pockets, 3=contents.
@@ -350,6 +354,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         lastLoadingStatus = "";
         readerLayerParent = "";
         pendingReaderLayer = "";
+        pendingLinkedDetail = "";
+        pendingLinkedDetailContext = "";
         targetingOriginalControls = false;
         pocketStage = 0;
         pocketDrafts.clear();
@@ -493,6 +499,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     snapshot = null;
                     commandPaletteOpen = false;
                     targetingOriginalControls = false;
+                    pendingLinkedDetail = "";
+                    pendingLinkedDetailContext = "";
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
                     lastLoadingStatus = "";
@@ -681,6 +689,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     readerLayerParent = "";
                     pendingReaderLayer = "";
                     pendingReaderLayerRevisions = 0;
+                    pendingLinkedDetail = "";
+                    pendingLinkedDetailContext = "";
                 } else if (!pendingReaderLayer.isEmpty()) {
                     ReaderSnapshot.Node parent = next.find(pendingReaderLayer);
                     ReaderSnapshot.Node child = parent == null ? null
@@ -881,6 +891,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     readCurrent();
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();
+                }
+                // A requested linked document must match the selection on
+                // the newly published native snapshot. Do not read a previous
+                // mission/recipe after a fast swipe followed by two fingers.
+                if (!pendingLinkedDetail.isEmpty() && snapshot != null
+                        && pendingLinkedDetailContext.equals(snapshot.contextKey())
+                        && pendingLinkedDetail.equals(focus)) {
+                    ReaderSnapshot.Node ready = snapshot.find(pendingLinkedDetail);
+                    if (ready != null && ready.selected) {
+                        pendingLinkedDetail = "";
+                        pendingLinkedDetailContext = "";
+                        readLinkedDetails(ready);
+                    }
                 }
             } catch (JSONException malformed) {
                 snapshot = null;
@@ -2137,6 +2160,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void navigate(int delta) {
+        pendingLinkedDetail = "";
+        pendingLinkedDetailContext = "";
         SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (delta == 0) { readCurrent(); return; }
@@ -2183,6 +2208,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // navigation advances the document itself, not the single parent
         // item. Back returns to that parent list without closing the screen.
         if (documentReader.isOpen() && !commandPaletteOpen) {
+            // Replace the still-playing full document when the player asks
+            // to navigate a paragraph, rather than queueing speech behind it.
+            speech.stop();
             speakDocument(delta > 0 ? documentReader.nextParagraph()
                     : documentReader.previousParagraph());
             return;
@@ -3704,6 +3732,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             prefix = "proficiency:details";
         }
         if (prefix.isEmpty()) { return false; }
+        // These document nodes describe only the engine's CURRENT selection,
+        // not all visible rows. A local Android swipe can arrive ahead of
+        // native focus synchronization; defer until its own row is selected.
+        if (!selected.selected || !id.equals(snapshot.focus)) {
+            pendingLinkedDetail = id;
+            pendingLinkedDetailContext = snapshot.contextKey();
+            if (send("focus", "") == 0) {
+                pendingLinkedDetail = "";
+                pendingLinkedDetailContext = "";
+                feedback(activity.getString(R.string.a11yReaderWaiting));
+            }
+            return true;
+        }
         StringBuilder full = new StringBuilder();
         for (ReaderSnapshot.Node document : snapshot.nodes) {
             if (!"document".equals(document.role)
@@ -3728,6 +3769,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void detail() {
+        pendingLinkedDetail = "";
+        pendingLinkedDetailContext = "";
         if (snapshot != null && "surroundings".equals(snapshot.category)
                 && !comprehensiveMenu && !commandPaletteOpen) {
             nearbyFirstItemPending = false;
