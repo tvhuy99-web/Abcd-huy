@@ -31,7 +31,8 @@ struct tile_observation {
     bool route_feature = false;
 };
 // Eight rays: North, NE, East, SE, South, SW, West, NW.
-// Negative distance means no visible target of that kind.
+// Sonar uses unrestricted map tiles, even behind obstacles. Negative distance
+// means no creature or item of that kind was detected within 16 tiles.
 struct directional_sonar_result {
     std::array<int, 8> creatures;
     std::array<int, 8> items;
