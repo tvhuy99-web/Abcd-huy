@@ -117,6 +117,51 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("last_target.lock().get() == this", monster)
         self.assertIn("Your current target %s was killed.", monster)
 
+    def test_combat_hold_opens_native_precision_toggle_without_spending_a_turn(self):
+        hub = load(ANDROID / "GameActionHub.java")
+        header = load(ROOT / "src/ranged.h")
+        self.assertIn('static final int COMBAT = 8;', hub)
+        self.assertIn('{ "reader:combat:aim-toggle", "fire"', hub)
+        self.assertIn("openHubSection(GameActionHub.COMBAT);", self.controller)
+        self.assertIn('if (combatMode && directWorldGesturesEnabled())', self.controller)
+        self.assertIn('"reader:combat:aim-toggle".equals(entry.node)', self.controller)
+        self.assertIn('button( "reader:combat:aim-toggle"', self.world)
+        self.assertIn("aim_toggle.enabled = result.swipe_movement_allowed;", self.world)
+        self.assertIn("target_handler::toggle_combat_precise_aim();", self.handler)
+        self.assertIn('return std::string( "TIMEOUT" );', self.handler)
+        self.assertIn("bool combat_precise_aim_enabled();", header)
+        self.assertIn("bool accessible_combat_precise_aim = true;", self.ranged)
+        for phrase in (
+            "Switch to quick fire", "Switch to precise aiming",
+            "Combat precise aiming enabled.", "Combat quick fire enabled.",
+        ):
+            self.assertIn('msgid "' + phrase + '"', self.po)
+
+    def test_precision_swipe_uses_original_native_multiturn_aim_and_both_modes_fire(self):
+        header = load(ROOT / "src/ranged.h")
+        self.assertIn(
+            "pending_accessible_combat_precise_aim = accessible_combat_precise_aim;",
+            self.ranged,
+        )
+        self.assertIn("take_accessible_combat_precise_aim()", self.ranged)
+        self.assertIn("const bool automatic_precise_combat_shot", self.ranged)
+        self.assertIn("std::find_if( aim_types.rbegin(), aim_types.rend()", self.ranged)
+        self.assertIn("if( action_aim_and_shoot( best->action ) )", self.ranged)
+        self.assertIn("timed_out_action = best->action;", self.ranged)
+        self.assertIn("loop_exit_code = ExitCode::Timeout;", self.ranged)
+        self.assertIn("loop_exit_code = ExitCode::Fire;", self.ranged)
+        self.assertIn("accessible_combat_shot_completed = true;", self.ranged)
+        self.assertIn("bool take_accessible_combat_precise_aim();", header)
+        self.assertIn("const tripoint_bub_ms shot = directional_shot_target(", self.ranged)
+        self.assertIn("set_cursor_pos( shot );", self.ranged)
+        self.assertIn("confirm_non_enemy_target()", self.ranged)
+        self.assertIn("who.fire_gun( here, fin_trajectory.back(), gun.qty, *gun, reload_loc );",
+                      self.activity)
+        # The original empty-direction fire remains possible in both modes.
+        self.assertIn("return fallback;", self.ranged)
+        self.assertIn("if( automatic_precise_combat_shot )", self.ranged)
+        self.assertNotIn('if( automatic_combat_shot && !dst_critter )', self.ranged)
+
     def test_deliberate_aimed_fire_is_available_beside_quick_fire(self):
         self.assertIn('intent.node == "target:aimed-shot"', self.ranged)
         self.assertIn('return "AIMED_SHOT";', self.ranged)
