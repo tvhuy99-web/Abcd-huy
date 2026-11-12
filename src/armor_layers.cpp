@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
 #include "body_part_set.h"
@@ -660,6 +661,7 @@ struct armor_layers_reader {
                 a11y::semantic_node node;
                 node.id = binding_id( shown[i] );
                 node.role = "listitem";
+                node.actions = { "focus", "activate", "read_detail" };
                 node.label = shown[i]->tname();
                 node.detail = item_detail( *shown[i], tab_bp, static_cast<int>( i ) );
                 node.selected = static_cast<int>( i ) == focus_index;
@@ -834,7 +836,8 @@ struct armor_layers_reader {
                 return b.id == intent.node;
             } );
             if( binding != bindings.end() &&
-                ( intent.action == "focus" || intent.action == "activate" ) ) {
+                ( intent.action == "focus" || intent.action == "activate" ||
+                  intent.action == "read_detail" ) ) {
                 bool still_worn = false;
                 for( auto it = worn.begin(); it != worn.end(); ++it ) {
                     if( it == binding->worn_it ) {
@@ -849,6 +852,10 @@ struct armor_layers_reader {
                 const auto found = std::find( shown.begin(), shown.end(), binding->worn_it );
                 if( found == shown.end() ) {
                     return std::nullopt;
+                }
+                if( intent.action == "read_detail" ) {
+                    a11y::announce_full_item_info( **found );
+                    return "TIMEOUT";
                 }
                 leftListIndex = static_cast<int>( std::distance( shown.begin(), found ) );
                 // Focus only synchronizes the original cursor. Activation
