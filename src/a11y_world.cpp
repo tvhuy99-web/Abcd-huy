@@ -46,6 +46,7 @@
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vpart_position.h"
 

@@ -3847,8 +3847,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (editor != null) { feedback(editor.valueDescription()); return; }
         if (comprehensiveMenu) {
-            if (choosingGesture || choosingHubAction) { readCurrent(); }
-            else { showHubActionChoices(); }
+            if (choosingGesture || choosingHubAction) {
+                readCurrent();
+            } else {
+                // A two-finger Detail request reads the selected hub entry
+                // in place. Its gesture/favorite action menu belongs only
+                // to long press, not to the information gesture.
+                List<GameActionHub.Entry> entries = hubEntries();
+                if (entries.isEmpty()) {
+                    feedback(activity.getString(hubEmptyLabel()));
+                } else {
+                    hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
+                    GameActionHub.Entry entry = entries.get(hubIndex);
+                    StringBuilder details = new StringBuilder(hubSpoken(entries, hubIndex));
+                    ReaderSnapshot.Node original = snapshot == null || entry.node.isEmpty()
+                            ? null : snapshot.find(entry.node);
+                    if (original != null && !original.detail.isEmpty()) {
+                        details.append(". ").append(original.detail);
+                    }
+                    speakInlineDetail(details.toString());
+                }
+            }
             return;
         }
         if (snapshot == null && !lastLoadingStatus.isEmpty()) {

@@ -150,6 +150,18 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("speakInlineDetail(information);", detail)
         self.assertNotIn("documentReader.open(", detail)
 
+    def test_hub_two_finger_detail_does_not_open_the_secondary_action_menu(self):
+        detail = self.java.split("public void detail() {", 1)[1].split(
+            "if (snapshot == null && !lastLoadingStatus.isEmpty())", 1
+        )[0]
+        self.assertIn("if (comprehensiveMenu) {", detail)
+        self.assertIn("GameActionHub.Entry entry = entries.get(hubIndex);", detail)
+        self.assertIn("speakInlineDetail(details.toString());", detail)
+        self.assertNotIn("showHubActionChoices();", detail)
+        # The explicit hold gesture still owns gesture assignment/favorites.
+        self.assertIn("if (comprehensiveMenu) {\\n            showHubActionChoices();",
+                      self.java)
+
     def test_linked_detail_waits_for_native_selected_row(self):
         self.assertIn("private boolean readLinkedDetails(ReaderSnapshot.Node selected)", self.java)
         self.assertIn("!selected.selected || !id.equals(snapshot.focus)", self.java)
