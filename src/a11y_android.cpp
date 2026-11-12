@@ -26,6 +26,7 @@ std::atomic<bool> reader_enabled{ false };
 std::atomic<bool> reader_suspended{ true };
 // Game-thread check is one atomic read; JNI only changes the selected modes.
 std::atomic<bool> no_world_graphics{ false };
+std::atomic<bool> directional_sonar_opt_in{ false };
 std::atomic<bool> performance_profile_active{ false };
 std::atomic<unsigned int> profile_configuration_epoch{ 0 };
 std::atomic<unsigned int> profile_busy_epoch{ 0 };
@@ -77,6 +78,15 @@ std::uint64_t lifecycle_epoch() { return epoch.load( std::memory_order_acquire )
 bool suppress_world_visuals()
 {
     return enabled() && !suspended() && no_world_graphics.load( std::memory_order_relaxed );
+}
+void configure_directional_sonar( const bool active )
+{
+    directional_sonar_opt_in.store( active, std::memory_order_release );
+}
+bool directional_sonar_enabled()
+{
+    return enabled() && !suspended() &&
+           directional_sonar_opt_in.load( std::memory_order_acquire );
 }
 bool performance_profiling_enabled()
 {
@@ -788,23 +798,37 @@ void cue( const std::string &name )
 #endif
 }
 
-void alignment_distance( const int distance )
+void directional_sonar_targets( const std::array<int, 8> &creatures,
+                                const std::array<int, 8> &items )
 {
 #if defined(__ANDROID__)
-    if( !enabled() || suspended() ) {
+    if( !directional_sonar_enabled() ) {
         return;
     }
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
-    if( env == nullptr || env->PushLocalFrame( 4 ) < 0 ) {
+    if( env == nullptr || env->PushLocalFrame( 8 ) < 0 ) {
         return;
     }
     jobject activity = static_cast<jobject>( GetAndroidActivity() );
     if( activity != nullptr ) {
         jclass cls = env->GetObjectClass( activity );
         if( cls != nullptr ) {
-            jmethodID method = env->GetMethodID( cls, "onAccessibilityAlignment", "(I)V" );
+            jmethodID method = env->GetMethodID( cls, "onAccessibilityDirectionalSonar",
+                                                "([I[I)V" );
             if( method != nullptr ) {
-                env->CallVoidMethod( activity, method, static_cast<jint>( distance ) );
+                jint creature_values[8];
+                jint item_values[8];
+                for( int i = 0; i < 8; ++i ) {
+                    creature_values[i] = static_cast<jint>( creatures[i] );
+                    item_values[i] = static_cast<jint>( items[i] );
+                }
+                jintArray creature_array = env->NewIntArray( 8 );
+                jintArray item_array = env->NewIntArray( 8 );
+                if( creature_array != nullptr && item_array != nullptr ) {
+                    env->SetIntArrayRegion( creature_array, 0, 8, creature_values );
+                    env->SetIntArrayRegion( item_array, 0, 8, item_values );
+                    env->CallVoidMethod( activity, method, creature_array, item_array );
+                }
             }
         }
     }
@@ -813,7 +837,8 @@ void alignment_distance( const int distance )
     }
     env->PopLocalFrame( nullptr );
 #else
-    ( void )distance;
+    ( void )creatures;
+    ( void )items;
 #endif
 }
 
@@ -885,6 +910,13 @@ Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureReaderPerformance(
     JNIEnv *, jclass, jboolean no_world_visuals, jboolean profile )
 {
     a11y::android::configure_performance( no_world_visuals == JNI_TRUE, profile == JNI_TRUE );
+}
+
+extern "C" JNIEXPORT void JNICALL
+Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeConfigureDirectionalSonar(
+    JNIEnv *, jclass, jboolean active )
+{
+    a11y::android::configure_directional_sonar( active == JNI_TRUE );
 }
 
 extern "C" JNIEXPORT jboolean JNICALL

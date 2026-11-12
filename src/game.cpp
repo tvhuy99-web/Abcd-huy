@@ -3496,34 +3496,15 @@ void game::draw( ui_adaptor &ui )
 #endif
 
 #if defined(__ANDROID__)
-    // Give the Android reader a distance, never an identity or an invisible
-    // target. It replays the user's chosen sonar once a second while aligned.
-    // Keep this scan on the game thread, after visibility cache refresh.
-    if( a11y::android::enabled() && !a11y::android::suspended() ) {
-        static std::chrono::steady_clock::time_point next_alignment_scan{};
+    // Normal rendering and spoken-only worlds share the same eight-ray observer.
+    if( a11y::android::directional_sonar_enabled() ) {
+        static std::chrono::steady_clock::time_point next_directional_scan{};
         const auto now = std::chrono::steady_clock::now();
-        if( now >= next_alignment_scan ) {
-            next_alignment_scan = now + std::chrono::milliseconds( 300 );
-            constexpr int alignment_radius = 30;
-            const tripoint_bub_ms origin = u.pos_bub( here );
-            int nearest = -1;
-            for( int distance = 1; distance <= alignment_radius && nearest < 0; ++distance ) {
-                for( int direction = 0; direction != 4; ++direction ) {
-                    const int dx = direction == 0 ? distance : direction == 1 ? -distance : 0;
-                    const int dy = direction == 2 ? distance : direction == 3 ? -distance : 0;
-                    const tripoint_bub_ms target = origin + tripoint_rel_ms( dx, dy, 0 );
-                    if( !here.inbounds( target ) ) {
-                        continue;
-                    }
-                    const a11y::tile_observation observed = a11y::observe_tile( target );
-                    if( observed.source == a11y::observation_source::visible &&
-                        ( !observed.seen_creatures.empty() || !observed.seen_items.empty() ) ) {
-                        nearest = distance;
-                        break;
-                    }
-                }
-            }
-            a11y::android::alignment_distance( nearest );
+        if( now >= next_directional_scan ) {
+            next_directional_scan = now + std::chrono::milliseconds( 300 );
+            const a11y::directional_sonar_result sonar =
+                a11y::scan_directional_sonar( u.pos_bub( here ) );
+            a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );
         }
     }
 #endif

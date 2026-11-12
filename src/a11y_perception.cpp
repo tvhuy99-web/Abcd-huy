@@ -239,6 +239,38 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
     return result;
 }
 
+directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin )
+{
+    // Scan only visible tiles on eight straight compass rays, 16 steps each.
+    static constexpr int dx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+    static constexpr int dy[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
+    directional_sonar_result result;
+    map &here = get_map();
+    for( int direction = 0; direction < 8; ++direction ) {
+        for( int distance = 1; distance <= 16; ++distance ) {
+            const tripoint_bub_ms target = origin + tripoint_rel_ms(
+                    dx[direction] * distance, dy[direction] * distance, 0 );
+            if( !here.inbounds( target ) ) {
+                break;
+            }
+            const tile_observation seen = observe_tile( target );
+            if( seen.source != observation_source::visible ) {
+                continue;
+            }
+            if( result.creatures[direction] < 0 && !seen.seen_creatures.empty() ) {
+                result.creatures[direction] = distance;
+            }
+            if( result.items[direction] < 0 && !seen.seen_items.empty() ) {
+                result.items[direction] = distance;
+            }
+            if( result.creatures[direction] > 0 && result.items[direction] > 0 ) {
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 tile_observation observe_memory_tile( const tripoint_bub_ms &position )
 {
     tile_observation result;

@@ -745,34 +745,16 @@ input_context game::get_player_input( std::string &action )
                     const int z = get_avatar().posz();
                     vision_map.build_map_cache( z );
                     vision_map.update_visibility_cache( z );
-                    // This audible alignment cue used to be refreshed only
-                    // from game::draw(). Headless world mode does not call the
-                    // painter each step; keep sonar accurate from the reader
-                    // path using the same visibility-filtered tile observer.
-                    static std::chrono::steady_clock::time_point next_sonar_scan{};
-                    const auto sonar_now = std::chrono::steady_clock::now();
-                    if( sonar_now >= next_sonar_scan ) {
-                        next_sonar_scan = sonar_now + std::chrono::milliseconds( 300 );
-                        constexpr int alignment_radius = 30;
-                        const tripoint_bub_ms origin = get_avatar().pos_bub( vision_map );
-                        int nearest = -1;
-                        for( int distance = 1; distance <= alignment_radius && nearest < 0; ++distance ) {
-                            for( int direction = 0; direction < 4; ++direction ) {
-                                const int dx = direction == 0 ? distance : direction == 1 ? -distance : 0;
-                                const int dy = direction == 2 ? distance : direction == 3 ? -distance : 0;
-                                const tripoint_bub_ms target = origin + tripoint_rel_ms( dx, dy, 0 );
-                                if( !vision_map.inbounds( target ) ) {
-                                    continue;
-                                }
-                                const a11y::tile_observation observed = a11y::observe_tile( target );
-                                if( observed.source == a11y::observation_source::visible &&
-                                    ( !observed.seen_creatures.empty() || !observed.seen_items.empty() ) ) {
-                                    nearest = distance;
-                                    break;
-                                }
-                            }
+                    // Spoken-only world skips game::draw; use the identical scan.
+                    if( a11y::android::directional_sonar_enabled() ) {
+                        static std::chrono::steady_clock::time_point next_directional_scan{};
+                        const auto sonar_now = std::chrono::steady_clock::now();
+                        if( sonar_now >= next_directional_scan ) {
+                            next_directional_scan = sonar_now + std::chrono::milliseconds( 300 );
+                            const a11y::directional_sonar_result sonar =
+                                a11y::scan_directional_sonar( get_avatar().pos_bub( vision_map ) );
+                            a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );
                         }
-                        a11y::android::alignment_distance( nearest );
                     }
                     if( profile ) {
                         const auto vision_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
