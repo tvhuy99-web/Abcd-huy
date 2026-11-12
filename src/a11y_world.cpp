@@ -2,6 +2,7 @@
 
 #include <algorithm>
 #include <array>
+#include <cmath>
 #include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
@@ -32,6 +33,7 @@
 #include "input_context.h"
 #include "item.h"
 #include "item_location.h"
+#include "lightmap.h"
 #include "map.h"
 #include "messages.h"
 #include "move_mode.h"
@@ -664,11 +666,52 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                              character.get_str(), character.get_dex(),
                              character.get_int(), character.get_per() );
     character_details += " " + status_summary;
+    // Blank labels mean neutral need states, not unavailable statistics.
+    // Speak them only in this requested full character read. Keep the
+    // short status summary unchanged to avoid repetitive live alerts.
+    const auto append_neutral_need = [&character_details]( const char *label,
+                                     const std::string &current ) {
+        if( current.empty() ) {
+            character_details += " " + string_format( label, _( "Normal" ) ) + ".";
+        }
+    };
+    append_neutral_need( _( "Hunger: %s" ), display::hunger_text_color( character ).first );
+    append_neutral_need( _( "Thirst: %s" ), display::thirst_text_color( character ).first );
+    append_neutral_need( _( "Sleepiness: %s" ), display::sleepiness_text_color( character ).first );
+
+    // Every number below comes from the existing game state. Nutrition is
+    // a genuine percent of healthy calorie reserves; never invent hunger,
+    // thirst or sleepiness percentages.
+    character_details += " " + string_format( _( "Energy reserves: %d%%" ),
+                         static_cast<int>( std::lround( 100.0f * character.get_kcal_percent() ) ) ) + ".";
+    const std::string mood = remove_color_tags( display::morale_face_color( character ).first );
+    if( !mood.empty() && mood != "ERR" ) {
+        character_details += " " + string_format( _( "Mood: %s" ), mood ) + ".";
+    }
+    character_details += " " + string_format( _( "Focus: %d" ), character.get_focus() ) + ".";
+    character_details += " " + string_format( _( "Speed: %d" ), character.get_speed() ) + ".";
+    // The current moves counter can be negative. It does not mean
+    // "number of moves already spent" or "maximum moves this turn".
+    character_details += " " + string_format( _( "Movement points: %d" ),
+                         character.get_moves() ) + ".";
+    character_details += " " + string_format( _( "Flat-ground move cost: %d" ),
+                         character.run_cost( 100, false ) ) + ".";
+    const auto weariness_progress = character.weariness_transition_progress();
+    if( weariness_progress.second > 0 ) {
+        character_details += " " + string_format( _( "Weariness to next level: %d" ),
+                             weariness_progress.first ) + ".";
+    }
+    character_details += " " + string_format( _( "Activity level: %s" ),
+                         display::activity_text_color( character ).first ) + ".";
+    character_details += " " + string_format( _( "Activity penalty: %s" ),
+                         display::activity_malus_str( character ) ) + ".";
+    // The player's existing local sound volume meter, not an invented
+    // noise system or a percentage.
+    character_details += " " + string_format( _( "Sound level: %d" ), character.volume ) + ".";
     const std::string held_item = remove_color_tags( character.weapname_simple() );
     if( !held_item.empty() ) {
         character_details += " " + string_format( _( "Wielding: %s." ), held_item );
     }
-    character_details += " " + std::string( _( "End of character information." ) );
     result.nodes.push_back( document( "world:character_detail", _( "Character information" ),
                                       std::move( character_details ) ) );
     if( !status_alert_history.empty() ) {
@@ -1412,8 +1455,11 @@ void announce_player_coordinates()
 {
     const avatar &viewer = get_avatar();
     const tripoint_abs_ms pos = viewer.pos_abs();
-    std::string spoken = string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
-                                        pos.x(), pos.y(), pos.z() );
+    const std::string coordinates = string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
+                                            pos.x(), pos.y(), pos.z() );
+    // Speak the known overmap place first. Never reveal undiscovered
+    // terrain when the current overmap location has not been seen.
+    std::string spoken = string_format( _( "Area: %1$s. %2$s" ), _( "Unknown" ), coordinates );
 
     // The overmap already names forests, roads, buildings and other areas.
     // Use exactly what the character knows; never expose an unseen terrain
@@ -1425,10 +1471,39 @@ void announce_player_coordinates()
         if( terrain.is_valid() ) {
             const std::string area = remove_color_tags( terrain->get_name( vision ) );
             if( !area.empty() ) {
-                spoken = string_format( _( "Area: %1$s. %2$s" ), area, spoken );
+                spoken = string_format( _( "Area: %1$s. %2$s" ), area, coordinates );
             }
         }
     }
+    // Native lighting classification at the player's actual tile. Use
+    // the lightmap, never the brighter general outdoor sky level.
+    const lit_level light = get_map().light_at( viewer.pos_bub() );
+    std::string lighting;
+    switch( light ) {
+        case lit_level::BRIGHT:
+            lighting = _( "Very bright" );
+            break;
+        case lit_level::LIT:
+            lighting = _( "Well lit" );
+            break;
+        case lit_level::LOW:
+            lighting = _( "Dim" );
+            break;
+        case lit_level::DARK:
+            lighting = _( "Dark" );
+            break;
+        default:
+            lighting = _( "Unknown" );
+            break;
+    }
+    spoken += " " + string_format( _( "Lighting: %s" ), lighting ) + ".";
+    spoken += " " + string_format( _( "Weather: %s" ),
+                                   display::weather_text_color( viewer ).first ) + ".";
+    // Exact with a watch, approximate if the sky is visible, otherwise
+    // unavailable. The native display routine already enforces this.
+    const std::string game_time = display::time_string( viewer );
+    spoken += " " + string_format( _( "Time: %s" ),
+                                   game_time == _( "???" ) ? _( "Unknown" ) : game_time ) + ".";
     a11y::android::announce( spoken, 1 );
 }
 

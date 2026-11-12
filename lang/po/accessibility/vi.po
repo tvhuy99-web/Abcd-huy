@@ -4598,3 +4598,65 @@ msgstr "Kéo phanh tay của phương tiện. Đây không phải là đòn tấ
 
 msgid "Process corpses, cut up materials or disassemble items on your current tile. Requirements and time depend on the work."
 msgstr "Xử lý xác, cắt nhỏ vật liệu hoặc tháo rã đồ ở ô hiện tại. Điều kiện và thời gian tùy công việc."
+
+msgid "Very bright"
+msgstr "Rất sáng"
+
+msgid "Well lit"
+msgstr "Sáng rõ"
+
+msgid "Dim"
+msgstr "Ánh sáng yếu"
+
+msgid "Dark"
+msgstr "Tối"
+
+msgid "Normal"
+msgstr "Bình thường"
+
+msgid "Underground"
+msgstr "Dưới lòng đất"
+
+#, c-format
+msgid "Lighting: %s"
+msgstr "Ánh sáng: %s"
+
+#, c-format
+msgid "Time: %s"
+msgstr "Thời gian: %s"
+
+#, c-format
+msgid "Energy reserves: %d%%"
+msgstr "Dự trữ năng lượng: %d%%"
+
+#, c-format
+msgid "Mood: %s"
+msgstr "Tâm trạng: %s"
+
+#, c-format
+msgid "Focus: %d"
+msgstr "Tập trung: %d"
+
+#, c-format
+msgid "Movement points: %d"
+msgstr "Điểm di chuyển hiện tại: %d"
+
+#, c-format
+msgid "Flat-ground move cost: %d"
+msgstr "Chi phí di chuyển một ô trên mặt đất bằng phẳng: %d"
+
+#, c-format
+msgid "Weariness to next level: %d"
+msgstr "Còn %d điểm đến mức mệt mỏi tiếp theo"
+
+#, c-format
+msgid "Activity level: %s"
+msgstr "Cường độ hoạt động: %s"
+
+#, c-format
+msgid "Activity penalty: %s"
+msgstr "Hình phạt do làm việc quá sức: %s"
+
+#, c-format
+msgid "Sound level: %d"
+msgstr "Mức âm thanh: %d"
