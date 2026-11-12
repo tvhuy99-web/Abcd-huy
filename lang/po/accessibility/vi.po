@@ -4572,6 +4572,9 @@ msgstr "Thời gian dự kiến: %s"
 msgid "All categories"
 msgstr "Tất cả"
 
+msgid "All categories has no subcategories. Swipe left or right with two fingers to select a main category."
+msgstr "Danh mục Tất cả không có danh mục phụ. Vuốt hai ngón sang trái hoặc sang phải để chọn danh mục chính."
+
 msgid "%d recipes"
 msgstr "%d công thức"
 
