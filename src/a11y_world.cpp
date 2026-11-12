@@ -38,6 +38,7 @@
 #include "messages.h"
 #include "move_mode.h"
 #include "monster.h"
+#include "mtype.h"
 #include "npc.h"
 #include "output.h"
 #include "options.h"
