@@ -28,7 +28,9 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
                         draw.index("suppress_world_visuals()"))
         self.assertLess(draw.index("here.update_visibility_cache("),
                         draw.index("suppress_world_visuals()"))
-        self.assertIn("a11y::android::alignment_distance( nearest );", draw)
+        self.assertIn("a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );", draw)
+        self.assertIn("a11y::scan_directional_sonar( u.pos_bub( here ) )", draw)
+        self.assertIn("a11y::android::directional_sonar_enabled()", draw)
         self.assertIn("draw_ter();", draw)
         self.assertIn("draw_panels( true );", draw)
         self.assertIn('diagnostic_event( "WORLD_RENDER_BREAKDOWN"', draw)
@@ -44,9 +46,11 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("vision_map.update_visibility_cache( z );", reader)
         self.assertLess(reader.index("vision_map.update_visibility_cache( z );"),
                         reader.index("make_reader_snapshot()"))
-        self.assertIn("a11y::android::alignment_distance( nearest );", reader)
-        self.assertIn("a11y::observe_tile( target )", reader)
-        self.assertIn("observed.source == a11y::observation_source::visible", reader)
+        self.assertIn("a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );", reader)
+        self.assertIn("a11y::scan_directional_sonar(", reader)
+        observer = native("a11y_perception.cpp")
+        self.assertIn("seen.source != observation_source::visible", observer)
+        self.assertIn("const tile_observation seen = observe_tile( target );", observer)
 
     def test_no_headless_redraw_or_animation_loop_before_a_footstep(self):
         turns = native("do_turn.cpp")

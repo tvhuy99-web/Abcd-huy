@@ -9,7 +9,7 @@ không phụ thuộc công tắc này.
 
 ## Hai âm thanh độc lập
 
-- **Vật phẩm nhìn thấy:** a11y_item_beep.ogg, chuyển từ beep.wav của người dùng, 0,096 giây.
+- **Vật phẩm nhìn thấy:** a11y_item_beep.wav, chuyển từ beep.wav của người dùng, 0,096 giây.
 - **NPC và quái vật nhìn thấy:** giữ lại a11y_alignment_sonar.ogg gốc.
 - Nếu có cả hai loại, cả hai phát, kể cả khi nằm trên cùng một hướng.
 - Khoảng cách của mỗi loại trong từng hướng được tính độc lập. Âm lượng giảm
