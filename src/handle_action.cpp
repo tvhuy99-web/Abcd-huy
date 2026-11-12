@@ -6,6 +6,7 @@
 #include <initializer_list>
 #include <list>
 #include <optional>
+#include <set>
 #include <vector>
 #include <map>
 #include <sstream>
@@ -15,6 +16,7 @@
 #include "action.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
 #include "a11y_quantity_selection.h"
@@ -335,6 +337,31 @@ static void pickup_here_accessible()
                 continue;
             }
             pickup_choice &choice = choices[i];
+            if( intent.action == "read_detail" ) {
+                // A quantity row may combine multiple items with identical
+                // names but different condition or contents. Read each
+                // distinct original item record once without selecting or
+                // picking up any quantity.
+                std::set<std::string> distinct;
+                std::string complete;
+                for( const drop_location &source : choice.sources ) {
+                    if( !source.first.valid() ) {
+                        continue;
+                    }
+                    const std::string information =
+                        remove_color_tags( source.first->info( true ) );
+                    if( !distinct.insert( information ).second ) {
+                        continue;
+                    }
+                    if( !complete.empty() ) {
+                        complete += "\n\n";
+                    }
+                    complete += a11y::spoken_item_name( *source.first ) +
+                                "\n" + information;
+                }
+                a11y::announce_full_detail_text( complete );
+                return std::string( "TIMEOUT" );
+            }
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -369,7 +396,7 @@ static void pickup_here_accessible()
             if( choice.available == 1 ) {
                 node.role = "checkbox";
                 node.checked = choice.selected == 1;
-                node.actions = { "focus", "activate" };
+                node.actions = { "focus", "activate", "read_detail" };
             } else {
                 node.role = "checkbox";
                 node.checked = choice.selected > 0;
@@ -381,7 +408,7 @@ static void pickup_here_accessible()
                 node.field_min = 0.0;
                 node.field_max = static_cast<double>( choice.available );
                 node.field_step = 1.0;
-                node.actions = { "focus", "activate", "set_value" };
+                node.actions = { "focus", "activate", "set_value", "read_detail" };
             }
             snapshot.nodes.push_back( std::move( node ) );
         }
