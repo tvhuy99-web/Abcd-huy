@@ -4510,3 +4510,9 @@ msgstr "Đang ẩn các vùng ở xa"
 msgctxt "zones manager"
 msgid "Personal"
 msgstr "Cá nhân"
+
+msgid "Keep hands free enabled."
+msgstr "Đã bật chế độ giữ tay rảnh."
+
+msgid "Keep hands free disabled."
+msgstr "Đã tắt chế độ giữ tay rảnh."

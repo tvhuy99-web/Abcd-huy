@@ -41,6 +41,8 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
             "Jump to end": "Đến cuối danh sách",
             "Showing all zones": "Đang hiển thị tất cả các vùng",
             "Hiding distant zones": "Đang ẩn các vùng ở xa",
+            "Keep hands free enabled.": "Đã bật chế độ giữ tay rảnh.",
+            "Keep hands free disabled.": "Đã tắt chế độ giữ tay rảnh.",
         }
         for english, vietnamese in pairs.items():
             with self.subTest(english=english):
@@ -65,6 +67,8 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('_( "Currently active fighting style." )', style)
         self.assertIn('_( "Not currently active." )', style)
         self.assertIn('_( "Active fighting style: %s." )', style)
+        self.assertIn('_( "Keep hands free enabled." )', style)
+        self.assertIn('_( "Keep hands free disabled." )', style)
         self.assertIn('_( "Preparing a new world. Please wait." )', loading_menu)
         self.assertIn('_( "Creating your character and starting the game." )', game)
 
