@@ -1413,20 +1413,30 @@ void surroundings_menu::execute_accessible()
                     ++counts[a11y::spoken_item_name( obj )];
                 }
                 std::set<std::string> spoken_descriptions;
+                std::string full;
                 for( const item &obj : here.i_at( target.target ) ) {
                     const std::string name = a11y::spoken_item_name( obj );
                     const int count = counts[name];
                     const std::string grouped = count == 1 ? name :
                                                 string_format( _( "%1$s [%2$d]" ), name, count );
-                    if( grouped == target.label &&
-                        spoken_descriptions.insert( obj.info( true ) ).second ) {
-                        // Distinct versions of the same named item retain
-                        // their distinct original facts. Exact duplicates
-                        // are read only once; the stack count stays in the
-                        // list's spoken label.
-                        a11y::announce_full_item_info( obj );
+                    if( grouped != target.label ) {
+                        continue;
                     }
+                    const std::string description = remove_color_tags( obj.info( true ) );
+                    if( !spoken_descriptions.insert( description ).second ) {
+                        continue;
+                    }
+                    // One request may represent a stack with multiple
+                    // distinct states. Assemble one long document, not a
+                    // burst of independent TTS messages that can evict
+                    // earlier paragraphs from the queue.
+                    if( !full.empty() ) {
+                        full += "\n\n";
+                    }
+                    full += name + "\n" + relative_words( target.relative ) +
+                            "\n" + description;
                 }
+                a11y::announce_full_detail_text( full );
                 return std::string( "TIMEOUT" );
             }
             // Find a real hazard-aware route even when the selected nearby
