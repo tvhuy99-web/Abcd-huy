@@ -3790,6 +3790,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if ("proficiencies".equals(category)
                 && id.startsWith("proficiency:entry:")) {
             prefix = "proficiency:details";
+        } else if ("diary".equals(category) && id.startsWith("diary:page:")) {
+            prefix = "diary:entry";
         }
         if (prefix.isEmpty()) { return false; }
         // These document nodes describe only the engine's CURRENT selection,
