@@ -2793,6 +2793,14 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 }
                 complete += document.label + "\n" + document.detail;
             }
+            // Recalculation may invalidate the selected recipe while
+            // reader_snapshot rebuilds the visible list. Do not examine
+            // a different or out-of-range result after that update.
+            if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
+                current[line]->ident().str() + ":" + std::to_string( line ) !=
+                id.substr( std::string( "recipe:" ).size() ) ) {
+                return "TIMEOUT";
+            }
             const recipe &rec = *current[line];
             if( !rec.is_nested() && !rec.is_practice() ) {
                 int scroll_position = 0;
