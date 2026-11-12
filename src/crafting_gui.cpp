@@ -25,6 +25,7 @@
 #include "bonuses.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_requirements.h"
 #include "a11y_runtime.h"
 #include "calendar.h"
@@ -2550,6 +2551,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         const recipe &rec = *current[i];
         a11y::semantic_node node;
         node.id = "recipe:" + rec.ident().str() + ":" + std::to_string( i );
+        node.actions = { "focus", "activate", "read_detail" };
         node.label = remove_color_tags( rec.result_name() );
         node.role = rec.is_nested() ? "treeitem" : "button";
         node.position = i + 1;
@@ -2762,7 +2764,8 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     }
     for( std::size_t i = 0; i < current.size(); ++i ) {
         const std::string id = "recipe:" + current[i]->ident().str() + ":" + std::to_string( i );
-        if( intent.node != id || ( intent.action != "focus" && intent.action != "activate" ) ) {
+        if( intent.node != id || ( intent.action != "focus" && intent.action != "activate" &&
+                                   intent.action != "read_detail" ) ) {
             continue;
         }
         if( line != static_cast<int>( i ) ) {
@@ -2773,6 +2776,38 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 manual_batch = line + 1;
             }
             invalidate_info_panels();
+        }
+        if( intent.action == "read_detail" ) {
+            // Read all the current original recipe documents, plus the
+            // complete item-info pane for the result when that pane exists.
+            // This is generated only for an explicit two-finger request.
+            const a11y::semantic_snapshot details = reader_snapshot( ctxt );
+            std::string complete;
+            for( const a11y::semantic_node &document : details.nodes ) {
+                if( document.role != "document" ||
+                    document.id.rfind( "craft:", 0 ) != 0 || document.detail.empty() ) {
+                    continue;
+                }
+                if( !complete.empty() ) {
+                    complete += "\n\n";
+                }
+                complete += document.label + "\n" + document.detail;
+            }
+            const recipe &rec = *current[line];
+            if( !rec.is_nested() && !rec.is_practice() ) {
+                int scroll_position = 0;
+                item_info_data item_data = result_info->get_result_data(
+                                               &rec, get_batch_size(), scroll_position, 80, true );
+                const std::string result_text = remove_color_tags(
+                                                    format_item_info( item_data.get_item_display(),
+                                                            item_data.get_item_compare() ) );
+                if( !result_text.empty() ) {
+                    complete += "\n\n" + std::string( _( "Item info" ) ) +
+                                "\n" + result_text;
+                }
+            }
+            a11y::announce_full_detail_text( complete );
+            return "TIMEOUT";
         }
         info_nav_active = false;
         rebuild_keybinding_tips();
