@@ -21,6 +21,10 @@ class FullDetailOnDemandTests(unittest.TestCase):
         cls.advanced = (SRC / "advanced_inv.cpp").read_text("utf-8")
         cls.armor = (SRC / "armor_layers.cpp").read_text("utf-8")
         cls.nearby = (SRC / "surroundings_menu.cpp").read_text("utf-8")
+        cls.pickup_here = (SRC / "handle_action.cpp").read_text("utf-8")
+        cls.crafting = (SRC / "crafting_gui.cpp").read_text("utf-8")
+        cls.help = (SRC / "help.cpp").read_text("utf-8")
+        cls.diary = (SRC / "diary_ui.cpp").read_text("utf-8")
         cls.runtime = (SRC / "a11y_runtime.cpp").read_text("utf-8")
         cls.java = JAVA.read_text("utf-8")
 
@@ -81,6 +85,32 @@ class FullDetailOnDemandTests(unittest.TestCase):
         first = self.nearby.index('if( intent.action == "read_detail" && target.kind')
         read_end = self.nearby.index('return std::string( "TIMEOUT" );', first)
         self.assertLess(read_end, self.nearby.index('g->safe_route_to(', first))
+
+    def test_dedicated_pickup_here_uses_the_original_item_info(self):
+        self.assertIn('a11y::screen_scope reader( &ctxt, "pickup-here"', self.pickup_here)
+        self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.pickup_here)
+        self.assertIn('node.actions = { "focus", "activate", "set_value", "read_detail" };',
+                      self.pickup_here)
+        self.assertIn("const std::string information =", self.pickup_here)
+        self.assertIn("source.first->info( true )", self.pickup_here)
+        self.assertIn("a11y::announce_full_detail_text( complete );", self.pickup_here)
+
+    def test_recipe_detail_includes_complete_output_item_pane(self):
+        self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.crafting)
+        self.assertIn('if( intent.action == "read_detail" ) {', self.crafting)
+        self.assertIn("const a11y::semantic_snapshot details = reader_snapshot( ctxt );",
+                      self.crafting)
+        self.assertIn("result_info->get_result_data(", self.crafting)
+        self.assertIn("format_item_info( item_data.get_item_display()", self.crafting)
+        self.assertIn("a11y::announce_full_detail_text( complete );", self.crafting)
+
+    def test_help_and_diary_original_text_on_two_finger_request(self):
+        self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.help)
+        self.assertIn("category.paragraphs", self.help)
+        self.assertIn("parse_tags( words, viewer, viewer );", self.help)
+        self.assertIn("a11y::announce_full_detail_text( document );", self.help)
+        self.assertIn('prefix = "diary:entry";', self.java)
+        self.assertIn('a11y::append_document( snapshot, "diary:entry"', self.diary)
 
     def test_read_detail_allowed_even_if_selection_is_disabled(self):
         self.assertIn('intent->action != "read_detail" && !node->enabled', self.runtime)
