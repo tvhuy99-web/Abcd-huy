@@ -3714,6 +3714,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             full.append(document.label).append(".\n").append(document.detail);
         }
         if (full.length() == 0) { return false; }
+        // Begin with the focused row identity and its concise state, then
+        // speak all accompanying native detail documents in order.
+        full.insert(0, nodeText(selected, true) + "\n\n");
         documentReader.open(snapshot.contextKey(),
                 selected.id + ":linked-details", full.toString());
         // This explicit two-finger request reads every linked section.
@@ -3778,8 +3781,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // Yes/No choices carry the original question in node.detail,
             // so do not prepend snapshot.summary a second time.
             if (!node.detail.isEmpty() || information.length() > 320) {
-                // Explicit details belong in the long-text queue so short
-                // focus notifications cannot silently truncate them.
+                // Give even standalone detail text a document owner; an old
+                // document key must never be reused for an unrelated item.
+                documentReader.open(snapshot.contextKey(),
+                        node.id + ":detail", information);
                 speakDocument(information);
             } else {
                 feedback(information);

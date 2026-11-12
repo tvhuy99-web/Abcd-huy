@@ -29,7 +29,7 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn("dynamic_cast<const inventory_multiselector *>", code)
         self.assertIn("dynamic_cast<const inventory_compare_selector *>", code)
         self.assertIn("if( available > 1 )", code)
-        self.assertIn('node.actions = { "focus", "activate", "set_value" };', code)
+        self.assertIn('node.actions = { "focus", "activate", "set_value", "read_detail" };', code)
         self.assertIn("entry.get_available_count() == 1", code)
         self.assertIn("select_count( *multi, binding->column, binding->location,", code)
         self.assertIn("entry.chosen_count == 0 ? 1 : 0 );", code)

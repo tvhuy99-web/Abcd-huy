@@ -54,6 +54,8 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         self.assertIn("speech.say(documentReader.speechKey(), text, ReaderSpeechQueue.LONG_TEXT);",
                       self.controller)
         self.assertIn("speakDocument(information);", self.controller)
+        self.assertIn('node.id + ":detail", information', self.controller)
+        self.assertIn('full.insert(0, nodeText(selected, true) + "\\n\\n");', self.controller)
 
     def test_disassembly_light_reason_is_accurate_and_translated(self):
         self.assertIn("Too dark to disassemble this item.", self.disassemble)
