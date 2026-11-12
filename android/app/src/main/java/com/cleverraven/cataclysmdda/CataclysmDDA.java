@@ -162,10 +162,10 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.onGameCue(name); }
     }
 
-    /** Visibility-filtered cardinal distance from the native game thread. */
-    public void onAccessibilityAlignment(int distance) {
+    /** Visible nearest targets on eight rays, split into creatures and items. */
+    public void onAccessibilityDirectionalSonar(int[] creatures, int[] items) {
         GameReaderController reader = readerController;
-        if (reader != null) { reader.onAlignmentDistance(distance); }
+        if (reader != null) { reader.onDirectionalSonarTargets(creatures, items); }
     }
 
     /**
@@ -257,6 +257,7 @@ public class CataclysmDDA extends SDLActivity {
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
     static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
                                                         boolean performanceProfile);
+    static native void nativeConfigureDirectionalSonar(boolean enabled);
     static native boolean nativeWorldStepReady();
     static native int nativeCancelPendingWorldSteps();
     static native int nativeTravelState();

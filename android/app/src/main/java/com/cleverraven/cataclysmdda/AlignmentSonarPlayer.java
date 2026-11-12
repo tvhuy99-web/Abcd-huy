@@ -5,110 +5,164 @@ import android.media.AudioAttributes;
 import android.media.SoundPool;
 import android.os.Handler;
 import android.os.Looper;
+import java.util.Arrays;
 
 /**
- * One gentle sonar ping per second when a seen item, monster or NPC is
- * cardinally aligned with the player. This never interrupts screen-reader
- * speech or changes the native game's audio settings.
- *
- * All methods run on the Android main looper. No polling of game data happens
- * here: the native game thread publishes only a visibility-filtered distance.
+ * Optional, independent item and creature sonar across eight compass rays.
+ * Each direction gets a separate time slot; stereo pan and north/south pitch
+ * distinguish the headings without interrupting TTS or changing game audio.
  */
 final class AlignmentSonarPlayer implements AutoCloseable {
-    private static final long PING_INTERVAL_MS = 1000L;
-    private static final int MAX_DISTANCE = 30;
-
+    static final int MAX_DISTANCE = 16;
+    static final int DIRECTIONS = 8;
+    private static final long DIRECTION_SLOT_MS = 160L;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SoundPool pool;
-    // SoundPool loads asynchronously. Its listener is installed before load().
-    private int soundId;
-    private int playingStream;
+    private final int[] creatures = new int[DIRECTIONS];
+    private final int[] items = new int[DIRECTIONS];
+    private final int[] streams = new int[DIRECTIONS * 2];
+    private int creatureSound;
+    private int itemSound;
+    private boolean creatureLoaded;
+    private boolean itemLoaded;
+    private boolean closed;
+    private boolean enabled;
+    private boolean worldActive;
+    private boolean scheduled;
+    private int direction;
+
     private final Runnable tick = new Runnable() {
-        @Override
-        public void run() {
+        @Override public void run() {
             scheduled = false;
-            if (!closed && worldActive && nearestDistance > 0) {
-                if (loaded) {
-                    final float gain = volumeAt(nearestDistance);
-                    playingStream = pool.play(soundId, gain, gain, 1, 0, 1.0f);
-                }
-                scheduled = true;
-                handler.postDelayed(this, PING_INTERVAL_MS);
+            if (closed || !enabled || !worldActive || !hasTargets()) {
+                return;
             }
+            final int heading = direction;
+            direction = (direction + 1) % DIRECTIONS;
+            // Both categories play independently, including on one ray.
+            if (creatureLoaded && creatures[heading] > 0) {
+                play(creatureSound, creatures[heading], heading, 0);
+            }
+            if (itemLoaded && items[heading] > 0) {
+                play(itemSound, items[heading], heading, 1);
+            }
+            scheduled = true;
+            handler.postDelayed(this, DIRECTION_SLOT_MS);
         }
     };
-    private boolean loaded;
-    private boolean closed;
-    private boolean scheduled;
-    private boolean worldActive;
-    private int nearestDistance = -1;
 
     AlignmentSonarPlayer(Context context) {
+        Arrays.fill(creatures, -1);
+        Arrays.fill(items, -1);
         AudioAttributes attributes = new AudioAttributes.Builder()
                 .setUsage(AudioAttributes.USAGE_ASSISTANCE_ACCESSIBILITY)
-                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
-                .build();
-        pool = new SoundPool.Builder().setMaxStreams(1)
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION).build();
+        pool = new SoundPool.Builder().setMaxStreams(DIRECTIONS * 2)
                 .setAudioAttributes(attributes).build();
         pool.setOnLoadCompleteListener((soundPool, sampleId, status) -> {
-            if (!closed && sampleId == soundId && status == 0) {
-                loaded = true;
-            }
+            if (closed || status != 0) { return; }
+            if (sampleId == creatureSound) { creatureLoaded = true; }
+            if (sampleId == itemSound) { itemLoaded = true; }
         });
-        soundId = pool.load(context.getApplicationContext(),
-                R.raw.a11y_alignment_sonar, 1);
+        Context app = context.getApplicationContext();
+        creatureSound = pool.load(app, R.raw.a11y_alignment_sonar, 1);
+        itemSound = pool.load(app, R.raw.a11y_item_beep, 1);
     }
 
-    /** -1 means nothing aligned; otherwise nearest distance in [1, 30]. */
-    void updateDistance(int distance) {
-        if (closed) {
-            return;
-        }
-        nearestDistance = distance >= 1 && distance <= MAX_DISTANCE ? distance : -1;
+    void setEnabled(boolean on) {
+        if (closed || enabled == on) { return; }
+        enabled = on;
+        if (!on) { clearTargets(); }
         refresh();
     }
 
-    /** A menu, paused/hidden Activity or disabled reader stops the sonar. */
+    /** Menus, paused/hidden Activities and disabled readers stop the sonar. */
     void setWorldActive(boolean active) {
-        if (closed) {
+        if (closed || worldActive == active) { return; }
+        worldActive = active;
+        if (!active) { clearTargets(); }
+        refresh();
+    }
+
+    /** Nearest visible distance per type per compass ray, as reported by C++. */
+    void updateTargets(int[] nearbyCreatures, int[] nearbyItems) {
+        if (closed || !enabled || nearbyCreatures == null || nearbyItems == null
+                || nearbyCreatures.length != DIRECTIONS || nearbyItems.length != DIRECTIONS) {
             return;
         }
-        worldActive = active;
-        if (!active) {
-            nearestDistance = -1;
+        for (int i = 0; i < DIRECTIONS; ++i) {
+            creatures[i] = clamp(nearbyCreatures[i]);
+            items[i] = clamp(nearbyItems[i]);
         }
         refresh();
+    }
+
+    private static int clamp(int d) {
+        return d >= 1 && d <= MAX_DISTANCE ? d : -1;
+    }
+
+    private boolean hasTargets() {
+        for (int i = 0; i < DIRECTIONS; ++i) {
+            if (creatures[i] > 0 || items[i] > 0) { return true; }
+        }
+        return false;
+    }
+
+    private void clearTargets() {
+        Arrays.fill(creatures, -1);
+        Arrays.fill(items, -1);
+    }
+
+    private void play(int sample, int distance, int heading, int category) {
+        final float gain = volumeAt(distance);
+        // N is bright/center, S low/center, East and West pan.
+        // Diagonal headings blend pan with pitch.
+        float left = gain;
+        float right = gain;
+        switch (heading) {
+            case 1: case 3: left *= 0.30f; break;
+            case 2: left *= 0.10f; break;
+            case 5: case 7: right *= 0.30f; break;
+            case 6: right *= 0.10f; break;
+            default: break;
+        }
+        final float rate = heading == 0 ? 1.35f
+                : heading == 1 || heading == 7 ? 1.20f
+                : heading == 4 ? 0.70f
+                : heading == 3 || heading == 5 ? 0.82f : 1.0f;
+        streams[heading * 2 + category] = pool.play(sample, left, right, 1, 0, rate);
+    }
+
+    /** 16 tiles = soft; 1 tile = loud (maximum 90% sample gain). */
+    static float volumeAt(int distance) {
+        final int d = Math.max(1, Math.min(MAX_DISTANCE, distance));
+        return 0.10f + (MAX_DISTANCE - d) * (0.80f / (MAX_DISTANCE - 1));
     }
 
     private void refresh() {
-        if (!worldActive || nearestDistance < 1) {
+        if (!enabled || !worldActive || !hasTargets()) {
             handler.removeCallbacks(tick);
             scheduled = false;
-            if (playingStream != 0) {
-                pool.stop(playingStream);
-                playingStream = 0;
+            for (int i = 0; i < streams.length; ++i) {
+                if (streams[i] != 0) { pool.stop(streams[i]); streams[i] = 0; }
             }
         } else if (!scheduled) {
+            direction = 0;
             scheduled = true;
             handler.post(tick);
         }
     }
 
-    /** 30 tiles = soft; 1 tile = loud; never louder than 90%. */
-    static float volumeAt(int distance) {
-        final int safe = Math.max(1, Math.min(MAX_DISTANCE, distance));
-        return 0.08f + (MAX_DISTANCE - safe) * (0.82f / (MAX_DISTANCE - 1));
-    }
-
-    @Override
-    public void close() {
+    @Override public void close() {
+        if (closed) { return; }
         closed = true;
-        handler.removeCallbacks(tick);
-        nearestDistance = -1;
+        enabled = false;
         worldActive = false;
-        if (playingStream != 0) {
-            pool.stop(playingStream);
-            playingStream = 0;
+        clearTargets();
+        handler.removeCallbacks(tick);
+        scheduled = false;
+        for (int i = 0; i < streams.length; ++i) {
+            if (streams[i] != 0) { pool.stop(streams[i]); streams[i] = 0; }
         }
         pool.release();
     }

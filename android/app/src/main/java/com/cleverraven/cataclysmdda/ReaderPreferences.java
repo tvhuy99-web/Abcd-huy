@@ -157,6 +157,15 @@ public final class ReaderPreferences {
         values.edit().putBoolean("haptic_cues", enabled).apply();
     }
 
+    /** Independent directional sonar is opt-in, unlike regular spoken output. */
+    public boolean isDirectionalSonarEnabled() {
+        return values.getBoolean("directional_sonar", false);
+    }
+
+    public void setDirectionalSonarEnabled(boolean enabled) {
+        values.edit().putBoolean("directional_sonar", enabled).apply();
+    }
+
     // Optional verified voice selection can re-enable an explicitly disabled reader.
     public void confirmHeardAndEnable(boolean permitNetworkVoice, float rate) {
         values.edit().putBoolean("enabled", true)

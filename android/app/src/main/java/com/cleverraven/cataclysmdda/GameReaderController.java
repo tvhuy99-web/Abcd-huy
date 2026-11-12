@@ -396,6 +396,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void updateNativeState(boolean force) {
         boolean enabled = !closed && preferences.isEnabled();
+        sonar.setEnabled(enabled && preferences.isDirectionalSonarEnabled());
         boolean suspended = !foreground || !windowFocused || (!usesTouchExploration() && !speech.isReady());
         if (!enabled || suspended) {
             sonar.setWorldActive(false);
@@ -406,6 +407,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || lastSpokenOnlyWorld != spokenOnlyWorld || lastPerformanceProfile != profile) {
             try {
                 CataclysmDDA.nativeConfigureReaderPerformance(spokenOnlyWorld, profile);
+                CataclysmDDA.nativeConfigureDirectionalSonar(
+                        enabled && preferences.isDirectionalSonarEnabled());
                 if (force || !nativeConfigured || lastEnabled != enabled
                         || lastSuspended != suspended) {
                     CataclysmDDA.nativeConfigureReader(enabled, suspended);
@@ -1085,8 +1088,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Distance-only native callback; only the UI looper touches SoundPool. */
-    public void onAlignmentDistance(int distance) {
+    /** Per-ray native callback; only the UI looper touches SoundPool. */
+    public void onDirectionalSonarTargets(int[] creatures, int[] items) {
         handler.post(() -> {
             if (closed) {
                 return;
@@ -1096,7 +1099,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     && !comprehensiveMenu && debugReport == null;
             sonar.setWorldActive(active);
             if (active) {
-                sonar.updateDistance(distance);
+                sonar.updateTargets(creatures, items);
             }
         });
     }

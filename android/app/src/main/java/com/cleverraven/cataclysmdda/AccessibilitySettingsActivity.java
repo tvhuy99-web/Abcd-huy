@@ -11,7 +11,7 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import java.util.Locale;
 
-/** Exactly three accessibility settings; the canonical TTS editor is separate. */
+/** Reader graphics, directional sonar and swipe settings; TTS is separate. */
 public final class AccessibilitySettingsActivity extends Activity {
     @Override protected void onCreate(Bundle state) {
         super.onCreate(state);
@@ -41,6 +41,22 @@ public final class AccessibilitySettingsActivity extends Activity {
         TextView graphicsHelp = new TextView(this);
         graphicsHelp.setText(R.string.a11yWorldGraphicsExplanation);
         controls.addView(graphicsHelp);
+
+        CheckBox directionalSonar = new CheckBox(this);
+        directionalSonar.setText(R.string.a11yDirectionalSonar);
+        directionalSonar.setChecked(prefs.isDirectionalSonarEnabled());
+        directionalSonar.setOnCheckedChangeListener((button, checked) -> {
+            prefs.setDirectionalSonarEnabled(checked);
+            try {
+                CataclysmDDA.nativeConfigureDirectionalSonar(checked);
+            } catch (UnsatisfiedLinkError unavailable) {
+                // Reapplied by the game reader when gameplay resumes.
+            }
+        });
+        controls.addView(directionalSonar);
+        TextView sonarHelp = new TextView(this);
+        sonarHelp.setText(R.string.a11yDirectionalSonarExplanation);
+        controls.addView(sonarHelp);
 
         TextView distanceValue = new TextView(this);
         controls.addView(distanceValue);

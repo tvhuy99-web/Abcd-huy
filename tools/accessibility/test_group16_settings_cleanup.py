@@ -61,7 +61,9 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn("nativeConfigureReaderPerformance(", self.accessibility)
         self.assertIn("setSwipeDistanceLevel(level)", self.accessibility)
         self.assertIn("setSwipeDurationLevel(level)", self.accessibility)
-        self.assertEqual(self.accessibility.count("new CheckBox(this)"), 1)
+        self.assertEqual(self.accessibility.count("new CheckBox(this)"), 2)
+        self.assertIn("setDirectionalSonarEnabled(checked)", self.accessibility)
+        self.assertIn("nativeConfigureDirectionalSonar(checked)", self.accessibility)
         self.assertEqual(self.accessibility.count("new SeekBar(this)"), 2)
 
     def test_backup_remains_two_stage_and_blocks_active_game(self):
