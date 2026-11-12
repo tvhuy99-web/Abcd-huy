@@ -151,21 +151,41 @@ class CombatRepairContracts(unittest.TestCase):
         ):
             self.assertIn('msgid "' + msg + '"', self.po)
 
-    def test_four_finger_counts_are_reserved_for_map_not_attacks(self):
-        controller = self.controller.split("public boolean handleCustomGesture(", 1)[1]
-        combat = controller.split("if (combatMode && directWorldGesturesEnabled())", 1)[1]
-        for gesture, vector in (
-            ("swipe_3_up", "0, -1"),
-            ("swipe_3_right", "1, 0"),
-            ("swipe_3_down", "0, 1"),
-            ("swipe_3_left", "-1, 0"),
+    def test_combat_one_finger_diagonals_and_two_finger_walking(self):
+        combat = self.controller.split("public boolean handleCustomGesture(", 1)[1]
+        combat = combat.split("if (combatMode && directWorldGesturesEnabled())", 1)[1]
+        for gesture, direction in (
+            ("swipe_up", 0), ("swipe_right", 2),
+            ("swipe_down", 4), ("swipe_left", 6),
+            ("swipe_up_left", 7), ("swipe_up_right", 1),
+            ("swipe_down_left", 5), ("swipe_down_right", 3),
         ):
-            self.assertIn(f'case "{gesture}": moveInCombat({vector}); return true;', combat)
+            self.assertIn(f'case "{gesture}": direction = {direction}; break;', combat)
+        self.assertIn('case "swipe_left_right":', combat)
+        self.assertIn('requestCombatCommand("reader:combat:reload");', combat)
+        self.assertIn('case "swipe_right_left":', combat)
+        self.assertIn("readCombatWieldedWeapon();", combat)
+        self.assertIn('snapshot.find("reader:combat:weapon-status")', self.controller)
+        self.assertIn('document( "reader:combat:weapon-status"', self.world)
+        self.assertIn("wielded->ammo_remaining()", self.world)
+        self.assertIn('msgstr "Đang cầm %1$s. Còn %2$d viên đạn."', self.po)
+
+        scan = self.controller.split("public void scanDirection(", 1)[1]
+        scan = scan.split("public void twoFingerTap(", 1)[0]
+        self.assertIn("moveInCombat(dx, dy);", scan)
+        self.assertNotIn('reader:combat:attack:', scan)
+        self.assertIn("requestLiveWorldCommand(id);", scan)
         self.assertIn("dispatchWorldMovement(dx, dy);", self.controller)
         self.assertIn("!combatMode && worldStepAllowed()", self.controller)
-        tests = load(INSTRUMENTATION / "GameMenuGestureDispatchTest.java")
-        self.assertIn("allFourThreeFingerCombatDirectionsAreDetected", tests)
-        self.assertIn("1, actions.savedThreeFingerSwipes", tests)
+        self.assertNotIn('case "swipe_3_up": moveInCombat(', combat)
+        surface = load(ANDROID / "ReaderGestureSurface.java")
+        self.assertIn("swipeHandled = true;", surface)
+        self.assertIn("boolean handled = listener.handleCustomGesture(gesture);", surface)
+        device = load(INSTRUMENTATION / "GameMenuGestureDispatchTest.java")
+        self.assertIn("allFourTwoFingerCombatDirectionsAreDetected", device)
+        self.assertIn("oneFingerBentCombatSwipesAttackDiagonally", device)
+        self.assertIn("oneFingerWeaponInspectAndReloadRemainDistinct", device)
+        self.assertIn("1, actions.savedThreeFingerSwipes", device)
 
 
 if __name__ == "__main__":

@@ -716,8 +716,13 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger=" + gesture
                             + " duration_ms=" + (event.getEventTime() - downTime));
                     clearMultiTap();
-                    if (!listener.handleCustomGesture(gesture)
-                            && gesture.indexOf('_', "swipe_".length()) < 0) {
+                    boolean handled = listener.handleCustomGesture(gesture);
+                    if (handled) {
+                        // A bent or out-and-back swipe can end at the touch
+                        // origin. Consume it before tap recognition below,
+                        // or reload/weapon inspection could also trigger tap.
+                        swipeHandled = true;
+                    } else if (gesture.indexOf('_', "swipe_".length()) < 0) {
                         handleSwipe(event.getX() - firstX, event.getY() - firstY);
                     }
                 }
