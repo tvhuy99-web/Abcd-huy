@@ -916,22 +916,26 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     && !viewer.has_destination()
                                     && !viewer.has_destination_activity()
                                     && !viewer.has_effect( effect_sleep );
-    // Compute native movement safety before publishing any combat buttons:
-    // a freshly built snapshot otherwise marks every attack as disabled.
-    // Combat commands are separate from walking/scan controls. All eight
-    // directions are explicit single-action nodes; there is no movement
-    // fallback even if the target disappears before native execution.
-    // The same world eligibility gate disables combat in vehicles, death
-    // cameras, sleeping, auto-travel and read-only explore mode.
+    // Eight-direction combat gestures use the same engine rules as the
+    // corresponding native keys. A gun fires; otherwise normal movement
+    // bumps into monsters for melee, interacts with NPCs, or walks into
+    // empty space. No hostile-only restriction or forced standstill.
+    // The existing eligibility gate prevents use in incompatible modes.
     const int combat_steps[8][2] = {
         { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
         { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
     };
+    const item_location combat_held = viewer.get_wielded_item();
+    const bool ranged_combat = combat_held && combat_held->is_gun() &&
+                               !combat_held->gun_current_mode().melee();
     for( int i = 0; i < 8; ++i ) {
+        const std::string dir_name = relative_name( combat_steps[i][0], combat_steps[i][1] );
         semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
-                                       string_format( _( "Attack %s" ),
-                                               relative_name( combat_steps[i][0], combat_steps[i][1] ) ),
-                                       _( "One attack in this direction. Never moves the player." ) );
+                                       ranged_combat ? string_format( _( "Fire %s" ), dir_name ) :
+                                       string_format( _( "Move or attack %s" ), dir_name ),
+                                       ranged_combat ?
+                                       _( "Fire the wielded gun in this direction." ) :
+                                       _( "Use normal movement: attack or interact if occupied, otherwise walk." ) );
         attack.enabled = result.swipe_movement_allowed;
         result.nodes.push_back( std::move( attack ) );
     }
