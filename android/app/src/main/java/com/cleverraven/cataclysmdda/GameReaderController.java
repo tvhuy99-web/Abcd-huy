@@ -147,6 +147,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // acknowledged its focus. Never speak the previous row's details.
     private String pendingLinkedDetail = "";
     private String pendingLinkedDetailContext = "";
+    // A native read-only item request is scoped to the currently focused
+    // row and screen. Long UTF-8 descriptions are assembled before entering
+    // the bounded speech queue; stale replies must not name another item.
+    private String pendingItemDetailNode = "";
+    private String pendingItemDetailContext = "";
+    private StringBuilder pendingItemDetailParts;
     // Inventory container picker: all edits stay local until the parent
     // pocket receives one atomic native commit. 0=outer, 1=hold menu,
     // 2=pockets, 3=contents.
@@ -356,6 +362,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         pendingReaderLayer = "";
         pendingLinkedDetail = "";
         pendingLinkedDetailContext = "";
+        pendingItemDetailNode = "";
+        pendingItemDetailContext = "";
+        pendingItemDetailParts = null;
         targetingOriginalControls = false;
         pocketStage = 0;
         pocketDrafts.clear();
@@ -501,6 +510,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
                     pendingLinkedDetailContext = "";
+                    pendingItemDetailNode = "";
+                    pendingItemDetailContext = "";
+                    pendingItemDetailParts = null;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
                     lastLoadingStatus = "";
@@ -691,6 +703,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     pendingReaderLayerRevisions = 0;
                     pendingLinkedDetail = "";
                     pendingLinkedDetailContext = "";
+                    pendingItemDetailNode = "";
+                    pendingItemDetailContext = "";
+                    pendingItemDetailParts = null;
                 } else if (!pendingReaderLayer.isEmpty()) {
                     ReaderSnapshot.Node parent = next.find(pendingReaderLayer);
                     ReaderSnapshot.Node child = parent == null ? null
@@ -918,12 +933,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         announceGameMessage(text, priority, false);
     }
 
+    private boolean expectingItemDetail() {
+        return snapshot != null && !pendingItemDetailNode.isEmpty()
+                && pendingItemDetailContext.equals(snapshot.contextKey())
+                && pendingItemDetailNode.equals(focus);
+    }
+
     private void announceGameMessage(String text, int priority, boolean immediate) {
-        if (text == null || text.trim().isEmpty() || text.length() > 16000) { return; }
+        // Framed long documents are assembled on the UI thread, before they
+        // enter ReaderSpeechQueue (MAX_PENDING=8). Never silently discard
+        // early chunks when a long book/item description is requested.
+        if (text == null || text.trim().isEmpty()
+                || (text.length() > 16000 && !text.startsWith("A11Y_DETAIL:"))) {
+            return;
+        }
         final String message = text;
         final boolean loading = message.startsWith("A11Y_LOADING:");
         final boolean extendedScan = message.startsWith("A11Y_SCAN:");
         final boolean requestedDetail = message.startsWith("A11Y_DETAIL:");
+        final boolean detailBegin = message.startsWith("A11Y_DETAIL_BEGIN:");
+        final boolean detailPart = message.startsWith("A11Y_DETAIL_PART:");
+        final boolean detailEnd = message.startsWith("A11Y_DETAIL_END:");
         final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
         final String spokenMessage = ReaderSpokenText.clean(
                 loading ? message.substring("A11Y_LOADING:".length())
@@ -944,6 +974,32 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
+            if (detailBegin || detailPart || detailEnd) {
+                if (!expectingItemDetail()) {
+                    pendingItemDetailParts = null;
+                    return;
+                }
+                if (detailBegin) {
+                    pendingItemDetailParts = new StringBuilder();
+                } else if (pendingItemDetailParts == null) {
+                    return;
+                }
+                String marker = detailBegin ? "A11Y_DETAIL_BEGIN:"
+                        : detailPart ? "A11Y_DETAIL_PART:" : "A11Y_DETAIL_END:";
+                String part = message.substring(marker.length());
+                if (pendingItemDetailParts.length() > 1000000 - part.length()) {
+                    pendingItemDetailParts = null;
+                    return;
+                }
+                pendingItemDetailParts.append(part);
+                if (detailEnd) {
+                    String assembled = pendingItemDetailParts.toString();
+                    pendingItemDetailParts = null;
+                    announceGameMessage("A11Y_DETAIL:" + assembled, priority, true);
+                }
+                return;
+            }
+            if (requestedDetail && !expectingItemDetail()) { return; }
             if (!loading && (snapshot == null
                     || (combatAlert && !"DEFAULTMODE".equals(snapshot.category)))) {
                 // A combat failure produced in targeting must wait until
@@ -977,11 +1033,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
             } else if (requestedDetail) {
-                // Full item facts are explicitly requested, never a combat
-                // event. Read as long text, so short focus changes and
-                // gameplay alerts do not turn the description into a flood.
-                speech.say("item-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
-                        spokenMessage, ReaderSpeechQueue.LONG_TEXT, 600000L);
+                // A request names one live item, not a gameplay message. The
+                // original text is one document, assembled before speech so
+                // no paragraphs can be evicted by the bounded queue.
+                documentReader.open(snapshot.contextKey(),
+                        pendingItemDetailNode + ":full-info", spokenMessage);
+                speakDocument(spokenMessage);
             } else if (extendedScan) {
                 // Reading sixteen unrestricted map cells may outlive the
                 // eight-second event TTL; use the document-length channel.
@@ -2162,6 +2219,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void navigate(int delta) {
         pendingLinkedDetail = "";
         pendingLinkedDetailContext = "";
+        pendingItemDetailNode = "";
+        pendingItemDetailContext = "";
+        pendingItemDetailParts = null;
         SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (delta == 0) { readCurrent(); return; }
@@ -3799,7 +3859,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // Native item information is fetched only on explicit request.
             // This also works for read-only/disabled items and pocket rows.
             if (node.actions.contains("read_detail")) {
-                send("read_detail", "");
+                pendingItemDetailNode = node.id;
+                pendingItemDetailContext = snapshot.contextKey();
+                pendingItemDetailParts = null;
+                if (send("read_detail", "") == 0) {
+                    pendingItemDetailNode = "";
+                    pendingItemDetailContext = "";
+                }
                 return;
             }
             if (readLinkedDetails(node)) { return; }
