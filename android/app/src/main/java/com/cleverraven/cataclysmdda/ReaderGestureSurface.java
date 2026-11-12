@@ -33,8 +33,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCraftingRecipeSwipe(int horizontal) { return false; }
         /** Crafting only: one finger vertically switches the active subcategory. */
         default boolean handleCraftingSubcategorySwipe(int vertical) { return false; }
-        /** Crafting only: two fingers vertically switch main categories, including All. */
-        default boolean handleCraftingMainCategorySwipe(int vertical) { return false; }
+        /** Crafting only: two fingers horizontally switch main categories, including All. */
+        default boolean handleCraftingMainCategorySwipe(int horizontal) { return false; }
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
         /** Confirm the current native menu, selection or editor without guessing an action. */
@@ -607,20 +607,23 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
                 cancelMultiHold();
             }
-            // In crafting, reserve two-finger vertical swipes for main
-            // categories. In every other modal keep Up=confirm and Down=Back.
+            // In crafting, only two-finger LEFT/RIGHT changes the main
+            // category. Leave two-finger UP/DOWN entirely to the established
+            // Confirm/Back handlers below, including within crafting.
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())) {
-                boolean up = TwoFingerBackGesture.matchesUp(event, backPointerIds,
+                boolean left = TwoFingerBackGesture.matchesLeft(event, backPointerIds,
                         backPointerStartX, backPointerStartY, backPointerCount,
                         listener.swipeDistancePx());
-                boolean down = !up && TwoFingerBackGesture.matches(event, backPointerIds,
+                boolean right = !left && TwoFingerBackGesture.matchesRight(event, backPointerIds,
                         backPointerStartX, backPointerStartY, backPointerCount,
                         listener.swipeDistancePx());
-                if ((up || down) && listener.handleCraftingMainCategorySwipe(up ? -1 : 1)) {
+                if ((left || right) && listener.handleCraftingMainCategorySwipe(left ? -1 : 1)) {
+                    SessionDebugLog.event("GESTURE", "crafting_main_category_two_fingers="
+                            + (left ? "left" : "right"));
                     ignoreUntilPointersReleased = true;
                     multiple = false;
                     backPointerCount = 0;
@@ -682,8 +685,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                         + " dx=" + (multiLastX - multiStartX)
                         + " dy=" + (multiLastY - multiStartY));
                 // Modal two-finger taps also reach the detail dispatcher.
-                // Modal swipes remain reserved for Back/Confirm above; only
-                // a live world may interpret directional swipes as scans.
+                // Two-finger up/down remain Back/Confirm above. Horizontal
+                // two-finger crafting switches were handled on POINTER_UP.
+                // Only a live world uses remaining gestures for scanning.
                 boolean permitted = !cancelled && owner != null
                         && owner.equals(listener.gestureContext())
                         && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
