@@ -75,34 +75,35 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("listener.scanDirection(", s)
         self.assertIn("listener.openActionMenu();", s)
 
-    def test_combat_three_finger_swipes_reuse_world_movement_without_cap(self):
+    def test_combat_two_finger_swipes_use_world_movement_without_cap(self):
         c = self.controller
-        # All four combat movements must be selected before the persisted
-        # custom bindings. The same IDs remain editable in map mode.
+        # Three-finger movement is inactive during combat but its custom
+        # map-mode bindings must remain available outside combat.
         segment = c.split("public boolean handleCustomGesture(", 1)[1]
         segment = segment.split("gestureBindings.targetFor(gestureId)", 1)[0]
-        for gesture, direction in (
-            ("swipe_3_up", "0, -1"),
-            ("swipe_3_down", "0, 1"),
-            ("swipe_3_left", "-1, 0"),
-            ("swipe_3_right", "1, 0"),
-        ):
-            self.assertIn(f'case "{gesture}": moveInCombat({direction}); return true;', segment)
+        for gesture in ("swipe_3_up", "swipe_3_down",
+                        "swipe_3_left", "swipe_3_right"):
+            self.assertIn(f'case "{gesture}":', segment)
+            self.assertNotIn(f'case "{gesture}": moveInCombat(', segment)
             self.assertNotIn(f'"{gesture}".equals(gesture)', self.bindings)
+        scan = c.split("public void scanDirection(", 1)[1]
+        scan = scan.split("public void twoFingerTap(", 1)[0]
+        self.assertIn("moveInCombat(dx, dy);", scan)
+        self.assertIn("requestLiveWorldCommand(id);", scan)
         self.assertIn("private boolean worldStepAllowed()", c)
         self.assertIn("return !combatMode && worldStepAllowed();", c)
         self.assertIn("private void moveInCombat(int dx, int dy)", c)
         self.assertIn("boolean enabled = combatMode && worldStepAllowed();", c)
         self.assertIn("dispatchWorldMovement(dx, dy);", c)
-        normal = c.split("public void moveDirection(int dx, int dy)", 1)[1]
-        self.assertIn("dispatchWorldMovement(dx, dy);", normal)
         retry = c.split("private void retryPendingWorldDirection()", 1)[1]
         self.assertIn("!worldStepAllowed()", retry)
         self.assertIn("!retryingWorldDirection && worldStepAllowed()", c)
         self.assertNotIn("combatMode ? 1 :", c)
         device = (ANDROID_TEST / "GameMenuGestureDispatchTest.java").read_text("utf-8")
-        self.assertIn("threeFingerSwipeMovesOnlyInCombatAndRestoresCustomBindingOnMap", device)
+        self.assertIn("threeFingerSwipeNoLongerMovesInCombatAndRestoresCustomBindingOnMap", device)
+        self.assertIn("allFourTwoFingerCombatDirectionsAreDetected", device)
         self.assertIn("1, actions.savedThreeFingerSwipes);", device)
+
 
     def test_native_combat_buttons_obey_computed_world_gate(self):
         world = self.world
