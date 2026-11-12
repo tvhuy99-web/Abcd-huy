@@ -127,9 +127,28 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("static_cast<unsigned char>( full[end] )", self.item_text)
         self.assertIn("pendingItemDetailParts.append(part)", self.java)
         self.assertIn('announceGameMessage("A11Y_DETAIL:" + assembled, priority, true)', self.java)
-        self.assertIn("documentReader.open(snapshot.contextKey(),", self.java)
-        self.assertIn("speakDocument(spokenMessage);", self.java)
+        self.assertIn("speakInlineDetail(spokenMessage);", self.java)
+        self.assertIn('speech.say("inline-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet()', self.java)
+        self.assertIn("ReaderSpeechQueue.LONG_TEXT, 600000L", self.java)
         self.assertIn('pendingItemDetailNode.equals(focus)', self.java)
+
+    def test_two_finger_details_do_not_open_modal_document_navigation(self):
+        item_delivery = self.java.split("} else if (requestedDetail) {", 1)[1].split(
+            "} else if (extendedScan) {", 1
+        )[0]
+        self.assertIn("speakInlineDetail(spokenMessage);", item_delivery)
+        self.assertNotIn("documentReader.open(", item_delivery)
+        linked = self.java.split("private boolean readLinkedDetails(", 1)[1].split(
+            "@Override\n    public void detail()", 1
+        )[0]
+        self.assertIn("speakInlineDetail(full.toString());", linked)
+        self.assertNotIn("documentReader.open(", linked)
+        detail = self.java.split("public void detail() {", 1)[1].split(
+            "public void spellFocused()", 1
+        )[0]
+        self.assertIn("speakInlineDetail(node.detail);", detail)
+        self.assertIn("speakInlineDetail(information);", detail)
+        self.assertNotIn("documentReader.open(", detail)
 
     def test_linked_detail_waits_for_native_selected_row(self):
         self.assertIn("private boolean readLinkedDetails(ReaderSnapshot.Node selected)", self.java)
