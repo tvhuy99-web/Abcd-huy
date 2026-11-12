@@ -3744,6 +3744,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (readLinkedDetails(node)) { return; }
+            // A two-finger request on a native long document reads the actual
+            // text through the resumable paragraph reader. The ordinary
+            // focus utterance remains short.
+            if ("document".equals(node.role) && !node.detail.isEmpty()) {
+                speakDocument(documentReader.open(snapshot.contextKey(), node.id, node.detail));
+                return;
+            }
             String information = nodeText(node, true);
             // Double-tap on an inventory item is reserved for selecting it.
             // Keep its informational pocket nodes accessible through Detail,
