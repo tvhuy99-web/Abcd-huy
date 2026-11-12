@@ -4021,9 +4021,6 @@ msgstr "Sức mạnh: %1$d. Khéo léo: %2$d. Trí tuệ: %3$d. Nhận thức: %
 msgid "Wielding: %s."
 msgstr "Đang cầm: %s."
 
-msgid "End of character information."
-msgstr "Hết thông tin nhân vật."
-
 msgid "Character information"
 msgstr "Thông tin nhân vật"
 

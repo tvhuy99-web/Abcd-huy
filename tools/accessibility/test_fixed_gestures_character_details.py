@@ -142,7 +142,11 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         for attribute in ("get_str()", "get_dex()", "get_int()", "get_per()"):
             self.assertIn("character." + attribute, w)
         self.assertIn("character.weapname_simple()", w)
-        self.assertIn('_( "End of character information." )', w)
+        # The user requested a natural stop with no closing phrase.
+        self.assertNotIn('_( "End of character information." )', w)
+        self.assertIn("character.get_kcal_percent()", w)
+        self.assertIn("character.get_focus()", w)
+        self.assertIn("character.weariness_transition_progress()", w)
         self.assertIn("void characterDetails()", self.controller)
         self.assertIn('snapshot.find("world:character_detail")', self.controller)
         self.assertIn("ReaderSpeechQueue.LONG_TEXT", self.controller)
@@ -154,7 +158,9 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         po = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
         for label in ("Character information. %s.",
                       "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d.",
-                      "Wielding: %s.", "End of character information."):
+                      "Wielding: %s.", "Energy reserves: %d%%",
+                      "Mood: %s", "Focus: %d", "Time: %s",
+                      "Lighting: %s"):
             self.assertIn('msgid "' + label + '"', po)
         gesture_device = (ANDROID_TEST / "GameMenuGestureDispatchTest.java").read_text("utf-8")
         bindings_device = (ANDROID_TEST / "ReaderGestureBindingsTest.java").read_text("utf-8")
