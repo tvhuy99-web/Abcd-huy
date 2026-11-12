@@ -124,6 +124,7 @@
     <string name="a11yHubSystem">System and saves</string>
     <string name="a11yHubTitle">Comprehensive menu</string>
     <string name="a11yHubAllCommands">All commands</string>
+    <string name="a11yHubNearbyNoActions">No actions available here.</string>
     <string name="a11yHubEmpty">No available entries</string>
     <string name="a11yHubNoMessages">No recent messages</string>
     <string name="a11yHubTts">TTS settings</string>

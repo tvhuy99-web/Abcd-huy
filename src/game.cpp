@@ -5713,7 +5713,7 @@ void game::examine( bool with_pickup )
                     : _( "Examine nearby objects" ),
         [&]( const tripoint_bub_ms &target ) {
             return can_examine_at( here, target, with_pickup );
-        } );
+        }, _( "Nothing to examine." ) );
     } else if( with_pickup ) {
         // Examine and/or pick up items
         examp = choose_adjacent_highlight( here, _( "Examine terrain, furniture, or items where?" ),

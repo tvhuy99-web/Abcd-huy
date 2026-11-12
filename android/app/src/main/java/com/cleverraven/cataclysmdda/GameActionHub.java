@@ -93,7 +93,7 @@ final class GameActionHub {
     private static final String[][] ACTIONS = {
             {},
             { "interact", "open", "close", "examine", "pickup", "pickup_all", "chat",
-                    "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash", "look" },
+                    "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash" },
             { "listitems", "reader:places", "map", "sky", "center", "zones" },
             { "LEVEL_UP", "LEVEL_DOWN", "open_movement", "cycle_move",
                     "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",
@@ -273,6 +273,21 @@ final class GameActionHub {
             return result;
         }
 
+        // Group 2 is a contextual list; all other groups stay unchanged.
+        if (section == 1) {
+            for (String id : ACTIONS[section]) {
+                ReaderSnapshot.Node action = snapshot.find(id);
+                ReaderSnapshot.Node available = snapshot.find("reader:nearby:available:" + id);
+                if (action == null || !action.enabled || !action.actions.contains("activate")
+                        || available == null || !available.enabled) {
+                    continue;
+                }
+                String label = spokenNodeLabel(context, action);
+                if (!available.value.isEmpty()) { label += ". " + available.value; }
+                result.add(new Entry(label, id, EXECUTE, 0));
+            }
+            return result;
+        }
         Set<String> seen = new HashSet<>();
         if (section == 3) {
             for (String direction : DIRECTION_ACTIONS) {

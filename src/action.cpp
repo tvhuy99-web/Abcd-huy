@@ -751,7 +751,8 @@ bool can_interact_at( action_id action, map &here, const tripoint_bub_ms &p )
 // Accessibility list: browse every currently visible, actionable adjacent tile
 // before selecting one. No action runs until a menu entry is activated.
 std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::string &title,
-        const std::function<bool( const tripoint_bub_ms & )> &allowed )
+        const std::function<bool( const tripoint_bub_ms & )> &allowed,
+        const std::string &empty_reason )
 {
     static const std::array<tripoint_rel_ms, 9> offsets = {
         tripoint_rel_ms( 0, 0, 0 ), tripoint_rel_ms( 0, -1, 0 ),
@@ -768,6 +769,7 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
 
     const tripoint_bub_ms origin = get_avatar().pos_bub( get_map() );
     std::vector<tripoint_bub_ms> targets;
+    std::string visible_object;
     uilist menu;
     menu.title = title;
     // The first real object should be heard immediately, without a tutorial.
@@ -778,7 +780,19 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
         // Never list live hidden terrain or unseen creatures from the engine's
         // interaction check. The perception layer owns visibility restrictions.
         const a11y::tile_observation observed = a11y::observe_tile( target );
-        if( observed.source != a11y::observation_source::visible || !allowed( target ) ) {
+        if( observed.source != a11y::observation_source::visible ) {
+            continue;
+        }
+        if( visible_object.empty() ) {
+            if( !observed.furniture.empty() ) {
+                visible_object = observed.furniture;
+            } else if( !observed.vehicle.empty() ) {
+                visible_object = observed.vehicle;
+            } else if( !observed.seen_items.empty() ) {
+                visible_object = observed.seen_items.front();
+            }
+        }
+        if( !allowed( target ) ) {
             continue;
         }
         const int index = static_cast<int>( targets.size() );
@@ -811,7 +825,11 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
                             a11y::describe_tile( observed ) );
     }
     if( targets.empty() ) {
-        add_msg( m_info, _( "No visible objects here can be examined or interacted with." ) );
+        if( visible_object.empty() ) {
+            add_msg( m_info, "%s", empty_reason );
+        } else {
+            add_msg( m_info, _( "%1$s: %2$s" ), visible_object, empty_reason );
+        }
         return std::nullopt;
     }
     menu.query();
@@ -850,6 +868,7 @@ action_id handle_interact( map &here, const tripoint_bub_ms &pos )
     }
 
     if( valid_actions.empty() ) {
+        add_msg( m_info, _( "No direct action for this object." ) );
         return ACTION_NULL;
     }
 

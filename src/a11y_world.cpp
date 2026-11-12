@@ -1,6 +1,7 @@
 #include "a11y_world.h"
 
 #include <algorithm>
+#include <array>
 #include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
@@ -16,6 +17,7 @@
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
 #include "a11y_runtime.h"
+#include "action.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -33,6 +35,7 @@
 #include "map.h"
 #include "messages.h"
 #include "move_mode.h"
+#include "npc.h"
 #include "output.h"
 #include "options.h"
 #include "overmap_types.h"
@@ -54,6 +57,10 @@ static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_sleep( "sleep" );
+static const efftype_id effect_incorporeal_nearby( "incorporeal" );
+static const trait_id trait_shell2_nearby( "SHELL2" );
+static const trait_id trait_shell3_nearby( "SHELL3" );
+static const json_character_flag no_hands_nearby( "TEMPORARY_SHAPESHIFT_NO_HANDS" );
 
 struct bodypart_status {
     bodypart_id id;
@@ -1087,6 +1094,128 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.label = _( "Stand still for one turn" );
         }
         result.nodes.push_back( std::move( node ) );
+    }
+
+    // Only the second comprehensive-menu group consumes these hidden
+    // capabilities. Other hubs and the engine's original actions stay intact.
+    // All checks run on the game thread after visibility has been updated.
+    {
+        map &nearby_map = get_map();
+        const tripoint_bub_ms player_pos = viewer.pos_bub( nearby_map );
+        std::map<std::string, std::string> nearby_actions;
+        const bool in_shell = viewer.has_active_mutation( trait_shell2_nearby ) ||
+                              viewer.has_active_mutation( trait_shell3_nearby );
+        const bool incorporeal = viewer.has_effect( effect_incorporeal_nearby );
+        const bool handless = viewer.has_flag( no_hands_nearby );
+        const bool mounted = viewer.is_mounted();
+        const auto permitted = [&]( const std::string & id ) {
+            if( in_shell && ( id == "open" || id == "close" || id == "smash" ||
+                              id == "examine" || id == "pickup" || id == "pickup_all" ||
+                              id == "grab" || id == "butcher" ) ) {
+                return false;
+            }
+            if( incorporeal && ( id == "open" || id == "close" || id == "smash" ||
+                                 id == "pickup" || id == "pickup_all" ||
+                                 id == "grab" || id == "butcher" ) ) {
+                return false;
+            }
+            if( handless && ( id == "open" || id == "close" || id == "pickup" ||
+                              id == "pickup_all" || id == "grab" || id == "butcher" ) ) {
+                return false;
+            }
+            if( mounted && ( id == "open" || id == "pickup" || id == "pickup_all" ||
+                             id == "grab" || id == "butcher" ) ) {
+                return false;
+            }
+            return true;
+        };
+        const auto offer = [&]( const std::string & id, const std::string & hint ) {
+            if( permitted( id ) ) {
+                nearby_actions.emplace( id, hint );
+            }
+        };
+        if( viewer.get_grab_type() != object_type::NONE ) {
+            offer( "grab", "" );
+        }
+        for( int dy = -1; dy <= 1; ++dy ) {
+            for( int dx = -1; dx <= 1; ++dx ) {
+                const tripoint_bub_ms target = player_pos + tripoint_rel_ms( dx, dy, 0 );
+                const tile_observation seen = observe_tile( target );
+                if( seen.source != observation_source::visible ) {
+                    continue;
+                }
+                std::string object_name = !seen.furniture.empty() ? seen.furniture :
+                                          !seen.vehicle.empty() ? seen.vehicle :
+                                          !seen.seen_creatures.empty() ? seen.seen_creatures.front() :
+                                          !seen.seen_items.empty() ? seen.seen_items.front() : seen.terrain;
+                const std::string hint = object_name + ", " +
+                                         relative_position_name( dx, dy, 0 );
+                const auto offer_interact = [&]( const std::string & id ) {
+                    if( permitted( id ) ) {
+                        offer( id, hint );
+                        offer( "interact", hint );
+                    }
+                };
+                if( can_interact_at( ACTION_EXAMINE, nearby_map, target ) ) {
+                    offer_interact( "examine" );
+                }
+                if( can_interact_at( ACTION_PICKUP, nearby_map, target ) ) {
+                    offer_interact( "pickup" );
+                    offer( "pickup_all", hint );
+                }
+                if( can_interact_at( ACTION_OPEN, nearby_map, target ) ) {
+                    offer_interact( "open" );
+                }
+                if( can_interact_at( ACTION_CLOSE, nearby_map, target ) ) {
+                    offer_interact( "close" );
+                }
+                const Creature *creature = get_creature_tracker().creature_at( target );
+                if( dynamic_cast<const npc *>( creature ) &&
+                    can_interact_at( ACTION_CHAT, nearby_map, target ) ) {
+                    offer_interact( "chat" );
+                }
+                if( target == player_pos ) {
+                    if( can_interact_at( ACTION_BUTCHER, nearby_map, target ) ) {
+                        offer_interact( "butcher" );
+                    }
+                    if( can_interact_at( ACTION_MOVE_UP, nearby_map, target ) ) {
+                        offer( "LEVEL_UP", hint );
+                        offer( "interact", hint );
+                    }
+                    if( can_interact_at( ACTION_MOVE_DOWN, nearby_map, target ) ) {
+                        offer( "LEVEL_DOWN", hint );
+                        offer( "interact", hint );
+                    }
+                }
+                if( can_interact_at( ACTION_SMASH, nearby_map, target ) ) {
+                    offer( "smash", hint );
+                }
+                if( target != player_pos &&
+                    ( ( nearby_map.has_furn( target ) &&
+                        nearby_map.furn( target ).obj().is_movable() ) ||
+                      ( nearby_map.veh_at( target ) &&
+                        !nearby_map.veh_at( target ).part_with_feature(
+                            VPFLAG_WALL_MOUNTED, false ) ) ) ) {
+                    offer( "grab", hint );
+                }
+            }
+        }
+        for( const std::string &id : {
+                    "interact", "open", "close", "examine", "pickup", "pickup_all",
+                    "chat", "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash"
+                } ) {
+            semantic_node marker;
+            marker.id = "reader:nearby:available:" + id;
+            marker.role = "status";
+            marker.label = marker.id;
+            marker.actions = { "focus" };
+            const auto found = nearby_actions.find( id );
+            marker.enabled = found != nearby_actions.end();
+            if( marker.enabled ) {
+                marker.value = found->second;
+            }
+            result.nodes.push_back( std::move( marker ) );
+        }
     }
     return result;
 }

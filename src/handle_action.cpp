@@ -4298,7 +4298,7 @@ bool game::handle_action()
                     return target == player_character.pos_bub() &&
                            ( can_interact_at( ACTION_MOVE_UP, here, target ) ||
                              can_interact_at( ACTION_MOVE_DOWN, here, target ) );
-                } );
+                }, _( "No direct interaction." ) );
                 if( !mouse_target ) {
                     return false;
                 }

@@ -3549,6 +3549,15 @@ msgstr "Thời tiết: %s"
 msgid "No visible objects here can be examined or interacted with."
 msgstr "Không có đối tượng nhìn thấy để kiểm tra hoặc tương tác."
 
+msgid "Nothing to examine."
+msgstr "Không có gì để kiểm tra."
+
+msgid "No direct interaction."
+msgstr "Không có tương tác phù hợp."
+
+msgid "No direct action for this object."
+msgstr "Đối tượng này không có thao tác phù hợp."
+
 msgid "Nearby objects. Choose an entry to interact; cancel to do nothing."
 msgstr "Các đối tượng ở gần. Chọn mục để tương tác, hoặc hủy để bỏ qua."
 

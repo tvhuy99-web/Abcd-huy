@@ -124,6 +124,7 @@
     <string name="a11yHubSystem">Hệ thống, TTS và lưu game</string>
     <string name="a11yHubTitle">Menu tổng hợp</string>
     <string name="a11yHubAllCommands">Tất cả lệnh</string>
+    <string name="a11yHubNearbyNoActions">Không có hành động phù hợp ở đây.</string>
     <string name="a11yHubEmpty">Không có mục khả dụng</string>
     <string name="a11yHubNoMessages">Không có thông báo gần đây</string>
     <string name="a11yHubTts">Cài đặt TTS</string>

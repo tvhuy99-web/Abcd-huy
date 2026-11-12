@@ -1769,6 +1769,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (snapshot == null) { return result; }
         if (commandPaletteOpen) { return contextualCommands(); }
         for (ReaderSnapshot.Node node : snapshot.nodes) {
+            // Group 2 capability markers must not appear as world rows.
+            if (node.id.startsWith("reader:nearby:available:")) { continue; }
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
         }
         if ("targeting".equals(snapshot.category)
@@ -3268,6 +3270,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
 
+    private int hubEmptyLabel() {
+        return hubSection == GameActionHub.FAVORITES ? R.string.a11yHubFavoritesEmpty
+                : hubSection == 1 ? R.string.a11yHubNearbyNoActions : R.string.a11yHubEmpty;
+    }
+
     private List<GameActionHub.Entry> hubEntries() {
         List<GameActionHub.Entry> result =
                 GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
@@ -3332,8 +3339,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         int selected = choosingHubAction ? hubActionChoice : binding ? gestureChoice : hubIndex;
         if (count == 0) {
             TextView empty = new TextView(activity);
-            empty.setText(hubSection == GameActionHub.FAVORITES
-                    ? R.string.a11yHubFavoritesEmpty : R.string.a11yHubEmpty);
+            empty.setText(hubEmptyLabel());
             empty.setTextColor(0xffeeeeee);
             rows.addView(empty);
             return;
@@ -3727,8 +3733,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             } else {
                 List<GameActionHub.Entry> items = hubEntries();
                 if (items.isEmpty()) {
-                    feedback(activity.getString(hubSection == GameActionHub.FAVORITES
-                            ? R.string.a11yHubFavoritesEmpty : R.string.a11yHubEmpty));
+                    feedback(activity.getString(hubEmptyLabel()));
                 }
                 else {
                     hubIndex = Math.max(0, Math.min(hubIndex, items.size() - 1));

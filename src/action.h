@@ -623,7 +623,8 @@ action_id handle_action_menu( map &here );
 // Spoken 3x3 object chooser, used by examine and the accessible interact hub.
 std::optional<tripoint_bub_ms> choose_accessible_nearby_target(
     const std::string &title,
-    const std::function<bool( const tripoint_bub_ms & )> &allowed );
+    const std::function<bool( const tripoint_bub_ms & )> &allowed,
+    const std::string &empty_reason );
 
 action_id handle_interact( map &here, const tripoint_bub_ms &pos );
 
