@@ -73,7 +73,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn('&& !"read_detail".equals(action)', self.java)
         self.assertIn('if (node.actions.contains("read_detail")) {', self.java)
         self.assertIn('send("read_detail", "");', self.java)
-        self.assertIn('if (intent.node.rfind( "pocket-entry:", 0 ) == 0)', self.inventory)
+        self.assertIn('if( intent.node.rfind( "pocket-entry:", 0 ) == 0 )', self.inventory)
 
     def test_long_speech_and_linked_native_documents(self):
         self.assertIn('message.startsWith("A11Y_DETAIL:")', self.java)
