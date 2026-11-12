@@ -124,12 +124,15 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("return GESTURE_ACTION_NAVIGATE;", self.prefs)
         self.assertNotIn("getGestureAction(\"horizontal_swipe_action\"", self.prefs)
         self.assertNotIn("getGestureAction(\"vertical_swipe_action\"", self.prefs)
-        setup = self.setup.split("TextView gestureHeading", 1)[1].split(
-            "sample = button(", 1)[0]
-        self.assertNotIn("cycleSwipeAction(true)", setup)
-        self.assertNotIn("cycleSwipeAction(false)", setup)
-        self.assertNotIn("view -> tryGestureMapping()", setup)
-        self.assertIn("a11y_restore_gesture_defaults", setup)
+        # The obsolete setup screen is now a compatibility redirect.
+        self.assertIn("GameSettingsActivity.class", self.setup)
+        self.assertNotIn("cycleSwipeAction(true)", self.setup)
+        self.assertNotIn("cycleSwipeAction(false)", self.setup)
+        self.assertNotIn("view -> tryGestureMapping()", self.setup)
+        accessibility = source("AccessibilitySettingsActivity.java")
+        self.assertIn("setSwipeDistanceLevel(level)", accessibility)
+        self.assertIn("setSwipeDurationLevel(level)", accessibility)
+        self.assertNotIn("a11y_restore_gesture_defaults", accessibility)
 
     def test_character_details_are_real_native_snapshot_and_readonly(self):
         w = self.world
