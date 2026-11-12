@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[2]
 CRAFT = (ROOT / "src/crafting_gui.cpp").read_text(encoding="utf-8")
 READER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
 GESTURES = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(encoding="utf-8")
+TWO_FINGER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/TwoFingerBackGesture.java").read_text(encoding="utf-8")
 VI = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
 
@@ -35,18 +36,30 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("craftingNavigationCompleted", READER)
         self.assertIn("craftingNavigationPending = false;", READER)
 
-    def test_two_finger_main_one_finger_sub_and_horizontal_recipe(self):
-        self.assertIn("handleCraftingMainCategorySwipe(up ? -1 : 1)", GESTURES)
+    def test_two_finger_horizontal_main_one_finger_vertical_sub_and_horizontal_recipe(self):
+        self.assertIn("handleCraftingMainCategorySwipe(left ? -1 : 1)", GESTURES)
         self.assertIn("handleCraftingSubcategorySwipe(vertical)", GESTURES)
         self.assertIn("handleCraftingRecipeSwipe(horizontal)", GESTURES)
         self.assertIn("navigate(horizontal > 0 ? 1 : -1);", READER)
         self.assertIn('"crafting".equals(snapshot.category)', READER)
-        self.assertIn('vertical < 0 ? "PREV_TAB" : "NEXT_TAB"', READER)
+        self.assertIn('horizontal < 0 ? "PREV_TAB" : "NEXT_TAB"', READER)
+        self.assertIn("TwoFingerBackGesture.matchesLeft", GESTURES)
+        self.assertIn("TwoFingerBackGesture.matchesRight", GESTURES)
+        self.assertIn("static boolean isLeftSwipe", TWO_FINGER)
+        self.assertIn("static boolean isRightSwipe", TWO_FINGER)
+        # Main categories must no longer override the two-finger vertical actions.
+        self.assertNotIn("handleCraftingMainCategorySwipe(up ? -1 : 1)", GESTURES)
         self.assertIn('vertical < 0 ? "LEFT" : "RIGHT"', READER)
         self.assertIn("navigate(int delta)", READER)
         # Existing non-crafting two-finger confirm/back is still present.
         self.assertIn("listener.confirm();", GESTURES)
         self.assertIn("listener.goBack();", GESTURES)
+
+    def test_category_commands_apply_in_native_game_thread(self):
+        self.assertIn("process_action( intent.node, ctxt );", CRAFT)
+        self.assertIn('"CRAFT_CATEGORY_NAV"', CRAFT)
+        self.assertIn("All categories has no subcategories.", CRAFT)
+        self.assertIn("ignored=global_all_subcategory", CRAFT)
 
     def test_time_translation_and_similar_recipe_names(self):
         self.assertIn('msgid "Estimated time: %s"\nmsgstr "Thời gian dự kiến: %s"', VI)
