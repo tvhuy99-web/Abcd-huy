@@ -20,6 +20,7 @@
 
 #include "activity_actor_definitions.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "advanced_inv_area.h"
 #include "advanced_inv_listitem.h"
@@ -2080,6 +2081,7 @@ class advanced_inventory::reader_session
                 a11y::semantic_node node;
                 node.id = id;
                 node.role = "button";
+                node.actions = { "focus", "activate", "read_detail" };
                 node.label = remove_color_tags( entry.name.empty() ?
                                                  location->display_name() : entry.name );
                 node.value = string_format(
@@ -2207,6 +2209,13 @@ class advanced_inventory::reader_session
             } );
             if( found == spane.items.end() ) {
                 return std::nullopt;
+            }
+            if( intent.action == "read_detail" ) {
+                const item_location live = found->items.front();
+                if( live ) {
+                    a11y::announce_full_item_info( *live );
+                }
+                return "TIMEOUT";
             }
             if( intent.action == "focus" ) {
                 spane.index = static_cast<int>( std::distance( spane.items.begin(), found ) );
