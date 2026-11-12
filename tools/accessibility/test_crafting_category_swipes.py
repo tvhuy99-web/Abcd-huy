@@ -61,6 +61,14 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("All categories has no subcategories.", CRAFT)
         self.assertIn("ignored=global_all_subcategory", CRAFT)
 
+    def test_horizontal_recipes_skip_detail_tail_and_page_backward_correctly(self):
+        self.assertIn("List<ReaderSnapshot.Node> recipeNodes = new ArrayList<>();", READER)
+        self.assertIn('node.id.startsWith("recipe:")', READER)
+        self.assertIn('craftingCommand("craft:page:next")', READER)
+        self.assertIn('craftingCommand("craft:page:previous")', READER)
+        self.assertIn("if (nextRecipe < 0)", READER)
+        self.assertIn("std::min( first + page_size - 1", CRAFT)
+
     def test_time_translation_and_similar_recipe_names(self):
         self.assertIn('msgid "Estimated time: %s"\nmsgstr "Thời gian dự kiến: %s"', VI)
         self.assertIn('msgid "All categories"\nmsgstr "Tất cả"', VI)
