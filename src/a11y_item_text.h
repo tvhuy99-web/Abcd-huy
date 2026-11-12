@@ -40,28 +40,55 @@ inline std::string spoken_item_name( const item &it )
     }
     return name;
 }
-// Item information is assembled only for an explicit reader request.
-// Keep list traversal fast; the item itself supplies the same complete
-// description used by the native Examine window, regardless of item type.
-// Send bounded speech chunks so unusually large item descriptions are not
-// rejected by the native-to-Java announcement size limit.
-inline void announce_full_item_info( const item &it )
+// Long original descriptions must not be precomputed while scrolling a
+// list. Announce only on a validated reader intent. A single Java event
+// cannot exceed the JNI speech limit; multi-part data is framed so Java can
+// reassemble it BEFORE placing it in the bounded TTS queue.
+inline void announce_full_detail_text( const std::string &full )
 {
-    const std::string full = spoken_item_name( it ) + "\n" +
-                             remove_color_tags( it.info( true ) );
+    if( full.empty() ) {
+        return;
+    }
     constexpr std::size_t max_chunk = 11000;
+    if( full.size() <= max_chunk ) {
+        android::announce( "A11Y_DETAIL:" + full, 1 );
+        return;
+    }
     std::size_t begin = 0;
+    bool first = true;
     while( begin < full.size() ) {
         std::size_t end = std::min( begin + max_chunk, full.size() );
         if( end < full.size() ) {
             const std::size_t boundary = full.find_last_of( "\n ", end - 1 );
             if( boundary != std::string::npos && boundary > begin + max_chunk / 2 ) {
                 end = boundary + 1;
+            } else {
+                // Never split a Vietnamese UTF-8 character across JNI
+                // strings when there is no whitespace in the interval.
+                while( end > begin &&
+                       ( static_cast<unsigned char>( full[end] ) & 0xc0 ) == 0x80 ) {
+                    --end;
+                }
             }
         }
-        android::announce( "A11Y_DETAIL:" + full.substr( begin, end - begin ), 1 );
+        const bool last = end == full.size();
+        android::announce( ( first ? "A11Y_DETAIL_BEGIN:" :
+                             last ? "A11Y_DETAIL_END:" : "A11Y_DETAIL_PART:" ) +
+                           full.substr( begin, end - begin ), 1 );
         begin = end;
+        first = false;
     }
+}
+
+// The actual item, not a guessed type, supplies its full facts: melee and
+// ranged damage, magazine, ammunition, armor, food, books, tools, etc.
+// Context is the already visible location/status, never an extra action.
+inline void announce_full_item_info( const item &it, const std::string &context = {} )
+{
+    const std::string full = spoken_item_name( it ) +
+                             ( context.empty() ? "" : "\n" + remove_color_tags( context ) ) +
+                             "\n" + remove_color_tags( it.info( true ) );
+    announce_full_detail_text( full );
 }
 } // namespace a11y
 
