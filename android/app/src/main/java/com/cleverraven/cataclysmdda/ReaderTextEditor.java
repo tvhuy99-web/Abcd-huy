@@ -232,7 +232,8 @@ public final class ReaderTextEditor {
         for (int i = start; i < Math.min(start + 16, items.size()); i++) {
             final int index = i;
             Button button = new Button(activity);
-            button.setText(items.get(i).label + ", "
+            button.setText(items.get(i).label + ". "
+                    + activity.getString(R.string.a11yControlButton) + ", "
                     + activity.getString(R.string.a11yPosition, i + 1, items.size()));
             button.setSelected(i == selected);
             button.setOnClickListener(view -> { selected = index; activate(); });
@@ -278,7 +279,8 @@ public final class ReaderTextEditor {
 
     public void readCurrent() {
         // Restore position feedback for all editor and keyboard choices.
-        listener.speak(items.get(selected).label + ", "
+        listener.speak(items.get(selected).label + ". "
+                + activity.getString(R.string.a11yControlButton) + ", "
                 + activity.getString(R.string.a11yPosition, selected + 1, items.size()));
     }
 

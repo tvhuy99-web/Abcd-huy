@@ -1286,7 +1286,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             String name = pocketMenuChoice == 0
                     ? activity.getString(R.string.a11yPocketOpen)
                     : activity.getString(R.string.a11yPocketOtherActions);
-            return name + ". " + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 2);
+            return name + ". " + activity.getString(R.string.a11yControlButton) + ", "
+                    + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 2);
         }
         if (pocketStage == 2) {
             List<ReaderSnapshot.Node> pockets = pocketNodes(pocketContainerId);
@@ -1300,11 +1301,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             List<ReaderSnapshot.Node> items = pocketItems();
             if (POCKET_CONFIRM_NODE.equals(focus)) {
                 return activity.getString(R.string.a11yPocketConfirm) + ". "
+                        + activity.getString(R.string.a11yControlButton) + ", "
                         + activity.getString(R.string.a11yPosition, items.size() + 1, items.size() + 2);
             }
             if (POCKET_CANCEL_NODE.equals(focus)) {
                 int cancelPosition = items.size() + (pocketAllowsSelection() ? 2 : 1);
                 return activity.getString(R.string.a11yPocketCancel) + ". "
+                        + activity.getString(R.string.a11yControlButton) + ", "
                         + activity.getString(R.string.a11yPosition, cancelPosition, cancelPosition);
             }
             for (int i = 0; i < items.size(); i++) {
@@ -1892,7 +1895,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private String travelSpoken(int state) {
         int count = travelChoiceCount(state);
         travelChoice = Math.max(0, Math.min(travelChoice, count - 1));
-        return activity.getString(travelLabel(state, travelChoice)) + ", "
+        return activity.getString(travelLabel(state, travelChoice)) + ". "
+                + activity.getString(R.string.a11yControlButton) + ", "
                 + activity.getString(R.string.a11yPosition, travelChoice + 1, count);
     }
 
@@ -3569,17 +3573,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 int label = debugFocus == 1 ? R.string.a11yDebugPromptContinue
                         : debugFocus == 2 ? R.string.a11yDebugPromptIgnore
                         : R.string.a11yDebugPromptCopy;
-                feedback(activity.getString(label));
+                feedback(activity.getString(label) + ". "
+                        + activity.getString(R.string.a11yControlButton) + ", "
+                        + activity.getString(R.string.a11yPosition, debugFocus, 3));
             }
             return;
         }
         if (editor != null) { editor.readCurrent(); return; }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                feedback(hubActionLabel(hubActionChoice) + ", "
+                feedback(hubActionLabel(hubActionChoice) + ". "
+                        + activity.getString(R.string.a11yControlButton) + ", "
                         + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
             } else if (choosingGesture) {
-                feedback(gestureChoiceLabel(gestureChoice) + ", "
+                feedback(gestureChoiceLabel(gestureChoice) + ". "
+                        + activity.getString(R.string.a11yControlButton) + ", "
                         + activity.getString(R.string.a11yPosition, gestureChoice + 1,
                                 ReaderGestureBindings.CUSTOM_IDS.length + 2));
             } else {
