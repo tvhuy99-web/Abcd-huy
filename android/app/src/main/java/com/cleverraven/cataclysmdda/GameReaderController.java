@@ -900,10 +900,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final String message = text;
         final boolean loading = message.startsWith("A11Y_LOADING:");
         final boolean extendedScan = message.startsWith("A11Y_SCAN:");
+        final boolean requestedDetail = message.startsWith("A11Y_DETAIL:");
         final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
         final String spokenMessage = ReaderSpokenText.clean(
                 loading ? message.substring("A11Y_LOADING:".length())
                 : extendedScan ? message.substring("A11Y_SCAN:".length())
+                : requestedDetail ? message.substring("A11Y_DETAIL:".length())
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
         // During movement, generating a new map area can emit this repeatedly.
         // Keep the actual map generation and all other gameplay messages;
@@ -951,6 +953,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (usesTouchExploration()) {
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
+            } else if (requestedDetail) {
+                // Full item facts are explicitly requested, never a combat
+                // event. Read as long text, so short focus changes and
+                // gameplay alerts do not turn the description into a flood.
+                speech.say("item-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet(),
+                        spokenMessage, ReaderSpeechQueue.LONG_TEXT);
             } else if (extendedScan) {
                 // Reading sixteen unrestricted map cells may outlive the
                 // eight-second event TTL; use the document-length channel.
@@ -3082,6 +3090,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!"cancel".equals(action)) {
             ReaderSnapshot.Node target = owner.find(focus);
             if (target == null || !target.enabled && !"focus".equals(action)
+                    && !"read_detail".equals(action)
                     || target != null && !target.actions.contains(action)) {
                 if (!"focus".equals(action) && target != null) {
                     feedback(nodeText(target, true));
@@ -3654,6 +3663,53 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    /**
+     * A selected recipe, construction, mission or faction row often has its
+     * original long description in a separate read-only document node.
+     * Two-finger Detail reads those documents directly, without activating
+     * the row or opening another modal. The native screen already updates
+     * them for the current selection, so no second gameplay implementation
+     * or speculative data is needed here.
+     */
+    private boolean readLinkedDetails(ReaderSnapshot.Node selected) {
+        if (snapshot == null || selected == null) { return false; }
+        String category = snapshot.category;
+        String id = selected.id;
+        String prefix = "";
+        if ("crafting".equals(category) && id.startsWith("recipe:")) {
+            prefix = "craft:";
+        } else if ("construction".equals(category) && id.startsWith("construction:group:")) {
+            prefix = "construction:";
+        } else if ("missions".equals(category) && id.startsWith("missions:mission:")) {
+            prefix = "missions:mission:details";
+        } else if ("missions".equals(category) && id.startsWith("missions:poi:")) {
+            prefix = "missions:poi:details";
+        } else if ("faction".equals(category) && "listitem".equals(selected.role)
+                && id.startsWith("faction:")) {
+            prefix = "faction:details";
+        } else if ("companion_missions".equals(category)
+                && id.startsWith("companion:entry:")) {
+            prefix = "companion:details";
+        } else if ("proficiencies".equals(category)
+                && id.startsWith("proficiency:entry:")) {
+            prefix = "proficiency:details";
+        }
+        if (prefix.isEmpty()) { return false; }
+        StringBuilder full = new StringBuilder();
+        for (ReaderSnapshot.Node document : snapshot.nodes) {
+            if (!"document".equals(document.role)
+                    || !document.id.startsWith(prefix) || document.detail.isEmpty()) {
+                continue;
+            }
+            if (full.length() > 0) { full.append("\n\n"); }
+            full.append(document.label).append(".\n").append(document.detail);
+        }
+        if (full.length() == 0) { return false; }
+        speakDocument(documentReader.open(snapshot.contextKey(),
+                selected.id + ":linked-details", full.toString()));
+        return true;
+    }
+
     @Override
     public void detail() {
         if (snapshot != null && "surroundings".equals(snapshot.category)
@@ -3681,6 +3737,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node != null) {
+            // Native item information is fetched only on explicit request.
+            // This also works for read-only/disabled items and pocket rows.
+            if (node.actions.contains("read_detail")) {
+                send("read_detail", "");
+                return;
+            }
+            if (readLinkedDetails(node)) { return; }
             String information = nodeText(node, true);
             // Double-tap on an inventory item is reserved for selecting it.
             // Keep its informational pocket nodes accessible through Detail,
