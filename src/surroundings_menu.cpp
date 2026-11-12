@@ -1356,6 +1356,45 @@ void surroundings_menu::execute_accessible()
             default: return std::string( _( "All" ) );
         }
     };
+    const auto relative_words = []( const tripoint_rel_ms &relative ) {
+        if( relative == tripoint_rel_ms() ) {
+            return std::string( _( "Current tile" ) );
+        }
+        const int x = relative.x();
+        const int y = relative.y();
+        std::string words;
+        if( x != 0 && y != 0 && std::abs( x ) == std::abs( y ) ) {
+            // A diagonal is a single direction and a single tile count.
+            const direction dir = y < 0 ?
+                                  ( x < 0 ? direction::NORTHWEST : direction::NORTHEAST ) :
+                                  ( x < 0 ? direction::SOUTHWEST : direction::SOUTHEAST );
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( dir ), std::abs( x ) );
+        } else if( x == 0 && y != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ) );
+        } else if( y == 0 && x != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
+        } else if( x != 0 && y != 0 ) {
+            // Unequal offsets are not diagonal tile counts: keep both axes.
+            words = string_format( _( "%1$s %2$d tiles, %3$s %4$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
+        }
+        if( relative.z() ) {
+            if( !words.empty() ) {
+                words += ", ";
+            }
+            words += string_format( relative.z() > 0 ? _( "Level above %d" ) :
+                                    _( "Level below %d" ), std::abs( relative.z() ) );
+        }
+        return words;
+    };
     input_context ctxt( "SURROUNDINGS" );
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "QUIT" );
@@ -1461,45 +1500,6 @@ void surroundings_menu::execute_accessible()
         return std::nullopt;
     } );
 
-    const auto relative_words = []( const tripoint_rel_ms &relative ) {
-        if( relative == tripoint_rel_ms() ) {
-            return std::string( _( "Current tile" ) );
-        }
-        const int x = relative.x();
-        const int y = relative.y();
-        std::string words;
-        if( x != 0 && y != 0 && std::abs( x ) == std::abs( y ) ) {
-            // A diagonal is a single direction and a single tile count.
-            const direction dir = y < 0 ?
-                                  ( x < 0 ? direction::NORTHWEST : direction::NORTHEAST ) :
-                                  ( x < 0 ? direction::SOUTHWEST : direction::SOUTHEAST );
-            words = string_format( _( "%1$s, %2$d tiles" ),
-                                   direction_name( dir ), std::abs( x ) );
-        } else if( x == 0 && y != 0 ) {
-            words = string_format( _( "%1$s, %2$d tiles" ),
-                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
-                                   std::abs( y ) );
-        } else if( y == 0 && x != 0 ) {
-            words = string_format( _( "%1$s, %2$d tiles" ),
-                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
-                                   std::abs( x ) );
-        } else if( x != 0 && y != 0 ) {
-            // Unequal offsets are not diagonal tile counts: keep both axes.
-            words = string_format( _( "%1$s %2$d tiles, %3$s %4$d tiles" ),
-                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
-                                   std::abs( y ),
-                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
-                                   std::abs( x ) );
-        }
-        if( relative.z() ) {
-            if( !words.empty() ) {
-                words += ", ";
-            }
-            words += string_format( relative.z() > 0 ? _( "Level above %d" ) :
-                                    _( "Level below %d" ), std::abs( relative.z() ) );
-        }
-        return words;
-    };
     while( true ) {
         const std::vector<std::size_t> filtered = filtered_indices();
         a11y::semantic_snapshot snapshot;
