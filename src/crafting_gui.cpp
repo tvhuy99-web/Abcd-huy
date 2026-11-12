@@ -622,6 +622,9 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
     }
     tab = tab_list( crafting_cats );
     subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
+    // The accessible crafting reader starts on the same global All tab
+    // that ImGui displays first. Thereafter semantic gestures own this state.
+    reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();
 
     if( goto_recipe.is_valid() ) {
         const std::vector<const recipe *> &gotocat =
@@ -814,7 +817,10 @@ void crafting_ui_impl::draw_category_tabs()
             const std::string all_label = std::string( _( "All categories" ) ) + "###cat_reader_all";
             if( cataimgui::BeginTabItem( all_label.c_str(),
                                         force_select_tab && reader_all_categories ) ) {
-                if( !reader_all_categories ) {
+                // BeginTabItem reports the selected tab even when nobody
+                // touched it. Do not let a stale ImGui selection undo a
+                // category chosen by a two-finger reader gesture.
+                if( ImGui::IsItemClicked() && !reader_all_categories ) {
                     reader_all_categories = true;
                     recalc = true;
                 }
@@ -832,7 +838,8 @@ void crafting_ui_impl::draw_category_tabs()
             bool should_select = force_select_tab && !reader_all_categories &&
                                  ( tab.cur_index() == static_cast<int>( i ) );
             if( cataimgui::BeginTabItem( label.c_str(), should_select ) ) {
-                if( reader_all_categories || tab.cur_index() != static_cast<int>( i ) ) {
+                if( ( !a11y::enabled() || ImGui::IsItemClicked() ) &&
+                    ( reader_all_categories || tab.cur_index() != static_cast<int>( i ) ) ) {
                     pending_tab_index = static_cast<int>( i );
                 }
                 ImGui::EndTabItem();
@@ -873,7 +880,8 @@ void crafting_ui_impl::draw_subcategory_tabs()
             bool should_select = force_select_subtab &&
                                  ( subtab.cur_index() == static_cast<int>( i ) );
             if( cataimgui::BeginTabItem( label.c_str(), should_select ) ) {
-                if( subtab.cur_index() != static_cast<int>( i ) ) {
+                if( ( !a11y::enabled() || ImGui::IsItemClicked() ) &&
+                    subtab.cur_index() != static_cast<int>( i ) ) {
                     pending_subtab_index = static_cast<int>( i );
                 }
                 ImGui::EndTabItem();
@@ -2661,7 +2669,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         }
         rows.push_back( std::move( node ) );
     }
-    if( page_start > 0 ) {
+    if( current.size() > 1 ) {
+        // This command also wraps from recipe 1 to the last recipe.
         a11y::semantic_node previous_page;
         previous_page.id = "craft:page:previous";
         previous_page.role = "button";
@@ -2669,7 +2678,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         previous_page.actions = { "activate" };
         rows.push_back( std::move( previous_page ) );
     }
-    if( page_end < current.size() ) {
+    if( current.size() > 1 ) {
+        // This command also wraps from the final recipe back to recipe 1.
         a11y::semantic_node next_page;
         next_page.id = "craft:page:next";
         next_page.role = "button";
@@ -2878,6 +2888,8 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV",
                                          "action=" + intent.node +
                                          " all=" + std::to_string( reader_all_categories ? 1 : 0 ) +
+                                         " category=" + tab.cur() +
+                                         " subcategory=" + subtab.cur() +
                                          " visible=" + std::to_string( current.size() ) );
         return "TIMEOUT";
     }
@@ -2886,15 +2898,17 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
         constexpr int page_size = 80;
         const int page = line / page_size;
         const int first = ( page + ( intent.node == "craft:page:next" ? 1 : -1 ) ) * page_size;
-        if( first >= 0 && first < static_cast<int>( current.size() ) ) {
-            // Next starts at the beginning of the next page. Previous lands
-            // on the last recipe of the previous page so a single swipe
-            // backward never skips 79 recipes.
-            line = intent.node == "craft:page:previous" ?
-                   std::min( first + page_size - 1, static_cast<int>( current.size() ) - 1 ) :
-                   first;
-            invalidate_info_panels();
+        if( intent.node == "craft:page:previous" ) {
+            // Crossing a real page boundary lands on its last recipe.
+            // At the first page, wrap directly to the final recipe.
+            line = first < 0 ? static_cast<int>( current.size() ) - 1 :
+                   std::min( first + page_size - 1, static_cast<int>( current.size() ) - 1 );
+        } else {
+            // Crossing forward lands on the next page's first recipe.
+            // At the final page, wrap to recipe 1.
+            line = first >= static_cast<int>( current.size() ) ? 0 : first;
         }
+        invalidate_info_panels();
         return "TIMEOUT";
     }
     if( intent.node == "craft:batch" && intent.action == "set_text" ) {
