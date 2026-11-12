@@ -22,7 +22,7 @@ final class ReaderSpokenText {
     // visual illustration, not item data. Keep every real stat, narrative
     // and number, including names or text containing a meaningful '#'.
     private static final Pattern ASCII_ARMOR_DIAGRAM_LINE = Pattern.compile(
-            "(?m)^[ \t]*(?:#[ \t]*){2,}\r?$");
+            "(?m)^[ \\t]*(?:#[ \\t]*){2,}\\r?$");
     private static final Pattern EXCESS_DIAGRAM_GAPS = Pattern.compile("\n{3,}");
 
     private ReaderSpokenText() { }
