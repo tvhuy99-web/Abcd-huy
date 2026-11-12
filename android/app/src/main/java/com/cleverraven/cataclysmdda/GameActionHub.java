@@ -29,6 +29,7 @@ final class GameActionHub {
     // Keep native group numbers stable for existing saved gesture targets.
     static final int DIRECTIONS = 16;
     static final int FAVORITES = 17;
+    static final int COMBAT = 8;
 
     static final class Entry {
         final String label;
@@ -109,7 +110,8 @@ final class GameActionHub {
                     "workout", "apply", "player_data" },
             { "wear", "take_off", "wield", "sort_armor", "mend", "compare", "reload_item",
                     "reload_weapon", "reload_wielded", "unload", "pick_style" },
-            { "fire", "fire_burst", "throw", "throw_wielded", "autoattack",
+            { "reader:combat:aim-toggle", "fire", "fire_burst", "throw",
+                    "throw_wielded", "autoattack",
                     "select_fire_mode", "select_default_ammo", "reload_item",
                     "reload_weapon", "reload_wielded", "unload", "pick_style",
                     "cast_spell", "recast_spell", "safemode", "autosafe",

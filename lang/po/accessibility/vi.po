@@ -4446,3 +4446,21 @@ msgstr "Đang cầm %1$s. Còn %2$d viên đạn."
 
 msgid "Wielded weapon"
 msgstr "Vũ khí đang cầm"
+
+msgid "Switch to quick fire"
+msgstr "Chuyển sang bắn nhanh"
+
+msgid "Switch to precise aiming"
+msgstr "Chuyển sang ngắm chính xác"
+
+msgid "Precise aiming is active. Directional gun attacks aim and fire automatically."
+msgstr "Đang ngắm chính xác. Vuốt tấn công bằng súng sẽ tự ngắm rồi bắn."
+
+msgid "Quick fire is active. Directional gun attacks fire immediately."
+msgstr "Đang bắn nhanh. Vuốt tấn công bằng súng sẽ bắn ngay."
+
+msgid "Combat precise aiming enabled."
+msgstr "Đã bật tự ngắm chính xác."
+
+msgid "Combat quick fire enabled."
+msgstr "Đã bật bắn nhanh."

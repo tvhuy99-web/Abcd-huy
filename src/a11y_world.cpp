@@ -38,6 +38,7 @@
 #include "overmap_types.h"
 #include "overmapbuffer.h"
 #include "point.h"
+#include "ranged.h"
 #include "string_formatter.h"
 #include "trap.h"
 #include "translations.h"
@@ -934,6 +935,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         attack.enabled = result.swipe_movement_allowed;
         result.nodes.push_back( std::move( attack ) );
     }
+    const bool precise_aim = target_handler::combat_precise_aim_enabled();
+    semantic_node aim_toggle = button( "reader:combat:aim-toggle",
+                                       precise_aim ? _( "Switch to quick fire" ) :
+                                       _( "Switch to precise aiming" ),
+                                       precise_aim ?
+                                       _( "Precise aiming is active. Directional gun attacks aim and fire automatically." ) :
+                                       _( "Quick fire is active. Directional gun attacks fire immediately." ) );
+    aim_toggle.enabled = result.swipe_movement_allowed;
+    result.nodes.push_back( std::move( aim_toggle ) );
     for( const std::pair<std::string, std::string> &command : {
                 std::pair<std::string, std::string>{ "reader:combat:weapon-next", _( "Next weapon" ) },
                 { "reader:combat:weapon-prev", _( "Previous weapon" ) },

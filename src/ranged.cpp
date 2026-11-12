@@ -2930,12 +2930,25 @@ double Character::gun_value( const item &weap, int ammo ) const
 namespace
 {
 std::optional<int> pending_accessible_combat_shot;
+bool accessible_combat_precise_aim = true;
+bool pending_accessible_combat_precise_aim = false;
 bool accessible_combat_shot_completed = false;
 } // namespace
+
+bool target_handler::combat_precise_aim_enabled()
+{
+    return accessible_combat_precise_aim;
+}
+
+void target_handler::toggle_combat_precise_aim()
+{
+    accessible_combat_precise_aim = !accessible_combat_precise_aim;
+}
 
 void target_handler::queue_accessible_combat_shot( int direction )
 {
     pending_accessible_combat_shot = direction;
+    pending_accessible_combat_precise_aim = accessible_combat_precise_aim;
     accessible_combat_shot_completed = false;
 }
 
@@ -2944,6 +2957,13 @@ std::optional<int> target_handler::take_accessible_combat_shot()
     std::optional<int> pending = pending_accessible_combat_shot;
     pending_accessible_combat_shot.reset();
     return pending;
+}
+
+bool target_handler::take_accessible_combat_precise_aim()
+{
+    const bool precise = pending_accessible_combat_precise_aim;
+    pending_accessible_combat_precise_aim = false;
+    return precise;
 }
 
 bool target_handler::take_accessible_combat_shot_completed()
@@ -3089,6 +3109,8 @@ target_handler::trajectory target_ui::run()
     // safety confirmations.
     const std::optional<int> automatic_combat_shot = mode == TargetMode::Fire ?
             target_handler::take_accessible_combat_shot() : std::nullopt;
+    const bool automatic_precise_combat_shot = automatic_combat_shot &&
+            target_handler::take_accessible_combat_precise_aim();
     if( automatic_combat_shot ) {
         accessible_fire_direction = *automatic_combat_shot;
         action = "A11Y_INTERNAL_FIRE_DIRECTION";
@@ -3263,13 +3285,32 @@ target_handler::trajectory target_ui::run()
                 }
                 continue;
             }
-            // Direction is the one-step confirmation, except when the
-            // engine requires its existing non-enemy/friendly warning.
-            // Actual firing remains inside ACT_AIM with normal turn costs.
+            // Both modes retain the native target, friendly-fire check,
+            // ammunition and ACT_AIM activity. Only the aim input differs.
             set_last_target();
             if( automatic_combat_shot ) {
+                // Keep the normal return-to-world behavior after an
+                // aim-and-fire activity that may require multiple turns.
                 accessible_combat_shot_completed = true;
             }
+            if( automatic_precise_combat_shot ) {
+                // Take the most precise threshold the wielded gun actually
+                // exposes. This is the original game's aim-and-shoot loop.
+                const auto best = std::find_if( aim_types.rbegin(), aim_types.rend(),
+                []( const aim_type & type ) {
+                    return type.has_threshold;
+                } );
+                if( best != aim_types.rend() ) {
+                    if( action_aim_and_shoot( best->action ) ) {
+                        loop_exit_code = ExitCode::Fire;
+                    } else {
+                        timed_out_action = best->action;
+                        loop_exit_code = ExitCode::Timeout;
+                    }
+                    break;
+                }
+            }
+            // Quick fire (or a gun without native aiming thresholds).
             loop_exit_code = ExitCode::Fire;
             break;
         } else if( action == "A11Y_INTERNAL_AUTO_RELOAD" ) {

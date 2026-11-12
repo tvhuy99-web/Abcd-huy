@@ -26,10 +26,15 @@ constexpr double MIN_RECOIL_IMPROVEMENT = 0.01;
 
 namespace target_handler
 {
-// A single combat swipe requests one native shot direction. The request is
-// consumed only by the next firearm aiming activity, never by a map swipe.
+// A combat-menu setting. Default to native precise aim-and-fire; quick
+// fire retains the original directional shot behavior and game rules.
+bool combat_precise_aim_enabled();
+void toggle_combat_precise_aim();
+
+// A combat swipe queues its direction and the current mode for one shot.
 void queue_accessible_combat_shot( int direction );
 std::optional<int> take_accessible_combat_shot();
+bool take_accessible_combat_precise_aim();
 bool take_accessible_combat_shot_completed();
 
 // Trajectory to target. Empty if selection was aborted or player ran out of moves

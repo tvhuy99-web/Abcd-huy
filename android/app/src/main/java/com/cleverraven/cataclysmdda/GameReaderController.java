@@ -1711,6 +1711,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             showHubActionChoices();
             return;
         }
+        if (combatMode && directWorldGesturesEnabled()) {
+            // Long press opens the existing combat menu with the aiming
+            // mode switch as its first row, not an extra modal overlay.
+            openHubSection(GameActionHub.COMBAT);
+            return;
+        }
         if (snapshot != null && "targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
             targetingOriginalControls = !targetingOriginalControls;
@@ -3141,7 +3147,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
 
     private List<GameActionHub.Entry> hubEntries() {
-        return GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
+        List<GameActionHub.Entry> result =
+                GameActionHub.entries(activity, snapshot, hubSection, hubQuery, favorites);
+        // Hide combat-only mode switching outside the live combat controls.
+        if (!combatMode) {
+            result.removeIf(entry -> "reader:combat:aim-toggle".equals(entry.node));
+        }
+        return result;
     }
 
     private String hubActionLabel(int choice) {

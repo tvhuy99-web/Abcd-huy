@@ -538,6 +538,14 @@ input_context game::get_player_input( std::string &action )
                     return "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i );
                 }
             }
+            if( intent.node == "reader:combat:aim-toggle" ) {
+                // A read-only setting change with no game turn or ammo cost.
+                target_handler::toggle_combat_precise_aim();
+                add_msg( m_info, target_handler::combat_precise_aim_enabled() ?
+                         _( "Combat precise aiming enabled." ) :
+                         _( "Combat quick fire enabled." ) );
+                return std::string( "TIMEOUT" );
+            }
             if( intent.node == "reader:combat:weapon-next" ) {
                 return "A11Y_INTERNAL_COMBAT_WEAPON_NEXT";
             }
