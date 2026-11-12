@@ -431,7 +431,7 @@ class crafting_ui_impl : public cataimgui::window
         void process_action( const std::string &action_in, input_context &ctxt );
         a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
         std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
-                const input_context &ctxt );
+                input_context &ctxt );
         void set_input_context( const input_context *ctxt ) {
             ctxt_ptr = ctxt;
         }
@@ -2855,8 +2855,32 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
 }
 
 std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic_intent &intent,
-        const input_context &ctxt )
+        input_context &ctxt )
 {
+    // Apply spoken tab/subtab controls on the native game thread before
+    // returning. Simply returning a keybinding ID from the semantic handler
+    // left category intents accepted in JNI but with no observable transition
+    // in the 2026-11-12 Android log.
+    if( intent.action == "activate" &&
+        ( intent.node == "PREV_TAB" || intent.node == "NEXT_TAB" ||
+          intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
+        if( reader_all_categories && ( intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
+            a11y::android::announce(
+                _( "All categories has no subcategories. Swipe left or right with two fingers to select a main category." ),
+                false );
+            a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV", "ignored=global_all_subcategory" );
+            return "TIMEOUT";
+        }
+        process_action( intent.node, ctxt );
+        if( recalc ) {
+            recalculate_recipes();
+        }
+        a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV",
+                                         "action=" + intent.node +
+                                         " all=" + std::to_string( reader_all_categories ? 1 : 0 ) +
+                                         " visible=" + std::to_string( current.size() ) );
+        return "TIMEOUT";
+    }
     if( intent.action == "activate" && !current.empty() &&
         ( intent.node == "craft:page:next" || intent.node == "craft:page:previous" ) ) {
         constexpr int page_size = 80;
