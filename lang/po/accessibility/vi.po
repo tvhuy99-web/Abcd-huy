@@ -4516,3 +4516,12 @@ msgstr "Đã bật chế độ giữ tay rảnh."
 
 msgid "Keep hands free disabled."
 msgstr "Đã tắt chế độ giữ tay rảnh."
+
+msgid "locker"
+msgstr "tủ đựng đồ"
+
+msgid "Place Arcade Machine"
+msgstr "Đặt máy trò chơi điện tử"
+
+msgid "Remove Linoleum Tiles"
+msgstr "Bóc gạch lát sàn vải sơn"

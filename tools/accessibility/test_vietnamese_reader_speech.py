@@ -43,6 +43,9 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
             "Hiding distant zones": "Đang ẩn các vùng ở xa",
             "Keep hands free enabled.": "Đã bật chế độ giữ tay rảnh.",
             "Keep hands free disabled.": "Đã tắt chế độ giữ tay rảnh.",
+            "locker": "tủ đựng đồ",
+            "Place Arcade Machine": "Đặt máy trò chơi điện tử",
+            "Remove Linoleum Tiles": "Bóc gạch lát sàn vải sơn",
         }
         for english, vietnamese in pairs.items():
             with self.subTest(english=english):
@@ -71,6 +74,11 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('_( "Keep hands free disabled." )', style)
         self.assertIn('_( "Preparing a new world. Please wait." )', loading_menu)
         self.assertIn('_( "Creating your character and starting the game." )', game)
+        furniture = (ROOT / "data/json/furniture_and_terrain/furniture-storage.json").read_text("utf-8")
+        groups = (ROOT / "data/json/construction_group.json").read_text("utf-8")
+        self.assertIn('"name": "locker"', furniture)
+        self.assertIn('"name": "Place Arcade Machine"', groups)
+        self.assertIn('"name": "Remove Linoleum Tiles"', groups)
 
     def test_yes_no_dialog_speaks_question_without_a_fake_row(self):
         self.assertIn('const bool yes_no_prompt = category == "YESNO"', self.dialog)
