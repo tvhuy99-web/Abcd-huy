@@ -1399,6 +1399,13 @@ void overmap::migrate_oter_ids( const std::unordered_map<tripoint_om_omt, std::s
 void overmap::migrate_camps( const std::vector<tripoint_abs_omt> &points ) const
 {
     for( const tripoint_abs_omt &point : points ) {
+        // This overmap may still be loading and not yet be discoverable
+        // through overmap_buffer.find_camp(). Check its own camp registry
+        // first: an old-world camp must never be added twice during the
+        // legacy terrain migration. Keep the existing named camp intact.
+        if( camps.find( point ) != camps.end() ) {
+            continue;
+        }
         std::optional<basecamp *> bcp = overmap_buffer.find_camp( point.xy() );
         if( bcp ) {
             continue; // Already a camp nearby, can't put down another one
