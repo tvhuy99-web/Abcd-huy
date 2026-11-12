@@ -111,6 +111,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Switching a nearby category speaks its name/count first. The first
     // right swipe then reads item one, instead of silently skipping it.
     private boolean nearbyFirstItemPending;
+    private boolean craftingNavigationPending;
     // Only the requested comprehensive menu appears as an Android overlay;
     // routine gameplay keeps the transparent, dashboard-free surface.
     private boolean comprehensiveMenu;
@@ -682,7 +683,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     pocketReturnParent = "";
                     pocketDrafts.clear();
                 }
+                boolean craftingNavigationCompleted = craftingNavigationPending
+                        && snapshot != null && "crafting".equals(next.category)
+                        && (!next.summary.equals(snapshot.summary)
+                            || !next.focus.equals(snapshot.focus)
+                            || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
+                if (!"crafting".equals(next.category)) {
+                    craftingNavigationPending = false;
+                }
                 if (!"surroundings".equals(next.category)) {
                     nearbyFirstItemPending = false;
                 } else if (changedContext || nearbyCategoryChanged) {
@@ -741,6 +750,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             : next.nodes.get(0).id;
                 } else if (selectionChanged) {
                     focus = selectedItemFocus;
+                } else if (craftingNavigationCompleted) {
+                    // Category and page gestures must start on the selected
+                    // recipe of the NEW native list, not an old details field.
+                    focus = next.find(next.focus) != null ? next.focus
+                            : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
+                    craftingNavigationPending = false;
                 } else if (nearbyCategoryChanged) {
                     // Even if the old target also exists in the new category
                     // (notably when switching to All), start at item one.
@@ -873,6 +888,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ReaderSnapshot.Node document = next.find(focus);
                     speakDocument(next.title + ". " + documentReader.open(
                             next.contextKey(), document.id, document.detail));
+                } else if ("crafting".equals(next.category) && craftingNavigationCompleted
+                        && next.find(focus) != null) {
+                    feedback(next.summary.trim() + ". " + nodeText(next.find(focus), false));
                 } else if ("surroundings".equals(next.category)
                         && (enteredMenu || nearbyCategoryChanged)) {
                     // Announce the active category and its *total* number
@@ -2291,6 +2309,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
+        // Global All can contain many recipes. A horizontal swipe at the
+        // last/first recipe moves seamlessly across native 80-recipe pages.
+        if ("crafting".equals(snapshot.category) && !commandPaletteOpen
+                && focus.startsWith("recipe:")) {
+            ReaderSnapshot.Node selectedRecipe = snapshot.find(focus);
+            if (selectedRecipe != null && selectedRecipe.position > 0) {
+                if (delta > 0 && selectedRecipe.position % 80 == 0
+                        && craftingCommand("craft:page:next")) { return; }
+                if (delta < 0 && selectedRecipe.position > 1
+                        && (selectedRecipe.position - 1) % 80 == 0
+                        && craftingCommand("craft:page:previous")) { return; }
+            }
+        }
         // All spoken lists wrap both ways: end -> first, first -> end.
         // This also applies to the contextual command drawer and nested lists.
         int selected = Math.floorMod(index() + delta, filtered.size());
@@ -2408,6 +2439,45 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return true;
         }
         return false;
+    }
+
+    /** Use native crafting commands, never synthesize a recipe selection. */
+    private boolean craftingCommand(String id) {
+        if (snapshot == null || !"crafting".equals(snapshot.category)) { return false; }
+        ReaderSnapshot.Node node = snapshot.find(id);
+        if (node == null || !node.enabled || !node.actions.contains("activate")) {
+            return false;
+        }
+        String previous = focus;
+        craftingNavigationPending = true;
+        focus = id;
+        send("activate", "");
+        focus = previous;
+        return true;
+    }
+
+    @Override
+    public boolean handleCraftingMainCategorySwipe(int vertical) {
+        if (vertical == 0 || snapshot == null || !"crafting".equals(snapshot.category)
+                || commandPaletteOpen || comprehensiveMenu || editor != null
+                || debugReport != null || !foreground || !windowFocused
+                || lastSuspended || documentReader.isOpen()) { return false; }
+        return craftingCommand(vertical < 0 ? "PREV_TAB" : "NEXT_TAB");
+    }
+
+    @Override
+    public boolean handleCraftingSubcategorySwipe(int vertical) {
+        if (vertical == 0 || snapshot == null || !"crafting".equals(snapshot.category)
+                || commandPaletteOpen || comprehensiveMenu || editor != null
+                || debugReport != null || !foreground || !windowFocused
+                || lastSuspended || documentReader.isOpen()) { return false; }
+        ReaderSnapshot.Node selected = snapshot.find(focus);
+        if (selected != null && ("number".equals(selected.role)
+                || !selected.fieldType.isEmpty())) {
+            // Numeric and choice fields keep their existing editing gestures.
+            return false;
+        }
+        return craftingCommand(vertical < 0 ? "LEFT" : "RIGHT");
     }
 
     /** Category and page controls are never targets; send a native,
