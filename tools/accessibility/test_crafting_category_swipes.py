@@ -69,6 +69,25 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("if (nextRecipe < 0)", READER)
         self.assertIn("std::min( first + page_size - 1", CRAFT)
 
+    def test_native_category_selection_cannot_be_reverted_by_imgui(self):
+        # In the 539b0655 phone log PREV_TAB produced a 20-recipe native
+        # category and ImGui immediately restored All with 1121 recipes.
+        self.assertIn("reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();", CRAFT)
+        self.assertIn("ImGui::IsItemClicked() && !reader_all_categories", CRAFT)
+        self.assertIn("( !a11y::enabled() || ImGui::IsItemClicked() )", CRAFT)
+        self.assertIn("subcategory=", CRAFT)
+        self.assertIn("category=", CRAFT)
+
+    def test_swipe_left_at_first_recipe_wraps_to_last_without_detail_rows(self):
+        # Page controls are present even on first/last page so the native
+        # engine, not local Java focus, selects the last real recipe.
+        self.assertIn("if( current.size() > 1 )", CRAFT)
+        self.assertIn("line = first < 0 ? static_cast<int>( current.size() ) - 1 :", CRAFT)
+        self.assertIn("line = first >= static_cast<int>( current.size() ) ? 0 : first;", CRAFT)
+        self.assertIn('craftingCommand("craft:page:previous")', READER)
+        self.assertIn('craftingCommand("craft:page:next")', READER)
+        self.assertIn('node.id.startsWith("recipe:")', READER)
+
     def test_time_translation_and_similar_recipe_names(self):
         self.assertIn('msgid "Estimated time: %s"\nmsgstr "Thời gian dự kiến: %s"', VI)
         self.assertIn('msgid "All categories"\nmsgstr "Tất cả"', VI)
