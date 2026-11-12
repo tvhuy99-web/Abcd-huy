@@ -19,6 +19,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
         cls.inventory = (SRC / "inventory_ui.cpp").read_text("utf-8")
         cls.advanced = (SRC / "advanced_inv.cpp").read_text("utf-8")
         cls.armor = (SRC / "armor_layers.cpp").read_text("utf-8")
+        cls.nearby = (SRC / "surroundings_menu.cpp").read_text("utf-8")
         cls.runtime = (SRC / "a11y_runtime.cpp").read_text("utf-8")
         cls.java = JAVA.read_text("utf-8")
 
@@ -58,6 +59,15 @@ class FullDetailOnDemandTests(unittest.TestCase):
         self.assertIn("std::find( shown.begin(), shown.end(), binding->worn_it )", self.armor)
         self.assertIn("a11y::announce_full_item_info( **found );", self.armor)
 
+    def test_nearby_items_read_the_real_visible_stack(self):
+        self.assertIn('#include "a11y_item_text.h"', self.nearby)
+        self.assertIn('node.actions.push_back( "read_detail" );', self.nearby)
+        self.assertIn('intent.action == "read_detail" && target.kind == nearby_kind::item', self.nearby)
+        self.assertIn('a11y::scan_unrestricted_tile( target.target )', self.nearby)
+        self.assertIn('std::find( visible.items.begin(), visible.items.end()', self.nearby)
+        self.assertIn('a11y::announce_full_item_info( obj );', self.nearby)
+        self.assertIn('return std::string( "TIMEOUT" );', self.nearby)
+
     def test_read_only_detail_does_not_need_item_to_be_selectable(self):
         self.assertIn('intent->action != "read_detail" && !node->enabled', self.runtime)
         self.assertIn('&& !"read_detail".equals(action)', self.java)
@@ -68,6 +78,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
     def test_long_speech_and_linked_native_documents(self):
         self.assertIn('message.startsWith("A11Y_DETAIL:")', self.java)
         self.assertIn('"item-detail:" + ANNOUNCEMENT_SEQUENCE.incrementAndGet()', self.java)
+        self.assertIn("ReaderSpeechQueue.LONG_TEXT, 600000L", self.java)
         self.assertIn('ReaderSpeechQueue.LONG_TEXT', self.java)
         self.assertIn('private boolean readLinkedDetails(ReaderSnapshot.Node selected)', self.java)
         for scope in (
