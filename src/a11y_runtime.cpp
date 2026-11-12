@@ -372,7 +372,7 @@ std::optional<std::string> poll_input( const void *input_owner )
                 }
                 continue;
             }
-            if( intent->action != "focus" && !node->enabled ) {
+            if( intent->action != "focus" && intent->action != "read_detail" && !node->enabled ) {
                 android::status( "disabled", &*intent );
                 continue;
             }
