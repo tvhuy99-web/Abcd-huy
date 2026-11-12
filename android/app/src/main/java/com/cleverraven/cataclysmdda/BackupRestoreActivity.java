@@ -1,7 +1,7 @@
 package com.cleverraven.cataclysmdda;
 
 import android.app.Activity;
-import android.app.ActivityNotFoundException;
+import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
