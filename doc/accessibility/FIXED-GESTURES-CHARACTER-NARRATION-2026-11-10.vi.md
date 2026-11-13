@@ -1,84 +1,42 @@
-# Cử chỉ cố định và đọc thông tin nhân vật bằng ba ngón (PR #7)
+# Cử chỉ cố định và đọc đầy đủ thông tin nhân vật
 
-## Quy tắc không cho thay thế cử chỉ có chức năng
+**Đối chiếu lại 13/11/2026 trên `master@f0be189`.** Thay thế bản cũ nói chạm ba lần ba ngón còn trống và có thể gán. Xem [đặc tả hiện hành](CURRENT-REFERENCE.vi.md).
 
-**Đã có chức năng mặc định => không thể đổi.** Cử chỉ chưa có
-chức năng mặc định => được gán tùy chỉnh tại Menu hành động tổng hợp.
-Quy tắc chỉ liên quan tới các cử chỉ trong ứng dụng khi đang chơi game;
-các cử chỉ TalkBack do Android giữ quyền vẫn thuộc về TalkBack.
+## Nguyên tắc
 
-| Cử chỉ | Hành động cố định | Cho đổi? |
+Các cử chỉ có chức năng gốc không thể bị ghi đè bởi cấu hình tùy chỉnh đã lưu. TalkBack và cử chỉ của Android luôn có quyền ưu tiên khi hệ thống giữ chúng.
+
+| Cử chỉ | Hành vi có mã hiện tại | Gán lại? |
 | --- | --- | --- |
-| Vuốt một ngón lên/xuống/trái/phải | Đi bộ ở thế giới; điều hướng trong menu | Không |
-| Chạm hai lần một ngón | Kích hoạt và xác nhận | Không |
+| Vuốt một ngón lên/xuống/trái/phải | Di chuyển ở thế giới; duyệt menu | Không |
+| Chạm đôi một ngón | Kích hoạt/xác nhận | Không |
 | Chạm ba lần một ngón | Mở menu hành động | Không |
 | Nhấn giữ một ngón | Hành động ngữ cảnh | Không |
-| Vuốt hai ngón lên/xuống/trái/phải | Quét 16 ô trên bản đồ; xác nhận/quay lại trong menu theo ngữ cảnh | Không |
-| Chạm một lần hai ngón | Đọc chi tiết mục đang chọn | Không |
-| Chạm hai lần hai ngón | Đọc các thông báo game ở thế giới | Không |
-| Chạm ba lần hai ngón | Mở menu hành động tổng hợp ở thế giới | Không |
+| Vuốt hai ngón bốn hướng | Quét 16 ô ở thế giới; nghĩa riêng ở menu | Không |
+| Chạm một lần hai ngón | Đọc chi tiết; ở combat đọc kẻ địch | Không |
+| Chạm hai lần hai ngón | Đọc thông báo thế giới | Không |
+| Chạm ba lần hai ngón | Mở menu tổng hợp | Không |
 | Chạm một lần ba ngón | Đọc tọa độ | Không |
-| **Chạm hai lần ba ngón** | **Đọc đầy đủ thông tin nhân vật hiện tại** | **Không** |
-| Chạm ba lần ba ngón | Chưa có chức năng mặc định | Có |
-| Vuốt ba/bốn ngón theo bốn hướng | Chưa có chức năng mặc định | Có |
-| Chạm một, hai, ba lần bốn ngón | Chưa có chức năng mặc định | Có |
-| Nhấn giữ hai/ba ngón | Chưa có chức năng mặc định | Có |
-| Vuốt một ngón theo hai nét (ví dụ lên rồi phải) | Chưa có chức năng mặc định | Có |
+| Chạm hai lần ba ngón | Đọc đầy đủ nhân vật | Không |
+| **Chạm ba lần ba ngón** | **Chuyển chế độ bản đồ/chiến đấu** | **Không** |
+| Vuốt ba/bốn ngón, chạm bốn ngón, giữ hai/ba ngón, các chuỗi vuốt một ngón | Gán shortcut nếu không có chức năng mặc định | Có, tùy ngữ cảnh |
 
-**Tổng cộng:** 36 mã cử chỉ nhận diện trong danh mục phím tắt thế
-giới, trong đó 10 mã đã có chức năng và được giữ cố định; 26 mã
-còn lại cho phép gán. Những cử chỉ mặc định do nhận dạng trực tiếp
-như chạm hai lần một ngón và vuốt hai ngón vốn không nằm trong 36
-mã, cũng được giữ cố định.
+`ReaderGestureBindings.IDS` có **36 mã**. Hàm `isReserved()` hiện đánh dấu **11 mã**, còn **25 mã tùy chỉnh**. Một số cử chỉ khác do `ReaderGestureSurface` nhận trực tiếp không nằm trong danh mục gán nên không được cộng vào 36.
 
-## Cách dùng chức năng đọc nhân vật
+## Đọc thông tin nhân vật
 
-Ở màn hình thế giới, chạm nhanh **hai lần bằng ba ngón tay**.
-Game đọc nội dung hiện có trong snapshot hiện tại, theo thứ tự:
+Tại thế giới bình thường, chạm **nhanh hai lần bằng ba ngón**. Mã đọc node `world:character_detail` của snapshot hiện tại. Nội dung gồm tên, chỉ số nhân vật, nhu cầu sinh tồn, tình trạng bộ phận, hiệu ứng, chế độ an toàn và trang bị/trạng thái xe nếu game công bố. Đây là thao tác đọc, không tự tiêu lượt.
 
-- Tên nhân vật.
-- Sức mạnh, khéo léo, trí tuệ và nhận thức.
-- Giờ, đói, khát, buồn ngủ, đau, thể lực, nhiệt độ, tinh thần,
-  mệt mỏi, hiệu ứng đang có.
-- Tình trạng sức khỏe các bộ phận cơ thể.
-- Chế độ an toàn.
-- Vật đang cầm; nếu điều khiển xe sẽ có các mục trạng thái xe
-  có sẵn trong báo cáo nhân vật.
-- Kết thúc thông tin nhân vật.
+Không tự suy ra HP chính xác hoặc chi tiết bị ẩn nếu engine chỉ mô tả tình trạng bằng chữ. Nếu snapshot chưa sẵn sàng, có thể nghe thông báo đang chờ.
 
-Tính năng **không thực hiện hành động gameplay và không làm trôi lượt**.
-Dùng đúng tên và các giá trị do engine cung cấp; không suy đoán HP
-chính xác khi engine chỉ công bố tình trạng chấn thương bằng lời.
-Nếu không có vật đang cầm thì không tự dựng một tên vật mới.
+## Chế độ chiến đấu
 
-## Bảo vệ trước cấu hình của bản cũ
+Chạm **ba lần bằng ba ngón** để bật hoặc tắt chế độ chiến đấu, *không phải cử chỉ để gán*. Khi combat bật, một ngón dùng ra đòn hướng; hai ngón vuốt để đi; chạm một lần hai ngón đọc kẻ địch. Phải nghe trạng thái chế độ trước khi dùng.
 
-- `ReaderGestureBindings.isReserved()` ngăn ghi đè 10 mã có chức năng.
-- `CUSTOM_IDS` và `CUSTOM_LABELS` loại các mã này khỏi menu gán
-  phím tắt, nhưng **không xóa** các lựa chọn chưa có chức năng.
-- Trên mỗi lần đọc cài đặt, những gán đã lưu từ bản trước cho mã
-  cố định bị loại bỏ và bản đồ gán được làm sạch.
-- Cách gán lại vuốt ngang/dọc trong thiết lập giọng nói đã được ẩn;
-  tùy chọn cũ dù còn trong bộ nhớ cũng không thay đổi thao tác điều
-  hướng thực tế.
-- Người dùng vẫn có thể điều chỉnh độ dài vuốt, thời gian vuốt,
-  hướng điều hướng thuận tay trái/phải; các tùy chỉnh này không
-  thay đổi nhiệm vụ của cử chỉ.
-- Việc bấm **Khôi phục cử chỉ mặc định** vẫn có thể đưa các cài đặt
-  nhận dạng và danh mục tùy chỉnh về trạng thái ban đầu.
+## Tương thích cấu hình cũ
 
-## Kiểm chứng trên thiết bị
+Những ánh xạ đã lưu cho mã cử chỉ cố định được bộ đọc gán bỏ qua và làm sạch. Các lựa chọn đổi chức năng vuốt ngang/dọc kiểu thử 45 giây không còn điều khiển map navigation trong mã mới. Vẫn có thể chỉnh độ dài/thời gian vuốt và thuận tay khi điều hướng.
 
-1. Vuốt một ngón, vuốt hai ngón và kiểm tra không bị thay thế bởi
-   gán cũ, kể cả sau khi nâng cấp từ APK trước.
-2. Chạm hai lần ba ngón; TTS phải đọc thông tin nhân vật thực,
-   không mở menu hay di chuyển nhân vật.
-3. Chạm ba lần ba ngón hoặc dùng vuốt 3 ngón; xác nhận
-   có thể gán và hoạt động như phím tắt tùy chọn.
-4. Nhấn giữ một ngón luôn mở hành động ngữ cảnh; nhấn giữ
-   hai hoặc ba ngón vẫn có thể gán lệnh.
-5. Kiểm tra menu thiết lập không còn nút gán lại vuốt ngang/dọc.
-6. Kiểm tra TalkBack đang bật có quyền ưu tiên với cử chỉ hệ thống;
-   không cướp cử chỉ của Android để ép chức năng game.
-7. Nếu cần thu nhật ký, bật ghi thủ công trước phép thử,
-   xuất trước khi thoát phiên. Tắt ghi sẽ ngừng đo hoàn toàn.
+## Bài cần thử trên thiết bị
+
+Cử chỉ 3 ngón chạm hai và ba lần; chế độ bản đồ ↔ chiến đấu; gián đoạn màn hình; TalkBack bật; nâng cấp từ cài đặt cũ; mọi shortcut chưa gán; không có lệnh combat bị kích hoạt do người dùng chỉ muốn đọc nhân vật. Các bài nguồn chỉ xác nhận mã/khế ước, không thay cho thử đa ngón trên điện thoại.

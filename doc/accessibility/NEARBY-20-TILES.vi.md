@@ -1,29 +1,17 @@
-# Danh sách xung quanh: quét 20 ô mỗi phía (Android)
+# Danh sách xung quanh: 20 ô mỗi phía trên Android
 
-Đây là **danh sách xung quanh** trên Android dành cho người dùng trình đọc,
-không phải thao tác **quét một đường 16 ô theo hướng vuốt** và không thay đổi
-danh sách đồ họa gốc.
+**Đã sửa 13/11/2026 theo `master@f0be189`.** Bản trước nói `observe_tile` chặn đọc địa hình thực sau tường; **điều đó không đúng với đường quét gần hiện tại**.
 
-- Duyệt các vòng hình vuông từ 0 đến 20 ô. Có đủ 41 × 41 = 1681 tọa độ,
-  gồm hướng bắc 20, tây 20, nam 20, đông 20 và bốn góc chéo 20 ô.
-- Dùng `a11y::observe_tile` để bảo vệ tính chính xác của khả năng nhìn,
-  bẫy đã nhận biết, đồ trong vật chứa và cảm nhận đặc biệt. Không đọc
-  tên địa hình thực từ những ô bị che khuất.
-- Chỉ hiện sinh vật, vật phẩm, bẫy đã biết, mối nguy đang hoạt động,
-  phương tiện (mỗi xe một dòng), dấu hiệu cảm nhận/âm thanh và các loại
-  địa hình có công dụng cụ thể như cửa, cầu thang, thang, bảng, máy tính,
-  thiết bị hoặc điểm tương tác.
-- **Không** liệt kê sàn, cỏ, đất, đường, tường thông thường hay nội thất
-  chỉ để trang trí. Không xếp quái vật trước đồ vật; thứ tự do khoảng cách
-  quyết định, hòa thì giữ thứ tự duyệt vòng.
-- Mục đọc chỉ gồm tên và hướng + số ô; không đọc câu hướng dẫn, số thứ tự
-  dài hay tiêu đề "từ gần đến xa". Khi trống chỉ đọc thông báo ngắn.
-- Chạm kích hoạt vẫn gọi `safe_route_to` cũ và tuân theo cơ chế tránh nguy
-  hiểm; quét chỉ quan sát, không tự di chuyển.
-- Các tab trực quan vẫn giữ logic 60 ô, nhưng không được khởi tạo thừa
-  khi Android accessibility dùng danh sách riêng.
+## Vùng quét
 
-Cần thử trên điện thoại: đủ tám hướng tại 20/21 ô, ô khuất, bẫy giấu,
-nhiều ô sàn giống nhau, xe dài, tên vật phẩm trong vật chứa, địa hình
-chuyên biệt của mod, và hiệu suất mở menu. Không khẳng định đã thử máy
-thật chỉ từ việc biên dịch thành công.
+- Quét hình vuông từ −20 đến +20 ô trên **hai trục**, tức 41 × 41 = 1.681 vị trí lý thuyết, giới hạn bởi bản đồ hiện đang nạp.
+- Không phải quét một ray 16 ô bằng hai ngón. Không phải ba tab hình ảnh gốc có bán kính `tab_data::radius = 60`.
+- Thông tin vật thể được lấy bằng `scan_unrestricted_tile`, **có thể đọc trực tiếp dữ liệu bản đồ sau tường** (sinh vật, bẫy, địa hình, vật phẩm). `observe_tile` vẫn được sử dụng **bổ trợ** cho dấu âm và cảm nhận đặc biệt. Không mô tả toàn bộ luồng như chỉ công bố thông tin trong tầm nhìn.
+- Giữ nội thất (kể cả tủ/chạn thường), cửa/cầu thang, phương tiện, vật phẩm, sinh vật, bẫy và trường nguy hiểm; không tạo hàng cho mọi sàn/cỏ/đường trống hoặc tường thông thường.
+- Sắp gần trước xa sau; cùng khoảng cách giữ thứ tự quét vòng. Phân trang **80 hàng**, không cắt ngầm những trang sau.
+- Có bốn nhóm bộ lọc: Tất cả, Sinh vật và NPC, Địa điểm và môi trường, Vật phẩm. Vuốt dọc đổi bộ lọc; vuốt ngang duyệt kết quả.
+- Chạm **một lần hai ngón trên vật phẩm** đọc `item::info(true)` sau khi tái xác minh danh sách; không di chuyển. Chạm **đôi một ngón** xin đường `safe_route_to`; không tự nhặt và có thể bị từ chối vì đường nguy hiểm.
+
+## Chưa nghiệm thu trên thiết bị
+
+Quét đúng ô 20/21, dữ liệu sau tường, trường hợp trùng tên/nhiều món, nội thất có/không vật phẩm, 80+ mục, đường bị chặn, thay bộ lọc, TalkBack thật và hiệu năng mở menu. Tất cả chỉ là đặc tả mã cho tới khi có nhật ký thử thực tế. [Đặc tả hiện hành](CURRENT-REFERENCE.vi.md).

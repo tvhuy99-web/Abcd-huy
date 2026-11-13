@@ -1,45 +1,28 @@
-# Trang Cài đặt TTS cho Android
+# Cài đặt TTS Android: mô tả đã đồng bộ mã hiện tại
 
-Trong menu chính: **Cài đặt > Cài đặt TTS**. Trong game có thể mở trang
-này bằng nút **Cài đặt TTS** trên bảng điều khiển trình đọc. Phần
-**Cài đặt trình đọc** cũ vẫn giữ các tính năng cử chỉ, cứu hộ,
-sao lưu và phục hồi, nên không được xóa tùy tiện.
+**Cập nhật đối chiếu `master@f0be189`, 13/11/2026.** Phiên bản cũ của trang này chứa các nút không còn xuất hiện trong `TtsSettingsActivity`. Đọc [hướng dẫn hiện hành](USER-GUIDE.vi.md) và [đặc tả](CURRENT-REFERENCE.vi.md).
 
-## Các mục theo đúng thứ tự
+## Thứ tự điều khiển thật
 
-1. **Bật trình đọc TTS trong game** (ô bật/tắt, ở trên cùng).
-2. **Bộ máy đọc** (các bộ máy TTS đã cài trong Android).
-3. **Ngôn ngữ** (chọn trong các ngôn ngữ bộ máy đọc cung cấp).
-4. **Giọng đọc** (giọng tương ứng với ngôn ngữ).
-5. **Tốc độ** (0,5 đến 3,0 lần).
-6. **Độ cao** (0,5 đến 2,0 lần).
-7. **Âm lượng** (0 đến 100 phần trăm, theo từng câu nói).
-8. **Cho phép giọng cần mạng** (mặc định không đồng ý).
-9. **Khôi phục giọng mặc định**, **Mở cài đặt giọng đọc Android**,
-   **Hủy, không lưu**.
-10. **Nghe thử**, cuối cùng **Lưu**.
+1. **Bật trình đọc TTS trong game**.
+2. **Bộ máy đọc**.
+3. **Ngôn ngữ**.
+4. **Giọng đọc**.
+5. **Tốc độ**, 0,5 đến 10,0 lần, bước 0,1.
+6. **Độ cao**, 0,5 đến 2,0 lần.
+7. **Âm lượng**, 0–100%.
+8. **Nghe thử**.
+9. **Hủy**.
+10. **Lưu**.
 
-Bộ đọc của game tự bật sau cài mới, trừ khi bạn chủ động tắt rồi lưu.
-TTS này **không bật/tắt được TalkBack** của Android.
+**Không có** nút riêng “Cho phép giọng cần mạng”, “Khôi phục giọng mặc định” hoặc “Mở cài đặt giọng Android” ở trang này. Cài đặt cho phép giọng mạng đã lưu trước đây vẫn được dùng để chọn giọng. Việc đổi lựa chọn hủy trạng thái thử trước, nhưng `saveSettings()` hiện **không kiểm tra `previewPassed`**, tức nghe thử thành công **không phải điều kiện bắt buộc để Lưu**. Nếu bật TTS nhưng âm lượng đang bằng 0, mã báo lỗi và không lưu.
 
-Các lựa chọn nằm trong bản nháp. Khi nhấn **Nghe thử**, Android dùng
-trực tiếp bộ máy, giọng, ngôn ngữ, tốc độ, độ cao và âm lượng vừa chọn
-để nói câu mẫu. Nếu đã bật TTS, phải nghe thử thành công trước khi lưu
-để giảm nguy cơ chọn phải giọng không phát tiếng; khi **tắt** TTS
-vẫn cho phép lưu mà không cần thử. Mọi lựa chọn chỉ được ghi vào
-SharedPreferences khi nhấn Lưu, rồi game tải lại chúng khi trở về.
+TTS trong game không điều khiển bật/tắt TalkBack hệ thống. Khi TalkBack giữ quyền khám phá bằng chạm, ưu tiên các điều khiển Android có nhãn. Bộ đọc nội bộ và bộ máy TTS phải được thử trên điện thoại riêng để xác nhận nghe rõ, độ trễ, nội dung Việt và fallback khi thiếu giọng.
 
-Giọng cần mạng phải được chủ động cho phép. Một số bộ máy Android có
-thể không hỗ trợ đầy đủ thông số độ cao hoặc âm lượng; thực tế còn tùy
-máy và bộ máy đọc. Có nút mở cài đặt Android để cài giọng Việt khi cần.
+## Liên quan
 
-## Kiểm thử cần thiết
+- **Cài đặt trợ năng**: hiển thị đồ họa thế giới, sonar, độ dài/thời gian vuốt, Quay lại.
+- **Cài đặt âm thanh game**: nhạc và hiệu ứng, riêng với giọng TTS.
+- **Nhật ký gỡ lỗi**: bật ghi, xuất/xóa, riêng với TTS.
 
-- Chạy `python3 -m unittest discover -s tools/accessibility
-  -p test_tts_settings.py`.
-- Trên giả lập API 35: chạy `TtsSettingsPreferencesTest` và các bài
-  Android instrumentation hiện có.
-- Trên thiết bị thật: bật/tắt TTS và mở lại, đổi bộ máy/giọng,
-  thử tốc độ/độ cao/âm lượng, không có giọng Việt, mất internet,
-  bật TalkBack, trở về game sau Lưu và trường hợp nhấn Hủy.
-- Chỉ sau khi build APK và xác minh thực tế mới coi mục này đã nghiệm thu.
+Nguồn chính: `TtsSettingsActivity.java` và `ReaderPreferences.java`. Kiểm thử tĩnh: `tools/accessibility/test_tts_settings.py`; cần thêm kiểm thử Android thật.
