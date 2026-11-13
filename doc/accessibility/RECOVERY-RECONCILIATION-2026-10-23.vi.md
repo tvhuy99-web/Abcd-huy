@@ -1,5 +1,7 @@
 # Hòa giải nguồn R00 — đối chiếu ba phía f40dcdd / ad5ecf0 / local
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Ngày: 2026-10-23 (giờ Việt Nam). Mục kế hoạch: R00 trong
 `REMAINING-CODE-PLAN.vi.md` bản 2.0, mục 4.
 

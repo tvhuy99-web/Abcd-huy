@@ -1,5 +1,7 @@
 # R21 — Lời đọc, âm hiệu, tiếng Việt và chẩn đoán
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Trạng thái: **đã viết, chờ kiểm thử** (giai đoạn 1 chỉ viết mã — không build,
 không chạy test/runner, không giả lập/APK; mọi đối chiếu bằng đọc mã/grep).
 Test sẽ chạy ở giai đoạn 2: T16, T22–T24, T30, T38, T54–T56, T60–T63.
