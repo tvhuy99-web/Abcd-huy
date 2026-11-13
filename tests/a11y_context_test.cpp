@@ -18,7 +18,7 @@ TEST_CASE( "a11y_only_active_overlay_accepts_input", "[a11y][context]" )
     a11y::context_stack stack;
     CHECK_FALSE( stack.active_token() );
     CHECK_FALSE( stack.accepts( {} ) );
-    const std::uint64_t world = stack.enter( "world", "DEFAULTMODE" );
+    stack.enter( "world", "DEFAULTMODE" );
     const a11y::context_token world_token = stack.active_token().value();
     REQUIRE( stack.accepts( world_token ) );
     const std::uint64_t menu = stack.enter( "inventory", "INVENTORY" );
@@ -41,7 +41,7 @@ TEST_CASE( "a11y_out_of_order_close_cannot_leave_orphan_input", "[a11y][context]
     const a11y::context_token stale = stack.active_token().value();
     REQUIRE( stack.leave( menu ) );
     CHECK_FALSE( stack.accepts( stale ) );
-    const std::uint64_t replacement = stack.enter( "dialogue", "DIALOGUE" );
+    stack.enter( "dialogue", "DIALOGUE" );
     const a11y::context_token current = stack.active_token().value();
     CHECK_FALSE( stack.leave( prompt ) );
     CHECK( stack.accepts( current ) );
