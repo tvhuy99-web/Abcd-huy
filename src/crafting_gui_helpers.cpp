@@ -12,6 +12,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "calendar.h"
 #include "cata_utility.h"
 #include "catacharset.h"
@@ -352,6 +353,9 @@ static std::string craft_success_chance_string( const recipe &recp, const Charac
         color = "cyan";
     }
 
+    if( a11y::enabled() ) {
+        return string_format( _( "Minor failure chance: %.2f%%" ), chance );
+    }
     return string_format( _( "Minor Failure Chance: <color_%s>%2.2f%%</color>" ), color, chance );
 }
 
@@ -369,6 +373,9 @@ static std::string cata_fail_chance_string( const recipe &recp, const Character 
         color = "light_gray";
     }
 
+    if( a11y::enabled() ) {
+        return string_format( _( "Chance of ruining the item: %.2f%%" ), chance );
+    }
     return string_format( _( "Catastrophic Failure Chance: <color_%s>%2.2f%%</color>" ), color,
                           chance );
 }
@@ -439,10 +446,16 @@ std::vector<std::string> recipe_info(
         oss << string_format( _( "Recipe makes: <color_cyan>%d</color>\n" ), makes );
     }
 
-    oss << string_format( _( "Craftable in the dark?  <color_cyan>%s</color>\n" ),
-                          recp.has_flag( "BLIND_EASY" ) ? _( "Easy" ) :
-                          recp.has_flag( "BLIND_HARD" ) ? _( "Hard" ) :
-                          _( "Impossible" ) );
+    if( a11y::enabled() ) {
+        oss << ( recp.has_flag( "BLIND_EASY" ) ? _( "Can be done in the dark." ) :
+                 recp.has_flag( "BLIND_HARD" ) ? _( "Difficult to do in the dark." ) :
+                 _( "Cannot be done in the dark." ) ) << "\n";
+    } else {
+        oss << string_format( _( "Craftable in the dark?  <color_cyan>%s</color>\n" ),
+                              recp.has_flag( "BLIND_EASY" ) ? _( "Easy" ) :
+                              recp.has_flag( "BLIND_HARD" ) ? _( "Hard" ) :
+                              _( "Impossible" ) );
+    }
 
     const temp_crafting_inventory &crafting_inv = avail.inv_override ? *avail.inv_override :
             guy.crafting_inventory();
