@@ -1,4 +1,5 @@
 #include "advanced_inv.h"
+#include "a11y_semantics.h"
 
 #include <algorithm>
 #include <climits>

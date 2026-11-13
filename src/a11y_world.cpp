@@ -1,4 +1,14 @@
 #include "a11y_world.h"
+#include "color.h"
+#include "enums.h"
+#include "gun_mode.h"
+#include "mapdata.h"
+#include "omdata.h"
+#include "overmap.h"
+#include "player_activity.h"
+#include "translation.h"
+#include <functional>
+#include <memory>
 
 #include <algorithm>
 #include <array>

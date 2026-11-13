@@ -1,4 +1,9 @@
 #include "a11y_input.h"
+#include "math_parser_diag_value.h"
+#include "string_id.h"
+#include <cstddef>
+#include <initializer_list>
+#include <memory>
 #include <algorithm>
 #include <array>
 #include <utility>

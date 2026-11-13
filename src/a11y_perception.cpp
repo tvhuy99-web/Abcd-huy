@@ -1,4 +1,11 @@
 #include "a11y_perception.h"
+#include "enums.h"
+#include "pimpl.h"
+#include "point.h"
+#include "translation.h"
+#include <list>
+#include <memory>
+#include <optional>
 #include "a11y_item_text.h"
 #include "a11y_world.h"
 

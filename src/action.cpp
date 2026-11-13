@@ -1,4 +1,8 @@
 #include "action.h"
+#include "a11y_semantics.h"
+#include "enums.h"
+#include "string_formatter.h"
+#include <cstddef>
 
 #include <algorithm>
 #include <array>
