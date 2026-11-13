@@ -279,8 +279,7 @@ thuộc giai đoạn 3 trên máy thật.
    này): bản local chưa commit của người dùng chưa có trong máy
    (R00.1 mở lại có điều kiện cho 8 tệp + hoán vị cử chỉ 8 hướng);
    chính sách Snake theo lượt khi bộ đọc bật (chờ nghiệm thu giai
-   đoạn 3); âm cứu hộ eSpeak NG còn máy móc; các quyết định phát
-   hành chưa ghim (danh sách mod, dải máy, khóa ký — khóa
+   đoạn 3); các quyết định phát hành chưa ghim (danh sách mod, dải máy, khóa ký — khóa
    `accessibility-test` là khóa thử công khai); snapshot >4096 node
    chưa phân trang; import backup chưa chặn cứng được phiên game
    đang sống (cần cờ C++/JNI); đường CMake có thể không dựng lại

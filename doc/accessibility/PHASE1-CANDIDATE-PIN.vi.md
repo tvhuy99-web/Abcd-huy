@@ -59,19 +59,17 @@ Tệp nguồn/chương trình **mới thêm** so với nền (doc/hồ sơ khôn
 | --- | --- | --- | --- |
 | `src/a11y_outcome.h`, `src/a11y_outcome.cpp` | R08 | Makefile: `SOURCES := $(wildcard src/*.cpp)` (`Makefile:1034`); CMake desktop: `file(GLOB ...)` ở `src/CMakeLists.txt:16-18`; CMake JNI Android: `file(GLOB CATA_SOURCES .../src/*.cpp)` ở `android/app/jni/CMakeLists.txt`; MSVC: wildcard theo chữ cái đầu (mục 4) | Có mặt ở mọi đường nạp, gồm cả MSVC |
 | `android/.../ReaderDocumentReader.java` | R04 | Gradle: `sourceSets.main.java.srcDirs = ['src/main/java']` (`build.gradle:524-528`) — nạp theo thư mục, không khai báo từng tệp | Tự vào build |
-| `android/.../RescueAudioPlayer.java` | R06 | như trên | Tự vào build |
 | `android/.../ReaderCuePlayer.java` | R21 | như trên | Tự vào build |
 | `android/.../ReaderBackupArchive.java` | R20 | như trên | Tự vào build |
 | `android/.../ReaderDiagnostics.java` | R21 | như trên | Tự vào build |
-| `android/app/src/main/res/raw/a11y_rescue_*.mp3` (6 tệp) | R06 | AGP tự đóng gói mọi tệp trong `res/`; tham chiếu bằng `R.raw.*` trong `RescueAudioPlayer.java` | Tự vào build; nội dung là âm thật (eSpeak NG) — provenance ở `R06-RESCUE-AUDIO-ASSETS.vi.md` |
 | `android/app/src/main/res/raw/a11y_cue_*.wav` (4 tệp) | R21 | như trên; tham chiếu trong `ReaderCuePlayer.java` | Tự vào build |
 | `tests/a11y_fixtures.h`, `tests/a11y_fixtures.cpp`, `tests/a11y_schema_test.cpp`, `tests/a11y_unicode_test.cpp`, `tests/a11y_knowledge_test.cpp` | R22 | `tests/CMakeLists.txt:4-5` — `file(GLOB CATACLYSM_DDA_TEST_SOURCES ${CMAKE_SOURCE_DIR}/tests/*.cpp)` cho cả `cata_test` và `cata_test-tiles` | Tự vào build test host khi cấu hình lại CMake (glob chốt ở bước configure — giới hạn quen thuộc của glob, ghi rõ để giai đoạn 2 nhớ cấu hình lại sau khi thêm tệp) |
 | `tools/accessibility/fixtures/FIXTURES.vi.md` | R22 | Tài liệu đặc tả fixture F-01..F-15 (không phải tệp dữ liệu nạp vào build) | Đủ 15 đặc tả; dữ liệu fixture phía host nằm trong `tests/a11y_fixtures.*` |
 
 Không có activity/service/provider/receiver mới trong các tệp Java cộng
 thêm, nên **không cần khai báo `AndroidManifest.xml` mới** (kiểm tại
-`android/app/src/main/AndroidManifest.xml`; `ReaderSetupActivity` có từ
-nền và đã khai ở :70; `SplashScreen` là activity launcher ở :48–60).
+`android/app/src/main/AndroidManifest.xml`; `SplashScreen` là activity
+launcher ở :48–60).
 
 Overlay tiếng Việt `lang/po/accessibility/vi.po` (1.219 msgid tại ứng
 viên) nạp bằng cơ chế overlay của chính repo: `lang/compile_mo.py:23-33`

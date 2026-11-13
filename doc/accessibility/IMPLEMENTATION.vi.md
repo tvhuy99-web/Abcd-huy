@@ -22,11 +22,9 @@ Workflow trợ năng của nhánh mới chuyển sang `workflow_dispatch`; khôn
 build/test tự động trong đợt viết mã này. Không merge vào `master` và không
 ghi PASS mới.
 
-Màn thiết lập giọng có thanh tốc độ 0,5–3 lần: mẫu thử dùng giá trị đang chọn,
-TalkBack nghe nhãn cập nhật, và xác nhận đã nghe lưu tốc độ cùng opt-in giọng
-mạng. Đổi tốc độ/quyền mạng hoặc dừng/mở cài đặt sẽ hủy xác nhận cũ và yêu cầu
-thử lại; nút xác nhận vẫn cần người dùng nhấn. Có assertion nguồn cho nhãn động;
-chưa chạy instrumentation test.
+Màn cài đặt giọng (`TtsSettingsActivity`) có thanh tốc độ 0,5–3 lần: mẫu thử
+dùng giá trị đang chọn, TalkBack nghe nhãn cập nhật. Có assertion nguồn cho
+nhãn động; chưa chạy instrumentation test.
 
 ## Mã đã bổ sung trong đợt hiện tại, chưa kiểm thử
 
@@ -36,8 +34,8 @@ chưa chạy instrumentation test.
 | Sở hữu và luồng | `a11y_runtime`, `a11y_android` | Scope, mailbox hữu hạn, lọc token/revision/request; scope có thể kích hoạt muộn khi adapter làm mới snapshot sau lúc bật reader; Java không giữ con trỏ gameplay; chưa kiểm thử race/vòng đời |
 | Android | `GameReaderController`, `CataclysmDDA` | Lớp trình bày native và gửi ý định; phối hợp touch exploration; chưa xác nhận focus/insets/Back trên máy |
 | Lời đọc | `ReaderSpeechQueue` | Gộp focus, ưu tiên, hết hạn, đọc theo đoạn, dừng/đọc lại/watchdog; chưa kiểm thử TTS thật cho mã mới |
-| Cử chỉ | `ReaderGestureSurface`, `GameReaderController`, `ReaderPreferences`, `ReaderSetupActivity` | Duyệt/chọn/chi tiết/dừng; có thể gán riêng vuốt ngang/dọc cho duyệt, đọc chi tiết, đọc mục đang chọn hoặc im lặng; ít nhất một trục vẫn duyệt; thử ánh xạ 45 giây trong game, phải xác nhận, hết giờ/TalkBack bật thì trả ánh xạ cũ; vùng luyện tám hướng đếm đủ từng hướng mà không gửi lệnh game; di chuyển nhanh mặc định tắt, chỉ gửi action khi snapshot là thế giới và có cảnh báo có thể tốn lượt; chưa thử trên máy |
-| Cấu hình | `ReaderPreferences`, `ReaderSetupActivity`, Splash | Bật bằng xác nhận sau khi nghe hết mẫu; tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; flavor trợ năng tự mở setup trước engine khi không có TalkBack và reader đang tắt; setup có vuốt trái/phải, chạm đơn đọc, chạm đôi kích hoạt, vuốt dọc chỉnh mục dạng thanh, hai ngón dừng; tùy chọn thuận tay trái chỉ đảo duyệt menu; chỉnh khoảng cách/thời gian vuốt và khôi phục mặc định; Splash tự đọc tiến độ chép dữ liệu theo mốc 10%, lỗi có thử lại, màn cài đặt ban đầu/trợ giúp và thông báo crash có đường đọc; giọng Việt không có vẫn cần TalkBack để phục hồi; chưa kiểm thử |
+| Cử chỉ | `ReaderGestureSurface`, `GameReaderController`, `ReaderPreferences` | Duyệt/chọn/chi tiết/dừng; có thể gán riêng vuốt ngang/dọc cho duyệt, đọc chi tiết, đọc mục đang chọn hoặc im lặng; ít nhất một trục vẫn duyệt; vùng luyện tám hướng đếm đủ từng hướng mà không gửi lệnh game; di chuyển nhanh mặc định tắt, chỉ gửi action khi snapshot là thế giới và có cảnh báo có thể tốn lượt; chưa thử trên máy |
+| Cấu hình | `ReaderPreferences`, Splash | Bật/tắt; thử/chọn tốc độ 0,5–3 lần và lưu khi xác nhận; chỉnh khoảng cách/thời gian vuốt; Splash tự đọc tiến độ chép dữ liệu theo mốc 10%, lỗi có thử lại, màn cài đặt ban đầu/trợ giúp và thông báo crash có đường đọc; giọng Việt không có vẫn cần TalkBack để phục hồi; chưa kiểm thử |
 | Nhập liệu | `ReaderTextEditor`, adapter popup cũ/ImGui/số | IME/TalkBack và bàn phím lựa chọn Việt, dấu thanh, biên ký tự ICU, nhận kết quả có token; chưa nghiệm thu giới hạn và callback tùy biến |
 | Menu chính | `main_menu.cpp` | Tab, lựa chọn con, thế giới kèm số bản lưu có thể tải, tài liệu; tạo/tải save vẫn cần nghiệm thu |
 | Danh sách | `uilist.cpp` | Theo `fentries`, đúng `retval` qua đường xác nhận gốc, metadata đánh dấu/lý do vô hiệu; callback có thể công bố action kèm trạng thái checked/disabled; callback legacy cần action ID ngữ nghĩa, không chỉ phím ký tự |
@@ -67,8 +65,8 @@ Các hàng dưới đây vẫn là công việc bắt buộc của kế hoạch,
 hoàn tất nhờ menu chung hoặc danh mục action:
 
 - G0/G1: hoàn thiện bootstrap khi TalkBack tắt, chọn engine/voice/tốc độ,
-  thông báo phục hồi có âm thu sẵn, cài/nâng dữ liệu, lỗi dung lượng và phục hồi.
-  Setup tự nói trước engine trên flavor trợ năng; Splash đọc mốc tiến độ, lỗi
+  cài/nâng dữ liệu, lỗi dung lượng và phục hồi.
+  Splash đọc mốc tiến độ, lỗi
   có nút thử lại/thoát, màn tùy chọn khởi động và trợ giúp dùng được bằng cử chỉ.
   Chưa có cài đặt theo kiểu stage/rollback nếu tiến trình bị kill hoặc ghi dữ liệu
   hỏng. Nếu thiếu giọng Việt, vẫn cần TalkBack để chọn/cài giọng. Chưa kiểm thử.
@@ -76,9 +74,8 @@ hoàn tất nhờ menu chung hoặc danh mục action:
   có trạng thái checked/disabled cho các lệnh callback, chọn ký tự cho luồng
   đổi phím vật phẩm/phép/bionics/mutation và bàn phím lệnh; khi reader bật,
   popup/Yes-No không còn nhảy sang Java modal; luồng xác nhận phản hồi hội thoại
-  cũng chấp nhận semantic action không có raw key. Có thử/khôi phục ánh xạ vuốt ngang
-  và dọc, bắt buộc giữ trục duyệt, thời hạn 45 giây, xác nhận trong game và tự
-  trả cấu hình nếu hết hạn hoặc bật Touch Exploration. Vẫn còn biểu mẫu/bảng/cây,
+  cũng chấp nhận semantic action không có raw key. Ánh xạ vuốt ngang
+  và dọc cố định hai trục, bắt buộc giữ trục duyệt. Vẫn còn biểu mẫu/bảng/cây,
   audit các đường raw-input còn lại và adapter ngữ cảnh lồng. Chưa build hoặc
   kiểm thử các thay đổi này.
 - G3: hoàn thiện chi tiết/đánh giá mọi tab tạo nhân vật; sao chép/đổi tên thế

@@ -183,8 +183,7 @@ controller mới; controller cũ bị chặn bởi chốt `closed` và tham chi�
 token mới, intent của chủ sở hữu trước không còn đường hợp lệ.
 Lỗi TTS đi qua `onSpeechHealth` → `updateNativeState` → suspended cho
 đến khi giọng sẵn sàng lại; TalkBack bật/tắt đi qua listener khám phá
-chạm: huỷ cử chỉ đang dở, tăng epoch trình bày, cấu hình lại native,
-và hoàn lượt thử ánh xạ cử chỉ đang chờ (tương tác với R00.3).
+chạm: huỷ cử chỉ đang dở, tăng epoch trình bày, cấu hình lại native.
 
 Không có tệp nguồn mới ở R03: mọi thay đổi nằm trong
 `a11y_runtime.h/.cpp`, `input_context.cpp` và hai tệp Java hiện hữu,

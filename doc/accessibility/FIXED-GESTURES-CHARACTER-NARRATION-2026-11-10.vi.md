@@ -35,7 +35,7 @@ Chạm **ba lần bằng ba ngón** để bật hoặc tắt chế độ chiến
 
 ## Tương thích cấu hình cũ
 
-Những ánh xạ đã lưu cho mã cử chỉ cố định được bộ đọc gán bỏ qua và làm sạch. Các lựa chọn đổi chức năng vuốt ngang/dọc kiểu thử 45 giây không còn điều khiển map navigation trong mã mới. Vẫn có thể chỉnh độ dài/thời gian vuốt và thuận tay khi điều hướng.
+Những ánh xạ đã lưu cho mã cử chỉ cố định được bộ đọc gán bỏ qua và làm sạch. Các lựa chọn đổi chức năng vuốt ngang/dọc kiểu thử 45 giây không còn điều khiển map navigation trong mã mới. Vẫn có thể chỉnh độ dài/thời gian vuốt khi điều hướng.
 
 ## Bài cần thử trên thiết bị
 
