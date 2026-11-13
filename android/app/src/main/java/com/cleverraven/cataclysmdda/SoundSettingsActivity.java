@@ -53,9 +53,6 @@ public final class SoundSettingsActivity extends Activity {
                 if (speech != null) { speech.cancel(); }
             }
             @Override public void goBack() { SoundSettingsActivity.this.finish(); }
-            @Override public boolean leftHandedNavigation() {
-                return reader.isLeftHandedNavigation();
-            }
             @Override public float swipeDistancePx() {
                 return reader.getSwipeDistanceDp()
                         * getResources().getDisplayMetrics().density;

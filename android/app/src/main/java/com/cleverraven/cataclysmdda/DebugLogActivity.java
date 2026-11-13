@@ -41,9 +41,6 @@ public final class DebugLogActivity extends Activity {
                 if (speech != null) { speech.cancel(); }
             }
             @Override public void goBack() { DebugLogActivity.this.onBackPressed(); }
-            @Override public boolean leftHandedNavigation() {
-                return reader.isLeftHandedNavigation();
-            }
             @Override public float swipeDistancePx() {
                 return reader.getSwipeDistanceDp()
                         * getResources().getDisplayMetrics().density;

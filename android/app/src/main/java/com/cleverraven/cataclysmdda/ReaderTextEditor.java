@@ -9,12 +9,14 @@ import android.widget.EditText;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 
-/** Native IME with TalkBack, plus a one-finger Vietnamese keyboard without IME. */
+/** Native IME with TalkBack for text and numbers, plus one-tap completed-number
+ *  choices with digit/punctuation entry for item quantities. (The former
+ *  one-finger Vietnamese letter/tone keyboard was removed: no editor could
+ *  reach it — only numeric quantity editors get past the native-input path.) */
 public final class ReaderTextEditor {
     public interface Listener {
         void speak(String text);
@@ -47,7 +49,6 @@ public final class ReaderTextEditor {
     private final List<Choice> items = new ArrayList<>();
     private int selected;
     private String group = "controls";
-    private boolean uppercase;
     private boolean clearing;
     private boolean replaceInitialNumberOnFirstDigit;
     private String initialNumber = "";
@@ -157,21 +158,12 @@ public final class ReaderTextEditor {
             add(R.string.a11yEditorCancel, listener::cancel);
         } else if ("controls".equals(group)) {
             add(R.string.a11yEditorReadValue, () -> listener.speak(valueDescription()));
-            if (!numeric) {
-                add(R.string.a11yEditorLetters, () -> open("letters"));
-                add(R.string.a11yEditorTone, () -> open("tones"));
-                add(R.string.a11yEditorCase, () -> {
-                    uppercase = !uppercase;
-                    listener.speak(string(uppercase ? R.string.a11yEditorUppercase : R.string.a11yEditorLowercase));
-                });
-            }
             add(R.string.a11yEditorDigits, () -> open("digits"));
             if (numeric && rangeStep != null) {
                 add(R.string.a11yEditorIncreaseStep, () -> stepBy(1));
                 add(R.string.a11yEditorDecreaseStep, () -> stepBy(-1));
             }
             add(R.string.a11yEditorPunctuation, () -> open("punctuation"));
-            if (!numeric) { add(R.string.a11yEditorSpace, () -> insert(" ")); }
             add(R.string.a11yEditorLeft, () -> move(-1));
             add(R.string.a11yEditorRight, () -> move(1));
             add(R.string.a11yEditorDelete, this::backspace);
@@ -189,20 +181,13 @@ public final class ReaderTextEditor {
             });
             add(R.string.a11yEditorApply, this::submitCurrent);
             add(R.string.a11yEditorCancel, listener::cancel);
-        } else if ("tones".equals(group)) {
-            add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
-            int[] labels = { R.string.a11yToneNone, R.string.a11yToneGrave, R.string.a11yToneAcute,
-                    R.string.a11yToneHook, R.string.a11yToneTilde, R.string.a11yToneDot };
-            String[] marks = { "", "\u0300", "\u0301", "\u0309", "\u0303", "\u0323" };
-            for (int i = 0; i < labels.length; i++) {
-                final String mark = marks[i];
-                add(labels[i], () -> tone(mark));
-            }
         } else {
+            // Only the digit and punctuation groups can reach this branch:
+            // the Vietnamese letter/tone keyboard is gone (see the header).
+            // Both groups are numeric-only here, because only item-quantity
+            // editors get past the native-input early return above.
             add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
-            String alphabet = "letters".equals(group) ? "aăâbcdđeêghiklmnoôơpqrstuưvxyfzjw"
-                    : "digits".equals(group) ? "0123456789" : numeric ? "-+." : ".,!?-_:;/\\@#%&*+=()[]{}\"'<>|~`$^";
-            if (uppercase) { alphabet = alphabet.toUpperCase(VIETNAMESE); }
+            String alphabet = "digits".equals(group) ? "0123456789" : "-+.";
             for (int offset = 0; offset < alphabet.length();) {
                 int cp = alphabet.codePointAt(offset);
                 final String character = new String(Character.toChars(cp));
@@ -339,30 +324,6 @@ public final class ReaderTextEditor {
         listener.speak(activity.getString(R.string.a11yEditorDeleted, removed));
     }
 
-    private void tone(String mark) {
-        String text = getText();
-        int position = caret(text);
-        if (position == 0) { listener.speak(string(R.string.a11yEditorNoVowel)); return; }
-        int previous = boundaries(text).preceding(position);
-        String decomposed = Normalizer.normalize(text.substring(previous, position), Normalizer.Form.NFD);
-        if (decomposed.isEmpty() || "aeiouyAEIOUY".indexOf(decomposed.charAt(0)) < 0) {
-            listener.speak(string(R.string.a11yEditorNoVowel));
-            return;
-        }
-        StringBuilder base = new StringBuilder();
-        for (int offset = 0; offset < decomposed.length();) {
-            int cp = decomposed.codePointAt(offset);
-            if (cp != 0x0300 && cp != 0x0301 && cp != 0x0303 && cp != 0x0309 && cp != 0x0323) {
-                base.appendCodePoint(cp);
-            }
-            offset += Character.charCount(cp);
-        }
-        String replacement = Normalizer.normalize(base + mark, Normalizer.Form.NFC);
-        field.setText(text.substring(0, previous) + replacement + text.substring(position));
-        field.setSelection(previous + replacement.length());
-        listener.speak(replacement);
-    }
-
     private String formatNumber(double value) {
         if (integer || value == Math.floor(value) && Math.abs(value) < 1e15) {
             return Long.toString(Math.round(value));
@@ -437,16 +398,5 @@ public final class ReaderTextEditor {
                     formatNumber(rangeStep)));
         }
         return description.toString();
-    }
-
-    public boolean back() {
-        if (quantityChoices) {
-            if (!"quantities".equals(group)) { open("quantities"); return true; }
-            listener.cancel();
-            return true;
-        }
-        if (!"controls".equals(group)) { open("controls"); return true; }
-        listener.cancel();
-        return true;
     }
 }

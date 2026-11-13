@@ -33,7 +33,7 @@ public final class BackupRestoreActivity extends Activity {
     private Button backupCancelRestore;
     private int pendingBackupAction = BACKUP_ACTION_NONE;
     private boolean stagedBackupReady;
-    // STT 7: a staged import the user explicitly confirmed while the
+    // a staged import the user explicitly confirmed while the
     // engine was running, waiting to be applied at the next launch.
     private boolean deferredRestorePending;
     private boolean backupBusy;
@@ -42,7 +42,7 @@ public final class BackupRestoreActivity extends Activity {
     // Failure found while opening this screen (recovery failed, or no
     // storage): onCreate runs before the screen is foreground and before
     // speech is ready, so it cannot be announced yet. It is spoken once
-    // speech becomes ready, instead of the heading (STT 105).
+    // speech becomes ready, instead of the heading.
     private int pendingOpenAnnouncement;
 
     @Override protected void onCreate(Bundle state) {
@@ -78,7 +78,7 @@ public final class BackupRestoreActivity extends Activity {
                 backupArchive.recoverInterruptedSwap();
                 // A merely staged import still dies with its screen
                 // instance (R20.3) — but never discard one the user
-                // already confirmed for deferred restore (STT 7): that
+                // already confirmed for deferred restore: that
                 // confirmation is what the next launch applies, and
                 // dropping it here would silently void it.
                 if (ReaderGameSession.canRestore()
@@ -147,7 +147,7 @@ public final class BackupRestoreActivity extends Activity {
      * before the picker ever opens.
      */
     private void chooseBackupPicker(boolean export) {
-        // STT 7: import may be staged while the engine runs. Staging
+        // import may be staged while the engine runs. Staging
         // only copies the chosen archive into the staging directory and
         // verifies it; no live tree is touched, so the running engine
         // cannot be disturbed. Only the restore itself is deferred.
@@ -266,7 +266,7 @@ public final class BackupRestoreActivity extends Activity {
      * The one exception is the deferred execution of this same
      * confirmation: when the engine is already running, Confirm records
      * itself on disk and SplashScreen applies that exact staged import at
-     * the next launch, before the engine starts (STT 7).
+     * the next launch, before the engine starts.
      */
     private void confirmBackupRestore() {
         if (backupBusy || !stagedBackupReady || backupArchive == null) {
@@ -285,7 +285,7 @@ public final class BackupRestoreActivity extends Activity {
     }
 
     /**
-     * STT 7 (deferred restore): the engine is running, so the swap
+     * (deferred restore): the engine is running, so the swap
      * itself cannot run now. Record this explicit Confirm on disk as a
      * deferred restore and apply nothing yet: SplashScreen applies the
      * staged import at the next launch, before reserveGameStart(). No
@@ -305,7 +305,7 @@ public final class BackupRestoreActivity extends Activity {
         deferredRestorePending = true;
         stagedBackupReady = false;
         updateBackupButtons();
-        // STT 7: dedicated deferred-restore string — the restore now
+        // dedicated deferred-restore string — the restore now
         // applies automatically on reopen, so the old "restore there"
         // wording of a11yBackupRequiresRestart no longer applies here.
         showStatus(R.string.a11yBackupRestoreDeferred, true);
@@ -433,9 +433,6 @@ public final class BackupRestoreActivity extends Activity {
             @Override public void speak(String id, String text) { speakText(text); }
             @Override public void stopSpeech() { if (speech != null) { speech.cancel(); } }
             @Override public void goBack() { finish(); }
-            @Override public boolean leftHandedNavigation() {
-                return new ReaderPreferences(BackupRestoreActivity.this).isLeftHandedNavigation();
-            }
             @Override public float swipeDistancePx() {
                 return new ReaderPreferences(BackupRestoreActivity.this).getSwipeDistanceDp()
                         * getResources().getDisplayMetrics().density;
@@ -490,7 +487,7 @@ public final class BackupRestoreActivity extends Activity {
                     preferences.getVolume());
         }
         // TalkBack without the internal reader never gets a speech READY
-        // callback, so announce an open failure here instead (STT 105).
+        // callback, so announce an open failure here instead.
         if (pendingOpenAnnouncement != 0 && usesTalkBack()) {
             int announcement = pendingOpenAnnouncement;
             pendingOpenAnnouncement = 0;

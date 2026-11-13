@@ -27,7 +27,6 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
         default void interruptForFocus() { stopSpeech(); }
         /** Return from this outer Android screen without saving draft settings. */
         void goBack();
-        boolean leftHandedNavigation();
         float swipeDistancePx();
         long swipeDurationLimitMs();
     }
@@ -252,7 +251,6 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     private void navigate(int delta) {
         if (items.isEmpty()) { return; }
         // Fixed menu rule throughout the app: right = next, left = previous.
-        // Left-handed preferences may affect other gestures, never list order.
         focus = Math.floorMod(focus + delta, items.size());
         speakFocused();
     }

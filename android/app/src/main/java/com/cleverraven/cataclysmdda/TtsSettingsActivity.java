@@ -26,7 +26,6 @@ public final class TtsSettingsActivity extends Activity {
     private final ArrayList<AndroidSpeech.VoiceOption> voices = new ArrayList<>();
     private AndroidSpeech speech;
     private BootstrapSelfVoiceSurface surface;
-    private RescueAudioPlayer rescue;
     private CheckBox enabled;
     private final ArrayList<String> languageChoices = new ArrayList<>();
     private final ArrayList<AndroidSpeech.VoiceOption> voiceChoices = new ArrayList<>();
@@ -79,11 +78,6 @@ public final class TtsSettingsActivity extends Activity {
             @Override
             public void goBack() {
                 if (!surface.dismissChoiceList()) { TtsSettingsActivity.this.finish(); }
-            }
-
-            @Override
-            public boolean leftHandedNavigation() {
-                return new ReaderPreferences(TtsSettingsActivity.this).isLeftHandedNavigation();
             }
 
             @Override
@@ -144,7 +138,7 @@ public final class TtsSettingsActivity extends Activity {
         volume.setOnSeekBarChangeListener(changed);
         updateSliders();
 
-        // Status row: visible on screen and announced in both modes (STT 5).
+        // Status row: visible on screen and announced in both modes.
         status = new TextView(this);
         status.setTextSize(17.0f);
         status.setLayoutParams(new LinearLayout.LayoutParams(
@@ -175,10 +169,6 @@ public final class TtsSettingsActivity extends Activity {
                     previewRequested = false;
                     previewPassed = false;
                     announce(ttsFailureReason(newState));
-                    if (foreground && !usesTalkBack()) {
-                        if (rescue == null) { rescue = new RescueAudioPlayer(TtsSettingsActivity.this); }
-                        rescue.play(RescueAudioPlayer.CLIP_TTS_FAILED);
-                    }
                 }
             }
 
@@ -192,14 +182,8 @@ public final class TtsSettingsActivity extends Activity {
                         || event == AndroidSpeech.Event.REJECTED) {
                     previewPassed = false;
                     // The event carries no reason; use the probe/speech
-                    // state instead (STT 4). The rescue clip is the only
-                    // audio while the engine is down, so it plays here
-                    // exactly as in the onState failure branch above.
+                    // state instead.
                     announce(ttsFailureReason(speech.getState()));
-                    if (foreground && !usesTalkBack()) {
-                        if (rescue == null) { rescue = new RescueAudioPlayer(TtsSettingsActivity.this); }
-                        rescue.play(RescueAudioPlayer.CLIP_TTS_FAILED);
-                    }
                 }
             }
         });
@@ -428,10 +412,6 @@ public final class TtsSettingsActivity extends Activity {
         }
     }
 
-    private void speakCurrentChoice() {
-        if (foreground && surface != null && !usesTalkBack()) { surface.speakFocused(); }
-    }
-
     private void testVoice() {
         if (probeRunning || speech == null) { return; }
         invalidatePreview();
@@ -472,7 +452,7 @@ public final class TtsSettingsActivity extends Activity {
     }
 
     /**
-     * Spoken reason for a failed voice state (STT 4). Unknown states fall
+     * Spoken reason for a failed voice state. Unknown states fall
      * back to the generic unavailable message; never guess a reason.
      */
     private String ttsFailureReason(AndroidSpeech.State state) {
@@ -519,7 +499,6 @@ public final class TtsSettingsActivity extends Activity {
         previewRequested = false;
         previewPassed = false;
         if (speech != null) { speech.cancel(); }
-        if (rescue != null) { rescue.stop(); }
         super.onPause();
     }
 
@@ -527,7 +506,6 @@ public final class TtsSettingsActivity extends Activity {
     protected void onDestroy() {
         ++probeGeneration;
         if (speech != null) { speech.close(); }
-        if (rescue != null) { rescue.release(); }
         super.onDestroy();
     }
 }

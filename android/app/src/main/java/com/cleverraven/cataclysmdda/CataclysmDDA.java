@@ -36,7 +36,7 @@ public class CataclysmDDA extends SDLActivity {
     public static final String SCREEN_ORIENTATION_PORTRAIT = "portrait";
     public static final String SCREEN_ORIENTATION_AUTO = "auto";
 
-    // startActivityForResult code for the TTS settings screen (STT 162).
+    // startActivityForResult code for the TTS settings screen.
     // The result is read back so a save can be announced on return.
     private static final int REQUEST_TTS_SETTINGS = 9101;
     private boolean pendingTtsSavedAnnouncement;
@@ -228,7 +228,7 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    // STT 162: the TTS screen used to be opened with plain startActivity,
+    // The TTS screen used to be opened with plain startActivity,
     // so its RESULT_OK was never read and a save ended in silence. Remember
     // a successful save here; the announcement itself waits for window
     // focus below, because the reader drops messages while unfocused.

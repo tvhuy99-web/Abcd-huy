@@ -61,7 +61,7 @@ public class SplashScreen extends Activity {
     private boolean gameStartLaunched;
     // A backup restore running on another thread holds ReaderGameSession
     // busy, so StartGameRunnable waits and retries instead of stopping
-    // dead (STT 133). Bounded: after the last retry the user gets an
+    // dead. Bounded: after the last retry the user gets an
     // explicit retry button instead of a silent splash.
     private static final long GAME_START_RESTORE_RETRY_DELAY_MS = 2000;
     private static final int GAME_START_RESTORE_MAX_RETRIES = 15;
@@ -75,8 +75,6 @@ public class SplashScreen extends Activity {
     private AlertDialog soundpackDialog;
     private TextView soundpackProgressText;
     private AndroidSpeech bootstrapSpeech;
-    private RescueAudioPlayer rescuePlayer;
-    private boolean rescueScreenShown;
     private BootstrapSelfVoiceSurface bootstrapSurface;
     private Runnable bootstrapBackAction;
     private TextView bootstrapProgressText;
@@ -120,7 +118,6 @@ public class SplashScreen extends Activity {
                     if (isFinishing() || isDestroyed()) { return; }
                     bootstrapSpeechInitializing = state == AndroidSpeech.State.INITIALIZING;
                     if (state == AndroidSpeech.State.READY) {
-                        rescueScreenShown = false;
                         if (pendingBootstrapSpeech != null) {
                             String message = pendingBootstrapSpeech;
                             pendingBootstrapSpeech = null;
@@ -135,16 +132,6 @@ public class SplashScreen extends Activity {
                         View feedback = bootstrapProgressText != null ? bootstrapProgressText : bootstrapSurface;
                         if (feedback != null) {
                             feedback.performHapticFeedback(android.view.HapticFeedbackConstants.LONG_PRESS);
-                        }
-                        // Packaged rescue audio (R06.3): TTS itself is the
-                        // broken piece here, so only pre-recorded clips can
-                        // still reach the user. During installation the
-                        // install screens speak for themselves on failure;
-                        // otherwise switch to the rescue screen once.
-                        if (!installationRunning && bootstrapSurface != null && !rescueScreenShown) {
-                            showBootstrapRescueScreen();
-                        } else if (!installationRunning) {
-                            playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED);
                         }
                     }
                 }
@@ -166,82 +153,6 @@ public class SplashScreen extends Activity {
                     preferences.getSpeechVoiceName(), preferences.getPitch(),
                     preferences.getVolume());
             refreshBootstrapSpeechOnResume = false;
-        }
-    }
-
-    private RescueAudioPlayer rescuePlayer() {
-        if (rescuePlayer == null) {
-            rescuePlayer = new RescueAudioPlayer(this);
-        }
-        return rescuePlayer;
-    }
-
-    private void playRescueClip(int clipResId) {
-        if (BuildConfig.FLAVOR.equals("accessibility")) {
-            rescuePlayer().play(clipResId);
-        }
-    }
-
-    /**
-     * Rescue screen for a broken/missing voice (R06.3). The buttons are
-     * ordinary labeled buttons in the exact order the packaged clip
-     * describes: replay the guidance, retry the voice, open the system
-     * voice settings, open reader setup, go back. This screen never tries
-     * to drive the Android settings UI; it only opens it and relies on
-     * the normal activity stack to bring the user back here.
-     */
-    private void showBootstrapRescueScreen() {
-        if (!shouldSelfVoiceBootstrap()) { return; }
-        rescueScreenShown = true;
-        showBootstrapMessage(R.string.a11yRescueTitle, getString(R.string.a11yRescueTtsMessage),
-                new int[] { R.string.a11yRescueReplay, R.string.a11yRescueRetryVoice,
-                        R.string.a11yAndroidVoiceSettings, R.string.a11yReaderSetup,
-                        R.string.a11yRescueBack },
-                new Runnable[] {
-                        () -> playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED),
-                        this::retryBootstrapVoice,
-                        this::openTtsSettings,
-                        () -> {
-                            startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class));
-                        },
-                        () -> {
-                            Intent intent = new Intent(SplashScreen.this, SplashScreen.class);
-                            startActivity(intent);
-                            finish();
-                        }
-                });
-        playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED);
-    }
-
-    private void retryBootstrapVoice() {
-        playRescueClip(RescueAudioPlayer.CLIP_RETRYING);
-        if (bootstrapSpeech != null) {
-            bootstrapSpeech.close();
-            bootstrapSpeech = null;
-        }
-        rescueScreenShown = false;
-        ensureBootstrapSpeech();
-    }
-
-    private void openTtsSettings() {
-        try {
-            startActivity(new Intent("com.android.settings.TTS_SETTINGS"));
-        } catch (ActivityNotFoundException missing) {
-            try {
-                startActivity(new Intent(Settings.ACTION_SETTINGS));
-            } catch (ActivityNotFoundException unavailable) {
-                showBootstrapMessage(R.string.a11ySettingsUnavailable,
-                        getString(R.string.a11yRescueTtsMessage),
-                        new int[] { R.string.a11yRescueReplay, R.string.a11yRescueBack },
-                        new Runnable[] {
-                                () -> playRescueClip(RescueAudioPlayer.CLIP_TTS_FAILED),
-                                () -> {
-                                    Intent intent = new Intent(SplashScreen.this, SplashScreen.class);
-                                    startActivity(intent);
-                                    finish();
-                                }
-                        });
-            }
         }
     }
 
@@ -298,7 +209,7 @@ public class SplashScreen extends Activity {
         if (labels != null && actions != null) {
             for (int i = 0; i < Math.min(labels.length, actions.length); i++) {
                 if (labels[i] == R.string.a11yBootstrapBackToSettings
-                        || labels[i] == R.string.a11yRescueBack) {
+                        || labels[i] == R.string.a11yReaderReturn) {
                     bootstrapBackAction = actions[i];
                     break;
                 }
@@ -356,11 +267,6 @@ public class SplashScreen extends Activity {
             }
 
             @Override
-            public boolean leftHandedNavigation() {
-                return new ReaderPreferences(SplashScreen.this).isLeftHandedNavigation();
-            }
-
-            @Override
             public float swipeDistancePx() {
                 return new ReaderPreferences(SplashScreen.this).getSwipeDistanceDp()
                         * getResources().getDisplayMetrics().density;
@@ -396,7 +302,7 @@ public class SplashScreen extends Activity {
         File externalFiles = getExternalFilesDir(null);
         if (externalFiles == null) {
             // installOrRun already shows the storage error in this case;
-            // never crash here on the null (STT 134).
+            // never crash here on the null.
             return;
         }
         String externalFilesDir = externalFiles.getPath();
@@ -456,9 +362,6 @@ public class SplashScreen extends Activity {
     @Override
     protected void onPause() {
         Log.e(TAG, "onPause()");
-        if (rescuePlayer != null) {
-            rescuePlayer.stop();
-        }
         if (bootstrapSpeech != null) {
             bootstrapSpeech.cancel();
             refreshBootstrapSpeechOnResume = true;
@@ -500,7 +403,6 @@ public class SplashScreen extends Activity {
         // Splash.finish() launches the game. It is not a normal game exit.
         if (soundpackInstaller != null) { soundpackInstaller.cancel(); }
         if (soundpackDialog != null) { soundpackDialog.dismiss(); }
-        if (rescuePlayer != null) { rescuePlayer.release(); rescuePlayer = null; }
         if (bootstrapSpeech != null) { bootstrapSpeech.close(); }
         super.onDestroy();
     }
@@ -511,18 +413,9 @@ public class SplashScreen extends Activity {
     // trusted until the task has restored the rollback copy.
     static final String INSTALL_JOURNAL_FILE = "install_journal.txt";
 
-    private String readInstallJournalState() {
-        File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
-        if (!journal.isFile()) {
-            return null;
-        }
-        try (BufferedReader reader = new BufferedReader(new FileReader(journal))) {
-            String line = reader.readLine();
-            return line == null ? null : line.trim();
-        } catch (IOException e) {
-            return null;
-        }
-    }
+    // Journal file tracking a staged backup restore (moved here from the
+    // deleted ReaderSetupActivity shim, which only held the constant).
+    private static final String BACKUP_JOURNAL_FILE = "reader_backup_journal.txt";
 
     @Override
     public void onBackPressed() {
@@ -547,7 +440,7 @@ public class SplashScreen extends Activity {
         if (installationRunning) { return; }
         accessibilityServicesAlert.dismiss();
         // No external storage, no game data and no install target: report
-        // it with a way back instead of crashing on a null path (STT 134).
+        // it with a way back instead of crashing on a null path.
         File externalRoot = getExternalFilesDir(null);
         if (externalRoot == null) {
             showExternalStorageUnavailable(this::installOrRun);
@@ -804,7 +697,7 @@ public class SplashScreen extends Activity {
 
     /**
      * getExternalFilesDir(null) is null when external storage is
-     * unavailable (STT 134): announce it and offer retry/exit instead of
+     * unavailable: announce it and offer retry/exit instead of
      * crashing on the null or stopping silently. Retry re-runs whatever
      * was trying to start, so storage that came back is picked up.
      * Title and shape follow the backup-recovery branch below.
@@ -821,13 +714,13 @@ public class SplashScreen extends Activity {
                     .setTitle(R.string.a11yBackupHeading)
                     .setMessage(R.string.a11ySoundpackStorageUnavailable)
                     .setPositiveButton(R.string.startGame, (dialog, which) -> retry.run())
-                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setNegativeButton(R.string.a11yReaderReturn, (dialog, which) -> finish())
                     .setCancelable(false).show();
         }
     }
 
     /**
-     * A restore still running after every automatic retry (STT 133): say
+     * A restore still running after every automatic retry: say
      * so and offer an explicit retry instead of leaving a silent splash.
      * Retry restarts the whole start attempt, so the wait starts over.
      */
@@ -844,13 +737,13 @@ public class SplashScreen extends Activity {
                     .setMessage(R.string.a11yBackupWorking)
                     .setPositiveButton(R.string.startGame, (dialog, which) ->
                             startGameActivity(false))
-                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setNegativeButton(R.string.a11yReaderReturn, (dialog, which) -> finish())
                     .setCancelable(false).show();
         }
     }
 
     /**
-     * A deferred restore (STT 7) that could not be applied before the
+     * A deferred restore that could not be applied before the
      * game starts: do not start the game on unrestored (or half-swapped)
      * data. Retry restarts the whole start attempt, which first repairs
      * any interrupted swap and then tries the staged import again.
@@ -879,7 +772,7 @@ public class SplashScreen extends Activity {
                             startGameActivity(false))
                     .setNeutralButton(R.string.a11yBackupCancelRestore, (dialog, which) ->
                             discardDeferredRestoreAndStart())
-                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setNegativeButton(R.string.a11yReaderReturn, (dialog, which) -> finish())
                     .setCancelable(false).show();
         }
     }
@@ -892,7 +785,7 @@ public class SplashScreen extends Activity {
             // with it; the next start attempt then repairs any leftover
             // swap journal before the game starts.
             new ReaderBackupArchive(playerRoot,
-                    new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE))
+                    new File(getFilesDir(), BACKUP_JOURNAL_FILE))
                     .cancelStagedImport();
         }
         startGameActivity(false);
@@ -910,28 +803,28 @@ public class SplashScreen extends Activity {
                 return;
             }
             ReaderBackupArchive backupArchive = new ReaderBackupArchive(playerRoot,
-                    new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE));
+                    new File(getFilesDir(), BACKUP_JOURNAL_FILE));
             try {
                 backupArchive.recoverInterruptedSwap();
             } catch (ReaderBackupArchive.BackupException failure) {
                 if (shouldSelfVoiceBootstrap()) {
                     showBootstrapMessage(R.string.a11yBackupHeading,
                             getString(R.string.a11yBackupRecoveryFailed),
-                            new int[] { R.string.a11yReaderSetup, R.string.a11yRescueBack },
+                            new int[] { R.string.a11yReaderSetup, R.string.a11yReaderReturn },
                             new Runnable[] {
-                                () -> startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class)),
+                                () -> startActivity(new Intent(SplashScreen.this, AccessibilitySettingsActivity.class)),
                                 () -> finish() });
                 } else {
                     new AlertDialog.Builder(SplashScreen.this)
                             .setTitle(R.string.a11yBackupHeading)
                             .setMessage(R.string.a11yBackupRecoveryFailed)
                             .setPositiveButton(R.string.a11yReaderSetup, (dialog, which) ->
-                                    startActivity(new Intent(SplashScreen.this, ReaderSetupActivity.class)))
-                            .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish()).show();
+                                    startActivity(new Intent(SplashScreen.this, AccessibilitySettingsActivity.class)))
+                            .setNegativeButton(R.string.a11yReaderReturn, (dialog, which) -> finish()).show();
                 }
                 return;
             }
-            // STT 7 (deferred restore): a staged import the user
+            // Deferred restore: a staged import the user
             // explicitly confirmed in BackupRestoreActivity while the
             // engine was running is applied here, before the engine
             // starts, so the game opens on the restored data. Only a
@@ -952,7 +845,7 @@ public class SplashScreen extends Activity {
                 }
             }
             if (!ReaderGameSession.reserveGameStart()) {
-                // A restore is running on another thread (STT 133): wait
+                // A restore is running on another thread: wait
                 // and try again instead of stopping dead. The wait message
                 // is spoken once; retries are silent until they succeed or
                 // run out, when the user gets a retry button.
@@ -1141,18 +1034,13 @@ public class SplashScreen extends Activity {
         }
 
         private void showBootstrapInstallationError() {
-            // The packaged clip names these buttons in this exact order:
-            // replay guidance, retry installation, open settings, exit.
-            final int clip = InstallProgramTask.ERR_NO_SPACE.equals(installationErrorCode)
-                    ? RescueAudioPlayer.CLIP_NO_SPACE : RescueAudioPlayer.CLIP_INSTALL_FAILED;
             showBootstrapMessage(R.string.installationFailed,
                     installationFailureDescription(),
-                    new int[] { R.string.a11yRescueReplay, R.string.a11yBootstrapRetry,
+                    new int[] { R.string.a11yBootstrapRetry,
                             R.string.a11yBootstrapOpenSettings, R.string.a11yBootstrapExit },
-                    new Runnable[] { () -> SplashScreen.this.playRescueClip(clip),
+                    new Runnable[] {
                             SplashScreen.this::installOrRun, this::openBootstrapDeviceSettings,
                             () -> SplashScreen.this.finish() });
-            SplashScreen.this.playRescueClip(clip);
         }
 
         private String installationFailureDescription() {
@@ -1451,19 +1339,6 @@ public class SplashScreen extends Activity {
             }
         }
 
-        private String readJournalState() {
-            File journal = new File(getFilesDir(), INSTALL_JOURNAL_FILE);
-            if (!journal.isFile()) {
-                return null;
-            }
-            try (BufferedReader reader = new BufferedReader(new FileReader(journal))) {
-                String line = reader.readLine();
-                return line == null ? null : line.trim();
-            } catch (IOException e) {
-                return null;
-            }
-        }
-
         /**
          * Bring the data tree back to a known state after a previous
          * install died: STAGING/STAGED leftovers are discarded (the live
@@ -1508,22 +1383,6 @@ public class SplashScreen extends Activity {
                 }
             }
             return result;
-        }
-
-        private void moveDirectory(File from, File to) throws IOException {
-            if (!from.exists()) {
-                return;
-            }
-            if (to.exists()) {
-                throw new IOException("swap target already exists: " + to.getPath());
-            }
-            File parent = to.getParentFile();
-            if (parent != null) {
-                parent.mkdirs();
-            }
-            if (!from.renameTo(to)) {
-                throw new IOException("cannot move " + from.getPath() + " to " + to.getPath());
-            }
         }
 
         /** Plain recursive delete with no preservation rules (staging/rollback only). */
@@ -1760,17 +1619,6 @@ public class SplashScreen extends Activity {
             if(result) {
                 if (shouldSelfVoiceBootstrap()) {
                     showBootstrapSettings();
-                    // Installation suppressed the rescue screen while it
-                    // ran; if the voice is still broken now that the
-                    // install finished, offer the rescue path before the
-                    // user is left on a silent settings screen (R06.3).
-                    if (bootstrapSpeech != null && !rescueScreenShown
-                            && (bootstrapSpeech.getState() == AndroidSpeech.State.FAILED
-                            || bootstrapSpeech.getState() == AndroidSpeech.State.MISSING_LANGUAGE
-                            || bootstrapSpeech.getState() == AndroidSpeech.State.MISSING_VOICE
-                            || bootstrapSpeech.getState() == AndroidSpeech.State.NETWORK_REQUIRED)) {
-                        showBootstrapRescueScreen();
-                    }
                 }
                 else { settingsAlert.show(); }
             } else {

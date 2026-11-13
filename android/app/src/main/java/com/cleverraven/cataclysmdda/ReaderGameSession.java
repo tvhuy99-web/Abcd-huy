@@ -29,7 +29,7 @@ final class ReaderGameSession {
     // gameStarted intentionally survives Activity destruction: SDL may still
     // hold a world in memory. A fresh process is required before restoring.
 
-    // ---- Deferred restore (STT 7) ----
+    // ---- Deferred restore ----
     //
     // The only way into BackupRestoreActivity is in-game (Main Menu ->
     // Settings), where the engine has already started and canRestore() is
