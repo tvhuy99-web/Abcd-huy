@@ -677,8 +677,7 @@ struct armor_layers_reader {
             // NULL_ID ("All") entry, hence the -1 in the total.
             int part_position = 0;
             const int part_total = static_cast<int>( armor_cat.size() ) - 1;
-            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
-                const bodypart_id &bp = armor_cat[i];
+            for( const bodypart_id &bp : armor_cat ) {
                 if( bp == bodypart_str_id::NULL_ID() ) {
                     continue;
                 }
@@ -820,8 +819,7 @@ struct armor_layers_reader {
                 }
             }
             // Encumbrance status nodes are read-only.
-            for( std::size_t i = 0; i < armor_cat.size(); ++i ) {
-                const bodypart_id &bp = armor_cat[i];
+            for( const bodypart_id &bp : armor_cat ) {
                 if( bp != bodypart_str_id::NULL_ID() &&
                     intent.node == encumbrance_node_id( bp ) &&
                     intent.action == "focus" ) {

@@ -81,7 +81,7 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("&route = player_character.get_auto_move_route();", self.handler)
         self.assertIn("route.insert( route.begin(), dest_tile );", self.handler)
         self.assertIn("if( !keep_safety_stopped_route() )", self.handler)
-        self.assertIn('_( "Travel stopped by safe mode. Route kept." )', self.handler)
+        self.assertIn('_( "Travel stopped by safe mode.  Route kept." )', self.handler)
         # Losing Android foreground focus must never silently resume.
         self.assertIn("!a11y::android::enabled()", self.handler)
 

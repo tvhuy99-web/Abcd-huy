@@ -46,8 +46,12 @@ class NativeBumpCombatGestures(unittest.TestCase):
         self.assertNotIn("avatar_action::move(", body)
 
     def test_normal_game_controls_are_responsible_for_melee_or_walking(self):
-        movement = self.handler.split("case ACTION_MOVE_FORTH:", 1)[1].split(
+        dispatch = self.handler.split("case ACTION_MOVE_FORTH:", 1)[1].split(
             "case ACTION_MOVE_DOWN:", 1
+        )[0]
+        self.assertIn("move_or_drive( act, player_character, weapon,", dispatch)
+        movement = self.handler.split("void game::move_or_drive(", 1)[1].split(
+            "bool game::do_regular_action(", 1
         )[0]
         self.assertIn("get_delta_from_movement_action( act, iso_rotate::yes )", movement)
         self.assertIn("avatar_action::move( player_character, here", movement)

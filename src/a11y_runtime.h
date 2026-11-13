@@ -29,7 +29,7 @@ void set_world_input_ready( const void *input_owner, bool ready );
 // Returns true when at least one scope was activated.
 bool activate_pending_scopes( const void *input_owner );
 std::optional<std::string> poll_input( const void *input_owner );
-void announce_game_message( const std::string_view text, bool urgent );
+void announce_game_message( std::string_view text, bool urgent );
 
 // Keep DEFAULTMODE's semantic frame across ordinary game turns. Only its
 // game-thread input handler is rebound at each input wait; none of the

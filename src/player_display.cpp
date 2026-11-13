@@ -64,9 +64,9 @@
 #include "weather.h"
 
 static const bionic_id bio_cqb( "bio_cqb" );
+static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_infected( "infected" );
-static const efftype_id effect_bite( "bite" );
 
 static const skill_id skill_bashing( "bashing" );
 static const skill_id skill_cutting( "cutting" );
@@ -1618,7 +1618,7 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         quick = _( "No urgent body-part warnings detected." );
     } else if( curtab == player_display_tab::stats ) {
         snapshot.summary += " " + string_format(
-                                _( "%d urgent body-part warnings. Open Quick health summary." ), warnings );
+                                _( "%d urgent body-part warnings.  Open Quick health summary." ), warnings );
     }
     quick += "\n" + needs;
     a11y::append_document( snapshot, "pd:quick-health", _( "Quick health summary" ), quick );

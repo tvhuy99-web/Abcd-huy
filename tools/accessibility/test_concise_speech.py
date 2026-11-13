@@ -49,8 +49,8 @@ class ConciseSpeechTest(unittest.TestCase):
     def test_short_action_outcomes_and_coordinates(self):
         for translation in (
             'msgstr "Bị chặn"',
-            'msgstr "Bẫy %s"',
-            'msgstr "Xe %s"',
+            'msgstr "Có bẫy: %s"',
+            'msgstr "Xe: %s"',
             'msgstr "X %1$d, Y %2$d, Z %3$d."',
             'msgstr "Chưa rõ kết quả."',
             'msgstr "%s chảy máu nặng hơn."',

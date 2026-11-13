@@ -60,7 +60,7 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn("compute_effective_nutrients( *location )", self.inv)
 
     def test_sleep_and_wait_feedback_only_on_real_actions(self):
-        self.assertIn("Before sleep. Sleepiness:", self.handle)
+        self.assertIn("Before sleep.  Sleepiness:", self.handle)
         self.assertIn("here.tername( p )", self.handle)
         self.assertIn("const bool was_asleep = has_effect( effect_sleep )",
                       self.avatar)

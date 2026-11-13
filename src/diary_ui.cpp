@@ -531,7 +531,7 @@ void diary::show_diary_ui( diary *c_diary )
             selected[window_mode::PAGE_WIN] = c_diary->pages.size() - 1;
             currwin = window_mode::PAGE_WIN;
             if( a11y::enabled() ) {
-                add_msg( m_info, _( "New diary page created. Select Edit entry text to write." ) );
+                add_msg( m_info, _( "New diary page created.  Select Edit entry text to write." ) );
             }
         } else if( action == "VIEW_SCORES" ) {
             show_scores_ui();

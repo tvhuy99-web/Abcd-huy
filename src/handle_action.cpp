@@ -541,7 +541,7 @@ input_context game::get_player_input( std::string &action )
     };
     // Parse the "<dx>:<dy>" tail of an explore node id. Returns false on any
     // malformed input instead of throwing into the intent handler.
-    const auto parse_reader_explore_pair = []( const std::string_view text, int &dx, int &dy ) {
+    const auto parse_reader_explore_pair = []( const std::string_view text, point &delta ) {
         const std::size_t colon = text.find( ':' );
         if( colon == std::string::npos ) {
             return false;
@@ -549,8 +549,8 @@ input_context game::get_player_input( std::string &action )
         try {
             std::size_t used_x = 0;
             std::size_t used_y = 0;
-            dx = std::stoi( std::string( text.substr( 0, colon ) ), &used_x );
-            dy = std::stoi( std::string( text.substr( colon + 1 ) ), &used_y );
+            delta.x = std::stoi( std::string( text.substr( 0, colon ) ), &used_x );
+            delta.y = std::stoi( std::string( text.substr( colon + 1 ) ), &used_y );
             return used_x == colon && used_y == text.size() - colon - 1;
         } catch( const std::exception & ) {
             return false;
@@ -646,31 +646,29 @@ input_context game::get_player_input( std::string &action )
                     }
                 }
             } else if( intent.node.rfind( "explore:dir:", 0 ) == 0 ) {
-                int dx = 0;
-                int dy = 0;
-                if( !parse_reader_explore_pair( intent.node.substr( 12 ), dx, dy ) ||
-                    dx < -1 || dx > 1 || dy < -1 || dy > 1 || ( dx == 0 && dy == 0 ) ) {
+                point delta;
+                if( !parse_reader_explore_pair( intent.node.substr( 12 ), delta ) ||
+                    delta.x < -1 || delta.x > 1 || delta.y < -1 || delta.y > 1 || delta == point::zero ) {
                     a11y::android::status( "invalid_value", &intent );
                     return std::nullopt;
                 }
                 if( reader_explore_cursor ) {
-                    const int x = std::clamp( reader_explore_cursor->x() + dx, -60, 60 );
-                    const int y = std::clamp( reader_explore_cursor->y() + dy, -60, 60 );
+                    const int x = std::clamp( reader_explore_cursor->x() + delta.x, -60, 60 );
+                    const int y = std::clamp( reader_explore_cursor->y() + delta.y, -60, 60 );
                     if( x != reader_explore_cursor->x() || y != reader_explore_cursor->y() ) {
                         reader_explore_cursor = tripoint_rel_ms( x, y, reader_explore_cursor->z() );
                         changed = true;
                     }
                 }
             } else if( intent.node.rfind( "explore:jump:", 0 ) == 0 ) {
-                int dx = 0;
-                int dy = 0;
-                if( !parse_reader_explore_pair( intent.node.substr( 13 ), dx, dy ) ) {
+                point offset;
+                if( !parse_reader_explore_pair( intent.node.substr( 13 ), offset ) ) {
                     a11y::android::status( "invalid_value", &intent );
                     return std::nullopt;
                 }
                 if( reader_explore_cursor ) {
-                    const tripoint_rel_ms target( std::clamp( dx, -60, 60 ),
-                                                  std::clamp( dy, -60, 60 ), 0 );
+                    const tripoint_rel_ms target( std::clamp( offset.x, -60, 60 ),
+                                                  std::clamp( offset.y, -60, 60 ), 0 );
                     if( target != *reader_explore_cursor ) {
                         reader_explore_cursor = target;
                         changed = true;
@@ -1834,7 +1832,7 @@ static void wait()
                                            to_string_time_of_day( calendar::turn ) ) : "";
     as_m.text += setting_alarm ? _( "Set alarm for when?" ) : _( "Wait for how long?" );
     if( !setting_alarm && a11y::enabled() ) {
-        as_m.text += "\n\n" + std::string( _( "Waiting advances game time. The world may change while you wait." ) );
+        as_m.text += "\n\n" + std::string( _( "Waiting advances game time.  The world may change while you wait." ) );
     }
     as_m.query(); /* calculate key and window variables, generate window, and loop until we get a valid answer */
 
@@ -1976,13 +1974,13 @@ static void sleep()
             data << std::endl;
         }
         data << string_format(
-                    _( "Before sleep. Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
+                    _( "Before sleep.  Sleepiness: %1$s. Thirst: %2$s. Pain: %3$s. "
                        "Location: %4$s." ),
                     display::sleepiness_text_color( player_character ).first,
                     display::thirst_text_color( player_character ).first,
                     display::pain_text_color( player_character ).first,
                     here.tername( p ) ) << std::endl;
-        data << _( "Sleeping advances game time. You cannot issue ordinary commands until you wake; "
+        data << _( "Sleeping advances game time.  You cannot issue ordinary commands until you wake; "
                    "scheduled events and world changes may occur." );
     }
     if( !active.empty() || a11y::enabled() ) {
@@ -2457,7 +2455,7 @@ static void fire()
                 const std::string reason = reasons.empty() ?
                                            _( "This firing mode cannot be used right now." ) :
                                            reasons.front();
-                add_msg( m_bad, _( "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons." ),
+                add_msg( m_bad, _( "Cannot fire: %1$s. %2$d rounds loaded.  Reload or change weapons." ),
                          reason, weapon->ammo_remaining() );
                 return;
             }
@@ -2953,6 +2951,162 @@ static bool is_move_mode_action( const action_id act )
     }
 }
 
+void game::move_or_drive( action_id &act, avatar &player_character, const item_location &weapon,
+                          const int desired_move_mode_cost )
+{
+    map &here = get_map();
+    if( player_character.maybe_get_value( "remote_controlling" ) &&
+        ( player_character.has_active_item( itype_radiocontrol ) ||
+          player_character.has_active_bionic( bio_remote ) ) ) {
+        rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
+    } else if( has_vehicle_control( player_character ) ) {
+        // vehicle control uses x for steering and y for ac/deceleration,
+        // so no rotation needed
+        pldrive( get_delta_from_movement_action( act, iso_rotate::no ) );
+    } else {
+        const int pre_walk_moves = player_character.get_moves();
+        point_rel_ms dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
+        if( auto_travel_mode && !player_character.is_auto_moving() ) {
+            const bool use_grab_routing =
+                has_grabbed_single_tile_vehicle( player_character, here );
+            for( int i = 0; i < SEEX; i++ ) {
+                tripoint_bub_ms auto_travel_destination =
+                    player_character.pos_bub() + dest_delta * ( SEEX - i );
+                if( use_grab_routing ) {
+                    destination_preview = route_with_grab( here, player_character,
+                                                           pathfinding_target::point( auto_travel_destination ),
+                                                           player_character.get_path_avoid() );
+                } else {
+                    destination_preview =
+                        here.route( player_character, pathfinding_target::point( auto_travel_destination ) );
+                }
+                if( !destination_preview.empty() ) {
+                    destination_preview.erase(
+                        destination_preview.begin() + 1, destination_preview.end() );
+                    player_character.set_destination( destination_preview );
+                    break;
+                }
+            }
+            act = player_character.get_next_auto_move_direction();
+            const point_rel_ms dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
+            if( dest_next == point_rel_ms::zero ) {
+                if( a11y::enabled() ) {
+                    add_msg( m_info, _( "No route in that direction." ) );
+                }
+                add_msg_debug( debugmode::DF_ACTIVITY,
+                               "auto_move: get_next returned zero, aborting.  pos=(%d,%d)",
+                               player_character.pos_bub().x(), player_character.pos_bub().y() );
+                player_character.abort_automove();
+            }
+            dest_delta = dest_next;
+        }
+        const tripoint_bub_ms pos_before = player_character.pos_bub();
+        const tripoint_bub_ms dest_tile = pos_before +
+                                          tripoint_rel_ms( dest_delta, 0 );
+        const auto keep_safety_stopped_route = [&]() {
+            if( !a11y::enabled() || safe_mode != SAFE_MODE_STOP ||
+                a11y::android::travel_state() != 1 ||
+                !player_character.is_auto_moving() ) {
+                return false;
+            }
+            // get_next_auto_move_direction() consumed this waypoint
+            // before the move failed. Put that exact tile back so
+            // "No, keep traveling" never loses or skips the dangerous
+            // step, and require an explicit safe-mode decision later.
+            std::vector<tripoint_bub_ms> &route = player_character.get_auto_move_route();
+            route.insert( route.begin(), dest_tile );
+            a11y::android::set_travel_state( 3 );
+            add_msg( m_warning, _( "Travel stopped by safe mode.  Route kept." ) );
+            return true;
+        };
+        const ter_id ter_before = here.ter( dest_tile );
+        const furn_id furn_before = here.furn( dest_tile );
+        int veh_door_part_before = -1;
+        if( const optional_vpart_position ovp = here.veh_at( dest_tile ) ) {
+            veh_door_part_before = ovp->vehicle().next_part_to_open(
+                                       ovp->part_index(), true );
+        }
+        if( !avatar_action::move( player_character, here, tripoint_rel_ms( dest_delta, 0 ) ) ) {
+            // auto-move should be canceled due to a failed move or obstacle
+            add_msg_debug( debugmode::DF_ACTIVITY,
+                           "auto_move: move(%d,%d) FAILED at pos=(%d,%d), aborting",
+                           dest_delta.x(), dest_delta.y(),
+                           player_character.pos_bub().x(), player_character.pos_bub().y() );
+            if( !keep_safety_stopped_route() ) {
+                player_character.abort_automove();
+            }
+        } else if( player_character.pos_bub() == pos_before &&
+                   dest_delta != point_rel_ms::zero ) {
+            // General auto-move safety: catches cases where move() returns true
+            // ("handled") but the player didn't actually move. Covers grabbed
+            // vehicle collisions, NPC interactions, and any future similar cases.
+            // Check if terrain, furniture, or a vehicle part changed (door/trunk
+            // opened) - if so, next step will walk through, so don't abort.
+            const ter_id ter_after = here.ter( dest_tile );
+            const furn_id furn_after = here.furn( dest_tile );
+            bool veh_part_opened = false;
+            if( const optional_vpart_position ovp = here.veh_at( dest_tile ) ) {
+                // If there was an openable part before but not now, a vehicle
+                // door/trunk/hatch was opened by avatar_action::move.
+                const int openable_now = ovp->vehicle().next_part_to_open(
+                                             ovp->part_index(), true );
+                veh_part_opened = ( veh_door_part_before >= 0 && openable_now < 0 ) ||
+                                  ( veh_door_part_before >= 0 && openable_now != veh_door_part_before );
+            }
+            if( ter_before != ter_after || furn_before != furn_after || veh_part_opened ) {
+                add_msg_debug( debugmode::DF_ACTIVITY,
+                               "auto_move: pos unchanged but ter/furn/veh changed at (%d,%d), continuing",
+                               dest_tile.x(), dest_tile.y() );
+            } else {
+                add_msg_debug( debugmode::DF_ACTIVITY,
+                               "auto_move: move(%d,%d) returned OK but pos unchanged at (%d,%d), aborting",
+                               dest_delta.x(), dest_delta.y(),
+                               pos_before.x(), pos_before.y() );
+                if( !keep_safety_stopped_route() ) {
+                    player_character.abort_automove();
+                }
+            }
+        }
+
+        // if we changed move modes this action, refund half the cost of changing move mode
+        // if their move action was an easy movement to represent combining the two actions
+        if( desired_move_mode_cost > 0 ) {
+            const int moves_delta = pre_walk_moves - player_character.get_moves();
+            // add 10% to the easy movement threshold to allow for some minor encumbrance
+            // add 20% if going prone because it has an extra 20% crawling mod
+            const int easy_moves = 110 /
+                                   player_character.get_modifier( character_modifier_move_mode_move_cost_mod ) *
+                                   ( player_character.is_prone() ? 1.2 : 1 );
+
+            if( moves_delta > 0 && moves_delta <= easy_moves ) {
+                player_character.mod_moves( desired_move_mode_cost / 2 );
+            }
+        }
+
+        if( get_option<bool>( "AUTO_FEATURES" ) && get_option<bool>( "AUTO_MOPPING" ) &&
+            weapon && weapon->has_flag( json_flag_MOP ) ) {
+            const bool is_blind = player_character.is_blind();
+            for( const tripoint_bub_ms &point : here.points_in_radius( player_character.pos_bub(), 1 ) ) {
+                bool did_mop = false;
+                if( is_blind ) {
+                    // blind character have a 1/3 chance of actually mopping
+                    if( one_in( 3 ) ) {
+                        did_mop = here.mop_spills( point );
+                    } else {
+                        did_mop = here.terrain_moppable( point );
+                    }
+                } else {
+                    did_mop = here.mop_spills( point );
+                }
+                // iuse::mop costs 15 moves per use
+                if( did_mop ) {
+                    player_character.mod_moves( -15 );
+                }
+            }
+        }
+    }
+}
+
 bool game::do_regular_action( action_id &act, avatar &player_character,
                               const std::optional<tripoint_bub_ms> &mouse_target )
 {
@@ -3075,156 +3229,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_MOVE_BACK_LEFT:
         case ACTION_MOVE_LEFT:
         case ACTION_MOVE_FORTH_LEFT:
-            if( player_character.maybe_get_value( "remote_controlling" ) &&
-                ( player_character.has_active_item( itype_radiocontrol ) ||
-                  player_character.has_active_bionic( bio_remote ) ) ) {
-                rcdrive( get_delta_from_movement_action( act, iso_rotate::yes ) );
-            } else if( has_vehicle_control( player_character ) ) {
-                // vehicle control uses x for steering and y for ac/deceleration,
-                // so no rotation needed
-                pldrive( get_delta_from_movement_action( act, iso_rotate::no ) );
-            } else {
-                const int pre_walk_moves = player_character.get_moves();
-                point_rel_ms dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
-                if( auto_travel_mode && !player_character.is_auto_moving() ) {
-                    const bool use_grab_routing =
-                        has_grabbed_single_tile_vehicle( player_character, here );
-                    for( int i = 0; i < SEEX; i++ ) {
-                        tripoint_bub_ms auto_travel_destination =
-                            player_character.pos_bub() + dest_delta * ( SEEX - i );
-                        if( use_grab_routing ) {
-                            destination_preview = route_with_grab( here, player_character,
-                                                                   pathfinding_target::point( auto_travel_destination ),
-                                                                   player_character.get_path_avoid() );
-                        } else {
-                            destination_preview =
-                                here.route( player_character, pathfinding_target::point( auto_travel_destination ) );
-                        }
-                        if( !destination_preview.empty() ) {
-                            destination_preview.erase(
-                                destination_preview.begin() + 1, destination_preview.end() );
-                            player_character.set_destination( destination_preview );
-                            break;
-                        }
-                    }
-                    act = player_character.get_next_auto_move_direction();
-                    const point_rel_ms dest_next = get_delta_from_movement_action( act, iso_rotate::yes );
-                    if( dest_next == point_rel_ms::zero ) {
-                        if( a11y::enabled() ) {
-                            add_msg( m_info, _( "No route in that direction." ) );
-                        }
-                        add_msg_debug( debugmode::DF_ACTIVITY,
-                                       "auto_move: get_next returned zero, aborting.  pos=(%d,%d)",
-                                       player_character.pos_bub().x(), player_character.pos_bub().y() );
-                        player_character.abort_automove();
-                    }
-                    dest_delta = dest_next;
-                }
-                const tripoint_bub_ms pos_before = player_character.pos_bub();
-                const tripoint_bub_ms dest_tile = pos_before +
-                                                  tripoint_rel_ms( dest_delta, 0 );
-                const auto keep_safety_stopped_route = [&]() {
-                    if( !a11y::enabled() || safe_mode != SAFE_MODE_STOP ||
-                        a11y::android::travel_state() != 1 ||
-                        !player_character.is_auto_moving() ) {
-                        return false;
-                    }
-                    // get_next_auto_move_direction() consumed this waypoint
-                    // before the move failed. Put that exact tile back so
-                    // "No, keep traveling" never loses or skips the dangerous
-                    // step, and require an explicit safe-mode decision later.
-                    std::vector<tripoint_bub_ms> &route = player_character.get_auto_move_route();
-                    route.insert( route.begin(), dest_tile );
-                    a11y::android::set_travel_state( 3 );
-                    add_msg( m_warning, _( "Travel stopped by safe mode. Route kept." ) );
-                    return true;
-                };
-                const ter_id ter_before = here.ter( dest_tile );
-                const furn_id furn_before = here.furn( dest_tile );
-                int veh_door_part_before = -1;
-                if( const optional_vpart_position ovp = here.veh_at( dest_tile ) ) {
-                    veh_door_part_before = ovp->vehicle().next_part_to_open(
-                                               ovp->part_index(), true );
-                }
-                if( !avatar_action::move( player_character, here, tripoint_rel_ms( dest_delta, 0 ) ) ) {
-                    // auto-move should be canceled due to a failed move or obstacle
-                    add_msg_debug( debugmode::DF_ACTIVITY,
-                                   "auto_move: move(%d,%d) FAILED at pos=(%d,%d), aborting",
-                                   dest_delta.x(), dest_delta.y(),
-                                   player_character.pos_bub().x(), player_character.pos_bub().y() );
-                    if( !keep_safety_stopped_route() ) {
-                        player_character.abort_automove();
-                    }
-                } else if( player_character.pos_bub() == pos_before &&
-                           dest_delta != point_rel_ms::zero ) {
-                    // General auto-move safety: catches cases where move() returns true
-                    // ("handled") but the player didn't actually move. Covers grabbed
-                    // vehicle collisions, NPC interactions, and any future similar cases.
-                    // Check if terrain, furniture, or a vehicle part changed (door/trunk
-                    // opened) - if so, next step will walk through, so don't abort.
-                    const ter_id ter_after = here.ter( dest_tile );
-                    const furn_id furn_after = here.furn( dest_tile );
-                    bool veh_part_opened = false;
-                    if( const optional_vpart_position ovp = here.veh_at( dest_tile ) ) {
-                        // If there was an openable part before but not now, a vehicle
-                        // door/trunk/hatch was opened by avatar_action::move.
-                        const int openable_now = ovp->vehicle().next_part_to_open(
-                                                     ovp->part_index(), true );
-                        veh_part_opened = ( veh_door_part_before >= 0 && openable_now < 0 ) ||
-                                          ( veh_door_part_before >= 0 && openable_now != veh_door_part_before );
-                    }
-                    if( ter_before != ter_after || furn_before != furn_after || veh_part_opened ) {
-                        add_msg_debug( debugmode::DF_ACTIVITY,
-                                       "auto_move: pos unchanged but ter/furn/veh changed at (%d,%d), continuing",
-                                       dest_tile.x(), dest_tile.y() );
-                    } else {
-                        add_msg_debug( debugmode::DF_ACTIVITY,
-                                       "auto_move: move(%d,%d) returned OK but pos unchanged at (%d,%d), aborting",
-                                       dest_delta.x(), dest_delta.y(),
-                                       pos_before.x(), pos_before.y() );
-                        if( !keep_safety_stopped_route() ) {
-                            player_character.abort_automove();
-                        }
-                    }
-                }
-
-                // if we changed move modes this action, refund half the cost of changing move mode
-                // if their move action was an easy movement to represent combining the two actions
-                if( desired_move_mode_cost > 0 ) {
-                    const int moves_delta = pre_walk_moves - player_character.get_moves();
-                    // add 10% to the easy movement threshold to allow for some minor encumbrance
-                    // add 20% if going prone because it has an extra 20% crawling mod
-                    const int easy_moves = 110 /
-                                           player_character.get_modifier( character_modifier_move_mode_move_cost_mod ) *
-                                           ( player_character.is_prone() ? 1.2 : 1 );
-
-                    if( moves_delta > 0 && moves_delta <= easy_moves ) {
-                        player_character.mod_moves( desired_move_mode_cost / 2 );
-                    }
-                }
-
-                if( get_option<bool>( "AUTO_FEATURES" ) && get_option<bool>( "AUTO_MOPPING" ) &&
-                    weapon && weapon->has_flag( json_flag_MOP ) ) {
-                    const bool is_blind = player_character.is_blind();
-                    for( const tripoint_bub_ms &point : here.points_in_radius( player_character.pos_bub(), 1 ) ) {
-                        bool did_mop = false;
-                        if( is_blind ) {
-                            // blind character have a 1/3 chance of actually mopping
-                            if( one_in( 3 ) ) {
-                                did_mop = here.mop_spills( point );
-                            } else {
-                                did_mop = here.terrain_moppable( point );
-                            }
-                        } else {
-                            did_mop = here.mop_spills( point );
-                        }
-                        // iuse::mop costs 15 moves per use
-                        if( did_mop ) {
-                            player_character.mod_moves( -15 );
-                        }
-                    }
-                }
-            }
+            move_or_drive( act, player_character, weapon, desired_move_mode_cost );
             break;
         case ACTION_MOVE_DOWN: {
             const int initial_level = player_character.posz();
@@ -3750,7 +3755,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_IGNORE_ENEMY:
             if( safe_mode == SAFE_MODE_STOP ) {
                 add_msg( m_info, a11y::enabled() ?
-                         _( "Enemy warning ignored for now. Safe mode remains on." ) :
+                         _( "Enemy warning ignored for now.  Safe mode remains on." ) :
                          _( "Ignoring enemy!" ) );
                 for( auto &elem : player_character.get_mon_visible().new_seen_mon ) {
                     monster &critter = *elem;
@@ -3815,7 +3820,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     // R20.1: a failed save otherwise ends in silence --
                     // the confirmation dialog closes and nothing says the
                     // game was not saved or that the player has not quit.
-                    popup( _( "The game could not be saved. You are still in the game; nothing was quit." ) );
+                    popup( _( "The game could not be saved.  You are still in the game; nothing was quit." ) );
                 }
             }
             break;
@@ -3828,7 +3833,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             // Unlike Save and Quit, quickload can silently discard every
             // change since the last save. Require spoken confirmation.
             if( a11y::enabled() &&
-                !query_yn( _( "Reload the last save? Any progress not saved will be lost. Continue?" ) ) ) {
+                !query_yn( _( "Reload the last save?  Any progress not saved will be lost.  Continue?" ) ) ) {
                 break;
             }
             quickload();
@@ -4074,13 +4079,13 @@ bool game::handle_action()
         player_character.abort_automove();
         destination_preview.clear();
         a11y::android::set_travel_state( 0 );
-        add_msg( m_info, _( "Automatic travel canceled. Returned to the map." ) );
+        add_msg( m_info, _( "Automatic travel canceled.  Returned to the map." ) );
         return false;
     }
     if( player_character.has_destination() && travel_control == 1 &&
         a11y::android::travel_state() == 1 ) {
         a11y::android::set_travel_state( 2 );
-        add_msg( m_info, _( "Automatic travel paused. Your route is kept." ) );
+        add_msg( m_info, _( "Automatic travel paused.  Your route is kept." ) );
     } else if( player_character.has_destination() && travel_control == 4 &&
                a11y::android::travel_state() == 3 && safe_mode == SAFE_MODE_STOP ) {
         // Same safety semantics as ACTION_IGNORE_ENEMY: an explicit user
@@ -4091,7 +4096,7 @@ bool game::handle_action()
         }
         set_safe_mode( SAFE_MODE_ON );
         a11y::android::set_travel_state( 1 );
-        add_msg( m_info, _( "Enemy warning ignored for now. Safe mode remains on." ) );
+        add_msg( m_info, _( "Enemy warning ignored for now.  Safe mode remains on." ) );
     } else if( player_character.has_destination() && travel_control == 2 &&
                ( a11y::android::travel_state() == 2 ||
                  a11y::android::travel_state() == 3 ) ) {

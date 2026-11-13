@@ -27,7 +27,7 @@ class CharacterCreatorSummaryInput(unittest.TestCase):
             self.assertIn('"' + action + '"', self.creator)
         self.assertIn('node.role = "button";', self.creator)
         self.assertIn('node.role == "button" || node.role == "document"', self.creator)
-        self.assertIn('_( "Summary. Step 7 of 7. Points remaining: %d." )', self.creator)
+        self.assertIn('_( "Summary.  Step 7 of 7. Points remaining: %d." )', self.creator)
         self.assertIn('"CHARACTER_CREATION".equals(next.category)', self.controller)
 
     def test_gender_outfit_and_blood_use_single_choice_lists(self):

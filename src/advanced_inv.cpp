@@ -2046,13 +2046,13 @@ class advanced_inventory::reader_session
             for( a11y::semantic_node &command : commands ) {
                 std::string effect;
                 if( command.id == "MOVE_VARIABLE_ITEM" ) {
-                    effect = _( "Move the selected item from source to destination. "
+                    effect = _( "Move the selected item from source to destination.  "
                                 "First choose an amount; the game checks space and ownership." );
                 } else if( command.id == "MOVE_SINGLE_ITEM" ) {
                     effect = _( "Move one item from the source pane to the destination pane." );
                 } else if( command.id == "MOVE_ITEM_STACK" ||
                            command.id == "MOVE_ALL_ITEMS" ) {
-                    effect = _( "Move a stack or all selected items to the destination. "
+                    effect = _( "Move a stack or all selected items to the destination.  "
                                 "The game checks whether each transfer is possible." );
                 } else if( command.id == "TOGGLE_TAB" ) {
                     effect = _( "Switch source and destination panes without moving items." );

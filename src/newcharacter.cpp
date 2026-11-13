@@ -804,7 +804,7 @@ bool avatar::create( character_type type, const std::string &tempname )
                     // load_template only debug-logs read/parse failures, so
                     // without this the load silently returns to the menu
                     // (R07.3).
-                    popup( _( "The character template \"%s\" could not be loaded. Its file may be missing or damaged." ),
+                    popup( _( "The character template \"%s\" could not be loaded.  Its file may be missing or damaged." ),
                            tempname );
                 }
                 return false;
@@ -3403,7 +3403,7 @@ bool character_creator_ui::display()
                 a11y::semantic_snapshot snapshot = a11y::command_snapshot( current_tab_input, _( "Character creation" ) );
                 const avatar &you = get_avatar();
                 append_character_reader_summary( snapshot, you );
-                snapshot.title = string_format( _( "Summary. Step 7 of 7. Points remaining: %d." ),
+                snapshot.title = string_format( _( "Summary.  Step 7 of 7. Points remaining: %d." ),
                                                 multi_pool( you ).skill_points_left );
                 for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
                     snapshot.nodes[i].position = static_cast<int>( i + 1 );

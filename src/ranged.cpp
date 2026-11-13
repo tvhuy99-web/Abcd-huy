@@ -3,6 +3,7 @@
 #include <cstdlib>
 
 #include <algorithm>
+#include <array>
 #include <cmath>
 #include <functional>
 #include <iterator>
@@ -225,26 +226,29 @@ std::string target_direction_description( const tripoint_bub_ms &origin,
         return _( "At your position" );
     }
     std::string result;
-    const int dx = target.x() - origin.x();
-    const int dy = target.y() - origin.y();
-    const int dz = target.z() - origin.z();
-    if( dy != 0 ) {
-        result = string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    const tripoint delta = ( target - origin ).raw();
+    if( delta.y != 0 ) {
+        result = string_format( delta.y < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( delta.y ) );
     }
-    if( dx != 0 ) {
+    if( delta.x != 0 ) {
         if( !result.empty() ) {
             result += ", ";
         }
-        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+        result += string_format( delta.x < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( delta.x ) );
     }
-    if( dz != 0 ) {
+    if( delta.z != 0 ) {
         if( !result.empty() ) {
             result += ", ";
         }
-        result += string_format( dz > 0 ? _( "Above %d" ) : _( "Below %d" ), std::abs( dz ) );
+        result += string_format( delta.z > 0 ? _( "Above %d" ) : _( "Below %d" ), std::abs( delta.z ) );
     }
     return result;
 }
+
+static constexpr std::array<point, 8> accessible_shot_directions = {
+    point::north, point::north_east, point::east, point::south_east,
+    point::south, point::south_west, point::west, point::north_west
+};
 
 class target_ui
 {
@@ -406,7 +410,7 @@ class target_ui
 
         // Aim at the first visible creature on this ray, or at the range edge.
         // Do not filter friendlies or require any creature to be present.
-        tripoint_bub_ms directional_shot_target( int dx, int dy );
+        tripoint_bub_ms directional_shot_target( const point &direction );
 
         // Semantic view of targets the game currently permits and knows how to aim at.
         a11y::semantic_snapshot reader_snapshot();
@@ -1291,10 +1295,10 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
                                shot.missed_by >= accuracy_standard ) {
                         // A grazing hit can reduce a powerful bullet to a
                         // point of damage. Tell the user that it was a graze.
-                        add_msg( m_info, _( "You grazed %1$s. %2$d damage. %3$d HP remaining." ),
+                        add_msg( m_info, _( "You grazed %1$s. %2$d damage.  %3$d HP remaining." ),
                                  victim.disp_name(), actual_damage, remaining_hp );
                     } else {
-                        add_msg( m_good, _( "You shot %1$s. %2$d damage. %3$d HP remaining." ),
+                        add_msg( m_good, _( "You shot %1$s. %2$d damage.  %3$d HP remaining." ),
                                  victim.disp_name(), actual_damage, remaining_hp );
                     }
                 } else {
@@ -3243,19 +3247,15 @@ target_handler::trajectory target_ui::run()
             if( !accessible_fire_direction || mode != TargetMode::Fire ) {
                 continue;
             }
-            const int steps[8][2] = {
-                { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
-                { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
-            };
             const int chosen = *accessible_fire_direction;
             accessible_fire_direction.reset();
             if( chosen < 0 || chosen >= 8 ) {
                 continue;
             }
-            const tripoint_bub_ms shot = directional_shot_target( steps[chosen][0], steps[chosen][1] );
+            const tripoint_bub_ms shot = directional_shot_target( accessible_shot_directions[chosen] );
             if( shot == src ) {
                 const std::string why = string_format(
-                                            _( "Cannot fire in that direction. Weapon range: %d tiles." ), range );
+                                            _( "Cannot fire in that direction.  Weapon range: %d tiles." ), range );
                 if( automatic_combat_shot ) {
                     // This modal is about to close. Defer speech until the
                     // stable world snapshot, or its context change cuts it off.
@@ -3268,7 +3268,7 @@ target_handler::trajectory target_ui::run()
             }
             set_cursor_pos( shot );
             if( status != Status::Good ) {
-                const std::string why = _( "The weapon cannot fire right now. Check ammunition and firing mode." );
+                const std::string why = _( "The weapon cannot fire right now.  Check ammunition and firing mode." );
                 if( automatic_combat_shot ) {
                     a11y::android::announce( "A11Y_COMBAT_ALERT:" + why, 3 );
                     loop_exit_code = ExitCode::Abort;
@@ -3471,12 +3471,12 @@ target_handler::trajectory target_ui::run()
     return traj;
 }
 
-tripoint_bub_ms target_ui::directional_shot_target( int dx, int dy )
+tripoint_bub_ms target_ui::directional_shot_target( const point &direction )
 {
     map &here = get_map();
     tripoint_bub_ms fallback = src;
     for( int step = 1; step <= range; ++step ) {
-        const tripoint_bub_ms tile = src + tripoint_rel_ms( dx * step, dy * step, 0 );
+        const tripoint_bub_ms tile = src + tripoint_rel_ms( tripoint( step * direction, 0 ) );
         if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
             break;
         }
@@ -3581,10 +3581,6 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         // The primary Android reader view shows eight directions. All other
         // original targeting nodes and engine commands remain in this
         // snapshot for the long-press advanced view.
-        const int steps[8][2] = {
-            { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
-            { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
-        };
         const std::string names[8] = {
             _( "North" ), _( "Northeast" ), _( "East" ), _( "Southeast" ),
             _( "South" ), _( "Southwest" ), _( "West" ), _( "Northwest" )
@@ -3596,7 +3592,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
             direction.role = "button";
             direction.label = names[i];
             direction.actions = { "focus", "activate" };
-            const tripoint_bub_ms shot = directional_shot_target( steps[i][0], steps[i][1] );
+            const tripoint_bub_ms shot = directional_shot_target( accessible_shot_directions[i] );
             direction.enabled = shot != src && status != Status::OutOfAmmo;
             if( !direction.enabled ) {
                 direction.disabled_reason = _( "The current gun cannot fire in this direction." );
@@ -3606,8 +3602,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
             std::string seen;
             int creature_count = 0;
             for( int step = 1; step <= range; ++step ) {
-                const tripoint_bub_ms tile = src + tripoint_rel_ms( steps[i][0] * step,
-                                                                   steps[i][1] * step, 0 );
+                const tripoint_bub_ms tile = src + tripoint_rel_ms( tripoint(
+                        step * accessible_shot_directions[i], 0 ) );
                 if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
                     break;
                 }
@@ -3640,13 +3636,13 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
                 }
             } else if( shot != src && you->sees( here, shot ) ) {
                 direction.value += " " + string_format(
-                                       _( "No visible creature. %1$s at %2$d tiles. You can fire." ),
+                                       _( "No visible creature.  %1$s at %2$d tiles.  You can fire." ),
                                        here.tername( shot ), dist_fn( shot ) );
             } else {
                 direction.value += " ";
-                direction.value += _( "No visible creature. You can still fire in this direction." );
+                direction.value += _( "No visible creature.  You can still fire in this direction." );
             }
-            direction.detail = _( "Double tap to fire once toward this direction without choosing a tile. "
+            direction.detail = _( "Double tap to fire once toward this direction without choosing a tile.  "
                                   "Hold one finger for all original aiming controls." );
             snapshot.nodes.push_back( std::move( direction ) );
         }
@@ -3658,7 +3654,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         aimed.id = "target:aimed-shot";
         aimed.role = "button";
         aimed.label = _( "Aim carefully and fire" );
-        aimed.detail = _( "Aim at the current target and fire when steady. Uses normal aiming time and ammunition." );
+        aimed.detail = _( "Aim at the current target and fire when steady.  Uses normal aiming time and ammunition." );
         aimed.enabled = status == Status::Good && dst != src;
         aimed.actions = { "focus", "activate" };
         if( !aimed.enabled ) {
@@ -3671,7 +3667,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         reload.role = "button";
         reload.label = _( "Reload until full" );
         reload.value = string_format( _( "Ammunition remaining: %d." ), relevant->ammo_remaining() );
-        reload.detail = _( "Double tap to reload using the game's normal timed activities. "
+        reload.detail = _( "Double tap to reload using the game's normal timed activities.  "
                            "It stops when the gun is full or no compatible ammunition remains." );
         reload.actions = { "focus", "activate" };
         snapshot.nodes.push_back( std::move( reload ) );
@@ -3724,17 +3720,16 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         // already computed for this aim point in set_cursor_pos().
         int min_z = spell_aoe.begin()->z();
         int max_z = min_z;
-        long long sum_x = 0;
-        long long sum_y = 0;
+        std::array<long long, 2> sum{};
         for( const tripoint_bub_ms &tile : spell_aoe ) {
             min_z = std::min( min_z, tile.z() );
             max_z = std::max( max_z, tile.z() );
-            sum_x += tile.x();
-            sum_y += tile.y();
+            sum[0] += tile.x();
+            sum[1] += tile.y();
         }
         const long long tile_count = static_cast<long long>( spell_aoe.size() );
-        const tripoint_bub_ms aoe_center( static_cast<int>( sum_x / tile_count ),
-                                          static_cast<int>( sum_y / tile_count ),
+        const tripoint_bub_ms aoe_center( static_cast<int>( sum[0] / tile_count ),
+                                          static_cast<int>( sum[1] / tile_count ),
                                           dst.z() );
 
         // Knowledge gate: only creatures the player can actually see are
@@ -3767,7 +3762,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
             aoe.detail += _( " Warning: you are inside the area of effect." );
         }
         if( known_friendlies.empty() ) {
-            aoe.detail += _( " No known friendly creature is in the area. This counts only "
+            aoe.detail += _( " No known friendly creature is in the area.  This counts only "
                             "creatures you can see, so it does not guarantee the area is safe." );
         } else {
             std::string names;
@@ -3802,27 +3797,22 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
             }
             snapshot.nodes.push_back( std::move( node ) );
         };
-        const int cursor_steps[8][2] = {
-            { -1, -1 }, { 0, -1 }, { 1, -1 },
-            { -1, 0 }, { 1, 0 },
-            { -1, 1 }, { 0, 1 }, { 1, 1 }
-        };
-        for( const auto &step : cursor_steps ) {
-            const tripoint_rel_ms delta( step[0], step[1], 0 );
+        for( const tripoint &step : eight_horizontal_neighbors ) {
+            const tripoint_rel_ms delta( step );
             add_cursor_control(
-                "target:move:" + std::to_string( step[0] ) + ":" + std::to_string( step[1] ),
+                "target:move:" + std::to_string( step.x ) + ":" + std::to_string( step.y ),
                 string_format( _( "Move aim point: %s" ),
                                target_direction_description( dst, dst + delta ) ),
-                _( "Moves only the aim point by one tile. This does not fire or spend a turn." ) );
+                _( "Moves only the aim point by one tile.  This does not fire or spend a turn." ) );
         }
         if( fov_3d_z_range > 0 ) {
             // Same condition under which init_window_and_input() registers
             // the LEVEL_UP / LEVEL_DOWN keyboard actions.
             add_cursor_control( "target:level:up", _( "Move aim point up one level" ),
-                                _( "Moves only the aim point up one level. This does not "
+                                _( "Moves only the aim point up one level.  This does not "
                                    "fire or spend a turn." ) );
             add_cursor_control( "target:level:down", _( "Move aim point down one level" ),
-                                _( "Moves only the aim point down one level. This does not "
+                                _( "Moves only the aim point down one level.  This does not "
                                    "fire or spend a turn." ) );
         }
     }
@@ -3870,7 +3860,7 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         limit.role = "document";
         limit.label = _( "Target list note" );
         limit.detail = string_format(
-                           _( "Showing the first %1$d of %2$d targets. The list is limited to %1$d "
+                           _( "Showing the first %1$d of %2$d targets.  The list is limited to %1$d "
                               "entries; use the next and previous target commands to move through "
                               "the full target list." ),
                            static_cast<int>( max_accessible_targets ),
@@ -3881,8 +3871,8 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
     help.id = "target:help";
     help.role = "document";
     help.label = _( "How target selection works" );
-    help.detail = _( "Activate a listed target or a move aim point control to move the aim point. "
-                     "This does not fire or spend a turn. Use the fire command separately to "
+    help.detail = _( "Activate a listed target or a move aim point control to move the aim point.  "
+                     "This does not fire or spend a turn.  Use the fire command separately to "
                      "confirm an attack." );
     snapshot.nodes.push_back( std::move( help ) );
 

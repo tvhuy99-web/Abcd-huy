@@ -4,6 +4,7 @@ The log itself is NOT committed. These tests cover reusable behavior rather
 than a particular character, camp name, inventory item or world coordinate.
 Device/TalkBack verification and the native Android build remain separate.
 """
+import re
 import unittest
 from pathlib import Path
 
@@ -79,7 +80,7 @@ class SessionDebugLogFixes(unittest.TestCase):
             "No recipes in this category.",
         ):
             self.assertIn(phrase, self.crafting)
-            self.assertIn('msgid "' + phrase, self.locale)
+            self.assertRegex(self.locale, r'msgid (?:""\n)?"' + re.escape(phrase))
         self.assertNotIn("learn_recipe(", self.crafting)
 
 

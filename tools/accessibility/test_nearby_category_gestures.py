@@ -80,7 +80,7 @@ class NearbyCategoryGestures(unittest.TestCase):
         self.assertIn('focus = next.find(next.focus) != null ? next.focus', self.reader)
         self.assertIn('feedback((enteredMenu ? next.title + ". " : "") + next.summary);', self.reader)
         self.assertIn('node.value = relative_words( entry.relative );', self.native)
-        for translation in ('Tất cả', 'Quái vật và NPC', 'Địa điểm và môi trường',
+        for translation in ('Tất cả', 'Sinh vật và NPC', 'Địa điểm và môi trường',
                             'Vật phẩm', 'Không có mục nào'):
             self.assertIn(translation, self.vi)
 

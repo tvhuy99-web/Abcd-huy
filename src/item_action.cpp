@@ -306,7 +306,7 @@ void game::item_action_menu( item_location loc )
     uilist kmenu;
     kmenu.desc_enabled = true;
     kmenu.text = a11y::enabled() ?
-                 _( "Choose a usable item action. The list announces each action, "
+                 _( "Choose a usable item action.  The list announces each action, "
                     "its item and any resource requirements before activation." ) :
                  _( "Execute which action?" );
     kmenu.input_category = "ITEM_ACTIONS";

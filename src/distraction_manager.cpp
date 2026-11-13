@@ -158,7 +158,7 @@ void distraction_manager_gui::show()
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
                     ctxt, _( "Distractions manager" ) );
-            snapshot.summary = _( "Select a condition to enable or disable interruption. "
+            snapshot.summary = _( "Select a condition to enable or disable interruption.  "
                                   "Toggle all affects every condition." );
             for( int i = 0; i < number_of_distractions; ++i ) {
                 const configurable_distraction &item = get_configurable_distractions()[i];

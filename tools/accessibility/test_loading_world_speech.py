@@ -21,7 +21,7 @@ class LoadingWorldSpeech(unittest.TestCase):
         menu = (ROOT / "src/main_menu.cpp").read_text(encoding="utf-8")
         world = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
         self.assertIn("const bool is_play_now = sel2 == 3 || sel2 == 4;", menu)
-        self.assertIn("Preparing a new world. Please wait.", menu)
+        self.assertIn("Preparing a new world.  Please wait.", menu)
         self.assertIn("Loading saved character.", world)
         self.assertIn("Preparing new character.", world)
         self.assertIn("Creating your character and starting the game.", world)

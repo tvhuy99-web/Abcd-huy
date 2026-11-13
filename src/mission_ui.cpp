@@ -549,11 +549,11 @@ a11y::semantic_snapshot mission_ui_impl::reader_snapshot( const input_context &c
     // game deletes a point of interest immediately, with no confirmation.
     for( a11y::semantic_node &node : snapshot.nodes ) {
         if( node.id == "CONFIRM" ) {
-            node.detail = _( "Set the selected mission or point of interest as the current objective. "
+            node.detail = _( "Set the selected mission or point of interest as the current objective.  "
                              "This only changes which objective is tracked; it does not accept or hand "
                              "in a mission, and it does not start travel." );
         } else if( node.id == "DELETE_POINT_OF_INTEREST" ) {
-            node.detail = _( "Delete the selected point of interest. The game deletes it immediately, "
+            node.detail = _( "Delete the selected point of interest.  The game deletes it immediately, "
                              "without a confirmation prompt." );
         }
     }

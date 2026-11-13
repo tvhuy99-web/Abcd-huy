@@ -1158,7 +1158,7 @@ void basecamp::get_available_missions_by_dir( mission_data &mission_key, const p
             // cannot. Same dummy recipe id add_available_recipes uses; the
             // entry can never be started while locked.
             std::string craft_entry = _( "Notes:\n"
-                                         "Three companions are already crafting. Finish or recall a "
+                                         "Three companions are already crafting.  Finish or recall a "
                                          "crafting job before starting another." );
             append_workers_in_progress( craft_entry, npc_list );
             mission_key.add_start( { Camp_Crafting, "DUMMY_RECIPE_REPLACED_IN_CAMP", {}, dir },
@@ -2268,7 +2268,7 @@ void basecamp::worker_assignment_ui()
         // screen; say the same on the command nodes.
         for( a11y::semantic_node &command : commands ) {
             if( command.id == "CONFIRM" ) {
-                command.detail = _( "Assign this follower to this camp. This opens the job priority screen for that follower." );
+                command.detail = _( "Assign this follower to this camp.  This opens the job priority screen for that follower." );
             } else if( command.id == "INSPECT_NPC" ) {
                 command.detail = _( "Inspect this follower." );
             }

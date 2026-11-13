@@ -155,7 +155,7 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
 
     def test_vietnamese_spoken_labels_and_android_gesture_tests(self):
         po = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
-        for label in ("Character information. %s.",
+        for label in ("Character information.  %s.",
                       "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d.",
                       "Wielding: %s.", "Energy reserves: %d%%",
                       "Mood: %s", "Focus: %d", "Time: %s",

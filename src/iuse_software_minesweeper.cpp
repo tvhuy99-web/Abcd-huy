@@ -9,6 +9,7 @@
 #include <functional>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <vector>
 
 #include "a11y_document.h"
@@ -220,7 +221,7 @@ int minesweeper_game::start_game()
             }
             // Digit-by-digit parse: a malformed ID from the reader is
             // rejected, never an exception on the game thread.
-            const auto parse_coord = []( const std::string & text, int &out ) {
+            const auto parse_coord = []( const std::string_view text, int &out ) {
                 if( text.empty() || text.size() > 6 ) {
                     return false;
                 }
@@ -234,15 +235,15 @@ int minesweeper_game::start_game()
                 out = value;
                 return true;
             };
-            int x = 0;
-            int y = 0;
-            if( !parse_coord( intent.node.substr( prefix_len, colon - prefix_len ), x ) ||
-                !parse_coord( intent.node.substr( colon + 1 ), y ) ||
-                x >= level.x || y >= level.y ) {
+            point cell;
+            const std::string_view id = intent.node;
+            if( !parse_coord( id.substr( prefix_len, colon - prefix_len ), cell.x ) ||
+                !parse_coord( id.substr( colon + 1 ), cell.y ) ||
+                cell.x >= level.x || cell.y >= level.y ) {
                 return std::nullopt;
             }
-            iPlayerX = x;
-            iPlayerY = y;
+            iPlayerX = cell.x;
+            iPlayerY = cell.y;
             if( intent.action == "focus" ) {
                 return std::string( "TIMEOUT" );
             }
@@ -276,20 +277,20 @@ int minesweeper_game::start_game()
 
         // Sparse-map lookups that never insert: cells the engine has
         // not touched yet are simply unknown / not mines here.
-        const auto reveal_at = [&]( const int x, const int y ) {
-            const auto row_it = mLevelReveal.find( y );
+        const auto reveal_at = [&]( const point &cell ) {
+            const auto row_it = mLevelReveal.find( cell.y );
             if( row_it != mLevelReveal.end() ) {
-                const auto cell_it = row_it->second.find( x );
+                const auto cell_it = row_it->second.find( cell.x );
                 if( cell_it != row_it->second.end() ) {
                     return cell_it->second;
                 }
             }
             return unknown;
         };
-        const auto level_at = [&]( const int x, const int y ) {
-            const auto row_it = mLevel.find( y );
+        const auto level_at = [&]( const point &cell ) {
+            const auto row_it = mLevel.find( cell.y );
             if( row_it != mLevel.end() ) {
-                const auto cell_it = row_it->second.find( x );
+                const auto cell_it = row_it->second.find( cell.x );
                 if( cell_it != row_it->second.end() ) {
                     return cell_it->second;
                 }
@@ -300,10 +301,10 @@ int minesweeper_game::start_game()
         // The knowledge boundary, in one place (see the comment above):
         // mLevel is consulted only for a seen cell, or after boom, when
         // the engine has already revealed the whole board on screen.
-        const auto cell_value_text = [&]( const int x, const int y ) -> std::string {
-            const reveal cell_reveal = reveal_at( x, y );
+        const auto cell_value_text = [&]( const point &cell ) -> std::string {
+            const reveal cell_reveal = reveal_at( cell );
             if( cell_reveal == seen ) {
-                const int num = level_at( x, y );
+                const int num = level_at( cell );
                 if( num == bomb ) {
                     return _( "Mine" );
                 }
@@ -312,7 +313,7 @@ int minesweeper_game::start_game()
                 }
                 return std::to_string( num );
             }
-            if( boom && level_at( x, y ) == bomb ) {
+            if( boom && level_at( cell ) == bomb ) {
                 return _( "Mine" );
             }
             if( cell_reveal == flag ) {
@@ -325,9 +326,9 @@ int minesweeper_game::start_game()
         int revealed_count = 0;
         for( int y = 0; y < level.y; ++y ) {
             for( int x = 0; x < level.x; ++x ) {
-                if( reveal_at( x, y ) == flag ) {
+                if( reveal_at( point( x, y ) ) == flag ) {
                     ++flag_count;
-                } else if( reveal_at( x, y ) == seen ) {
+                } else if( reveal_at( point( x, y ) ) == seen ) {
                     ++revealed_count;
                 }
             }
@@ -367,13 +368,13 @@ int minesweeper_game::start_game()
         }
 
         snapshot.summary = string_format(
-                               _( "Minesweeper board: %1$d columns by %2$d rows. "
+                               _( "Minesweeper board: %1$d columns by %2$d rows.  "
                                   "Mines: %3$d. Flags placed: %4$d. "
                                   "Cells revealed: %5$d of %6$d. "
                                   "Cursor: row %7$d, column %8$d: %9$s." ),
                                level.x, level.y, iBombs, flag_count, revealed_count,
                                total_cells, iPlayerY + 1, iPlayerX + 1,
-                               cell_value_text( iPlayerX, iPlayerY ) );
+                               cell_value_text( point( iPlayerX, iPlayerY ) ) );
         if( windowed ) {
             snapshot.summary += " " + string_format(
                                       _( "The board is too large to list in full; only the "
@@ -384,9 +385,9 @@ int minesweeper_game::start_game()
 
         a11y::append_document( snapshot, "mine:rules", _( "Minesweeper rules" ),
                                _( "Reveal every cell that does not hide a mine to win; "
-                                  "revealing a mine loses the game. The number on a "
+                                  "revealing a mine loses the game.  The number on a "
                                   "revealed cell counts the mines in the eight "
-                                  "neighboring cells. Activate a covered cell to reveal "
+                                  "neighboring cells.  Activate a covered cell to reveal "
                                   "it. Use the flag action on a covered cell to place a "
                                   "flag where you believe a mine is hidden, or to remove "
                                   "a flag you placed; a flag only records your suspicion "
@@ -397,7 +398,7 @@ int minesweeper_game::start_game()
                 a11y::semantic_node cell;
                 cell.id = string_format( "mine:cell:%d:%d", x, y );
                 cell.label = string_format( _( "Row %d, column %d" ), y + 1, x + 1 );
-                cell.value = cell_value_text( x, y );
+                cell.value = cell_value_text( point( x, y ) );
                 cell.selected = x == iPlayerX && y == iPlayerY;
                 cell.actions = { "focus", "activate", "flag" };
                 if( cell.selected ) {

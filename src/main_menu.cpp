@@ -100,8 +100,8 @@ bool confirm_realtime_progression_for_accessibility()
 
     const std::string action = query_popup()
                                .context( "YESNOQUIT" )
-                               .message( "%s", _( "Real-time turns are enabled. Monsters may act periodically while you listen, "
-                                            "read menus, or prepare an action. Yes keeps them enabled, No turns them "
+                               .message( "%s", _( "Real-time turns are enabled.  Monsters may act periodically while you listen, "
+                                            "read menus, or prepare an action.  Yes keeps them enabled, No turns them "
                                             "off and saves the setting, and Quit returns to the main menu." ) )
                                .option( "YES" ).option( "NO" ).option( "QUIT" )
                                .cursor( 2 )
@@ -115,7 +115,7 @@ bool confirm_realtime_progression_for_accessibility()
 
     get_options().get_option( "TURN_DURATION" ).setValue( 0.0f );
     if( !get_options().save() ) {
-        popup( _( "Real-time turns are off for this session, but the setting could not be saved. "
+        popup( _( "Real-time turns are off for this session, but the setting could not be saved.  "
                   "They may be enabled again next time." ) );
     }
     return true;
@@ -131,11 +131,11 @@ bool confirm_world_removal_for_reader( const std::string &worldname, size_t save
                                 save_count );
     if( delete_world ) {
         return query_yn( string_format(
-                             _( "Delete the world \"%1$s\" permanently? This deletes the world folder and all %2$s inside it. This cannot be undone." ),
+                             _( "Delete the world \"%1$s\" permanently?  This deletes the world folder and all %2$s inside it. This cannot be undone." ),
                              worldname, saves ) );
     }
     return query_yn( string_format(
-                         _( "Reset the world \"%1$s\"? This removes all %2$s inside it and regenerates the world. Its settings and mod list are kept. This cannot be undone." ),
+                         _( "Reset the world \"%1$s\"? This removes all %2$s inside it and regenerates the world.  Its settings and mod list are kept.  This cannot be undone." ),
                          worldname, saves ) );
 }
 } // namespace
@@ -868,7 +868,7 @@ bool main_menu::opening_screen()
                     node.detail = remove_color_tags( vNewGameHints[i] );
                     if( i == 3 || i == 4 ) {
                         node.detail += " " + std::string( _(
-                                               "Creates a NEW character. To continue a saved character, choose Load Game." ) );
+                                               "Creates a NEW character.  To continue a saved character, choose Load Game." ) );
                     }
                 }
                 if( sel1 == getopt( main_menu_opts::WORLD ) && i == 0 ) {
@@ -1151,7 +1151,7 @@ bool main_menu::opening_screen()
                             // a silent ImGui canvas.
                             uilist accessible_demo( _( "ImGui demonstration" ), {} );
                             accessible_demo.text = _(
-                                                       "This developer demonstration does not provide accessible game controls. "
+                                                       "This developer demonstration does not provide accessible game controls.  "
                                                        "Choose Back to return to Settings." );
                             accessible_demo.addentry( 0, true, 'q', _( "Back to settings" ) );
                             accessible_demo.query();
@@ -1315,14 +1315,14 @@ bool main_menu::new_character_tab()
                 return !pair.second->world_saves.empty();
             } );
             if( has_saves && !query_yn( _(
-                                            "Play Now creates a NEW character, not your saved character. "
-                                            "To resume, use Load Game. Create another new character?" ) ) ) {
+                                            "Play Now creates a NEW character, not your saved character.  "
+                                            "To resume, use Load Game.  Create another new character?" ) ) ) {
                 return false;
             }
             // Quick Play can spend a long time generating a world without a
             // menu snapshot. Confirm activation before the loading UI appears.
             a11y::android::announce( "A11Y_LOADING:" +
-                                     std::string( _( "Preparing a new world. Please wait." ) ), 1 );
+                                     std::string( _( "Preparing a new world.  Please wait." ) ), 1 );
         }
         WORLD *world = world_generator->pick_world( !is_play_now, is_play_now );
         if( world == nullptr ) {
@@ -1413,8 +1413,8 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
             // Nothing about the save is touched here; returning false lets
             // the main menu loop offer another save or world.
             popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded because the "
-                      "world could not be prepared. The save was not changed, overwritten, or "
-                      "deleted. You can try another save or world from the main menu." ),
+                      "world could not be prepared.  The save was not changed, overwritten, or "
+                      "deleted.  You can try another save or world from the main menu." ),
                    savegame.decoded_name(), worldname );
         }
         return false;
@@ -1448,9 +1448,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         // caller returns to the load list / main menu, where another save
         // can be chosen. No save data is overwritten or deleted on this
         // path.
-        popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded. It may be "
-                  "damaged, missing, or from an incompatible version. The save was not "
-                  "changed, overwritten, or deleted. You can choose another save or return "
+        popup( _( "The save for \"%1$s\" in world \"%2$s\" could not be loaded.  It may be "
+                  "damaged, missing, or from an incompatible version.  The save was not "
+                  "changed, overwritten, or deleted.  You can choose another save or return "
                   "to the main menu." ),
                savegame.decoded_name(), worldname );
     }
@@ -1626,7 +1626,7 @@ bool main_menu::load_character_tab( const std::string &worldname )
         }
         if( res == "DELETE" &&
             query_yn( string_format(
-                          _( "Delete the save for \"%1$s\" in world \"%2$s\" permanently? This deletes the character's save files in that world. This cannot be undone." ),
+                          _( "Delete the save for \"%1$s\" in world \"%2$s\" permanently?  This deletes the character's save files in that world.  This cannot be undone." ),
                           chosen.decoded_name(), worldname ) ) ) {
             if( delete_character_save_files( cur_world, chosen ) ) {
                 cur_world->world_saves.erase(
@@ -1758,7 +1758,7 @@ void main_menu::world_tab( const std::string &worldname )
             if( confirmed ) {
                 clear_world( false );
                 if( a11y::enabled() ) {
-                    popup( _( "World \"%s\" reset. All of its saves were removed." ), worldname );
+                    popup( _( "World \"%s\" reset.  All of its saves were removed." ), worldname );
                 }
             }
             break;

@@ -55,8 +55,8 @@ class CombatPocketRegressions(unittest.TestCase):
         self.assertIn("creature != nullptr && creature != you && pl_sees( *creature )", targeting)
         self.assertNotIn("guaranteed_hostile", targeting)
         self.assertNotIn("Attitude::HOSTILE", targeting)
-        self.assertIn('No visible creature. You can still fire in this direction.', self.gun)
-        self.assertNotIn('" " + _( "No visible creature. You can still fire in this direction." )', self.gun)
+        self.assertIn('No visible creature.  You can still fire in this direction.', self.gun)
+        self.assertNotIn('" " + _( "No visible creature.  You can still fire in this direction." )', self.gun)
         self.assertIn('direction.value += " ";\n                direction.value += _(', self.gun)
 
     def test_direct_gun_chooser_and_auto_reload_keep_native_game_rules(self):

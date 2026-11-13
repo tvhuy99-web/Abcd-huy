@@ -141,7 +141,7 @@ void annotate_live_command_states( semantic_snapshot &snapshot )
             // Despite the translated name, this action makes a single
             // automatic melee attack. It has no persistent on/off state.
             node.value = _( "One attack, not an on/off setting" );
-            node.detail = _( "Perform one automatic melee attack. This is not an on/off setting." );
+            node.detail = _( "Perform one automatic melee attack.  This is not an on/off setting." );
         } else if( id == "safemode" && g ) {
             node.value = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
                          g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) :

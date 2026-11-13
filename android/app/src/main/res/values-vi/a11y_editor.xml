@@ -10,7 +10,7 @@
     <string name="a11yEditorReadValue">Đọc toàn bộ giá trị</string>
     <string name="a11yEditorLetters">Chọn chữ cái</string>
     <string name="a11yEditorTone">Đổi dấu thanh của nguyên âm trước con trỏ</string>
-    <string name="a11yEditorCase">Đổi chữ hoa và chữ thường</string>
+    <string name="a11yEditorCase">Chuyển đổi chữ hoa và chữ thường</string>
     <string name="a11yEditorUppercase">Chữ hoa</string>
     <string name="a11yEditorLowercase">Chữ thường</string>
     <string name="a11yEditorDigits">Chọn chữ số</string>
@@ -38,7 +38,7 @@
     <string name="a11yToneTilde">Dấu ngã</string>
     <string name="a11yToneDot">Dấu nặng</string>
     <string name="a11yEditorRange">Giá trị cho phép: %1$s đến %2$s</string>
-    <string name="a11yEditorStep">Bước nhảy: %1$s</string>
+    <string name="a11yEditorStep">Bước: %1$s</string>
     <string name="a11yEditorIncreaseStep">Tăng một bước</string>
     <string name="a11yEditorDecreaseStep">Giảm một bước</string>
     <string name="a11yEditorNotANumber">Hãy nhập số.</string>
@@ -46,7 +46,7 @@
     <string name="a11yEditorStepMismatch">Giá trị phải theo bước %1$s tính từ %2$s.</string>
     <string name="a11yPocketOpen">Mở ngăn chứa</string>
     <string name="a11yPocketOtherActions">Các lệnh khác</string>
-    <string name="a11yPocketActions">Thao tác với vật phẩm</string>
+    <string name="a11yPocketActions">Thao tác với ngăn chứa</string>
     <string name="a11yPocketChoose">Chọn ngăn chứa</string>
     <string name="a11yPocketItems">Vật phẩm trong ngăn</string>
     <string name="a11yPocketEmpty">Không có vật phẩm trong ngăn này.</string>
@@ -60,7 +60,7 @@
     <string name="a11yPocketInstructions">Chọn vật phẩm rồi xác nhận để trở về danh sách ngoài. Chưa nhặt đồ cho tới khi xác nhận danh sách ngoài. Hủy sẽ bỏ lựa chọn mới trong ngăn.</string>
     <string name="a11yTravelMoving">Đang di chuyển tự động. Tuyến đường đang hoạt động.</string>
     <string name="a11yTravelPaused">Đã tạm dừng di chuyển. Tuyến đường vẫn được giữ.</string>
-    <string name="a11yTravelSafetyStopped">Đã dừng vì cảnh báo an toàn. Tuyến đường vẫn được giữ. Chỉ tiếp tục khi an toàn hoặc chủ động bỏ qua kẻ địch.</string>
+    <string name="a11yTravelSafetyStopped">Đã dừng vì chế độ an toàn. Tuyến đường vẫn được giữ. Chỉ tiếp tục khi an toàn hoặc chủ động bỏ qua mối đe dọa này.</string>
     <string name="a11yTravelIgnoreWarning">Bỏ qua cảnh báo kẻ địch lần này</string>
     <string name="a11yTravelResume">Tiếp tục di chuyển</string>
     <string name="a11yTravelPause">Tạm dừng di chuyển</string>

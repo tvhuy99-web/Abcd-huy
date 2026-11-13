@@ -33,7 +33,7 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                                     const std::string &title, const auto &filter ) {
         std::size_t group_index = 0;
         for( const auto &group : groups ) {
-            std::string text = _( "Each requirement group must be met. Within this group, choose one alternative:" );
+            std::string text = _( "Each requirement group must be met.  Within this group, choose one alternative:" );
             for( const auto &alternative : group ) {
                 const bool present = alternative.has( &actor, inventory, filter, batch );
                 text += '\n';
@@ -41,7 +41,12 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
                 text += ". ";
                 text += present ? _( "Available." ) : _( "Missing." );
             }
-            append_document( snapshot, prefix + ":" + kind + ":" + std::to_string( group_index ),
+            std::string id = prefix;
+            id += ":";
+            id += kind;
+            id += ":";
+            id += std::to_string( group_index );
+            append_document( snapshot, std::move( id ),
                              string_format( _( "%1$s. Group %2$d" ), title, group_index + 1 ), text );
             ++group_index;
         }
@@ -78,7 +83,8 @@ void append_requirements( semantic_snapshot &snapshot, const std::string &prefix
         const int have = item::count_by_charges( entry.first )
                          ? inventory.charges_of( entry.first, INT_MAX, component_filter )
                          : inventory.amount_of( entry.first, false, INT_MAX, component_filter );
-        totals += "\n" + string_format( _( "%1$s: need %2$d in total across groups; available %3$d." ),
+        totals += '\n';
+        totals += string_format( _( "%1$s: need %2$d in total across groups; available %3$d." ),
                                         entry.first.obj().nname( entry.second ), entry.second, have );
     }
     append_document( snapshot, prefix + ":total", _( "Shared total" ), totals );

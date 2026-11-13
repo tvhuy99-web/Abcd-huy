@@ -2785,11 +2785,11 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             reason = _( "No recipes learned or available to this crafter yet." );
         } else if( !filterstring.empty() ) {
             reason = string_format(
-                         _( "No recipes match this filter. %d recipes are available in the crafting group." ),
+                         _( "No recipes match this filter.  %d recipes are available in the crafting group." ),
                          static_cast<int>( available_recipes->size() ) );
         } else {
             reason = string_format(
-                         _( "No recipes in this category. %d recipes are available in the crafting group." ),
+                         _( "No recipes in this category.  %d recipes are available in the crafting group." ),
                          static_cast<int>( available_recipes->size() ) );
         }
         a11y::append_document( snapshot, "craft:no-recipes",
@@ -2964,7 +2964,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
           intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
         if( reader_all_categories && ( intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
             a11y::android::announce(
-                _( "All categories has no subcategories. Swipe left or right with two fingers to select a main category." ),
+                _( "All categories has no subcategories.  Swipe left or right with two fingers to select a main category." ),
                 1 );
             a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV", "ignored=global_all_subcategory" );
             return "TIMEOUT";

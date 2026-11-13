@@ -1322,7 +1322,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
         ui_manager::redraw();
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, remove_color_tags( message ) );
-            snapshot.summary = _( "Read a direction, then activate it to choose. Reading does not act." );
+            snapshot.summary = _( "Read a direction, then activate it to choose.  Reading does not act." );
             const tripoint_bub_ms origin = reader_origin ? *reader_origin : get_player_character().pos_bub();
             get_map().update_visibility_cache( origin.z() );
             for( a11y::semantic_node &node : snapshot.nodes ) {

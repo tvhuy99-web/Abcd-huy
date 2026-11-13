@@ -1,10 +1,10 @@
 #include "a11y_semantics.h"
 #include <utility>
 #include "output.h"
+#include "string_formatter.h"
 
 #include <algorithm>
 #include <cmath>
-#include <cstdio>
 #include <cstdlib>
 #include <map>
 #include <set>
@@ -59,9 +59,7 @@ std::string number( const double value )
         value >= -9.0e15 && value <= 9.0e15 ) {
         return std::to_string( static_cast<long long>( value ) );
     }
-    char buffer[40];
-    std::snprintf( buffer, sizeof( buffer ), "%.6g", value );
-    return buffer;
+    return string_format( "%.6g", value );
 }
 
 bool parse_number( const std::string &text, double &value )
