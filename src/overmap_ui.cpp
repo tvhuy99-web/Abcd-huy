@@ -1,4 +1,6 @@
 #include "overmap_ui.h"
+#include "a11y_semantics.h"
+#include "enums.h"
 
 #include <algorithm>
 #include <array>
@@ -12,6 +14,7 @@
 #include <ratio>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -547,7 +550,7 @@ std::tuple<char, nc_color, size_t> get_note_display_info( std::string_view note 
 // Spoken equivalent of a map note's visual glyph and color (R13.2): the
 // glyph is a single character on the visual map, so the reader names it and
 // the color instead of relying on the character's shape or hue.
-static std::string note_symbol_description( const std::string &note )
+static std::string note_symbol_description( const std::string_view note )
 {
     const std::tuple<char, nc_color, std::size_t> display_info = get_note_display_info( note );
     const char symbol = std::get<0>( display_info );
@@ -983,7 +986,7 @@ static point_abs_omt draw_notes( const tripoint_abs_omt &origin )
                                distance_player );
             nmenu.entries[row].a11y_value = string_format(
                                                 _( "Overmap coordinates: X %1$d, Y %2$d, level %3$d. "
-                                                   "Distance from player: %4$d map tiles. %5$s %6$s" ),
+                                                   "Distance from player: %4$d map tiles.  %5$s %6$s" ),
                                                 p.x(), p.y(), origin.z(), distance_player, location_desc,
                                                 danger_desc_text );
             nmenu.entries[row].a11y_value += " " + note_symbol_description( note );
@@ -1746,7 +1749,7 @@ static bool search( const ui_adaptor &om_ui, tripoint_abs_omt &curs,
             snapshot.nodes[node_index].position = node_index + 1;
             snapshot.nodes[node_index].total = snapshot.nodes.size();
             if( snapshot.nodes[node_index].id == "CONFIRM" ) {
-                snapshot.nodes[node_index].detail = _( "Choose the displayed search result and return to the map at that location. This does not start travel." );
+                snapshot.nodes[node_index].detail = _( "Choose the displayed search result and return to the map at that location.  This does not start travel." );
             } else if( snapshot.nodes[node_index].id == "NEXT_TAB" ) {
                 snapshot.nodes[node_index].detail = _( "Move to the next matching map tile." );
             } else if( snapshot.nodes[node_index].id == "PREV_TAB" ) {
@@ -2277,7 +2280,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         const tripoint_abs_omt &cursor, const tripoint_abs_omt &origin,
         std::map<std::string, tripoint_abs_omt> &focus_targets )
 {
-    auto snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
     std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
     snapshot.nodes.clear();
     snapshot.summary = string_format( _( "Map coordinates: X %1$d, Y %2$d, level %3$d. "
@@ -2364,11 +2367,11 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     const int cursor_danger_radius = overmap_buffer.note_danger_radius( cursor );
     for( a11y::semantic_node &command : commands ) {
         if( command.id == "CONFIRM" ) {
-            command.detail = _( "Select the current map coordinates and close the map. This action does not start travel." );
+            command.detail = _( "Select the current map coordinates and close the map.  This action does not start travel." );
         } else if( command.id == "CHOOSE_DESTINATION" ) {
-            command.detail = _( "Set the current map tile as the route destination. Choosing the existing route again may open the travel confirmation." );
+            command.detail = _( "Set the current map tile as the route destination.  Choosing the existing route again may open the travel confirmation." );
         } else if( command.id == "CHOOSE_DESTINATION_DIRECT" ) {
-            command.detail = _( "Set a direct route to the current map tile. Choosing the existing route again may open the travel confirmation." );
+            command.detail = _( "Set a direct route to the current map tile.  Choosing the existing route again may open the travel confirmation." );
         } else if( command.id == "GO_TO_DESTINATION" || command.id == "CENTER_ON_DESTINATION" ) {
             if( !has_route ) {
                 command.enabled = false;
@@ -2376,7 +2379,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                 command.detail = command.disabled_reason;
             } else {
                 command.detail = string_format( _( "Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. "
-                                                   "Route length: %5$d map tiles. Relative location: %6$s." ),
+                                                   "Route length: %5$d map tiles.  Relative location: %6$s." ),
                                                 overmap_tile_description( route.front() ), route.front().x(),
                                                 route.front().y(), route.front().z(),
                                                 static_cast<int>( route.size() ),
@@ -2403,7 +2406,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         } else if( command.id == "MARK_DANGER" ) {
             if( cursor_danger_radius >= 0 ) {
                 command.detail = string_format(
-                                     _( "A danger radius of %d map tiles is set at the cursor. "
+                                     _( "A danger radius of %d map tiles is set at the cursor.  "
                                         "Open the prompt to remove it or choose another radius." ),
                                      cursor_danger_radius );
             } else if( cursor_has_note ) {
@@ -2440,23 +2443,23 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         } else if( command.id == "TOGGLE_MAP_NOTES" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_map_notes;
-            command.detail = _( "Show or hide map notes visually. The reader still describes a note at the cursor." );
+            command.detail = _( "Show or hide map notes visually.  The reader still describes a note at the cursor." );
         } else if( command.id == "TOGGLE_BLINKING" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_blinking;
-            command.detail = _( "Blink the visual map between the explored view and the overlay view. This changes only the visual display; reader descriptions do not change." );
+            command.detail = _( "Blink the visual map between the explored view and the overlay view.  This changes only the visual display; reader descriptions do not change." );
         } else if( command.id == "TOGGLE_OVERLAYS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_overlays;
-            command.detail = _( "Show or hide visual overlay information, such as explored shading. This changes only the visual display." );
+            command.detail = _( "Show or hide visual overlay information, such as explored shading.  This changes only the visual display." );
         } else if( command.id == "TOGGLE_HORDES" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_hordes;
-            command.detail = _( "Show or hide monster horde markers on the visual map. Hordes are only ever shown where the character's senses allow." );
+            command.detail = _( "Show or hide monster horde markers on the visual map.  Hordes are only ever shown where the character's senses allow." );
         } else if( command.id == "TOGGLE_CITY_LABELS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_city_labels;
-            command.detail = _( "Show or hide city name labels on the visual map. Labels are only drawn for places the character has seen the outlines of." );
+            command.detail = _( "Show or hide city name labels on the visual map.  Labels are only drawn for places the character has seen the outlines of." );
         } else if( command.id == "TOGGLE_MAP_REVEALS" ) {
             command.role = "checkbox";
             command.checked = uistate.overmap_show_revealed_omts;
@@ -2477,7 +2480,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         } else if( command.id == "TOGGLE_EXPLORED" ) {
             command.role = "checkbox";
             command.checked = overmap_buffer.is_explored( cursor );
-            command.detail = _( "Mark the cursor tile as explored, or remove that mark. This changes the map's remembered state for this tile; it does not move the player." );
+            command.detail = _( "Mark the cursor tile as explored, or remove that mark.  This changes the map's remembered state for this tile; it does not move the player." );
         } else if( command.id == "TOGGLE_LAND_USE_CODES" ) {
             if( !debug_mode ) {
                 command.enabled = false;
@@ -2489,13 +2492,13 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
                 command.detail = _( "Show or hide land use codes on the visual map (debug display)." );
             }
         } else if( command.id == "look" ) {
-            command.detail = _( "Open the look-around view at the cursor tile on the local map. This closes the overmap and does not move the player." );
+            command.detail = _( "Open the look-around view at the cursor tile on the local map.  This closes the overmap and does not move the player." );
         } else if( command.id == "zoom_in" ) {
             command.detail = _( "Zoom the visual map in. This changes only the visual scale; reader descriptions do not change." );
         } else if( command.id == "zoom_out" ) {
-            command.detail = _( "Zoom the visual map out. This changes only the visual scale; reader descriptions do not change." );
+            command.detail = _( "Zoom the visual map out.  This changes only the visual scale; reader descriptions do not change." );
         } else if( command.id == "SEARCH" ) {
-            command.detail = _( "Search for map tiles and notes by name around the cursor. Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor." );
+            command.detail = _( "Search for map tiles and notes by name around the cursor.  Only tiles the character has seen and notes the character made can be found; choosing a result only moves the map cursor." );
         } else if( command.id == "MISSIONS" ) {
             command.detail = _( "Open the missions screen with the active, completed and failed mission lists and points of interest." );
         }
@@ -2524,12 +2527,12 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
     // accuracy boundary for tile names.
     a11y::append_document( snapshot, "overmap:legend", _( "Map legend in words" ),
                            _( "Each map tile is named at the level of detail the character actually has: "
-                              "full knowledge, some details, outlines only, or vague details. A tile the "
-                              "character has never seen is announced as unexplored and is not named. "
-                              "Cursor coordinates are exact because the map is the character's own record. "
+                              "full knowledge, some details, outlines only, or vague details.  A tile the "
+                              "character has never seen is announced as unexplored and is not named.  "
+                              "Cursor coordinates are exact because the map is the character's own record.  "
                               "A map note is read as its text plus its symbol and color in words, and a "
-                              "danger area is stated as a radius in map tiles. The current route node "
-                              "names the planned destination; starting travel is a separate command. "
+                              "danger area is stated as a radius in map tiles.  The current route node "
+                              "names the planned destination; starting travel is a separate command.  "
                               "The target tile of the current objective is announced when the cursor "
                               "reaches it. Search finds only tiles the character has seen and notes the "
                               "character made." ) );

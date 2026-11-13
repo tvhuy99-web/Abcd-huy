@@ -1,4 +1,5 @@
 #include "panels.h"
+#include "a11y_semantics.h"
 
 #include <algorithm>
 #include <cstddef>
@@ -818,10 +819,9 @@ void panel_manager::show_adm()
             auto &panel_list = get_current_layout().panels();
             const size_t source_index = row_it->second;
             const size_t target_index = target_it->second;
-            const int step = target_index > source_index ? 1 : -1;
+            const bool forward = target_index > source_index;
             for( size_t i = source_index; i != target_index; ) {
-                const size_t next =
-                    static_cast<size_t>( static_cast<int>( i ) + step );
+                const size_t next = forward ? i + 1 : i - 1;
                 std::swap( panel_list[i], panel_list[next] );
                 i = next;
             }
@@ -840,7 +840,7 @@ void panel_manager::show_adm()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Sidebar options" );
-        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order. Activate a layout name to switch the sidebar layout. Changes are saved when you exit, as on the original screen." );
+        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
         const auto &panel_list = get_current_layout().panels();
         for( const auto &entry : row_indices ) {
             const size_t row = entry.first;
@@ -853,7 +853,7 @@ void panel_manager::show_adm()
             node.value = panel.toggle ? _( "On" ) : _( "Off" );
             node.selected = current_col == 0 && current_row == row;
             node.detail = string_format(
-                              _( "Panel %d of %d in the display order. Width: %d. Height: %d." ),
+                              _( "Panel %d of %d in the display order.  Width: %d. Height: %d." ),
                               static_cast<int>( row + 1 ),
                               static_cast<int>( row_indices.size() ),
                               panel.get_width(), panel.get_height() );
@@ -892,7 +892,7 @@ void panel_manager::show_adm()
             snapshot.nodes.push_back( std::move( node ) );
             layout_row++;
         }
-        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }

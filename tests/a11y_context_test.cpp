@@ -1,8 +1,15 @@
+#include <cstddef>
+#include <cstdint>
+#include <initializer_list>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "a11y_context.h"
 #include "a11y_quantity_selection.h"
+#include "a11y_semantics.h"
 #include "a11y_world_input_gate.h"
 #include "cata_catch.h"
 
@@ -11,11 +18,11 @@ TEST_CASE( "a11y_only_active_overlay_accepts_input", "[a11y][context]" )
     a11y::context_stack stack;
     CHECK_FALSE( stack.active_token() );
     CHECK_FALSE( stack.accepts( {} ) );
-    const auto world = stack.enter( "world", "DEFAULTMODE" );
-    const auto world_token = stack.active_token().value();
+    const std::uint64_t world = stack.enter( "world", "DEFAULTMODE" );
+    const a11y::context_token world_token = stack.active_token().value();
     REQUIRE( stack.accepts( world_token ) );
-    const auto menu = stack.enter( "inventory", "INVENTORY" );
-    const auto menu_token = stack.active_token().value();
+    const std::uint64_t menu = stack.enter( "inventory", "INVENTORY" );
+    const a11y::context_token menu_token = stack.active_token().value();
     CHECK_FALSE( stack.accepts( world_token ) );
     CHECK( stack.accepts( menu_token ) );
     REQUIRE( stack.leave( menu ) );
@@ -30,13 +37,13 @@ TEST_CASE( "a11y_out_of_order_close_cannot_leave_orphan_input", "[a11y][context]
 {
     a11y::context_stack stack;
     stack.enter( "world", "DEFAULTMODE" );
-    const auto menu = stack.enter( "inventory", "INVENTORY" );
-    const auto prompt = stack.enter( "count", "STRING_INPUT" );
-    const auto stale = stack.active_token().value();
+    const std::uint64_t menu = stack.enter( "inventory", "INVENTORY" );
+    const std::uint64_t prompt = stack.enter( "count", "STRING_INPUT" );
+    const a11y::context_token stale = stack.active_token().value();
     REQUIRE( stack.leave( menu ) );
     CHECK_FALSE( stack.accepts( stale ) );
-    const auto replacement = stack.enter( "dialogue", "DIALOGUE" );
-    const auto current = stack.active_token().value();
+    const std::uint64_t replacement = stack.enter( "dialogue", "DIALOGUE" );
+    const a11y::context_token current = stack.active_token().value();
     CHECK_FALSE( stack.leave( prompt ) );
     CHECK( stack.active_frame()->id == replacement );
     CHECK( stack.accepts( current ) );
@@ -46,7 +53,7 @@ TEST_CASE( "a11y_background_and_resume_invalidate_callbacks", "[a11y][context]" 
 {
     a11y::context_stack stack;
     stack.enter( "world", "DEFAULTMODE" );
-    const auto before = stack.active_token().value();
+    const a11y::context_token before = stack.active_token().value();
     stack.set_suspended( true );
     CHECK( stack.is_suspended() );
     CHECK_FALSE( stack.active_token() );
@@ -60,16 +67,16 @@ TEST_CASE( "a11y_background_and_resume_invalidate_callbacks", "[a11y][context]" 
 TEST_CASE( "a11y_load_does_not_reuse_session_or_scope_identity", "[a11y][context]" )
 {
     a11y::context_stack stack;
-    const auto old_frame = stack.enter( "world", "DEFAULTMODE" );
-    const auto old_token = stack.active_token().value();
+    const std::uint64_t old_frame = stack.enter( "world", "DEFAULTMODE" );
+    const a11y::context_token old_token = stack.active_token().value();
     stack.set_suspended( true );
     stack.reset_session();
     CHECK( stack.is_suspended() );
-    const auto new_frame = stack.enter( "world", "DEFAULTMODE" );
+    const std::uint64_t new_frame = stack.enter( "world", "DEFAULTMODE" );
     CHECK( old_frame != new_frame );
     CHECK_FALSE( stack.leave( old_frame ) );
     stack.set_suspended( false );
-    const auto token = stack.active_token().value();
+    const a11y::context_token token = stack.active_token().value();
     CHECK( old_token.session != token.session );
     CHECK_FALSE( stack.accepts( old_token ) );
     CHECK( stack.accepts( token ) );
@@ -97,7 +104,7 @@ TEST_CASE( "a11y_repeated_noop_does_not_invalidate_current_input", "[a11y][conte
 {
     a11y::context_stack stack;
     stack.enter( "world", "DEFAULTMODE" );
-    const auto token = stack.active_token().value();
+    const a11y::context_token token = stack.active_token().value();
     stack.set_suspended( false );
     CHECK_FALSE( stack.leave( 0 ) );
     CHECK( stack.accepts( token ) );
@@ -112,7 +119,7 @@ TEST_CASE( "a11y_recreated_runtime_cannot_accept_another_stack_token", "[a11y][c
     a11y::context_stack second;
     first.enter( "world", "DEFAULTMODE" );
     second.enter( "world", "DEFAULTMODE" );
-    const auto token = first.active_token().value();
+    const a11y::context_token token = first.active_token().value();
     CHECK_FALSE( second.accepts( token ) );
     first.reset_session();
     first.enter( "world", "DEFAULTMODE" );
@@ -125,7 +132,7 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
 {
     a11y::context_stack stack;
     stack.enter( "world", "DEFAULTMODE" );
-    const auto token = stack.active_token().value();
+    const a11y::context_token token = stack.active_token().value();
 
     a11y::semantic_snapshot world;
     world.token = token;
@@ -183,7 +190,7 @@ TEST_CASE( "a11y_fast_world_swipe_does_not_depend_on_map_revision",
     // Matching a world command is never sufficient by itself. The actual
     // runtime first requires the current, unexpired session/frame/generation.
     world.category = "DEFAULTMODE";
-    const auto overlay = stack.enter( "inventory", "INVENTORY" );
+    const std::uint64_t overlay = stack.enter( "inventory", "INVENTORY" );
     CHECK_FALSE( stack.accepts( swipe.token ) );
     REQUIRE( stack.leave( overlay ) );
     CHECK_FALSE( stack.accepts( swipe.token ) );

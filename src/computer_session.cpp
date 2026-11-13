@@ -1,4 +1,5 @@
 #include "computer_session.h"
+#include "a11y_semantics.h"
 
 #include <algorithm>
 #include <array>
@@ -7,6 +8,7 @@
 #include <memory>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <unordered_set>
 #include <utility>
 
@@ -1791,7 +1793,7 @@ bool computer_session::query_any()
     return query_any_impl( terminal_text() );
 }
 
-bool computer_session::query_any_impl( const std::string &summary )
+bool computer_session::query_any_impl( const std::string_view summary )
 {
     if( !a11y::enabled() ) {
         ui_manager::redraw();

@@ -1,4 +1,5 @@
 #include "veh_interact.h"
+#include "a11y_semantics.h"
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -521,21 +522,20 @@ std::string reader_part_condition( const vehicle_part &pt )
 std::string reader_tile_words( const vehicle &veh, const point_rel_ms &mount )
 {
     const point_rel_ms origin = veh.part( 0 ).mount;
-    const int dx = mount.x() - origin.x();
-    const int dy = mount.y() - origin.y();
-    if( dx == 0 && dy == 0 ) {
+    const point delta = ( mount - origin ).raw();
+    if( delta == point::zero ) {
         return _( "the reference tile" );
     }
     std::string result;
-    if( dx != 0 ) {
-        result += string_format( dx > 0 ? _( "%d ahead" ) : _( "%d back" ), std::abs( dx ) );
+    if( delta.x != 0 ) {
+        result += string_format( delta.x > 0 ? _( "%d ahead" ) : _( "%d back" ), std::abs( delta.x ) );
     }
-    if( dy != 0 ) {
+    if( delta.y != 0 ) {
         if( !result.empty() ) {
             result += ", ";
         }
-        result += string_format( dy > 0 ? _( "%d to the right" ) : _( "%d to the left" ),
-                                 std::abs( dy ) );
+        result += string_format( delta.y > 0 ? _( "%d to the right" ) : _( "%d to the left" ),
+                                 std::abs( delta.y ) );
     }
     return result;
 }
@@ -875,8 +875,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                         snapshot.focus = node.id;
                     }
                 }
-                snapshot.nodes.push_back( std::move( node ) );
                 part_bindings.push_back( { node.id, part_index, row } );
+                snapshot.nodes.push_back( std::move( node ) );
             }
         }
     }
@@ -944,10 +944,10 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                                      static_cast<int>( owner.parts_here.size() ) );
             node.detail = detail;
             node.actions = { "focus" };
-            snapshot.nodes.push_back( std::move( node ) );
             if( snapshot.focus.empty() ) {
                 snapshot.focus = node.id;
             }
+            snapshot.nodes.push_back( std::move( node ) );
         }
         for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
             const int part_index = owner.parts_here[i];
@@ -1045,14 +1045,14 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 const bool ok = owner.update_part_requirements( here );
                 node.enabled = ok;
                 if( !ok ) {
-                    node.disabled_reason = _( "This part cannot be installed here. The requirements say why." );
+                    node.disabled_reason = _( "This part cannot be installed here.  The requirements say why." );
                 }
                 if( owner.msg ) {
                     node.detail = remove_color_tags( *owner.msg );
                 }
             }
-            snapshot.nodes.push_back( std::move( node ) );
             install_bindings.push_back( { node.id, vp } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
     } else if( current_mode == mode::repair ) {
         snapshot.summary = title;
@@ -1084,8 +1084,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 }
             }
             node.detail = detail;
-            snapshot.nodes.push_back( std::move( node ) );
             part_bindings.push_back( { node.id, part_index, static_cast<int>( j ) } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
     } else if( current_mode == mode::remove && owner.remove_info ) {
         snapshot.summary = title;
@@ -1114,8 +1114,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             if( node.selected ) {
                 snapshot.focus = node.id;
             }
-            snapshot.nodes.push_back( std::move( node ) );
             part_bindings.push_back( { node.id, part_index, static_cast<int>( i ) } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
         owner.msg = saved_msg;
     }

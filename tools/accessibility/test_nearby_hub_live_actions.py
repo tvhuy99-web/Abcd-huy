@@ -51,7 +51,7 @@ class NearbyHubLiveActionsTest(unittest.TestCase):
         self.assertIn("nearby_map.furn( target ).obj().is_movable()", section)
         self.assertIn("viewer.is_mounted()", section)
         self.assertIn("viewer.has_active_mutation(", section)
-        self.assertIn("viewer.has_effect( effect_incorporeal_nearby )", section)
+        self.assertIn("viewer.has_effect( effect_incorporeal )", section)
         self.assertIn('"reader:nearby:available:" + id', section)
         self.assertIn('if (node.id.startsWith("reader:nearby:available:")) { continue; }',
                       self.reader)

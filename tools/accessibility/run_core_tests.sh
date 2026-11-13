@@ -13,5 +13,6 @@ CPP
 "${CXX:-g++}" -std=c++17 -Wall -Wextra -Werror -pedantic \
     -I"$task_root/src" -I"$task_root/tests" -isystem "$task_root/src/third-party" \
     "$task_build/main.cpp" "$task_root/tests/a11y_context_test.cpp" \
-    "$task_root/src/a11y_context.cpp" -o "$task_build/a11y_core_test"
+    "$task_root/src/a11y_context.cpp" "$task_root/src/a11y_quantity_selection.cpp" \
+    -o "$task_build/a11y_core_test"
 "$task_build/a11y_core_test" '[a11y]'

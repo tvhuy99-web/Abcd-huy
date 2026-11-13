@@ -1,4 +1,11 @@
 #include "a11y_perception.h"
+#include "enums.h"
+#include "pimpl.h"
+#include "point.h"
+#include "translation.h"
+#include <list>
+#include <memory>
+#include <optional>
 #include "a11y_item_text.h"
 #include "a11y_world.h"
 
@@ -6,16 +13,13 @@
 #include <unordered_set>
 #include <utility>
 #include "avatar.h"
-#include "catacharset.h"
 #include "creature.h"
 #include "creature_tracker.h"
 #include "coordinates.h"
 #include "dialogue.h"
 #include "field.h"
-#include "field_type.h"
 #include "flag.h"
 #include "item.h"
-#include "lightmap.h"
 #include "magic_enchantment.h"
 #include "map.h"
 #include "map_memory.h"
@@ -28,6 +32,8 @@
 #include "type_id.h"
 #include "vehicle.h"
 #include "vpart_position.h"
+
+static const json_character_flag json_flag_BLIND( "BLIND" );
 
 namespace a11y
 {
@@ -157,14 +163,14 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
     if( !here.inbounds( position ) ) {
         return result;
     }
-    const auto &cache = here.get_visibility_variables_cache();
+    const visibility_variables &cache = here.get_visibility_variables_cache();
     const bool visible = here.get_visibility( here.apparent_light_at( position, cache ), cache ) ==
                          visibility_type::CLEAR;
     // sound_at is the player's heard-marker description, not a lookup of a
     // creature's true location or identity.
     result.heard_marker = sounds::sound_at( position );
     if( !visible ) {
-        const auto absolute = here.get_abs( position );
+        const tripoint_abs_ms absolute = here.get_abs( position );
         if( viewer.has_memory_at( absolute ) ) {
             fill_remembered_tile( result, viewer.get_memorized_tile( absolute ) );
         }
@@ -227,10 +233,9 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
         result.vehicle_part = vehicle_part->vehicle().part(
                                   static_cast<int>( vehicle_part->part_index() ) ).name( false );
     }
-    const json_character_flag blind( "BLIND" );
     if( here.sees_some_items( position, viewer ) &&
         !( here.has_flag( ter_furn_flag::TFLAG_CONTAINER, position ) && !here.could_see_items( position, viewer ) ) &&
-        !viewer.has_effect_with_flag( blind ) && !viewer.worn_with_flag( flag_BLIND ) ) {
+        !viewer.has_effect_with_flag( json_flag_BLIND ) && !viewer.worn_with_flag( flag_BLIND ) ) {
         std::map<std::string, int> names;
         for( const item &value : here.i_at( position ) ) { add_known_items( names, value ); }
         for( const auto &name : names ) {
@@ -279,7 +284,7 @@ tile_observation observe_memory_tile( const tripoint_bub_ms &position )
     if( !here.inbounds( position ) ) {
         return result;
     }
-    const auto absolute = here.get_abs( position );
+    const tripoint_abs_ms absolute = here.get_abs( position );
     if( !viewer.has_memory_at( absolute ) ) {
         return result;
     }

@@ -1,4 +1,5 @@
 #include "auto_note.h"
+#include "a11y_semantics.h"
 
 #include <cstddef>
 #include <functional>
@@ -508,7 +509,7 @@ void auto_note_manager_gui::show()
             const std::vector<map_extra_id> &shown = bCharacter ? char_displayCache : global_displayCache;
             const auto &entries = bCharacter ? char_mapExtraCache : global_mapExtraCache;
             const auto &symbols = bCharacter ? char_custom_symbol_cache : global_custom_symbol_cache;
-            snapshot.summary = string_format( _( "%1$s tab. %2$d discovered map extras. "
+            snapshot.summary = string_format( _( "%1$s tab.  %2$d discovered map extras.  "
                                                   "Automatic map-extra notes: %3$s." ),
                                               bCharacter ? _( "Character" ) : _( "Global" ),
                                               static_cast<int>( shown.size() ),

@@ -10,7 +10,6 @@
 
 #include "a11y_runtime.h"
 #include "cata_imgui.h"
-#include "catacharset.h"
 #include "debug.h"
 #include "dialogue.h"
 #include "imgui/imgui.h"

@@ -27,7 +27,7 @@ class CharacterCreatorSummaryInput(unittest.TestCase):
             self.assertIn('"' + action + '"', self.creator)
         self.assertIn('node.role = "button";', self.creator)
         self.assertIn('node.role == "button" || node.role == "document"', self.creator)
-        self.assertIn('_( "Summary. Step 7 of 7. Points remaining: %d." )', self.creator)
+        self.assertIn('_( "Summary.  Step 7 of 7. Points remaining: %d." )', self.creator)
         self.assertIn('"CHARACTER_CREATION".equals(next.category)', self.controller)
 
     def test_gender_outfit_and_blood_use_single_choice_lists(self):
@@ -56,7 +56,7 @@ class CharacterCreatorSummaryInput(unittest.TestCase):
         self.assertIn('field.setError(', self.native)
         self.assertIn('if (completed.compareAndSet(false, true))', self.native)
         self.assertIn('android_accessible_input( title, text, 0, max_input_length', self.popup)
-        self.assertIn('std::is_integral<T>::value ? 1 : 2', self.popup)
+        self.assertIn('std::is_integral_v<T> ? 1 : 2', self.popup)
         self.assertIn('void number_input_popup<T>::set_value_range', self.popup)
         self.assertIn('manual.set_value_range( min_value, maximum_affordable );', self.creator)
         self.assertIn('age_query.set_value_range( CHARACTER_AGE_MIN, CHARACTER_AGE_MAX );', self.creator)

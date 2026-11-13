@@ -1,4 +1,5 @@
 #include "iuse_software_snake.h"
+#include "a11y_semantics.h"
 
 #include <cstddef>
 #include <iterator>
@@ -176,18 +177,18 @@ int snake_game::start_game()
         // waits for a direction at each step instead of moving in real
         // time. Speed, scoring and growth rules are unchanged.
         const std::string rules_text = _(
-                                           "Steer the snake with the direction commands. The snake keeps moving in its "
+                                           "Steer the snake with the direction commands.  The snake keeps moving in its "
                                            "current direction until you steer it. Eat fruit to score 500 points per "
                                            "fruit and grow 10 segments longer; the game also speeds up slightly with "
-                                           "each fruit when played in real time. The snake wraps around the edges of "
-                                           "the board: leaving one side brings it back in on the opposite side. If "
-                                           "the snake runs into its own body, the game is over. Reader timing: with "
+                                           "each fruit when played in real time.  The snake wraps around the edges of "
+                                           "the board: leaving one side brings it back in on the opposite side.  If "
+                                           "the snake runs into its own body, the game is over.  Reader timing: with "
                                            "the screen reader on, the snake waits for your direction at each step "
-                                           "instead of moving in real time. The snake, scoring and growth rules are "
+                                           "instead of moving in real time.  The snake, scoring and growth rules are "
                                            "unchanged." );
 
         if( game_over ) {
-            snapshot.summary = string_format( _( "Game over. Total score: %d." ), iScore );
+            snapshot.summary = string_format( _( "Game over.  Total score: %d." ), iScore );
         } else {
             // vSnakeBody entries are (row, column); the head is the last entry.
             const int head_y = vSnakeBody.empty() ? 0 : vSnakeBody.back().first;
@@ -207,22 +208,21 @@ int snake_game::start_game()
             const bool has_fruit = iFruitPosX != 0 && iFruitPosY != 0;
             std::string fruit_relative;
             if( has_fruit ) {
-                const int dx = iFruitPosX - head_x;
-                const int dy = iFruitPosY - head_y;
+                const point delta( iFruitPosX - head_x, iFruitPosY - head_y );
                 std::vector<std::string> parts;
-                if( dx > 0 ) {
-                    parts.push_back( string_format( dx == 1 ? _( "%d column right" )
-                                                    : _( "%d columns right" ), dx ) );
-                } else if( dx < 0 ) {
-                    parts.push_back( string_format( dx == -1 ? _( "%d column left" )
-                                                    : _( "%d columns left" ), -dx ) );
+                if( delta.x > 0 ) {
+                    parts.push_back( string_format( delta.x == 1 ? _( "%d column right" )
+                                                    : _( "%d columns right" ), delta.x ) );
+                } else if( delta.x < 0 ) {
+                    parts.push_back( string_format( delta.x == -1 ? _( "%d column left" )
+                                                    : _( "%d columns left" ), -delta.x ) );
                 }
-                if( dy < 0 ) {
-                    parts.push_back( string_format( dy == -1 ? _( "%d row up" )
-                                                    : _( "%d rows up" ), -dy ) );
-                } else if( dy > 0 ) {
-                    parts.push_back( string_format( dy == 1 ? _( "%d row down" )
-                                                    : _( "%d rows down" ), dy ) );
+                if( delta.y < 0 ) {
+                    parts.push_back( string_format( delta.y == -1 ? _( "%d row up" )
+                                                    : _( "%d rows up" ), -delta.y ) );
+                } else if( delta.y > 0 ) {
+                    parts.push_back( string_format( delta.y == 1 ? _( "%d row down" )
+                                                    : _( "%d rows down" ), delta.y ) );
                 }
                 for( size_t i = 0; i < parts.size(); ++i ) {
                     if( i > 0 ) {
@@ -241,27 +241,26 @@ int snake_game::start_game()
                                    _( "Score: %1$d. Snake length: %2$d. Head at column %3$d, row %4$d. "
                                       "Heading %5$s. %6$s. Reader timing: with the screen reader on, the "
                                       "snake waits for your direction at each step instead of moving in real "
-                                      "time. The snake, scoring and growth rules are unchanged." ),
+                                      "time.  The snake, scoring and growth rules are unchanged." ),
                                    iScore, static_cast<int>( vSnakeBody.size() ), head_x + 1, head_y + 1,
                                    heading, fruit_text );
 
             const struct {
                 const char *id;
                 std::string label;
-                int dx;
-                int dy;
+                point delta;
             } directions[] = {
-                { "snake:dir:up", _( "Steer north" ), 0, -1 },
-                { "snake:dir:down", _( "Steer south" ), 0, 1 },
-                { "snake:dir:left", _( "Steer west" ), -1, 0 },
-                { "snake:dir:right", _( "Steer east" ), 1, 0 },
+                { "snake:dir:up", _( "Steer north" ), point::north },
+                { "snake:dir:down", _( "Steer south" ), point::south },
+                { "snake:dir:left", _( "Steer west" ), point::west },
+                { "snake:dir:right", _( "Steer east" ), point::east },
             };
             for( const auto &direction : directions ) {
                 a11y::semantic_node node;
                 node.id = direction.id;
                 node.label = direction.label;
                 node.actions = { "focus", "activate" };
-                node.selected = iDirX == direction.dx && iDirY == direction.dy;
+                node.selected = point( iDirX, iDirY ) == direction.delta;
                 if( node.selected ) {
                     snapshot.focus = node.id;
                 }

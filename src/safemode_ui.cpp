@@ -1,4 +1,6 @@
 #include "safemode_ui.h"
+#include "a11y_semantics.h"
+#include <cstddef>
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -60,6 +62,65 @@ std::string safemode::npc_type_name()
     return name;
 }
 
+std::string safemode::attitude_value_of( const Creature::Attitude attitude )
+{
+    switch( attitude ) {
+        case Creature::Attitude::HOSTILE:
+            return "hostile";
+        case Creature::Attitude::NEUTRAL:
+            return "neutral";
+        case Creature::Attitude::FRIENDLY:
+            return "friendly";
+        case Creature::Attitude::ANY:
+            return "any";
+    }
+    return "any";
+}
+
+bool safemode::attitude_from_value( const std::string &value,
+                                   Creature::Attitude &attitude )
+{
+    if( value == "hostile" ) {
+        attitude = Creature::Attitude::HOSTILE;
+    } else if( value == "neutral" ) {
+        attitude = Creature::Attitude::NEUTRAL;
+    } else if( value == "friendly" ) {
+        attitude = Creature::Attitude::FRIENDLY;
+    } else if( value == "any" ) {
+        attitude = Creature::Attitude::ANY;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+std::string safemode::movement_value_of( const MovementModes mode )
+{
+    switch( mode ) {
+        case MovementModes::WALKING:
+            return "walking";
+        case MovementModes::DRIVING:
+            return "driving";
+        case MovementModes::BOTH:
+            return "both";
+    }
+    return "both";
+}
+
+bool safemode::movement_from_value( const std::string &value, MovementModes &mode )
+{
+    if( value == "walking" ) {
+        mode = MovementModes::WALKING;
+    } else if( value == "driving" ) {
+        mode = MovementModes::DRIVING;
+    } else if( value == "both" ) {
+        mode = MovementModes::BOTH;
+    } else {
+        return false;
+    }
+    return true;
+}
+
 void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
 {
     auto global_rules_old = global_rules;
@@ -67,17 +128,6 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
 
     const int header_height = 5;
     int content_height = 0;
-    const int num_columns = 6;
-
-    enum Columns : int {
-        COLUMN_RULE,
-        COLUMN_ATTITUDE,
-        COLUMN_PROXIMITY,
-        COLUMN_WHITE_BLACKLIST,
-        COLUMN_CATEGORY,
-        COLUMN_MOVEMENT_MODE
-    };
-
     catacurses::window w_border;
     catacurses::window w_header;
     catacurses::window w;
@@ -160,57 +210,6 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
     };
     const auto binding_is_current = [&]( const reader_binding &binding ) -> bool {
         return binding.tab == tab && binding.line == line && binding_live( binding );
-    };
-    const auto attitude_value_of = []( const Creature::Attitude attitude ) -> std::string {
-        switch( attitude ) {
-            case Creature::Attitude::HOSTILE:
-                return "hostile";
-            case Creature::Attitude::NEUTRAL:
-                return "neutral";
-            case Creature::Attitude::FRIENDLY:
-                return "friendly";
-            case Creature::Attitude::ANY:
-                return "any";
-        }
-        return "any";
-    };
-    const auto attitude_from_value = []( const std::string &value,
-    Creature::Attitude &attitude ) -> bool {
-        if( value == "hostile" ) {
-            attitude = Creature::Attitude::HOSTILE;
-        } else if( value == "neutral" ) {
-            attitude = Creature::Attitude::NEUTRAL;
-        } else if( value == "friendly" ) {
-            attitude = Creature::Attitude::FRIENDLY;
-        } else if( value == "any" ) {
-            attitude = Creature::Attitude::ANY;
-        } else {
-            return false;
-        }
-        return true;
-    };
-    const auto movement_value_of = []( const MovementModes mode ) -> std::string {
-        switch( mode ) {
-            case MovementModes::WALKING:
-                return "walking";
-            case MovementModes::DRIVING:
-                return "driving";
-            case MovementModes::BOTH:
-                return "both";
-        }
-        return "both";
-    };
-    const auto movement_from_value = []( const std::string &value, MovementModes &mode ) -> bool {
-        if( value == "walking" ) {
-            mode = MovementModes::WALKING;
-        } else if( value == "driving" ) {
-            mode = MovementModes::DRIVING;
-        } else if( value == "both" ) {
-            mode = MovementModes::BOTH;
-        } else {
-            return false;
-        }
-        return true;
     };
     std::optional<std::string> draft_rule;
     reader_binding draft_rule_binding;
@@ -517,7 +516,9 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             a11y::semantic_node node;
             node.id = "safemode:row:" + std::to_string( i );
             node.label = rule.rule.empty() ? _( "<empty rule>" ) : rule.rule;
-            node.value = list_text + ", " + category_text;
+            node.value = list_text;
+            node.value += ", ";
+            node.value += category_text;
             if( rule.category == Categories::HOSTILE_SPOTTED ) {
                 node.value += ", " + attitude_text;
             }
@@ -525,7 +526,10 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.value += ", " + string_format( _( "distance %1$d (0 means max view distance)" ),
                                                     rule.proximity );
             }
-            node.value += ", " + mode_text + ", " + ( rule.active ? _( "Active" ) : _( "Inactive" ) );
+            node.value += ", ";
+            node.value += mode_text;
+            node.value += ", ";
+            node.value += rule.active ? _( "Active" ) : _( "Inactive" );
             node.table_id = "safemode:rules";
             node.row_index = i;
             node.cells = { { "rule", node.label, "", "" },
@@ -558,8 +562,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.role = "text";
                 node.label = _( "Rule" );
                 node.detail = selected_rule.category == Categories::SOUND ?
-                              _( "* is used as a wildcard and matching is case insensitive. Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed." ) :
-                              _( "* is used as a wildcard and matching is case insensitive. Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed." );
+                              _( "* is used as a wildcard and matching is case insensitive.  Examples: 'footsteps' matches the sound name exactly, 'a loud ba*' matches sounds beginning with 'a loud ba', '*losion!' matches sounds ending with 'losion!', and 'a *oud*ba*' shows that multiple * are allowed." ) :
+                              _( "* is used as a wildcard and matching is case insensitive.  Examples: 'human' matches every NPC, 'zombie' matches the monster name exactly, 'acidic zo*' matches monsters beginning with 'acidic zo', '*mbie' matches monsters ending with 'mbie', and '*cid*zo*ie' shows that multiple * are allowed." );
                 node.field_type = "text";
                 node.applied_value = selected_rule.rule;
                 node.value = selected_rule.rule.empty() ? _( "<empty rule>" ) : selected_rule.rule;
@@ -692,7 +696,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                 node.role = "button";
                 node.label = string_format( _( "Confirm removal of rule %s" ),
                                             selected_rule.rule.empty() ? _( "<empty rule>" ) : selected_rule.rule );
-                node.detail = _( "The rule is removed from the list right away. The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No restores the rules as they were." );
+                node.detail = _( "The rule is removed from the list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No restores the rules as they were." );
                 node.actions = { "focus", "activate" };
                 snapshot.nodes.push_back( std::move( node ) );
             }
@@ -702,7 +706,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                                std::make_move_iterator( commands.end() ) );
         snapshot.focus = have_selection ? "safemode:row:" + std::to_string( line ) :
                          "safemode:tab:global";
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }
@@ -710,148 +714,8 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
     };
 
     ui.on_redraw( [&]( const ui_adaptor & ) {
-
-        int free_space = ( getmaxx( w_border ) - FULL_SCREEN_WIDTH ) / 5;
-
-        std::map<int, int> column_width;
-        column_width[COLUMN_RULE] = std::min( 30, 27 + free_space );
-        column_width[COLUMN_ATTITUDE] = std::min( 15, 11 + free_space );
-        column_width[COLUMN_PROXIMITY] = 6;
-        column_width[COLUMN_WHITE_BLACKLIST] = std::min( 16, 11 + free_space );
-        column_width[COLUMN_CATEGORY] = std::min( 15, 11 + free_space );
-
-        std::map<int, int> column_pos;
-        column_pos[COLUMN_RULE] = 4;
-        column_pos[COLUMN_ATTITUDE] = column_pos[COLUMN_RULE] + column_width[COLUMN_RULE];
-        column_pos[COLUMN_PROXIMITY] = column_pos[COLUMN_ATTITUDE] + column_width[COLUMN_ATTITUDE];
-        column_pos[COLUMN_WHITE_BLACKLIST] = column_pos[COLUMN_PROXIMITY] + column_width[COLUMN_PROXIMITY];
-        column_pos[COLUMN_CATEGORY] = column_pos[COLUMN_WHITE_BLACKLIST] +
-                                      column_width[COLUMN_WHITE_BLACKLIST];
-        column_pos[COLUMN_MOVEMENT_MODE] = column_pos[COLUMN_CATEGORY] + column_width[COLUMN_CATEGORY];
-
-        column_width[COLUMN_MOVEMENT_MODE] = getmaxx( w_border ) - column_pos[COLUMN_MOVEMENT_MODE] - 2;
-
-        draw_border( w_border, BORDER_COLOR, custom_name_in );
-
-        wattron( w_border, c_light_gray );
-        mvwaddch( w_border, point( 0, 4 ), LINE_XXXO ); // |-
-        mvwaddch( w_border, point( getmaxx( w_border ) - 1, 4 ), LINE_XOXX ); // -|
-
-        for( auto &column : column_pos ) {
-            mvwaddch( w_border, point( column.second + 1, TERMY - 1 ), LINE_XXOX ); // _|_
-        }
-        wattroff( w_border, c_light_gray );
-
-        wnoutrefresh( w_border );
-
-        static const std::vector<std::string> hotkeys = {{
-                translate_marker( "<A>dd" ), translate_marker( "<R>emove" ),
-                translate_marker( "<C>opy" ), translate_marker( "<M>ove" ),
-                translate_marker( "<E>nable" ), translate_marker( "<D>isable" ),
-                translate_marker( "<T>est" )
-            }
-        };
-
-        int tmpx = 0;
-        for( const std::string &hotkey : hotkeys ) {
-            tmpx += shortcut_print( w_header, point( tmpx, 0 ), c_white, c_light_green, _( hotkey ) ) + 2;
-        }
-
-        tmpx = 0;
-        tmpx += shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green,
-                                _( "<+-> Move up/down" ) ) + 2;
-        tmpx += shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green,
-                                _( "<Enter>-Edit" ) ) + 2;
-        shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green, _( "<Tab>-Switch Page" ) );
-
-        mvwhline( w_header, point( 0, 3 ), c_light_gray, LINE_OXOX,
-                  getmaxx( w_header ) ); // Draw line under header
-
-        int locx = 0;
-        const std::string safe_mode_enabled_text = _( "Safe mode enabled:" );
-        mvwprintz( w_header, point( locx, 2 ), c_white, safe_mode_enabled_text );
-        locx += utf8_width( safe_mode_enabled_text );
-        locx += shortcut_print( w_header, point( locx + 1, 2 ),
-                                ( g->safe_mode == SAFE_MODE_ON ? c_light_green : c_light_red ), c_white,
-                                ( g->safe_mode == SAFE_MODE_ON ? _( "True" ) : _( "False" ) ) );
-
-        wattron( w_header, c_light_gray );
-        for( auto &pos : column_pos ) {
-            mvwaddch( w_header, point( pos.second, 3 ), LINE_OXXX ); // ^|^
-            mvwaddch( w_header, point( pos.second, 4 ), LINE_XOXO ); // |
-        }
-        wattroff( w_header, c_light_gray );
-
-        locx = getmaxx( w_header ) / 2 - 15;
-        locx += shortcut_print( w_header, point( locx, 3 ), c_white,
-                                ( tab == GLOBAL_TAB ) ? hilite( c_white ) : c_white, _( "[<Global>]" ) ) + 1;
-        shortcut_print( w_header, point( locx, 3 ), c_white,
-                        ( tab == CHARACTER_TAB ) ? hilite( c_white ) : c_white, _( "[<Character>]" ) );
-
-        mvwprintz( w_header, point( 1, 4 ), c_white, " #" );
-        mvwprintz( w_header, point( column_pos[COLUMN_RULE] + 4, 4 ), c_white, _( "Rules" ) );
-        mvwprintz( w_header, point( column_pos[COLUMN_ATTITUDE] + 2, 4 ), c_white, _( "Attitude" ) );
-        mvwprintz( w_header, point( column_pos[COLUMN_PROXIMITY] + 2, 4 ), c_white, _( "Dist" ) );
-        mvwprintz( w_header, point( column_pos[COLUMN_WHITE_BLACKLIST] + 2, 4 ), c_white, _( "B/W" ) );
-        mvwprintz( w_header, point( column_pos[COLUMN_CATEGORY] + 2, 4 ), c_white, _( "Category" ) );
-        mvwprintz( w_header, point( column_pos[COLUMN_MOVEMENT_MODE] + 2, 4 ), c_white, _( "Mode" ) );
-
-        wnoutrefresh( w_header );
-
-        // Clear the lines
-        mvwrectf( w, point::zero, c_black, ' ', getmaxx( w ) - 1, content_height );
-        for( auto &pos : column_pos ) {
-            mvwvline( w, point( pos.second, 0 ), c_light_gray, LINE_XOXO, content_height ); // |
-        }
-
-        auto &current_tab = tab == GLOBAL_TAB ? global_rules : character_rules;
-
-        if( tab == CHARACTER_TAB && player_character.name.empty() ) {
-            character_rules.clear();
-            mvwprintz( w, point( 15, 8 ), c_white, _( "Please load a character first to use this page!" ) );
-        } else if( empty() ) {
-            mvwprintz( w, point( 15, 8 ), c_white, _( "Safe mode manager is currently inactive." ) );
-            mvwprintz( w, point( 15, 9 ), c_white, _( "Default rules are used.  Add a rule to activate." ) );
-            mvwprintz( w, point( 15, 10 ), c_white, _( "Press ~ to add a default ruleset to get started." ) );
-        }
-
-        draw_scrollbar( w_border, line, content_height, current_tab.size(), point( 0, 6 ) );
-        wnoutrefresh( w_border );
-
-        calcStartPos( start_pos, line, content_height, current_tab.size() );
-
-        // display safe mode
-        for( int i = start_pos; i < static_cast<int>( current_tab.size() ); i++ ) {
-            if( i >= start_pos &&
-                i < start_pos + std::min( content_height, static_cast<int>( current_tab.size() ) ) ) {
-
-                safemode::rules_class rule = current_tab[i];
-
-                nc_color line_color = ( rule.active ) ? c_white : c_light_gray;
-
-                mvwprintz( w, point( 0, i - start_pos ), line_color, "%3d", i + 1 );
-                mvwprintz( w, point( 5, i - start_pos ), c_yellow, line == i ? ">> " : "   " );
-
-                auto draw_column = [&]( Columns column_in, const std::string & text_in ) {
-                    trim_and_print( w, point( column_pos[column_in] + 2, i - start_pos ), column_width[column_in] - 2,
-                                    ( line == i && column == column_in ) ? hilite( line_color ) : line_color, text_in );
-                };
-
-                draw_column( COLUMN_RULE, rule.rule.empty() ? _( "<empty rule>" ) : rule.rule );
-                draw_column( COLUMN_ATTITUDE, ( rule.category == Categories::HOSTILE_SPOTTED ) ?
-                             Creature::get_attitude_ui_data( rule.attitude ).first.translated() : "---" );
-                draw_column( COLUMN_PROXIMITY, ( ( rule.category == Categories::SOUND ) ||
-                                                 !rule.whitelist ) ? std::to_string( rule.proximity ) : "---" );
-                draw_column( COLUMN_WHITE_BLACKLIST, rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) );
-                draw_column( COLUMN_CATEGORY, ( rule.category == Categories::SOUND ) ? _( "Sound" ) :
-                             _( "Hostile" ) );
-                draw_column( COLUMN_MOVEMENT_MODE,
-                             ( rule.movement_mode == MovementModes::WALKING ) ? _( "Walking" ) :
-                             ( ( rule.movement_mode == MovementModes::DRIVING ) ? _( "Driving" ) : _( "Both" ) ) );
-            }
-        }
-
-        wnoutrefresh( w );
+        draw_rules( w_border, w_header, w, custom_name_in, player_character, tab, line, column,
+                    content_height, start_pos );
     } );
 
     while( true ) {
@@ -1045,7 +909,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             changes_made = true;
             current_tab[line].active = false;
         } else if( action == "LEFT" || action == "RIGHT" ) {
-            column = inc_clamp_wrap( column, action == "RIGHT", num_columns );
+            column = inc_clamp_wrap( column, action == "RIGHT", NUM_COLUMNS );
         } else if( action == "MOVE_RULE_UP" && !current_tab.empty() ) {
             changes_made = true;
             if( line < static_cast<int>( current_tab.size() ) - 1 ) {
@@ -1082,6 +946,154 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
         global_rules = global_rules_old;
         character_rules = character_rules_old;
     }
+}
+
+void safemode::draw_rules( const catacurses::window &w_border, const catacurses::window &w_header,
+                           const catacurses::window &w, const std::string &custom_name_in,
+                           const Character &player_character, const int tab, const int line,
+                           const int column, const int content_height, int &start_pos )
+{
+    int free_space = ( getmaxx( w_border ) - FULL_SCREEN_WIDTH ) / 5;
+
+    std::map<int, int> column_width;
+    column_width[COLUMN_RULE] = std::min( 30, 27 + free_space );
+    column_width[COLUMN_ATTITUDE] = std::min( 15, 11 + free_space );
+    column_width[COLUMN_PROXIMITY] = 6;
+    column_width[COLUMN_WHITE_BLACKLIST] = std::min( 16, 11 + free_space );
+    column_width[COLUMN_CATEGORY] = std::min( 15, 11 + free_space );
+
+    std::map<int, int> column_pos;
+    column_pos[COLUMN_RULE] = 4;
+    column_pos[COLUMN_ATTITUDE] = column_pos[COLUMN_RULE] + column_width[COLUMN_RULE];
+    column_pos[COLUMN_PROXIMITY] = column_pos[COLUMN_ATTITUDE] + column_width[COLUMN_ATTITUDE];
+    column_pos[COLUMN_WHITE_BLACKLIST] = column_pos[COLUMN_PROXIMITY] + column_width[COLUMN_PROXIMITY];
+    column_pos[COLUMN_CATEGORY] = column_pos[COLUMN_WHITE_BLACKLIST] +
+                                  column_width[COLUMN_WHITE_BLACKLIST];
+    column_pos[COLUMN_MOVEMENT_MODE] = column_pos[COLUMN_CATEGORY] + column_width[COLUMN_CATEGORY];
+
+    column_width[COLUMN_MOVEMENT_MODE] = getmaxx( w_border ) - column_pos[COLUMN_MOVEMENT_MODE] - 2;
+
+    draw_border( w_border, BORDER_COLOR, custom_name_in );
+
+    wattron( w_border, c_light_gray );
+    mvwaddch( w_border, point( 0, 4 ), LINE_XXXO ); // |-
+    mvwaddch( w_border, point( getmaxx( w_border ) - 1, 4 ), LINE_XOXX ); // -|
+
+    for( auto &column : column_pos ) {
+        mvwaddch( w_border, point( column.second + 1, TERMY - 1 ), LINE_XXOX ); // _|_
+    }
+    wattroff( w_border, c_light_gray );
+
+    wnoutrefresh( w_border );
+
+    static const std::vector<std::string> hotkeys = {{
+            translate_marker( "<A>dd" ), translate_marker( "<R>emove" ),
+            translate_marker( "<C>opy" ), translate_marker( "<M>ove" ),
+            translate_marker( "<E>nable" ), translate_marker( "<D>isable" ),
+            translate_marker( "<T>est" )
+        }
+    };
+
+    int tmpx = 0;
+    for( const std::string &hotkey : hotkeys ) {
+        tmpx += shortcut_print( w_header, point( tmpx, 0 ), c_white, c_light_green, _( hotkey ) ) + 2;
+    }
+
+    tmpx = 0;
+    tmpx += shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green,
+                            _( "<+-> Move up/down" ) ) + 2;
+    tmpx += shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green,
+                            _( "<Enter>-Edit" ) ) + 2;
+    shortcut_print( w_header, point( tmpx, 1 ), c_white, c_light_green, _( "<Tab>-Switch Page" ) );
+
+    mvwhline( w_header, point( 0, 3 ), c_light_gray, LINE_OXOX,
+              getmaxx( w_header ) ); // Draw line under header
+
+    int locx = 0;
+    const std::string safe_mode_enabled_text = _( "Safe mode enabled:" );
+    mvwprintz( w_header, point( locx, 2 ), c_white, safe_mode_enabled_text );
+    locx += utf8_width( safe_mode_enabled_text );
+    locx += shortcut_print( w_header, point( locx + 1, 2 ),
+                            ( g->safe_mode == SAFE_MODE_ON ? c_light_green : c_light_red ), c_white,
+                            ( g->safe_mode == SAFE_MODE_ON ? _( "True" ) : _( "False" ) ) );
+
+    wattron( w_header, c_light_gray );
+    for( auto &pos : column_pos ) {
+        mvwaddch( w_header, point( pos.second, 3 ), LINE_OXXX ); // ^|^
+        mvwaddch( w_header, point( pos.second, 4 ), LINE_XOXO ); // |
+    }
+    wattroff( w_header, c_light_gray );
+
+    locx = getmaxx( w_header ) / 2 - 15;
+    locx += shortcut_print( w_header, point( locx, 3 ), c_white,
+                            ( tab == GLOBAL_TAB ) ? hilite( c_white ) : c_white, _( "[<Global>]" ) ) + 1;
+    shortcut_print( w_header, point( locx, 3 ), c_white,
+                    ( tab == CHARACTER_TAB ) ? hilite( c_white ) : c_white, _( "[<Character>]" ) );
+
+    mvwprintz( w_header, point( 1, 4 ), c_white, " #" );
+    mvwprintz( w_header, point( column_pos[COLUMN_RULE] + 4, 4 ), c_white, _( "Rules" ) );
+    mvwprintz( w_header, point( column_pos[COLUMN_ATTITUDE] + 2, 4 ), c_white, _( "Attitude" ) );
+    mvwprintz( w_header, point( column_pos[COLUMN_PROXIMITY] + 2, 4 ), c_white, _( "Dist" ) );
+    mvwprintz( w_header, point( column_pos[COLUMN_WHITE_BLACKLIST] + 2, 4 ), c_white, _( "B/W" ) );
+    mvwprintz( w_header, point( column_pos[COLUMN_CATEGORY] + 2, 4 ), c_white, _( "Category" ) );
+    mvwprintz( w_header, point( column_pos[COLUMN_MOVEMENT_MODE] + 2, 4 ), c_white, _( "Mode" ) );
+
+    wnoutrefresh( w_header );
+
+    // Clear the lines
+    mvwrectf( w, point::zero, c_black, ' ', getmaxx( w ) - 1, content_height );
+    for( auto &pos : column_pos ) {
+        mvwvline( w, point( pos.second, 0 ), c_light_gray, LINE_XOXO, content_height ); // |
+    }
+
+    auto &current_tab = tab == GLOBAL_TAB ? global_rules : character_rules;
+
+    if( tab == CHARACTER_TAB && player_character.name.empty() ) {
+        character_rules.clear();
+        mvwprintz( w, point( 15, 8 ), c_white, _( "Please load a character first to use this page!" ) );
+    } else if( empty() ) {
+        mvwprintz( w, point( 15, 8 ), c_white, _( "Safe mode manager is currently inactive." ) );
+        mvwprintz( w, point( 15, 9 ), c_white, _( "Default rules are used.  Add a rule to activate." ) );
+        mvwprintz( w, point( 15, 10 ), c_white, _( "Press ~ to add a default ruleset to get started." ) );
+    }
+
+    draw_scrollbar( w_border, line, content_height, current_tab.size(), point( 0, 6 ) );
+    wnoutrefresh( w_border );
+
+    calcStartPos( start_pos, line, content_height, current_tab.size() );
+
+    // display safe mode
+    for( int i = start_pos; i < static_cast<int>( current_tab.size() ); i++ ) {
+        if( i >= start_pos &&
+            i < start_pos + std::min( content_height, static_cast<int>( current_tab.size() ) ) ) {
+
+            safemode::rules_class rule = current_tab[i];
+
+            nc_color line_color = ( rule.active ) ? c_white : c_light_gray;
+
+            mvwprintz( w, point( 0, i - start_pos ), line_color, "%3d", i + 1 );
+            mvwprintz( w, point( 5, i - start_pos ), c_yellow, line == i ? ">> " : "   " );
+
+            auto draw_column = [&]( Columns column_in, const std::string & text_in ) {
+                trim_and_print( w, point( column_pos[column_in] + 2, i - start_pos ), column_width[column_in] - 2,
+                                ( line == i && column == column_in ) ? hilite( line_color ) : line_color, text_in );
+            };
+
+            draw_column( COLUMN_RULE, rule.rule.empty() ? _( "<empty rule>" ) : rule.rule );
+            draw_column( COLUMN_ATTITUDE, ( rule.category == Categories::HOSTILE_SPOTTED ) ?
+                         Creature::get_attitude_ui_data( rule.attitude ).first.translated() : "---" );
+            draw_column( COLUMN_PROXIMITY, ( ( rule.category == Categories::SOUND ) ||
+                                             !rule.whitelist ) ? std::to_string( rule.proximity ) : "---" );
+            draw_column( COLUMN_WHITE_BLACKLIST, rule.whitelist ? _( "Whitelist" ) : _( "Blacklist" ) );
+            draw_column( COLUMN_CATEGORY, ( rule.category == Categories::SOUND ) ? _( "Sound" ) :
+                         _( "Hostile" ) );
+            draw_column( COLUMN_MOVEMENT_MODE,
+                         ( rule.movement_mode == MovementModes::WALKING ) ? _( "Walking" ) :
+                         ( ( rule.movement_mode == MovementModes::DRIVING ) ? _( "Driving" ) : _( "Both" ) ) );
+        }
+    }
+
+    wnoutrefresh( w );
 }
 
 void safemode::test_pattern( const int tab_in, const int row_in )
@@ -1158,7 +1170,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
         std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
         snapshot.nodes.clear();
         snapshot.summary = buf;
-        for( size_t i = 0; i < creature_list.size(); ++i ) {
+        for( std::size_t i = 0; i < creature_list.size(); ++i ) {
             a11y::semantic_node node;
             node.id = "safemode:test:" + std::to_string( i );
             node.role = "document";
@@ -1176,7 +1188,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
                                std::make_move_iterator( commands.begin() ),
                                std::make_move_iterator( commands.end() ) );
         snapshot.focus = creature_list.empty() ? "safemode:test:note" : "safemode:test:0";
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }

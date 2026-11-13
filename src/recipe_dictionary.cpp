@@ -32,7 +32,9 @@
 #include "item_factory.h"
 #include "item_location.h"
 #include "itype.h"
+#if defined(__ANDROID__)
 #include "loading_ui.h"
+#endif
 #include "mapgen.h"
 #include "math_parser_type.h"
 #include "mod_tracker.h"

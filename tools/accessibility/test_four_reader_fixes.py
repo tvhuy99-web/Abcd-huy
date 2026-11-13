@@ -18,7 +18,7 @@ class ReaderRegressionFixes(unittest.TestCase):
         cls.serialize = (SRC / "a11y_semantics.cpp").read_text(encoding="utf-8")
         cls.android = (SRC / "a11y_android.cpp").read_text(encoding="utf-8")
         cls.perception = (SRC / "a11y_perception.cpp").read_text(encoding="utf-8")
-        cls.item = (SRC / "a11y_item_text.h").read_text(encoding="utf-8")
+        cls.item = (SRC / "a11y_item_text.cpp").read_text(encoding="utf-8")
         cls.speech = (JAVA / "ReaderSpeechQueue.java").read_text(encoding="utf-8")
         cls.clean = (JAVA / "ReaderSpokenText.java").read_text(encoding="utf-8")
 

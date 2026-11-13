@@ -1,4 +1,6 @@
 #include <algorithm>
+#include "a11y_semantics.h"
+#include <cstddef>
 #include <iterator>
 #include <map>
 #include <memory>

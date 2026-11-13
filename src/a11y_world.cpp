@@ -1,4 +1,14 @@
 #include "a11y_world.h"
+#include "color.h"
+#include "enums.h"
+#include "gun_mode.h"
+#include "mapdata.h"
+#include "omdata.h"
+#include "overmap.h"
+#include "player_activity.h"
+#include "translation.h"
+#include <functional>
+#include <memory>
 
 #include <algorithm>
 #include <array>
@@ -9,6 +19,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include "a11y_android.h"
@@ -42,7 +53,9 @@
 #include "npc.h"
 #include "output.h"
 #include "options.h"
+#if defined(__ANDROID__)
 #include "overmap_types.h"
+#endif
 #include "overmapbuffer.h"
 #include "point.h"
 #include "ranged.h"
@@ -54,19 +67,20 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
+static const efftype_id effect_bite( "bite" );
+static const efftype_id effect_bleed( "bleed" );
+static const efftype_id effect_incorporeal( "incorporeal" );
+static const efftype_id effect_infected( "infected" );
+static const efftype_id effect_sleep( "sleep" );
+static const json_character_flag json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS(
+    "TEMPORARY_SHAPESHIFT_NO_HANDS" );
+static const trait_id trait_SHELL2( "SHELL2" );
+static const trait_id trait_SHELL3( "SHELL3" );
+
 namespace a11y
 {
 namespace
 {
-static const efftype_id effect_bleed( "bleed" );
-static const efftype_id effect_bite( "bite" );
-static const efftype_id effect_infected( "infected" );
-static const efftype_id effect_sleep( "sleep" );
-static const efftype_id effect_incorporeal_nearby( "incorporeal" );
-static const trait_id trait_shell2_nearby( "SHELL2" );
-static const trait_id trait_shell3_nearby( "SHELL3" );
-static const json_character_flag no_hands_nearby( "TEMPORARY_SHAPESHIFT_NO_HANDS" );
-
 struct bodypart_status {
     bodypart_id id;
     int bleeding = 0;
@@ -239,7 +253,7 @@ void add_transition( std::vector<std::string> &changes, const std::string &key,
     }
 }
 
-semantic_node document( std::string id, std::string label, std::string detail )
+semantic_node document( std::string id, std::string label, const std::string_view detail )
 {
     semantic_node node;
     node.id = std::move( id );
@@ -249,7 +263,7 @@ semantic_node document( std::string id, std::string label, std::string detail )
     return node;
 }
 
-semantic_node button( std::string id, std::string label, std::string detail )
+semantic_node button( std::string id, std::string label, const std::string_view detail )
 {
     semantic_node node;
     node.id = std::move( id );
@@ -260,33 +274,33 @@ semantic_node button( std::string id, std::string label, std::string detail )
     return node;
 }
 
-std::string relative_name( const int dx, const int dy )
+std::string relative_name( const point &delta )
 {
-    if( dx == 0 && dy == 0 ) { return _( "Current tile" ); }
+    if( delta.x == 0 && delta.y == 0 ) { return _( "Current tile" ); }
     std::string result;
-    if( dy != 0 ) {
-        result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    if( delta.y != 0 ) {
+        result += string_format( delta.y < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( delta.y ) );
     }
-    if( dx != 0 ) {
+    if( delta.x != 0 ) {
         if( !result.empty() ) { result += ", "; }
-        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+        result += string_format( delta.x < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( delta.x ) );
     }
     return result;
 }
 
 // Position relative to the avatar: relative_name for the horizontal part,
 // plus the level difference when the tile is on another level.
-std::string relative_position_name( const int dx, const int dy, const int dz )
+std::string relative_position_name( const tripoint &delta )
 {
-    std::string result = relative_name( dx, dy );
-    if( dz != 0 ) {
-        if( dx != 0 || dy != 0 ) {
+    std::string result = relative_name( delta.xy() );
+    if( delta.z != 0 ) {
+        if( delta.x != 0 || delta.y != 0 ) {
             result += ", ";
         } else {
             result.clear();
         }
-        result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
-                                 std::abs( dz ) );
+        result += string_format( delta.z > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                 std::abs( delta.z ) );
     }
     return result;
 }
@@ -387,7 +401,7 @@ std::string player_status()
     // The native sidebar uses an empty label for neutral statuses. Spoken
     // summaries must not say "Hunger: . Pain: ." or invent a severity;
     // keep only readings the game actually supplies.
-    const auto append_if_present = [&result]( const char *heading, const std::string &reading ) {
+    const auto append_if_present = [&result]( const char *heading, const std::string_view reading ) {
         const std::string clean = remove_color_tags( reading );
         if( !clean.empty() ) {
             result += ". " + string_format( heading, clean );
@@ -620,7 +634,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     }
     if( camera_offset ) {
         here.label = _( "Death camera center" );
-        result.summary = _( "Death camera is active. Use Look to inspect the view, move or center the camera, "
+        result.summary = _( "Death camera is active.  Use Look to inspect the view, move or center the camera, "
                             "or accept your fate to finish watching." );
     }
     result.nodes.push_back( std::move( here ) );
@@ -661,7 +675,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
     const avatar &character = get_avatar();
     std::string character_details = string_format(
-                                        _( "Character information. %s." ), character.get_name() );
+                                        _( "Character information.  %s." ), character.get_name() );
     character_details += " " + string_format(
                              _( "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d." ),
                              character.get_str(), character.get_dex(),
@@ -671,7 +685,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // Speak them only in this requested full character read. Keep the
     // short status summary unchanged to avoid repetitive live alerts.
     const auto append_neutral_need = [&character_details]( const char *label,
-                                     const std::string &current ) {
+                                     const std::string_view current ) {
         if( current.empty() ) {
             character_details += " " + string_format( label, _( "Normal" ) ) + ".";
         }
@@ -714,7 +728,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         character_details += " " + string_format( _( "Wielding: %s." ), held_item );
     }
     result.nodes.push_back( document( "world:character_detail", _( "Character information" ),
-                                      std::move( character_details ) ) );
+                                      character_details ) );
     if( !status_alert_history.empty() ) {
         // Session alert history (R10.4): the last status transitions the
         // monitor announced, newest last, with approximate ages. This is a
@@ -740,9 +754,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     const avatar &viewer = get_avatar();
     if( viewer.has_effect( effect_sleep ) ) {
         semantic_node activity_node = document( "world:activity", _( "Current activity" ),
-                                               _( "Sleeping. The game will continue until you wake up." ) );
+                                               _( "Sleeping.  The game will continue until you wake up." ) );
         activity_node.role = "status";
-        activity_node.value = _( "Sleeping. The game will continue until you wake up." );
+        activity_node.value = _( "Sleeping.  The game will continue until you wake up." );
         result.nodes.push_back( std::move( activity_node ) );
     } else if( viewer.activity ) {
         const player_activity &current = viewer.activity;
@@ -774,7 +788,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     depth.id = "world:depth";
     depth.label = _( "Vertical memory scan depth, from 0 to 10" );
     depth.value = std::to_string( scan_depth );
-    depth.detail = _( "This scan reads only remembered terrain and furniture on other levels. "
+    depth.detail = _( "This scan reads only remembered terrain and furniture on other levels.  "
                       "Reading the map does not advance game time." );
     depth.role = "number";
     depth.actions = { "focus", "set_text" };
@@ -793,7 +807,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         _( "Show all nearby tiles and label unexplored tiles as unknown." ),
         _( "Show visible or remembered tiles and tiles with a sound marker." ),
         _( "Show visible fields, traps, creatures, special perceptions, items, vehicles, obstacles, known doors and stairs, remembered furniture, and heard markers." ),
-        _( "Show only the game's heard sound markers. A marker is approximate and does not reveal a creature's true position." )
+        _( "Show only the game's heard sound markers.  A marker is approximate and does not reveal a creature's true position." )
     };
     for( std::size_t i = 0; i < filters.size(); ++i ) {
         semantic_node node;
@@ -835,7 +849,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         for( int dy = -distance; dy <= distance; ++dy ) {
             for( int dx = -distance; dx <= distance; ++dx ) {
                 if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
-                const auto tile = observe_scan_tile( scan_origin + tripoint_rel_ms( dx, dy, 0 ) );
+                const a11y::tile_observation tile = observe_scan_tile( scan_origin + tripoint_rel_ms( dx, dy, 0 ) );
                 const bool include = filter == world_scan_filter::all ||
                                      ( filter == world_scan_filter::known &&
                                        ( tile.source != observation_source::unknown ||
@@ -843,7 +857,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                      ( filter == world_scan_filter::noteworthy && has_noteworthy_information( tile ) ) ||
                                      ( filter == world_scan_filter::heard && !tile.heard_marker.empty() );
                 if( !include ) { continue; }
-                const std::string direction = relative_name( dx, dy );
+                const std::string direction = relative_name( point( dx, dy ) );
                 semantic_node node = document( "tile:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                                direction, describe_tile( tile ) );
                 if( filter == world_scan_filter::noteworthy ) {
@@ -874,14 +888,14 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // exploring costs no moves and no game time.
     if( !explore_active ) {
         result.nodes.push_back( button( "explore:enter", _( "Explore mode" ),
-                                        _( "Move a read-only cursor away from your character to inspect distant tiles. "
+                                        _( "Move a read-only cursor away from your character to inspect distant tiles.  "
                                            "Exploring never moves your character and does not use game time." ) ) );
     } else {
         const tripoint_rel_ms cursor = *explore_cursor;
         const tile_observation cursor_tile = observe_scan_tile( scan_origin );
         std::string cursor_detail = describe_tile( cursor_tile );
         cursor_detail += ". " + string_format( _( "Relative to you: %s" ),
-                                               relative_position_name( cursor.x(), cursor.y(), cursor.z() ) );
+                                               relative_position_name( cursor.raw() ) );
         semantic_node cursor_node = document( "explore:cursor", _( "Explore cursor" ), cursor_detail );
         cursor_node.value = cursor_tile.source == observation_source::unknown ? _( "Unknown" ) :
                             cursor_tile.terrain;
@@ -890,13 +904,13 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         result.nodes.push_back( std::move( cursor_node ) );
         const std::string cursor_move_detail =
-            _( "Moves only the explore cursor. Your character does not move and no game time passes." );
+            _( "Moves only the explore cursor.  Your character does not move and no game time passes." );
         for( int dy = -1; dy <= 1; ++dy ) {
             for( int dx = -1; dx <= 1; ++dx ) {
                 if( dx == 0 && dy == 0 ) { continue; }
                 result.nodes.push_back( button(
                                             "explore:dir:" + std::to_string( dx ) + ':' + std::to_string( dy ),
-                                            string_format( _( "Move explore cursor: %s" ), relative_name( dx, dy ) ),
+                                            string_format( _( "Move explore cursor: %s" ), relative_name( point( dx, dy ) ) ),
                                             cursor_move_detail ) );
             }
         }
@@ -921,12 +935,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             for( int dy = -distance; dy <= distance; ++dy ) {
                 for( int dx = -distance; dx <= distance; ++dx ) {
                     if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
-                    const auto tile = observe_tile( avatar_origin + tripoint_rel_ms( dx, dy, 0 ) );
+                    const a11y::tile_observation tile = observe_tile( avatar_origin + tripoint_rel_ms( dx, dy, 0 ) );
                     if( !has_noteworthy_information( tile ) ) { continue; }
                     semantic_node node = button(
                                              "explore:jump:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                              string_format( _( "%1$s: %2$s" ), noteworthy_category( tile ),
-                                                     relative_name( dx, dy ) ),
+                                                     relative_name( point( dx, dy ) ) ),
                                              describe_tile( tile ) );
                     jumps.push_back( { noteworthy_priority( tile ), distance, std::move( node ) } );
                 }
@@ -938,7 +952,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             return lhs.distance < rhs.distance;
         } );
         if( jumps.size() > 24 ) { jumps.resize( 24 ); }
-        for( auto &jump : jumps ) {
+        for( jump_candidate &jump : jumps ) {
             result.nodes.push_back( std::move( jump.node ) );
         }
     }
@@ -974,15 +988,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // bumps into monsters for melee, interacts with NPCs, or walks into
     // empty space. No hostile-only restriction or forced standstill.
     // The existing eligibility gate prevents use in incompatible modes.
-    const int combat_steps[8][2] = {
-        { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
-        { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+    constexpr std::array<point, 8> combat_steps = {
+        point::north, point::north_east, point::east, point::south_east,
+        point::south, point::south_west, point::west, point::north_west
     };
     const item_location combat_held = viewer.get_wielded_item();
     const bool ranged_combat = combat_held && combat_held->is_gun() &&
                                !combat_held->gun_current_mode().melee();
-    for( int i = 0; i < 8; ++i ) {
-        const std::string dir_name = relative_name( combat_steps[i][0], combat_steps[i][1] );
+    for( std::size_t i = 0; i < combat_steps.size(); ++i ) {
+        const std::string dir_name = relative_name( combat_steps[i] );
         semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
                                        ranged_combat ? string_format( _( "Fire %s" ), dir_name ) :
                                        string_format( _( "Move or attack %s" ), dir_name ),
@@ -997,8 +1011,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                        precise_aim ? _( "Switch to quick fire" ) :
                                        _( "Switch to precise aiming" ),
                                        precise_aim ?
-                                       _( "Precise aiming is active. Directional gun attacks aim and fire automatically." ) :
-                                       _( "Quick fire is active. Directional gun attacks fire immediately." ) );
+                                       _( "Precise aiming is active.  Directional gun attacks aim and fire automatically." ) :
+                                       _( "Quick fire is active.  Directional gun attacks fire immediately." ) );
     aim_toggle.enabled = result.swipe_movement_allowed;
     result.nodes.push_back( std::move( aim_toggle ) );
     for( const std::pair<std::string, std::string> &command : {
@@ -1007,7 +1021,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 { "reader:combat:reload", _( "Reload wielded gun" ) }
             } ) {
         semantic_node node = button( command.first, command.second,
-                                     _( "Uses the native weapon and ammunition rules. No walking." ) );
+                                     _( "Uses the native weapon and ammunition rules.  No walking." ) );
         node.enabled = result.swipe_movement_allowed;
         if( node.id == "reader:combat:reload" ) {
             const item_location held = viewer.get_wielded_item();
@@ -1050,7 +1064,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         enemy_report += string_format(
                             _( "%1$s, %2$s, %3$d HP remaining." ),
-                            enemy->disp_name(), relative_name( relative.x(), relative.y() ),
+                            enemy->disp_name(), relative_name( relative.raw().xy() ),
                             std::max( 0, enemy->get_hp() ) );
     }
     if( enemy_report.empty() ) {
@@ -1059,10 +1073,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "reader:combat:enemies",
                                       _( "Visible hostile creatures" ), enemy_report ) );
 
-    auto commands = command_snapshot( context, result.title );
+    a11y::semantic_snapshot commands = command_snapshot( context, result.title );
     const std::string active_mode = viewer.current_movement_mode()->name();
     const std::string chosen_mode = viewer.get_desired_move_mode()->name();
-    for( auto &node : commands.nodes ) {
+    for( a11y::semantic_node &node : commands.nodes ) {
         if( node.id == "cycle_move" || node.id == "cycle_move_reverse" ||
             node.id == "reset_move" || node.id == "open_movement" ||
             node.id == "toggle_run" || node.id == "toggle_crouch" ||
@@ -1072,7 +1086,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
                                          active_mode, chosen_mode );
         } else if( node.id == "auto_travel_mode" ) {
-            node.detail = _( "When on, directional movement may follow a longer path. "
+            node.detail = _( "When on, directional movement may follow a longer path.  "
                              "It does not select a destination." );
         } else if( node.id == "grab" ) {
             if( viewer.get_grab_type() != object_type::NONE ) {
@@ -1085,9 +1099,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 }
                 node.label = held_name.empty() ? _( "Release held object" ) :
                              string_format( _( "Release %s" ), held_name );
-                node.detail = _( "Release the held object. No movement or extra confirmation." );
+                node.detail = _( "Release the held object.  No movement or extra confirmation." );
             } else {
-                node.detail = _( "Choose a visible movable object by name and direction. "
+                node.detail = _( "Choose a visible movable object by name and direction.  "
                                  "Selecting it grabs it immediately." );
             }
         } else if( node.id == "haul" || node.id == "haul_toggle" ) {
@@ -1096,47 +1110,47 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                          viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
         } else if( node.id == "interact" || node.id == "examine" ||
                    node.id == "examine_and_pickup" ) {
-            node.detail = _( "Opens a spoken list of visible, nearby objects. "
+            node.detail = _( "Opens a spoken list of visible, nearby objects.  "
                              "Browse freely; selecting an object uses the original game action." );
         } else if( node.id == "smash" && viewer.controlling_vehicle ) {
             // When driving, the native Smash key engages the handbrake.
             // The contextual menu must never call that "Smash".
             node.label = _( "Apply handbrake" );
-            node.detail = _( "Apply the vehicle handbrake. This is not an attack." );
+            node.detail = _( "Apply the vehicle handbrake.  This is not an attack." );
         } else if( node.id == "open" || node.id == "close" || node.id == "smash" ) {
-            node.detail = _( "Choose a target, then listen for the result. "
+            node.detail = _( "Choose a target, then listen for the result.  "
                              "The action may spend time or damage property." );
         } else if( node.id == "pickup" ) {
             node.detail = _( "Choose one tile, mark the items and quantities, then confirm." );
         } else if( node.id == "pickup_all" ) {
             node.detail = _( "Mark items from your tile and all eight neighboring tiles, "
-                             "then confirm. Browsing does not pick anything up." );
+                             "then confirm.  Browsing does not pick anything up." );
         } else if( node.id == "butcher" ) {
             node.detail = _( "Process corpses, cut up materials or disassemble items on "
-                             "your current tile. Requirements and time depend on the work." );
+                             "your current tile.  Requirements and time depend on the work." );
         } else if( node.id == "inventory" ) {
-            node.detail = _( "Browse carried items. Select an item for its original action "
-                             "menu. Browsing never uses or drops an item." );
+            node.detail = _( "Browse carried items.  Select an item for its original action "
+                             "menu.  Browsing never uses or drops an item." );
         } else if( node.id == "advinv" ) {
-            node.detail = _( "Transfer items between a source and destination. "
+            node.detail = _( "Transfer items between a source and destination.  "
                              "Review both panes and the amount before moving." );
         } else if( node.id == "drop" || node.id == "drop_adj" ) {
             node.detail = _( "Choose items and amounts, then choose or confirm the "
-                             "destination. Only the game activity moves them." );
+                             "destination.  Only the game activity moves them." );
         } else if( node.id == "compare" ) {
-            node.detail = _( "Choose two items. Each side will be read separately "
+            node.detail = _( "Choose two items.  Each side will be read separately "
                              "with its full item statistics." );
         } else if( node.id == "organize" ) {
-            node.detail = _( "Assign or clear inventory shortcut letters. "
+            node.detail = _( "Assign or clear inventory shortcut letters.  "
                              "This does not move items." );
         } else if( node.id == "apply" || node.id == "apply_wielded" ) {
-            node.detail = _( "Use a selected or wielded item. Its effects and "
+            node.detail = _( "Use a selected or wielded item.  Its effects and "
                              "resource costs depend on that item." );
         } else if( node.id == "item_action_menu" ) {
             node.detail = _( "Browse available item actions, with their original "
                              "requirements and disabled choices." );
         } else if( node.id == "insert" ) {
-            node.detail = _( "Select a container and items to put inside. "
+            node.detail = _( "Select a container and items to put inside.  "
                              "The game checks capacity before inserting." );
         } else if( node.id == "unload_container" ) {
             node.detail = _( "Take eligible contents out of containers and drop "
@@ -1154,10 +1168,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         map &nearby_map = get_map();
         const tripoint_bub_ms player_pos = viewer.pos_bub( nearby_map );
         std::map<std::string, std::string> nearby_actions;
-        const bool in_shell = viewer.has_active_mutation( trait_shell2_nearby ) ||
-                              viewer.has_active_mutation( trait_shell3_nearby );
-        const bool incorporeal = viewer.has_effect( effect_incorporeal_nearby );
-        const bool handless = viewer.has_flag( no_hands_nearby );
+        const bool in_shell = viewer.has_active_mutation( trait_SHELL2 ) ||
+                              viewer.has_active_mutation( trait_SHELL3 );
+        const bool incorporeal = viewer.has_effect( effect_incorporeal );
+        const bool handless = viewer.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS );
         const bool mounted = viewer.is_mounted();
         const bool ordinary_mount = mounted &&
                                     ( !viewer.mounted_creature ||
@@ -1231,7 +1245,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                           !seen.seen_creatures.empty() ? seen.seen_creatures.front() :
                                           !seen.seen_items.empty() ? seen.seen_items.front() : seen.terrain;
                 const std::string hint = object_name + ", " +
-                                         relative_position_name( dx, dy, 0 );
+                                         relative_position_name( tripoint( dx, dy, 0 ) );
                 const auto offer_interact = [&]( const std::string & id ) {
                     if( permitted( id ) ) {
                         offer( id, hint );
@@ -1294,7 +1308,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 }
             }
         }
-        for( const std::string &id : {
+        for( const std::string id : {
                     "interact", "open", "close", "examine", "examine_and_pickup",
                     "reader:pickup_here", "pickup", "pickup_all", "chat",
                     "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
@@ -1359,16 +1373,16 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     return tile;
 }
 
-void announce_linear_scan( const int dx, const int dy )
+void announce_linear_scan( const point &delta )
 {
-    if( std::abs( dx ) + std::abs( dy ) != 1 ) {
+    if( std::abs( delta.x ) + std::abs( delta.y ) != 1 ) {
         return;
     }
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
     std::string spoken;
     for( int distance = 1; distance <= 16; ++distance ) {
-        const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
+        const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
         std::string detail;
         if( !here.inbounds( pos ) ) {
             detail = _( "Outside loaded map" );
@@ -1456,7 +1470,7 @@ void announce_player_coordinates()
 {
     const avatar &viewer = get_avatar();
     const tripoint_abs_ms pos = viewer.pos_abs();
-    const std::string coordinates = string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
+    const std::string coordinates = string_format( _( "Coordinates.  X %1$d. Y %2$d. Z %3$d." ),
                                             pos.x(), pos.y(), pos.z() );
     // Speak the known overmap place first. Never reveal undiscovered
     // terrain when the current overmap location has not been seen.
@@ -1566,7 +1580,7 @@ semantic_snapshot activity_snapshot( const input_context &context )
         progress_node->value = std::to_string( coarse );
     }
     if( get_option<float>( "TURN_DURATION" ) > 0.005f ) {
-        const std::string realtime_warning = _( "Real-time turns are enabled. The world may continue to update while you "
+        const std::string realtime_warning = _( "Real-time turns are enabled.  The world may continue to update while you "
                                                 "listen to this activity screen." );
         result.summary = realtime_warning;
         current.detail += ". " + result.summary;
@@ -1580,7 +1594,7 @@ semantic_snapshot activity_snapshot( const input_context &context )
     const std::vector<std::string> supported_actions = {
         "pause", "zoom_in", "zoom_out", "player_data", "messages", "help"
     };
-    auto commands = command_snapshot( context, result.title );
+    a11y::semantic_snapshot commands = command_snapshot( context, result.title );
     for( semantic_node &node : commands.nodes ) {
         if( std::find( supported_actions.begin(), supported_actions.end(), node.id ) == supported_actions.end() ) {
             continue;

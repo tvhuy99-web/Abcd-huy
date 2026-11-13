@@ -11,8 +11,13 @@
 #include "creature.h"
 #include "enums.h"
 
+class Character;
 class JsonArray;
 class JsonOut;
+namespace catacurses
+{
+class window;
+} // namespace catacurses
 
 class safemode
 {
@@ -21,6 +26,17 @@ class safemode
             GLOBAL_TAB,
             CHARACTER_TAB,
             MAX_TAB
+        };
+
+
+        enum Columns : int {
+            COLUMN_RULE,
+            COLUMN_ATTITUDE,
+            COLUMN_PROXIMITY,
+            COLUMN_WHITE_BLACKLIST,
+            COLUMN_CATEGORY,
+            COLUMN_MOVEMENT_MODE,
+            NUM_COLUMNS
         };
 
         enum class Categories : int {
@@ -85,6 +101,14 @@ class safemode
         std::vector<rules_class> global_rules;
         std::vector<rules_class> character_rules;
 
+        static std::string attitude_value_of( Creature::Attitude attitude );
+        static bool attitude_from_value( const std::string &value, Creature::Attitude &attitude );
+        static std::string movement_value_of( MovementModes mode );
+        static bool movement_from_value( const std::string &value, MovementModes &mode );
+        void draw_rules( const catacurses::window &w_border, const catacurses::window &w_header,
+                         const catacurses::window &w, const std::string &custom_name_in,
+                         const Character &player_character, int tab, int line, int column,
+                         int content_height, int &start_pos );
         void test_pattern( int tab_in, int row_in );
 
         void load( bool is_character_in );

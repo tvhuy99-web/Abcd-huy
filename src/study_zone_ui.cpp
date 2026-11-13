@@ -1,4 +1,5 @@
 #include "study_zone_ui.h"
+#include "a11y_semantics.h"
 
 #include <algorithm>
 #include <array>
@@ -463,7 +464,7 @@ class study_zone_window : public cataimgui::window
             snapshot.summary = string_format(
                                    _( "Each companion studies only books for the skills marked "
                                       "for them in this study zone; a companion with no "
-                                      "preference entry reads every skill. "
+                                      "preference entry reads every skill.  "
                                       "%1$d companions, %2$d skills." ),
                                    static_cast<int>( npc_names.size() ),
                                    static_cast<int>( all_skills.size() ) );

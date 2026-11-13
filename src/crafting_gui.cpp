@@ -1,4 +1,7 @@
 #include "crafting_gui.h"
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include <system_error>
 
 #include <imgui/imgui.h>
 #include <algorithm>
@@ -2684,7 +2687,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                  static_cast<int>( current.size() ),
                                                  filterstring.empty() ? 0 : 1 ) );
     }
-    auto snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
     if( crafting_cats.empty() ) {
         snapshot.summary += _( "No recipes available." );
@@ -2782,11 +2785,11 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             reason = _( "No recipes learned or available to this crafter yet." );
         } else if( !filterstring.empty() ) {
             reason = string_format(
-                         _( "No recipes match this filter. %d recipes are available in the crafting group." ),
+                         _( "No recipes match this filter.  %d recipes are available in the crafting group." ),
                          static_cast<int>( available_recipes->size() ) );
         } else {
             reason = string_format(
-                         _( "No recipes in this category. %d recipes are available in the crafting group." ),
+                         _( "No recipes in this category.  %d recipes are available in the crafting group." ),
                          static_cast<int>( available_recipes->size() ) );
         }
         a11y::append_document( snapshot, "craft:no-recipes",
@@ -2916,7 +2919,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 for( std::size_t i = 0; i < rec.steps().size(); ++i ) {
                     const recipe_step &step = rec.steps()[i];
                     const std::string prefix = "craft:step:" + std::to_string( i );
-                    const auto time = time_duration::from_moves( static_cast<int64_t>(
+                    const time_duration time = time_duration::from_moves( static_cast<int64_t>(
                                           rec.step_budget_moves( *crafter, i, manual_batch, cost ) ) );
                     a11y::append_document( documents, prefix, step.name.translated(),
                                            step.name.translated() + "\n" + to_string( time ) + "\n" +
@@ -2925,7 +2928,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                inventory, rec.get_component_filter(), manual_batch );
                 }
             }
-            const auto &resources = rec.get_character_resources();
+            const character_resource_costs &resources = rec.get_character_resources();
             std::string resource_text;
             const auto add_resource = [&]( int amount, int have, const std::string &name ) {
                 if( amount != 0 ) {
@@ -2961,7 +2964,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
           intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
         if( reader_all_categories && ( intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
             a11y::android::announce(
-                _( "All categories has no subcategories. Swipe left or right with two fingers to select a main category." ),
+                _( "All categories has no subcategories.  Swipe left or right with two fingers to select a main category." ),
                 1 );
             a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV", "ignored=global_all_subcategory" );
             return "TIMEOUT";
@@ -2998,7 +3001,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     }
     if( intent.node == "craft:batch" && intent.action == "set_text" ) {
         int quantity = 0;
-        const auto parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
+        const std::from_chars_result parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
                                             quantity );
         if( parsed.ec != std::errc() || parsed.ptr != intent.value.data() + intent.value.size() ||
             quantity < 1 || quantity > 50 || line < 0 ||

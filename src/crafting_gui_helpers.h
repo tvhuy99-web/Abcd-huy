@@ -3,6 +3,7 @@
 #define CATA_SRC_CRAFTING_GUI_HELPERS_H
 
 #include <cstddef>
+#include "type_id.h"
 #include <functional>
 #include <map>
 #include <optional>

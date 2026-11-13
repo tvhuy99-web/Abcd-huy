@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include "a11y_semantics.h"
 #include <array>
 #include <climits>
 #include <cmath>
@@ -3046,9 +3047,9 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 const std::set<dialogue_consequence> consequences =
                     responses[index].get_consequences( *this );
                 if( consequences.count( dialogue_consequence::hostile ) > 0 ) {
-                    node.detail = _( "Warning: this response may provoke an attack. The game will ask for confirmation before it takes effect." );
+                    node.detail = _( "Warning: this response may provoke an attack.  The game will ask for confirmation before it takes effect." );
                 } else if( consequences.count( dialogue_consequence::helpless ) > 0 ) {
-                    node.detail = _( "Warning: this response may leave you helpless. The game will ask for confirmation before it takes effect." );
+                    node.detail = _( "Warning: this response may leave you helpless.  The game will ask for confirmation before it takes effect." );
                 }
             }
             node.selected = d_img.sel_response == static_cast<int>( index );
@@ -3056,7 +3057,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             snapshot.nodes.push_back( std::move( node ) );
         }
 
-        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }

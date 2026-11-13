@@ -1,11 +1,11 @@
 #include "a11y_android.h"
+#include "a11y_context.h"
 #include "a11y_world_input_gate.h"
 
 #include <algorithm>
 #include <atomic>
 #include <chrono>
 #include <deque>
-#include <limits>
 #include <mutex>
 #include <utility>
 
@@ -93,9 +93,9 @@ bool performance_profiling_enabled()
     return enabled() && !suspended() &&
            performance_profile_active.load( std::memory_order_relaxed );
 }
-void configure_performance( const bool skip_visuals, const bool profile )
+void configure_performance( const bool skip_world_visuals, const bool profile )
 {
-    no_world_graphics.store( skip_visuals, std::memory_order_release );
+    no_world_graphics.store( skip_world_visuals, std::memory_order_release );
     const bool previous = performance_profile_active.exchange( profile, std::memory_order_acq_rel );
     if( profile != previous ) {
         profile_configuration_epoch.fetch_add( 1, std::memory_order_release );
@@ -208,7 +208,7 @@ void performance_step_sample( const bool moved )
 
 void configure( const bool enable, const bool suspend )
 {
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     reader_enabled.store( enable, std::memory_order_release );
     reader_suspended.store( suspend, std::memory_order_release );
     inbox.clear();
@@ -226,7 +226,7 @@ void configure( const bool enable, const bool suspend )
 
 bool enqueue( semantic_intent intent )
 {
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     if( !enabled() || suspended() || inbox.size() >= 32 || intent.request == 0 ||
         intent.node.size() > 512 || intent.action.size() > 80 || intent.value.size() > 16384 ) {
         return false;
@@ -260,7 +260,7 @@ bool enqueue( semantic_intent intent )
 
 std::optional<semantic_intent> take()
 {
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     if( inbox.empty() ) {
         return std::nullopt;
     }
@@ -271,14 +271,14 @@ std::optional<semantic_intent> take()
 
 void clear()
 {
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     inbox.clear();
     world_step_ready = false;
 }
 
 void set_world_step_ready( const std::optional<context_token> token, const bool ready )
 {
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     if( token ) {
         last_world_token = *token;
         has_world_token = true;
@@ -298,7 +298,7 @@ bool world_step_can_accept()
     // JNI read-only readiness probe. The game thread is the only writer.
     // This is not permission to bypass gameplay: enqueue() repeats the
     // exact same one-step gate under this mutex.
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     return world_step_ready && has_world_token && enabled() && !suspended() &&
            std::none_of( inbox.begin(), inbox.end(), []( const semantic_intent &pending ) {
         return pending.action == "activate" && is_world_step_node( pending.node );
@@ -343,9 +343,9 @@ int take_travel_control()
 
 void request_travel_map_return()
 {
-    const auto now = std::chrono::steady_clock::now();
-    const auto ms = std::chrono::duration_cast<std::chrono::milliseconds>(
-                        now.time_since_epoch() ).count();
+    const std::chrono::steady_clock::time_point now = std::chrono::steady_clock::now();
+    const std::chrono::milliseconds::rep ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+            now.time_since_epoch() ).count();
     travel_map_return_deadline_ms.store( static_cast<std::uint64_t>( ms + 2000 ),
                                          std::memory_order_release );
 }
@@ -354,8 +354,8 @@ bool take_travel_map_return()
 {
     const std::uint64_t deadline = travel_map_return_deadline_ms.exchange(
                                        0, std::memory_order_acq_rel );
-    const auto now = std::chrono::duration_cast<std::chrono::milliseconds>(
-                         std::chrono::steady_clock::now().time_since_epoch() ).count();
+    const std::chrono::milliseconds::rep now = std::chrono::duration_cast<std::chrono::milliseconds>(
+                std::chrono::steady_clock::now().time_since_epoch() ).count();
     return deadline != 0 && static_cast<std::uint64_t>( now ) <= deadline;
 }
 
@@ -371,7 +371,7 @@ std::size_t cancel_pending_world_steps()
     // The Android-only command hub is not a native modal. Explicitly
     // discard walking inputs already waiting in the existing mailbox
     // when the player opens that hub, without touching other actions.
-    const std::lock_guard<std::mutex> lock( inbox_mutex );
+    const std::scoped_lock<std::mutex> lock( inbox_mutex );
     const std::size_t before = inbox.size();
     inbox.erase( std::remove_if( inbox.begin(), inbox.end(),
     []( const semantic_intent & intent ) {
@@ -381,7 +381,7 @@ std::size_t cancel_pending_world_steps()
     return before - inbox.size();
 }
 
-void publish( const std::string &json )
+void publish( const std::string_view json )
 {
 #if defined(__ANDROID__)
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
@@ -424,7 +424,7 @@ void publish( const std::string &json )
 #endif
 }
 
-void announce( const std::string &text, const int priority )
+void announce( const std::string_view text, const int priority )
 {
 #if defined(__ANDROID__)
     if( text.empty() || text.size() > 16384 || ( priority != 1 && priority != 3 ) ) {
@@ -481,7 +481,7 @@ void announce( const std::string &text, const int priority )
 #endif
 }
 
-void present_debug_prompt( const std::string &report )
+void present_debug_prompt( const std::string_view report )
 {
 #if defined(__ANDROID__)
     debug_prompt_response.store( 0, std::memory_order_release );
@@ -573,7 +573,7 @@ void queue_sound_settings( const int music, const int effects, const bool enable
         return;
     }
     {
-        const std::lock_guard<std::mutex> lock( sound_settings_mutex );
+        const std::scoped_lock<std::mutex> lock( sound_settings_mutex );
         pending_sound = pending_sound_settings{ music, effects, enabled };
     }
     PushWakeEvent();
@@ -583,7 +583,7 @@ void apply_pending_sound_settings()
 {
     std::optional<pending_sound_settings> update;
     {
-        const std::lock_guard<std::mutex> lock( sound_settings_mutex );
+        const std::scoped_lock<std::mutex> lock( sound_settings_mutex );
         update = pending_sound;
         pending_sound.reset();
     }
@@ -598,7 +598,7 @@ void apply_pending_sound_settings()
     get_options().save();
 }
 
-void diagnostic_event( const std::string &category, const std::string &detail )
+void diagnostic_event( const std::string_view category, const std::string_view detail )
 {
     // Manual OFF disables the entire diagnostic bridge, including failures.
     // Java checks the same manual switch under its file lock before writing.
@@ -619,8 +619,8 @@ void diagnostic_event( const std::string &category, const std::string &detail )
                            env->GetMethodID( cls, "onAccessibilityNativeDiagnostic",
                                              "(Ljava/lang/String;Ljava/lang/String;)V" );
         if( method != nullptr ) {
-            jstring kind = env->NewStringUTF( category.c_str() );
-            jstring info = env->NewStringUTF( detail.c_str() );
+            jstring kind = env->NewStringUTF( std::string( category ).c_str() );
+            jstring info = env->NewStringUTF( std::string( detail ).c_str() );
             if( kind != nullptr && info != nullptr ) {
                 env->CallVoidMethod( activity, method, kind, info );
             }
@@ -847,12 +847,12 @@ void status( const std::string &code, const semantic_intent *intent )
     // Codes are internal literals; translated user-facing text belongs to Java.
     if( code == "stale" || code == "disabled" || code == "unsupported" ||
         code == "invalid_value" || code == "text_applied" ) {
-        std::string json = "{\"status\":\"" + code + "\"";
+        std::string json = R"({"status":")" + code + '"';
         if( intent != nullptr ) {
-            json += ",\"request\":\"" + std::to_string( intent->request ) +
-                    "\",\"session\":\"" + std::to_string( intent->token.session ) +
-                    "\",\"frame\":\"" + std::to_string( intent->token.frame ) +
-                    "\",\"generation\":\"" + std::to_string( intent->token.generation ) + "\"";
+            json += R"(,"request":")" + std::to_string( intent->request ) +
+                    R"(","session":")" + std::to_string( intent->token.session ) +
+                    R"(","frame":")" + std::to_string( intent->token.frame ) +
+                    R"(","generation":")" + std::to_string( intent->token.generation ) + '"';
         }
         publish( json + '}' );
     }

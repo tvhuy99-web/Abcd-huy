@@ -1,10 +1,11 @@
 #include "a11y_fixtures.h"
 
 #include <algorithm>
+#include <cstddef>
 #include <map>
+#include <memory>
 #include <optional>
 #include <string>
-#include <utility>
 #include <vector>
 
 #include "auto_pickup.h"
@@ -14,13 +15,13 @@
 #include "calendar.h"
 #include "cata_catch.h"
 #include "character.h"
+#include "character_id.h"
 #include "clzones.h"
 #include "computer.h"
 #include "coordinates.h"
 #include "creature.h"
 #include "enums.h"
 #include "faction.h"
-#include "game.h"
 #include "item.h"
 #include "item_pocket.h"
 #include "magic.h"
@@ -32,9 +33,11 @@
 #include "mission.h"
 #include "npc.h"
 #include "overmapbuffer.h"
+#include "pimpl.h"
 #include "player_helpers.h"
 #include "pocket_type.h"
 #include "point.h"
+#include "ret_val.h"
 #include "rng.h"
 #include "safemode_ui.h"
 #include "stomach.h"
@@ -42,36 +45,40 @@
 #include "units.h"
 #include "vehicle.h"
 #include "vpart_position.h"
+#include "vpart_range.h"
 
 // See a11y_fixtures.h for the guarantee each builder makes and the oracle it
 // serves. Written during the coding phase (phase 1): NOT compiled, NOT run.
 
-namespace
-{
+static const bionic_id bio_power_storage( "bio_power_storage" );
 
-const tripoint_bub_ms fixture_origin( 60, 60, 0 );
+static const itype_id itype_backpack( "backpack" );
+static const itype_id itype_bandages( "bandages" );
+static const itype_id itype_bio_power_storage( "bio_power_storage" );
+static const itype_id itype_debug_backpack( "debug_backpack" );
+static const itype_id itype_disinfectant( "disinfectant" );
+static const itype_id itype_gasoline( "gasoline" );
+static const itype_id itype_jeans( "jeans" );
+static const itype_id itype_knife_combat( "knife_combat" );
+static const itype_id itype_test_can_drink( "test_can_drink" );
+static const itype_id itype_test_rock( "test_rock" );
+static const itype_id itype_test_textbook_fabrication( "test_textbook_fabrication" );
+static const itype_id itype_water( "water" );
 
-const itype_id itype_bandages( "bandages" );
-const itype_id itype_debug_backpack( "debug_backpack" );
-const itype_id itype_backpack( "backpack" );
-const itype_id itype_disinfectant( "disinfectant" );
-const itype_id itype_gasoline( "gasoline" );
-const itype_id itype_jeans( "jeans" );
-const itype_id itype_knife_combat( "knife_combat" );
-const itype_id itype_test_can_drink( "test_can_drink" );
-const itype_id itype_test_rock( "test_rock" );
-const itype_id itype_test_textbook_fabrication( "test_textbook_fabrication" );
-const itype_id itype_water( "water" );
+static const mission_type_id mission_TEST_MISSION_FIND_ITEM( "TEST_MISSION_FIND_ITEM" );
 
-const spell_id spell_test_spell_lava( "test_spell_lava" );
-const spell_id spell_test_spell_pew( "test_spell_pew" );
+static const spell_id spell_test_spell_lava( "test_spell_lava" );
+static const spell_id spell_test_spell_pew( "test_spell_pew" );
 
-const bionic_id bio_power_storage( "bio_power_storage" );
+static const vproto_id vehicle_prototype_car( "car" );
+static const vproto_id vehicle_prototype_test_shopping_cart( "test_shopping_cart" );
 
-const vproto_id vehicle_prototype_car( "car" );
-const vproto_id vehicle_prototype_test_shopping_cart( "test_shopping_cart" );
+static const zone_type_id zone_type_CAMP_FOOD( "CAMP_FOOD" );
+static const zone_type_id zone_type_CAMP_STORAGE( "CAMP_STORAGE" );
+static const zone_type_id zone_type_LOOT_FOOD( "LOOT_FOOD" );
+static const zone_type_id zone_type_LOOT_UNSORTED( "LOOT_UNSORTED" );
 
-} // namespace
+static const tripoint_bub_ms fixture_origin( 60, 60, 0 );
 
 namespace a11y_fixture
 {
@@ -384,12 +391,12 @@ zones_rules_fixture build_zones_and_rules()
     // create_tile_zone() (its last argument is the add() silent flag).
     zone_manager &zm = zone_manager::get_manager();
     zm.clear();
-    zm.add( "A11y Loot Food", zone_type_id( "LOOT_FOOD" ), your_fac, false, true,
+    zm.add( "A11y Loot Food", zone_type_LOOT_FOOD, your_fac, false, true,
             result.food_zone_start, result.food_zone_end, nullptr, false );
-    zm.add( "A11y Unsorted", zone_type_id( "LOOT_UNSORTED" ), your_fac, false, true,
+    zm.add( "A11y Unsorted", zone_type_LOOT_UNSORTED, your_fac, false, true,
             result.unsorted_zone_pos, result.unsorted_zone_pos, nullptr, false );
-    REQUIRE( zm.has( zone_type_id( "LOOT_FOOD" ), result.food_zone_start ) );
-    REQUIRE( zm.has( zone_type_id( "LOOT_UNSORTED" ), result.unsorted_zone_pos ) );
+    REQUIRE( zm.has( zone_type_LOOT_FOOD, result.food_zone_start ) );
+    REQUIRE( zm.has( zone_type_LOOT_UNSORTED, result.unsorted_zone_pos ) );
 
     // Root rule stores: start empty, then one sample rule each.
     safemode &safe = get_safemode();
@@ -431,9 +438,9 @@ camp_fixture build_faction_camp()
 
     // Food and storage zones, as in faction_camp_test.cpp's first case.
     const tripoint_abs_ms zone_loc = here.get_abs( mid );
-    mapgen_place_zone( zone_loc, zone_loc, zone_type_id( "CAMP_FOOD" ), your_fac, {},
+    mapgen_place_zone( zone_loc, zone_loc, zone_type_CAMP_FOOD, your_fac, {},
                        "food" );
-    mapgen_place_zone( zone_loc, zone_loc, zone_type_id( "CAMP_STORAGE" ), your_fac, {},
+    mapgen_place_zone( zone_loc, zone_loc, zone_type_CAMP_STORAGE, your_fac, {},
                        "storage" );
 
     // Resident.
@@ -443,7 +450,7 @@ camp_fixture build_faction_camp()
     // Assigned work for the avatar (mission_test.cpp's pattern).
     mission::clear_all();
     who.reset_all_missions();
-    mission *job = mission::reserve_new( mission_type_id( "TEST_MISSION_FIND_ITEM" ),
+    mission *job = mission::reserve_new( mission_TEST_MISSION_FIND_ITEM,
                                          character_id() );
     REQUIRE( job != nullptr );
     if( job->get_assigned_player_id() == who.getID() ) {
@@ -482,7 +489,7 @@ abilities_fixture build_abilities()
     abilities_fixture result;
     result.computer_pos = fixture_origin + tripoint_rel_ms::east;
     result.installed_bionic = bio_power_storage;
-    result.uninstalled_cbm = itype_id( "bio_power_storage" );
+    result.uninstalled_cbm = itype_bio_power_storage;
     result.known_spell = spell_test_spell_pew;
     result.spellbook_item = itype_test_textbook_fabrication;
     result.spellbook_spell = spell_test_spell_lava.str();
@@ -610,11 +617,11 @@ lightson_spec lightson_spec_for_seed( const unsigned int seed )
 
     // reset_level(): all lights on, then each change coord toggles itself
     // and its orthogonal neighbours.
-    std::vector<bool> lit( static_cast<size_t>( cell_count ), true );
+    std::vector<bool> lit( static_cast<std::size_t>( cell_count ), true );
     const auto toggle = [&]( const point & p ) {
         if( p.x >= 0 && p.x < width && p.y >= 0 && p.y < height ) {
-            lit[static_cast<size_t>( p.y * width + p.x )] =
-                !lit[static_cast<size_t>( p.y * width + p.x )];
+            const std::size_t index = static_cast<std::size_t>( p.y ) * width + p.x;
+            lit[index] = !lit[index];
         }
     };
     for( const point &coord : result.change_coords ) {
@@ -626,7 +633,7 @@ lightson_spec lightson_spec_for_seed( const unsigned int seed )
     }
     for( int y = 0; y < height; ++y ) {
         for( int x = 0; x < width; ++x ) {
-            if( !lit[static_cast<size_t>( y * width + x )] ) {
+            if( !lit[static_cast<std::size_t>( y ) * width + x] ) {
                 result.dark_cells.emplace_back( x, y );
             }
         }

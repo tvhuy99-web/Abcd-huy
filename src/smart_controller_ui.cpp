@@ -1,4 +1,8 @@
 #include "smart_controller_ui.h"
+#include "a11y_semantics.h"
+#include <iterator>
+#include <cstddef>
+#include <utility>
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -330,7 +334,7 @@ void smart_controller_ui::control()
         snapshot.nodes.insert( snapshot.nodes.end(),
                                std::make_move_iterator( commands.begin() ),
                                std::make_move_iterator( commands.end() ) );
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }

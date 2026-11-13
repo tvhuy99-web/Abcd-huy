@@ -1,4 +1,7 @@
 #include "construction.h"
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include "line.h"
 
 #include <algorithm>
 #include <array>
@@ -1087,7 +1090,7 @@ construction_id construction_menu( const bool blueprint )
         ui_manager::redraw();
 
         if( a11y::enabled() ) {
-            auto snapshot = a11y::command_snapshot( ctxt, _( "Construction" ) );
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Construction" ) );
             snapshot.summary = construct_cat[tabindex].name();
             snapshot.summary += ". " + std::string( filter_mode == 0 ? _( "All" ) :
                                   filter_mode == 1 ? _( "Ready (missing location)" ) : _( "Buildable here" ) );

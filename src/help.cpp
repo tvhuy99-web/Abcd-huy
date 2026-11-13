@@ -1,4 +1,6 @@
 #include "help.h"
+#include "a11y_semantics.h"
+#include <cstddef>
 
 #include <charconv>
 #include <cmath>
@@ -471,7 +473,7 @@ void help_window::show()
             filter_node.role = "text";
             filter_node.label = _( "Filter topics by name" );
             filter_node.detail = _( "Reader-only filter: the help screen itself has no "
-                                    "search. Filtering only changes which topic rows are "
+                                    "search.  Filtering only changes which topic rows are "
                                     "listed here; the help topics themselves never change." );
             filter_node.field_type = "text";
             filter_node.applied_value = reader_filter;

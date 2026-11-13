@@ -66,8 +66,8 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
                      "trái/phải", "nạp đạn", "vũ khí"):
             self.assertIn(word, combat.lower())
         self.assertNotIn("ba ngón", combat.lower())
-        self.assertIn("chỗ chứa và quyền sở hữu", self.po)
-        self.assertIn("tốn lượt hoặc làm hỏng tài sản", self.po)
+        self.assertRegex(self.po, r'chỗ chứa và (?:"\n")?quyền sở hữu')
+        self.assertRegex(self.po, r'tốn lượt hoặc (?:"\n")?làm hỏng tài sản')
 
     def test_irreversible_backup_warnings_are_still_explicit(self):
         self.assertIn("ghi đè", self.xml["a11yBackupExportGuidance"])

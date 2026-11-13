@@ -1085,6 +1085,8 @@ class game
     private:
         // Routine loop functions, approximately in order of execution
         void open_consume_item_menu(); // Custom menu for consuming specific group of items
+        void move_or_drive( action_id &act, avatar &player_character, const item_location &weapon,
+                            int desired_move_mode_cost );
         bool do_regular_action( action_id &act, avatar &player_character,
                                 const std::optional<tripoint_bub_ms> &mouse_target );
         bool handle_action();

@@ -30,7 +30,7 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         # Real speech leaks from Quick Play, fighting-style selection,
         # crafting navigation and zone management in Android session logs.
         pairs = {
-            "Preparing a new world. Please wait.": "Đang chuẩn bị thế giới mới. Vui lòng chờ.",
+            "Preparing a new world.  Please wait.": "Đang chuẩn bị thế giới mới. Vui lòng chờ.",
             "Creating your character and starting the game.": "Đang tạo nhân vật và bắt đầu trò chơi.",
             "Currently active fighting style.": "Đang sử dụng thế võ này.",
             "Not currently active.": "Chưa sử dụng thế võ này.",
@@ -72,7 +72,7 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
         self.assertIn('_( "Active fighting style: %s." )', style)
         self.assertIn('_( "Keep hands free enabled." )', style)
         self.assertIn('_( "Keep hands free disabled." )', style)
-        self.assertIn('_( "Preparing a new world. Please wait." )', loading_menu)
+        self.assertIn('_( "Preparing a new world.  Please wait." )', loading_menu)
         self.assertIn('_( "Creating your character and starting the game." )', game)
         furniture = (ROOT / "data/json/furniture_and_terrain/furniture-storage.json").read_text("utf-8")
         groups = (ROOT / "data/json/construction_group.json").read_text("utf-8")

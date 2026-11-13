@@ -1,4 +1,5 @@
 #include "avatar_action.h"
+#include "value_ptr.h"
 
 #include <algorithm>
 #include <climits>
@@ -861,7 +862,7 @@ void avatar_action::autoattack( avatar &you, map &m )
     } ), critters.end() );
     if( critters.empty() ) {
         add_msg( m_info, a11y::enabled()
-                 ? _( "Autoattack: no target in reach. Will wait one turn if safe mode allows." )
+                 ? _( "Autoattack: no target in reach.  Will wait one turn if safe mode allows." )
                  : _( "No hostile creature in reach.  Waiting a turn." ) );
         if( g->check_safe_mode_allowed() ) {
             you.pause();

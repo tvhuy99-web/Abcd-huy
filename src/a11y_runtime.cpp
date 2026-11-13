@@ -1,18 +1,22 @@
 #include "a11y_runtime.h"
 
 #include <algorithm>
+#if defined(__ANDROID__)
 #include <chrono>
+#endif
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
 #include "a11y_android.h"
 #include "a11y_context.h"
 #include "a11y_input.h"
-#include "input_context.h"
 #include "a11y_outcome.h"
 #include "a11y_world.h"
 #include "a11y_world_input_gate.h"
+
+class input_context;
 
 namespace a11y
 {
@@ -409,7 +413,7 @@ std::optional<std::string> poll_input( const void *input_owner )
     return std::nullopt;
 }
 
-void announce_game_message( const std::string &text, const bool urgent )
+void announce_game_message( const std::string_view text, const bool urgent )
 {
     synchronize_lifecycle();
     if( text.empty() || suspended() ) {

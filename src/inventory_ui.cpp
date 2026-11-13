@@ -1,4 +1,7 @@
 #include "inventory_ui.h"
+#include "a11y_semantics.h"
+#include "stomach.h"
+#include "value_ptr.h"
 
 #include <chrono>
 #include <optional>
@@ -3622,22 +3625,22 @@ class inventory_selector::reader_session
                     std::string effect;
                     if( command.id == trade_selector::ACTION_SWITCH_PANES ) {
                         effect = _( "Switch to the other trade pane, between the trader's "
-                                    "items and your items. This only changes which pane you "
+                                    "items and your items.  This only changes which pane you "
                                     "are browsing; it does not change the offer." );
                     } else if( command.id == trade_selector::ACTION_AUTOBALANCE ) {
                         effect = _( "Adjust the selected amount of the highlighted item in "
-                                    "this pane to balance the current offer. This changes "
+                                    "this pane to balance the current offer.  This changes "
                                     "the selection, like toggling an item; it does not "
                                     "complete the trade." );
                     } else if( command.id == trade_selector::ACTION_BANKBALANCE ) {
                         effect = _( "Balance the trade with your bank account, changing the "
-                                    "bank adjustment shown in the summary. This only works "
+                                    "bank adjustment shown in the summary.  This only works "
                                     "with the CAPITALISM option on, does not change the "
                                     "selected items, and does not complete the trade." );
                     } else if( command.id == trade_selector::ACTION_TRADE_OK ) {
                         effect = _( "Confirm the trade: the decision to exchange the items "
-                                    "selected on both sides. The game asks once more before "
-                                    "anything changes hands. Selecting items alone never "
+                                    "selected on both sides.  The game asks once more before "
+                                    "anything changes hands.  Selecting items alone never "
                                     "trades them." );
                     } else if( command.id == trade_selector::ACTION_TRADE_CANCEL ) {
                         effect = _( "Cancel the trade and leave this screen without "
@@ -3666,13 +3669,13 @@ class inventory_selector::reader_session
                        "Browsing never picks items up." ) );
             } else if( compare_mode ) {
                 snapshot.summary += "\n" + std::string(
-                    _( "Select two items to compare. Each selected item is announced "
+                    _( "Select two items to compare.  Each selected item is announced "
                        "before the comparison opens." ) );
             } else if( drop_mode ) {
                 snapshot.summary += "\n" + std::string( insert_mode ?
-                    _( "Choose items and quantities to put in the selected container. "
+                    _( "Choose items and quantities to put in the selected container.  "
                        "The game checks capacity before inserting." ) :
-                    _( "Choose items and quantities to drop. The chosen destination "
+                    _( "Choose items and quantities to drop.  The chosen destination "
                        "is announced before the drop activity begins." ) );
             }
             for( const std::string &line : owner.get_stats() ) {
@@ -3831,7 +3834,7 @@ class inventory_selector::reader_session
                         node.label += string_format( _( ", located: %s" ),
                                                     remove_color_tags( location.describe( &owner.u ) ) );
                         node.detail += "\n" + string_format(
-                                           _( "Weight: %1$s grams. Volume: %2$s milliliters." ),
+                                           _( "Weight: %1$s grams.  Volume: %2$s milliliters." ),
                                            std::to_string( units::to_gram( location->weight() ) ),
                                            std::to_string( units::to_milliliter( location->volume() ) ) );
                     }
@@ -4075,7 +4078,7 @@ class inventory_selector::reader_session
                         lines.push_back( remove_color_tags( data->description.translated() ) );
                     }
                     if( pocket->sealed() ) {
-                        lines.push_back( _( "Sealed: the contents cannot be seen." ) );
+                        lines.emplace_back( _( "Sealed: the contents cannot be seen." ) );
                     } else if( pocket->size() > 0 ) {
                         lines.push_back( string_format( _( "Contains %d item stacks." ),
                                                         static_cast<int>( pocket->size() ) ) );
@@ -4091,16 +4094,16 @@ class inventory_selector::reader_session
                                                         length_to_string( data->max_item_length ) ) );
                     }
                     if( pocket->watertight() ) {
-                        lines.push_back( _( "Watertight." ) );
+                        lines.emplace_back( _( "Watertight." ) );
                     }
                     if( pocket->airtight() ) {
-                        lines.push_back( _( "Airtight." ) );
+                        lines.emplace_back( _( "Airtight." ) );
                     }
                     if( pocket->rigid() ) {
-                        lines.push_back( _( "Rigid." ) );
+                        lines.emplace_back( _( "Rigid." ) );
                     }
                     if( data->holster ) {
-                        lines.push_back( _( "Holster: holds a single item." ) );
+                        lines.emplace_back( _( "Holster: holds a single item." ) );
                     }
                     pocket_node.detail = string_join( lines, "\n" );
                     // A pocket hangs under its item only when the item is
@@ -4163,7 +4166,7 @@ class inventory_selector::reader_session
                                 contained.enabled = all_inside && entry->is_selectable() &&
                                                     entry->get_available_count() > 0;
                                 contained.disabled_reason = !all_inside ?
-                                                            _( "This stack spans multiple pockets. Select it in the main item list." ) :
+                                                            _( "This stack spans multiple pockets.  Select it in the main item list." ) :
                                                             remove_color_tags( entry->denial.value_or( "" ) );
                                 contained.checked = entry->chosen_count > 0;
                                 contained.actions = { "focus", "read_detail" };
@@ -4260,7 +4263,7 @@ class inventory_selector::reader_session
                         }
                         if( truncated_contents ) {
                             pocket_node.detail += "\n" +
-                                                  std::string( _( "Additional nested items not shown. "
+                                                  std::string( _( "Additional nested items not shown.  "
                                                                   "Try a shorter inventory list." ) );
                         }
                         // The raw internal "read_only" marker is not user-
@@ -4376,7 +4379,7 @@ class inventory_selector::reader_session
                 return false;
             };
             if( count > 0 && dynamic_cast<const pickup_selector *>( &owner ) != nullptr ) {
-                const auto source_rows = column->get_entries( return_item, true );
+                const inventory_column::get_entries_t source_rows = column->get_entries( return_item, true );
                 const auto target = std::find_if( source_rows.begin(), source_rows.end(),
                 [&]( const inventory_entry *row ) { return row->any_item() == location; } );
                 if( target == source_rows.end() ) {
@@ -4406,7 +4409,7 @@ class inventory_selector::reader_session
                     }
                 }
                 for( const auto &conflict : conflicts ) {
-                    const auto current = conflict.first->get_entries( return_item, true );
+                    const inventory_column::get_entries_t current = conflict.first->get_entries( return_item, true );
                     const auto found = std::find_if( current.begin(), current.end(),
                     [&]( const inventory_entry *row ) { return row->any_item() == conflict.second; } );
                     if( found != current.end() && ( *found )->chosen_count > 0 ) {
@@ -4414,7 +4417,7 @@ class inventory_selector::reader_session
                     }
                 }
             }
-            const auto rows = column->get_entries( return_item, true );
+            const inventory_column::get_entries_t rows = column->get_entries( return_item, true );
             const auto target = std::find_if( rows.begin(), rows.end(),
             [&]( const inventory_entry *row ) { return row->any_item() == location; } );
             if( target == rows.end() ) {
@@ -4434,7 +4437,7 @@ class inventory_selector::reader_session
                 // any selections already made in the outer item list.
                 const auto reject_pocket_change = []() -> std::optional<std::string> {
                     a11y::android::announce(
-                        _( "Pocket contents changed or cannot be selected. Please open the pocket again." ), 1 );
+                        _( "Pocket contents changed or cannot be selected.  Please open the pocket again." ), 1 );
                     return "TIMEOUT";
                 };
                 if( intent.action != "set_value" || !has_quantity_form() ||
@@ -4474,7 +4477,7 @@ class inventory_selector::reader_session
                     if( choice == pb->items.end() || !unique_choices.insert( key ).second ) {
                         return reject_pocket_change();
                     }
-                    const auto rows = choice->column->get_entries( return_item, true );
+                    const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                     const auto found = std::find_if( rows.begin(), rows.end(),
                     [&]( const inventory_entry *entry ) { return entry->any_item() == choice->location; } );
                     if( found == rows.end() ) {
@@ -4534,7 +4537,7 @@ class inventory_selector::reader_session
                         if( choice == pocket.items.end() || !pocket.container ) {
                             continue;
                         }
-                        const auto rows = choice->column->get_entries( return_item, true );
+                        const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                         const auto live = std::find_if( rows.begin(), rows.end(),
                         [&]( const inventory_entry *entry ) {
                             return entry->any_item() == choice->location;
@@ -4586,7 +4589,7 @@ class inventory_selector::reader_session
             }
             // Resolve the handle again against this screen's current visible
             // rows. No vector-entry pointer survives a sort, filter or redraw.
-            const auto entries = binding->column->get_entries( return_item );
+            const inventory_column::get_entries_t entries = binding->column->get_entries( return_item );
             const auto found = std::find_if( entries.begin(), entries.end(),
             [&]( const inventory_entry *entry ) { return entry->any_item() == binding->location; } );
             if( found == entries.end() ) {

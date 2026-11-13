@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include "a11y_semantics.h"
-#include "coords_fwd.h"
 #include "coordinates.h"
 #include "point.h"
 class input_context;
@@ -36,7 +35,7 @@ semantic_snapshot world_snapshot( const input_context &context, int scan_radius,
                                   std::optional<tripoint_rel_ms> explore_cursor = std::nullopt );
 semantic_snapshot activity_snapshot( const input_context &context );
 // Unrestricted, read-only 16-tile accessibility scan. Never moves the avatar or advances time.
-void announce_linear_scan( int dx, int dy );
+void announce_linear_scan( const point &delta );
 void announce_player_coordinates();
 // Announce a known overmap terrain change (forest, road, town, etc.).
 // Monitors the player's absolute overmap tile, not the renderer submap shift.

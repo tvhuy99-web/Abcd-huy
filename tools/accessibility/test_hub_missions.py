@@ -30,9 +30,9 @@ class MissionsHubTest(unittest.TestCase):
         self.assertIn('query_yn( _( "Really delete Page?" ) )', self.diary)
 
     def test_followers_can_be_contacted_without_accidental_recall(self):
-        self.assertIn("Within interaction range. Activate to talk.",
+        self.assertIn("Within interaction range.  Activate to talk.",
                       self.factions)
-        self.assertIn("Within radio range. Activate to talk.",
+        self.assertIn("Within radio range.  Activate to talk.",
                       self.factions)
         self.assertIn("Use Contact to recall.", self.factions)
         self.assertIn('return "CONFIRM";', self.factions)

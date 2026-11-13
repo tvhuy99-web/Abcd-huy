@@ -406,8 +406,7 @@ struct snake_spec {
     point board_size;   // (width, height), as declared by the caller
     point head;         // (x, y) = (width / 2, height / 2)
     point fruit;        // (x, y), first fruit for the declared size + seed
-    int direction_x = 1;  // east
-    int direction_y = 0;
+    point direction = point::east;
     int starting_length = 10;  // iSnakeBody in start_game()
     unsigned int seed = 0;
 };

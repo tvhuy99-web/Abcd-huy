@@ -1,4 +1,7 @@
 #include <algorithm>
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include <initializer_list>
 #include <cstdlib>
 #include <functional>
 #include <imgui/imgui.h>
@@ -394,12 +397,12 @@ std::string a11y::limb_health_description( const Character &who, const bodypart_
     const bool no_feeling = who.has_flag( json_flag_PAIN_IMMUNE );
     if( who.worn_with_flag( flag_SPLINT, part ) ) {
         if( no_feeling ) {
-            return _( "Splinted. Mending progress is unknown." );
+            return _( "Splinted.  Mending progress is unknown." );
         }
         const effect &mending = who.get_effect( effect_mending, part );
         const int percent = mending.is_null() || mending.get_max_duration() <= 0_turns ? 0 :
                             100 * mending.get_duration() / mending.get_max_duration();
-        return string_format( _( "Splinted. Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
+        return string_format( _( "Splinted.  Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
     }
     if( who.is_limb_broken( part ) ) {
         return _( "Broken." );
@@ -782,7 +785,7 @@ void medical_ui::draw_controls()
 
 a11y::semantic_snapshot medical_ui::reader_snapshot() const
 {
-    auto snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
     snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
     // Urgent conditions are announced before the full limb list. A status
     // estimate must never expose exact hit points or bypass treatment checks.
@@ -1103,7 +1106,7 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         if( a11y::enabled() ) {
             a11y::semantic_snapshot requirements;
             a11y::append_requirements( requirements, "treatment", reqs, *this, inv, is_crafting_component, 1 );
-            for( const auto &node : requirements.nodes ) {
+            for( const a11y::semantic_node &node : requirements.nodes ) {
                 descr += "\n" + node.label + "\n" + node.detail;
             }
             for( const wound_proficiency &prof : fix.proficiencies ) {

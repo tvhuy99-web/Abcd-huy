@@ -65,7 +65,7 @@ class WorldGestureContracts(unittest.TestCase):
         )[0]
         # The player's absolute X/Y/Z remain the existing numbers. The
         # overmap name is optional, drawn only from previously known data.
-        self.assertIn('_( "Coordinates. X %1$d. Y %2$d. Z %3$d." )', reader)
+        self.assertIn('_( "Coordinates.  X %1$d. Y %2$d. Z %3$d." )', reader)
         self.assertIn("viewer.pos_abs_omt()", reader)
         self.assertIn("overmap_buffer.seen( omt )", reader)
         self.assertIn("vision != om_vision_level::unseen", reader)

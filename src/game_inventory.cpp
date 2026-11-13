@@ -1,4 +1,5 @@
 #include "game_inventory.h"
+#include "a11y_semantics.h"
 
 #include <imgui/imgui.h>
 #include <algorithm>

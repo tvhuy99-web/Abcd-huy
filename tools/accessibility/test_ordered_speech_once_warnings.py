@@ -51,7 +51,7 @@ class OrderedSpeechAndWarningsTest(unittest.TestCase):
         body = self.world.split('std::string enemy_report;', 1)[1].split(
             'result.nodes.push_back( document( "reader:combat:enemies"', 1)[0]
         self.assertIn('_( "%1$s, %2$s, %3$d HP remaining." )', body)
-        self.assertIn("relative_name( relative.x(), relative.y() )", body)
+        self.assertIn("relative_name( relative.raw().xy() )", body)
         self.assertIn("std::max( 0, enemy->get_hp() )", body)
         self.assertNotIn("enemy->hp_percentage()", body)
         self.assertNotIn("distance %3$d tiles", body)

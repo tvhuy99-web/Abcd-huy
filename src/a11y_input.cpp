@@ -1,4 +1,9 @@
 #include "a11y_input.h"
+#include "math_parser_diag_value.h"
+#include "string_id.h"
+#include <cstddef>
+#include <initializer_list>
+#include <memory>
 #include <algorithm>
 #include <array>
 #include <utility>
@@ -127,7 +132,7 @@ void annotate_live_command_states( semantic_snapshot &snapshot )
             // These are multi-valued modes, not boolean switches.
             const char *const setting = id == "toggle_auto_pulp_butcher" ?
                                         "AUTO_PULP_BUTCHER" : "AUTO_FORAGING";
-            const auto &option = get_options().get_option( setting );
+            const options_manager::cOpt &option = get_options().get_option( setting );
             node.value = option.getValue() == "off" ? _( "Currently off" ) : option.getValueName();
             if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
                 node.value += ". " + std::string( _( "Inactive: additional auto features are off" ) );
@@ -136,7 +141,7 @@ void annotate_live_command_states( semantic_snapshot &snapshot )
             // Despite the translated name, this action makes a single
             // automatic melee attack. It has no persistent on/off state.
             node.value = _( "One attack, not an on/off setting" );
-            node.detail = _( "Perform one automatic melee attack. This is not an on/off setting." );
+            node.detail = _( "Perform one automatic melee attack.  This is not an on/off setting." );
         } else if( id == "safemode" && g ) {
             node.value = g->safe_mode == SAFE_MODE_OFF ? _( "Currently off" ) :
                          g->safe_mode == SAFE_MODE_STOP ? _( "On, danger detected" ) :

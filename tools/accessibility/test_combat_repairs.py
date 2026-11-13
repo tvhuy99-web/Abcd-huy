@@ -46,7 +46,7 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("gunmode_checks_common(", quick)
         self.assertIn("gunmode_checks_weapon(", quick)
         self.assertIn("firing_mode_blocked(", quick)
-        self.assertIn("rounds loaded. Reload or change weapons.", quick)
+        self.assertIn("rounds loaded.  Reload or change weapons.", quick)
         self.assertLess(quick.index("gunmode_checks_weapon("),
                         quick.index("queue_accessible_combat_shot("))
         self.assertLess(quick.index("gunmode_checks_common("),
@@ -59,7 +59,7 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("direction.disabled_reason", view)
         self.assertIn("Ammunition remaining: %d.", view)
         self.assertLess(view.index("if( !direction.enabled )"),
-                        view.index("No visible creature. You can still fire"))
+                        view.index("No visible creature.  You can still fire"))
 
     def test_important_combat_warning_waits_for_stable_world_context(self):
         self.assertIn("A11Y_COMBAT_ALERT:", self.ranged)
@@ -112,7 +112,7 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertIn("hit.second.second", self.ranged)
         self.assertIn("Your shot did not hit any creature.", self.ranged)
         self.assertIn("Your shot hit %s but dealt no damage.", self.ranged)
-        self.assertIn("You grazed %1$s. %2$d damage. %3$d HP remaining.", self.ranged)
+        self.assertIn("You grazed %1$s. %2$d damage.  %3$d HP remaining.", self.ranged)
         self.assertIn("COMBAT_SHOT", self.ranged)
         self.assertIn("COMBAT_BALLISTIC", creature)
         self.assertIn('#include "a11y_runtime.h"', creature)
@@ -194,8 +194,8 @@ class CombatRepairContracts(unittest.TestCase):
 
     def test_vietnamese_combat_labels_have_translations(self):
         for msg in (
-                "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons.",
-                "The weapon cannot fire right now. Check ammunition and firing mode.",
+                "Cannot fire: %1$s. %2$d rounds loaded.  Reload or change weapons.",
+                "The weapon cannot fire right now.  Check ammunition and firing mode.",
                 "Loaded %1$d %2$s into %3$s. %4$d rounds in gun.",
                 "Fighting unarmed.",
                 "Wielding %s.",
@@ -203,8 +203,8 @@ class CombatRepairContracts(unittest.TestCase):
                 "%1$s hits your %2$s. You lose %3$d HP.",
                 "Critical hit on %1$s. %2$d damage. %3$d HP remaining.",
                 "Hit %1$s. %2$d damage. %3$d HP remaining.",
-                "You grazed %1$s. %2$d damage. %3$d HP remaining.",
-                "You shot %1$s. %2$d damage. %3$d HP remaining.",
+                "You grazed %1$s. %2$d damage.  %3$d HP remaining.",
+                "You shot %1$s. %2$d damage.  %3$d HP remaining.",
         ):
             self.assertIn('msgid "' + msg + '"', self.po)
 
