@@ -312,6 +312,10 @@ class recipe
         std::map<itype_id, book_recipe_data> booksets;
         // Parameters for practice recipes
         std::optional<practice_recipe_data> practice_data;
+        // Original data name for accessible practice lists. A faulty language
+        // catalog must not turn "computer (beginner)" into a camp blueprint.
+        // Display-only metadata; never serialize or overwrite translation keys.
+        std::string practice_source_name;
         // Parameters for nested categories
         std::set<recipe_id> nested_category_data;
 
