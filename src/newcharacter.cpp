@@ -4334,7 +4334,7 @@ void character_creator_callback::confirm( uilist *menu )
             cc_uistate.recalc_professions = true;
             cc_uistate.recalc_hobbies = true;
             cc_uistate.recalc_traits = true;
-            if( a11y::enabled() ) {
+            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
                 ui_parent->handle_action( "NEXT_TAB" );
             }
             break;
@@ -4377,7 +4377,7 @@ void character_creator_callback::confirm( uilist *menu )
             cc_uistate.recalc_hobbies = true;
             cc_uistate.recalc_traits = true;
             cc_uistate.cached_profession_inventory.clear();
-            if( a11y::enabled() ) {
+            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
                 ui_parent->handle_action( "NEXT_TAB" );
             }
             break;
@@ -4437,7 +4437,7 @@ void character_creator_callback::confirm( uilist *menu )
 
             character_stat selected_stat = static_cast<character_stat>( selected_stat_index );
             const int stat_queried = cc_uistate.stats[selected_stat_index];
-            if( a11y::enabled() ) {
+            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
                 const std::string name = _( io::enum_to_full_string( selected_stat ) );
                 const std::optional<int> chosen = choose_accessible_creation_value(
                                                       name, stat_queried, CHARACTER_STAT_MIN,
@@ -4567,7 +4567,7 @@ void character_creator_callback::confirm( uilist *menu )
             select( menu );
             const skill_id skill_queried = cc_uistate.get_selected_skill();
             int previous_skill_level = u.get_skill_level( skill_queried );
-            if( a11y::enabled() ) {
+            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
                 const std::optional<int> chosen = choose_accessible_creation_value(
                                                       skill_queried->name(), previous_skill_level,
                                                       MIN_SKILL, MAX_SKILL,
