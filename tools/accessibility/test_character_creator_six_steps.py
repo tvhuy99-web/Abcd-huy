@@ -47,16 +47,28 @@ class CharacterCreatorSixSteps(unittest.TestCase):
 
     def test_attributes_and_skills_have_retryable_value_picker(self):
         self.assertIn('choices.input_category = "character-creator-value";', self.source)
-        self.assertIn('value <= 10', self.source)
-        self.assertIn('choices.addentry( 11, true, -1, _( "Enter manually" ) );', self.source)
+        # STT 30: the picker used to list a fixed 1-10 for every value,
+        # but stats range 4-20. It now takes min/max from the caller.
+        self.assertIn('value <= max_value', self.source)
+        self.assertIn(
+            'name, stat_queried, CHARACTER_STAT_MIN,\n'
+            '                                                      CHARACTER_STAT_MAX,',
+            self.source
+        )
+        # The manual entry is one past the max (21 for stats, 11 for
+        # skills), not a hardcoded 11.
+        self.assertIn('const int manual_entry = max_value + 1;', self.source)
+        self.assertIn('choices.addentry( manual_entry, true, -1, _( "Enter manually" ) );', self.source)
         self.assertIn('if( candidate < min_value || candidate > max_value )', self.source)
         self.assertIn('if( const std::optional<std::string> error = validate( candidate ) )', self.source)
         self.assertIn('popup( *error );\n            continue;', self.source)
         self.assertIn('Not enough points for this attribute.', self.source)
         self.assertIn('Not enough points for this skill.', self.source)
         self.assertIn(
+            # STT 30: include_zero is gone — min_value already says
+            # whether zero is offered (skills 0-10, stats 4-20).
             'skill_queried->name(), previous_skill_level,\n'
-            '                                                      MIN_SKILL, MAX_SKILL, true,',
+            '                                                      MIN_SKILL, MAX_SKILL,',
             self.source
         )
 

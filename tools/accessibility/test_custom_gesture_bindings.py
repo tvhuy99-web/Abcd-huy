@@ -29,7 +29,7 @@ class CustomGestureContracts(unittest.TestCase):
                 )
                 self.assertIn('name="' + label + '"', xml)
 
-    def test_newest_binding_replaces_older_and_restores_default(self):
+    def test_newest_binding_replaces_older(self):
         src = (JAVA / "ReaderGestureBindings.java").read_text(
             encoding="utf-8"
         )
@@ -38,11 +38,15 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("mapping.put(gesture, target)", src)
         self.assertIn("mapping.values().removeAll(", src)
         self.assertIn('putString(KEY, json.toString())', src)
+        # STT 21 (XOA MA): restoreGestureDefaults() was deleted with the
+        # old setup screen, so there is no restore-defaults path left in
+        # prefs. Custom bindings live only under KEY in
+        # ReaderGestureBindings (loaded on start, saved on change).
         prefs = (JAVA / "ReaderPreferences.java").read_text(
             encoding="utf-8"
         )
-        restore = prefs.split("public void restoreGestureDefaults()", 1)[1]
-        self.assertIn('remove("world_gesture_bindings_v1")', restore)
+        self.assertNotIn("restoreGestureDefaults", prefs)
+        self.assertIn('store.getString(KEY, "{}")', src)
 
     def test_game_shortcuts_restore_the_comprehensive_menu(self):
         ctrl = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")

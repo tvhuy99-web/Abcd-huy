@@ -51,7 +51,9 @@ class ConciseSpeechTest(unittest.TestCase):
             'msgstr "Bị chặn"',
             'msgstr "Có bẫy: %s"',
             'msgstr "Xe: %s"',
-            'msgstr "X %1$d, Y %2$d, Z %3$d."',
+            # The coordinates entry is translated now (was untranslated
+            # English); the concise Vietnamese form is asserted instead.
+            'msgstr "Tọa độ. X %1$d, Y %2$d, Z %3$d."',
             'msgstr "Chưa rõ kết quả."',
             'msgstr "%s chảy máu nặng hơn."',
         ):
