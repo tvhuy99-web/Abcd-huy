@@ -1,4 +1,6 @@
 #include "ui_iteminfo.h"
+#include "a11y_semantics.h"
+#include <utility>
 
 #include <imgui/imgui.h>
 #include <string>

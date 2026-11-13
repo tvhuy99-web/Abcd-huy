@@ -1,4 +1,8 @@
 #include "smart_controller_ui.h"
+#include "a11y_semantics.h"
+#include <iterator>
+#include <stddef.h>
+#include <utility>
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"

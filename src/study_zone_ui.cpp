@@ -1,4 +1,5 @@
 #include "study_zone_ui.h"
+#include "a11y_semantics.h"
 
 #include <algorithm>
 #include <array>

@@ -1,6 +1,9 @@
 #include "clzones.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "a11y_semantics.h"
+#include "enums.h"
+#include <cstdlib>
 #include <iterator>
 
 #include "a11y_input.h"
