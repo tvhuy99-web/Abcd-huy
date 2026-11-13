@@ -195,8 +195,14 @@ void VehicleSpawn::load( const JsonObject &jo )
                 type.throw_error_at( "vehicle_function", "load_vehicle_spawn: unable to find builtin function" );
             }
 
-            spawn.add( type.get_float( "weight" ), make_shared_fast<VehicleFunction_builtin>
-                       ( builtin_functions[type.get_string( "vehicle_function" )] ) );
+            // Keep the control block separate from the polymorphic object.
+            // GCC 16 may incorrectly devirtualize the in-place shared pointer
+            // disposal as VehicleFunction_json and warn about out-of-bounds access.
+            // Preserve the single-threaded shared_ptr_fast ownership policy.
+            spawn.add( type.get_float( "weight" ),
+                       shared_ptr_fast<VehicleFunction>(
+                           new VehicleFunction_builtin(
+                               builtin_functions[type.get_string( "vehicle_function" )] ) ) );
         } else {
             type.throw_error( "load_vehicle_spawn: missing required vehicle_json (object) or vehicle_function (string)." );
         }
