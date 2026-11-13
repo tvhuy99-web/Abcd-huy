@@ -29,7 +29,9 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#if defined(__ANDROID__)
 #include "blueprint_cache.h"
+#endif
 #include "cata_path.h"
 #include "cata_scope_helpers.h"
 #include "cata_utility.h"

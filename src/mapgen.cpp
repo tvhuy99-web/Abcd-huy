@@ -3,7 +3,9 @@
 
 #include <algorithm>
 #include <array>
+#if defined(__ANDROID__)
 #include <chrono>
+#endif
 #include <climits>
 #include <cstdint>
 #include <functional>

@@ -13,11 +13,13 @@
 #include <tuple>
 #include <utility>
 
+#if defined(__ANDROID__)
 #include "a11y_perception.h"
 #include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "a11y_semantics.h"
 #include "a11y_world.h"
+#endif
 #include "avatar.h"
 #include "avatar_action.h"
 #include "cata_utility.h"
@@ -27,7 +29,9 @@
 #include "debug.h"
 #include "enums.h"
 #include "enum_traits.h"
+#if defined(__ANDROID__)
 #include "field.h"
+#endif
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"

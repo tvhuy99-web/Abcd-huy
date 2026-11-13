@@ -1,7 +1,9 @@
 #include "init.h"
 
 #include <algorithm>
+#if defined(__ANDROID__)
 #include <chrono>
+#endif
 #include <cstddef>
 #include <filesystem>
 #include <memory>
@@ -20,7 +22,9 @@
 #include "ascii_art.h"
 #include "behavior.h"
 #include "bionics.h"
+#if defined(__ANDROID__)
 #include "blueprint_cache.h"
+#endif
 #include "bodygraph.h"
 #include "bodypart.h"
 #include "butchery_requirements.h"

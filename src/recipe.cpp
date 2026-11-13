@@ -4,9 +4,11 @@
 #include <array>
 #include <cmath>
 #include <cstdint>
+#if defined(__ANDROID__)
 #include <filesystem>
 #include <fstream>
 #include <limits>
+#endif
 #include <initializer_list>
 #include <memory>
 #include <numeric>
@@ -15,7 +17,9 @@
 #include <sstream>
 #include <unordered_map>
 
+#if defined(__ANDROID__)
 #include "blueprint_cache.h"
+#endif
 #include "bonuses.h"
 #include "cached_options.h"
 #include "calendar.h"

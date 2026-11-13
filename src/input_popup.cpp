@@ -8,13 +8,17 @@
 #include <cstddef>
 #include <cmath>
 #include <locale>
+#if defined(__ANDROID__)
 #include <limits>
+#endif
 #include <optional>
 #include <sstream>
 #include <type_traits>
 
 #include "coordinates.h"
+#if defined(__ANDROID__)
 #include "catacharset.h"
+#endif
 #include "output.h"
 #include "imgui/imgui.h"
 #include "imgui/imgui_stdlib.h"
