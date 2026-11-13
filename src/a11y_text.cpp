@@ -1,6 +1,7 @@
 #include "a11y_text.h"
 
 #include <utility>
+#include <vector>
 
 #include "a11y_semantics.h"
 #include "translations.h"

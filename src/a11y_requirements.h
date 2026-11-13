@@ -8,7 +8,7 @@
 class Character;
 class deduped_requirement_data;
 class item;
-class requirement_data;
+struct requirement_data;
 class temp_crafting_inventory;
 
 namespace a11y

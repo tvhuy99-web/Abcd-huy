@@ -4,6 +4,8 @@
 #include <cstddef>
 #include <cstdlib>
 #include <map>
+#include <utility>
+#include <vector>
 
 #include "a11y_document.h"
 #include "item.h"
