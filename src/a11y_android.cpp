@@ -162,11 +162,11 @@ void performance_reader_sample( const long long ms )
         return;
     }
 
+    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
+#if defined(__ANDROID__)
     const auto update_after_action_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
                                             std::chrono::steady_clock::now() -
                                             pending_step_completed_at ).count();
-    const unsigned int busy_epoch = profile_busy_epoch.load( std::memory_order_acquire );
-#if defined(__ANDROID__)
     // ON is a complete diagnostic capture. Do not sample, skip fast
     // footsteps or stop after any number of stable turns.
     diagnostic_event( "WORLD_STEP_PIPELINE",

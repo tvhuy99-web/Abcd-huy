@@ -45,7 +45,7 @@ jobs:
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
-      uses: github/codeql-action@b8d3b6e8af63cde30bdc382c0bc28114f4346c88 # v2
+      uses: github/codeql-action/init@33d7b85da1a04171e211befe2c739303b9a4c066 # v4
       with:
         languages: ${{ matrix.language }}
         # If you wish to specify custom queries, you can do so here or in a config file.
@@ -65,8 +65,15 @@ jobs:
     #    and modify them (or add more) to build your code if your project
     #    uses a compiled language
 
-    - run: |
-       make RELEASE=1 TESTS=0
+    - name: Install C++ build dependencies
+      if: matrix.language == 'cpp'
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y libncursesw5-dev gettext
+
+    - name: Compile C++ for CodeQL tracing
+      if: matrix.language == 'cpp'
+      run: make RELEASE=1 TESTS=0 -j2
 
     - name: Perform CodeQL Analysis
-      uses: github/codeql-action@b8d3b6e8af63cde30bdc382c0bc28114f4346c88 # v2
+      uses: github/codeql-action/analyze@33d7b85da1a04171e211befe2c739303b9a4c066 # v4

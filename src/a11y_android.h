@@ -72,6 +72,10 @@ void diagnostic_event( const std::string &category, const std::string &detail );
 void open_sound_settings( int music, int effects, bool enabled );
 void queue_sound_settings( int music, int effects, bool enabled );
 void apply_pending_sound_settings();
+#else
+// Diagnostics are Android-only. Other platforms build shared gameplay code
+// without a Java journal, so diagnostic calls must be harmless there.
+inline void diagnostic_event( const std::string &, const std::string & ) {}
 #endif
 // Accessible recovery actions for SDL debug messages, even without an
 // active semantic snapshot. The game thread retains authority to continue.
