@@ -35,7 +35,7 @@ class SessionDebugLogSourceTest(unittest.TestCase):
     def test_single_recording_switch_starts_and_stops_all_diagnostics(self):
         ordered = ["enabled = new CheckBox(this)",
                    "export = new Button(this)",
-                   "clear = new Button(this)"]
+                   "clearButton = new Button(this)"]
         indexes = [self.activity.index(name) for name in ordered]
         self.assertEqual(indexes, sorted(indexes))
         self.assertNotIn("CheckBox profiling", self.activity)
@@ -49,6 +49,32 @@ class SessionDebugLogSourceTest(unittest.TestCase):
         self.assertIn("log.recording = enabled;", self.log)
         self.assertIn("SessionDebugLog.isRecording()", self.reader)
         self.assertNotIn("isPerformanceProfilingEnabled()", self.reader)
+
+    def test_clear_confirmation_stays_inside_spoken_game_task(self):
+        self.assertIn("surface.setContent(confirmation);", self.activity)
+        self.assertIn("surface.setContent(mainControls, 2);", self.activity)
+        self.assertIn("clearButton.setOnClickListener(view -> showClearConfirmation())",
+                      self.activity)
+        self.assertIn("confirm.setText(R.string.a11yDebugLogConfirmClearAction)",
+                      self.activity)
+        self.assertIn("cancel.setText(R.string.a11yTtsCancel)", self.activity)
+        self.assertIn("SessionDebugLog.clear(this);", self.activity)
+        self.assertNotIn("new AlertDialog.Builder(this)", self.activity)
+        self.assertIn("if (confirmingClear) {", self.activity)
+        self.assertIn("super.onBackPressed();", self.activity)
+        surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text("utf-8")
+        self.assertIn("public void setContent(View content, int initialFocus)", surface)
+
+        # A singleInstance game creates a separate Android task for every
+        # child Activity. singleTask keeps the debug log inside the game task
+        # so Recents names the game and Back reveals gameplay.
+        manifest = ET.parse(RES.parent / "AndroidManifest.xml").getroot()
+        android = "{http://schemas.android.com/apk/res/android}"
+        activities = manifest.find("application").findall("activity")
+        game = next(x for x in activities if x.get(android + "name") == "CataclysmDDA")
+        debug = next(x for x in activities if x.get(android + "name") == "DebugLogActivity")
+        self.assertEqual(game.get(android + "launchMode"), "singleTask")
+        self.assertIsNone(debug.get(android + "taskAffinity"))
 
     def test_fresh_file_for_each_launch_and_no_legacy_crash_recovery(self):
         self.assertIn('new File(directory, ACTIVE)', self.log)
