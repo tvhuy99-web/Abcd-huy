@@ -1,5 +1,8 @@
 [flake8]
 exclude = .git,__pycache__,lang/json,tools/clang-tidy-plugin/test/check_clang_tidy.py
+# The source-contract tests embed long paths and engine phrases. 120 columns
+# keeps new code readable without failing 700 pre-existing 80-column lines.
+max-line-length = 120
 ignore =
     # E265 forces comments to have a space after the '#'.  We have a bunch of
     # optional debugging code commented out this way, and not having a space is
@@ -8,4 +11,5 @@ ignore =
     E265,
     # W503 and W504 require line breaks after or before binary operators; you
     # can only have one enabled
+    W503,
     W504

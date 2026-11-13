@@ -8,9 +8,15 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[2]
 CRAFT = (ROOT / "src/crafting_gui.cpp").read_text(encoding="utf-8")
-READER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
-GESTURES = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(encoding="utf-8")
-TWO_FINGER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/TwoFingerBackGesture.java").read_text(encoding="utf-8")
+READER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(
+    encoding="utf-8"
+)
+GESTURES = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(
+    encoding="utf-8"
+)
+TWO_FINGER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/TwoFingerBackGesture.java").read_text(
+    encoding="utf-8"
+)
 VI = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
 

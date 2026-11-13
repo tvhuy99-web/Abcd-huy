@@ -1,5 +1,4 @@
 """Regression contracts for the consolidated System menu and added settings pages."""
-import re
 from pathlib import Path
 import unittest
 

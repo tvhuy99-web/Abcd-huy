@@ -146,8 +146,6 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertNotIn("profile_place_samples % 8", game)
         self.assertNotIn("profile_shift_samples % 8", game)
 
-
-
     def test_native_step_result_uses_real_position(self):
         engine = (SRC / "handle_action.cpp").read_text(encoding="utf-8")
         self.assertIn('diagnostic_event( "WORLD_MOVE_RESULT"', engine)
@@ -169,7 +167,6 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         for phase in ("before_cache_ms=", "cache_ms=", "monsters_ms=",
                       "player_turn_ms="):
             self.assertIn(phase, code)
-
 
 
 if __name__ == "__main__":

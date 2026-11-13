@@ -33,7 +33,10 @@ class FastLoadAndAnnouncements(unittest.TestCase):
         self.assertIn("replayBufferedGameMessages();", self.controller)
         self.assertNotIn("MAX_BUFFERED_MESSAGES = 8", self.controller)
         self.assertIn("pendingGameMessages.addLast(", self.controller)
-        self.assertNotIn("pendingGameMessages.removeFirst();\n                    SessionDebugLog.event", self.controller)
+        self.assertNotIn(
+            "pendingGameMessages.removeFirst();\n                    SessionDebugLog.event",
+            self.controller
+        )
         self.assertIn("pendingGameMessages.clear();", self.controller)
         self.assertIn('"GAME_MESSAGE_BUFFERED"', self.controller)
         self.assertIn("orderedGameEvents.addLast(", self.queue)
