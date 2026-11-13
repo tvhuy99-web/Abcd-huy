@@ -69,6 +69,7 @@ jobs:
         install: >-
           gettext
           make
+          mingw-w64-x86_64-python
 
     - name: Add msbuild to PATH
       uses: microsoft/setup-msbuild@6fb02220983dee41ce7ae257b6f4d8f9bf5ed4ce # v2

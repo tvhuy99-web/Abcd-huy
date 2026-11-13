@@ -28,6 +28,13 @@ class window;
 
 static std::vector<std::pair<std::string, std::string>> messages;
 
+// The test message sink records messages and has no live speech to mute.
+Messages::mute_combat_speech::mute_combat_speech( bool ) : muted( false ) {}
+Messages::mute_combat_speech::~mute_combat_speech()
+{
+    static_cast<void>( muted );
+}
+
 std::vector<std::pair<std::string, std::string>> Messages::recent_messages( size_t )
 {
     return messages;
