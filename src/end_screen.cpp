@@ -1,4 +1,7 @@
 #include <imgui/imgui.h>
+#include "a11y_semantics.h"
+#include "output.h"
+#include "translation.h"
 #include <algorithm>
 #include <memory>
 #include <optional>

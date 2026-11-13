@@ -1,4 +1,6 @@
 #include "faction_ui.h"
+#include "enums.h"
+#include <array>
 
 #include <algorithm>
 #include <cstddef>
