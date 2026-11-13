@@ -20,8 +20,13 @@ class CharacterHubTest(unittest.TestCase):
     def test_mutations_consistently_check_stamina(self):
         self.assertEqual(self.mutation.count(
             "!mut_data.stamina || get_stamina() >= mut_data.cost"), 2)
+        # STT 54: both activation paths now report the specific shortage
+        # through activation_shortage(); the generic message survives
+        # only as its fallback, so it appears once, not twice.
         self.assertEqual(self.mutation.count(
-            "Not enough resources to activate %s."), 2)
+            "activation_shortage( mut_data )"), 2)
+        self.assertEqual(self.mutation.count(
+            "Not enough resources to activate %s."), 1)
         self.assertEqual(self.mutation.count(
             "Cannot activate %s. Focus it to hear the description."), 2)
 
