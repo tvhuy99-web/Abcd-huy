@@ -25,21 +25,23 @@ inline bool is_world_step_node( const std::string &node )
            node == "LEFTDOWN" || node == "RIGHTUP" || node == "RIGHTDOWN";
 }
 
+// Only the first matching node may authorize a walking step.
+inline bool enabled_world_step_node( const semantic_snapshot &snapshot,
+                                     const std::string &node_id )
+{
+    const auto node = std::find_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+    [&node_id]( const semantic_node & n ) { return n.id == node_id; } );
+    return node != snapshot.nodes.end() && node->enabled &&
+           std::find( node->actions.begin(), node->actions.end(), "activate" ) != node->actions.end();
+}
+
 inline bool live_world_walk_command( const semantic_snapshot &snapshot,
                                      const semantic_intent &intent )
 {
-    if( snapshot.category != "DEFAULTMODE" || !snapshot.swipe_movement_allowed ||
-        intent.action != "activate" || !is_world_step_node( intent.node ) ||
-        !intent.value.empty() || intent.revision == 0 || intent.revision > snapshot.revision ) {
-        return false;
-    }
-
-    // Re-resolve the command against the current native world, even when
-    // Android originally sent it against an older description.
-    const auto node = std::find_if( snapshot.nodes.begin(), snapshot.nodes.end(),
-    [&intent]( const semantic_node & n ) { return n.id == intent.node; } );
-    return node != snapshot.nodes.end() && node->enabled &&
-           std::find( node->actions.begin(), node->actions.end(), "activate" ) != node->actions.end();
+    return snapshot.category == "DEFAULTMODE" && snapshot.swipe_movement_allowed &&
+           intent.action == "activate" && is_world_step_node( intent.node ) &&
+           intent.value.empty() && intent.revision != 0 && intent.revision <= snapshot.revision &&
+           enabled_world_step_node( snapshot, intent.node );
 }
 
 } // namespace a11y

@@ -7,6 +7,7 @@
 #include <cstdint>
 #include <optional>
 #include <string>
+#include <string_view>
 
 #include "a11y_semantics.h"
 
@@ -56,8 +57,8 @@ int take_travel_control();
 void request_travel_map_return();
 bool take_travel_map_return();
 void reset_travel_control();
-void publish( const std::string &json );
-void announce( const std::string &text, int priority );
+void publish( std::string_view json );
+void announce( std::string_view text, int priority );
 // Open app-owned speech controls from the Android SDL game thread.
 void open_tts_settings();
 #if defined(__ANDROID__)
@@ -66,7 +67,7 @@ void open_debug_log();
 void open_accessibility_settings();
 void open_backup_restore();
 void normal_exit();
-void diagnostic_event( const std::string &category, const std::string &detail );
+void diagnostic_event( std::string_view category, std::string_view detail );
 // Sound settings are queued by the Java UI, then applied on the C++ game
 // thread from the main-menu loop, preserving SDL/option thread ownership.
 void open_sound_settings( int music, int effects, bool enabled );
@@ -75,11 +76,11 @@ void apply_pending_sound_settings();
 #else
 // Diagnostics are Android-only. Other platforms build shared gameplay code
 // without a Java journal, so diagnostic calls must be harmless there.
-inline void diagnostic_event( const std::string &, const std::string & ) {}
+inline void diagnostic_event( std::string_view, std::string_view ) {}
 #endif
 // Accessible recovery actions for SDL debug messages, even without an
 // active semantic snapshot. The game thread retains authority to continue.
-void present_debug_prompt( const std::string &report );
+void present_debug_prompt( std::string_view report );
 int take_debug_prompt_response();
 void dismiss_debug_prompt();
 // Sound/haptic cue channel (R21.2). The name is one of a small set of
