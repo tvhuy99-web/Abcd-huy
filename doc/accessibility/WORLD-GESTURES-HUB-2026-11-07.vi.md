@@ -1,53 +1,29 @@
-# Cử chỉ trực tiếp và menu tổng hợp trong thế giới
+# Cử chỉ thế giới và menu tổng hợp: mô tả hiện hành
 
-Nhánh: integration/reader-vietnamese-20261107
+**Đính chính 13/11/2026, `master@f0be189`.** Tệp tháng 11 ban đầu ghi sai chức năng chạm hai ngón một lần, số mục menu và quyền gán đè cử chỉ; phiên bản này đã cập nhật. Đọc đầy đủ tại [đặc tả](CURRENT-REFERENCE.vi.md) và [hướng dẫn](USER-GUIDE.vi.md).
 
-## Cử chỉ khi nhân vật đang ở thế giới
+## Trên bản đồ thế giới
 
-* Vuốt một ngón lên/xuống/trái/phải: đi Bắc/Nam/Tây/Đông, mỗi cử chỉ là một lệnh di chuyển. Không yêu cầu bật chế độ di chuyển nhanh hay luyện tám hướng.
-* Vuốt hai ngón theo bốn hướng: quét tuyến thẳng 16 ô ở hướng tương ứng. Đọc từ ô 1 đến ô 16, không ưu tiên nguy hiểm, không cần đã nhìn thấy ô. Đọc dữ liệu địa hình, đồ đạc, bẫy, sinh vật, xe, vật phẩm và trường hiệu ứng từ bản đồ đã nạp, kể cả ở sau tường.
-* Chạm hai ngón một lần: đọc trạng thái nhân vật.
-* Chạm hai ngón hai lần: đọc thông báo gần đây.
-* Chạm hai ngón ba lần: mở menu tổng hợp.
-* Chạm ba ngón một lần: đọc tọa độ X/Y/Z của nhân vật (tọa độ ô tuyệt đối trong game).
-
-Quét và đọc thông tin không di chuyển nhân vật và không tiêu lượt. Khi đang lái xe, ngủ, tự đi, thực hiện hoạt động hoặc ở màn hình chọn mục tiêu, vuốt một ngón không phát lệnh đi bộ sai ngữ cảnh. Cử chỉ nhiều ngón chỉ có tác dụng trên màn hình chơi và khi TalkBack không chiếm quyền khám phá bằng chạm. Nút có nhãn **Menu tổng hợp** và nút Quay lại là lối vào dự phòng.
+- Vuốt một ngón lên/xuống/trái/phải gửi bước đi Bắc/Nam/Tây/Đông khi game sẵn sàng. Có thể bị từ chối khi engine đang bận, ở xe hoặc trong cửa sổ khác.
+- Vuốt hai ngón theo một trong bốn hướng đọc từng ô 1–16 bằng `scan_unrestricted_tile`, **có thể đọc xuyên tường và thấy dữ liệu bản đồ chưa được nhân vật biết**. Khác sonar và quan sát theo trí nhớ.
+- Chạm một lần hai ngón là **Đọc chi tiết lựa chọn**, không phải mặc định đọc trạng thái nhân vật. Trong **chế độ chiến đấu**, cử chỉ này đọc danh sách kẻ địch.
+- Chạm hai lần hai ngón đọc thông báo game; chạm ba lần hai ngón mở menu tổng hợp.
+- Chạm một lần ba ngón đọc tọa độ; chạm **hai lần ba ngón** đọc đầy đủ thông tin nhân vật; chạm **ba lần ba ngón** bật/tắt chế độ chiến đấu.
+- Chạm ba lần một ngón cũng mở Menu tổng hợp; nhấn giữ một ngón mở hành động ngữ cảnh.
+- TalkBack hệ thống có thể giữ một số cử chỉ, khi đó dùng nút có nhãn và cách điều hướng TalkBack.
 
 ## Menu tổng hợp
 
-Mở bằng ba lần chạm hai ngón, nút Menu tổng hợp hoặc nút Quay lại khi đang ở màn hình chơi. Menu gốc gồm 16 lựa chọn: Tìm lệnh, Việc có thể làm tại đây, Quan sát và bản đồ, Di chuyển và tư thế, Tương tác với môi trường, Túi đồ và vật phẩm, Ăn uống/nghỉ ngơi/y tế, Trang bị và sửa chữa, Chiến đấu/vũ khí/phép thuật, Chế tạo và xây dựng, Nhân vật và năng lực, Nhiệm vụ và quan hệ, Phương tiện và hành trình, Quản lý khu vực và tự động hóa, Thông tin/trình đọc/trợ giúp, Hệ thống/TTS/lưu game.
+Menu có **17 lựa chọn cấp đầu**, theo thứ tự: **Yêu thích**, 15 nhóm chức năng, **Tìm lệnh**. Không còn danh mục gốc 16 mục bắt đầu bằng Tìm lệnh. Chi tiết danh sách tên và thứ tự xem [hướng dẫn, mục 4](USER-GUIDE.vi.md).
 
-Vuốt một ngón để duyệt, chạm hai lần để chọn, Quay lại để lên tầng menu trước hoặc trở về thế giới. Khi menu mở, cử chỉ một ngón không điều khiển nhân vật. Các nhóm lấy những lệnh đang được game công bố trong snapshot, không tạo ra lệnh giả. Mục Tất cả lệnh cho phép truy cập mọi lệnh có mặt trong snapshot hiện tại, kể cả lệnh chưa được phân nhóm. Mục Tìm lệnh hỗ trợ nhập tiếng Việt có hoặc không dấu. Khi thực hiện lệnh, menu đóng, lệnh vẫn phải qua bộ kiểm tra native của game; các màn hình nhiều bước như chế tạo, ngắm bắn, sử dụng đồ vật tiếp tục dùng giao diện tương ứng đã có.
+Duyệt chỉ đọc, chạm đôi mới kích hoạt. Nhấn giữ một hàng để mở tùy chọn (thêm vào Yêu thích hoặc chọn shortcut khi phù hợp). Tìm lệnh và Tất cả lệnh chỉ hiện những lệnh được snapshot của engine công bố. Các mục đã lưu có thể không khả dụng ở ngữ cảnh mới.
 
-## Lưu ý kiểm thử
+## Gán cử chỉ
 
-* Android Java phải được biên dịch và C++ native phải được biên dịch qua CI/build gốc; thử nghiệm thực tế trên thiết bị vẫn là bước độc lập.
-* Trên hệ thống bật TalkBack và khám phá bằng chạm, Android có thể giữ quyền điều khiển cử chỉ đa ngón; người dùng vẫn có nút giao diện có nhãn và nút Quay lại.
-* Quét 16 ô lấy từ bản đồ hiện đang nạp, không tự tạo dữ liệu ngoài vùng đã nạp; hiện các lượt quét 16 ô quanh nhân vật thông thường nằm trong vùng này.
-* “Việc có thể làm tại đây” là tập lệnh tương tác nhanh, game sẽ quyết định lệnh có khả dụng tại ô đang nhắm hay không.
+Có **36 mã** trong `ReaderGestureBindings.IDS`, **11 mã được giữ cố định**, còn **25 mã có thể gán**. Không thể gán đè vuốt một ngón bốn hướng, `hold_1`, các tap 2/3 ngón được giữ hoặc những hành vi trực tiếp của lớp Surface. Gán mới nhất đối với cử chỉ được phép sẽ thay gán cũ của nó.
 
-## Gán cử chỉ cho từng mục trong menu
+**Không có khả năng thay “vuốt lên đi Bắc” bằng lệnh khác bằng bộ gán hiện hành.** Những đoạn hướng dẫn cũ nói ngược lại là thiết kế đã bị thay thế.
 
-Khi đang ở menu tổng hợp, di chuyển đến bất kỳ mục nào và **nhấn giữ** để mở
-màn hình **Gán cử chỉ cho: tên mục**. Danh sách này cho phép duyệt, chọn và
-lưu một trong **33 cử chỉ**: bốn vuốt đơn, 12 chuỗi vuốt hai hướng,
-ba dạng chạm hai ngón, ba dạng chạm ba ngón, bốn vuốt ba ngón, bốn vuốt
-bốn ngón và ba dạng chạm bốn ngón.
+## Còn phải xác nhận
 
-Nút **Khôi phục cử chỉ mặc định** loại bỏ gán tùy chỉnh của mục đang chọn.
-Nút **Hủy** đóng màn hình gán mà không lưu. Các cử chỉ đã gán được lưu trong
-SharedPreferences và sử dụng ở màn hình chơi thực, không áp dụng vào
-cử chỉ duyệt menu. Các lệnh chỉ được thực thi thông qua snapshot native đang
-hợp lệ. Lệnh không khả dụng được thông báo thay vì thực hiện nhầm.
-
-**Khi xung đột:** lệnh được gán mới nhất chiếm quyền sử dụng cử chỉ.
-Lệnh từng có gán tùy chỉnh ở cử chỉ đó tự mất gán và trở về cách hoạt động
-mặc định của game; không thực hiện hai lệnh trong cùng một cử chỉ.
-Khi một lệnh được chuyển sang cử chỉ mới, gán cũ của chính lệnh đó cũng
-được giải phóng. Đối với cử chỉ mặc định như vuốt lên để đi Bắc, gán mới
-sẽ ghi đè hành động mặc định đó khi đang trong thế giới; chọn khôi phục
-mặc định để trả lại chức năng đi Bắc.
-
-TalkBack có thể giữ quyền xử lý một số cử chỉ nhiều ngón. Trong trường hợp
-đó, người dùng vẫn có thể tương tác bằng nút màn hình có nhãn, nhưng cần
-kiểm thử thực tế trên từng thiết bị.
+Tính đúng của nhận dạng đa ngón trên từng điện thoại, TalkBack bật/tắt, độ trễ sau một cú vuốt nhanh, mọi chuyển ngữ cảnh map/menu/combat và shortcut đã lưu từ APK trước. Có bài kiểm thử mã nhưng chưa có nghiệm thu toàn diện trên máy thật.

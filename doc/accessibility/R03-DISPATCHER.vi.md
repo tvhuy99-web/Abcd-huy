@@ -1,5 +1,7 @@
 # R03 — Dispatcher, quyền đầu vào và modal (giai đoạn 1, chỉ viết mã)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Tài liệu này ghi cửa kiểm quyền duy nhất cho intent của bộ đọc, vòng đời
 intent, chủ sở hữu modal, các đường đầu vào kép đã đóng, cơ chế nối adapter
 khi bật bộ đọc giữa màn, và suspend/resume. Trạng thái R03.1–R03.4 là

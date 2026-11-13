@@ -1,5 +1,7 @@
 # Danh mục bề mặt cần nghiệm thu — bản đầu
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Trạng thái mọi hàng: **chưa có nghiệm thu trợ năng**. Đây là bản kiểm kê đầu,
 không phải danh sách đầy đủ hoặc mẫu số để công bố “100%”. Tên màn/context
 được xác định bằng đọc nguồn tại baseline và công cụ `inventory.py`.

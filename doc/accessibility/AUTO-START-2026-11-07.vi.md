@@ -1,5 +1,7 @@
 # Bật trình đọc mặc định khi mở game
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 Áp dụng cho bản Android flavor `accessibility` trên nhánh tích hợp.
 
 - Đổi nhãn ứng dụng từ “Thử trợ năng” thành “Trình đọc”.

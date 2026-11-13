@@ -1,5 +1,7 @@
 # Đọc thông tin gốc đầy đủ bằng một lần chạm hai ngón (PR #7)
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 ## Nguyên tắc thiết kế
 
 - **Vuốt duyệt:** chỉ đọc tên và dữ liệu ngắn như trước, không mở menu hay tính thông tin chi tiết của cả danh sách.

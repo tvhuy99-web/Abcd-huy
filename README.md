@@ -6,6 +6,10 @@ Cataclysm: Dark Days Ahead is a turn-based survival game set in a post-apocalypt
     <img src="./data/screenshots/ultica-showcase-sep-2021.png" alt="Tileset: Ultica">
 </p>
 
+## Android accessibility fork documentation
+
+For the Vietnamese screen-reader-focused Android variant in this fork, start with the [current accessibility documentation](doc/accessibility/README.md), [current implementation status](doc/accessibility/STATUS.md) and [Vietnamese user guide](doc/accessibility/USER-GUIDE.vi.md). These pages are pinned to the post-PR #7 source snapshot; older dated design notes are historical and should not be used as current APK instructions.
+
 ## Downloads
 
 **Releases** - [Stable](https://cataclysmdda.org/releases/) | [Experimental](https://cataclysmdda.org/experimental/)

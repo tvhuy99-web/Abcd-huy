@@ -1,5 +1,7 @@
 # R18 — Minigame và màn điều khiển riêng
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Phạm vi: 5 minigame trên thiết bị trong mã nguồn hiện hành — robotfindskitten
 (`src/iuse_software_kitten.cpp`), Lights On (`src/iuse_software_lightson.cpp`),
 Minesweeper (`src/iuse_software_minesweeper.cpp`), Snake

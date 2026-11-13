@@ -1,42 +1,21 @@
-# Nhật ký gỡ lỗi từng phiên, có khôi phục sự cố (phương án B)
+# Nhật ký gỡ lỗi từng phiên, trạng thái mã hiện tại
+
+**Đối chiếu `master@f0be189`, 13/11/2026.** Bản mô tả trước đó nói “mặc định bật”, giữ `crash_recovery.txt`, xuất phiên bị văng trước. Các điều đó **không đúng ở mã hiện tại**; không dùng quy trình cũ.
 
 ## Giao diện
 
-Ở bản Android, **Nhật ký gỡ lỗi** là mục thứ 10 của menu chính, sau **Thoát**. Mở ra một màn riêng chỉ có ba điều khiển từ trên xuống dưới: **Ghi nhật ký** (công tắc, mặc định bật), **Xuất nhật ký**, **Xóa nhật ký**. Không có phần mô tả dài trên màn.
+`DebugLogActivity` có **Ghi nhật ký**, **Xuất nhật ký**, **Xóa nhật ký**. Ghi nhật ký **mặc định tắt** và chỉ bật khi người dùng chọn; có thể bật/tắt nhiều lần trong một phiên. Không còn lựa chọn xuất log của phiên bị văng trước. Công tắc **chỉ đọc bằng giọng nói/đồ họa thế giới** nằm trong `AccessibilitySettingsActivity`, không nằm ở trang nhật ký.
 
-**Xuất nhật ký** mở trình chọn vị trí lưu tệp TXT của Android, không dùng quyền truy cập toàn bộ kho tệp. Nếu có nhật ký của lần bị văng, trước khi xuất cho phép chọn **Phiên bị văng trước** hoặc **Phiên hiện tại**. Tệp đã xuất nằm ở vị trí người dùng chọn và không tự bị xóa khi game đóng.
+## Vòng đời
 
-**Xóa nhật ký** hỏi xác nhận, sau đó xóa dữ liệu phiên hiện tại và nhật ký sự cố chưa xuất.
+- `SessionDebugLog` tạo một journal mới khi tiến trình mở. Cố xóa/truncate `active.txt` cũ, xóa `active.marker` và `crash_recovery.txt` cũ.
+- Phiên ghi hiện tại giới hạn khoảng **5 MiB**, khi đầy giữ phần nội dung gần nhất. Khi tắt ghi, các sự kiện sau đó không được lưu; dữ liệu đã ghi trong phiên vẫn có thể được xuất.
+- **Phải xuất trước khi khởi động lại game** nếu muốn giữ log. Game không bảo đảm lưu lại log để cho xuất trong lần mở kế tiếp.
+- Xóa nhật ký là thao tác riêng có xác nhận. Không tự gửi nhật ký đi đâu.
+- Công tắc ghi là điều khiển thủ công duy nhất. Không tự bật lại khi chậm, không tự dừng sau những bước đi nhanh.
 
-## Vòng đời và giới hạn
+## Cách báo lỗi
 
-- Tệp hoạt động: `files/session_debug/active.txt`, giới hạn cứng **5 MiB = 5 × 1.048.576 byte**. Khi vượt ngưỡng, xóa những dòng cũ nhất, giữ khoảng 4 MiB gần nhất và tiếp tục ghi.
-- Đánh dấu phiên đang mở: `active.marker`. Khởi động ứng dụng lần đầu trong tiến trình sẽ kiểm tra và tạo tệp hoạt động mới. Không bao giờ nối nhật ký của hai phiên.
-- Nếu tiến trình cũ chết mà chưa xóa dấu, giữ tệp cũ thành `crash_recovery.txt` **trước khi** tạo tệp mới. Tệp khôi phục này không bị xóa khi thoát bình thường. Một lần bị văng mới có thể thay thế nhật ký khôi phục chưa xuất của sự cố trước nữa.
-- Thoát game bình thường từ mục Thoát của menu hoặc Activity thực sự kết thúc: xóa ngay `active.txt` và `active.marker`. Chuyển sang nền bằng Home hoặc đổi Activity không tính là thoát.
-- Trong trường hợp ứng dụng bị hệ điều hành cưỡng chế kết thúc, Java không nhất thiết nhận callback; dấu còn lại cho phép nhận biết trên lần mở sau.
-- Tắt công tắc chặn ghi sự kiện mới, giữ dữ liệu đã có để xuất hoặc xóa. Bật lại tiếp tục ghi trong tệp hiện tại.
+Bật Ghi nhật ký → tái hiện vấn đề → mở lại Nhật ký gỡ lỗi → Xuất nhật ký bằng bộ chọn tệp Android → tùy ý tắt Ghi nhật ký. Ghi thêm commit APK, mẫu máy, TTS engine/TalkBack và đường thao tác. Chưa có bằng chứng đã thử mọi đường lỗi trên thiết bị thực tế.
 
-## Ghi thông tin
-
-Mỗi dòng ghi giờ UTC, `elapsed_ms` tính từ lúc thiết bị khởi động, tên sự kiện và dữ liệu.
-
-- **LIFECYCLE, SCREEN, SNAPSHOT**: vòng đời màn hình; loại màn chơi; mục được chọn; số nút.
-- **TOUCH, GESTURE, GESTURE_BINDING, GESTURE_ACTION**: số ngón, số lần chạm, hướng vuốt, thời lượng, cử chỉ đã nhận diện, lệnh được gán, chấp nhận hay từ chối.
-- **INTENT, INTENT_RESULT**: mã yêu cầu, màn hình và nút, hành động gửi qua JNI, kết quả nhận và độ trễ.
-- **NATIVE_ACTION**: tên hành động được game thực hiện (không chỉ bộ đọc), trạng thái hoàn thành/từ chối và số mili giây trong khối xử lý.
-- **GAME_SPEECH, TTS_REQUEST, TTS_STATE, TTS_EVENT**: chính xác chuỗi yêu cầu đọc, mã đoạn, hàng đợi TTS, sự kiện STARTED/DONE/CANCELLED/ERROR, thời gian xếp hàng và thời gian phát được callback xác nhận.
-- **NATIVE_ERROR, DEBUG_PROMPT, FATAL**: thông báo lỗi C++, mã lỗi giao diện và stacktrace lỗi Java không bắt được.
-- Khi xuất, thêm phần cuối `config/debug.log`, `config/crash.log` và ở phiên bị văng thêm `debug.log.prev` (nếu có). Tệp xuất vẫn tối đa 5 MiB, các phần quá cũ sẽ bị cắt và có ghi dấu.
-
-## Hạn chế quan sát và bảo mật
-
-Các sự kiện do Android hoặc engine không gửi tới ứng dụng **không thể** được ghi trọn vẹn, nhất là khi kernel/OS trực tiếp giết tiến trình, lỗi native trước khi file được ghi, hoặc âm thanh phát ra thực tế từ TalkBack. Callback `STARTED` chứng minh công cụ TTS nhận đoạn, không chứng minh loa thực sự phát tiếng. Thời gian tác vụ bao gồm phạm vi đo được, không tự khẳng định đo toàn bộ các thao tác bất đồng bộ.
-
-Không lưu nội dung ô nhập tự do, mật khẩu và giá trị trình chỉnh sửa trong `INTENT` (ghi `<redacted>`). Ngược lại, câu đưa tới TTS được ghi nguyên văn vì đó là thông tin cần tìm lỗi, có thể bao gồm tên nhân vật hoặc lời thoại. Nhật ký chỉ ở vùng riêng của ứng dụng và **không bao giờ tự gửi ra Internet**. Người dùng nên xem qua tệp trước khi chia sẻ.
-
-## Kiểm thử
-
-- `python3 -m unittest discover -s tools/accessibility -p test_session_debug_log.py -v`.
-- `androidTest` `SessionDebugLogTest`: kiểm tra ghi vòng vượt 5 MiB, công tắc tắt, dọn bình thường, phục hồi khi có marker và xuất tệp của sự cố.
-- CI Android Java và APK ARM64, sau đó cần xác nhận trên điện thoại: mở mục thứ 10, xuất và xóa, cử chỉ/TTS, thoát bình thường, buộc dừng bất thường rồi mở lại để khôi phục.
+Nguồn mã: `SessionDebugLog.java`, `DebugLogActivity.java`, `GameReaderController.java`. [Đặc tả hiện hành](CURRENT-REFERENCE.vi.md).

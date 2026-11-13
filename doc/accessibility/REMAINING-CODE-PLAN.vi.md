@@ -1,5 +1,7 @@
 # Kế hoạch phần mã còn lại — bản khôi phục 2.1
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Ngày 24/10/2026. Bản này được dựng lại từ 96 đầu việc trong `REMAINING-CODE-BACKLOG.json`; không tuyên bố khớp byte với bản 2.0 chỉ từng lưu cục bộ. Kế hoạch gốc và mục tiêu nghiệm thu nằm trong `PLAN.vi.md`.
 
 Quy trình hiện tại: sửa các phát hiện của đợt rà 24/10, chạy kiểm thử có bằng chứng cho từng lớp, sửa lỗi phát sinh rồi tạo APK đầy đủ. APK hoặc test host đạt chưa thay cho thử TalkBack/giọng thật và người khiếm thị.

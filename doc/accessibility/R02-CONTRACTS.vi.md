@@ -1,5 +1,7 @@
 # R02 — Hợp đồng cây, bảng và biểu mẫu (giai đoạn 1, chỉ viết mã)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Tài liệu này ghi schema, chính sách và bằng chứng nguồn của mục R02 trong
 `REMAINING-CODE-PLAN.vi.md`. Trạng thái của R02.1–R02.4 là
 **đã viết, chờ kiểm thử** (xem `REMAINING-CODE-BACKLOG.json`): chưa build,

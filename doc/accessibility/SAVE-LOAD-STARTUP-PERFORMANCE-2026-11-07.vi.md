@@ -1,5 +1,7 @@
 # Phân biệt tạo mới và tải bản lưu, khảo sát tốc độ tải Android
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 Phân tích theo mã nguồn nhánh `integration/reader-vietnamese-20261107`, không
 phải phép đo hiệu năng trên điện thoại người chơi.
 

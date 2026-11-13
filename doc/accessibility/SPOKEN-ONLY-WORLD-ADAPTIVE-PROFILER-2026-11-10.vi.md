@@ -1,3 +1,5 @@
+> **Đính chính giao diện 13/11/2026, `master@f0be189`:** phần Điều khiển được đối chiếu lại với `DebugLogActivity` và `AccessibilitySettingsActivity`. Công tắc đồ họa thế giới hiện **không nằm ở trang Nhật ký gỡ lỗi**. Mọi số đo trong tệp này còn cần thử trên thiết bị. [Đặc tả hiện hành](CURRENT-REFERENCE.vi.md).
+
 # Chế độ chỉ đọc và nhật ký chẩn đoán thủ công (PR #7)
 
 > Lưu ý: tài liệu này thay thế hoàn toàn thiết kế cũ từng dùng cơ chế
@@ -31,16 +33,14 @@
 
 ## Điều khiển
 
-Vào **Nhật ký gỡ lỗi** trong menu chính. Có:
-- **Ghi nhật ký:** công tắc thủ công duy nhất điều khiển mọi phép đo.
-- **Chỉ đọc bằng giọng nói, không dựng hình bản đồ:** độc lập với nhật ký;
-  vẫn bật mặc định trong biến thể APK trợ năng.
-- **Xuất nhật ký:** chỉ xuất tệp của lần mở game hiện tại.
-- **Xóa nhật ký:** xóa những gì đã ghi của phiên hiện tại.
+Vào **Nhật ký gỡ lỗi** trong menu chính. Trang `DebugLogActivity` có đúng ba điều khiển:
+- **Ghi nhật ký**: công tắc thủ công, mặc định tắt; không tự động bật/tắt vì tốc độ game.
+- **Xuất nhật ký**: xuất tệp của phiên mở game hiện tại.
+- **Xóa nhật ký**: thao tác riêng có xác nhận.
 
-Khi thay đổi công tắc ghi, Java cập nhật cờ ghi ngay và gửi cờ
-bật/tắt đo vào native qua JNI mà không đợi màn hình game mở lại.
-Native cũng nhận lại giá trị khi game tiếp tục foreground.
+**Chỉ đọc bằng giọng nói, không dựng hình bản đồ** là công tắc **trong Cài đặt trợ năng** (`AccessibilitySettingsActivity`), không nằm trong màn Nhật ký gỡ lỗi. Công tắc này độc lập với việc ghi log và mặc định bật trong flavor accessibility.
+
+Mỗi lần đổi trạng thái ghi, Java cập nhật chế độ đo native. Xuất log trước khi khởi động lại ứng dụng vì phiên mới tạo journal mới và xóa dữ liệu ghi của phiên trước.
 
 ## Những gì còn hoạt động trong chế độ chỉ đọc
 

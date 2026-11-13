@@ -1,27 +1,18 @@
-# Khôi phục menu tổng hợp và gán cử chỉ
+# Ghi chú khôi phục Menu tổng hợp: đã đối chiếu phiên bản hiện tại
 
-Đối chiếu lịch sử commit `443d1b2` với nhánh tích hợp sau khi phần giao diện đọc cũ bị dọn. Giao diện menu tổng hợp đã bị loại bỏ, còn chức năng nhận dạng/lưu 36 cử chỉ vẫn tồn tại.
+**Mốc lịch sử ban đầu: 08/11/2026. Đính chính mã `master@f0be189` ngày 13/11/2026.** Các số “16 lựa chọn”, “36 cử chỉ đều có thể chọn” và “Tìm lệnh đầu tiên” trong bản cũ không còn đúng.
 
-## Đã khôi phục
+## Trạng thái hiện hành
 
-- Chạm **ba lần bằng hai ngón** trong thế giới để mở **Menu tổng hợp** gồm 16 nhóm, từ **Tìm lệnh** đến **Hệ thống, TTS và lưu game**.
-- Lần mở đầu đọc: “Menu tổng hợp. Tìm lệnh, mục 1 trên 16”; vuốt tiếp chỉ đọc tên nhóm và thứ tự. Khi menu mở, vuốt một ngón chỉ điều hướng, **không làm nhân vật di chuyển**.
-- Lệnh tìm kiếm hỗ trợ tiếng Việt có dấu hoặc không dấu; **Tất cả lệnh** hiển thị lệnh thực sự được bản mô tả từ engine cung cấp.
-- Chạm hai lần để mở nhóm/thực hiện lệnh; **nhấn giữ một mục** mở danh sách 36 cử chỉ, kèm **khôi phục mặc định** và **hủy**.
-- Một cử chỉ chỉ có một lệnh. Khi được gán cho lệnh mới, lệnh trước mất gán tùy chỉnh và quay về mặc định. Các cài đặt gán cũ được giữ, cả dạng `hub:group:`, `hub:search`, `action:`.
-- Nút Quay lại đi từ bảng chọn cử chỉ về mục đã chọn, từ nhóm con về đúng vị trí ở menu gốc, sau đó đóng menu để trở lại trò chơi.
-- Với lệnh thực hiện hành động, menu đóng trước khi gửi yêu cầu đến engine; engine kiểm tra lại lệnh, trạng thái và phiên giao diện. Không kích hoạt hành động khi chỉ duyệt.
-- Màn cài đặt TTS được mở từ nhóm Hệ thống, không thay đổi thứ tự 10 điều khiển đã được duyệt. Mục cài đặt âm thanh tách riêng trong menu chính của game vẫn giữ nguyên.
-- **Không khôi phục bảng điều khiển cũ luôn hiển thị**, nút thử trợ năng hay màn hình luyện tập.
+- Menu tổng hợp có **17 mục cấp đầu**: Yêu thích; 15 nhóm; Tìm lệnh. Không phải bảng điều khiển luôn hiện.
+- Có thể mở ở thế giới bằng **chạm ba lần một ngón** hoặc **ba lần hai ngón**. Chạm hai lần để chọn, điều hướng menu không tự di chuyển nhân vật.
+- Tìm lệnh, Tất cả lệnh và Yêu thích dùng danh sách hành động đang được game công bố; mục không khả dụng ở ngữ cảnh hiện tại không được gửi như lệnh hợp lệ.
+- `ReaderGestureBindings` có 36 **mã nhận diện**, nhưng **11 mã cố định không gán lại**, chỉ **25 mã tùy chỉnh**.
+- Chạm ba lần ba ngón đã được dùng để bật/tắt chiến đấu. Nhấn giữ một ngón đã là hành động theo ngữ cảnh.
+- Các hành động qua menu vẫn được C++ kiểm tra bằng token và điều kiện màn hình trước khi thực hiện.
 
-## Phạm vi và hạn chế
+## Kiểm chứng còn thiếu
 
-Danh mục chức năng bên trong các nhóm phụ thuộc vào các lệnh **thực sự có trong snapshot của game**, không phải mọi chức năng mà bản thiết kế đề xuất đều có lệnh sẵn để thực hiện. Các mục chưa có dữ liệu chưa được giả lập thành nút không có tác dụng.
+Thử TalkBack/TTS, giữ focus khi đóng/mở menu, Yêu thích không khả dụng, nhiều trang danh sách, shortcut cũ, mở menu và quay lại sau chuyển trạng thái thế giới. Không coi build APK là bằng chứng nghiệm thu.
 
-Chưa xác nhận vận hành trên điện thoại. Cần thử với TTS Việt và TalkBack, trong menu và ngoài thế giới, đặc biệt chạm ba lần bằng hai ngón và nhấn giữ khi màn hình cập nhật.
-
-## Kiểm thử
-
-`python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v`
-
-`Android TTS settings validation` biên dịch Java Android; `Android accessibility baseline and candidate` chạy bộ kiểm thử và build APK ARM64.
+Tham khảo [đặc tả hiện hành](CURRENT-REFERENCE.vi.md) và [hướng dẫn sử dụng](USER-GUIDE.vi.md). Lịch sử khác biệt của bản tháng 11 được giữ trong Git.

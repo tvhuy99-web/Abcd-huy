@@ -1,889 +1,163 @@
-# Hướng dẫn sử dụng — CDDA bản trợ năng trên Android
+# Hướng dẫn sử dụng CDDA Android trợ năng, phiên bản hiện hành
 
-Tài liệu này viết để nghe bằng giọng đọc.
+**Đối chiếu mã trên `master@f0be189ac5ebf000fc38e8c91fa3b42e325a7417`, ngày 13/11/2026.** Đây là hướng dẫn hành vi đã triển khai, **không phải chứng nhận toàn bộ APK đã được thử với TalkBack trên điện thoại thật**. Nếu thấy câu hướng dẫn cũ trái với trang này, dùng trang này và [đặc tả hiện hành](CURRENT-REFERENCE.vi.md).
 
-Mỗi câu đều ngắn.
+Tài liệu được viết theo trình tự để người dùng trình đọc màn hình có thể nghe từ trên xuống. Không cần tự cài nhiều APK chỉ để đoán giao diện; nơi nào chỉ chắc ở tầng mã, hướng dẫn sẽ ghi “cần kiểm tra trên thiết bị”.
 
-Mỗi mục đều có tiêu đề rõ.
+## Mục 0. Phân biệt bản trợ năng và bản thường
 
-Hãy nghe theo thứ tự nếu bạn là người mới.
+Biến thể thử trợ năng có mã ứng dụng `com.cleverraven.cataclysmdda.accessibility`. Bản này có vùng dữ liệu ứng dụng riêng, không tự thay thế bản CDDA thường. Bản candidate ARM64 của PR #7 đã xây dựng thành công, nhưng kết quả đó **không chứng minh** rằng mọi chức năng nghe và điều khiển trên máy bạn đều đúng.
 
-Nếu bạn đã quen, hãy nhảy thẳng tới mục bạn cần.
+Khi nâng cấp, nên sao lưu bản lưu quan trọng. Nếu cần báo lỗi, ghi commit APK, mẫu máy, Android, TalkBack/TTS engine, thao tác và kết quả quan sát được.
 
-## Mục 0 — Bản này là bản gì
+## Mục 1. Khởi động và nghe giọng
 
-Tên ứng dụng trên màn hình chính là Cataclysm DDA - Thử trợ năng.
+Ở biến thể trợ năng, trình đọc nội bộ được bật mặc định khi cài mới trừ khi bạn đã chủ động thay đổi cài đặt. Khi màn hình xuất hiện, có thể có thông báo tải dữ liệu trước khi vào menu chính. Tải mod và khởi tạo thế giới có thể kéo dài; trạng thái “đang tải” **không có nghĩa** game đã vào màn bản đồ.
 
-Mã ứng dụng là com.cleverraven.cataclysmdda.accessibility.
+Nếu không nghe được:
+1. Kiểm tra âm lượng media Android và sự hiện diện của bộ máy TTS/ngôn ngữ Việt.
+2. Dùng TalkBack để tìm các nút có nhãn khi giọng nội bộ không hoạt động.
+3. Mở **Cài đặt TTS** để chọn engine và giọng có sẵn rồi dùng **Nghe thử**.
+4. Nếu có lỗi, mở **Nhật ký gỡ lỗi**, bật **Ghi nhật ký** trước khi tái hiện; phải **Xuất nhật ký trước khi khởi động lại**.
 
-Bản này có vùng dữ liệu riêng.
+Cử chỉ ứng dụng chỉ hoạt động khi Android không giữ cử chỉ đó cho TalkBack. Không yêu cầu tắt TalkBack chỉ để đọc menu Android.
 
-Bản này không dùng chung bản lưu với bản thường.
+## Mục 2. Màn hình Cài đặt TTS
 
-Bạn không cần gỡ bản game đang dùng.
+`TtsSettingsActivity` có các điều khiển theo thứ tự:
 
-Bạn giữ nguyên bản lưu của bản thường.
+1. **Bật trình đọc TTS trong game**.
+2. **Bộ máy đọc**.
+3. **Ngôn ngữ**.
+4. **Giọng đọc**.
+5. **Tốc độ**, từ **0,5 đến 10,0 lần**, bước 0,1.
+6. **Độ cao**, từ **0,5 đến 2,0 lần**.
+7. **Âm lượng**, từ 0 đến 100%.
+8. **Nghe thử**.
+9. **Hủy**.
+10. **Lưu**.
 
-Kết quả kiểm thử tự động và bản APK ngày 24 tháng 10 năm 2026 được ghi trong BUILD-AND-TEST-2026-10-24.vi.md.
+Trong mã hiện tại, trang này **không có** công tắc giọng mạng, nút “Khôi phục giọng mặc định” hay “Mở cài đặt TTS Android”. Quyền dùng giọng qua mạng đã được lưu từ trước vẫn được tôn trọng. Hãy chủ động **Nghe thử** trước khi Lưu để đảm bảo bạn nghe rõ, nhưng mã hiện tại **không bắt buộc** thử thành công trước khi Lưu. Nếu bật TTS mà âm lượng bằng 0, mã từ chối Lưu.
 
-Các kết quả tự động không thay cho việc nghe thử trên điện thoại và nghiệm thu với người khiếm thị.
+Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại vì bộ máy TTS thực có thể giới hạn tốc độ hoặc thiếu giọng tiếng Việt dù thanh trượt có đủ mức.
 
-Mục Giới hạn hiện tại ở cuối tài liệu nói rõ phần này.
+## Mục 3. Các cử chỉ cố định
 
-## Mục 1 — Bắt đầu lần đầu
+**Khi nhân vật ở màn hình thế giới bình thường:**
 
-### Bước 1 — Mở ứng dụng lần đầu
+- Vuốt một ngón lên: đi Bắc. Vuốt xuống: đi Nam. Vuốt trái: đi Tây. Vuốt phải: đi Đông. Từng cử chỉ đề nghị một bước; nếu game đang bận có thể từ chối.
+- Chạm hai lần bằng một ngón: kích hoạt/xác nhận lựa chọn, khi có hàng hay nút phù hợp.
+- Chạm ba lần bằng một ngón: mở Menu tổng hợp.
+- Nhấn giữ một ngón: mở hành động theo ngữ cảnh.
+- Vuốt hai ngón lên/xuống/trái/phải: đọc từng ô trên đường thẳng 16 ô theo hướng đó. Đây là **quét riêng cho trợ năng, có thể đọc qua tường**.
+- Chạm một lần bằng hai ngón: đọc chi tiết lựa chọn hiện tại. Nếu đang ở chế độ chiến đấu, thay vào đó đọc thông tin kẻ địch phù hợp.
+- Chạm hai lần bằng hai ngón: đọc thông báo gần đây ở thế giới.
+- Chạm ba lần bằng hai ngón: mở Menu tổng hợp ở thế giới.
+- Chạm một lần bằng ba ngón: đọc tọa độ.
+- Chạm hai lần bằng ba ngón: đọc đầy đủ thông tin nhân vật hiện tại.
+- Chạm ba lần bằng ba ngón: **bật/tắt chế độ chiến đấu**. Không phải cử chỉ trống để gán lệnh khác.
 
-Bạn mở ứng dụng từ màn hình chính.
+**Trong menu:** vuốt dùng để chuyển mục hoặc đổi nhóm tùy màn; chạm đôi mới kích hoạt. Vuốt hai ngón có thể mang nghĩa xác nhận hoặc quay lại theo ngữ cảnh. Luôn nghe tên, giá trị và trạng thái hàng trước khi chạm đôi; không suy rằng cử chỉ thế giới có nghĩa tương tự trong cửa sổ.
 
-Ứng dụng cần cài dữ liệu trò chơi trước khi chơi.
+Có 36 mã trong danh mục cử chỉ: 11 được giữ cố định và 25 cho phép gán tùy chỉnh. Các cử chỉ cố định không thể bị thay thế bởi cấu hình cũ. Hướng dẫn thử ánh xạ vuốt ngang/dọc trong 45 giây là **thiết kế lịch sử**, không còn là luồng cài đặt điều hướng hiện hành.
 
-Dữ liệu được chép vào một vùng tạm trước.
+## Mục 4. Menu tổng hợp
 
-Dữ liệu cũ không bị xóa trước.
+Mở từ màn hình chơi bằng chạm ba lần một ngón hoặc chạm ba lần hai ngón. Đây là menu **chỉ xuất hiện khi yêu cầu**, không phải bảng điều khiển luôn phủ lên màn hình.
 
-Chỉ khi bản chép đã kiểm chứng xong, dữ liệu mới mới được đưa vào dùng.
+Thứ tự mục cấp đầu:
+1. Yêu thích.
+2. Việc có thể làm tại đây.
+3. Quan sát và bản đồ.
+4. Di chuyển và tư thế.
+5. Tương tác với môi trường.
+6. Túi đồ và vật phẩm.
+7. Ăn uống, nghỉ ngơi và y tế.
+8. Trang bị và sửa chữa.
+9. Chiến đấu, vũ khí và phép thuật.
+10. Chế tạo và xây dựng.
+11. Nhân vật và năng lực.
+12. Nhiệm vụ và quan hệ.
+13. Phương tiện và hành trình.
+14. Quản lý khu vực và tự động hóa.
+15. Thông tin, trình đọc và trợ giúp.
+16. Hệ thống, TTS và lưu game.
+17. Tìm lệnh.
 
-Nếu máy hết dung lượng, ứng dụng báo lỗi trước khi đụng vào dữ liệu đang dùng.
+Các tệp kỹ thuật gọi “nhóm 3: Quan sát” theo **thứ tự nhìn thấy có tính cả Yêu thích**; mã `GameActionHub` gọi đó là nhóm nội bộ 2. Đừng dùng ID nội bộ làm số mục để vuốt.
 
-Bạn nghe thông báo lỗi đó.
+Khi duyệt một mục, trình đọc nói tên và thông tin ngắn. Chạm đôi mới vào nhóm hoặc gửi hành động. Một số nhóm chỉ hiện lệnh thật sự có trong tình huống hiện tại. Yêu thích đã lưu vẫn có thể báo **Không khả dụng ở màn hình hiện tại**; điều đó không có nghĩa mất mục.
 
-Bạn có các lựa chọn thử lại, mở cài đặt máy, hoặc thoát.
+**Tìm lệnh** giúp tra các lệnh đang được công bố; **Tất cả lệnh** không tự tạo chức năng mà engine không cho phép. Nhấn giữ một lệnh có thể mở tùy chọn thêm vào yêu thích hoặc gán cử chỉ cho lệnh ấy.
 
-Nếu quá trình bị dừng giữa chừng, lần mở sau ứng dụng sẽ tự khôi phục trước.
+## Mục 5. Quan sát bản đồ và Danh sách xung quanh
 
-Bạn không cần tự sửa tệp nào.
+Có hai cơ chế khác nhau, dễ nhầm:
 
-### Bước 2 — Nghe tiến độ cài đặt
+**Quan sát thông thường:** đọc thứ nhân vật nhìn thấy, đã ghi nhớ, nghe hoặc cảm nhận; ô chưa biết thì báo chưa biết. Việc quan sát tầng khác dùng dữ liệu trí nhớ, không tự phơi bày bản đồ sống.
 
-Khi bộ đọc đã bật, tiến độ cài đặt được đọc theo từng mốc mười phần trăm.
+**Quét trợ năng không giới hạn:** vuốt hai ngón một hướng đọc lần lượt các ô 1 đến 16. Danh sách xung quanh quét khu vực 20 ô về mỗi phía trên cả trục ngang và dọc, tức tối đa **41 × 41 vị trí** trong bản đồ đang nạp. Các lệnh này hiện cố ý có thể đọc địa hình, vật phẩm, sinh vật và bẫy **sau tường**. Đây là hành vi mã nguồn hiện tại, không phải chứng nhận cân bằng gameplay.
 
-Bạn chờ tới khi cài đặt xong.
+Mở **Menu tổng hợp → Quan sát và bản đồ → Danh sách xung quanh**. Danh sách đọc tên đối tượng, hướng và khoảng cách; các hàng được sắp gần trước, xa sau. Danh sách không phát mọi ô đất/cỏ/sàn trống, và có trang tiếp theo nếu quá 80 hàng.
 
-Bạn không tắt ứng dụng giữa chừng nếu không cần thiết.
+Bốn bộ lọc: **Tất cả**, **Sinh vật và NPC**, **Địa điểm và môi trường**, **Vật phẩm**. Trong danh sách này, vuốt ngang đổi đối tượng; vuốt dọc đổi bộ lọc.
 
-### Bước 3 — Nếu giọng đọc lỗi ngay từ đầu
+- Chạm **một lần hai ngón** trên hàng vật phẩm: nghe thông tin đầy đủ, **không** đi tới vật phẩm.
+- Chạm **đôi một ngón** trên hàng: yêu cầu tìm đường đến vị trí, theo kiểm tra an toàn của engine. Không dịch chuyển tức thời và không tự nhặt.
+- Nếu không có đường hợp lệ, có thể nghe thông báo từ chối.
+- Danh sách phản ánh đối tượng tại lúc mở; sinh vật có thể di chuyển sau đó.
 
-Nếu giọng tổng hợp lỗi, màn hình cứu hộ sẽ hiện.
+**Sonar định hướng** là tùy chọn tách biệt. Trong Cài đặt trợ năng, bật/tắt **Âm thanh định hướng vật phẩm và sinh vật**; mặc định tắt. Sonar chỉ dùng vật phẩm/sinh vật có thể nhìn thấy theo tám hướng, không có cùng cơ chế xuyên tường với danh sách quét.
 
-Màn hình cứu hộ có năm nút thường, theo thứ tự từ trên xuống.
+## Mục 6. Hành trang, đồ vật, ngăn chứa và số lượng
 
-Nút một là nghe lại hướng dẫn cứu hộ.
+Duyệt danh sách không tự nhặt, mặc, cất, thả hoặc dùng đồ. Chạm một lần hai ngón trên hàng vật phẩm được hỗ trợ sẽ yêu cầu đọc `item::info(true)`, tức phần thông tin đầy đủ do engine cung cấp.
 
-Nút hai là thử lại giọng đọc.
+Nếu có **đúng một đơn vị**, chạm đôi để đánh dấu một món; chạm lại bỏ đánh dấu. Không hiện bảng số.
 
-Nút ba là mở cài đặt giọng đọc của máy.
+Nếu có **nhiều đơn vị**, chọn số lượng 1–9, Tất cả, Bỏ chọn hoặc Nhập số lượng khác. Lựa chọn số được áp dụng ngay về danh sách, nhưng **chưa thực sự nhặt/thả/chuyển** cho tới khi bạn dùng bước xác nhận chung của màn đó. Quay lại từ bảng số không tự thay giá trị.
 
-Nút bốn là mở thiết lập bộ đọc.
+Trong túi nhiều ngăn, chú ý tên vật chứa và vị trí vật phẩm. Mã nguồn có kiểm tra lại đối tượng/đúng ngăn khi thực hiện. Nếu vật đã đổi vị trí hoặc số lượng không đủ, thao tác phải bị từ chối, không tự áp dụng sai.
 
-Nút cuối là quay lại.
+Nếu một vật phẩm bị vô hiệu hóa cho hành động hiện tại nhưng có quyền đọc chi tiết, bạn vẫn có thể yêu cầu đọc; **đọc được không đồng nghĩa được phép kích hoạt**.
 
-Một đoạn âm ghi sẵn sẽ phát để nói thứ tự các nút này.
+## Mục 7. Di chuyển, chiến đấu và hoạt động dài
 
-Đoạn âm đó không cần giọng tổng hợp.
+**Di chuyển bình thường:** mỗi cú vuốt được engine xem xét theo lượt. Đôi khi game xử lý tầm nhìn, quái vật và bản đồ nên có độ trễ. Đừng coi không có lời đọc tức thì là đã đi được; kiểm tra thông báo hoặc tọa độ khi cần.
 
-Ở màn hình lỗi cài đặt cũng có nút nghe lại hướng dẫn đứng đầu.
+**Chiến đấu:** chạm ba lần bằng ba ngón để chuyển chế độ và nghe thông báo trạng thái. Trong chế độ chiến đấu, một ngón dùng cho các đòn hướng; vuốt hai ngón là đi; chạm một lần hai ngón là nghe danh sách địch. Đổi lại chế độ bản đồ trước khi dùng cử chỉ quét. Không thử các lệnh chiến đấu nguy hiểm khi chưa nghe rõ chế độ hiện tại.
 
-Nếu thiếu dung lượng, đoạn âm riêng về thiếu dung lượng sẽ phát.
+**Ăn/uống/chữa trị/chế tạo/chờ/ngủ:** nghe điều kiện và số lượng trước khi xác nhận. Một hoạt động có thể bị hủy, gián đoạn hoặc kéo dài nhiều lượt; việc duyệt mô tả không tiêu lượt nhưng hành động gameplay thực có thể tiêu lượt. Trạng thái thực do engine quyết định.
 
-## Mục 2 — Chọn giọng đọc
+## Mục 8. Thông tin nhân vật và đọc tài liệu dài
 
-### Vào màn hình thiết lập
+Chạm **hai lần ba ngón** khi ở thế giới để nghe báo cáo nhân vật: tên, thuộc tính, tình trạng sinh tồn, hiệu ứng, các bộ phận, chế độ an toàn và trang bị đang cầm nếu game công bố.
 
-Bạn vào màn hình Thiết lập bộ đọc.
+Chạm **một lần hai ngón** trên công thức, trang trợ giúp, trang nhật ký, nhiệm vụ hoặc hàng tài liệu được hỗ trợ sẽ đọc chi tiết. Tài liệu dài được chia và ghép thành một lượt đọc. Hãy kiểm tra trên thiết bị nếu nội dung vượt 11 KB, vì kiểm thử nguồn chưa thay cho thử giọng thật.
 
-Màn hình này có danh sách các nút và các lựa chọn.
+Không có bảo đảm mọi cửa sổ của mod bên ngoài hoặc công cụ debug chuyên biệt đều có chi tiết đầy đủ.
 
-Bạn duyệt từng mục bằng cử chỉ ở mục sau, hoặc bằng TalkBack nếu TalkBack đang bật.
+## Mục 9. Cài đặt trợ năng khác
 
-### Chọn ngôn ngữ, bộ máy và giọng
+Trang **Cài đặt trợ năng** hiện có công tắc bật/ẩn đồ họa thế giới; chế độ chỉ đọc bằng giọng là mặc định ở biến thể APK trợ năng. Ngoài ra có sonar, ba mức khoảng cách vuốt và ba mức thời gian vuốt.
 
-Bạn có ba lựa chọn nối tiếp nhau.
+Trang **Nhật ký gỡ lỗi** khác với trang trợ năng và trang TTS. **Ghi nhật ký** mặc định tắt; trang cũng có **Xuất nhật ký** và **Xóa nhật ký**. Không có công tắc vẽ bản đồ trong trang nhật ký.
 
-Lựa chọn một là ngôn ngữ đọc.
+## Mục 10. Lưu, tải, sao lưu và báo lỗi
 
-Lựa chọn hai là bộ máy giọng đọc, tức engine.
+Sử dụng các lệnh lưu/tải của game; nếu có hộp xác nhận, nghe rõ câu hỏi và lựa chọn trước khi chạm đôi. Với bản lưu quan trọng, xuất bản sao lưu trước khi thực hiện các thao tác thử nghiệm hoặc khôi phục.
 
-Lựa chọn ba là giọng cụ thể trong ngôn ngữ đã chọn.
+Để báo lỗi:
+1. Vào **Nhật ký gỡ lỗi**, bật **Ghi nhật ký** trước khi thực hiện lỗi.
+2. Lặp lại chính xác cử chỉ, màn hình, vật phẩm hoặc thao tác gây lỗi.
+3. Trở lại Nhật ký gỡ lỗi và **Xuất nhật ký** bằng bộ chọn tệp Android. Có thể tắt ghi rồi mới xuất.
+4. **Không đóng/mở lại app trước khi xuất**: lần mở tiến trình mới tạo nhật ký mới, không còn lựa chọn “phiên bị văng trước”.
+5. Báo commit APK, mẫu máy, engine TTS, TalkBack bật/tắt, chuỗi thao tác, điều đã nghe, kết quả gameplay và nhật ký.
 
-Đổi bộ máy thì danh sách giọng được dò lại.
+Nhật ký chỉ được ghi khi bạn bật công tắc, không tự tắt khi máy chạy nhanh. Công tắc tắt không tiếp tục thu thập dữ liệu.
 
-Mỗi giọng đều có dòng trạng thái đi kèm.
+## Mục 11. Giới hạn chưa thể bảo đảm
 
-Dòng trạng thái nói giọng đó hoạt động ngoại tuyến hay cần mạng.
+APK ARM64 đã build được ở PR #7; nhưng vẫn cần nghiệm thu TalkBack và TTS trên máy thật, các ngữ cảnh chiến đấu/xe/giao dịch, nhập liệu dài, ngăn chứa lồng nhau, danh sách rất lớn, minigame, mod ngoài và lỗi lưu/khôi phục. Trong CI `master` vẫn có các job thất bại chưa sửa hết.
 
-Giọng ngoại tuyến dùng được khi không có mạng.
-
-Giọng cần mạng chỉ dùng được khi có mạng và khi bạn đã đồng ý.
-
-### Đồng ý dùng giọng mạng
-
-Có một ô chọn riêng cho việc cho phép giọng cần mạng.
-
-Bạn để ô này tắt nếu bạn chỉ muốn giọng ngoại tuyến.
-
-Bạn chỉ bật ô này khi bạn chủ động muốn dùng giọng cần mạng.
-
-Ứng dụng không tự chấp nhận giọng mạng thay bạn.
-
-Nếu bạn chọn giọng mạng mà chưa bật ô đồng ý, mẫu thử sẽ không phát.
-
-Ứng dụng sẽ báo trạng thái cần mạng.
-
-### Nghe mẫu rồi mới xác nhận
-
-Bạn bấm nút nghe mẫu.
-
-Bạn phải nghe hết câu mẫu.
-
-Chỉ sau khi mẫu phát xong, nút xác nhận đã nghe mới bật.
-
-Bạn bấm nút đó thì lựa chọn mới được lưu.
-
-Đổi bất kỳ lựa chọn nào sau khi nghe mẫu đều bắt bạn nghe mẫu lại.
-
-Tốc độ đọc chỉnh được từ không phẩy năm tới ba lần.
-
-Tốc độ được lưu cùng lúc bạn xác nhận đã nghe mẫu.
-
-Câu mẫu hiện tại vẫn là câu tiếng Việt.
-
-Dù bạn chọn ngôn ngữ đọc khác, câu mẫu vẫn chưa đổi theo ngôn ngữ đó.
-
-### Nếu giọng đã lưu bị mất
-
-Nếu giọng đã lưu bị gỡ khỏi máy, ứng dụng rơi về giọng mặc định đúng một lần.
-
-Ứng dụng đọc thông báo về việc này.
-
-Ứng dụng không lặp lại lỗi đó ở lần mở sau.
-
-Bạn vào lại thiết lập để chọn giọng mới nếu muốn.
-
-Nếu bộ máy lỗi thoáng qua khi đang chơi, hàng lời tự thử lại tối đa hai lần trước khi báo lỗi.
-
-## Mục 3 — Học cử chỉ cơ bản
-
-Phần này dành cho chế độ bộ đọc nội bộ, khi khám phá bằng chạm đang tắt.
-
-Khi TalkBack đang bật, bạn dùng cử chỉ quen thuộc của TalkBack và các nút có nhãn.
-
-### Bốn cử chỉ gốc
-
-Vuốt ngang và vuốt dọc là hai trục duyệt.
-
-Ý nghĩa của mỗi trục do thiết lập của bạn quyết định.
-
-Ít nhất một trục luôn là duyệt, để bạn không bao giờ mất đường duyệt menu.
-
-Chạm hai lần là chọn mục đang nghe.
-
-Nhấn giữ là đọc chi tiết của mục.
-
-Vuốt theo ánh xạ đọc cũng có thể đọc mục hiện tại, tùy ánh xạ bạn chọn.
-
-Phím Quay lại của máy mở bảng điều khiển bộ đọc.
-
-Trong bảng điều khiển có mục hủy một tầng menu của game.
-
-### Chỉnh ngưỡng vuốt
-
-Bạn chỉnh được độ dài vuốt.
-
-Bạn chỉnh được thời gian vuốt.
-
-Bạn chỉnh được tay thuận.
-
-Các giá trị này nằm trong màn hình thiết lập.
-
-## Mục 4 — Bài luyện tám hướng di chuyển
-
-### Bài luyện dùng để làm gì
-
-Bài luyện giúp bạn học vuốt tám hướng mà không di chuyển nhân vật.
-
-Vuốt trong bài luyện không gửi lệnh nào vào game.
-
-Vuốt trong bài luyện không tốn lượt.
-
-### Điều kiện vào bài luyện
-
-Bạn phải đang ở màn hình thế giới.
-
-Tức là nhân vật đã vào game.
-
-Ở menu chính chưa có nhân vật thì chưa luyện được.
-
-Ứng dụng sẽ báo cần mở màn hình thế giới trước.
-
-### Cách luyện
-
-Bạn mở bảng điều khiển bộ đọc.
-
-Bạn chọn mục luyện an toàn tám hướng di chuyển.
-
-Bạn nghe hướng dẫn của bài luyện.
-
-Bạn vuốt lần lượt theo tám hướng.
-
-Mỗi lần vuốt, ứng dụng đọc tên hướng vừa vuốt.
-
-Ứng dụng cũng đọc tiến độ.
-
-Ví dụ, đã luyện ba trên tám hướng.
-
-Đủ tám hướng thì bài luyện hoàn thành.
-
-Tiến độ hoàn thành được lưu.
-
-### Thoát và học lại
-
-Bạn chạm hai lần để thoát bất cứ lúc nào.
-
-Bạn cũng nhấn phím Quay lại để thoát.
-
-Thoát không đổi thiết lập di chuyển thật của bạn.
-
-Vào lại bài luyện thì số đếm bắt đầu lại từ đầu.
-
-Điều này là để bạn học lại từ đầu khi muốn.
-
-## Mục 5 — Bật di chuyển nhanh bằng vuốt
-
-Di chuyển nhanh mặc định tắt.
-
-Bạn bật được sau khi luyện đủ tám hướng.
-
-Bạn cũng bỏ qua luyện tập được bằng một mục riêng có cảnh báo rõ.
-
-Mục bỏ qua luôn ghi rõ vuốt sẽ di chuyển nhân vật và tốn lượt.
-
-Khi di chuyển nhanh đang bật, mỗi vuốt trong màn hình thế giới gửi một lệnh di chuyển.
-
-Mỗi lệnh như vậy có thể tốn một lượt.
-
-Vuốt lên là hướng bắc trên bản đồ.
-
-Tên hướng được đọc là tên của chính lệnh hướng đó trong game.
-
-Nghĩa của vuốt không đổi theo cách vẽ bản đồ.
-
-Bật bản đồ vẽ nghiêng cũng không xoay nghĩa của vuốt.
-
-### Khi nào vuốt không di chuyển
-
-Vuốt chỉ di chuyển khi nhân vật đang đi bộ.
-
-Vuốt không di chuyển khi nhân vật đang ở trong xe hoặc đang lái xe.
-
-Vuốt không di chuyển khi nhân vật đang điều khiển từ xa.
-
-Vuốt không di chuyển khi nhân vật đang làm hoạt động khác, đang ngủ, hoặc đang có điểm đến tự động.
-
-Khi đó, vuốt trở về làm việc duyệt menu như thường.
-
-Vuốt di chuyển không bao giờ là lệnh tăng ga xe.
-
-Lệnh xe chỉ tới được bằng cách duyệt và chọn trong trung tâm lệnh.
-
-### Tắt di chuyển nhanh
-
-Bạn mở bảng điều khiển bộ đọc.
-
-Bạn chọn lại mục di chuyển nhanh.
-
-Vuốt trở về chế độ duyệt danh sách.
-
-## Mục 6 — Thử ánh xạ vuốt mới trong bốn mươi lăm giây
-
-Bạn đổi được hành động của trục ngang và trục dọc.
-
-Đổi xong không áp dụng ngay vĩnh viễn.
-
-Đổi xong chỉ là bản thử.
-
-Bản thử sống trong bốn mươi lăm giây.
-
-Trong lúc thử, hai mục cuối của bảng điều khiển là xác nhận và khôi phục.
-
-Bạn xác nhận trong thời hạn thì ánh xạ mới được lưu.
-
-Hết bốn mươi lăm giây mà chưa xác nhận thì ánh xạ cũ trở lại.
-
-Bật TalkBack giữa lúc thử cũng làm bản thử bị hủy và trở về ánh xạ cũ.
-
-Ứng dụng chết giữa lúc thử cũng không giữ bản thử.
-
-Lần mở sau luôn bắt đầu bằng ánh xạ đã xác nhận.
-
-## Mục 7 — Trung tâm lệnh Tất cả lệnh
-
-### Trung tâm lệnh là gì
-
-Mỗi màn hình trong game có một danh sách lệnh riêng.
-
-Danh sách đó tên là Tất cả lệnh đã đăng ký.
-
-Chỉ lệnh nào màn hình hiện tại đã đăng ký mới xuất hiện.
-
-Lệnh của màn hình khác không xuất hiện thay mặt.
-
-### Cách mở và cách duyệt
-
-Bạn mở bảng điều khiển bộ đọc.
-
-Bạn chọn mục Tất cả lệnh đã đăng ký.
-
-Danh sách lệnh được chia theo nhóm.
-
-Các nhóm là di chuyển và nhìn.
-
-Nhóm tương tác và vật phẩm.
-
-Nhóm chiến đấu và sinh tồn.
-
-Nhóm nhân vật và thông tin.
-
-Nhóm chế tạo và xe.
-
-Nhóm chờ và hệ thống.
-
-Nhóm cuối là các lệnh khác của màn này.
-
-Bạn duyệt qua tiêu đề nhóm thì chỉ nghe tên nhóm.
-
-Tiêu đề nhóm không phải là lệnh.
-
-Bạn duyệt tới từng lệnh để nghe tên lệnh.
-
-Bạn đọc chi tiết để nghe mô tả phím đã gán của lệnh đó.
-
-Duyệt và đọc chi tiết không làm gì trong game.
-
-Chỉ chọn lệnh mới gửi lệnh vào game.
-
-### Cách tìm một chức năng
-
-Cách một là duyệt theo nhóm ở trên.
-
-Cách hai là dùng mục tìm trong bảng điều khiển.
-
-Bạn gõ chữ cần tìm.
-
-Ứng dụng báo có bao nhiêu mục phù hợp.
-
-Chuỗi tìm kiếm được giữ nguyên văn bạn gõ.
-
-Bạn chọn mục hiện lại tất cả mục để bỏ tìm kiếm.
-
-### Điều trung tâm lệnh không hiện
-
-Trung tâm lệnh không hiện chi phí của lệnh.
-
-Nguồn dữ liệu của game không có chi phí đó.
-
-Trung tâm lệnh cũng không hiện tham số của lệnh.
-
-Một số lệnh mở bước tiếp theo ở màn hình sau.
-
-Ví dụ chọn hướng, chọn mục tiêu, hoặc chọn vật phẩm.
-
-Bước tiếp theo đó là một màn hình riêng và được đọc riêng.
-
-Lệnh bị vô hiệu vẫn duyệt tới được.
-
-Bạn đọc chi tiết để nghe lý do bị vô hiệu.
-
-## Mục 8 — Cứu hộ bằng một ngón
-
-### Điểm vào duy nhất
-
-Nút Điều khiển trình đọc là một nút thường trên hàng công cụ.
-
-Bạn chạm một ngón vào nút đó là tới nơi.
-
-Phím Quay lại cũng mở bảng điều khiển khi bạn đang dùng bộ đọc nội bộ.
-
-Mọi mục trong bảng điều khiển là nút có nhãn.
-
-Bạn duyệt bằng vuốt hoặc chạm trực tiếp từng nút.
-
-Không chức năng cứu hộ nào bắt bạn vuốt chéo hay vuốt hai ngón.
-
-### Các mục cứu hộ theo thứ tự trong bảng điều khiển
-
-Mục Trở về màn hình hiện tại đóng bảng điều khiển.
-
-Mục Tôi đang ở đâu đọc tiêu đề và tóm tắt của màn hình hiện tại.
-
-Mục Đọc chi tiết mục đọc phần chi tiết của mục đang chọn.
-
-Mục Đọc lại lời vừa nghe phát lại câu vừa nghe.
-
-Khi TalkBack đang bật, mục này đọc lại mục hiện tại thay thế.
-
-Mục Dừng lời đọc dừng ngay lời đang đọc.
-
-Mục Hủy một tầng menu game gửi lệnh hủy.
-
-Lệnh hủy chỉ tác động màn hình đang sở hữu nó.
-
-Mục Thiết lập bộ đọc mở màn hình thiết lập.
-
-Mục Hướng dẫn cử chỉ đọc toàn văn hướng dẫn cử chỉ.
-
-Mục Tìm lệnh hoặc mục mở tìm kiếm.
-
-Mục Tất cả lệnh đã đăng ký mở trung tâm lệnh.
-
-Mục Hiện lại tất cả mục bỏ bộ lọc tìm kiếm.
-
-Tiếp theo là mục di chuyển nhanh và mục luyện tám hướng, đã nói ở mục trước.
-
-Mục Đánh vần mục hiện tại đánh vần từng chữ của mục đang chọn.
-
-Mục này giúp bạn kiểm tra đúng tên chưa có bản dịch hoặc tên nước ngoài.
-
-### Dừng lời bằng đường khác
-
-Ngoài bảng điều khiển còn có nút Dừng lời đọc trên hàng công cụ.
-
-Chạm hai ngón trên bề mặt cũng dừng lời.
-
-Chạm hai ngón chỉ là lối tắt.
-
-Bạn luôn có nút một ngón thay thế.
-
-### Khôi phục cử chỉ mặc định
-
-Bạn mở Thiết lập bộ đọc từ bảng điều khiển.
-
-Bạn tìm nút khôi phục mặc định cử chỉ trong màn hình thiết lập.
-
-Nút đó là nút thường, duyệt một ngón tới được.
-
-Khôi phục sẽ xóa ánh xạ hai trục đã chỉnh.
-
-Khôi phục xóa cả tay thuận và ngưỡng vuốt đã chỉnh.
-
-Khôi phục xóa cả bản thử ánh xạ đang chờ.
-
-Khôi phục giữ nguyên lựa chọn di chuyển nhanh của bạn.
-
-Khôi phục cũng giữ nguyên việc bạn đã luyện đủ tám hướng hay chưa.
-
-### Nếu bạn kẹt ở cấu hình khó dùng
-
-Bản thử ánh xạ sai tự hết sau bốn mươi lăm giây.
-
-Bài luyện thoát được bằng phím Quay lại hoặc chạm hai lần và không đổi cấu hình.
-
-Di chuyển nhanh tắt được ngay trong bảng điều khiển.
-
-Giọng lỗi có màn hình cứu hộ riêng ở mục một.
-
-TalkBack là đường phục hồi dự phòng ở mọi bước trên.
-
-## Mục 9 — Chơi cơ bản
-
-### Di chuyển
-
-Cách chậm và chắc là dùng lệnh trong trung tâm lệnh.
-
-Bạn duyệt tới lệnh hướng.
-
-Bạn nghe tên hướng.
-
-Bạn chọn lệnh đó.
-
-Cách nhanh là vuốt, sau khi đã bật di chuyển nhanh ở mục năm.
-
-Mỗi cách đều đi qua cùng một lệnh di chuyển của game.
-
-### Khám phá xung quanh
-
-Bạn dùng mục Tôi đang ở đâu để nghe lại mình đang ở màn hình nào.
-
-Bạn dùng con trỏ thăm dò để xem từng ô mà không di chuyển nhân vật.
-
-Ứng dụng chỉ đọc điều nhân vật đã biết.
-
-Ô chưa thấy được báo là chưa biết.
-
-Ứng dụng không đọc dữ liệu sống ở nơi nhân vật chưa biết.
-
-Bạn dùng tính năng quét để nghe các ô đáng chú ý quanh mình.
-
-Thứ tự quét ưu tiên bẫy đã biết, sinh vật đang nhìn thấy, rồi tới lối đi, vật phẩm và đồ đạc.
-
-Dấu âm thanh được đọc là vị trí gần đúng.
-
-Dấu âm thanh không khẳng định sinh vật ở đúng ô đó và không khẳng định sinh vật là thù địch.
-
-### Đồ đạc và các menu nói chung
-
-Mọi menu đều dùng cùng một mẫu.
-
-Bạn vuốt để duyệt từng mục.
-
-Bạn nhấn giữ hoặc đọc chi tiết để nghe thêm về mục.
-
-Mục bị khóa vẫn nghe được lý do bị khóa.
-
-Bạn chạm hai lần để chọn.
-
-Chọn xong có thể mở bước tiếp theo, ví dụ chọn số lượng.
-
-Số lượng nhập bằng trình nhập số riêng và được kiểm tra trước khi nộp.
-
-Bạn hủy bằng phím Quay lại hoặc mục hủy trong bảng điều khiển.
-
-### Đọc tài liệu dài
-
-Tài liệu dài được đọc theo đoạn.
-
-Khi có tài liệu đang mở, bảng điều khiển có thêm các mục tài liệu.
-
-Các mục đó gồm đọc tiếp, đoạn sau, đoạn trước, và đọc lại câu cuối.
-
-Có cả đánh vần đoạn hiện tại, đánh dấu đoạn, tới dấu trang, và tìm trong tài liệu.
-
-Nếu cảnh báo chen vào giữa chừng, vị trí đọc không mất.
-
-Bạn chọn đọc tiếp thì nghe lại đúng đoạn bị ngắt, kèm thông báo đã bị ngắt.
-
-Ứng dụng không tự đọc lại từ đầu và không tự phát lại sau cảnh báo.
-
-## Mục 10 — Lưu và tải
-
-### Nghe thông tin của từng bản lưu
-
-Trong danh sách tải, mỗi bản lưu được đọc kèm thông tin.
-
-Thông tin gồm tên thế giới của bản lưu.
-
-Thông tin gồm thời lượng chơi, nếu bản lưu có ghi.
-
-Không có ghi thì ứng dụng nói rõ là chưa ghi thời lượng.
-
-Thông tin gồm lần lưu cuối.
-
-Lần lưu cuối lấy từ thời gian của tệp trên máy.
-
-Nếu bạn chép thư mục bản lưu đi nơi khác, thời gian đó có thể đổi.
-
-### Tải bản lưu
-
-Bạn chọn bản lưu trong danh sách.
-
-Bạn xác nhận tải ở bước riêng.
-
-Nếu tải thất bại, một thông báo hiện lên.
-
-Thông báo nêu tên bản lưu và tên thế giới.
-
-Thông báo khẳng định bản lưu không bị thay đổi, không bị ghi đè và không bị xóa.
-
-Bạn quay về menu chính hoặc danh sách để chọn bản lưu khác.
-
-### Lưu thất bại
-
-Nếu lưu thất bại, ứng dụng báo rõ là game chưa lưu được.
-
-Bạn vẫn đang ở trong game.
-
-Ứng dụng không tự thoát thay bạn.
-
-Lưu nhanh thất bại cũng có thông báo riêng tương tự.
-
-### Xóa một bản lưu
-
-Xóa từng bản lưu là thao tác riêng, không nằm chung với tải.
-
-Bạn chọn một bản lưu thì thấy lựa chọn tải, xóa, hoặc hủy.
-
-Chọn xóa thì phải xác nhận thêm một lần nữa.
-
-Lần xác nhận đó nêu tên nhân vật và tên thế giới.
-
-Lần xác nhận đó nói rõ là không thể hoàn tác.
-
-Chỉ khi các tệp của bản lưu đó thật sự mất, mục đó mới biến khỏi danh sách.
-
-Xóa dở thì ứng dụng nói rõ và giữ mục đó lại.
-
-Xóa một bản lưu không xóa thành tích và không xóa bản ghi tưởng niệm đã xuất.
-
-## Mục 11 — Sao lưu và khôi phục bản lưu
-
-Phần này nằm trong màn hình Thiết lập bộ đọc.
-
-Tiêu đề của phần là Sao lưu và khôi phục.
-
-Có năm nút theo thứ tự.
-
-Nút xuất bản sao lưu.
-
-Nút nhập bản sao lưu.
-
-Nút tiếp tục mở trình chọn tệp.
-
-Nút xác nhận khôi phục.
-
-Nút hủy khôi phục.
-
-Ba nút cuối chỉ bật khi tới đúng bước của chúng.
-
-### Bản sao lưu gồm những gì
-
-Bản sao lưu là một tệp nén do bạn chọn nơi lưu.
-
-Bên trong có các cây bản lưu, thiết lập, tưởng niệm, thành tích và mẫu nhân vật.
-
-Tên các cây đó trong tệp là save, config, memorial, achievements và templates.
-
-Bên trong còn có một tệp kê khai.
-
-Tên tệp kê khai đó là cdda-reader-backup.txt.
-
-Tệp kê khai ghi số tệp và số byte chính xác.
-
-Ứng dụng dùng nó để kiểm chứng khi khôi phục.
-
-Nếu chưa có bản lưu hay thiết lập nào, xuất sẽ báo là chưa có gì để xuất.
-
-### Xuất bản sao lưu, bước một
-
-Bạn bấm nút xuất.
-
-Lần bấm đầu chưa xuất gì cả.
-
-Ứng dụng chỉ đọc toàn bộ hướng dẫn.
-
-Hướng dẫn nói trình chọn tệp của Android sắp mở.
-
-Hướng dẫn nói hệ thống sẽ tiếp quản màn hình khi trình chọn tệp mở.
-
-Hướng dẫn nói lời đọc của ứng dụng tạm dừng trong lúc đó.
-
-Hướng dẫn nói chọn trùng tên ở đích thì tệp đích đó bị thay thế.
-
-Hướng dẫn nói quay về màn hình này sẽ có thông báo kết quả.
-
-Nút tiếp tục được bật sau khi bạn nghe hướng dẫn.
-
-### Xuất bản sao lưu, bước hai
-
-Bạn bấm nút tiếp tục.
-
-Trình chọn tệp của hệ thống mở.
-
-Bạn chọn thư mục và tên tệp cho bản sao lưu.
-
-Bạn hủy trình chọn tệp thì quay về và nghe thông báo chưa chọn tệp nào.
-
-Bạn hoàn tất thì nghe thông báo đã xuất.
-
-Thông báo đã xuất nêu số tệp và số byte đã ghi.
-
-Xuất không bao giờ đổi bản lưu hay thiết lập của bạn.
-
-### Nhập và khôi phục, bước một và bước hai
-
-Bạn bấm nút nhập.
-
-Giống như xuất, lần bấm đầu chỉ đọc hướng dẫn và bật nút tiếp tục.
-
-Bạn bấm tiếp tục rồi chọn tệp sao lưu trong trình chọn tệp của hệ thống.
-
-Khi quay về, tệp chỉ được đọc và kiểm tra.
-
-Ứng dụng kiểm tra tệp có mở được không.
-
-Ứng dụng kiểm tra kê khai có khớp số tệp và số byte không.
-
-Ứng dụng kiểm tra có ít nhất một tệp bản lưu hoặc thiết lập.
-
-Ứng dụng kiểm tra mọi mục đều nằm trong các cây được phép.
-
-Ứng dụng kiểm tra dung lượng trống, gồm cả phần dự phòng.
-
-Sai bất kỳ điểm nào thì vùng tạm bị xóa.
-
-Dữ liệu hiện tại của bạn vẫn nguyên vẹn.
-
-Mọi lỗi đều được đọc thành lời và đều nói chưa có gì thay đổi.
-
-### Nhập và khôi phục, bước xác nhận riêng
-
-Kiểm tra xong thì trạng thái mới chỉ là đã sẵn sàng.
-
-Thông báo nêu rõ khôi phục sẽ thay những loại dữ liệu nào có trong bản sao lưu.
-
-Loại nào không có trong bản sao lưu thì được giữ nguyên.
-
-Chưa có gì bị thay thế ở bước này.
-
-Bạn bấm nút Xác nhận khôi phục thì việc thay thế mới chạy.
-
-Bạn bấm nút Hủy khôi phục thì vùng tạm bị loại bỏ và dữ liệu hiện tại được giữ.
-
-Khôi phục dùng vùng dự phòng và nhật ký riêng.
-
-Nếu ứng dụng dừng giữa lúc khôi phục, lần mở sau sẽ tự đưa dữ liệu cũ trở lại trước.
-
-Khôi phục xong, bạn khởi động lại game.
-
-Game cần đọc lại bản lưu và thiết lập vừa khôi phục.
-
-### Cảnh báo khi khôi phục
-
-Bạn hãy khôi phục từ màn hình khởi động.
-
-Bạn khôi phục trước khi bắt đầu một phiên chơi.
-
-Hiện tại chưa có cầu nối để game đang chạy đóng băng việc ghi đĩa.
-
-Game đang chạy có thể lưu đè lên dữ liệu vừa khôi phục về sau.
-
-Ứng dụng đã cảnh báo điều này ngay trong hướng dẫn nhập.
-
-## Mục 12 — Báo lỗi kèm chẩn đoán
-
-### Chẩn đoán nằm ở đâu
-
-Bạn mở màn hình Thiết lập bộ đọc.
-
-Bạn tìm tiêu đề Chẩn đoán.
-
-Dưới tiêu đề có nút Đọc báo cáo chẩn đoán.
-
-### Cách nghe báo cáo
-
-Bạn phải mở game với bộ đọc bật trước, trong cùng một lần chạy ứng dụng.
-
-Nếu chưa có phiên bộ đọc nào trong lần chạy này, ứng dụng nói rõ điều đó.
-
-Khi có phiên, báo cáo được đọc thành lời.
-
-Báo cáo gồm thời gian tiến trình đã chạy.
-
-Báo cáo gồm số câu đã đọc xong, bị ngắt, bị bỏ vì trùng, bị bỏ vì hết hạn, và bị đẩy ra khi hàng đợi đầy.
-
-Báo cáo gồm độ trễ bắt đầu đọc gần nhất và chậm nhất, nếu đã đo được.
-
-Báo cáo nói rõ độ trễ đó chỉ là số đo và không có ngưỡng nào được tuyên bố.
-
-Báo cáo gồm hàng đợi hiện tại.
-
-Báo cáo gồm số thông báo thường và khẩn cấp.
-
-Báo cáo gồm số ý định bị từ chối theo từng loại.
-
-Báo cáo gồm số cue âm thanh và số sự cố cue.
-
-Báo cáo gồm ba mươi sự kiện gần nhất.
-
-Mã sự kiện trong báo cáo là chữ kỹ thuật tiếng Anh.
-
-Phần còn lại của báo cáo theo ngôn ngữ giao diện của bạn.
-
-### Chẩn đoán chứa gì và không chứa gì
-
-Báo cáo chỉ chứa mã và số.
-
-Báo cáo không chứa nội dung câu đã đọc.
-
-Báo cáo không chứa nội dung thông báo của game.
-
-Báo cáo không chứa tên bản lưu, tên thế giới hay tên nhân vật.
-
-Vì vậy báo cáo an toàn để đọc to và để gửi kèm báo lỗi.
-
-Báo cáo chỉ sống trong bộ nhớ của lần chạy hiện tại.
-
-Báo cáo không ghi xuống đĩa.
-
-Đóng ứng dụng là báo cáo mất.
-
-Bạn hãy nghe và ghi lại báo cáo trước khi đóng ứng dụng để thử lại.
-
-### Gửi kèm khi báo lỗi
-
-Bạn chép lại các số và mã sự kiện bạn nghe được vào báo lỗi.
-
-Bạn dùng mẫu ở tệp BUG-REPORT-TEMPLATE.vi.md đi kèm tài liệu này.
-
-Bạn không đính kèm bản lưu cá nhân.
-
-Chỉ khi người nhận báo lỗi yêu cầu riêng và bạn đồng ý, bạn mới cân nhắc gửi bản lưu.
-
-Bạn xem mục báo lỗi trong mẫu đó để điền đủ thông tin máy, giọng và TalkBack.
-
-## Mục 13 — Giới hạn hiện tại
-
-Mục này nói thẳng những gì chưa được chứng minh tại thời điểm viết.
-
-Mã trong bản này là mã giai đoạn một.
-
-Mã chưa được biên dịch, chưa được chạy kiểm thử và chưa tạo thành bản cài đặt trong giai đoạn một.
-
-Kiểm thử là việc của giai đoạn hai.
-
-Nghiệm thu nghe thật trên máy thật cùng người khiếm thị là việc của giai đoạn ba.
-
-Vì vậy hướng dẫn này mô tả đúng đường đi trong mã hiện tại.
-
-Hướng dẫn này không hứa mọi đường đi đã chạy đúng trên máy thật.
-
-Giọng âm cứu hộ hiện tại là giọng eSpeak NG sinh ngoại tuyến.
-
-Giọng đó nghe máy móc.
-
-Độ rõ của nó phải nghiệm thu trên máy thật.
-
-Đoạn âm chào mừng đã có tệp nhưng chưa nối vào luồng phát nào.
-
-Bài luyện tám hướng cần màn hình thế giới nên chưa luyện được ở menu chính.
-
-Chưa có hoán vị tám hướng.
-
-Nghĩa tám hướng đang cố định theo tọa độ bản đồ của game.
-
-Khôi phục bản lưu chưa chặn cứng được khi một phiên game đang sống.
-
-Bạn phải tự khôi phục từ màn hình khởi động như mục mười một đã dặn.
-
-Cue âm thanh và rung mặc định tắt.
-
-Chúng chỉ là bản sao tùy chọn của thông tin đã có bằng lời.
-
-Tắt cả hai thì bạn không mất thông tin nào.
-
-Báo cáo chẩn đoán chỉ có trong lần chạy hiện tại của ứng dụng.
-
-Đóng ứng dụng là không nghe lại được báo cáo của lần chạy trước.
-
-Câu mẫu chọn giọng vẫn là câu tiếng Việt, kể cả khi bạn chọn ngôn ngữ đọc khác.
-
-Tài liệu dài được giữ vị trí theo đoạn, không theo từng chữ.
-
-Bị ngắt giữa đoạn thì bạn nghe lại cả đoạn đó, tối đa bảy trăm ký tự.
-
-Bản dịch tiếng Việt đã bổ sung ở mức chuỗi trong mã.
-
-Chất lượng dịch và phát âm chưa được nghiệm thu bằng tai người trên máy thật.
-
-
-## Cập nhật điều khiển biểu mẫu và khôi phục sao lưu
-
-Sau khi nhập một giá trị, bộ đọc nói rõ giá trị nháp. Nhấn Quay lại để mở
-menu điều khiển, vuốt tới Áp dụng hoặc Hủy nháp, rồi chạm đôi để chọn. Chỉ
-Áp dụng mới ghi giá trị; duyệt hoặc nghe lại không xác nhận thay bạn.
-
-Để khôi phục dữ liệu, hãy lưu và thoát game, đóng hẳn tiến trình ứng dụng,
-rồi mở Thiết lập bộ đọc trước khi vào game. Nếu Android vẫn giữ tiến trình
-cũ, dùng Dừng bắt buộc trong thông tin ứng dụng rồi mở lại. Ứng dụng từ chối
-khôi phục sau khi engine đã chạy, dù bạn đang ở màn thiết lập, để bản lưu
-cũ trong bộ nhớ không ghi đè dữ liệu vừa khôi phục. Nếu báo lỗi phục hồi,
-không xóa bản dự phòng; xử lý lỗi dung lượng/quyền ghi và mở lại ứng dụng.
+Khi nghi ngờ một màn không đọc được, dùng nút Quay lại hoặc điều hướng có nhãn, không thử nhiều lần một hành động có thể tiêu lượt. Xem [trạng thái](STATUS.md) và [ma trận thử nghiệm](VALIDATION-MATRIX.vi.md) để biết đâu là điều đã xác minh và đâu là mục còn phải thử.

@@ -1,28 +1,23 @@
-# Menu tổng hợp, nhóm 3: Quan sát và bản đồ
+# Menu tổng hợp, mục hiển thị 3: Quan sát và bản đồ
 
-## Phạm vi hiện có
+**Đặc tả hiện hành đối chiếu `master@f0be189` (13/11/2026).** Tệp này thay thế mô tả tháng 11 cũ về “bán kính 60 ô, chỉ dữ liệu nhìn thấy”. Xem [đặc tả chung](CURRENT-REFERENCE.vi.md) và [hướng dẫn](USER-GUIDE.vi.md).
 
-Bộ tìm kiếm của game nằm trong `src/surroundings_menu.h`: `tab_data::radius = 60`. Đó là **bán kính 60 ô**, không phải giới hạn 60 dòng. Các mục chỉ xuất hiện khi game cho nhân vật phát hiện: vật phẩm và địa hình theo tầm nhìn, sinh vật theo `get_visible_creatures( 60 )`. Giữ nguyên ranh giới hiểu biết và phạm vi này.
+## Phân biệt các loại quan sát
 
-## Danh sách xung quanh nâng cấp trên Android
+- Quan sát bản đồ thông thường dùng `a11y::observe_tile` với phân biệt thấy/nhớ/chưa biết.
+- **Vuốt hai ngón theo bốn hướng** trên thế giới gọi `announce_linear_scan` đọc từng ô từ 1 tới 16, qua `scan_unrestricted_tile`. Mã này **cố ý đọc dữ liệu bản đồ sau tường**, gồm các thông tin có thể chưa được nhân vật nhìn thấy.
+- **Danh sách xung quanh** cho biến thể Android trợ năng quét tối đa 20 ô theo **mỗi trục** quanh nhân vật: 41 × 41 vị trí, trong vùng bản đồ đã nạp. Đừng nhầm với `tab_data::radius = 60` của **ba tab hình ảnh gốc khi trình đọc tắt**.
 
-Từ menu tổng hợp → **Quan sát và bản đồ** → **Danh sách xung quanh**:
+## Danh sách xung quanh
 
-- Khi trình đọc Android bật, hiển thị **một danh sách hợp nhất** của vật phẩm, sinh vật và địa hình/nội thất hiện có. Mỗi vị trí được liệt kê riêng (không dồn nhiều vị trí khác nhau dưới cùng một tên).
-- **Sắp xếp từ gần tới xa**, cùng khoảng cách thì theo tên. Mỗi dòng đọc loại, tên, số ô cách xa và hướng tương đối. Chỉ tạo tối đa 80 nút cho một trang, có **Trang trước/Trang sau** để đi qua mọi kết quả; không cắt bán kính 60 ô.
-- **Chạm hai lần** lên mục sẽ dùng `game::safe_route_to()` để tự tìm đường. Với vật phẩm hoặc ô đi qua được, game nhắm ô đích. Với sinh vật hoặc ô không thể đi vào, nhân vật dừng cách tối đa một ô. Đường đi tuân theo các quy tắc tránh nguy hiểm của game; không tìm được đường phải phát thông báo lỗi. Chọn mục **không dịch chuyển tức thời** và không tự nhặt vật phẩm.
-- Khi đã ở đích, game thông báo rằng đã ở tại hoặc cạnh mục đã chọn; không tạo lệnh di chuyển vô ích.
-- Khi trình đọc tắt, giữ giao diện danh sách ba tab trực quan nguyên bản.
-- Danh sách là ảnh chụp tại thời điểm mở. Sinh vật có thể di chuyển sau khi chọn, nên tuyến đường không phải lệnh tự bám đuổi sinh vật.
+1. Mở **Menu tổng hợp → Quan sát và bản đồ → Danh sách xung quanh**.
+2. Danh sách chỉ đưa ra sinh vật, vật phẩm, âm thanh/cảm nhận, nội thất, phương tiện, bẫy, trường nguy hiểm, địa hình/điểm tương tác đáng chú ý. Không liệt kê mọi ô sàn/cỏ/đường/tường thường.
+3. Có bốn bộ lọc: **Tất cả**, **Sinh vật và NPC**, **Địa điểm và môi trường**, **Vật phẩm**. Vuốt một ngón dọc đổi nhóm; vuốt ngang duyệt từng đối tượng.
+4. Sắp **từ gần đến xa**, cùng khoảng cách thì giữ thứ tự dò quét vòng; **không bảo đảm xếp theo tên chữ cái**. Phân trang tối đa **80 hàng**.
+5. Hàng đọc tên, hướng và số ô. Chạm hai lần yêu cầu `safe_route_to` (tới ô vật phẩm đi được hoặc gần đối tượng/vật cản); không teleport, không tự nhặt, có thể không tìm thấy đường. Danh sách là dữ liệu tại thời điểm mở, không tự bám theo sinh vật di chuyển.
+6. Trên hàng **vật phẩm**, chạm một lần hai ngón gọi `read_detail` để nghe bảng thông tin đầy đủ; **không** kích hoạt tìm đường. Engine tái xác minh đối tượng theo ô và nhóm tên, tránh đọc nhầm sau khi danh sách thay đổi.
+7. Các hành động nhìn lén, kiểm tra ô hiện tại và bản đồ thời tiết vẫn theo lệnh gốc và giới hạn cụ thể từng màn. Đừng áp cơ chế quét không giới hạn cho mọi loại quan sát.
 
-## Ba chỉnh sửa còn lại
+## Kiểm chứng còn thiếu
 
-1. **Ô hiện tại**: kể cả khi ô chứa dữ liệu đáng chú ý và được phân loại `alert`, mục vẫn được giữ trong menu và khi kích hoạt sẽ đọc nội dung ô, không gửi lệnh sai sang game.
-2. **Nhìn lén**: trên Android có trình đọc, chọn một trong 10 hướng (8 hướng mặt phẳng, lên, xuống). Việc nhìn lén vẫn tiêu hao thời gian và áp dụng giới hạn của engine, không biến thành quét miễn phí.
-3. **Bầu trời / bản đồ thời tiết**: khi đang xem lớp thời tiết, đọc tên thời tiết tại con trỏ bản đồ nếu tầm nhìn thực tế cho phép, nếu ngoài tầm nhìn thì nói không biết thời tiết. Không dùng TTS để tiết lộ vùng thời tiết không quan sát được.
-
-## Kiểm thử
-
-- `python3 -m unittest discover -s tools/accessibility -p test_nearby_accessible_navigation.py -v`.
-- Android Java CI và APK ARM64 native CI. Cần thử bằng điện thoại: danh sách nhiều trang, sinh vật/đồ vật cùng tên ở nhiều vị trí, ô không tới được, mở cửa, nhìn lén, bản đồ thời tiết, Ô hiện tại.
-- Không sửa `master` hoặc dữ liệu bản lưu của người dùng.
+Thử sau tường (quái/bẫy/đồ vật), ô 20/21, nhiều món trùng tên khác tình trạng, danh sách trên 80 hàng, cử chỉ đổi lọc, không tìm được đường, chạm hai ngón không tốn lượt, và TalkBack thật. Các bài nguồn có thể tìm ở `test_nearby_20_tile_scan.py`, `test_nearby_category_gestures.py`, `test_nearby_accessible_navigation.py` và `test_full_detail_on_demand.py`. Không gọi đã nghiệm thu thiết bị chỉ vì các bài nguồn đạt.

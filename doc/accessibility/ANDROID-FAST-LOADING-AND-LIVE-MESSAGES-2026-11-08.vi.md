@@ -1,5 +1,7 @@
 # Tăng tốc tải dữ liệu Android và đọc ngay thông báo game
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 ## Vấn đề thực tế
 
 Nhật ký người chơi `cataclysm-session-debug.txt`, phiên bản `9ea347b`, cho thấy lần tiếp tục bản lưu mất khoảng 6 phút 17 giây. `A11Y_LOAD_TIMING` báo `core_ms=49`, `mods_ms=361699` và `save_total=15566`. Các khoảng đợi dài thuộc về hoàn tất hoặc xác minh dữ liệu, nhưng nhật ký trước đây chưa có thời gian riêng từng nhóm nên **chưa thể kết luận nhóm nào chiếm bao nhiêu CPU**.

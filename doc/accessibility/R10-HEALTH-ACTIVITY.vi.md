@@ -1,5 +1,7 @@
 # R10 — Sức khỏe, sinh hoạt và hoạt động dài (giai đoạn 1, chỉ viết mã)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Trạng thái: **đã viết, chờ kiểm thử** (xem `REMAINING-CODE-BACKLOG.json`).
 Chưa build, chưa chạy test, chưa tạo APK trong đợt này.
 Test ID sẽ chạy ở giai đoạn 2: T16, T35–T38, T53–T54, T60.

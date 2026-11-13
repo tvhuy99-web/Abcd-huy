@@ -1,5 +1,7 @@
 # Khắc phục cử chỉ ba và bốn ngón trên Android (tham khảo GnollHack)
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 Nguồn tham khảo do người dùng cung cấp:
 `GnollHack-BLIND-VI-PLAYER-TTS-FIX-20260831-R7.zip`.
 

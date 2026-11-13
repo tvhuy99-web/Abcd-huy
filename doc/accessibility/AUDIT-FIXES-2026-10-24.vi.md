@@ -1,5 +1,7 @@
 # Sửa lỗi sau kiểm tra kho, chuẩn bị kiểm thử và APK
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Ngày 24/10/2026. Nền: 3c556a7f40b8f1249eff10241fd5b60102121f7b.
 Nhánh: fix/reader-audit-apk-20261024.
 
