@@ -260,9 +260,9 @@ std::string trade_ui::build_accessibility_summary( const pane_t &pane ) const
                    _( "Your offer: %1$s item units, estimated value %2$s. "
                       "NPC offer: %3$s item units, estimated value %4$s. "
                       "Current balance: %5$s." ),
-                              std::to_string( _trade_unit_counts[_you] ), format_money( _trade_values[_you] ),
-                              std::to_string( _trade_unit_counts[_trader] ), format_money( _trade_values[_trader] ),
-                              balance );
+                   std::to_string( _trade_unit_counts[_you] ), format_money( _trade_values[_you] ),
+                   std::to_string( _trade_unit_counts[_trader] ), format_money( _trade_values[_trader] ),
+                   balance );
     if( !trader.will_exchange_items_freely() ) {
         summary += "\n";
         summary += npc_trading::npc_will_accept_trade( trader, _balance ) ?
