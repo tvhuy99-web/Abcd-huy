@@ -316,6 +316,7 @@ class recipe
         // catalog must not turn "computer (beginner)" into a camp blueprint.
         // Display-only metadata; never serialize or overwrite translation keys.
         std::string practice_source_name;
+        std::string practice_source_description;
         // Parameters for nested categories
         std::set<recipe_id> nested_category_data;
 
