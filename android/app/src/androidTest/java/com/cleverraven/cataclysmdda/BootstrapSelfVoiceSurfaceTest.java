@@ -41,8 +41,6 @@ public class BootstrapSelfVoiceSurfaceTest {
                             @Override
                             public void goBack() { }
                             @Override
-                            public boolean leftHandedNavigation() { return false; }
-                            @Override
                             public float swipeDistancePx() { return 48; }
                             @Override
                             public long swipeDurationLimitMs() { return 750; }
@@ -80,7 +78,6 @@ public class BootstrapSelfVoiceSurfaceTest {
                             }
                             @Override public void stopSpeech() { interrupted.incrementAndGet(); }
                             @Override public void goBack() { }
-                            @Override public boolean leftHandedNavigation() { return true; }
                             @Override public float swipeDistancePx() { return 48; }
                             @Override public long swipeDurationLimitMs() { return 750; }
                         });
@@ -116,7 +113,6 @@ public class BootstrapSelfVoiceSurfaceTest {
                             @Override public void speak(String id, String text) { }
                             @Override public void stopSpeech() { }
                             @Override public void goBack() { }
-                            @Override public boolean leftHandedNavigation() { return false; }
                             @Override public float swipeDistancePx() { return 48; }
                             @Override public long swipeDurationLimitMs() { return 750; }
                         });

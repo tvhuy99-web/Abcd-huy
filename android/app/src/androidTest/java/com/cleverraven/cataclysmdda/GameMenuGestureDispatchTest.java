@@ -50,7 +50,6 @@ public final class GameMenuGestureDispatchTest {
 
         @Override public boolean usesTouchExploration() { return false; }
         @Override public String gestureContext() { return playing ? "world" : "menu"; }
-        @Override public boolean leftHandedNavigation() { return false; }
         @Override public int horizontalSwipeAction() {
             return ReaderPreferences.GESTURE_ACTION_NAVIGATE;
         }
@@ -229,10 +228,9 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void tripleTapOpensActionsWithoutDoubleTapActivation() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 Actions actions = new Actions();
                 actions.playing = true;
@@ -255,13 +253,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void threeFingerSystemCancelRecoversOneTapOnly() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -294,13 +291,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void doubleThreeFingerTapReadsDetailsWithoutOverridingOtherTaps() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -322,13 +318,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void threeFingerTripleTapTogglesCombatNotUnassigned() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -350,13 +345,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void fourFingerTapAndSwipeReachBindings() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -380,12 +374,11 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void unassignedThreeFingerSwipeIsNotSilentlyDropped() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -402,13 +395,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void threeFingerSwipeNoLongerMovesInCombatAndRestoresCustomBindingOnMap() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         actions.playing = true;
         actions.combatMode = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -439,13 +431,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void allFourTwoFingerCombatDirectionsAreDetectedWithoutWalkingOnMap() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         actions.playing = true;
         actions.combatMode = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -481,13 +472,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void oneFingerBentCombatSwipesAttackDiagonally() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         actions.playing = true;
         actions.combatMode = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -513,13 +503,12 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void oneFingerWeaponInspectAndReloadRemainDistinct() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         actions.playing = true;
         actions.combatMode = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -545,14 +534,13 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void singleFingerHoldAlwaysOpensContextActions() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         final long[] down = new long[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -587,14 +575,13 @@ public final class GameMenuGestureDispatchTest {
     public void twoAndThreeFingerHoldsFireOnceWithoutBecomingTaps()
             throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         final long[] down = new long[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -623,14 +610,13 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void movingFingersCancelsPendingHold() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
         final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
         final long[] down = new long[1];
         actions.playing = true;
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 surface[0] = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface[0]);
@@ -650,10 +636,9 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void upSwipeConfirmsOnlyInMenusAndScansInWorld() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 Actions actions = new Actions();
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
@@ -672,11 +657,10 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void twoFingerSingleTapReadsDetailInMenus() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final Actions actions = new Actions();
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
                 activity.setContentView(surface);
@@ -696,10 +680,9 @@ public final class GameMenuGestureDispatchTest {
     @Test
     public void downSwipeGoesBackOnMenusAndScansOnlyWhilePlaying() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
                 Actions actions = new Actions();
                 ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
