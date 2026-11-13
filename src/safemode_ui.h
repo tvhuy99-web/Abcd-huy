@@ -35,7 +35,8 @@ class safemode
             COLUMN_PROXIMITY,
             COLUMN_WHITE_BLACKLIST,
             COLUMN_CATEGORY,
-            COLUMN_MOVEMENT_MODE
+            COLUMN_MOVEMENT_MODE,
+            NUM_COLUMNS
         };
 
         enum class Categories : int {

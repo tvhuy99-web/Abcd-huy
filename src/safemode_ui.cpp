@@ -128,9 +128,6 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
 
     const int header_height = 5;
     int content_height = 0;
-    const int num_columns = 6;
-
-
     catacurses::window w_border;
     catacurses::window w_header;
     catacurses::window w;
@@ -912,7 +909,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
             changes_made = true;
             current_tab[line].active = false;
         } else if( action == "LEFT" || action == "RIGHT" ) {
-            column = inc_clamp_wrap( column, action == "RIGHT", num_columns );
+            column = inc_clamp_wrap( column, action == "RIGHT", NUM_COLUMNS );
         } else if( action == "MOVE_RULE_UP" && !current_tab.empty() ) {
             changes_made = true;
             if( line < static_cast<int>( current_tab.size() ) - 1 ) {
