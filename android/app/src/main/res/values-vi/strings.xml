@@ -202,6 +202,7 @@
     <string name="a11yDebugLogExport">Xuất nhật ký</string>
     <string name="a11yDebugLogClear">Xóa nhật ký</string>
     <string name="a11yDebugLogConfirmClear">Xóa nhật ký của lần mở game hiện tại?</string>
+    <string name="a11yDebugLogConfirmClearAction">Xác nhận xóa nhật ký</string>
     <string name="a11yDebugLogCleared">Đã xóa nhật ký</string>
     <string name="a11yDebugLogEmpty">Chưa có nhật ký để xuất</string>
     <string name="a11yDebugLogExportError">Không xuất được nhật ký</string>
