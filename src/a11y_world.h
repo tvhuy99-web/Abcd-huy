@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include "a11y_semantics.h"
-#include "coords_fwd.h"
 #include "coordinates.h"
 #include "point.h"
 class input_context;

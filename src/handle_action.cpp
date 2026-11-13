@@ -22,7 +22,9 @@
 #include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_item_text.h"
+#if defined(__ANDROID__)
 #include "a11y_outcome.h"
+#endif
 #include "a11y_perception.h"
 #include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
@@ -89,7 +91,9 @@
 #include "mdarray.h"
 #include "messages.h"
 #include "monster.h"
+#if defined(__ANDROID__)
 #include "npc.h"
+#endif
 #include "move_mode.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -125,8 +129,6 @@
 #include "weather.h"
 #include "weather_type.h"
 #include "worldfactory.h"
-
-enum class direction : unsigned int;
 
 #if defined(TILES)
 #include "cata_tiles.h" // all animation functions will be pushed out to a cata_tiles function in some manner
