@@ -78,8 +78,8 @@ class TravelDialogPickupContracts(unittest.TestCase):
         # has already removed its waypoint. It must be restored on a
         # safety stop; simply keeping the remaining route would skip it.
         self.assertIn("const auto keep_safety_stopped_route =", self.handler)
-        self.assertIn("get_auto_move_route().insert(", self.handler)
-        self.assertIn("get_auto_move_route().begin(), dest_tile", self.handler)
+        self.assertIn("&route = player_character.get_auto_move_route();", self.handler)
+        self.assertIn("route.insert( route.begin(), dest_tile );", self.handler)
         self.assertIn("if( !keep_safety_stopped_route() )", self.handler)
         self.assertIn('_( "Travel stopped by safe mode. Route kept." )', self.handler)
         # Losing Android foreground focus must never silently resume.

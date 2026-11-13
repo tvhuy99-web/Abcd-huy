@@ -14,6 +14,7 @@
 #include <ratio>
 #include <set>
 #include <string>
+#include <string_view>
 #include <tuple>
 #include <unordered_map>
 #include <unordered_set>
@@ -549,7 +550,7 @@ std::tuple<char, nc_color, size_t> get_note_display_info( std::string_view note 
 // Spoken equivalent of a map note's visual glyph and color (R13.2): the
 // glyph is a single character on the visual map, so the reader names it and
 // the color instead of relying on the character's shape or hue.
-static std::string note_symbol_description( const std::string &note )
+static std::string note_symbol_description( const std::string_view note )
 {
     const std::tuple<char, nc_color, std::size_t> display_info = get_note_display_info( note );
     const char symbol = std::get<0>( display_info );
@@ -2279,7 +2280,7 @@ static a11y::semantic_snapshot reader_snapshot( const input_context &ictxt,
         const tripoint_abs_omt &cursor, const tripoint_abs_omt &origin,
         std::map<std::string, tripoint_abs_omt> &focus_targets )
 {
-    auto snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ictxt, _( "Overmap" ) );
     std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
     snapshot.nodes.clear();
     snapshot.summary = string_format( _( "Map coordinates: X %1$d, Y %2$d, level %3$d. "

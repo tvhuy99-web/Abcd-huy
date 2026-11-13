@@ -64,9 +64,9 @@
 #include "weather.h"
 
 static const bionic_id bio_cqb( "bio_cqb" );
-static const efftype_id effect_a11y_bleed( "bleed" );
-static const efftype_id effect_a11y_infected( "infected" );
-static const efftype_id effect_a11y_bite( "bite" );
+static const efftype_id effect_bleed( "bleed" );
+static const efftype_id effect_infected( "infected" );
+static const efftype_id effect_bite( "bite" );
 
 static const skill_id skill_bashing( "bashing" );
 static const skill_id skill_cutting( "cutting" );
@@ -1556,15 +1556,15 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     const std::vector<trait_and_var> &traitslist )
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Character status" ) );
-    static const std::vector<std::pair<player_display_tab, std::string>> tabs = {
-        { player_display_tab::stats, _( "Stats" ) },
-        { player_display_tab::encumbrance, _( "Encumbrance and warmth" ) },
-        { player_display_tab::speed, _( "Speed" ) },
-        { player_display_tab::skills, _( "Skills" ) },
-        { player_display_tab::traits, _( "Traits" ) },
-        { player_display_tab::bionics, _( "Bionics" ) },
-        { player_display_tab::effects, _( "Effects" ) },
-        { player_display_tab::proficiencies, _( "Proficiencies" ) }
+    static const std::vector<std::pair<player_display_tab, translation>> tabs = {
+        { player_display_tab::stats, to_translation( "Stats" ) },
+        { player_display_tab::encumbrance, to_translation( "Encumbrance and warmth" ) },
+        { player_display_tab::speed, to_translation( "Speed" ) },
+        { player_display_tab::skills, to_translation( "Skills" ) },
+        { player_display_tab::traits, to_translation( "Traits" ) },
+        { player_display_tab::bionics, to_translation( "Bionics" ) },
+        { player_display_tab::effects, to_translation( "Effects" ) },
+        { player_display_tab::proficiencies, to_translation( "Proficiencies" ) }
     };
     static const std::vector<std::string> tab_ids = {
         "pd:tab:stats", "pd:tab:encumbrance", "pd:tab:speed", "pd:tab:skills",
@@ -1574,12 +1574,12 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         a11y::semantic_node node;
         node.id = tab_ids[i];
         node.role = "tab";
-        node.label = tabs[i].second;
+        node.label = tabs[i].second.translated();
         node.selected = curtab == tabs[i].first;
         node.actions = { "focus", "activate" };
         if( node.selected ) {
             snapshot.focus = node.id;
-            snapshot.summary = tabs[i].second;
+            snapshot.summary = tabs[i].second.translated();
         }
         snapshot.nodes.push_back( std::move( node ) );
     }
@@ -1598,13 +1598,13 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     int warnings = 0;
     for( const bodypart_id &part : you.get_all_body_parts( get_body_part_flags::sorted ) ) {
         std::string condition;
-        if( you.has_effect( effect_a11y_infected, part ) ) {
+        if( you.has_effect( effect_infected, part ) ) {
             condition = _( "Infected" );
-        } else if( you.has_effect( effect_a11y_bleed, part ) ) {
+        } else if( you.has_effect( effect_bleed, part ) ) {
             condition = _( "Bleeding" );
         } else if( you.is_limb_broken( part ) ) {
             condition = _( "Broken" );
-        } else if( you.has_effect( effect_a11y_bite, part ) ) {
+        } else if( you.has_effect( effect_bite, part ) ) {
             condition = _( "Bitten" );
         }
         if( !condition.empty() ) {

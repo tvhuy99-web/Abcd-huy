@@ -3057,7 +3057,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             snapshot.nodes.push_back( std::move( node ) );
         }
 
-        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }

@@ -848,7 +848,7 @@ bool main_menu::opening_screen()
             if( reader_submenu_open && sel1 == getopt( main_menu_opts::NEWCHAR ) ) { items = vNewGameSubItems; }
             if( reader_submenu_open && sel1 == getopt( main_menu_opts::SETTINGS ) ) { items = vSettingsSubItems; }
             if( reader_submenu_open && sel1 == getopt( main_menu_opts::WORLD ) ) {
-                items.push_back( _( "Create New World" ) );
+                items.emplace_back( _( "Create New World" ) );
             }
             if( reader_submenu_open && ( sel1 == getopt( main_menu_opts::WORLD ) ||
                                          sel1 == getopt( main_menu_opts::LOADCHAR ) ) ) {

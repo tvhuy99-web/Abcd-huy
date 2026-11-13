@@ -44,7 +44,7 @@ class HealthHubTest(unittest.TestCase):
         self.assertIn('_( "Quick health summary" )', self.player)
         self.assertIn("display::hunger_text_color( you )", self.player)
         self.assertIn("display::sleepiness_text_color( you )", self.player)
-        self.assertIn("you.has_effect( effect_a11y_bleed, part )", self.player)
+        self.assertIn("you.has_effect( effect_bleed, part )", self.player)
         quick = self.player.split(
             "// Readable health overview before navigating", 1)[1]
         quick = quick.split("const auto stat_text", 1)[0]

@@ -4078,7 +4078,7 @@ class inventory_selector::reader_session
                         lines.push_back( remove_color_tags( data->description.translated() ) );
                     }
                     if( pocket->sealed() ) {
-                        lines.push_back( _( "Sealed: the contents cannot be seen." ) );
+                        lines.emplace_back( _( "Sealed: the contents cannot be seen." ) );
                     } else if( pocket->size() > 0 ) {
                         lines.push_back( string_format( _( "Contains %d item stacks." ),
                                                         static_cast<int>( pocket->size() ) ) );
@@ -4094,16 +4094,16 @@ class inventory_selector::reader_session
                                                         length_to_string( data->max_item_length ) ) );
                     }
                     if( pocket->watertight() ) {
-                        lines.push_back( _( "Watertight." ) );
+                        lines.emplace_back( _( "Watertight." ) );
                     }
                     if( pocket->airtight() ) {
-                        lines.push_back( _( "Airtight." ) );
+                        lines.emplace_back( _( "Airtight." ) );
                     }
                     if( pocket->rigid() ) {
-                        lines.push_back( _( "Rigid." ) );
+                        lines.emplace_back( _( "Rigid." ) );
                     }
                     if( data->holster ) {
-                        lines.push_back( _( "Holster: holds a single item." ) );
+                        lines.emplace_back( _( "Holster: holds a single item." ) );
                     }
                     pocket_node.detail = string_join( lines, "\n" );
                     // A pocket hangs under its item only when the item is
@@ -4379,7 +4379,7 @@ class inventory_selector::reader_session
                 return false;
             };
             if( count > 0 && dynamic_cast<const pickup_selector *>( &owner ) != nullptr ) {
-                const auto source_rows = column->get_entries( return_item, true );
+                const inventory_column::get_entries_t source_rows = column->get_entries( return_item, true );
                 const auto target = std::find_if( source_rows.begin(), source_rows.end(),
                 [&]( const inventory_entry *row ) { return row->any_item() == location; } );
                 if( target == source_rows.end() ) {
@@ -4409,7 +4409,7 @@ class inventory_selector::reader_session
                     }
                 }
                 for( const auto &conflict : conflicts ) {
-                    const auto current = conflict.first->get_entries( return_item, true );
+                    const inventory_column::get_entries_t current = conflict.first->get_entries( return_item, true );
                     const auto found = std::find_if( current.begin(), current.end(),
                     [&]( const inventory_entry *row ) { return row->any_item() == conflict.second; } );
                     if( found != current.end() && ( *found )->chosen_count > 0 ) {
@@ -4417,7 +4417,7 @@ class inventory_selector::reader_session
                     }
                 }
             }
-            const auto rows = column->get_entries( return_item, true );
+            const inventory_column::get_entries_t rows = column->get_entries( return_item, true );
             const auto target = std::find_if( rows.begin(), rows.end(),
             [&]( const inventory_entry *row ) { return row->any_item() == location; } );
             if( target == rows.end() ) {
@@ -4477,7 +4477,7 @@ class inventory_selector::reader_session
                     if( choice == pb->items.end() || !unique_choices.insert( key ).second ) {
                         return reject_pocket_change();
                     }
-                    const auto rows = choice->column->get_entries( return_item, true );
+                    const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                     const auto found = std::find_if( rows.begin(), rows.end(),
                     [&]( const inventory_entry *entry ) { return entry->any_item() == choice->location; } );
                     if( found == rows.end() ) {
@@ -4537,7 +4537,7 @@ class inventory_selector::reader_session
                         if( choice == pocket.items.end() || !pocket.container ) {
                             continue;
                         }
-                        const auto rows = choice->column->get_entries( return_item, true );
+                        const inventory_column::get_entries_t rows = choice->column->get_entries( return_item, true );
                         const auto live = std::find_if( rows.begin(), rows.end(),
                         [&]( const inventory_entry *entry ) {
                             return entry->any_item() == choice->location;
@@ -4589,7 +4589,7 @@ class inventory_selector::reader_session
             }
             // Resolve the handle again against this screen's current visible
             // rows. No vector-entry pointer survives a sort, filter or redraw.
-            const auto entries = binding->column->get_entries( return_item );
+            const inventory_column::get_entries_t entries = binding->column->get_entries( return_item );
             const auto found = std::find_if( entries.begin(), entries.end(),
             [&]( const inventory_entry *entry ) { return entry->any_item() == binding->location; } );
             if( found == entries.end() ) {

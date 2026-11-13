@@ -1321,7 +1321,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
     do {
         ui_manager::redraw();
         if( a11y::enabled() ) {
-            auto snapshot = a11y::command_snapshot( ctxt, remove_color_tags( message ) );
+            a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, remove_color_tags( message ) );
             snapshot.summary = _( "Read a direction, then activate it to choose. Reading does not act." );
             const tripoint_bub_ms origin = reader_origin ? *reader_origin : get_player_character().pos_bub();
             get_map().update_visibility_cache( origin.z() );
@@ -1334,7 +1334,7 @@ std::optional<tripoint_rel_ms> choose_direction( const std::string &message,
                     // Use the engine's transformed direction, including an
                     // isometric tileset, so spoken compass names stay truthful.
                     node.label = direction_name( direction_from( offset->raw() ) );
-                    const auto observation = a11y::observe_tile( origin + *offset );
+                    const a11y::tile_observation observation = a11y::observe_tile( origin + *offset );
                     node.detail = a11y::describe_tile( observation );
                     // Match the visible target highlights without publishing
                     // validity tests against hidden live terrain or furniture.

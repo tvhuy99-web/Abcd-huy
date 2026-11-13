@@ -1,6 +1,6 @@
 #include "ranged.h"
 #include "a11y_semantics.h"
-#include <stdlib.h>
+#include <cstdlib>
 
 #include <algorithm>
 #include <cmath>
@@ -3114,7 +3114,7 @@ target_handler::trajectory target_ui::run()
     const bool automatic_precise_combat_shot = automatic_combat_shot &&
             target_handler::take_accessible_combat_precise_aim();
     if( automatic_combat_shot ) {
-        accessible_fire_direction = *automatic_combat_shot;
+        accessible_fire_direction = automatic_combat_shot;
         action = "A11Y_INTERNAL_FIRE_DIRECTION";
     }
     std::unique_ptr<a11y::screen_scope> reader;

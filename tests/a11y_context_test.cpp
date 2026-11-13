@@ -1,8 +1,15 @@
+#include <cstddef>
+#include <cstdint>
+#include <initializer_list>
+#include <optional>
 #include <stdexcept>
+#include <string>
 #include <utility>
+#include <vector>
 
 #include "a11y_context.h"
 #include "a11y_quantity_selection.h"
+#include "a11y_semantics.h"
 #include "a11y_world_input_gate.h"
 #include "cata_catch.h"
 

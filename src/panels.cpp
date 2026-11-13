@@ -819,10 +819,9 @@ void panel_manager::show_adm()
             auto &panel_list = get_current_layout().panels();
             const size_t source_index = row_it->second;
             const size_t target_index = target_it->second;
-            const int step = target_index > source_index ? 1 : -1;
+            const bool forward = target_index > source_index;
             for( size_t i = source_index; i != target_index; ) {
-                const size_t next =
-                    static_cast<size_t>( static_cast<int>( i ) + step );
+                const size_t next = forward ? i + 1 : i - 1;
                 std::swap( panel_list[i], panel_list[next] );
                 i = next;
             }
@@ -893,7 +892,7 @@ void panel_manager::show_adm()
             snapshot.nodes.push_back( std::move( node ) );
             layout_row++;
         }
-        auto commands = a11y::command_snapshot( ctxt, snapshot.title );
+        a11y::semantic_snapshot commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }

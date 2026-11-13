@@ -21,6 +21,7 @@
 #include <map>
 #include <optional>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 #include "a11y_android.h"
@@ -68,19 +69,19 @@
 #include "vehicle.h"
 #include "vpart_position.h"
 
-namespace a11y
-{
-namespace
-{
 static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_sleep( "sleep" );
-static const efftype_id effect_incorporeal_nearby( "incorporeal" );
-static const trait_id trait_shell2_nearby( "SHELL2" );
-static const trait_id trait_shell3_nearby( "SHELL3" );
-static const json_character_flag no_hands_nearby( "TEMPORARY_SHAPESHIFT_NO_HANDS" );
+static const efftype_id effect_incorporeal( "incorporeal" );
+static const trait_id trait_SHELL2( "SHELL2" );
+static const trait_id trait_SHELL3( "SHELL3" );
+static const json_character_flag json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS( "TEMPORARY_SHAPESHIFT_NO_HANDS" );
 
+namespace a11y
+{
+namespace
+{
 struct bodypart_status {
     bodypart_id id;
     int bleeding = 0;
@@ -253,7 +254,7 @@ void add_transition( std::vector<std::string> &changes, const std::string &key,
     }
 }
 
-semantic_node document( std::string id, std::string label, std::string detail )
+semantic_node document( std::string id, std::string label, const std::string &detail )
 {
     semantic_node node;
     node.id = std::move( id );
@@ -263,7 +264,7 @@ semantic_node document( std::string id, std::string label, std::string detail )
     return node;
 }
 
-semantic_node button( std::string id, std::string label, std::string detail )
+semantic_node button( std::string id, std::string label, const std::string &detail )
 {
     semantic_node node;
     node.id = std::move( id );
@@ -401,7 +402,7 @@ std::string player_status()
     // The native sidebar uses an empty label for neutral statuses. Spoken
     // summaries must not say "Hunger: . Pain: ." or invent a severity;
     // keep only readings the game actually supplies.
-    const auto append_if_present = [&result]( const char *heading, const std::string &reading ) {
+    const auto append_if_present = [&result]( const char *heading, const std::string_view reading ) {
         const std::string clean = remove_color_tags( reading );
         if( !clean.empty() ) {
             result += ". " + string_format( heading, clean );
@@ -685,7 +686,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // Speak them only in this requested full character read. Keep the
     // short status summary unchanged to avoid repetitive live alerts.
     const auto append_neutral_need = [&character_details]( const char *label,
-                                     const std::string &current ) {
+                                     const std::string_view current ) {
         if( current.empty() ) {
             character_details += " " + string_format( label, _( "Normal" ) ) + ".";
         }
@@ -849,7 +850,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         for( int dy = -distance; dy <= distance; ++dy ) {
             for( int dx = -distance; dx <= distance; ++dx ) {
                 if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
-                const auto tile = observe_scan_tile( scan_origin + tripoint_rel_ms( dx, dy, 0 ) );
+                const a11y::tile_observation tile = observe_scan_tile( scan_origin + tripoint_rel_ms( dx, dy, 0 ) );
                 const bool include = filter == world_scan_filter::all ||
                                      ( filter == world_scan_filter::known &&
                                        ( tile.source != observation_source::unknown ||
@@ -935,7 +936,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             for( int dy = -distance; dy <= distance; ++dy ) {
                 for( int dx = -distance; dx <= distance; ++dx ) {
                     if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) { continue; }
-                    const auto tile = observe_tile( avatar_origin + tripoint_rel_ms( dx, dy, 0 ) );
+                    const a11y::tile_observation tile = observe_tile( avatar_origin + tripoint_rel_ms( dx, dy, 0 ) );
                     if( !has_noteworthy_information( tile ) ) { continue; }
                     semantic_node node = button(
                                              "explore:jump:" + std::to_string( dx ) + ':' + std::to_string( dy ),
@@ -952,7 +953,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             return lhs.distance < rhs.distance;
         } );
         if( jumps.size() > 24 ) { jumps.resize( 24 ); }
-        for( auto &jump : jumps ) {
+        for( jump_candidate &jump : jumps ) {
             result.nodes.push_back( std::move( jump.node ) );
         }
     }
@@ -1073,10 +1074,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "reader:combat:enemies",
                                       _( "Visible hostile creatures" ), enemy_report ) );
 
-    auto commands = command_snapshot( context, result.title );
+    a11y::semantic_snapshot commands = command_snapshot( context, result.title );
     const std::string active_mode = viewer.current_movement_mode()->name();
     const std::string chosen_mode = viewer.get_desired_move_mode()->name();
-    for( auto &node : commands.nodes ) {
+    for( a11y::semantic_node &node : commands.nodes ) {
         if( node.id == "cycle_move" || node.id == "cycle_move_reverse" ||
             node.id == "reset_move" || node.id == "open_movement" ||
             node.id == "toggle_run" || node.id == "toggle_crouch" ||
@@ -1168,10 +1169,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         map &nearby_map = get_map();
         const tripoint_bub_ms player_pos = viewer.pos_bub( nearby_map );
         std::map<std::string, std::string> nearby_actions;
-        const bool in_shell = viewer.has_active_mutation( trait_shell2_nearby ) ||
-                              viewer.has_active_mutation( trait_shell3_nearby );
-        const bool incorporeal = viewer.has_effect( effect_incorporeal_nearby );
-        const bool handless = viewer.has_flag( no_hands_nearby );
+        const bool in_shell = viewer.has_active_mutation( trait_SHELL2 ) ||
+                              viewer.has_active_mutation( trait_SHELL3 );
+        const bool incorporeal = viewer.has_effect( effect_incorporeal );
+        const bool handless = viewer.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS );
         const bool mounted = viewer.is_mounted();
         const bool ordinary_mount = mounted &&
                                     ( !viewer.mounted_creature ||
@@ -1594,7 +1595,7 @@ semantic_snapshot activity_snapshot( const input_context &context )
     const std::vector<std::string> supported_actions = {
         "pause", "zoom_in", "zoom_out", "player_data", "messages", "help"
     };
-    auto commands = command_snapshot( context, result.title );
+    a11y::semantic_snapshot commands = command_snapshot( context, result.title );
     for( semantic_node &node : commands.nodes ) {
         if( std::find( supported_actions.begin(), supported_actions.end(), node.id ) == supported_actions.end() ) {
             continue;

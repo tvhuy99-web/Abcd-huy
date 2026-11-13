@@ -78,7 +78,7 @@ void iteminfo_window::execute()
         return a11y::registered_intent( ctxt, intent );
     } );
     if( a11y::enabled() ) {
-        auto snapshot = a11y::command_snapshot( ctxt, remove_color_tags( data.get_item_name() ) );
+        a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, remove_color_tags( data.get_item_name() ) );
         snapshot.summary = remove_color_tags( data.get_type_name() );
         a11y::append_document( snapshot, "item:information", _( "Item info" ),
                                format_item_info( data.get_item_display(), data.get_item_compare() ) );

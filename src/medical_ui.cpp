@@ -785,7 +785,7 @@ void medical_ui::draw_controls()
 
 a11y::semantic_snapshot medical_ui::reader_snapshot() const
 {
-    auto snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Medical" ) );
     snapshot.summary = selected_tab == medical_tab_mode::TAB_LIMBS ? _( "Limbs" ) : _( "Summary" );
     // Urgent conditions are announced before the full limb list. A status
     // estimate must never expose exact hit points or bypass treatment checks.
@@ -1106,7 +1106,7 @@ bool Character::pick_wound_fix( const bodypart_id &bp_id )
         if( a11y::enabled() ) {
             a11y::semantic_snapshot requirements;
             a11y::append_requirements( requirements, "treatment", reqs, *this, inv, is_crafting_component, 1 );
-            for( const auto &node : requirements.nodes ) {
+            for( const a11y::semantic_node &node : requirements.nodes ) {
                 descr += "\n" + node.label + "\n" + node.detail;
             }
             for( const wound_proficiency &prof : fix.proficiencies ) {

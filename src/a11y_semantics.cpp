@@ -9,12 +9,13 @@
 #include <map>
 #include <set>
 #include <string>
+#include <string_view>
 
 namespace a11y
 {
 namespace
 {
-std::string quote( const std::string &text )
+std::string quote( const std::string_view text )
 {
     constexpr char hex[] = "0123456789abcdef";
     std::string result = "\"";
@@ -40,7 +41,7 @@ std::string quote( const std::string &text )
 
 // All semantic display strings share this sanitizing boundary. Never
 // rewrite node IDs or raw edit values: those are data, not spoken markup.
-std::string quote_spoken( const std::string &value )
+std::string quote_spoken( const std::string_view value )
 {
     return quote( remove_color_tags( value ) );
 }

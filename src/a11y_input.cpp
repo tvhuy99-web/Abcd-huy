@@ -132,7 +132,7 @@ void annotate_live_command_states( semantic_snapshot &snapshot )
             // These are multi-valued modes, not boolean switches.
             const char *const setting = id == "toggle_auto_pulp_butcher" ?
                                         "AUTO_PULP_BUTCHER" : "AUTO_FORAGING";
-            const auto &option = get_options().get_option( setting );
+            const options_manager::cOpt &option = get_options().get_option( setting );
             node.value = option.getValue() == "off" ? _( "Currently off" ) : option.getValueName();
             if( option.getValue() != "off" && !get_option<bool>( "AUTO_FEATURES" ) ) {
                 node.value += ". " + std::string( _( "Inactive: additional auto features are off" ) );

@@ -5,6 +5,7 @@
 #include <chrono>
 #endif
 #include <memory>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -412,7 +413,7 @@ std::optional<std::string> poll_input( const void *input_owner )
     return std::nullopt;
 }
 
-void announce_game_message( const std::string &text, const bool urgent )
+void announce_game_message( const std::string_view text, const bool urgent )
 {
     synchronize_lifecycle();
     if( text.empty() || suspended() ) {

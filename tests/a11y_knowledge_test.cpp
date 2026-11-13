@@ -1,3 +1,6 @@
+#include <cstddef>
+#include <initializer_list>
+#include <memory>
 #include <string>
 #include <vector>
 
@@ -6,9 +9,12 @@
 #include "avatar.h"
 #include "calendar.h"
 #include "cata_catch.h"
+#include "coordinates.h"
 #include "magic.h"
-#include "player_helpers.h"
+#include "pimpl.h"
+#include "point.h"
 #include "rng.h"
+#include "string_id.h"
 
 // Written during the coding phase (R22.2). Integration oracles over the
 // F-01/F-15 fixtures (tests/a11y_fixtures.h):
@@ -72,8 +78,10 @@ TEST_CASE( "a11y_tile_queries_do_not_consume_time_moves_or_rng", "[a11y][knowled
 
     // Record the RNG stream the engine would produce from a fixed seed.
     rng_set_engine_seed( 2301 );
+    constexpr int sample_count = 8;
     std::vector<int> expected;
-    for( int i = 0; i < 8; i++ ) {
+    expected.reserve( sample_count );
+    for( int i = 0; i < sample_count; i++ ) {
         expected.push_back( rng( 0, 1000000 ) );
     }
 
@@ -84,7 +92,8 @@ TEST_CASE( "a11y_tile_queries_do_not_consume_time_moves_or_rng", "[a11y][knowled
         ( void )a11y::describe_tile( a11y::observe_memory_tile( fx.crate_pos ) );
     }
     std::vector<int> after_queries;
-    for( int i = 0; i < 8; i++ ) {
+    after_queries.reserve( sample_count );
+    for( int i = 0; i < sample_count; i++ ) {
         after_queries.push_back( rng( 0, 1000000 ) );
     }
 

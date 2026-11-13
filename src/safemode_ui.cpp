@@ -1,6 +1,6 @@
 #include "safemode_ui.h"
 #include "a11y_semantics.h"
-#include <stddef.h>
+#include <cstddef>
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -704,7 +704,7 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
                                std::make_move_iterator( commands.end() ) );
         snapshot.focus = have_selection ? "safemode:row:" + std::to_string( line ) :
                          "safemode:tab:global";
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }
@@ -1160,7 +1160,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
         std::vector<a11y::semantic_node> commands = std::move( snapshot.nodes );
         snapshot.nodes.clear();
         snapshot.summary = buf;
-        for( size_t i = 0; i < creature_list.size(); ++i ) {
+        for( std::size_t i = 0; i < creature_list.size(); ++i ) {
             a11y::semantic_node node;
             node.id = "safemode:test:" + std::to_string( i );
             node.role = "document";
@@ -1178,7 +1178,7 @@ void safemode::test_pattern( const int tab_in, const int row_in )
                                std::make_move_iterator( commands.begin() ),
                                std::make_move_iterator( commands.end() ) );
         snapshot.focus = creature_list.empty() ? "safemode:test:note" : "safemode:test:0";
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
+        for( std::size_t i = 0; i < snapshot.nodes.size(); ++i ) {
             snapshot.nodes[i].position = static_cast<int>( i ) + 1;
             snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
         }

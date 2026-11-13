@@ -4,6 +4,7 @@
 
 #include <map>
 #include <string>
+#include <string_view>
 #include <utility>
 #include <vector>
 
@@ -93,7 +94,7 @@ class computer_session
         // Backend of both query_any forms. `summary` is the text just
         // printed for the templated form; the no-output form passes the
         // whole current terminal text instead.
-        bool query_any_impl( const std::string &summary );
+        bool query_any_impl( std::string_view summary );
 
         void action_amigara_log();
         void action_amigara_start();

@@ -876,8 +876,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                         snapshot.focus = node.id;
                     }
                 }
-                snapshot.nodes.push_back( std::move( node ) );
                 part_bindings.push_back( { node.id, part_index, row } );
+                snapshot.nodes.push_back( std::move( node ) );
             }
         }
     }
@@ -945,10 +945,10 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                                      static_cast<int>( owner.parts_here.size() ) );
             node.detail = detail;
             node.actions = { "focus" };
-            snapshot.nodes.push_back( std::move( node ) );
             if( snapshot.focus.empty() ) {
                 snapshot.focus = node.id;
             }
+            snapshot.nodes.push_back( std::move( node ) );
         }
         for( size_t i = 0; i < owner.parts_here.size(); ++i ) {
             const int part_index = owner.parts_here[i];
@@ -1052,8 +1052,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                     node.detail = remove_color_tags( *owner.msg );
                 }
             }
-            snapshot.nodes.push_back( std::move( node ) );
             install_bindings.push_back( { node.id, vp } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
     } else if( current_mode == mode::repair ) {
         snapshot.summary = title;
@@ -1085,8 +1085,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 }
             }
             node.detail = detail;
-            snapshot.nodes.push_back( std::move( node ) );
             part_bindings.push_back( { node.id, part_index, static_cast<int>( j ) } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
     } else if( current_mode == mode::remove && owner.remove_info ) {
         snapshot.summary = title;
@@ -1115,8 +1115,8 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
             if( node.selected ) {
                 snapshot.focus = node.id;
             }
-            snapshot.nodes.push_back( std::move( node ) );
             part_bindings.push_back( { node.id, part_index, static_cast<int>( i ) } );
+            snapshot.nodes.push_back( std::move( node ) );
         }
         owner.msg = saved_msg;
     }

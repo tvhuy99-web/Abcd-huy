@@ -2687,7 +2687,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                  static_cast<int>( current.size() ),
                                                  filterstring.empty() ? 0 : 1 ) );
     }
-    auto snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
+    a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
     if( crafting_cats.empty() ) {
         snapshot.summary += _( "No recipes available." );
@@ -2919,7 +2919,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 for( std::size_t i = 0; i < rec.steps().size(); ++i ) {
                     const recipe_step &step = rec.steps()[i];
                     const std::string prefix = "craft:step:" + std::to_string( i );
-                    const auto time = time_duration::from_moves( static_cast<int64_t>(
+                    const time_duration time = time_duration::from_moves( static_cast<int64_t>(
                                           rec.step_budget_moves( *crafter, i, manual_batch, cost ) ) );
                     a11y::append_document( documents, prefix, step.name.translated(),
                                            step.name.translated() + "\n" + to_string( time ) + "\n" +
@@ -2928,7 +2928,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                inventory, rec.get_component_filter(), manual_batch );
                 }
             }
-            const auto &resources = rec.get_character_resources();
+            const character_resource_costs &resources = rec.get_character_resources();
             std::string resource_text;
             const auto add_resource = [&]( int amount, int have, const std::string &name ) {
                 if( amount != 0 ) {
@@ -3001,7 +3001,7 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     }
     if( intent.node == "craft:batch" && intent.action == "set_text" ) {
         int quantity = 0;
-        const auto parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
+        const std::from_chars_result parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
                                             quantity );
         if( parsed.ec != std::errc() || parsed.ptr != intent.value.data() + intent.value.size() ||
             quantity < 1 || quantity > 50 || line < 0 ||

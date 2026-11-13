@@ -558,7 +558,7 @@ T number_input_popup<T>::query()
         std::optional<std::string> submitted;
         if( android_accessible_input( reader_title.empty() ? _( "Enter number" ) :
                                       remove_color_tags( reader_title ), old_text.str(),
-                                      std::is_integral<T>::value ? 1 : 2, 0,
+                                      std::is_integral_v<T> ? 1 : 2, 0,
                                       value_min ? static_cast<double>( *value_min ) :
                                       std::numeric_limits<double>::quiet_NaN(),
                                       value_max ? static_cast<double>( *value_max ) :
@@ -590,7 +590,7 @@ T number_input_popup<T>::query()
             return "TEXT.QUIT";
         }
         if( intent.node == "confirm" && intent.action == "activate" ) { return "TEXT.CONFIRM"; }
-        if( accessible_quantity_max && std::is_integral<T>::value &&
+        if( accessible_quantity_max && std::is_integral_v<T> &&
             intent.node == "quantity" && intent.action == "set_value" ) {
             const auto count = a11y::selected_quantity( intent.value,
                                static_cast<std::size_t>( *accessible_quantity_max ) );
@@ -625,7 +625,7 @@ T number_input_popup<T>::query()
         std::ostringstream reader_value;
         reader_value.imbue( std::locale::classic() );
         reader_value << value;
-        if( accessible_quantity_max && std::is_integral<T>::value ) {
+        if( accessible_quantity_max && std::is_integral_v<T> ) {
             a11y::semantic_snapshot snapshot;
             snapshot.title = remove_color_tags( reader_title );
             snapshot.summary = remove_color_tags( reader_description() );
@@ -653,7 +653,7 @@ T number_input_popup<T>::query()
             reader.update( a11y::text_snapshot( remove_color_tags( reader_title ),
                            remove_color_tags( reader_description() ), reader_value.str(), true,
                            step_size.has_value() ? static_cast<double>( *step_size ) : 0.0,
-                           std::is_integral<T>::value ) );
+                           std::is_integral_v<T> ) );
         }
         std::string action = ctxt.handle_input();
 
@@ -681,7 +681,7 @@ T number_input_popup<T>::query()
 template<typename T>
 void number_input_popup<T>::set_accessible_quantity_max( const T available )
 {
-    if( std::is_integral<T>::value && available > 0 ) {
+    if( std::is_integral_v<T> && available > 0 ) {
         accessible_quantity_max = available;
     }
 }

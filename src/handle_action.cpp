@@ -774,24 +774,24 @@ input_context game::get_player_input( std::string &action )
                 }
 #endif
                 const bool profile_reader = a11y::android::performance_profiling_enabled();
-                const auto started = profile_reader ? std::chrono::steady_clock::now() :
+                const std::chrono::steady_clock::time_point started = profile_reader ? std::chrono::steady_clock::now() :
                                      std::chrono::steady_clock::time_point{};
                 a11y::semantic_snapshot next = make_reader_snapshot();
-                const auto built = profile_reader ? std::chrono::steady_clock::now() :
+                const std::chrono::steady_clock::time_point built = profile_reader ? std::chrono::steady_clock::now() :
                                    std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
                 // Only speak when the KNOWN overmap terrain changes.
                 // An internal submap cache shift alone is not a new area.
                 a11y::announce_area_transition();
-                const auto published = profile_reader ? std::chrono::steady_clock::now() :
+                const std::chrono::steady_clock::time_point published = profile_reader ? std::chrono::steady_clock::now() :
                                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
                     const auto ms = []( const auto from, const auto to ) {
                         return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
                     };
-                    const auto build_ms = ms( started, built );
-                    const auto publish_ms = ms( built, published );
+                    const std::chrono::milliseconds::rep build_ms = ms( started, built );
+                    const std::chrono::milliseconds::rep publish_ms = ms( built, published );
                     a11y::android::performance_reader_sample( build_ms + publish_ms );
                     a11y::android::diagnostic_event( "WORLD_READER_TIMING",
                             "build_ms=" + std::to_string( build_ms ) +
@@ -2395,7 +2395,7 @@ static void fire()
                 // Standard location-aware wield validates conflicts and
                 // spends retrieval time, including when nested in holsters.
                 a11y::set_weapon_auto_stow( true );
-                const auto reset_auto_stow = on_out_of_scope( []() {
+                const on_out_of_scope reset_auto_stow = on_out_of_scope( []() {
                     a11y::set_weapon_auto_stow( false );
                 } );
                 if( !you.wield( selected ) ) {
@@ -3132,8 +3132,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                     // before the move failed. Put that exact tile back so
                     // "No, keep traveling" never loses or skips the dangerous
                     // step, and require an explicit safe-mode decision later.
-                    player_character.get_auto_move_route().insert(
-                        player_character.get_auto_move_route().begin(), dest_tile );
+                    std::vector<tripoint_bub_ms> &route = player_character.get_auto_move_route();
+                    route.insert( route.begin(), dest_tile );
                     a11y::android::set_travel_state( 3 );
                     add_msg( m_warning, _( "Travel stopped by safe mode. Route kept." ) );
                     return true;
@@ -3480,7 +3480,7 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 }
                 const int chosen = ( current + total + combat_cycle_direction ) % total;
                 a11y::set_weapon_auto_stow( true );
-                const auto clear_auto_stow = on_out_of_scope( []() {
+                const on_out_of_scope clear_auto_stow = on_out_of_scope( []() {
                     a11y::set_weapon_auto_stow( false );
                 } );
                 if( chosen == 0 ) {
