@@ -2278,8 +2278,15 @@ int game::inventory_item_menu( item_location locThisItem,
                 addentry( 'T', pgettext( "action", "take off" ), rate_action_take_off( u, oThisItem ) );
                 addentry( 'd', pgettext( "action", "drop" ), rate_drop_item );
                 addentry( 'U', pgettext( "action", "unload" ), u.rate_action_unload( oThisItem ) );
-                addentry( 'r', pgettext( "action", "reload" ), u.rate_action_reload( oThisItem ) );
-                addentry( 'p', pgettext( "action", "part reload" ), u.rate_action_reload( oThisItem ) );
+                // "Reload" also inserts battery cells into flashlights
+                // and fuel into tools. Give screen-reader players an
+                // accurate label rather than the gun-only "Reload ammo".
+                addentry( 'r', a11y::enabled() ?
+                          _( "Reload item (ammo, battery or fuel)" ) :
+                          pgettext( "action", "reload" ), u.rate_action_reload( oThisItem ) );
+                addentry( 'p', a11y::enabled() ?
+                          _( "Partly reload item (ammo, battery or fuel)" ) :
+                          pgettext( "action", "part reload" ), u.rate_action_reload( oThisItem ) );
                 addentry( 'm', pgettext( "action", "mend" ), rate_action_mend( u, oThisItem ) );
                 addentry( 'D', pgettext( "action", "disassemble" ), rate_action_disassemble( u, oThisItem ) );
                 if( oThisItem.is_container() && !oThisItem.is_corpse() ) {
