@@ -9,7 +9,10 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 JAVA = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda"
-read = lambda file: file.read_text("utf-8")
+
+
+def read(file):
+    return file.read_text("utf-8")
 
 
 class TravelDialogPickupContracts(unittest.TestCase):

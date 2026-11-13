@@ -7,8 +7,12 @@ INPUT = (ROOT / "src/a11y_input.cpp").read_text(encoding="utf-8")
 WORLD = (ROOT / "src/worldfactory.cpp").read_text(encoding="utf-8")
 OPTIONS = (ROOT / "src/options.cpp").read_text(encoding="utf-8")
 SPEECH = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
-ANDROID = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
-SURFACE = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(encoding="utf-8")
+ANDROID = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(
+    encoding="utf-8"
+)
+SURFACE = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(
+    encoding="utf-8"
+)
 
 
 class WorldMenuFiveRequestedFixes(unittest.TestCase):

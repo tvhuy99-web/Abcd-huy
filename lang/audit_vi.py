@@ -1,9 +1,7 @@
 #!/usr/bin/env python3
 """Audit Vietnamese gettext coverage against newly extracted English source strings."""
 
-import collections
 import json
-import re
 import subprocess
 import sys
 from pathlib import Path

@@ -104,7 +104,6 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("allFourTwoFingerCombatDirectionsAreDetected", device)
         self.assertIn("1, actions.savedThreeFingerSwipes);", device)
 
-
     def test_native_combat_buttons_obey_computed_world_gate(self):
         world = self.world
         # A default snapshot starts with swipe_movement_allowed=False.

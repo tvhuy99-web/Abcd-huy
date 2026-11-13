@@ -54,14 +54,24 @@ class CharacterCreatorSixSteps(unittest.TestCase):
         self.assertIn('popup( *error );\n            continue;', self.source)
         self.assertIn('Not enough points for this attribute.', self.source)
         self.assertIn('Not enough points for this skill.', self.source)
-        self.assertIn('skill_queried->name(), previous_skill_level,\n                                                      MIN_SKILL, MAX_SKILL, true,', self.source)
+        self.assertIn(
+            'skill_queried->name(), previous_skill_level,\n'
+            '                                                      MIN_SKILL, MAX_SKILL, true,',
+            self.source
+        )
 
     def test_single_trait_variant_returns_to_trait_step(self):
         self.assertIn('menu.input_category = "character-creator-variant";', self.source)
         self.assertIn('if( a11y::enabled() && menu.ret >= 0 && menu.ret < idx )', self.source)
         self.assertIn('if( menu.ret == UILIST_CANCEL || menu.ret == UILIST_ERROR )', self.source)
-        self.assertIn('const bool creator_step = input_category.rfind( "character-creator-step-", 0 ) == 0', self.uilist)
-        self.assertIn('node.enabled = allow_confirm && ( entry.enabled || ( allow_disabled && !creator_step ) );', self.uilist)
+        self.assertIn(
+            'const bool creator_step = input_category.rfind( "character-creator-step-", 0 ) == 0',
+            self.uilist
+        )
+        self.assertIn(
+            'node.enabled = allow_confirm && ( entry.enabled || ( allow_disabled && !creator_step ) );',
+            self.uilist
+        )
 
     def test_summary_logic_is_unmodified_by_new_gestures(self):
         self.assertIn('if( cc_uistate.selected_tab == CHARCREATOR_SUMMARY )', self.source)

@@ -5,8 +5,12 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 WORLD = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
 DISPLAY = (ROOT / "src/display.cpp").read_text(encoding="utf-8")
-GESTURES = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(encoding="utf-8")
-READER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
+GESTURES = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java").read_text(
+    encoding="utf-8"
+)
+READER = (ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java").read_text(
+    encoding="utf-8"
+)
 VI = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
 

@@ -1,15 +1,27 @@
 name: Android accessibility baseline and candidate
 
 on:
-  # Build the accessibility integration and the character-cache test branch
+  # Automatically build master, integration branches and PRs targeting master
   # into reproducibly signed ARM64 APKs. Future pushes use the same
   # package name and the same checked-in accessibility testing certificate.
   push:
     branches:
+      - master
       - integration/reader-vietnamese-20261107
       - perf/character-blueprint-cache-20261108
       - perf/reader-swipe-latency-20261109
       - feat/one-step-quantity-selection-20261110
+    paths:
+      - '.github/workflows/android-accessibility.yml'
+      - 'android/**'
+      - 'src/**'
+      - 'lang/**'
+      - 'data/**'
+      - 'tools/accessibility/**'
+      - 'tests/a11y_context_test.cpp'
+  pull_request:
+    branches:
+      - master
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'

@@ -25,6 +25,13 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Install gettext CLI tools required by compile_mo.py
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y gettext
+          command -v msgcat
+          command -v msgfmt
+
       - name: Prepare English-only language assets
         run: |
           sh lang/compile_mo.sh
