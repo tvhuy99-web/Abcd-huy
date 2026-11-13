@@ -1,7 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -10,6 +9,7 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.OutputStream;
@@ -23,6 +23,9 @@ public final class DebugLogActivity extends Activity {
     private boolean foreground;
     private byte[] pendingExport;
     private long utteranceSequence;
+    private LinearLayout mainControls;
+    private Button clearButton;
+    private boolean confirmingClear;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -37,7 +40,7 @@ public final class DebugLogActivity extends Activity {
             @Override public void stopSpeech() {
                 if (speech != null) { speech.cancel(); }
             }
-            @Override public void goBack() { finish(); }
+            @Override public void goBack() { DebugLogActivity.this.onBackPressed(); }
             @Override public boolean leftHandedNavigation() {
                 return reader.isLeftHandedNavigation();
             }
@@ -49,10 +52,10 @@ public final class DebugLogActivity extends Activity {
                 return reader.getSwipeDurationLimitMs();
             }
         });
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.VERTICAL);
+        mainControls = new LinearLayout(this);
+        mainControls.setOrientation(LinearLayout.VERTICAL);
         int padding = Math.round(16 * getResources().getDisplayMetrics().density);
-        controls.setPadding(padding, padding, padding, padding);
+        mainControls.setPadding(padding, padding, padding, padding);
 
         CheckBox enabled = new CheckBox(this);
         enabled.setText(R.string.a11yDebugLogEnabled);
@@ -69,28 +72,20 @@ public final class DebugLogActivity extends Activity {
                 // The next foreground reader rebind also applies the switch.
             }
         });
-        controls.addView(enabled);
+        mainControls.addView(enabled);
 
         Button export = new Button(this);
         export.setText(R.string.a11yDebugLogExport);
         export.setOnClickListener(view -> exportLog());
-        controls.addView(export);
+        mainControls.addView(export);
 
-        Button clear = new Button(this);
-        clear.setText(R.string.a11yDebugLogClear);
-        clear.setOnClickListener(view -> new AlertDialog.Builder(this)
-                .setMessage(R.string.a11yDebugLogConfirmClear)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    SessionDebugLog.clear(this);
-                    Toast.makeText(this, R.string.a11yDebugLogCleared,
-                            Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show());
-        controls.addView(clear);
+        clearButton = new Button(this);
+        clearButton.setText(R.string.a11yDebugLogClear);
+        clearButton.setOnClickListener(view -> showClearConfirmation());
+        mainControls.addView(clearButton);
 
         setContentView(surface);
-        surface.setContent(controls);
+        surface.setContent(mainControls);
 
         speech = new AndroidSpeech(this, new AndroidSpeech.Listener() {
             @Override public void onState(AndroidSpeech.State state) {
@@ -100,6 +95,55 @@ public final class DebugLogActivity extends Activity {
             }
             @Override public void onUtterance(String id, AndroidSpeech.Event event) { }
         });
+    }
+
+    /** Keep confirmation inside the same self-voiced gesture surface.
+     * A platform AlertDialog steals touches and leaves the internal reader
+     * unable to activate the positive or negative button.
+     */
+    private void showClearConfirmation() {
+        confirmingClear = true;
+        clearButton.setText(R.string.a11yDebugLogClear);
+        LinearLayout confirmation = new LinearLayout(this);
+        confirmation.setOrientation(LinearLayout.VERTICAL);
+        TextView question = new TextView(this);
+        question.setText(R.string.a11yDebugLogConfirmClear);
+        confirmation.addView(question);
+
+        Button confirm = new Button(this);
+        confirm.setText(R.string.a11yDebugLogConfirmClearAction);
+        confirm.setOnClickListener(view -> {
+            SessionDebugLog.clear(this);
+            Toast.makeText(this, R.string.a11yDebugLogCleared,
+                    Toast.LENGTH_SHORT).show();
+            // Speak the result when focus returns, even without TalkBack.
+            clearButton.setText(getString(R.string.a11yDebugLogCleared)
+                    + ". " + getString(R.string.a11yDebugLogClear));
+            showMainControls();
+        });
+        confirmation.addView(confirm);
+
+        Button cancel = new Button(this);
+        cancel.setText(R.string.a11yTtsCancel);
+        cancel.setOnClickListener(view -> showMainControls());
+        confirmation.addView(cancel);
+        surface.setContent(confirmation);
+    }
+
+    private void showMainControls() {
+        confirmingClear = false;
+        // The third control remains Clear. Returning to it avoids making the
+        // user navigate from the checkbox after cancelling a confirmation.
+        surface.setContent(mainControls, 2);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (confirmingClear) {
+            showMainControls();
+        } else {
+            super.onBackPressed();
+        }
     }
 
     private void exportLog() {
