@@ -99,10 +99,15 @@ public final class BootstrapSelfVoiceSurface extends ScrollView {
     }
 
     public void setContent(View content) {
+        setContent(content, 0);
+    }
+
+    /** Replace the presented controls and restore their native reader focus. */
+    public void setContent(View content, int initialFocus) {
         // The caller's real form remains intact when a spoken choice list opens.
         choosingSpinner = null;
         primaryContent = content;
-        showContent(content, 0);
+        showContent(content, initialFocus);
     }
 
     private void showContent(View content, int initialFocus) {
