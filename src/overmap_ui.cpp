@@ -1,4 +1,6 @@
 #include "overmap_ui.h"
+#include "a11y_semantics.h"
+#include "enums.h"
 
 #include <algorithm>
 #include <array>

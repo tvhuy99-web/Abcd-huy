@@ -1,4 +1,6 @@
 #include "morale.h"
+#include "a11y_semantics.h"
+#include <optional>
 
 #include "a11y_document.h"
 #include "a11y_input.h"

@@ -1,6 +1,7 @@
 #include "avatar.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "a11y_semantics.h"
 #include <climits>
 #include <cmath>
 #include <cstdlib>

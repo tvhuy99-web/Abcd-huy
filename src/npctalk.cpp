@@ -1,5 +1,6 @@
 
 #include <algorithm>
+#include "a11y_semantics.h"
 #include <array>
 #include <climits>
 #include <cmath>

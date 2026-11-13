@@ -1,4 +1,5 @@
 #include "npctrade.h"
+#include "translations.h"
 
 #include <algorithm>
 #include <cmath>
