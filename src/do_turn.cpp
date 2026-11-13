@@ -17,10 +17,9 @@
 #include <vector>
 
 #include "action.h"
-#include "a11y_runtime.h"
-#if defined(__ANDROID__)
 #include "a11y_android.h"
-#endif
+#include "a11y_runtime.h"
+#include "a11y_semantics.h"
 #include "a11y_world.h"
 #include "activity_type.h"
 #include "avatar.h"
