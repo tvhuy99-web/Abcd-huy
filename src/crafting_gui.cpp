@@ -615,11 +615,12 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
 
     // Build only real crafting categories. CC_* is a wildcard/dummy
     // category for nested recipe grouping and Favorites/Recent/Hidden,
-    // not a navigable main category. The 2026-11-12 reader log showed
-    // swipes from Weapons landing on its empty Favorites subcategory.
+    // not a navigable main category in accessible mode. Normal visual
+    // mode keeps its existing special tabs. The 2026-11-12 reader log
+    // showed swipes from Weapons landing on empty Favorites.
     crafting_cats.reserve( craft_cat_list.size() );
     for( const crafting_category &cat : craft_cat_list.get_all() ) {
-        if( !cat.is_hidden && !cat.is_wildcard &&
+        if( !cat.is_hidden && ( !a11y::enabled() || !cat.is_wildcard ) &&
             !available_recipes->in_category( cat.id ).empty() ) {
             crafting_cats.emplace_back( cat.id.str() );
         }
