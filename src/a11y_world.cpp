@@ -493,6 +493,18 @@ std::string player_status()
                                         strain <= 0.0f ? _( "none" ) :
                                         strain <= 0.2f ? _( "low" ) :
                                         strain <= 0.4f ? _( "moderate" ) : _( "high" ) );
+    } else if( viewer.in_vehicle ) {
+        // A passenger has no driven vehicle, so the block above stays
+        // silent and the spoken report never says the avatar is in a
+        // vehicle at all. Name the vehicle the avatar is sitting in;
+        // driving details (azimuth, cruise, fuel, strain) belong to the
+        // driver and are not repeated here. No new string: the
+        // "Vehicle: %s" label is already translated.
+        map &here = get_map();
+        const optional_vpart_position vp = here.veh_at( viewer.pos_bub( here ) );
+        if( vp ) {
+            result += ". " + string_format( _( "Vehicle: %s" ), vp->vehicle().name );
+        }
     }
     return remove_color_tags( result );
 }
@@ -1358,6 +1370,22 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     const optional_vpart_position vehicle = here.veh_at( position );
     if( vehicle ) {
         tile.vehicle = remove_color_tags( vehicle->vehicle().name );
+        // The list only read the vehicle name, so the player had to walk
+        // up to a wreck and examine it to learn it cannot be driven.
+        // State whether a working (unbroken, available) controls part
+        // exists, using strings that are already translated. This text
+        // travels with the name into the tile alert, the linear scan,
+        // the tile detail and the surroundings list.
+        bool has_controls = false;
+        for( const vpart_reference &part :
+             vehicle->vehicle().get_avail_parts( VPFLAG_CONTROLS ) ) {
+            ( void )part;
+            has_controls = true;
+            break;
+        }
+        tile.vehicle += ". ";
+        tile.vehicle += has_controls ? _( "There are vehicle controls here." ) :
+                        _( "No vehicle controls found." );
     }
     std::map<std::string, int> counts;
     for( const item &obj : here.i_at( position ) ) {

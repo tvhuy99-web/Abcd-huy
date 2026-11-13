@@ -83,6 +83,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private String activeChunk;
     private long sequence;
     private int chunkIndex;
+    // Chunk of the last utterance where speech stopped (STT 175). Updated
+    // whenever an utterance is cut off, so resume() can continue a long
+    // document from the interrupted chunk instead of restarting it.
+    private int lastChunkIndex;
     private Runnable completionTimeout;
     private boolean closed;
     private boolean healthy;
@@ -110,6 +114,10 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     }
 
     private void fireFinished(String key) {
+        if (key != null && key.equals(lastKey)) {
+            // The utterance ran to the end; a later resume starts over.
+            lastChunkIndex = 0;
+        }
         if (completionListener != null && key != null) {
             completionListener.onFinished(key);
         }
@@ -120,6 +128,11 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         // clear, engine error, stale context) funnels through here, so
         // this is the single honest place to count interruptions (R21.4).
         statInterrupted++;
+        if (key != null && key.equals(lastKey)) {
+            // chunkIndex is the chunk being spoken when the cut happened;
+            // resume() replays that chunk (STT 175).
+            lastChunkIndex = chunkIndex;
+        }
         if (completionListener != null && key != null) {
             completionListener.onInterrupted(key);
         }
@@ -133,12 +146,21 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         final long created;
         final long expires;
         final List<String> chunks;
+        // Chunk to start speaking from (STT 175). Normally 0; resume()
+        // sets it to the interrupted chunk so a long document continues
+        // instead of restarting.
+        final int startChunk;
 
         Request(String context, String key, String text, int priority) {
             this(context, key, text, priority, priority == FOCUS ? 2000 : 15000);
         }
 
         Request(String context, String key, String text, int priority, long ttlMs) {
+            this(context, key, text, priority, ttlMs, 0);
+        }
+
+        Request(String context, String key, String text, int priority, long ttlMs,
+                int startChunk) {
             this.context = context;
             this.key = key;
             this.text = text;
@@ -146,6 +168,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             created = SystemClock.elapsedRealtime();
             expires = created + ttlMs;
             chunks = chunks(text);
+            this.startChunk = startChunk;
         }
     }
 
@@ -342,6 +365,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             }
             lastText = "";
             lastKey = "";
+            lastChunkIndex = 0;
             advance();
         }
     }
@@ -357,13 +381,17 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         say(key, text, priority, priority == FOCUS ? 2000 : 15000);
     }
 
+    public void say(String key, String text, int priority, long ttlMs) {
+        say(key, text, priority, ttlMs, 0);
+    }
+
     /**
      * Enqueue with an explicit time-to-live. Game messages use a shorter
      * life than screen speech (R21.1): a burst of turn messages must not
      * still be talking about an old turn many seconds later, while an
      * urgent warning keeps the standard life.
      */
-    public void say(String key, String text, int priority, long ttlMs) {
+    public void say(String key, String text, int priority, long ttlMs, int startChunk) {
         if (!isReady() || text == null || text.trim().isEmpty()) {
             return;
         }
@@ -375,7 +403,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             // an active message. Keep normal damage reports even when equal.
             Request request = new Request(GAME_EVENT_CONTEXT, key, text,
                     priority >= URGENT ? URGENT : GAME_EVENT,
-                    365L * 24 * 60 * 60 * 1000);
+                    365L * 24 * 60 * 60 * 1000, startChunk);
             if (request.priority >= URGENT) {
                 // A persistent status can fire several times in one turn.
                 // Only coalesce identical urgent messages that are already
@@ -415,7 +443,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                 }
             }
         }
-        Request request = new Request(contextKey, key, text, priority, ttlMs);
+        Request request = new Request(contextKey, key, text, priority, ttlMs, startChunk);
         for (Iterator<Request> iterator = pending.iterator(); iterator.hasNext();) {
             Request old = iterator.next();
             if ((old.key.equals(key) && old.priority <= priority)
@@ -477,7 +505,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
             // Already-playing game speech is allowed to finish first.
             active = !urgentGameEvents.isEmpty()
                     ? urgentGameEvents.removeFirst() : orderedGameEvents.removeFirst();
-            chunkIndex = 0;
+            chunkIndex = startChunkOf(active);
             lastText = active.text;
             lastKey = active.key;
             speakChunk();
@@ -499,11 +527,18 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         if (best != null) {
             pending.remove(best);
             active = best;
-            chunkIndex = 0;
+            chunkIndex = startChunkOf(active);
             lastText = best.text;
             lastKey = best.key;
             speakChunk();
         }
+    }
+
+    private static int startChunkOf(Request request) {
+        if (request == null || request.chunks.isEmpty()) {
+            return 0;
+        }
+        return Math.max(0, Math.min(request.startChunk, request.chunks.size() - 1));
     }
 
     private void speakChunk() {
@@ -529,7 +564,79 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         String text = lastText;
         String key = lastKey;
         stop();
+        // Repeat means "from the start": forget the interruption point so
+        // a later resume() does not jump back mid-document (STT 175).
+        lastChunkIndex = 0;
         say("repeat:" + key, text, FOCUS);
+    }
+
+    /**
+     * Continue the last utterance from the chunk where it was cut off
+     * (STT 175): a long document (MOTD/Credits) interrupted by a focus
+     * move, Stop or an engine error resumes mid-text instead of
+     * restarting from chunk 0. Falls back to {@link #repeat()} when
+     * nothing was interrupted mid-utterance. Stops whatever is speaking
+     * now. Wiring a gesture or command to this is the controller's job
+     * (GameReaderController); this class only provides the mechanism.
+     */
+    public void resume() {
+        String text = lastText;
+        String key = lastKey;
+        int start = lastChunkIndex;
+        if (text == null || text.isEmpty()) {
+            return;
+        }
+        if (start <= 0) {
+            repeat();
+            return;
+        }
+        start = Math.min(start, Math.max(0, chunks(text).size() - 1));
+        stop();
+        say("resume:" + key, text, FOCUS, 2000, start);
+    }
+
+    /** Whether the active utterance has another chunk in this direction. */
+    public boolean canSkipChunk(int delta) {
+        return active != null && active.chunks.size() > 1
+                && chunkIndex + delta >= 0 && chunkIndex + delta < active.chunks.size();
+    }
+
+    /**
+     * Jump the active utterance forward (+1) or back (-1) by one chunk
+     * (STT 175). Returns false when there is no chunk in that direction.
+     * The current chunk is cancelled and the target chunk speaks at once;
+     * the stale utterance callback is ignored because activeChunk is
+     * cleared before cancelling. Wiring a gesture to this is the
+     * controller's job (GameReaderController).
+     */
+    public boolean skipChunk(int delta) {
+        if (!canSkipChunk(delta)) {
+            return false;
+        }
+        chunkIndex += delta;
+        removeCompletionTimeout();
+        activeChunk = null;
+        speech.cancel();
+        speakChunk();
+        return true;
+    }
+
+    public boolean skipToNextChunk() {
+        return skipChunk(1);
+    }
+
+    public boolean skipToPreviousChunk() {
+        return skipChunk(-1);
+    }
+
+    /** 0-based index of the chunk being spoken, or -1 when idle. */
+    public int getChunkIndex() {
+        return active == null ? -1 : chunkIndex;
+    }
+
+    /** Number of chunks in the active utterance, or 0 when idle. */
+    public int getChunkCount() {
+        return active == null ? 0 : active.chunks.size();
     }
 
     public void stop() {
@@ -571,6 +678,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         contextKey = "";
         lastText = "";
         lastKey = "";
+        lastChunkIndex = 0;
         // The duplicate window must not reach across a lifecycle
         // boundary either: what was said before a pause says nothing
         // about what the fresh foreground session needs to hear.

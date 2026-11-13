@@ -249,10 +249,17 @@ std::string trade_ui::build_accessibility_summary( const pane_t &pane ) const
                                  format_money( std::abs( _balance ) ) );
     }
 
-    std::string summary = string_format(
-                              _( "Your offer: %1$s item units, estimated value %2$s. "
-                                 "NPC offer: %3$s item units, estimated value %4$s. "
-                                 "Current balance: %5$s." ),
+    // The screen title ("Trade: <name>", set by the talk functions) is
+    // drawn in the visual header only and never reaches the reader
+    // snapshot, whose title is the (unset) selector title. Name the
+    // trader at the top of the spoken summary instead, so the reader
+    // hears who the other party is as soon as the trade screen opens.
+    std::string summary = string_format( _( "Trading with %s." ), trader.get_name() );
+    summary += "\n";
+    summary += string_format(
+                   _( "Your offer: %1$s item units, estimated value %2$s. "
+                      "NPC offer: %3$s item units, estimated value %4$s. "
+                      "Current balance: %5$s." ),
                               std::to_string( _trade_unit_counts[_you] ), format_money( _trade_values[_you] ),
                               std::to_string( _trade_unit_counts[_trader] ), format_money( _trade_values[_trader] ),
                               balance );

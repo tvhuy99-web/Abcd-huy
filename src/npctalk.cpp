@@ -1162,6 +1162,13 @@ void game::chat( const std::optional<tripoint_bub_ms> &p )
         nmenu.addentry( NPC_CHAT_TALK, true, 't', available_count == 1 ?
                         string_format( _( "Talk to %s" ), title ) :
                         _( "Talk to…" ) );
+    } else {
+        // No one in range to talk to: say so in the menu itself instead of
+        // silently omitting the entry, which left the reader (and new
+        // players) to infer it from the entry's absence. Disabled, like
+        // the seminar entry below when it cannot be used.
+        nmenu.addentry( NPC_CHAT_TALK, false, 't',
+                        _( "Talk to… (No one nearby to talk to)" ) );
     }
 
     if( !available_for_activities.empty() ) {
@@ -2959,7 +2966,8 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     };
     a11y::screen_scope reader( &ctxt, "dialogue", [&]( const a11y::semantic_intent &intent ) ->
     std::optional<std::string> {
-        if( intent.node == "dialogue:history" && intent.action == "focus" ) {
+        if( ( intent.node == "dialogue:history" || intent.node == "dialogue:about" ) &&
+            intent.action == "focus" ) {
             return std::optional<std::string>( "A11Y_INTERNAL_DIALOGUE_FOCUS" );
         }
         const std::string response_prefix = "dialogue:response:";
@@ -3018,6 +3026,44 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             snapshot.nodes.back().actions = { "focus" };
         }
 
+        // The sidebar the sighted UI draws next to the dialogue
+        // (dialogue_imgui.cpp draw_dialogue_sidebar) shows what this person
+        // looks like and what they think of the player: wielded weapon,
+        // worn gear, visible mutations, stat estimate, personality traits
+        // and opinion. Publish exactly those same four texts as a second
+        // document node so the reader can hear them on demand, in the
+        // same order the sidebar draws them. Nothing here is computed
+        // for the reader: every line comes from the same talker calls
+        // the sidebar uses, including the blind-player wording.
+        {
+            std::string about_text;
+            const auto append_about_part = [&about_text]( const std::string &part ) {
+                if( part.empty() ) {
+                    return;
+                }
+                if( !about_text.empty() ) {
+                    about_text += "\n\n";
+                }
+                about_text += part;
+            };
+            if( actor( false )->can_see() ) {
+                append_about_part( actor( true )->short_description() );
+            } else {
+                append_about_part( string_format( _( "You're blind and can't look at %s." ),
+                                                  actor( true )->disp_name() ) );
+            }
+            append_about_part( actor( true )->evaluation_by( *actor( false ) ) );
+            append_about_part( actor( true )->view_personality_traits() );
+            append_about_part( actor( true )->opinion_text() );
+            if( !about_text.empty() ) {
+                a11y::append_document( snapshot, "dialogue:about",
+                                       speaker.empty() ? _( "About the speaker" ) :
+                                       string_format( _( "About %s" ), speaker ),
+                                       about_text );
+                snapshot.nodes.back().actions = { "focus" };
+            }
+        }
+
         for( size_t index = 0; index < response_lines.size(); ++index ) {
             const talk_data &response = response_lines[index];
             a11y::semantic_node node;
@@ -3061,9 +3107,27 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
         }
-        for( size_t index = 0; index < snapshot.nodes.size(); ++index ) {
-            snapshot.nodes[index].position = static_cast<int>( index + 1 );
-            snapshot.nodes[index].total = static_cast<int>( snapshot.nodes.size() );
+        // Position/total count only the nodes the reader can swipe through
+        // (history and about documents, response buttons). The command
+        // nodes command_snapshot() appends are hidden hold-menu entries
+        // the Java presenter filters out of the swipe list, so counting
+        // them inflated the spoken position (e.g. "4 of 17" for three
+        // responses). Command nodes keep position/total 0, which the
+        // presenter treats as "no C++ position supplied" and numbers
+        // from its own visible list instead.
+        int visible_total = 0;
+        for( const a11y::semantic_node &node : snapshot.nodes ) {
+            if( node.role != "command" ) {
+                ++visible_total;
+            }
+        }
+        int visible_index = 0;
+        for( a11y::semantic_node &node : snapshot.nodes ) {
+            if( node.role == "command" ) {
+                continue;
+            }
+            node.position = ++visible_index;
+            node.total = visible_total;
         }
         reader.update( std::move( snapshot ) );
     };
@@ -3079,13 +3143,19 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             }
             // For reasons unclear to me, we must manually invalidate and redraw the windows here, or else they will stack up.
             ui_manager::invalidate_all_ui_adaptors();
-            update_reader();
-            // Announce once per newly constructed dialogue topic, after its
-            // snapshot exists. Do not repeat on response focus or redraw.
+            // Announce the NPC's spoken line BEFORE publishing the new
+            // snapshot: both go through the same UI queue in order, so
+            // publishing first made the reader speak the title and the
+            // first response before the line that prompted them. The
+            // snapshot still follows immediately, so the response list
+            // is announced right after the question, as the sighted UI
+            // shows it. (Java side still owns the rest of the ordering:
+            // snapshot summary and focus handling.)
             if( !reply_announced && a11y::enabled() ) {
                 a11y::android::announce( remove_color_tags( spoken_reply ), 1 );
                 reply_announced = true;
             }
+            update_reader();
             ui_manager::redraw();
             action = ctxt.handle_input();
 

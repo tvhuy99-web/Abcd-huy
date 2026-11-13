@@ -36,6 +36,11 @@ public class CataclysmDDA extends SDLActivity {
     public static final String SCREEN_ORIENTATION_PORTRAIT = "portrait";
     public static final String SCREEN_ORIENTATION_AUTO = "auto";
 
+    // startActivityForResult code for the TTS settings screen (STT 162).
+    // The result is read back so a save can be announced on return.
+    private static final int REQUEST_TTS_SETTINGS = 9101;
+    private boolean pendingTtsSavedAnnouncement;
+
     private NativeUI nativeUI = new NativeUI(CataclysmDDA.this);
     private volatile GameReaderController readerController;
     private int lastImeLeft = -1;
@@ -217,9 +222,22 @@ public class CataclysmDDA extends SDLActivity {
     public void onAccessibilityOpenTtsSettings() {
         runOnUiThread(() -> {
             if (!isFinishing() && !isDestroyed()) {
-                startActivity(new Intent(this, TtsSettingsActivity.class));
+                startActivityForResult(new Intent(this, TtsSettingsActivity.class),
+                        REQUEST_TTS_SETTINGS);
             }
         });
+    }
+
+    // STT 162: the TTS screen used to be opened with plain startActivity,
+    // so its RESULT_OK was never read and a save ended in silence. Remember
+    // a successful save here; the announcement itself waits for window
+    // focus below, because the reader drops messages while unfocused.
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_TTS_SETTINGS && resultCode == RESULT_OK) {
+            pendingTtsSavedAnnouncement = true;
+        }
     }
 
     /** Open the two added entries in the original native game Settings list. */
@@ -272,6 +290,21 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.onWindowFocusChanged(hasFocus); }
         if (hasFocus) {
             applySystemUiMode();
+            if (pendingTtsSavedAnnouncement) {
+                pendingTtsSavedAnnouncement = false;
+                if (reader != null && reader.isEnabled()) {
+                    reader.announceGameMessage(
+                            getString(R.string.a11yReaderEnabledNotice),
+                            ReaderSpeechQueue.INFORMATION);
+                } else if (reader != null && reader.usesTouchExploration()
+                        && getWindow() != null && getWindow().getDecorView() != null) {
+                    // Reader saved off: the notice above does not apply, and
+                    // the reader speaks nothing while off. TalkBack users
+                    // still get the matching confirmation for this state.
+                    getWindow().getDecorView().announceForAccessibility(
+                            getString(R.string.a11yReaderDisabledNotice));
+                }
+            }
         }
     }
 

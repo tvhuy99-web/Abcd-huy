@@ -640,6 +640,31 @@ void avatar::power_mutations()
         }
     } );
 
+    // Reader-only failure reason (STT 54): the generic "Not enough
+    // resources" message never said which resource was short, so the
+    // player had to leave the screen and check every status value. Name
+    // the first requirement that fails, in the same order the activation
+    // check below tests them. The sighted popup path is untouched.
+    const auto activation_shortage = [this]( const mutation_branch &mut_data ) -> std::string {
+        const std::string name = mutation_name( mut_data.id );
+        if( mut_data.hunger && get_kcal_percent() < 0.8f ) {
+            return string_format( _( "Too hungry to activate %s." ), name );
+        }
+        if( mut_data.thirst && get_thirst() > 400 ) {
+            return string_format( _( "Too thirsty to activate %s." ), name );
+        }
+        if( mut_data.sleepiness && get_sleepiness() > 400 ) {
+            return string_format( _( "Too sleepy to activate %s." ), name );
+        }
+        if( mut_data.mana && magic->available_mana() < mut_data.cost ) {
+            return string_format( _( "Not enough mana to activate %s." ), name );
+        }
+        if( mut_data.stamina && get_stamina() < mut_data.cost ) {
+            return string_format( _( "Not enough stamina to activate %s." ), name );
+        }
+        return string_format( _( "Not enough resources to activate %s." ), name );
+    };
+
     bool exit = false;
     while( !exit ) {
         recalc_max_scroll_position();
@@ -707,8 +732,8 @@ void avatar::power_mutations()
                                 exit = true;
                             } else {
                                 if( a11y::enabled() ) {
-                                    add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
-                                                       mutation_name( mut_data.id ) );
+                                    add_msg_if_player( m_info, "%s",
+                                                       activation_shortage( mut_data ).c_str() );
                                 } else {
                                     popup( _( "You don't have enough in you to activate your %s!" ),
                                            mutation_name( mut_data.id ) );
@@ -876,8 +901,8 @@ void avatar::power_mutations()
                                     exit = true;
                                 } else {
                                     if( a11y::enabled() ) {
-                                        add_msg_if_player( m_info, _( "Not enough resources to activate %s." ),
-                                                           mutation_name( mut_data.id ) );
+                                        add_msg_if_player( m_info, "%s",
+                                                           activation_shortage( mut_data ).c_str() );
                                     } else {
                                         popup( _( "You don't have enough in you to activate your %s!" ),
                                                mutation_name( mut_data.id ) );

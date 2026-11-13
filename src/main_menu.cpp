@@ -1148,12 +1148,15 @@ bool main_menu::opening_screen()
                         if( a11y::enabled() ) {
                             // This developer-only visual demonstration has
                             // no semantic controls. Do not strand readers on
-                            // a silent ImGui canvas.
+                            // a silent ImGui canvas. The explanatory text
+                            // below has no Vietnamese translation yet (STT
+                            // 174: both catalogs lack these strings), so at
+                            // least the only action reads in Vietnamese.
                             uilist accessible_demo( _( "ImGui demonstration" ), {} );
                             accessible_demo.text = _(
                                                        "This developer demonstration does not provide accessible game controls.  "
                                                        "Choose Back to return to Settings." );
-                            accessible_demo.addentry( 0, true, 'q', _( "Back to settings" ) );
+                            accessible_demo.addentry( 0, true, 'q', _( "Back" ) );
                             accessible_demo.query();
                         } else {
                             imgui_demo_ui demo;
@@ -1677,18 +1680,55 @@ void main_menu::world_tab( const std::string &worldname )
         return;
     }
 
-    auto clear_world = [this, &worldname]( bool do_delete ) {
+    // Returns false when the world folder (delete) or its saves (reset)
+    // survived the removal, so the caller can report the failure instead
+    // of the unconditional success popup (STT 194). delete_world itself
+    // reports nothing, and its signature cannot change here.
+    auto clear_world = [this, &worldname]( bool do_delete ) -> bool {
         // NOLINTNEXTLINE(cata-use-localized-sorting)
         if( last_world_pos > 0 && worldname <= world_generator->all_worldnames()[last_world_pos] ) {
             last_world_pos--;
+        }
+        const WORLD *world = world_generator->get_world( worldname );
+        const std::filesystem::path folder = world != nullptr
+                                             ? world->folder_path().get_unrelative_path()
+                                             : std::filesystem::path();
+        if( folder.empty() ) {
+            return false;
         }
         world_generator->delete_world( worldname, do_delete );
         savegames.clear();
         MAPBUFFER.clear();
         overmap_buffer.clear();
+        std::error_code ec;
         if( do_delete ) {
+            const bool gone = !std::filesystem::exists( folder, ec );
+            if( ec || !gone ) {
+                return false;
+            }
             sel2 = 0; // reset to create world selection
+            return true;
         }
+        // Reset keeps the folder by design, but only options, the mod
+        // list and compression dictionaries may remain. Any other file
+        // means the saves were not actually removed.
+        if( !std::filesystem::exists( folder, ec ) ) {
+            return false;
+        }
+        for( std::filesystem::recursive_directory_iterator it( folder, ec ), end;
+             !ec && it != end; it.increment( ec ) ) {
+            if( !it->is_regular_file( ec ) ) {
+                continue;
+            }
+            const std::filesystem::path file = it->path();
+            const std::string filename = file.filename().generic_u8string();
+            if( filename == PATH_INFO::worldoptions() || filename == "mods.json" ||
+                file.extension().generic_u8string() == ".dict" ) {
+                continue;
+            }
+            return false;
+        }
+        return !ec;
     };
 
     switch( opt_val ) {
@@ -1742,9 +1782,10 @@ void main_menu::world_tab( const std::string &worldname )
                                    ? confirm_world_removal_for_reader( worldname, save_count, true )
                                    : query_yn( _( "Delete the world and all saves within?" ) );
             if( confirmed ) {
-                clear_world( true );
+                const bool deleted = clear_world( true );
                 if( a11y::enabled() ) {
-                    popup( _( "World \"%s\" deleted." ), worldname );
+                    popup( deleted ? _( "World \"%s\" deleted." )
+                           : _( "World \"%s\" could not be deleted." ), worldname );
                 }
             }
             break;
@@ -1756,9 +1797,10 @@ void main_menu::world_tab( const std::string &worldname )
                                    ? confirm_world_removal_for_reader( worldname, save_count, false )
                                    : query_yn( _( "Remove all saves and regenerate world?" ) );
             if( confirmed ) {
-                clear_world( false );
+                const bool reset = clear_world( false );
                 if( a11y::enabled() ) {
-                    popup( _( "World \"%s\" reset.  All of its saves were removed." ), worldname );
+                    popup( reset ? _( "World \"%s\" reset.  All of its saves were removed." )
+                         : _( "World \"%s\" could not be reset." ), worldname );
                 }
             }
             break;

@@ -59,6 +59,13 @@ public class SplashScreen extends Activity {
     // repeated triggers (resume, dialog buttons, the Start button) and a
     // queued delayed start must not stack a second launch (R03.2).
     private boolean gameStartLaunched;
+    // A backup restore running on another thread holds ReaderGameSession
+    // busy, so StartGameRunnable waits and retries instead of stopping
+    // dead (STT 133). Bounded: after the last retry the user gets an
+    // explicit retry button instead of a silent splash.
+    private static final long GAME_START_RESTORE_RETRY_DELAY_MS = 2000;
+    private static final int GAME_START_RESTORE_MAX_RETRIES = 15;
+    private int gameStartRestoreRetries;
     // Optional gameplay soundpack gate. The packaged data/sound tree is not
     // touched, and Skip/Cancel never modifies any existing save.
     private boolean soundpackGateResolved;
@@ -386,7 +393,13 @@ public class SplashScreen extends Activity {
     }
 
     private void showCrashAlert() {
-        String externalFilesDir = getExternalFilesDir(null).getPath();
+        File externalFiles = getExternalFilesDir(null);
+        if (externalFiles == null) {
+            // installOrRun already shows the storage error in this case;
+            // never crash here on the null (STT 134).
+            return;
+        }
+        String externalFilesDir = externalFiles.getPath();
         File crashAlertPrompt = new File(externalFilesDir + "/config/crash.log.prompt");
         try {
             crashAlertPrompt.delete();
@@ -533,15 +546,22 @@ public class SplashScreen extends Activity {
         Log.e(TAG, "onCreate()");
         if (installationRunning) { return; }
         accessibilityServicesAlert.dismiss();
+        // No external storage, no game data and no install target: report
+        // it with a way back instead of crashing on a null path (STT 134).
+        File externalRoot = getExternalFilesDir(null);
+        if (externalRoot == null) {
+            showExternalStorageUnavailable(this::installOrRun);
+            return;
+        }
         // Start the game if already installed, otherwise start installing...
         // A mid-swap death (journal left at SWAPPING) forces the install
         // task even when the version matches: the task restores the
         // rollback copy before staging anything new (R06.4).
         boolean swapInterrupted = new File(getFilesDir(), INSTALL_JOURNAL_FILE).exists()
-                || new File(getExternalFilesDir(null), InstallProgramTask.ROLLBACK_DIR).exists();
+                || new File(externalRoot, InstallProgramTask.ROLLBACK_DIR).exists();
         if (!swapInterrupted && getVersionName().equals(PreferenceManager.getDefaultSharedPreferences(getApplicationContext()).getString("installed", ""))) {
             // Show an alert box if the game crashed last time
-            String externalFilesDir = getExternalFilesDir(null).getPath();
+            String externalFilesDir = externalRoot.getPath();
             File crashAlertPrompt = new File(externalFilesDir + "/config/crash.log.prompt");
             if(crashAlertPrompt.exists()) {
                 showCrashAlert();
@@ -599,6 +619,7 @@ public class SplashScreen extends Activity {
     }
 
     private void startGameActivity(boolean delay) {
+        gameStartRestoreRetries = 0;
         if (BuildConfig.FLAVOR.equals("accessibility") && !soundpackGateResolved) {
             prepareGameSoundpack();
             return;
@@ -781,6 +802,102 @@ public class SplashScreen extends Activity {
         }
     }
 
+    /**
+     * getExternalFilesDir(null) is null when external storage is
+     * unavailable (STT 134): announce it and offer retry/exit instead of
+     * crashing on the null or stopping silently. Retry re-runs whatever
+     * was trying to start, so storage that came back is picked up.
+     * Title and shape follow the backup-recovery branch below.
+     */
+    private void showExternalStorageUnavailable(Runnable retry) {
+        if (shouldSelfVoiceBootstrap()) {
+            showBootstrapMessage(R.string.a11yBackupHeading,
+                    getString(R.string.a11ySoundpackStorageUnavailable),
+                    new int[] { R.string.startGame, R.string.a11yBootstrapExit },
+                    new Runnable[] { retry, () -> finish() });
+            speakBootstrap(getString(R.string.a11ySoundpackStorageUnavailable));
+        } else {
+            new AlertDialog.Builder(SplashScreen.this)
+                    .setTitle(R.string.a11yBackupHeading)
+                    .setMessage(R.string.a11ySoundpackStorageUnavailable)
+                    .setPositiveButton(R.string.startGame, (dialog, which) -> retry.run())
+                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setCancelable(false).show();
+        }
+    }
+
+    /**
+     * A restore still running after every automatic retry (STT 133): say
+     * so and offer an explicit retry instead of leaving a silent splash.
+     * Retry restarts the whole start attempt, so the wait starts over.
+     */
+    private void showGameStartRestoreBusy() {
+        if (shouldSelfVoiceBootstrap()) {
+            showBootstrapMessage(R.string.a11yBackupHeading,
+                    getString(R.string.a11yBackupWorking),
+                    new int[] { R.string.startGame, R.string.a11yBootstrapExit },
+                    new Runnable[] { () -> startGameActivity(false), () -> finish() });
+            speakBootstrap(getString(R.string.a11yBackupWorking));
+        } else {
+            new AlertDialog.Builder(SplashScreen.this)
+                    .setTitle(R.string.a11yBackupHeading)
+                    .setMessage(R.string.a11yBackupWorking)
+                    .setPositiveButton(R.string.startGame, (dialog, which) ->
+                            startGameActivity(false))
+                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setCancelable(false).show();
+        }
+    }
+
+    /**
+     * A deferred restore (STT 7) that could not be applied before the
+     * game starts: do not start the game on unrestored (or half-swapped)
+     * data. Retry restarts the whole start attempt, which first repairs
+     * any interrupted swap and then tries the staged import again.
+     * Discard is the escape hatch a merely-retrying dialog would lack:
+     * a staged import that deterministically fails verification (for
+     * example files changed under staging after they were checked)
+     * would otherwise block every launch, since this screen is the only
+     * place the restore can run. Discarding drops the staged copy and
+     * its confirmation and starts the game on the current data; the
+     * backup file the user picked is untouched and can be staged again.
+     */
+    private void showDeferredRestoreFailed() {
+        if (shouldSelfVoiceBootstrap()) {
+            showBootstrapMessage(R.string.a11yBackupHeading,
+                    getString(R.string.a11yBackupSwapFailed),
+                    new int[] { R.string.startGame, R.string.a11yBackupCancelRestore,
+                            R.string.a11yBootstrapExit },
+                    new Runnable[] { () -> startGameActivity(false),
+                            () -> discardDeferredRestoreAndStart(), () -> finish() });
+            speakBootstrap(getString(R.string.a11yBackupSwapFailed));
+        } else {
+            new AlertDialog.Builder(SplashScreen.this)
+                    .setTitle(R.string.a11yBackupHeading)
+                    .setMessage(R.string.a11yBackupSwapFailed)
+                    .setPositiveButton(R.string.startGame, (dialog, which) ->
+                            startGameActivity(false))
+                    .setNeutralButton(R.string.a11yBackupCancelRestore, (dialog, which) ->
+                            discardDeferredRestoreAndStart())
+                    .setNegativeButton(R.string.a11yRescueBack, (dialog, which) -> finish())
+                    .setCancelable(false).show();
+        }
+    }
+
+    /** Drop a deferred restore that cannot be applied and start on current data. */
+    private void discardDeferredRestoreAndStart() {
+        File playerRoot = getExternalFilesDir(null);
+        if (playerRoot != null) {
+            // Deletes the staging directory, so the deferred marker goes
+            // with it; the next start attempt then repairs any leftover
+            // swap journal before the game starts.
+            new ReaderBackupArchive(playerRoot,
+                    new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE))
+                    .cancelStagedImport();
+        }
+        startGameActivity(false);
+    }
+
     private final class StartGameRunnable implements Runnable {
         @Override
         public void run() {
@@ -788,11 +905,14 @@ public class SplashScreen extends Activity {
             // trigger racing the first launch) must not fire late (R03.2).
             if (gameStartLaunched || isFinishing() || isDestroyed()) { return; }
             File playerRoot = getExternalFilesDir(null);
-            if (playerRoot == null) { return; }
+            if (playerRoot == null) {
+                showExternalStorageUnavailable(() -> startGameActivity(false));
+                return;
+            }
+            ReaderBackupArchive backupArchive = new ReaderBackupArchive(playerRoot,
+                    new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE));
             try {
-                new ReaderBackupArchive(playerRoot,
-                        new File(getFilesDir(), ReaderSetupActivity.BACKUP_JOURNAL_FILE))
-                        .recoverInterruptedSwap();
+                backupArchive.recoverInterruptedSwap();
             } catch (ReaderBackupArchive.BackupException failure) {
                 if (shouldSelfVoiceBootstrap()) {
                     showBootstrapMessage(R.string.a11yBackupHeading,
@@ -811,8 +931,41 @@ public class SplashScreen extends Activity {
                 }
                 return;
             }
+            // STT 7 (deferred restore): a staged import the user
+            // explicitly confirmed in BackupRestoreActivity while the
+            // engine was running is applied here, before the engine
+            // starts, so the game opens on the restored data. Only a
+            // confirmed stage is ever applied: the deferred marker is
+            // written solely by that screen's Confirm action, and a
+            // merely staged import is left alone. This runs after
+            // recoverInterruptedSwap(), so a half-swapped tree from an
+            // earlier process is repaired before the new swap, and
+            // before reserveGameStart(), so beginRestore() inside
+            // restoreStagedImport() still succeeds.
+            if (ReaderGameSession.hasDeferredRestore(playerRoot)
+                    && backupArchive.hasStagedImport()) {
+                try {
+                    backupArchive.restoreStagedImport();
+                } catch (ReaderBackupArchive.BackupException failure) {
+                    showDeferredRestoreFailed();
+                    return;
+                }
+            }
             if (!ReaderGameSession.reserveGameStart()) {
-                speakBootstrap(getString(R.string.a11yBackupWorking));
+                // A restore is running on another thread (STT 133): wait
+                // and try again instead of stopping dead. The wait message
+                // is spoken once; retries are silent until they succeed or
+                // run out, when the user gets a retry button.
+                if (gameStartRestoreRetries < GAME_START_RESTORE_MAX_RETRIES) {
+                    gameStartRestoreRetries++;
+                    if (gameStartRestoreRetries == 1) {
+                        speakBootstrap(getString(R.string.a11yBackupWorking));
+                    }
+                    new Handler(Looper.getMainLooper()).postDelayed(
+                            new StartGameRunnable(), GAME_START_RESTORE_RETRY_DELAY_MS);
+                    return;
+                }
+                showGameStartRestoreBusy();
                 return;
             }
             gameStartLaunched = true;

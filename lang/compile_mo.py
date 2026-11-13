@@ -29,8 +29,19 @@ def main() -> int:
         executable = Path(msgfmt)
         msgcat_name = "msgcat.exe" if executable.suffix == ".exe" else "msgcat"
         msgcat = str(executable.with_name(msgcat_name)) if executable.parent != Path(".") else msgcat_name
-        content = subprocess.run([msgcat, "--use-first", str(overlay), "-"],
-                                 input=content, stdout=subprocess.PIPE, check=True).stdout
+        try:
+            content = subprocess.run([msgcat, "--use-first", str(overlay), "-"],
+                                     input=content, stdout=subprocess.PIPE, check=True).stdout
+        except FileNotFoundError:
+            # A missing msgcat used to surface only as a bare traceback, which
+            # hid that the accessibility overlay (vehicle strings included)
+            # could not be merged -- and once cost a release CI run (CI-REL).
+            # Fail loudly with the cause and the remedy instead.
+            print(f"Error: '{msgcat}' not found. Install gettext (msgcat) so the "
+                  f"accessibility overlay '{overlay}' can be merged into "
+                  f"'{output}'. Without it the build cannot produce a "
+                  "correct .mo file.", file=sys.stderr)
+            return 1
     subprocess.run([msgfmt, "-f", "-o", str(output), "-"],
                    input=content, check=True)
     return 0

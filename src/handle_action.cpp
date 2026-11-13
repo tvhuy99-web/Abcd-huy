@@ -780,9 +780,6 @@ input_context game::get_player_input( std::string &action )
                                    std::chrono::steady_clock::time_point{};
                 const std::size_t nodes = next.nodes.size();
                 reader->update( std::move( next ) );
-                // Only speak when the KNOWN overmap terrain changes.
-                // An internal submap cache shift alone is not a new area.
-                a11y::announce_area_transition();
                 const std::chrono::steady_clock::time_point published = profile_reader ? std::chrono::steady_clock::now() :
                                        std::chrono::steady_clock::time_point{};
                 if( profile_reader ) {
@@ -800,6 +797,15 @@ input_context game::get_player_input( std::string &action )
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
             }
+            // The snapshot above is only republished when the lifecycle
+            // epoch moves (reader enable / session change), so an area
+            // announcement placed inside that block never fired while
+            // walking -- the snapshot itself is refreshed after every
+            // action by the intent handler. Check for a new area on
+            // every input wait instead; the function only speaks when
+            // the known overmap terrain actually changes, and an
+            // internal submap cache shift alone is not a new area.
+            a11y::announce_area_transition();
         } else {
             reader_snapshot_published = false;
         }

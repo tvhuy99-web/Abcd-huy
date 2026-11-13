@@ -819,6 +819,27 @@ void avatar::power_bionics()
         append_tab( "bionics:tab:active", _( "Active" ), TAB_ACTIVE, active.size(), 1 );
         append_tab( "bionics:tab:passive", _( "Passive" ), TAB_PASSIVE, passive.size(), 2 );
 
+        // Bionic slots per body part (STT 286): the screen draws
+        // "Torso: 3/8" (used/total) on the side, but the snapshot had no
+        // node for it, so the reader could not report free slots before
+        // the player tries an install and hits the "not enough space"
+        // popup. One status node per body part, same order as the draw.
+        const auto slot_parts = get_all_body_parts();
+        for( std::size_t i = 0; i < slot_parts.size(); ++i ) {
+            const bodypart_id &bp = slot_parts[i];
+            const int total = get_total_bionics_slots( bp );
+            const int free = get_free_bionics_slots( bp );
+            a11y::semantic_node node;
+            node.id = "bionics:slots:" + bp.id().str();
+            node.role = "status";
+            node.label = body_part_name_as_heading( bp, 1 );
+            node.value = string_format( _( "%1$d of %2$d slots free" ), free, total );
+            node.actions = { "focus" };
+            node.position = static_cast<int>( i ) + 1;
+            node.total = static_cast<int>( slot_parts.size() );
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+
         sorted_bionics *current_list = tab_mode == TAB_ACTIVE ? &active : &passive;
         if( current_list->empty() ) {
             // Empty state, mirroring the uilist precedent: a status node

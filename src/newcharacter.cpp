@@ -2681,6 +2681,9 @@ void character_creator_ui::update_uilist_entries()
                 if( prof_id == u.prof->ident() ) {
                     entry.a11y_value += ". " + std::string( _( "Current choice" ) );
                 }
+                // STT 203: the header pane shows the mod origin, but the reader
+                // entry did not. Publish it as part of the spoken value.
+                entry.a11y_value += ". " + get_origin( prof_id->src );
                 entry.enabled = prof_id->can_pick().success();
                 entry.desc = prof_id->description( u.male );
                 if( !entry.enabled ) { entry.a11y_disabled_reason = prof_id->can_pick().str(); }
@@ -2766,6 +2769,11 @@ void character_creator_ui::update_uilist_entries()
                                                   char_creation::stat_level_description(
                                                           cc_uistate.stats[i] ),
                                                   CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
+                // STT 31: the tab title alone cannot carry the per-tab pool
+                // once the user moves between rows, so each focused row also
+                // states the remaining stat points (spoken as the node value).
+                entry.a11y_value += " " + string_format( _( "Stat points left: %d." ),
+                                        multi_pool( u ).stat_points_left );
                 entry.desc = string_format( _( "Stat points left: %d." ),
                                             multi_pool( u ).stat_points_left );
                 menu->addentry( entry );
@@ -2782,6 +2790,10 @@ void character_creator_ui::update_uilist_entries()
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
                 trait_entry.a11y_checked = u.has_trait( current_trait );
                 trait_entry.a11y_value = string_format( _( "Trait point value: %d" ), current_trait->points );
+                // STT 31: trait_points_left was published nowhere on this tab
+                // (only inside the summary document); state it on each focused row.
+                trait_entry.a11y_value += " " + string_format( _( "Trait points left: %d." ),
+                                              multi_pool( u ).trait_points_left );
                 trait_entry.desc = u.mutation_desc( current_trait );
                 trait_entry.enabled = !( u.has_conflicting_trait( current_trait ) ||
                                          get_scenario()->is_forbidden_trait( current_trait ) ||
@@ -2878,6 +2890,10 @@ void character_creator_ui::update_uilist_entries()
                                          ? string_format( _( "Level: %d" ), own_level )
                                          : string_format( _( "Level: %1$d + %2$d from profession or background" ),
                                                  own_level, bonus_level );
+                // STT 31: state the remaining skill points on each focused row,
+                // like the stat rows do (the title alone is not re-read on move).
+                skill_entry.a11y_value += " " + string_format( _( "Skill points left: %d." ),
+                                              creator_points.skill_points_left );
                 skill_entry.desc += "\n" + string_format( _( "Skill points left: %d." ),
                                     creator_points.skill_points_left );
                 menu->addentry( skill_entry );
@@ -2899,9 +2915,21 @@ void character_creator_ui::update_uilist_entries()
                 case CHARCREATOR_SKILLS: step_label = _( "Set skills" ); break;
                 default: break;
             }
+            // STT 31: the title used to report the combined pool
+            // (skill_points_left) on every tab, e.g. 6 remaining while only
+            // 2 stat points were left. Report this tab's own pool instead;
+            // scenario/profession/background keep the combined total.
+            const multi_pool tab_points( u );
+            int points_for_tab = tab_points.skill_points_left;
+            switch( cc_uistate.selected_tab ) {
+                case CHARCREATOR_STATS: points_for_tab = tab_points.stat_points_left; break;
+                case CHARCREATOR_TRAITS: points_for_tab = tab_points.trait_points_left; break;
+                case CHARCREATOR_SKILLS: points_for_tab = tab_points.skill_points_left; break;
+                default: break;
+            }
             menu->title = string_format( _( "%1$s. Step %2$d of 7. Points remaining: %3$d." ),
                                          step_label, static_cast<int>( cc_uistate.selected_tab ) + 1,
-                                         multi_pool( u ).skill_points_left );
+                                         points_for_tab );
         }
         menu->desired_bounds = uilist_reset_desired_bounds();
         menu->filterlist();
@@ -3405,6 +3433,15 @@ bool character_creator_ui::display()
                 append_character_reader_summary( snapshot, you );
                 snapshot.title = string_format( _( "Summary.  Step 7 of 7. Points remaining: %d." ),
                                                 multi_pool( you ).skill_points_left );
+                // STT 207 (C++ part): the reader's tab-entry feedback reads
+                // only the title, so the summary line built by
+                // append_character_reader_summary ("Character: … Scenario: …
+                // Profession: …") was never spoken on entry. Append it to
+                // the title so it is heard immediately; the Java side should
+                // eventually speak snapshot.summary itself instead.
+                if( !snapshot.summary.empty() ) {
+                    snapshot.title += " " + snapshot.summary;
+                }
                 for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
                     snapshot.nodes[i].position = static_cast<int>( i + 1 );
                     snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
@@ -3905,21 +3942,64 @@ bool character_creator_ui::handle_action( const std::string &action )
 {
     avatar &you = get_avatar();
 
+    // STT 32: the ±1 commands used to clamp only to the hard 4-20 / 0-10
+    // range with no points check and no feedback, so the player could
+    // overspend without knowing. Trial-apply like the value picker does:
+    // refuse (and revert) when this step would push the tab's pool below
+    // zero, and announce the new value otherwise. All of this is gated on
+    // the reader: sighted/desktop behaviour is unchanged.
     auto mod_stat_base = [&you]( int mod_value ) {
         character_stat selected_stat = static_cast<character_stat>( cc_uistate.selected_stat_index );
-        cc_uistate.stats[cc_uistate.selected_stat_index] = std::clamp(
-                    cc_uistate.stats[cc_uistate.selected_stat_index] + mod_value,
-                    CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
-        set_stat_base( you, selected_stat, cc_uistate.stats[cc_uistate.selected_stat_index] );
+        const int old_value = cc_uistate.stats[cc_uistate.selected_stat_index];
+        const int new_value = std::clamp( old_value + mod_value,
+                                          CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
+        if( new_value == old_value ) {
+            if( a11y::enabled() ) {
+                a11y::android::announce( string_format( _( "Choose a value from %1$d to %2$d." ),
+                                         CHARACTER_STAT_MIN, CHARACTER_STAT_MAX ), 1 );
+            }
+            return;
+        }
+        const int pool_before = a11y::enabled() ? multi_pool( you ).stat_points_left : 0;
+        cc_uistate.stats[cc_uistate.selected_stat_index] = new_value;
+        set_stat_base( you, selected_stat, new_value );
+        if( a11y::enabled() ) {
+            const int pool_after = multi_pool( you ).stat_points_left;
+            if( mod_value > 0 && pool_after < 0 && pool_after < pool_before ) {
+                set_stat_base( you, selected_stat, old_value );
+                cc_uistate.stats[cc_uistate.selected_stat_index] = old_value;
+                a11y::android::announce( _( "Not enough points for this attribute." ), 1 );
+                return;
+            }
+            a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
+                                     _( io::enum_to_full_string( selected_stat ) ), new_value ), 1 );
+        }
     };
     auto mod_skill = [&you]( int mod_value ) {
         const skill_id selected_skill = cc_uistate.get_selected_skill();
         if( ( you.get_skill_level( selected_skill ) == MIN_SKILL && mod_value < 0 ) ||
             ( you.get_skill_level( selected_skill ) == MAX_SKILL && mod_value > 0 ) ) {
+            if( a11y::enabled() ) {
+                a11y::android::announce( string_format( _( "Choose a value from %1$d to %2$d." ),
+                                         MIN_SKILL, MAX_SKILL ), 1 );
+            }
             return;
         }
+        const int points_before = a11y::enabled() ? multi_pool( you ).skill_points_left : 0;
         you.mod_skill_level( selected_skill, mod_value );
         you.mod_knowledge_level( selected_skill, mod_value );
+        if( a11y::enabled() ) {
+            const int points_after = multi_pool( you ).skill_points_left;
+            if( mod_value > 0 && points_after < 0 && points_after < points_before ) {
+                you.mod_skill_level( selected_skill, -mod_value );
+                you.mod_knowledge_level( selected_skill, -mod_value );
+                a11y::android::announce( _( "Not enough points for this skill." ), 1 );
+                return;
+            }
+            a11y::android::announce( string_format( _( "%1$s set to %2$d." ),
+                                     selected_skill->name(),
+                                     you.get_skill_level( selected_skill ) ), 1 );
+        }
     };
 
     if( action == "QUIT" && query_yn( _( "Return to main menu?" ) ) ) {
@@ -3981,6 +4061,12 @@ bool character_creator_ui::handle_action( const std::string &action )
         // We don't need to check at the top as you won't be able to edit the name
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
+            // STT 208: announce the new name (reuses the translated
+            // "Name: %s" string); without this the player had to swipe
+            // back over the rows to learn the result.
+            if( a11y::enabled() ) {
+                a11y::android::announce( string_format( _( "Name: %1$s" ), you.name ), 1 );
+            }
         }
     } else if( action == "RANDOMIZE_CHAR_DESCRIPTION" ) {
         bool gender_selection = one_in( 2 );
@@ -3992,6 +4078,10 @@ bool character_creator_ui::handle_action( const std::string &action )
         }
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
+            // STT 208: as above, announce the new name right away.
+            if( a11y::enabled() ) {
+                a11y::android::announce( string_format( _( "Name: %1$s" ), you.name ), 1 );
+            }
         }
         you.set_base_age( rng( CHARACTER_AGE_MIN, CHARACTER_AGE_MAX ) );
         you.randomize_height();
@@ -4073,7 +4163,7 @@ bool character_creator_ui::handle_action( const std::string &action )
         }
     } else if( action == "CHANGE_NAME" ) {
         string_input_popup_imgui popup( 60, you.name );
-        popup.set_description( _( "Enter name.  Cancel to delete all." ) );
+        popup.set_description( _( "Enter name.  Cancel to keep the current name." ) );
         popup.set_max_input_length( NAME_CHARACTER_LIMIT );
         you.name = popup.query();
     } else if( action == "CHANGE_AGE" ) {
@@ -4156,20 +4246,23 @@ bool character_creator_ui::handle_action( const std::string &action )
 // current creator step. Rejected values keep the same list open for retry.
 // Desktop creation keeps its existing number popup unchanged.
 static std::optional<int> choose_accessible_creation_value( const std::string &label,
-        int current, int min_value, int max_value, bool include_zero,
+        int current, int min_value, int max_value,
         const std::function<std::optional<std::string>( int )> &validate )
 {
-    int initial_index = std::clamp( current, include_zero ? 0 : 1, 10 ) -
-                        ( include_zero ? 0 : 1 );
+    // List the full valid range (STT 30/205): stats are 4-20, skills 0-10.
+    // The old code hardcoded 1-10, so valid stats 11-20 were only reachable
+    // through the silent manual number dialog and 1-3 were offered then rejected.
+    int initial_index = std::clamp( current, min_value, max_value ) - min_value;
+    const int manual_entry = max_value + 1;
     for( ;; ) {
         uilist choices;
         choices.title = string_format( _( "Set %s" ), label );
         choices.input_category = "character-creator-value";
         choices.allow_cancel = true;
-        for( int value = include_zero ? 0 : 1; value <= 10; ++value ) {
+        for( int value = min_value; value <= max_value; ++value ) {
             choices.addentry( value, true, -1, std::to_string( value ) );
         }
-        choices.addentry( 11, true, -1, _( "Enter manually" ) );
+        choices.addentry( manual_entry, true, -1, _( "Enter manually" ) );
         choices.selected = initial_index;
         choices.query();
         if( choices.ret == UILIST_CANCEL || choices.ret == UILIST_ERROR ) {
@@ -4177,7 +4270,7 @@ static std::optional<int> choose_accessible_creation_value( const std::string &l
         }
 
         int candidate = choices.ret;
-        if( candidate == 11 ) {
+        if( candidate == manual_entry ) {
             number_input_popup<int> manual( 0, current,
                                             string_format( _( "Enter %s (from %d to %d):" ),
                                                     label, min_value, max_value ) );
@@ -4193,7 +4286,7 @@ static std::optional<int> choose_accessible_creation_value( const std::string &l
                 continue;
             }
         } else {
-            initial_index = candidate - ( include_zero ? 0 : 1 );
+            initial_index = candidate - min_value;
         }
         if( candidate < min_value || candidate > max_value ) {
             popup( _( "Choose a value from %1$d to %2$d." ), min_value, max_value );
@@ -4241,7 +4334,7 @@ void character_creator_callback::confirm( uilist *menu )
             cc_uistate.recalc_professions = true;
             cc_uistate.recalc_hobbies = true;
             cc_uistate.recalc_traits = true;
-            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
+            if( a11y::enabled() ) {
                 ui_parent->handle_action( "NEXT_TAB" );
             }
             break;
@@ -4284,7 +4377,7 @@ void character_creator_callback::confirm( uilist *menu )
             cc_uistate.recalc_hobbies = true;
             cc_uistate.recalc_traits = true;
             cc_uistate.cached_profession_inventory.clear();
-            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
+            if( a11y::enabled() ) {
                 ui_parent->handle_action( "NEXT_TAB" );
             }
             break;
@@ -4344,11 +4437,11 @@ void character_creator_callback::confirm( uilist *menu )
 
             character_stat selected_stat = static_cast<character_stat>( selected_stat_index );
             const int stat_queried = cc_uistate.stats[selected_stat_index];
-            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
+            if( a11y::enabled() ) {
                 const std::string name = _( io::enum_to_full_string( selected_stat ) );
                 const std::optional<int> chosen = choose_accessible_creation_value(
                                                       name, stat_queried, CHARACTER_STAT_MIN,
-                                                      CHARACTER_STAT_MAX, false,
+                                                      CHARACTER_STAT_MAX,
                 [&]( int candidate ) -> std::optional<std::string> {
                     const int points_before = multi_pool( u ).stat_points_left;
                     set_stat_base( u, selected_stat, candidate );
@@ -4474,10 +4567,10 @@ void character_creator_callback::confirm( uilist *menu )
             select( menu );
             const skill_id skill_queried = cc_uistate.get_selected_skill();
             int previous_skill_level = u.get_skill_level( skill_queried );
-            if( a11y::enabled() && cc_uistate.generation_type == character_type::CUSTOM ) {
+            if( a11y::enabled() ) {
                 const std::optional<int> chosen = choose_accessible_creation_value(
                                                       skill_queried->name(), previous_skill_level,
-                                                      MIN_SKILL, MAX_SKILL, true,
+                                                      MIN_SKILL, MAX_SKILL,
                 [&]( int candidate ) -> std::optional<std::string> {
                     const int points_before = multi_pool( u ).skill_points_left;
                     u.set_skill_level( skill_queried, candidate );

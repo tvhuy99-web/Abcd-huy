@@ -1747,6 +1747,12 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *p )
     p->in_vehicle = true;
     if( p->is_avatar() ) {
         g->update_map( *p->as_avatar() );
+        // Boarding was completely silent: the player only learned they
+        // were in a vehicle indirectly (the hub showing control_vehicle).
+        // Reader-only, so the sighted message log is unchanged.
+        if( a11y::android::enabled() ) {
+            add_msg( m_info, _( "You board the vehicle." ) );
+        }
     }
 }
 

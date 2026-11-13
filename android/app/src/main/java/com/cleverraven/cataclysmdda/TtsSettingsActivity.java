@@ -144,8 +144,13 @@ public final class TtsSettingsActivity extends Activity {
         volume.setOnSeekBarChangeListener(changed);
         updateSliders();
 
-        // Internal feedback has no separate on-screen explanation row.
+        // Status row: visible on screen and announced in both modes (STT 5).
         status = new TextView(this);
+        status.setTextSize(17.0f);
+        status.setLayoutParams(new LinearLayout.LayoutParams(
+                LinearLayout.LayoutParams.MATCH_PARENT,
+                LinearLayout.LayoutParams.WRAP_CONTENT));
+        column.addView(status);
         sampleButton = button(column, R.string.a11yTtsSample, view -> testVoice());
         button(column, R.string.a11yTtsCancel, view -> finish());
         button(column, R.string.a11yTtsSave, view -> saveSettings());
@@ -169,7 +174,7 @@ public final class TtsSettingsActivity extends Activity {
                         || newState == AndroidSpeech.State.NETWORK_REQUIRED) {
                     previewRequested = false;
                     previewPassed = false;
-                    status.setText(R.string.a11yTtsUnavailable);
+                    announce(ttsFailureReason(newState));
                     if (foreground && !usesTalkBack()) {
                         if (rescue == null) { rescue = new RescueAudioPlayer(TtsSettingsActivity.this); }
                         rescue.play(RescueAudioPlayer.CLIP_TTS_FAILED);
@@ -182,11 +187,19 @@ public final class TtsSettingsActivity extends Activity {
                 if (!"tts-preview".equals(id) || isFinishing() || isDestroyed()) { return; }
                 if (event == AndroidSpeech.Event.DONE) {
                     previewPassed = true;
-                    status.setText(R.string.a11yTtsTestComplete);
+                    announce(getString(R.string.a11yTtsTestComplete));
                 } else if (event == AndroidSpeech.Event.ERROR
                         || event == AndroidSpeech.Event.REJECTED) {
                     previewPassed = false;
-                    status.setText(R.string.a11yTtsUnavailable);
+                    // The event carries no reason; use the probe/speech
+                    // state instead (STT 4). The rescue clip is the only
+                    // audio while the engine is down, so it plays here
+                    // exactly as in the onState failure branch above.
+                    announce(ttsFailureReason(speech.getState()));
+                    if (foreground && !usesTalkBack()) {
+                        if (rescue == null) { rescue = new RescueAudioPlayer(TtsSettingsActivity.this); }
+                        rescue.play(RescueAudioPlayer.CLIP_TTS_FAILED);
+                    }
                 }
             }
         });
@@ -312,9 +325,9 @@ public final class TtsSettingsActivity extends Activity {
             voices.addAll(foundVoices);
             if (success) {
                 adoptAvailableVoice();
-                status.setText(R.string.a11yTtsReady);
+                announce(getString(R.string.a11yTtsReady));
             } else {
-                status.setText(R.string.a11yTtsUnavailable);
+                announce(getString(R.string.a11yTtsUnavailable));
             }
             updateChoices();
         });
@@ -423,7 +436,7 @@ public final class TtsSettingsActivity extends Activity {
         if (probeRunning || speech == null) { return; }
         invalidatePreview();
         previewRequested = true;
-        status.setText(R.string.a11ySpeechInitializing);
+        announce(getString(R.string.a11ySpeechInitializing));
         speech.initialize(engineName, Locale.forLanguageTag(languageTag),
                 selectedRate(), !allowNetwork, voiceName,
                 selectedPitch(), selectedVolume());
@@ -456,6 +469,23 @@ public final class TtsSettingsActivity extends Activity {
                 && speech.getState() == AndroidSpeech.State.READY) {
             speech.speak("tts-focus-" + (++spokenSequence), text);
         }
+    }
+
+    /**
+     * Spoken reason for a failed voice state (STT 4). Unknown states fall
+     * back to the generic unavailable message; never guess a reason.
+     */
+    private String ttsFailureReason(AndroidSpeech.State state) {
+        if (state == AndroidSpeech.State.MISSING_LANGUAGE) {
+            return getString(R.string.a11yTtsMissingLanguage);
+        }
+        if (state == AndroidSpeech.State.MISSING_VOICE) {
+            return getString(R.string.a11yTtsMissingVoice);
+        }
+        if (state == AndroidSpeech.State.NETWORK_REQUIRED) {
+            return getString(R.string.a11yTtsNetworkRequired);
+        }
+        return getString(R.string.a11yTtsUnavailable);
     }
 
     private void announce(String message) {

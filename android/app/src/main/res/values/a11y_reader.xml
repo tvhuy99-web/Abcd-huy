@@ -3,6 +3,7 @@
     <string name="a11yDirectionalSonar">Directional sounds for nearby items and creatures</string>
     <string name="a11yDirectionalSonarExplanation">When enabled, a beep signals visible items and the original sonar signals visible NPCs or monsters. Eight compass directions are checked for up to 16 tiles each. Stereo position and pitch distinguish directions. Both sounds play if both types are nearby. Off disables the scan.</string>
     <string name="a11yBackupRequiresRestart">Player data cannot be restored after the game engine has started. Close the app completely, reopen reader setup before entering the game, and restore there.</string>
+    <string name="a11yBackupRestoreDeferred">Confirmed. The game engine is running, so nothing has been replaced yet. Close the app completely and reopen it; the restore will be applied before the game starts.</string>
     <string name="a11yBackupRecoveryFailed">Data recovery could not finish. The original backup has been retained. Do not start the game; resolve the storage error and restart the app to retry.</string>
     <string name="a11yReaderSearch">Find a command or item</string>
     <string name="a11yReaderSearchCount">%1$d matching items</string>
@@ -110,6 +111,9 @@
     <string name="a11yBootstrapNoSpace">There is not enough free storage to install the game data. Free some space and retry. Your existing game data has not been changed.</string>
     <string name="a11yDisableInternalReader">Turn off the internal reader</string>
     <string name="a11yReaderEnabledNotice">Voice saved. Reader is on.</string>
+    <string name="a11yTtsMissingLanguage">The selected language has no installed voice data. Install the voice data in Android settings.</string>
+    <string name="a11yTtsMissingVoice">The selected voice is not installed. Choose another voice or install it in Android settings.</string>
+    <string name="a11yTtsNetworkRequired">This voice needs a network connection. Connect to a network or choose a voice that works offline.</string>
     <string name="a11yReaderDisabledNotice">Internal reader is off.</string>
     <string name="a11yDocContinue">Continue reading the document</string>
     <string name="a11yDocNextParagraph">Next paragraph</string>

@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_android.h"
 #include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -453,7 +454,30 @@ void robot_finds_kitten::process_input()
                 constexpr half_open_rectangle<point> bounds(
                     point( 0, 3 ), point( rfkCOLS, rfkLINES ) );
                 if( !bounds.contains( check ) ) {
-                    /* Can't move past edge */
+                    /* Can't move past edge. The field does not change, so
+                       the snapshot is identical and the reader would
+                       otherwise stay silent: announce the blocked move at
+                       once, exactly as a blocked world step is announced,
+                       so the player can tell it apart from a gesture the
+                       game never received. (STT 412) */
+                    if( a11y::enabled() ) {
+                        std::string direction_word;
+                        if( action == "UP" ) {
+                            direction_word = _( "north" );
+                        } else if( action == "DOWN" ) {
+                            direction_word = _( "south" );
+                        } else if( action == "LEFT" ) {
+                            direction_word = _( "west" );
+                        } else {
+                            direction_word = _( "east" );
+                        }
+                        a11y::android::announce(
+                            string_format(
+                                _( "Blocked: you cannot move %s. The edge of the field is there." ),
+                                direction_word ),
+                            3 );
+                        a11y::android::cue( "blocked" );
+                    }
                 } else if( rfkscreen[check.x][check.y] != EMPTY ) {
                     switch( rfkscreen[check.x][check.y] ) {
                         case ROBOT:

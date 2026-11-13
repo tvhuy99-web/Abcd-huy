@@ -982,6 +982,27 @@ construction_id construction_menu( const bool blueprint )
 
     a11y::screen_scope reader( &ctxt, "construction",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && !constructs.empty() &&
+            ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) ) {
+            // Same 80-row paging as the crafting menu (STT 333):
+            // crossing a page boundary lands on the new page, wrapping
+            // at either end instead of swiping through the whole list.
+            constexpr int page_size = 80;
+            const int page = select / page_size;
+            const int first = ( page + ( intent.node == "construction:page:next" ? 1 : -1 ) ) * page_size;
+            if( intent.node == "construction:page:previous" ) {
+                // Crossing a real page boundary lands on its last entry.
+                // At the first page, wrap directly to the final entry.
+                select = first < 0 ? static_cast<int>( constructs.size() ) - 1 :
+                         std::min( first + page_size - 1, static_cast<int>( constructs.size() ) - 1 );
+            } else {
+                // Crossing forward lands on the next page's first entry.
+                // At the final page, wrap to entry 1.
+                select = first >= static_cast<int>( constructs.size() ) ? 0 : first;
+            }
+            update_info = true;
+            return "TIMEOUT";
+        }
         for( std::size_t i = 0; i < constructs.size(); ++i ) {
             if( intent.node == "construction:group:" + constructs[i].str() &&
                 ( intent.action == "focus" || intent.action == "activate" ) ) {
@@ -1098,20 +1119,61 @@ construction_id construction_menu( const bool blueprint )
                 snapshot.summary += ". " + string_format( _( "Filter: %s" ), filter );
             }
             std::vector<a11y::semantic_node> rows;
-            for( std::size_t i = 0; i < constructs.size(); ++i ) {
+            // Same 80-row paging as the crafting menu (STT 333): only
+            // the page holding the selection is published, plus page
+            // commands below. The visual list is untouched.
+            constexpr std::size_t reader_page_size = 80;
+            const std::size_t page_start = select >= 0 ?
+                                           ( static_cast<std::size_t>( select ) / reader_page_size ) *
+                                           reader_page_size : 0;
+            const std::size_t page_end = std::min( constructs.size(), page_start + reader_page_size );
+            for( std::size_t i = page_start; i < page_end; ++i ) {
                 a11y::semantic_node node;
                 node.id = "construction:group:" + constructs[i].str();
                 node.label = constructs[i]->name();
                 node.position = i + 1;
                 node.total = constructs.size();
                 node.selected = static_cast<int>( i ) == select;
-                node.value = blueprint ? _( "Blueprint" ) :
-                             player_can_build( player_character, total_inv, constructs[i] ) ?
-                             _( "Buildable here" ) : _( "Requirements or location are missing." );
+                // STT 72: player_can_build does not check light, so
+                // "Buildable here" was announced for rows that fail at
+                // CONFIRM with "It is too dark…" and close the menu.
+                // Say so on the row itself, before the player confirms,
+                // mirroring how crafting publishes its conditions up
+                // front. Deconstruction needs no light (same exception
+                // as the CONFIRM check).
+                if( blueprint ) {
+                    node.value = _( "Blueprint" );
+                } else if( !player_can_build( player_character, total_inv, constructs[i] ) ) {
+                    node.value = _( "Requirements or location are missing." );
+                } else if( constructs[i] != construction_group_deconstruct_simple_furniture &&
+                           !player_can_see_to_build( player_character, constructs[i] ) ) {
+                    node.value = std::string( _( "Buildable here" ) ) + ". " +
+                                 _( "It is too dark to construct right now." );
+                } else {
+                    node.value = _( "Buildable here" );
+                }
                 if( node.selected ) {
                     snapshot.focus = node.id;
                 }
                 rows.push_back( std::move( node ) );
+            }
+            if( constructs.size() > 1 ) {
+                // This command also wraps from entry 1 to the last entry.
+                a11y::semantic_node previous_page;
+                previous_page.id = "construction:page:previous";
+                previous_page.role = "button";
+                previous_page.label = _( "Previous page" );
+                previous_page.actions = { "activate" };
+                rows.push_back( std::move( previous_page ) );
+            }
+            if( constructs.size() > 1 ) {
+                // This command also wraps from the final entry back to entry 1.
+                a11y::semantic_node next_page;
+                next_page.id = "construction:page:next";
+                next_page.role = "button";
+                next_page.label = _( "Next page" );
+                next_page.actions = { "activate" };
+                rows.push_back( std::move( next_page ) );
             }
             rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
                          std::make_move_iterator( snapshot.nodes.end() ) );
