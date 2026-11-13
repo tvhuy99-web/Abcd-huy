@@ -1,0 +1,45 @@
+#include "a11y_text.h"
+
+#include <utility>
+
+#include "a11y_semantics.h"
+#include "translations.h"
+
+namespace a11y
+{
+semantic_snapshot text_snapshot( std::string title, std::string description,
+                                 std::string value, bool numeric,
+                                 double field_step, bool integer )
+{
+    semantic_snapshot snapshot;
+    snapshot.title = std::move( title );
+    snapshot.summary = std::move( description );
+    snapshot.focus = "text";
+    semantic_node field;
+    field.id = "text";
+    field.role = numeric ? "number" : "text";
+    field.label = numeric ? _( "Number" ) : _( "Text" );
+    field.value = std::move( value );
+    field.actions = { "focus", "set_text" };
+    if( numeric ) {
+        // Form contract (R04.2): a number popup has no min/max in the game
+        // UI, but number_input_popup does have an edit step. Publish the
+        // step (without a range) so the reader's editor can offer
+        // step increment/decrement and format the value correctly; the
+        // popup's own parser remains the authority on validity.
+        field.field_type = integer ? "int" : "float";
+        field.applied_value = field.value;
+        field.field_step = field_step;
+    }
+    snapshot.nodes.push_back( std::move( field ) );
+    semantic_node confirm;
+    confirm.id = "confirm";
+    confirm.label = _( "Confirm" );
+    snapshot.nodes.push_back( std::move( confirm ) );
+    semantic_node cancel;
+    cancel.id = "cancel";
+    cancel.label = _( "Cancel" );
+    snapshot.nodes.push_back( std::move( cancel ) );
+    return snapshot;
+}
+} // namespace a11y

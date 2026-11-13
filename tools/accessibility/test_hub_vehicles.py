@@ -1,5 +1,6 @@
 """Accessibility regression tests for vehicle and journey actions."""
 
+import re
 import unittest
 from pathlib import Path
 
@@ -12,6 +13,21 @@ class VehicleJourneyHubTest(unittest.TestCase):
         cls.game = (SRC / "game.cpp").read_text("utf-8")
         cls.action = (SRC / "handle_action.cpp").read_text("utf-8")
         cls.world = (SRC / "a11y_world.cpp").read_text("utf-8")
+        cls.vehicle_interact = (SRC / "veh_interact.cpp").read_text("utf-8")
+
+    def test_vehicle_actions_capture_node_id_before_moving_the_node(self):
+        bindings = (
+            "part_bindings.push_back( { node.id, part_index, row } );",
+            "install_bindings.push_back( { node.id, vp } );",
+            "part_bindings.push_back( { node.id, part_index, static_cast<int>( j ) } );",
+            "part_bindings.push_back( { node.id, part_index, static_cast<int>( i ) } );",
+        )
+        for binding in bindings:
+            with self.subTest(binding=binding):
+                self.assertRegex(
+                    self.vehicle_interact,
+                    re.escape(binding) + r"\s+snapshot\.nodes\.push_back\( std::move\( node \) \);",
+                )
 
     def test_vehicle_selection_names_visible_controls(self):
         self.assertIn("Choose vehicle controls", self.game)

@@ -16,6 +16,7 @@
 #include <map>
 #include <sstream>
 #include <string>
+#include <string_view>
 #include <utility>
 
 #include "action.h"
@@ -540,7 +541,7 @@ input_context game::get_player_input( std::string &action )
     };
     // Parse the "<dx>:<dy>" tail of an explore node id. Returns false on any
     // malformed input instead of throwing into the intent handler.
-    const auto parse_reader_explore_pair = []( const std::string & text, int &dx, int &dy ) {
+    const auto parse_reader_explore_pair = []( const std::string_view text, int &dx, int &dy ) {
         const std::size_t colon = text.find( ':' );
         if( colon == std::string::npos ) {
             return false;
@@ -548,8 +549,8 @@ input_context game::get_player_input( std::string &action )
         try {
             std::size_t used_x = 0;
             std::size_t used_y = 0;
-            dx = std::stoi( text.substr( 0, colon ), &used_x );
-            dy = std::stoi( text.substr( colon + 1 ), &used_y );
+            dx = std::stoi( std::string( text.substr( 0, colon ) ), &used_x );
+            dy = std::stoi( std::string( text.substr( colon + 1 ) ), &used_y );
             return used_x == colon && used_y == text.size() - colon - 1;
         } catch( const std::exception & ) {
             return false;
@@ -595,13 +596,13 @@ input_context game::get_player_input( std::string &action )
         // They never enqueue movement, consume moves, or change the turn.
         if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
             if( intent.node == "reader:scan:north" ) {
-                a11y::announce_linear_scan( 0, -1 );
+                a11y::announce_linear_scan( point::north );
             } else if( intent.node == "reader:scan:south" ) {
-                a11y::announce_linear_scan( 0, 1 );
+                a11y::announce_linear_scan( point::south );
             } else if( intent.node == "reader:scan:west" ) {
-                a11y::announce_linear_scan( -1, 0 );
+                a11y::announce_linear_scan( point::west );
             } else if( intent.node == "reader:scan:east" ) {
-                a11y::announce_linear_scan( 1, 0 );
+                a11y::announce_linear_scan( point::east );
             } else if( intent.node == "reader:places" ) {
                 ui::omap::display_accessible_places();
             } else if( intent.node == "reader:pickup_here" ) {
@@ -2373,7 +2374,7 @@ static void fire()
             if( choice < 0 || static_cast<std::size_t>( choice ) >= guns.size() ) {
                 return;
             }
-            item_location selected = guns[choice];
+            const item_location &selected = guns[choice];
             if( !selected ) {
                 add_msg( m_info, _( "That gun is no longer available." ) );
                 return;

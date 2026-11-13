@@ -11,10 +11,9 @@
 #include <memory>
 
 #include <algorithm>
-#if defined(__ANDROID__)
 #include <array>
-#endif
 #include <cmath>
+#include <cstddef>
 #include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
@@ -275,33 +274,33 @@ semantic_node button( std::string id, std::string label, const std::string &deta
     return node;
 }
 
-std::string relative_name( const int dx, const int dy )
+std::string relative_name( const point &delta )
 {
-    if( dx == 0 && dy == 0 ) { return _( "Current tile" ); }
+    if( delta.x == 0 && delta.y == 0 ) { return _( "Current tile" ); }
     std::string result;
-    if( dy != 0 ) {
-        result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( dy ) );
+    if( delta.y != 0 ) {
+        result += string_format( delta.y < 0 ? _( "North %d" ) : _( "South %d" ), std::abs( delta.y ) );
     }
-    if( dx != 0 ) {
+    if( delta.x != 0 ) {
         if( !result.empty() ) { result += ", "; }
-        result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( dx ) );
+        result += string_format( delta.x < 0 ? _( "West %d" ) : _( "East %d" ), std::abs( delta.x ) );
     }
     return result;
 }
 
 // Position relative to the avatar: relative_name for the horizontal part,
 // plus the level difference when the tile is on another level.
-std::string relative_position_name( const int dx, const int dy, const int dz )
+std::string relative_position_name( const tripoint &delta )
 {
-    std::string result = relative_name( dx, dy );
-    if( dz != 0 ) {
-        if( dx != 0 || dy != 0 ) {
+    std::string result = relative_name( delta.xy() );
+    if( delta.z != 0 ) {
+        if( delta.x != 0 || delta.y != 0 ) {
             result += ", ";
         } else {
             result.clear();
         }
-        result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
-                                 std::abs( dz ) );
+        result += string_format( delta.z > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                 std::abs( delta.z ) );
     }
     return result;
 }
@@ -858,7 +857,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                      ( filter == world_scan_filter::noteworthy && has_noteworthy_information( tile ) ) ||
                                      ( filter == world_scan_filter::heard && !tile.heard_marker.empty() );
                 if( !include ) { continue; }
-                const std::string direction = relative_name( dx, dy );
+                const std::string direction = relative_name( point( dx, dy ) );
                 semantic_node node = document( "tile:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                                direction, describe_tile( tile ) );
                 if( filter == world_scan_filter::noteworthy ) {
@@ -896,7 +895,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         const tile_observation cursor_tile = observe_scan_tile( scan_origin );
         std::string cursor_detail = describe_tile( cursor_tile );
         cursor_detail += ". " + string_format( _( "Relative to you: %s" ),
-                                               relative_position_name( cursor.x(), cursor.y(), cursor.z() ) );
+                                               relative_position_name( cursor.raw() ) );
         semantic_node cursor_node = document( "explore:cursor", _( "Explore cursor" ), cursor_detail );
         cursor_node.value = cursor_tile.source == observation_source::unknown ? _( "Unknown" ) :
                             cursor_tile.terrain;
@@ -911,7 +910,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 if( dx == 0 && dy == 0 ) { continue; }
                 result.nodes.push_back( button(
                                             "explore:dir:" + std::to_string( dx ) + ':' + std::to_string( dy ),
-                                            string_format( _( "Move explore cursor: %s" ), relative_name( dx, dy ) ),
+                                            string_format( _( "Move explore cursor: %s" ), relative_name( point( dx, dy ) ) ),
                                             cursor_move_detail ) );
             }
         }
@@ -941,7 +940,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                     semantic_node node = button(
                                              "explore:jump:" + std::to_string( dx ) + ':' + std::to_string( dy ),
                                              string_format( _( "%1$s: %2$s" ), noteworthy_category( tile ),
-                                                     relative_name( dx, dy ) ),
+                                                     relative_name( point( dx, dy ) ) ),
                                              describe_tile( tile ) );
                     jumps.push_back( { noteworthy_priority( tile ), distance, std::move( node ) } );
                 }
@@ -989,15 +988,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // bumps into monsters for melee, interacts with NPCs, or walks into
     // empty space. No hostile-only restriction or forced standstill.
     // The existing eligibility gate prevents use in incompatible modes.
-    const int combat_steps[8][2] = {
-        { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
-        { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+    constexpr std::array<point, 8> combat_steps = {
+        point::north, point::north_east, point::east, point::south_east,
+        point::south, point::south_west, point::west, point::north_west
     };
     const item_location combat_held = viewer.get_wielded_item();
     const bool ranged_combat = combat_held && combat_held->is_gun() &&
                                !combat_held->gun_current_mode().melee();
-    for( int i = 0; i < 8; ++i ) {
-        const std::string dir_name = relative_name( combat_steps[i][0], combat_steps[i][1] );
+    for( std::size_t i = 0; i < combat_steps.size(); ++i ) {
+        const std::string dir_name = relative_name( combat_steps[i] );
         semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
                                        ranged_combat ? string_format( _( "Fire %s" ), dir_name ) :
                                        string_format( _( "Move or attack %s" ), dir_name ),
@@ -1065,7 +1064,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         enemy_report += string_format(
                             _( "%1$s, %2$s, %3$d HP remaining." ),
-                            enemy->disp_name(), relative_name( relative.x(), relative.y() ),
+                            enemy->disp_name(), relative_name( relative.raw().xy() ),
                             std::max( 0, enemy->get_hp() ) );
     }
     if( enemy_report.empty() ) {
@@ -1246,7 +1245,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                           !seen.seen_creatures.empty() ? seen.seen_creatures.front() :
                                           !seen.seen_items.empty() ? seen.seen_items.front() : seen.terrain;
                 const std::string hint = object_name + ", " +
-                                         relative_position_name( dx, dy, 0 );
+                                         relative_position_name( tripoint( dx, dy, 0 ) );
                 const auto offer_interact = [&]( const std::string & id ) {
                     if( permitted( id ) ) {
                         offer( id, hint );
@@ -1309,7 +1308,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 }
             }
         }
-        for( const std::string &id : {
+        for( const std::string id : {
                     "interact", "open", "close", "examine", "examine_and_pickup",
                     "reader:pickup_here", "pickup", "pickup_all", "chat",
                     "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
@@ -1374,16 +1373,16 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
     return tile;
 }
 
-void announce_linear_scan( const int dx, const int dy )
+void announce_linear_scan( const point &delta )
 {
-    if( std::abs( dx ) + std::abs( dy ) != 1 ) {
+    if( std::abs( delta.x ) + std::abs( delta.y ) != 1 ) {
         return;
     }
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
     std::string spoken;
     for( int distance = 1; distance <= 16; ++distance ) {
-        const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
+        const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
         std::string detail;
         if( !here.inbounds( pos ) ) {
             detail = _( "Outside loaded map" );

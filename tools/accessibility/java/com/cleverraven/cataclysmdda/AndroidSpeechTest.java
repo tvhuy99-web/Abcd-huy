@@ -37,7 +37,7 @@ public final class AndroidSpeechTest {
     }
 
     private static TextToSpeech initialize() {
-        speech.initialize(null, new Locale("vi", "VN"), 1.0f);
+        speech.initialize(null, Locale.forLanguageTag("vi-VN"), 1.0f);
         Looper.runReady();
         return TextToSpeech.latest;
     }
@@ -70,7 +70,7 @@ public final class AndroidSpeechTest {
         check(speech.getState() == AndroidSpeech.State.READY, "Completed speech cancels watchdog");
 
         fresh();
-        speech.initialize(null, new Locale("vi", "VN"), 1.0f, true,
+        speech.initialize(null, Locale.forLanguageTag("vi-VN"), 1.0f, true,
                 null, 1.3f, 0.65f);
         Looper.runReady();
         engine = TextToSpeech.latest;
@@ -159,7 +159,7 @@ public final class AndroidSpeechTest {
         Looper.runReady();
         check(speech.getState() == AndroidSpeech.State.NETWORK_REQUIRED, "Online voice must require an explicit choice");
         check(engine.closed, "Rejected online voice must release the engine");
-        speech.initialize(null, new Locale("vi", "VN"), 1.0f, false);
+        speech.initialize(null, Locale.forLanguageTag("vi-VN"), 1.0f, false);
         Looper.runReady();
         engine = TextToSpeech.latest;
         engine.networkVoice = true;

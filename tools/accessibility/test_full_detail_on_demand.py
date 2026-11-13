@@ -15,7 +15,7 @@ JAVA = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda/GameReader
 class FullDetailOnDemandTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.item_text = (SRC / "a11y_item_text.h").read_text("utf-8")
+        cls.item_text = (SRC / "a11y_item_text.cpp").read_text("utf-8")
         cls.item_info = (SRC / "item_info.cpp").read_text("utf-8")
         cls.inventory = (SRC / "inventory_ui.cpp").read_text("utf-8")
         cls.advanced = (SRC / "advanced_inv.cpp").read_text("utf-8")
@@ -41,7 +41,7 @@ class FullDetailOnDemandTests(unittest.TestCase):
     def test_full_details_are_computed_only_on_explicit_request(self):
         self.assertIn("announce_full_detail_text", self.item_text)
         self.assertIn("constexpr std::size_t max_chunk = 11000", self.item_text)
-        self.assertIn("inline void announce_full_item_info(", self.item_text)
+        self.assertIn("void announce_full_item_info(", self.item_text)
         self.assertIn('{ "focus", "activate", "set_value", "read_detail" }', self.inventory)
         self.assertIn('{ "focus", "activate", "read_detail" }', self.inventory)
         build, handler = self.inventory.split("class inventory_selector::reader_session", 1)[1].split(
