@@ -1,4 +1,7 @@
 #include "crafting_gui.h"
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include <system_error>
 
 #include <imgui/imgui.h>
 #include <algorithm>

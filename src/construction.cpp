@@ -1,4 +1,7 @@
 #include "construction.h"
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include "line.h"
 
 #include <algorithm>
 #include <array>
