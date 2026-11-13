@@ -15,12 +15,18 @@ VI = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
 
 class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
-    def test_global_all_uses_every_group_recipe_not_subcategory_all(self):
+    def test_global_all_only_uses_visible_real_categories_not_internal_nested_groups(self):
         self.assertIn("reader_all_categories = true;", CRAFT)
-        self.assertIn("available_recipes->begin(), available_recipes->end()", CRAFT)
         self.assertIn('"All categories"', CRAFT)
         self.assertIn("reader_all_categories ? std::string", CRAFT)
         self.assertIn('!reader_all_categories && ( subtab.cur() == "CSC_*_RECENT" )', CRAFT)
+        # CC_* is the internal wildcard recipe category with nested group
+        # placeholders; it must not inflate All or trap main-category swipes.
+        self.assertIn("( !a11y::enabled() || !cat.is_wildcard )", CRAFT)
+        self.assertIn("entry->category.str() ) != crafting_cats.end()", CRAFT)
+        self.assertNotIn("picking.insert( picking.end(), available_recipes->begin(),", CRAFT)
+        # Preserve native visual-mode special Favorites/Recent/Hidden tabs.
+        self.assertIn("!a11y::enabled() || !cat.is_wildcard", CRAFT)
 
     def test_reader_list_is_bounded_for_large_global_all(self):
         self.assertIn("constexpr std::size_t reader_page_size = 80;", CRAFT)
@@ -68,6 +74,21 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn('craftingCommand("craft:page:previous")', READER)
         self.assertIn("if (nextRecipe < 0)", READER)
         self.assertIn("std::min( first + page_size - 1", CRAFT)
+
+    def test_swipe_left_from_weapon_skips_empty_internal_favorites_tab(self):
+        from json import loads
+        categories = loads((ROOT / "data/json/recipes/recipes.json").read_text(encoding="utf-8"))
+        wildcard = next(c for c in categories if c.get("id") == "CC_*")
+        self.assertTrue(wildcard["is_wildcard"])
+        self.assertIn("CSC_*_FAVORITE", wildcard["recipe_subcategories"])
+        groups = loads((ROOT / "data/json/recipes/nested.json").read_text(encoding="utf-8"))
+        self.assertGreater(
+            sum(g.get("category") == "CC_*" and g.get("type") == "nested_category"
+                for g in groups), 300
+        )
+        self.assertIn("!cat.is_wildcard", CRAFT)
+        self.assertIn("a11y::enabled() && tab.cur_index() == 0", CRAFT)
+        self.assertIn("reader_all_categories = true;", CRAFT)
 
     def test_native_category_selection_cannot_be_reverted_by_imgui(self):
         # In the 539b0655 phone log PREV_TAB produced a 20-recipe native
