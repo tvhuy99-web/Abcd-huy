@@ -1000,6 +1000,8 @@ void recipe::load( const JsonObject &jo, const std::string_view src )
         // A separate canonical display fallback for the accessibility reader.
         // Keep the normal translation object intact for visual rendering.
         practice_source_name = jo.has_string( "name" ) ? jo.get_string( "name" ) : "";
+        practice_source_description = jo.has_string( "description" ) ?
+                                      jo.get_string( "description" ) : "";
         mandatory( jo, false, "name", name_ );
         mandatory( jo, was_loaded, "category", category );
         mandatory( jo, was_loaded, "subcategory", subcategory );
