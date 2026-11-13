@@ -3625,22 +3625,22 @@ class inventory_selector::reader_session
                     std::string effect;
                     if( command.id == trade_selector::ACTION_SWITCH_PANES ) {
                         effect = _( "Switch to the other trade pane, between the trader's "
-                                    "items and your items. This only changes which pane you "
+                                    "items and your items.  This only changes which pane you "
                                     "are browsing; it does not change the offer." );
                     } else if( command.id == trade_selector::ACTION_AUTOBALANCE ) {
                         effect = _( "Adjust the selected amount of the highlighted item in "
-                                    "this pane to balance the current offer. This changes "
+                                    "this pane to balance the current offer.  This changes "
                                     "the selection, like toggling an item; it does not "
                                     "complete the trade." );
                     } else if( command.id == trade_selector::ACTION_BANKBALANCE ) {
                         effect = _( "Balance the trade with your bank account, changing the "
-                                    "bank adjustment shown in the summary. This only works "
+                                    "bank adjustment shown in the summary.  This only works "
                                     "with the CAPITALISM option on, does not change the "
                                     "selected items, and does not complete the trade." );
                     } else if( command.id == trade_selector::ACTION_TRADE_OK ) {
                         effect = _( "Confirm the trade: the decision to exchange the items "
-                                    "selected on both sides. The game asks once more before "
-                                    "anything changes hands. Selecting items alone never "
+                                    "selected on both sides.  The game asks once more before "
+                                    "anything changes hands.  Selecting items alone never "
                                     "trades them." );
                     } else if( command.id == trade_selector::ACTION_TRADE_CANCEL ) {
                         effect = _( "Cancel the trade and leave this screen without "
@@ -3669,13 +3669,13 @@ class inventory_selector::reader_session
                        "Browsing never picks items up." ) );
             } else if( compare_mode ) {
                 snapshot.summary += "\n" + std::string(
-                    _( "Select two items to compare. Each selected item is announced "
+                    _( "Select two items to compare.  Each selected item is announced "
                        "before the comparison opens." ) );
             } else if( drop_mode ) {
                 snapshot.summary += "\n" + std::string( insert_mode ?
-                    _( "Choose items and quantities to put in the selected container. "
+                    _( "Choose items and quantities to put in the selected container.  "
                        "The game checks capacity before inserting." ) :
-                    _( "Choose items and quantities to drop. The chosen destination "
+                    _( "Choose items and quantities to drop.  The chosen destination "
                        "is announced before the drop activity begins." ) );
             }
             for( const std::string &line : owner.get_stats() ) {
@@ -3834,7 +3834,7 @@ class inventory_selector::reader_session
                         node.label += string_format( _( ", located: %s" ),
                                                     remove_color_tags( location.describe( &owner.u ) ) );
                         node.detail += "\n" + string_format(
-                                           _( "Weight: %1$s grams. Volume: %2$s milliliters." ),
+                                           _( "Weight: %1$s grams.  Volume: %2$s milliliters." ),
                                            std::to_string( units::to_gram( location->weight() ) ),
                                            std::to_string( units::to_milliliter( location->volume() ) ) );
                     }
@@ -4166,7 +4166,7 @@ class inventory_selector::reader_session
                                 contained.enabled = all_inside && entry->is_selectable() &&
                                                     entry->get_available_count() > 0;
                                 contained.disabled_reason = !all_inside ?
-                                                            _( "This stack spans multiple pockets. Select it in the main item list." ) :
+                                                            _( "This stack spans multiple pockets.  Select it in the main item list." ) :
                                                             remove_color_tags( entry->denial.value_or( "" ) );
                                 contained.checked = entry->chosen_count > 0;
                                 contained.actions = { "focus", "read_detail" };
@@ -4263,7 +4263,7 @@ class inventory_selector::reader_session
                         }
                         if( truncated_contents ) {
                             pocket_node.detail += "\n" +
-                                                  std::string( _( "Additional nested items not shown. "
+                                                  std::string( _( "Additional nested items not shown.  "
                                                                   "Try a shorter inventory list." ) );
                         }
                         // The raw internal "read_only" marker is not user-
@@ -4437,7 +4437,7 @@ class inventory_selector::reader_session
                 // any selections already made in the outer item list.
                 const auto reject_pocket_change = []() -> std::optional<std::string> {
                     a11y::android::announce(
-                        _( "Pocket contents changed or cannot be selected. Please open the pocket again." ), 1 );
+                        _( "Pocket contents changed or cannot be selected.  Please open the pocket again." ), 1 );
                     return "TIMEOUT";
                 };
                 if( intent.action != "set_value" || !has_quantity_form() ||

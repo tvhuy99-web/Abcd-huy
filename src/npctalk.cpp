@@ -3047,9 +3047,9 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
                 const std::set<dialogue_consequence> consequences =
                     responses[index].get_consequences( *this );
                 if( consequences.count( dialogue_consequence::hostile ) > 0 ) {
-                    node.detail = _( "Warning: this response may provoke an attack. The game will ask for confirmation before it takes effect." );
+                    node.detail = _( "Warning: this response may provoke an attack.  The game will ask for confirmation before it takes effect." );
                 } else if( consequences.count( dialogue_consequence::helpless ) > 0 ) {
-                    node.detail = _( "Warning: this response may leave you helpless. The game will ask for confirmation before it takes effect." );
+                    node.detail = _( "Warning: this response may leave you helpless.  The game will ask for confirmation before it takes effect." );
                 }
             }
             node.selected = d_img.sel_response == static_cast<int>( index );

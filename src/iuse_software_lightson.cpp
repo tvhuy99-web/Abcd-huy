@@ -218,10 +218,10 @@ int lightson_game::start_game()
                                cursor_on ? _( "On" ) : _( "Off" ) );
 
         a11y::append_document( snapshot, "lights:rules", _( "Lights On rules" ),
-                               _( "Game goal: switch all the lights on. # is on and - is off. "
+                               _( "Game goal: switch all the lights on. # is on and - is off.  "
                                   "Toggling a light switches the selected light and its "
                                   "4 neighbors (above, below, left and right); a neighbor "
-                                  "outside the board is not toggled. Move the cursor with "
+                                  "outside the board is not toggled.  Move the cursor with "
                                   "the direction keys, toggle the selected light with the "
                                   "space bar or 5, reset to return the board to its "
                                   "starting state, and quit to leave the game." ) );

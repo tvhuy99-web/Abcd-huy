@@ -62,6 +62,65 @@ std::string safemode::npc_type_name()
     return name;
 }
 
+std::string safemode::attitude_value_of( const Creature::Attitude attitude )
+{
+    switch( attitude ) {
+        case Creature::Attitude::HOSTILE:
+            return "hostile";
+        case Creature::Attitude::NEUTRAL:
+            return "neutral";
+        case Creature::Attitude::FRIENDLY:
+            return "friendly";
+        case Creature::Attitude::ANY:
+            return "any";
+    }
+    return "any";
+}
+
+bool safemode::attitude_from_value( const std::string &value,
+                                   Creature::Attitude &attitude )
+{
+    if( value == "hostile" ) {
+        attitude = Creature::Attitude::HOSTILE;
+    } else if( value == "neutral" ) {
+        attitude = Creature::Attitude::NEUTRAL;
+    } else if( value == "friendly" ) {
+        attitude = Creature::Attitude::FRIENDLY;
+    } else if( value == "any" ) {
+        attitude = Creature::Attitude::ANY;
+    } else {
+        return false;
+    }
+    return true;
+}
+
+std::string safemode::movement_value_of( const MovementModes mode )
+{
+    switch( mode ) {
+        case MovementModes::WALKING:
+            return "walking";
+        case MovementModes::DRIVING:
+            return "driving";
+        case MovementModes::BOTH:
+            return "both";
+    }
+    return "both";
+}
+
+bool safemode::movement_from_value( const std::string &value, MovementModes &mode )
+{
+    if( value == "walking" ) {
+        mode = MovementModes::WALKING;
+    } else if( value == "driving" ) {
+        mode = MovementModes::DRIVING;
+    } else if( value == "both" ) {
+        mode = MovementModes::BOTH;
+    } else {
+        return false;
+    }
+    return true;
+}
+
 void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
 {
     auto global_rules_old = global_rules;
@@ -154,57 +213,6 @@ void safemode::show( const std::string &custom_name_in, bool is_safemode_in )
     };
     const auto binding_is_current = [&]( const reader_binding &binding ) -> bool {
         return binding.tab == tab && binding.line == line && binding_live( binding );
-    };
-    const auto attitude_value_of = []( const Creature::Attitude attitude ) -> std::string {
-        switch( attitude ) {
-            case Creature::Attitude::HOSTILE:
-                return "hostile";
-            case Creature::Attitude::NEUTRAL:
-                return "neutral";
-            case Creature::Attitude::FRIENDLY:
-                return "friendly";
-            case Creature::Attitude::ANY:
-                return "any";
-        }
-        return "any";
-    };
-    const auto attitude_from_value = []( const std::string &value,
-    Creature::Attitude &attitude ) -> bool {
-        if( value == "hostile" ) {
-            attitude = Creature::Attitude::HOSTILE;
-        } else if( value == "neutral" ) {
-            attitude = Creature::Attitude::NEUTRAL;
-        } else if( value == "friendly" ) {
-            attitude = Creature::Attitude::FRIENDLY;
-        } else if( value == "any" ) {
-            attitude = Creature::Attitude::ANY;
-        } else {
-            return false;
-        }
-        return true;
-    };
-    const auto movement_value_of = []( const MovementModes mode ) -> std::string {
-        switch( mode ) {
-            case MovementModes::WALKING:
-                return "walking";
-            case MovementModes::DRIVING:
-                return "driving";
-            case MovementModes::BOTH:
-                return "both";
-        }
-        return "both";
-    };
-    const auto movement_from_value = []( const std::string &value, MovementModes &mode ) -> bool {
-        if( value == "walking" ) {
-            mode = MovementModes::WALKING;
-        } else if( value == "driving" ) {
-            mode = MovementModes::DRIVING;
-        } else if( value == "both" ) {
-            mode = MovementModes::BOTH;
-        } else {
-            return false;
-        }
-        return true;
     };
     std::optional<std::string> draft_rule;
     reader_binding draft_rule_binding;

@@ -522,21 +522,20 @@ std::string reader_part_condition( const vehicle_part &pt )
 std::string reader_tile_words( const vehicle &veh, const point_rel_ms &mount )
 {
     const point_rel_ms origin = veh.part( 0 ).mount;
-    const int dx = mount.x() - origin.x();
-    const int dy = mount.y() - origin.y();
-    if( dx == 0 && dy == 0 ) {
+    const point delta = ( mount - origin ).raw();
+    if( delta == point::zero ) {
         return _( "the reference tile" );
     }
     std::string result;
-    if( dx != 0 ) {
-        result += string_format( dx > 0 ? _( "%d ahead" ) : _( "%d back" ), std::abs( dx ) );
+    if( delta.x != 0 ) {
+        result += string_format( delta.x > 0 ? _( "%d ahead" ) : _( "%d back" ), std::abs( delta.x ) );
     }
-    if( dy != 0 ) {
+    if( delta.y != 0 ) {
         if( !result.empty() ) {
             result += ", ";
         }
-        result += string_format( dy > 0 ? _( "%d to the right" ) : _( "%d to the left" ),
-                                 std::abs( dy ) );
+        result += string_format( delta.y > 0 ? _( "%d to the right" ) : _( "%d to the left" ),
+                                 std::abs( delta.y ) );
     }
     return result;
 }
@@ -1046,7 +1045,7 @@ a11y::semantic_snapshot veh_interact::reader_session::build( map &here )
                 const bool ok = owner.update_part_requirements( here );
                 node.enabled = ok;
                 if( !ok ) {
-                    node.disabled_reason = _( "This part cannot be installed here. The requirements say why." );
+                    node.disabled_reason = _( "This part cannot be installed here.  The requirements say why." );
                 }
                 if( owner.msg ) {
                     node.detail = remove_color_tags( *owner.msg );

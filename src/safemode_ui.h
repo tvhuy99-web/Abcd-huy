@@ -100,6 +100,10 @@ class safemode
         std::vector<rules_class> global_rules;
         std::vector<rules_class> character_rules;
 
+        static std::string attitude_value_of( Creature::Attitude attitude );
+        static bool attitude_from_value( const std::string &value, Creature::Attitude &attitude );
+        static std::string movement_value_of( MovementModes mode );
+        static bool movement_from_value( const std::string &value, MovementModes &mode );
         void draw_rules( const catacurses::window &w_border, const catacurses::window &w_header,
                          const catacurses::window &w, const std::string &custom_name_in,
                          const Character &player_character, int tab, int line, int column,

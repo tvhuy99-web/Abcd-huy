@@ -840,7 +840,7 @@ void panel_manager::show_adm()
         reader_targets.clear();
         a11y::semantic_snapshot snapshot;
         snapshot.title = _( "Sidebar options" );
-        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order. Activate a layout name to switch the sidebar layout. Changes are saved when you exit, as on the original screen." );
+        snapshot.summary = _( "Activate a panel to toggle it on or off, or move it up or down to change the display order.  Activate a layout name to switch the sidebar layout.  Changes are saved when you exit, as on the original screen." );
         const auto &panel_list = get_current_layout().panels();
         for( const auto &entry : row_indices ) {
             const size_t row = entry.first;
@@ -853,7 +853,7 @@ void panel_manager::show_adm()
             node.value = panel.toggle ? _( "On" ) : _( "Off" );
             node.selected = current_col == 0 && current_row == row;
             node.detail = string_format(
-                              _( "Panel %d of %d in the display order. Width: %d. Height: %d." ),
+                              _( "Panel %d of %d in the display order.  Width: %d. Height: %d." ),
                               static_cast<int>( row + 1 ),
                               static_cast<int>( row_indices.size() ),
                               panel.get_width(), panel.get_height() );

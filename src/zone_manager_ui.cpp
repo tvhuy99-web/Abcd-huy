@@ -24,6 +24,7 @@
 #include "output.h"
 #include "overmap_ui.h"
 #include "panels.h"
+#include "point.h"
 #include "popup.h"
 #include "string_formatter.h"
 #include "string_input_popup.h"
@@ -163,6 +164,101 @@ void zone_manager_ui::zones_manager_draw_borders( const catacurses::window &w_bo
 
     wnoutrefresh( w_info_border );
 }
+
+namespace
+{
+// Axis-by-axis offset of an absolute point from the player, in
+// the same wording a11y_world's relative_position_name uses.
+std::string corner_offset( const tripoint_abs_ms &player_pos, const tripoint_abs_ms &corner )
+{
+    const tripoint delta = ( corner - player_pos ).raw();
+    if( delta == tripoint::zero ) {
+        return _( "Current tile" );
+    }
+    std::string result;
+    if( delta.y != 0 ) {
+        result += string_format( delta.y < 0 ? _( "North %d" ) : _( "South %d" ),
+                                 std::abs( delta.y ) );
+    }
+    if( delta.x != 0 ) {
+        if( !result.empty() ) {
+            result += ", ";
+        }
+        result += string_format( delta.x < 0 ? _( "West %d" ) : _( "East %d" ),
+                                 std::abs( delta.x ) );
+    }
+    if( delta.z != 0 ) {
+        if( delta.x != 0 || delta.y != 0 ) {
+            result += ", ";
+        } else {
+            result.clear();
+        }
+        result += string_format( delta.z > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
+                                 std::abs( delta.z ) );
+    }
+    return result;
+}
+
+a11y::semantic_node zone_reader_row( const zone_data &zone, const std::string &row_id,
+                                     const std::string &type_name, const tripoint_abs_ms &player_pos,
+                                     const int index, const bool selected )
+{
+    const std::string status = zone.get_enabled() ? _( "Enabled" ) : _( "Disabled" );
+    const tripoint_abs_ms center = zone.get_center_point();
+    const std::string direction = direction_name_short( direction_from(
+                                      player_pos, center ) );
+    const int distance = static_cast<int>( trig_dist( player_pos, center ) );
+
+    std::string detail = string_format( _( "Type: %s." ), type_name );
+    detail += " " + status + ".";
+    if( zone.get_temporarily_disabled() ) {
+        detail += " " + std::string( _( "Temporarily disabled." ) );
+    }
+    if( zone.get_is_personal() ) {
+        detail += " " + std::string( _( "Personal zone: it moves with you." ) );
+    }
+    if( zone.get_is_vehicle() ) {
+        detail += " " + std::string( _( "Vehicle zone." ) );
+    }
+    detail += " " + string_format( _( "Center: %1$s, %2$d tiles away." ), direction,
+                                   distance );
+    detail += " " + string_format( _( "First corner: %s." ),
+                                   corner_offset( player_pos, zone.get_start_point() ) );
+    detail += " " + string_format( _( "Second corner: %s." ),
+                                   corner_offset( player_pos, zone.get_end_point() ) );
+    const tripoint extent = ( zone.get_end_point() - zone.get_start_point() ).raw().abs();
+    detail += " " + string_format( _( "Size: %1$d by %2$d tiles, %3$d levels." ),
+                                   extent.x + 1, extent.y + 1, extent.z + 1 );
+    detail += " " + std::string( zone.get_is_displayed() ? _( "Shown on the map." )
+                                  : _( "Not shown on the map." ) );
+    if( zone.has_options() ) {
+        for( const auto &desc : zone.get_options().get_descriptions() ) {
+            detail += " " + desc.first + ": " + desc.second + ".";
+        }
+    }
+
+    a11y::semantic_node node;
+    node.id = row_id;
+    node.role = "listitem";
+    node.label = zone.get_name();
+    node.value = string_format( _( "%1$s, %2$s" ), type_name, status );
+    node.detail = detail;
+    node.selected = selected;
+    node.actions = { "focus", "activate" };
+    node.table_id = "zones:list";
+    node.row_index = index;
+    node.cells = { { "name", zone.get_name(), "", "" },
+                   { "type", type_name, "", "" },
+                   { "status", status, "", "" },
+                   { "personal", zone.get_is_personal() ? _( "Yes" ) : _( "No" ), "", "" },
+                   { "vehicle", zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ), "", "" },
+                   { "direction", direction, "", "" },
+                   { "distance", std::to_string( distance ), "", std::to_string( distance ) },
+                   { "displayed", zone.get_is_displayed() ? _( "Yes" ) : _( "No" ), "", "" }
+                 };
+    return node;
+}
+} // namespace
 
 void zone_manager_ui::display_zone_manager()
 {
@@ -443,100 +539,14 @@ void zone_manager_ui::display_zone_manager()
                               };
         snapshot.tables.push_back( zones_table );
 
-        // Axis-by-axis offset of an absolute point from the player, in
-        // the same wording a11y_world's relative_position_name uses.
-        const auto corner_offset = [&]( const tripoint_abs_ms & point_abs ) -> std::string {
-            const int dx = point_abs.x() - player_absolute_pos.x();
-            const int dy = point_abs.y() - player_absolute_pos.y();
-            const int dz = point_abs.z() - player_absolute_pos.z();
-            if( dx == 0 && dy == 0 && dz == 0 ) {
-                return _( "Current tile" );
-            }
-            std::string result;
-            if( dy != 0 ) {
-                result += string_format( dy < 0 ? _( "North %d" ) : _( "South %d" ),
-                                         std::abs( dy ) );
-            }
-            if( dx != 0 ) {
-                if( !result.empty() ) {
-                    result += ", ";
-                }
-                result += string_format( dx < 0 ? _( "West %d" ) : _( "East %d" ),
-                                         std::abs( dx ) );
-            }
-            if( dz != 0 ) {
-                if( dx != 0 || dy != 0 ) {
-                    result += ", ";
-                } else {
-                    result.clear();
-                }
-                result += string_format( dz > 0 ? _( "Level above %d" ) : _( "Level below %d" ),
-                                         std::abs( dz ) );
-            }
-            return result;
-        };
-
         zone_reader_bindings.clear();
         for( size_t i = 0; i < zones.size(); ++i ) {
             const zone_data &zone = zones[i].get();
             const std::string row_id = "zone:row:" + std::to_string( i );
             const std::string type_name = mgr.get_name_from_type( zone.get_type() );
-            const std::string status = zone.get_enabled() ? _( "Enabled" ) : _( "Disabled" );
-            const tripoint_abs_ms center = zone.get_center_point();
-            const std::string direction = direction_name_short( direction_from(
-                                              player_absolute_pos, center ) );
-            const int distance = static_cast<int>( trig_dist( player_absolute_pos, center ) );
-
-            std::string detail = string_format( _( "Type: %s." ), type_name );
-            detail += " " + status + ".";
-            if( zone.get_temporarily_disabled() ) {
-                detail += " " + std::string( _( "Temporarily disabled." ) );
-            }
-            if( zone.get_is_personal() ) {
-                detail += " " + std::string( _( "Personal zone: it moves with you." ) );
-            }
-            if( zone.get_is_vehicle() ) {
-                detail += " " + std::string( _( "Vehicle zone." ) );
-            }
-            detail += " " + string_format( _( "Center: %1$s, %2$d tiles away." ), direction,
-                                           distance );
-            detail += " " + string_format( _( "First corner: %s." ),
-                                           corner_offset( zone.get_start_point() ) );
-            detail += " " + string_format( _( "Second corner: %s." ),
-                                           corner_offset( zone.get_end_point() ) );
-            const int size_x = std::abs( zone.get_end_point().x() - zone.get_start_point().x() ) + 1;
-            const int size_y = std::abs( zone.get_end_point().y() - zone.get_start_point().y() ) + 1;
-            const int size_z = std::abs( zone.get_end_point().z() - zone.get_start_point().z() ) + 1;
-            detail += " " + string_format( _( "Size: %1$d by %2$d tiles, %3$d levels." ),
-                                           size_x, size_y, size_z );
-            detail += " " + std::string( zone.get_is_displayed() ? _( "Shown on the map." )
-                                          : _( "Not shown on the map." ) );
-            if( zone.has_options() ) {
-                for( const auto &desc : zone.get_options().get_descriptions() ) {
-                    detail += " " + desc.first + ": " + desc.second + ".";
-                }
-            }
-
-            a11y::semantic_node node;
-            node.id = row_id;
-            node.role = "listitem";
-            node.label = zone.get_name();
-            node.value = string_format( _( "%1$s, %2$s" ), type_name, status );
-            node.detail = detail;
-            node.selected = static_cast<int>( i ) == active_index;
-            node.actions = { "focus", "activate" };
-            node.table_id = "zones:list";
-            node.row_index = static_cast<int>( i );
-            node.cells = { { "name", zone.get_name(), "", "" },
-                           { "type", type_name, "", "" },
-                           { "status", status, "", "" },
-                           { "personal", zone.get_is_personal() ? _( "Yes" ) : _( "No" ), "", "" },
-                           { "vehicle", zone.get_is_vehicle() ? _( "Yes" ) : _( "No" ), "", "" },
-                           { "direction", direction, "", "" },
-                           { "distance", std::to_string( distance ), "", std::to_string( distance ) },
-                           { "displayed", zone.get_is_displayed() ? _( "Yes" ) : _( "No" ), "", "" }
-                         };
-            snapshot.nodes.push_back( std::move( node ) );
+            const int index = static_cast<int>( i );
+            snapshot.nodes.push_back( zone_reader_row( zone, row_id, type_name, player_absolute_pos,
+                                      index, index == active_index ) );
             zone_reader_bindings.push_back( zone_reader_make_binding( row_id, zone ) );
         }
 
@@ -548,7 +558,7 @@ void zone_manager_ui::display_zone_manager()
                 confirm.role = "button";
                 confirm.label = string_format( _( "Confirm removal of zone %s" ),
                                                zones[*armed_index].get().get_name() );
-                confirm.detail = _( "This zone will be removed from the list immediately. "
+                confirm.detail = _( "This zone will be removed from the list immediately.  "
                                     "The change is only saved when you confirm saving when you "
                                     "leave; choosing not to save restores it." );
                 confirm.actions = { "focus", "activate" };

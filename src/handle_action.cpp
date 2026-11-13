@@ -653,10 +653,10 @@ input_context game::get_player_input( std::string &action )
                     return std::nullopt;
                 }
                 if( reader_explore_cursor ) {
-                    const int x = std::clamp( reader_explore_cursor->x() + delta.x, -60, 60 );
-                    const int y = std::clamp( reader_explore_cursor->y() + delta.y, -60, 60 );
-                    if( x != reader_explore_cursor->x() || y != reader_explore_cursor->y() ) {
-                        reader_explore_cursor = tripoint_rel_ms( x, y, reader_explore_cursor->z() );
+                    const point target( std::clamp( reader_explore_cursor->x() + delta.x, -60, 60 ),
+                                        std::clamp( reader_explore_cursor->y() + delta.y, -60, 60 ) );
+                    if( target != reader_explore_cursor->raw().xy() ) {
+                        reader_explore_cursor = tripoint_rel_ms( tripoint( target, reader_explore_cursor->z() ) );
                         changed = true;
                     }
                 }

@@ -245,7 +245,7 @@ std::string target_direction_description( const tripoint_bub_ms &origin,
     return result;
 }
 
-static constexpr std::array<point, 8> accessible_shot_directions = {
+constexpr std::array<point, 8> accessible_shot_directions = {
     point::north, point::north_east, point::east, point::south_east,
     point::south, point::south_west, point::west, point::north_west
 };

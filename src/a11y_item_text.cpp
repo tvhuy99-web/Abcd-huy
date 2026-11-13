@@ -56,7 +56,7 @@ void announce_full_detail_text( const std::string &full )
     while( begin < full.size() ) {
         std::size_t end = std::min( begin + max_chunk, full.size() );
         if( end < full.size() ) {
-            const std::size_t boundary = full.find_last_of( " \n", end - 1 );
+            const std::size_t boundary = full.find_last_of( "\n ", end - 1 );
             if( boundary != std::string::npos && boundary > begin + max_chunk / 2 ) {
                 end = boundary + 1;
             } else {

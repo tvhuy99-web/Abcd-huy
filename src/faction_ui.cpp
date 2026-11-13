@@ -1087,11 +1087,11 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 const npc &follower = *followers[i];
                 std::string contact;
                 if( follower.has_companion_mission() ) {
-                    contact = _( "On a companion mission. Use Contact to recall." );
+                    contact = _( "On a companion mission.  Use Contact to recall." );
                 } else if( can_contact( get_avatar(), follower ) ) {
-                    contact = _( "Within interaction range. Activate to talk." );
+                    contact = _( "Within interaction range.  Activate to talk." );
                 } else if( can_radio_contact( get_avatar(), follower ) == radio_contact_result::YES ) {
-                    contact = _( "Within radio range. Activate to talk." );
+                    contact = _( "Within radio range.  Activate to talk." );
                 } else {
                     contact = _( "Out of contact range." );
                 }
@@ -1377,7 +1377,7 @@ std::optional<std::string> faction_ui::reader_intent( const a11y::semantic_inten
                     if( intent.action == "activate" ) {
                         // Recall from a mission must be an explicit Contact action.
                         if( picked_follower->has_companion_mission() ) {
-                            add_msg( m_info, _( "%s is on a companion mission. Use Contact to recall." ),
+                            add_msg( m_info, _( "%s is on a companion mission.  Use Contact to recall." ),
                                      picked_follower->get_name() );
                         } else if( can_contact( get_avatar(), *picked_follower ) ||
                                    can_radio_contact( get_avatar(), *picked_follower ) ==

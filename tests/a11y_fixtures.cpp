@@ -50,9 +50,12 @@
 // See a11y_fixtures.h for the guarantee each builder makes and the oracle it
 // serves. Written during the coding phase (phase 1): NOT compiled, NOT run.
 
-static const itype_id itype_bandages( "bandages" );
-static const itype_id itype_debug_backpack( "debug_backpack" );
+static const bionic_id bio_power_storage( "bio_power_storage" );
+
 static const itype_id itype_backpack( "backpack" );
+static const itype_id itype_bandages( "bandages" );
+static const itype_id itype_bio_power_storage( "bio_power_storage" );
+static const itype_id itype_debug_backpack( "debug_backpack" );
 static const itype_id itype_disinfectant( "disinfectant" );
 static const itype_id itype_gasoline( "gasoline" );
 static const itype_id itype_jeans( "jeans" );
@@ -61,17 +64,19 @@ static const itype_id itype_test_can_drink( "test_can_drink" );
 static const itype_id itype_test_rock( "test_rock" );
 static const itype_id itype_test_textbook_fabrication( "test_textbook_fabrication" );
 static const itype_id itype_water( "water" );
+
+static const mission_type_id mission_TEST_MISSION_FIND_ITEM( "TEST_MISSION_FIND_ITEM" );
+
 static const spell_id spell_test_spell_lava( "test_spell_lava" );
 static const spell_id spell_test_spell_pew( "test_spell_pew" );
-static const bionic_id bio_power_storage( "bio_power_storage" );
+
 static const vproto_id vehicle_prototype_car( "car" );
 static const vproto_id vehicle_prototype_test_shopping_cart( "test_shopping_cart" );
-static const zone_type_id zone_type_LOOT_FOOD( "LOOT_FOOD" );
-static const zone_type_id zone_type_LOOT_UNSORTED( "LOOT_UNSORTED" );
+
 static const zone_type_id zone_type_CAMP_FOOD( "CAMP_FOOD" );
 static const zone_type_id zone_type_CAMP_STORAGE( "CAMP_STORAGE" );
-static const mission_type_id mission_TEST_MISSION_FIND_ITEM( "TEST_MISSION_FIND_ITEM" );
-static const itype_id itype_bio_power_storage( "bio_power_storage" );
+static const zone_type_id zone_type_LOOT_FOOD( "LOOT_FOOD" );
+static const zone_type_id zone_type_LOOT_UNSORTED( "LOOT_UNSORTED" );
 
 static const tripoint_bub_ms fixture_origin( 60, 60, 0 );
 

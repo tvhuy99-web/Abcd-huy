@@ -397,12 +397,12 @@ std::string a11y::limb_health_description( const Character &who, const bodypart_
     const bool no_feeling = who.has_flag( json_flag_PAIN_IMMUNE );
     if( who.worn_with_flag( flag_SPLINT, part ) ) {
         if( no_feeling ) {
-            return _( "Splinted. Mending progress is unknown." );
+            return _( "Splinted.  Mending progress is unknown." );
         }
         const effect &mending = who.get_effect( effect_mending, part );
         const int percent = mending.is_null() || mending.get_max_duration() <= 0_turns ? 0 :
                             100 * mending.get_duration() / mending.get_max_duration();
-        return string_format( _( "Splinted. Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
+        return string_format( _( "Splinted.  Mending indicator %d of 5." ), std::clamp( percent / 20, 0, 5 ) );
     }
     if( who.is_limb_broken( part ) ) {
         return _( "Broken." );

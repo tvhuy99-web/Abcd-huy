@@ -944,7 +944,7 @@ void Messages::dialog::reader_update( a11y::screen_scope &reader )
     std::string summary;
     if( total > max_published_messages ) {
         summary = string_format(
-                      _( "Showing the newest %1$d of %2$d messages. Older messages are not "
+                      _( "Showing the newest %1$d of %2$d messages.  Older messages are not "
                          "included; use the filter to narrow the list." ),
                       static_cast<int>( entries.size() ), static_cast<int>( total ) );
     } else {

@@ -659,7 +659,7 @@ void bodygraph_display::display()
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot(
                                                     ctxt, _( "Body status" ) );
-            snapshot.summary = _( "Body parts in a list. Select a part to hear its condition. "
+            snapshot.summary = _( "Body parts in a list.  Select a part to hear its condition.  "
                                   "Browsing never treats wounds." );
             for( std::size_t i = 0; i < partlist.size(); ++i ) {
                 const part_tuple &part = partlist[i];

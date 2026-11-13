@@ -528,7 +528,7 @@ void user_interface::show()
                             // as cancelling the edit: "*" is the way to
                             // match everything. The draft is kept and
                             // the refusal is published as a field error.
-                            rule_field_error = _( "A rule cannot be empty. Use * to match everything." );
+                            rule_field_error = _( "A rule cannot be empty.  Use * to match everything." );
                             return std::string( "TIMEOUT" );
                         }
                         rules[binding.line].sRule = wildcard_trim_rule( *draft_rule );
@@ -569,13 +569,13 @@ void user_interface::show()
                 node.role = "checkbox";
                 node.checked = pickup_enabled;
                 node.detail = pickup_enabled ?
-                              _( "Auto pickup is currently enabled. Activate to disable it." ) :
-                              _( "Auto pickup is currently disabled. Activate to enable it." );
+                              _( "Auto pickup is currently enabled.  Activate to disable it." ) :
+                              _( "Auto pickup is currently disabled.  Activate to enable it." );
             }
         }
         reader_bindings.clear();
         snapshot.summary = string_format(
-                               _( "Auto pickup is currently %1$s in the options. Current tab: %2$s. %3$d rule(s) on this tab." ),
+                               _( "Auto pickup is currently %1$s in the options.  Current tab: %2$s. %3$d rule(s) on this tab." ),
                                pickup_enabled ? _( "enabled" ) : _( "disabled" ),
                                tabs[iTab].title,
                                static_cast<int>( tabs[iTab].new_rules.size() ) );
@@ -678,7 +678,7 @@ void user_interface::show()
                 node.role = "button";
                 node.label = string_format( _( "Confirm removal of rule %s" ),
                                             selected_rule.sRule.empty() ? _( "<empty rule>" ) : selected_rule.sRule );
-                node.detail = _( "The rule is removed from this tab's list right away. The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it." );
+                node.detail = _( "The rule is removed from this tab's list right away.  The change is only saved when you answer Yes to \"Save changes?\" when leaving this screen; answering No discards it." );
                 node.actions = { "focus", "activate" };
                 snapshot.nodes.push_back( std::move( node ) );
             }
