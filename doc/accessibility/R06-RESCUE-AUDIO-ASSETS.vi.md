@@ -1,5 +1,7 @@
 # Asset âm cứu hộ R06.3 — transcript, nguồn và kiểm chứng tệp
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Các tệp trong `android/app/src/main/res/raw/`, phát qua
 `RescueAudioPlayer` khi TTS lỗi/thiếu giọng. Đây là âm ghi sẵn thật
 (có tiếng nói, đo được thời lượng), **không phải tệp câm/placeholder**.

@@ -1,5 +1,7 @@
 # Báo cáo kết thúc giai đoạn 1 — viết mã CDDA Android trợ năng (R23.4)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Ngày: 2026-10-23. Mục kế hoạch: R23.4 trong `REMAINING-CODE-PLAN.vi.md` bản 2.0.
 Nhánh: `recovery/android-reader-ad5ecf0` (local, chưa push).
 Commit ứng viên (mã): `bc4f807c853e16909199578c4d68218ae50415b4` — ghim tại

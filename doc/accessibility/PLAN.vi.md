@@ -1,5 +1,7 @@
 # Kế hoạch triển khai CDDA Android để người khiếm thị chơi độc lập và đầy đủ
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Phiên bản kế hoạch: 1.0 — ngày 22/10/2026.
 
 Dự án đích: [tvhuy99-web/Abcd-huy](https://github.com/tvhuy99-web/Abcd-huy).

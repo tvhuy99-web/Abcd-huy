@@ -1,5 +1,7 @@
 # Điều hướng menu theo từng cấp cho trình đọc màn hình
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 **Phạm vi:** quy tắc chung trong trình đọc Android và bộ công bố menu native,
 không phải bản vá chỉ dành riêng cho màn hình tạo nhân vật.
 

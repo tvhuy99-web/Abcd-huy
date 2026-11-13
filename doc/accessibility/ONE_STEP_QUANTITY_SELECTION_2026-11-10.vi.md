@@ -1,5 +1,7 @@
 # Chọn số lượng chỉ một lần, áp dụng chung cho game (trợ năng Android)
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 Ngày kiểm tra: 2026-11-10.
 Nhánh tính năng: `feat/one-step-quantity-selection-20261110`.
 Nhánh cơ sở: `perf/reader-swipe-latency-20261109`.

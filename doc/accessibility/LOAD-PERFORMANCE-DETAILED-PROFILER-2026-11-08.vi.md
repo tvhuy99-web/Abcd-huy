@@ -1,5 +1,7 @@
 # Nhật ký đo thời gian tải game chi tiết (Android)
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 Áp dụng cho nhánh `integration/reader-vietnamese-20261107` và bản APK build từ commit có thêm bộ đo.
 Bản APK cũ không thể tự sinh các dòng `A11Y_LOAD_DETAIL`.
 
