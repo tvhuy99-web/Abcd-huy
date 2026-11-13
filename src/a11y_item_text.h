@@ -4,6 +4,7 @@
 
 #include <algorithm>
 #include <string>
+#include <string_view>
 
 #include "a11y_android.h"
 
@@ -83,7 +84,7 @@ inline void announce_full_detail_text( const std::string &full )
 // The actual item, not a guessed type, supplies its full facts: melee and
 // ranged damage, magazine, ammunition, armor, food, books, tools, etc.
 // Context is the already visible location/status, never an extra action.
-inline void announce_full_item_info( const item &it, const std::string &context = {} )
+inline void announce_full_item_info( const item &it, const std::string_view context = {} )
 {
     const std::string full = spoken_item_name( it ) +
                              ( context.empty() ? "" : "\n" + remove_color_tags( context ) ) +
