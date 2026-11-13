@@ -63,9 +63,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- A game task may host the internal log and settings pages.
+             singleInstance isolates every child Activity in another task,
+             causing Recents to show "Debug log" separately and Back to
+             return to the launcher instead of the paused game. -->
         <activity android:name="CataclysmDDA"
                   android:label="@string/app_name"
-                  android:launchMode="singleInstance"
+                  android:launchMode="singleTask"
                   android:keepScreenOn="true"
                   android:windowSoftInputMode="adjustNothing"
                   android:screenOrientation="fullUser"
