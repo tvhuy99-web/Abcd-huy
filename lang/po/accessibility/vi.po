@@ -4572,6 +4572,74 @@ msgstr "Thời gian dự kiến: %s"
 msgid "All categories"
 msgstr "Tất cả"
 
+# Verified spoken-only crafting practice names and conditions.
+msgid "Computer practice, beginner"
+msgstr "Luyện máy tính, cơ bản"
+
+msgid "Computer practice, intermediate"
+msgstr "Luyện máy tính, trung cấp"
+
+msgid "Computer practice, advanced"
+msgstr "Luyện máy tính, nâng cao"
+
+msgid "Athletics practice, beginner"
+msgstr "Luyện thể chất, cơ bản"
+
+msgid "Athletics practice, intermediate"
+msgstr "Luyện thể chất, trung cấp"
+
+msgid "Dancing practice"
+msgstr "Luyện nhảy múa"
+
+msgid "Dodging practice, beginner"
+msgstr "Luyện né tránh, cơ bản"
+
+msgid "Unarmed combat practice, beginner"
+msgstr "Luyện chiến đấu tay không, cơ bản"
+
+msgid "Unarmed combat practice, intermediate"
+msgstr "Luyện chiến đấu tay không, trung cấp"
+
+#, c-format
+msgid "Practice %1$s: %2$s"
+msgstr "Luyện kỹ năng %1$s: %2$s"
+
+#, c-format
+msgid "Practice: %s"
+msgstr "Luyện tập: %s"
+
+msgid "Practice the basics of using a computer."
+msgstr "Luyện các thao tác cơ bản trên máy tính."
+
+msgid "Practice simple exercises such as push-ups, squats and crunches."
+msgstr "Luyện các bài thể dục cơ bản như chống đẩy, đứng lên ngồi xuống và gập bụng."
+
+msgid "Practice dancing with an imaginary partner."
+msgstr "Luyện các động tác nhảy cùng bạn nhảy tưởng tượng."
+
+msgid "Practice sidestepping and retreating to avoid attacks."
+msgstr "Luyện bước tránh ngang và lùi lại để né đòn."
+
+msgid "Practice shadowboxing to prepare for fighting without a weapon."
+msgstr "Luyện đấm gió để chuẩn bị chiến đấu khi không có vũ khí."
+
+#, c-format
+msgid "Minor failure chance: %.2f%%"
+msgstr "Nguy cơ lỗi nhẹ: %.2f%%"
+
+#, c-format
+msgid "Chance of ruining the item: %.2f%%"
+msgstr "Nguy cơ làm hỏng vật phẩm: %.2f%%"
+
+msgid "Can be done in the dark."
+msgstr "Có thể thực hiện trong bóng tối."
+
+msgid "Difficult to do in the dark."
+msgstr "Thực hiện trong bóng tối sẽ khó hơn."
+
+msgid "Cannot be done in the dark."
+msgstr "Không thể thực hiện trong bóng tối."
+
 msgid "Reload item (ammo, battery or fuel)"
 msgstr "Nạp vật phẩm (đạn, pin hoặc nhiên liệu)"
 
