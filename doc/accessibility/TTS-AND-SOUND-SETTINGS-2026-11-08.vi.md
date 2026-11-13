@@ -1,3 +1,5 @@
+> **Đính chính 13/11/2026 theo `master@f0be189`:** đã sửa điều kiện Nghe thử/Lưu. Trang dưới đây ghi hiện trạng ở commit ghim, không phải nghiệm thu thiết bị. Xem [mô tả TTS](TTS-SETTINGS-2026-11-07.vi.md) và [đặc tả](CURRENT-REFERENCE.vi.md).
+
 # Giao diện cài đặt TTS và âm thanh
 
 Áp dụng tại nhánh `integration/reader-vietnamese-20261107`.
@@ -17,7 +19,7 @@ Thứ tự điều khiển từ trên xuống dưới:
 9. **Hủy**.
 10. **Lưu**.
 
-Không có phần giải thích, nút khôi phục, nút Android Settings hay công tắc giọng mạng trong màn hình TTS rút gọn. Quyền dùng giọng mạng đã được lưu trước đó vẫn được tôn trọng; **không tự chấp nhận** giọng mạng. Giọng được lựa chọn phải nghe thử thành công trước khi lưu trạng thái bật mới, tránh lưu cài đặt không có tiếng. Khi tắt, không yêu cầu nghe thử.
+Không có phần giải thích, nút khôi phục, nút Android Settings hay công tắc giọng mạng trong màn hình TTS rút gọn. Quyền dùng giọng mạng đã được lưu trước đó vẫn được tôn trọng; **không tự chấp nhận** giọng mạng. Nghe thử trước khi Lưu là khuyến nghị để bảo đảm có âm thanh, nhưng mã `TtsSettingsActivity.saveSettings()` hiện **không yêu cầu `previewPassed`** trước khi lưu. Khi bật với âm lượng 0, mã từ chối Lưu. Khi tắt, không cần thử giọng.
 
 Với TalkBack, danh sách chọn dùng bộ chọn gốc của Android. Với bộ đọc nội bộ, vuốt chọn điều khiển và chạm đôi trên danh sách để chuyển sang lựa chọn kế tiếp, sau đó nghe tên được chọn.
 
