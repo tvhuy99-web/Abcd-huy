@@ -1,4 +1,6 @@
 #include "safemode_ui.h"
+#include "a11y_semantics.h"
+#include <stddef.h>
 
 #include "a11y_input.h"
 #include "a11y_runtime.h"

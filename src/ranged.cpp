@@ -1,4 +1,6 @@
 #include "ranged.h"
+#include "a11y_semantics.h"
+#include <stdlib.h>
 
 #include <algorithm>
 #include <cmath>

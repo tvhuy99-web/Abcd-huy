@@ -1,4 +1,7 @@
 #include "popup.h"
+#include "a11y_semantics.h"
+#include "translations.h"
+#include <optional>
 #include "a11y_runtime.h"
 
 #include <algorithm>
