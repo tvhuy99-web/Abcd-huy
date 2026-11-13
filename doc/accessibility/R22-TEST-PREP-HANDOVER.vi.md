@@ -68,8 +68,8 @@ thiếu là bài thiết bị trong danh mục, không phải mã host.
   từng bài tiền điều kiện, fixture (F-ID), bước, oracle (trạng thái game/
   hành vi) và loại môi trường (host-C++ / host-Java / Android-giả-lập /
   máy-thật-TalkBack / nghiệm-thu-người-dùng).
-- 32 bài bổ sung TX-01…TX-32: form/bảng/cây R02 (gồm trần 4096 node và
-  bảng Study Zone vượt 16 cột), engine/voice/âm cứu hộ, cue có tương
+- 31 bài bổ sung TX-01…TX-06, TX-08…TX-32: form/bảng/cây R02 (gồm trần 4096 node và
+  bảng Study Zone vượt 16 cột), engine/voice, cue có tương
   đương lời và không rò thông tin, Smart controller, Study Zone, hai
   bảng quy tắc, máy tính trong game, **mỗi minigame một bài chơi trọn
   ván**, **TX-20 riêng cho Snake chính sách theo lượt** (bộ đọc bật =

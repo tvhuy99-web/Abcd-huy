@@ -177,7 +177,7 @@ giữ vị trí đọc:
   "đoạn gần nhất đã bắt đầu phát".
 - Mười điều khiển tài liệu được nối vào **Reader controls** chỉ khi có
   phiên tài liệu đang mở, đặt sau các điều khiển gốc (và sau mục bỏ qua
-  luyện tập khi có), trước hai mục thử ánh xạ luôn ở cuối: Đọc tiếp,
+  luyện tập khi có): Đọc tiếp,
   Đoạn sau, Đoạn trước, Đọc lại câu cuối, Đánh vần đoạn hiện tại,
   Đánh dấu đoạn này, Tới dấu trang, Tìm trong tài liệu, Kết quả
   tiếp theo, Kết quả trước.

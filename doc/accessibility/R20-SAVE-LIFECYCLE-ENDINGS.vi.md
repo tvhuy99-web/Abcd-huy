@@ -90,7 +90,7 @@ root + tệp journal, giữ khả năng host-test như mẫu `AndroidSpeech`):
   (kiểm ở cả `verifyAndExtract` lẫn trước swap). Import không bao giờ thay
   được `data/gfx/lang`.
 
-**Nối UI trong `ReaderSetupActivity`** (mẫu sẵn có: nút thường +
+**Nối UI trong `BackupRestoreActivity`** (mẫu sẵn có: nút thường +
 `showStatus/showStatusText` qua TTS/TalkBack, việc nền bằng thread +
 `runOnUiThread` có kiểm `isFinishing()/isDestroyed()` và sequence như R03):
 mục mới trước nút Return gồm heading + 5 nút (`a11y_backup_export`,
@@ -134,18 +134,14 @@ phía C++/JNI — điểm mở ghi cho giai đoạn 2 quyết định, không t�
   ở resume/pause/touch-exploration và `receive()` loại callback theo epoch;
   `onPause` xóa snapshot/editor/`formRequest`/`editorRequest`/gesture timeout;
   `close()` gọi `handler.removeCallbacksAndMessages(null)`.
-- `ReaderPreferences`: trial cử chỉ chỉ ở bộ nhớ tĩnh + dọn khóa legacy khi
-  khởi tạo — không sống qua process death (tiếp nối R00.3).
-- `ReaderSetupActivity`: không đọc gì từ `savedInstanceState`; các view xác
-  nhận có `setSaveEnabled(false)`; nút "đã nghe mẫu" luôn khởi tạo disabled —
-  xác nhận giọng không sống qua recreate. `SplashScreen` chỉ khôi phục boolean
+- `SplashScreen` chỉ khôi phục boolean
   `reader_setup_opened` (cờ điều hướng, không phải xác nhận/lệnh).
 - Xoay màn hình: manifest có `configChanges` gồm
   `orientation|screenSize|...` cho Splash và game nên game không recreate khi
   xoay; Setup recreate rơi về trạng thái an toàn như trên.
 - Picker backup: toàn bộ trạng thái (`pendingBackupAction`,
   `stagedBackupReady`, sequence) chỉ ở bộ nhớ instance, không ghi
-  savedInstanceState/preferences; instance Setup mới gọi
+  savedInstanceState/preferences; instance `BackupRestoreActivity` mới gọi
   `recoverInterruptedSwap()` rồi `cancelStagedImport()` — staged import của
   instance đã chết không thể được khôi phục "hộ".
 
@@ -163,7 +159,7 @@ kế.
 **Giới hạn ghi rõ:** grep toàn cây Java cho `AudioFocus|requestAudioFocus`
 không có — lớp Java không tự giữ/thả audio focus; việc dừng khi khóa máy/
 cuộc gọi đi qua `onPause`/`onWindowFocusChanged` của Activity (controller
-dừng lời; Splash/Setup `onPause` cancel speech và `rescuePlayer.stop()`),
+dừng lời; Splash `onPause` cancel speech),
 còn focus của luồng TTS thuộc tiến trình engine TTS. Không bịa thêm cơ chế
 focus mới ở đợt này.
 
