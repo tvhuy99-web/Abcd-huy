@@ -1,5 +1,7 @@
 # R16 — Vùng, tự động hóa và quy tắc
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Giai đoạn 1 (chỉ viết mã, không build/test). Trước đợt này cả năm bề
 mặt đều có 0 điểm `a11y::`: `zone_manager_ui.cpp`, `study_zone_ui.cpp`,
 `safemode_ui.cpp`, `auto_pickup.cpp` và màn chọn vị trí

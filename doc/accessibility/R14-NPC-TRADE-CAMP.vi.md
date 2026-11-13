@@ -1,5 +1,7 @@
 # R14 — NPC, giao dịch, đồng đội và trại (giai đoạn 1, chỉ viết mã)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Trạng thái: **đã viết, chờ kiểm thử** (xem `REMAINING-CODE-BACKLOG.json`
 R14.1–R14.4): chưa build, chưa chạy test, chưa tạo APK. Đối chiếu bằng
 đọc mã/grep/git diff tại HEAD `fdd8dd81` cộng thay đổi của đợt này.

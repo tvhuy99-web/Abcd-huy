@@ -1,5 +1,7 @@
 # R19 — Kiến thức, trợ giúp và mọi cấu hình còn lại
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Phạm vi đợt này: kiến thức nhân vật (kỹ năng/proficiency/traits), trợ giúp,
 gán phím, và toàn bộ cấu hình còn lại (options/panels/color). Bảy tệp nguồn
 đã sửa: `src/player_display.cpp`, `src/proficiency_ui.cpp`, `src/help.cpp`,

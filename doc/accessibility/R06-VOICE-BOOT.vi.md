@@ -1,5 +1,7 @@
 # R06 — Giọng, khởi động và cài dữ liệu (giai đoạn 1, chỉ viết mã)
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Trạng thái: **đã viết, chờ kiểm thử** cho R06.1, R06.2, R06.4;
 R06.3 **mã đã viết và asset đã có thật**, với hai điểm mở ghi rõ ở
 mục 3 (giọng asset là eSpeak NG, `CLIP_WELCOME` chưa nối luồng).
