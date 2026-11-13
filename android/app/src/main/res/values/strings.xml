@@ -10,7 +10,6 @@
     <string name="accessibilityServicesMessage">Some touch accessibility services can affect game gestures. Keep your screen reader enabled while testing the voice setup. Gameplay narration is still being developed. Continue to use the existing game controls, or open accessibility and voice setup:\n%1$s</string>
     <string name="ignoreFalsePostives">Mark as false positive(s)</string>
     <string name="softwareRendering">Software rendering</string>
-    <string name="forceFullscreen">Force fullscreen</string>
     <string name="androidSystemUiMode">Android system bars</string>
     <string name="androidSystemUiModeSystemBars">Show system bars</string>
     <string name="androidSystemUiModeFullscreen">Fullscreen</string>
@@ -24,7 +23,6 @@
     <string name="settings">Settings</string>
     <string name="startGame">Start game</string>
     <string name="showHelp">Show help</string>
-    <string name="showAccessibilitySettings">Show accessibility settings menu</string>
     <string name="crashAlert">The game did not quit properly last time</string>
     <string name="crashMessage">The crash report located in ./config/crash.log may help developers troubleshoot program errors.</string>
     <string name="yes">Yes</string>
@@ -34,24 +32,9 @@
     <string name="unavailable">Unavailable</string>
     <string name="unavailableOption">The option you chose is not available.</string>
     <string name="a11yReaderSetup">Reader and voice settings</string>
-    <string name="a11yReaderSetupExplanation">The internal reader starts automatically when the game opens. Voice settings are optional. If speech is unavailable, keep TalkBack as a recovery option and select an installed Vietnamese voice.</string>
-    <string name="a11yTestVietnamese">Listen to selected voice</string>
-    <string name="a11yStopSpeech">Stop speech</string>
     <string name="a11yAndroidVoiceSettings">Open Android voice settings</string>
-    <string name="a11yAllowNetworkVoice">Allow a voice that needs internet. The sample text may be sent online by the selected speech engine.</string>
-    <string name="a11ySpeechRateLabel">Speech rate</string>
-    <string name="a11ySpeechRateValue">Speech rate: %1$s times normal</string>
-    <string name="a11yRetestAfterSettingsChange">Voice settings changed. Listen to the selected voice before saving your new choice.</string>
-    <string name="a11yReturnToStartup">Return to startup</string>
-    <string name="a11ySpeechNew">Reader starts automatically. You can change its voice here.</string>
     <string name="a11ySpeechInitializing">Loading voice.</string>
-    <string name="a11ySpeechReady">Voice ready.</string>
     <string name="a11ySpeechSample">Xin chào. Đây là câu thử giọng tiếng Việt của Cataclysm. Bạn có thể dừng lời đọc và quay lại bất cứ lúc nào.</string>
-    <string name="a11ySpeechPlaying">Playing voice sample.</string>
-    <string name="a11ySpeechFinished">Playback finished.</string>
-    <string name="a11ySpeechStopped">Speech stopped.</string>
-    <string name="a11ySpeechMissingVietnamese">The selected engine has no usable Vietnamese voice. Install or choose a Vietnamese voice in Android settings, then test again.</string>
-    <string name="a11ySpeechNetworkRequired">The selected voice needs internet. Choose an offline voice in Android settings, or explicitly allow a network voice for this test.</string>
     <string name="a11ySpeechFailed">Speech could not start or failed. Turn on TalkBack or choose another voice in Android settings, then try again.</string>
     <string name="a11ySettingsUnavailable">Android could not open settings. You can return to startup or open settings from your device.</string>
 
@@ -67,7 +50,6 @@
     <string name="a11yTtsRateValue">Speech rate: %1$s times</string>
     <string name="a11yTtsPitchValue">Pitch: %1$s times</string>
     <string name="a11yTtsVolumeValue">Volume: %1$d percent</string>
-    <string name="a11yTtsAllowNetwork">Allow an online voice. Spoken text may be sent to the voice provider.</string>
     <string name="a11yTtsLoading">Finding voices.</string>
     <string name="a11yTtsReady">Voice found. Test it before saving.</string>
     <string name="a11yTtsUnavailable">The selected voice is unavailable. Check the speech engine and language in Android settings.</string>
@@ -82,8 +64,6 @@
     <string name="a11yTtsSample">Listen to sample</string>
     <string name="a11yTtsSave">Save</string>
     <string name="a11yTtsVolumeTooLow">Volume is zero. Increase the volume before enabling spoken navigation.</string>
-    <string name="a11yTtsEnabledDraft">TTS selected. Test before saving.</string>
-    <string name="a11yTtsDisableWarning">TTS is off in this draft. Saving will silence the in-game reader. Keep TalkBack available to enable it again.</string>
 
     <!-- Consolidated spoken gameplay hub. -->
     <string name="a11yHubFavorites">Favorites</string>
@@ -128,7 +108,6 @@
     <string name="a11yHubEmpty">No available entries</string>
     <string name="a11yHubNoMessages">No recent messages</string>
     <string name="a11yHubTts">TTS settings</string>
-    <string name="a11yHubReaderSetup">Reader settings</string>
     <string name="a11yHubNoMatches">Search returned no matches</string>
 
     <!-- Configurable world shortcuts. -->
@@ -174,11 +153,7 @@
     <string name="a11yBindSaved">Assigned %1$s to %2$s.</string>
     <string name="a11yBindDisplaced">Command %1$s returned to default.</string>
     <string name="a11yBindRestored">Restored gesture for %1$s.</string>
-    <string name="a11yBindCurrent">Currently assigned: %1$s.</string>
-    <string name="a11yBindGuide">Hold an item to assign a gesture.</string>
     <string name="a11yBindUnavailable">Command unavailable.</string>
-    <string name="a11yBindMenuTitle">Select a gesture</string>
-    <string name="a11yBindTouchExploration">Android TalkBack may reserve some multi-finger gestures. Use the accessible on-screen controls if a gesture is intercepted.</string>
     <string name="a11ySoundSettingsTitle">Sound settings</string>
     <string name="a11yMusicEnabled">Background music</string>
     <string name="a11yMusicVolumeValue">Music volume: %1$d</string>
@@ -191,7 +166,6 @@
     <string name="a11yControlTextField">Text field</string>
     <string name="a11yControlText">Text</string>
     <string name="a11yGameSettingsTitle">Settings</string>
-    <string name="a11yGameSettingsExplanation">All existing game options remain in Options in the System menu. Voice, accessibility, and backup settings are below.</string>
     <string name="a11yAccessibilitySettingsTitle">Accessibility settings</string>
     <string name="a11yBackupRestoreTitle">Backup and restore</string>
     <string name="a11yWorldGraphics">Display world graphics</string>
@@ -215,7 +189,6 @@
     <string name="a11yContextConfirm">Confirm</string>
     <string name="a11yContextBack">Cancel or back</string>
     <string name="a11yContextConfirmUnavailable">No confirmation action here</string>
-    <string name="a11yGlobalGestureHelp">Menus: hold one finger for screen commands; tap two fingers once for details; swipe two fingers up to confirm, down to cancel or back. In number entry, swipe vertically to choose digits. On the world map, two-finger directional swipes still scan.</string>
     <string name="a11yNativeInputRangeError">Value must be between %1$s and %2$s.</string>
     <string name="a11yNativeInputInstructions">Edit with the Android keyboard. Use OK to save or Cancel to discard. You can turn TalkBack on or off yourself.</string>
     <string name="a11yCombatOn">Combat: one finger attacks straight or diagonally by bending a swipe. Two fingers move. Left-right reloads; right-left reads weapon.</string>
