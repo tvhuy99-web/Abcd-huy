@@ -11,7 +11,9 @@
 #include <memory>
 
 #include <algorithm>
+#if defined(__ANDROID__)
 #include <array>
+#endif
 #include <cmath>
 #include <cstdint>
 #include <cstdlib>
@@ -52,7 +54,9 @@
 #include "npc.h"
 #include "output.h"
 #include "options.h"
+#if defined(__ANDROID__)
 #include "overmap_types.h"
+#endif
 #include "overmapbuffer.h"
 #include "point.h"
 #include "ranged.h"

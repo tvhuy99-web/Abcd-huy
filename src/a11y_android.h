@@ -11,6 +11,8 @@
 
 #include "a11y_semantics.h"
 
+namespace a11y { struct context_token; }
+
 namespace a11y::android
 {
 // This mailbox is the only UI-thread entry. No gameplay access in JNI callbacks.

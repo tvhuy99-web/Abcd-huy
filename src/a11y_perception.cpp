@@ -13,16 +13,13 @@
 #include <unordered_set>
 #include <utility>
 #include "avatar.h"
-#include "catacharset.h"
 #include "creature.h"
 #include "creature_tracker.h"
 #include "coordinates.h"
 #include "dialogue.h"
 #include "field.h"
-#include "field_type.h"
 #include "flag.h"
 #include "item.h"
-#include "lightmap.h"
 #include "magic_enchantment.h"
 #include "map.h"
 #include "map_memory.h"
