@@ -1,5 +1,7 @@
 # Đóng gói APK ARM64 nhanh bằng thư viện native đã kiểm chứng
 
+> **GHI CHÚ PHIÊN BẢN (13/11/2026):** Đây là hồ sơ chuyên đề theo thời điểm viết, không tự động là chỉ dẫn cho `master` sau PR #7. Khi cử chỉ, menu, quyền đọc bản đồ hoặc CI khác, ưu tiên [đặc tả hiện hành](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [trạng thái](STATUS.md). **Không coi mã đã viết là nghiệm thu TalkBack trên máy thật.**
+
 ## Mục tiêu và giới hạn
 
 Workflow `.github/workflows/android-accessibility.yml` có hai đường:

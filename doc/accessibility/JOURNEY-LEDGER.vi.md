@@ -1,5 +1,7 @@
 # Sổ hành trình R01 — bản tóm tắt đọc cho người
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Ngày: 2026-10-23. Mục kế hoạch: R01.2 và R01.3 trong `REMAINING-CODE-PLAN.vi.md` bản 2.0.
 Bản máy đọc được đầy đủ (đường vào, trường/tham số, xác nhận/hủy, kết quả, quyền biết,
 adapter, file/hàm, test ID cho từng hành trình) là `JOURNEY-LEDGER.json` cùng thư mục.
