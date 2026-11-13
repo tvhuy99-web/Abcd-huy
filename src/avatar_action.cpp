@@ -1,4 +1,5 @@
 #include "avatar_action.h"
+#include "value_ptr.h"
 
 #include <algorithm>
 #include <climits>

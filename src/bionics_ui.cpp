@@ -1,4 +1,5 @@
 #include <algorithm>
+#include "a11y_semantics.h"
 #include <cstddef>
 #include <cstdint>
 #include <iterator>
