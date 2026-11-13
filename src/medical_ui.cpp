@@ -1,4 +1,7 @@
 #include <algorithm>
+#include "a11y_document.h"
+#include "a11y_semantics.h"
+#include <initializer_list>
 #include <cstdlib>
 #include <functional>
 #include <imgui/imgui.h>

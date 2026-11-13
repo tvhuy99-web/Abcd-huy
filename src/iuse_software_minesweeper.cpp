@@ -1,4 +1,8 @@
 #include "iuse_software_minesweeper.h"
+#include "a11y_semantics.h"
+#include <cstddef>
+#include <iterator>
+#include <utility>
 
 #include <algorithm>
 #include <array>

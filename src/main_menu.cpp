@@ -1,4 +1,6 @@
 #include "main_menu.h"
+#include "a11y_semantics.h"
+#include <system_error>
 #include "a11y_runtime.h"
 #include "a11y_android.h"
 

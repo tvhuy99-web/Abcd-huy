@@ -1,6 +1,7 @@
 #include "game.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "a11y_semantics.h"
 #include <map>
 #include <optional>
 #include <string>
