@@ -1,5 +1,7 @@
 # Mẫu báo lỗi — CDDA bản trợ năng trên Android
 
+> **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
+
 Dùng mẫu này cho mọi báo lỗi của bản trợ năng.
 
 Chép toàn bộ mẫu, điền vào các chỗ trong ngoặc vuông, rồi gửi kèm chẩn đoán đã nghe theo hướng dẫn trong `USER-GUIDE.vi.md`, mục 12.
