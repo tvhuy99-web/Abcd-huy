@@ -613,10 +613,14 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
 
     result_info = std::make_unique<recipe_result_info_cache>( *crafter );
 
-    // Build category list (non-hidden categories that have known recipes)
+    // Build only real crafting categories. CC_* is a wildcard/dummy
+    // category for nested recipe grouping and Favorites/Recent/Hidden,
+    // not a navigable main category. The 2026-11-12 reader log showed
+    // swipes from Weapons landing on its empty Favorites subcategory.
     crafting_cats.reserve( craft_cat_list.size() );
     for( const crafting_category &cat : craft_cat_list.get_all() ) {
-        if( !cat.is_hidden && !available_recipes->in_category( cat.id ).empty() ) {
+        if( !cat.is_hidden && !cat.is_wildcard &&
+            !available_recipes->in_category( cat.id ).empty() ) {
             crafting_cats.emplace_back( cat.id.str() );
         }
     }
@@ -2448,8 +2452,18 @@ void crafting_ui_impl::recalculate_recipes()
                 filter_recipes( *available_recipes, qry, *crafter, progress_callback );
             picking.insert( picking.end(), filtered_recipes.begin(), filtered_recipes.end() );
         } else if( reader_all_categories ) {
-            // Include all known/group recipes across every main category.
-            picking.insert( picking.end(), available_recipes->begin(), available_recipes->end() );
+            // Only aggregate real, visible crafting categories. The raw
+            // recipe_subset also contains CC_* wildcard nested-category
+            // definitions (not craftable recipes), which inflated the
+            // spoken All count to 1121 while visible categories held 812.
+            // Checking against crafting_cats keeps All and each main
+            // category consistent and excludes hidden camp-only recipes.
+            for( const recipe *entry : *available_recipes ) {
+                if( std::find( crafting_cats.begin(), crafting_cats.end(),
+                               entry->category.str() ) != crafting_cats.end() ) {
+                    picking.push_back( entry );
+                }
+            }
         } else {
             const std::pair<std::vector<const recipe *>, bool> result = recipes_from_cat(
                         *available_recipes,
