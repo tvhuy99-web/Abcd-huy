@@ -1,4 +1,5 @@
 #include "iuse_software_snake.h"
+#include "a11y_semantics.h"
 
 #include <cstddef>
 #include <iterator>

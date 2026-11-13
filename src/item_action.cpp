@@ -1,4 +1,5 @@
 #include "item_action.h"
+#include "enums.h"
 
 #include <algorithm>
 #include <functional>

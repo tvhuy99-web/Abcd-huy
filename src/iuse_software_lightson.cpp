@@ -1,4 +1,5 @@
 #include "iuse_software_lightson.h"
+#include "a11y_semantics.h"
 
 #include "a11y_document.h"
 #include "a11y_input.h"

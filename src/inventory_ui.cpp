@@ -1,4 +1,7 @@
 #include "inventory_ui.h"
+#include "a11y_semantics.h"
+#include "stomach.h"
+#include "value_ptr.h"
 
 #include <chrono>
 #include <optional>

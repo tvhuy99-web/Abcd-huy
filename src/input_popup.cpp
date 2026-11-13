@@ -1,4 +1,5 @@
 #include "input_popup.h"
+#include "a11y_semantics.h"
 #include "a11y_runtime.h"
 #include "a11y_android.h"
 #include "a11y_quantity_selection.h"

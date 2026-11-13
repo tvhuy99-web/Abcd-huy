@@ -1,6 +1,11 @@
 #include "game.h" // IWYU pragma: associated
 
 #include <algorithm>
+#include "a11y_semantics.h"
+#include "cata_scope_helpers.h"
+#include "line.h"
+#include "ret_val.h"
+#include <exception>
 #include <chrono>
 #include <cmath>
 #include <initializer_list>
