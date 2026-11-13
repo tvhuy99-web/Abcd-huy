@@ -19,7 +19,7 @@ import java.util.Objects;
 
 /**
  * Dedicated, self-voiced TTS settings. All edits are drafts until Save.
- * A successful preview is required before enabling a changed voice.
+ * Voice preview is optional and never blocks saving a configuration.
  */
 public final class TtsSettingsActivity extends Activity {
     private final ArrayList<AndroidSpeech.EngineOption> engines = new ArrayList<>();
@@ -77,7 +77,9 @@ public final class TtsSettingsActivity extends Activity {
             }
 
             @Override
-            public void goBack() { TtsSettingsActivity.this.finish(); }
+            public void goBack() {
+                if (!surface.dismissChoiceList()) { TtsSettingsActivity.this.finish(); }
+            }
 
             @Override
             public boolean leftHandedNavigation() {
@@ -436,10 +438,6 @@ public final class TtsSettingsActivity extends Activity {
             announce(getString(R.string.a11yTtsVolumeTooLow));
             return;
         }
-        if (enabled.isChecked() && !previewPassed) {
-            announce(getString(R.string.a11yTtsTestFirst));
-            return;
-        }
         new ReaderPreferences(this).saveTtsSettings(enabled.isChecked(), engineName,
                 voiceName, languageTag, allowNetwork, selectedRate(),
                 selectedPitch(), selectedVolume());
@@ -450,7 +448,7 @@ public final class TtsSettingsActivity extends Activity {
     private boolean usesTalkBack() {
         AccessibilityManager manager = (AccessibilityManager)
                 getSystemService(ACCESSIBILITY_SERVICE);
-        return manager != null && manager.isEnabled();
+        return manager != null && manager.isTouchExplorationEnabled();
     }
 
     private void speakLocal(String text) {
@@ -467,6 +465,11 @@ public final class TtsSettingsActivity extends Activity {
         } else {
             speakLocal(message);
         }
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (!surface.dismissChoiceList()) { super.onBackPressed(); }
     }
 
     @Override

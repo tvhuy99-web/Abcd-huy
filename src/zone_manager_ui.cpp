@@ -90,7 +90,8 @@ void zone_manager_ui::zones_manager_shortcuts( const catacurses::window &w_info,
 
     std::vector<std::string> keybinding_tips;
     std::vector<std::string> act_descs;
-    std::string show_zones_text = show_all_zones ? "Showing all zones" : "Hiding distant zones";
+    const std::string show_zones_text = show_all_zones ? _( "Showing all zones" ) :
+                                        _( "Hiding distant zones" );
     std::string zone_faction = string_format( _( "Shown faction: %s" ), faction.str() );
     const auto add_action_desc = [&]( const std::string & act, const std::string & txt ) {
         act_descs.emplace_back( ctxt.get_desc( act, txt, input_context::allow_all_keys ) );
@@ -109,7 +110,7 @@ void zone_manager_ui::zones_manager_shortcuts( const catacurses::window &w_info,
     add_action_desc( "MOVE_ZONE_UP", pgettext( "zones manager", "Move up" ) );
     add_action_desc( "MOVE_ZONE_DOWN", pgettext( "zones manager", "Move down" ) );
     add_action_desc( "CONFIRM", pgettext( "zones manager", "Edit" ) );
-    add_action_desc( "SHOW_ALL_ZONES", pgettext( "zones manager", show_zones_text.c_str() ) );
+    add_action_desc( "SHOW_ALL_ZONES", show_zones_text );
     add_action_desc( "SHOW_ZONE_ON_MAP", pgettext( "zones manager", "Map" ) );
     if( debug_mode ) {
         add_action_desc( "CHANGE_FACTION", pgettext( "zones manager", zone_faction.c_str() ) );
@@ -434,7 +435,7 @@ void zone_manager_ui::display_zone_manager()
                                 { "personal", _( "Personal" ), "" },
                                 { "vehicle", _( "Vehicle" ), "" },
                                 { "direction", _( "Direction" ), "" },
-                                { "distance", _( "Distance" ), "tiles" },
+                                { "distance", _( "Distance" ), _( "tiles" ) },
                                 { "displayed", _( "Displayed" ), "" }
                               };
         snapshot.tables.push_back( zones_table );

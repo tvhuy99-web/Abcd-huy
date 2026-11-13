@@ -10,6 +10,9 @@
 #include <limits>
 #include <map>
 #include <memory>
+#if defined(__ANDROID__)
+#include <mutex>
+#endif
 #include <optional>
 #include <ostream>
 #include <set>
@@ -480,6 +483,14 @@ void mapgen_function_builtin::generate( mapgendata &mgd )
 
 namespace
 {
+#if defined(__ANDROID__)
+bool &android_defer_oter_setup()
+{
+    static bool enabled = false;
+    return enabled;
+}
+#endif
+
 class mapgen_basic_container
 {
     private:
@@ -487,6 +498,25 @@ class mapgen_basic_container
         //mapgens that need to be recalculated with a function when spawned
         std::vector<std::shared_ptr<mapgen_function>> mapgens_to_recalc_;
         weighted_int_list<std::shared_ptr<mapgen_function>> weights_;
+#if defined(__ANDROID__)
+        mutable std::once_flag first_use;
+
+    public:
+        void ensure_prepared() const {
+            if( !android_defer_oter_setup() ) {
+                return;
+            }
+            // Mapgen setup uses shared JSON defer state, so serialize on-demand
+            // preparation even if other mapgen calls happen on worker threads.
+            static std::recursive_mutex setup_mutex;
+            std::lock_guard<std::recursive_mutex> guard( setup_mutex );
+            std::call_once( first_use, [this]() {
+                mapgen_basic_container &value = const_cast<mapgen_basic_container &>( *this );
+                value.setup();
+                value.finalize_parameters();
+            } );
+        }
+#endif
 
     public:
         int add( const std::shared_ptr<mapgen_function> &ptr ) {
@@ -687,6 +717,9 @@ class mapgen_factory
             // all the sources for them upon each loop.
             const std::set<std::string> usages = get_usages();
             for( const std::pair<const std::string, mapgen_basic_container> &omw : mapgens_ ) {
+#if defined(__ANDROID__)
+                omw.second.ensure_prepared();
+#endif
                 omw.second.check_consistency();
                 if( usages.count( omw.first ) == 0 ) {
                     debugmsg( "Mapgen %s is not used by anything!", omw.first );
@@ -706,6 +739,9 @@ class mapgen_factory
             if( it == mapgens_.end() ) {
                 return nullptr;
             } else {
+#if defined(__ANDROID__)
+                it->second.ensure_prepared();
+#endif
                 return &it->second;
             }
         }
@@ -719,6 +755,9 @@ class mapgen_factory
             if( iter == mapgens_.end() ) {
                 return false;
             }
+#if defined(__ANDROID__)
+            iter->second.ensure_prepared();
+#endif
             return iter->second.generate( dat, hardcoded_weight );
         }
 
@@ -727,6 +766,9 @@ class mapgen_factory
             if( iter == mapgens_.end() ) {
                 return mapgen_parameters();
             }
+#if defined(__ANDROID__)
+            iter->second.ensure_prepared();
+#endif
             return iter->second.get_mapgen_params( mapgen_parameter_scope::overmap_special,
                                                    // NOLINTNEXTLINE(cata-translate-string-literal)
                                                    string_format( "map special %s", key ) );
@@ -735,6 +777,13 @@ class mapgen_factory
 } // namespace
 
 static mapgen_factory oter_mapgen;
+
+#if defined(__ANDROID__)
+void set_android_deferred_oter_mapgen_setup( bool enabled )
+{
+    android_defer_oter_setup() = enabled;
+}
+#endif
 
 std::map<nested_mapgen_id, nested_mapgen> nested_mapgens;
 std::map<update_mapgen_id, update_mapgen> update_mapgens;
@@ -830,7 +879,15 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
 #endif
     };
 
+#if defined(__ANDROID__)
+    if( !android_defer_oter_setup() ) {
+        oter_mapgen.setup();
+    } else {
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_setup_deferred";
+    }
+#else
     oter_mapgen.setup();
+#endif
     profile_groups( "nested_setup", nested_mapgens, []( const auto &ptr ) {
         ptr.first->setup();
     } );
@@ -839,7 +896,15 @@ void calculate_mapgen_weights()   // TODO: rename as it runs jsonfunction setup 
     } );
 
     // A second pass finalizes the parameters after all mapgens are set up.
+#if defined(__ANDROID__)
+    if( !android_defer_oter_setup() ) {
+        oter_mapgen.finalize_parameters();
+    } else {
+        DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=mapgen step=oter_parameters_deferred";
+    }
+#else
     oter_mapgen.finalize_parameters();
+#endif
     profile_groups( "nested_parameters", nested_mapgens, []( const auto &ptr ) {
         ptr.first->finalize_parameters();
     } );

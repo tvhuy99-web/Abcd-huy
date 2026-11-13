@@ -1,4 +1,4 @@
-"""Otopack download stays outside the APK, is atomic and removes temporary cues."""
+"""Optional Bl@ck Edition download stays outside the APK and is atomic."""
 from pathlib import Path
 import unittest
 
@@ -13,13 +13,13 @@ class OnDemandSoundpack(unittest.TestCase):
         installer = (JAVA / "OptionalSoundpackInstaller.java").read_text(encoding="utf-8")
         self.assertIn("android.permission.INTERNET", manifest)
         self.assertIn("android.permission.ACCESS_NETWORK_STATE", manifest)
-        self.assertIn("https://codeload.github.com/Kenan2000/Otopack-Mods-Updates/zip/", installer)
-        self.assertIn('SOURCE_COMMIT = "508da9f0e38ec996f14c930c58848024680ca2be"', installer)
+        self.assertIn("https://codeload.github.com/chronicpayne/Bl-ck-Edition-Soundpack/zip/", installer)
+        self.assertIn('SOURCE_COMMIT = "061d784e5e98ad4e1fc847f22b5fd8a389e2954d"', installer)
 
     def test_installer_is_atomic_cancellable_and_defensive(self):
         s = (JAVA / "OptionalSoundpackInstaller.java").read_text(encoding="utf-8")
         self.assertIn('new File(gameRoot, "data/sound/" + PACK_DIRECTORY)', s)
-        self.assertIn('".reader_otopack_staging"', s)
+        self.assertIn('".reader_black_edition_staging"', s)
         self.assertIn('staging.renameTo(destination)', s)
         self.assertIn("if (!committed) { removeStaging(staging); }", s)
         self.assertIn("if (destination.exists())", s)
@@ -44,12 +44,12 @@ class OnDemandSoundpack(unittest.TestCase):
         self.assertIn('showBootstrapContent(content);', splash)
         self.assertIn('R.string.a11ySoundpackPlayWithout', splash)
 
-    def test_native_selects_otopack_and_preserves_other_choices(self):
+    def test_native_selects_black_edition_and_preserves_other_choices(self):
         options = (ROOT / "src/options.cpp").read_text(encoding="utf-8")
-        self.assertIn('option.first == "otopack"', options)
-        self.assertIn('has_otopack ? "otopack"', options)
-        self.assertIn('SOUNDPACKS.find( "otopack" )', options)
-        self.assertIn('get_option( "SOUNDPACKS" ).setValue( "otopack" )', options)
+        self.assertIn('option.first == "Bl@ck Edition soundpack"', options)
+        self.assertIn('has_black_edition ? "Bl@ck Edition soundpack"', options)
+        self.assertIn('SOUNDPACKS.find( "Bl@ck Edition soundpack" )', options)
+        self.assertIn('get_option( "SOUNDPACKS" ).setValue( "Bl@ck Edition soundpack" )', options)
         self.assertIn('get_option( "SOUNDPACKS" ).getValue() == "basic"', options)
 
     def test_temporary_step_and_automatic_reader_sounds_are_gone(self):

@@ -1,14 +1,18 @@
 #include "a11y_runtime.h"
 
 #include <algorithm>
+#include <chrono>
 #include <memory>
 #include <utility>
 #include <vector>
 
 #include "a11y_android.h"
 #include "a11y_context.h"
+#include "a11y_input.h"
+#include "input_context.h"
 #include "a11y_outcome.h"
 #include "a11y_world.h"
+#include "a11y_world_input_gate.h"
 
 namespace a11y
 {
@@ -33,6 +37,8 @@ std::vector<std::unique_ptr<screen_data>> screens;
 // activate_pending_scopes() to give already-open screens a reader adapter
 // when the reader becomes available (R03.3). Game thread only.
 std::vector<screen_scope *> live_scopes;
+// Destruct before screens and live_scopes at process exit.
+std::unique_ptr<screen_scope> retained_world_scope;
 std::uint64_t seen_epoch = 0;
 
 void publish_current()
@@ -54,9 +60,12 @@ bool suspended() { return !enabled() || android::suspended(); }
 
 void replace_game_session()
 {
+    android::reset_travel_control();
     reset_status_monitor();
     // The previous character's last action outcome must not carry over.
     reset_action_outcomes();
+    retained_world_scope.reset();
+    invalidate_command_snapshot_cache();
     contexts.invalidate_session();
     android::clear();
     for( auto &screen : screens ) {
@@ -75,6 +84,7 @@ void synchronize_lifecycle()
     if( current != seen_epoch ) {
         seen_epoch = current;
         reset_status_monitor();
+        invalidate_command_snapshot_cache();
         // Force a generation boundary even when two Activity callbacks report
         // the same state. Tokens from an old UI owner must never become valid.
         contexts.set_suspended( true );
@@ -100,6 +110,18 @@ bool bound_to( const void *input_owner )
     return enabled() && !screens.empty() && screens.back()->input_owner == input_owner;
 }
 
+void set_world_input_ready( const void *input_owner, const bool ready )
+{
+    synchronize_lifecycle();
+    if( ready && enabled() && !suspended() && !screens.empty() &&
+        screens.back()->input_owner == input_owner &&
+        screens.back()->category == "DEFAULTMODE" ) {
+        android::set_world_step_ready( contexts.active_token(), true );
+    } else {
+        android::set_world_step_ready( std::nullopt, false );
+    }
+}
+
 screen_scope::screen_scope( const void *input_owner, std::string category,
                             intent_handler handler )
     : owner( input_owner ), screen_category( std::move( category ) ),
@@ -115,6 +137,9 @@ void screen_scope::activate()
     if( frame != 0 || !enabled() ) {
         return;
     }
+    if( screen_category != "DEFAULTMODE" ) {
+        invalidate_command_snapshot_cache();
+    }
     frame = contexts.enter( "semantic-screen", screen_category );
     auto screen = std::make_unique<screen_data>();
     screen->frame = frame;
@@ -123,6 +148,21 @@ void screen_scope::activate()
     screen->handler = std::move( intent_callback );
     screens.push_back( std::move( screen ) );
     android::clear();
+}
+
+void screen_scope::rebind( const void *input_owner, intent_handler handler )
+{
+    owner = input_owner;
+    if( frame == 0 ) {
+        intent_callback = std::move( handler );
+        return;
+    }
+    const auto found = std::find_if( screens.begin(), screens.end(),
+    [this]( const std::unique_ptr<screen_data> &s ) { return s->frame == frame; } );
+    if( found != screens.end() ) {
+        ( *found )->input_owner = input_owner;
+        ( *found )->handler = std::move( handler );
+    }
 }
 
 screen_scope::~screen_scope()
@@ -148,6 +188,26 @@ screen_scope::~screen_scope()
             ++screens.back()->revision;
         }
         publish_current();
+    }
+}
+
+screen_scope &bind_world_screen( const void *input_owner, intent_handler handler )
+{
+    if( !retained_world_scope ) {
+        retained_world_scope = std::make_unique<screen_scope>(
+                                   input_owner, "DEFAULTMODE", std::move( handler ) );
+    } else {
+        retained_world_scope->rebind( input_owner, std::move( handler ) );
+    }
+    return *retained_world_scope;
+}
+
+void unbind_world_screen()
+{
+    if( retained_world_scope ) {
+        // The previous turn's lambda contains local references; clear it
+        // before the owning input_context leaves the stack.
+        retained_world_scope->rebind( nullptr, {} );
     }
 }
 
@@ -235,12 +295,43 @@ std::optional<std::string> poll_input( const void *input_owner )
     }
     while( auto intent = android::take() ) {
         screen_data &screen = *screens.back();
-        if( !contexts.accepts( intent->token ) || intent->revision != screen.revision ||
-            intent->request <= screen.last_request ) {
+        // A normal walking swipe remains an input command as world map
+        // descriptions advance. A previous revision is valid for a live
+        // cardinal step, not for menu entries or any other semantic action.
+        // The context token still rejects all input across modal, session,
+        // lifecycle and foreground transitions, and request IDs are strictly
+        // monotonic. Recheck the native walking permission for every step.
+        const bool world_walk = live_world_walk_command( screen.snapshot, *intent );
+        // A focus move is read-only. Its node and "focus" permission are
+        // re-resolved below against the *current* snapshot, so an unrelated
+        // sidebar or list redraw must not make swiping sound like a failed
+        // item selection. Mutations (activate/set_value/etc.) still require
+        // an exact revision; no stale user action is silently replayed.
+        const bool live_read_only_focus = intent->action == "focus" &&
+                                          intent->value.empty() && intent->revision > 0 &&
+                                          intent->revision <= screen.revision;
+        const bool valid_token = contexts.accepts( intent->token );
+        const bool valid_revision = intent->revision == screen.revision || world_walk ||
+                                    live_read_only_focus;
+        const bool valid_request = intent->request > screen.last_request;
+        if( !valid_token || !valid_revision || !valid_request ) {
             android::status( "stale", &*intent );
             continue;
         }
         screen.last_request = intent->request;
+#if defined(__ANDROID__)
+        if( world_walk && android::performance_profiling_enabled() ) {
+            const auto now_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now().time_since_epoch() ).count();
+            const std::uint64_t wait_ms =
+                intent->received_at_ms > 0 &&
+                now_ms >= static_cast<std::int64_t>( intent->received_at_ms ) ?
+                static_cast<std::uint64_t>( now_ms ) - intent->received_at_ms : 0;
+            android::diagnostic_event( "WORLD_INPUT_TIMING",
+                    "jni_to_poll_ms=" + std::to_string( wait_ms ) +
+                    " revision_lag=" + std::to_string( screen.revision - intent->revision ) );
+        }
+#endif
         // Only three actions may carry a value at all (R03.1). Every other
         // action is a plain command on its node; a value smuggled into one
         // (stale editor callback, hand-crafted intent) is rejected before
@@ -281,7 +372,7 @@ std::optional<std::string> poll_input( const void *input_owner )
                 }
                 continue;
             }
-            if( intent->action != "focus" && !node->enabled ) {
+            if( intent->action != "focus" && intent->action != "read_detail" && !node->enabled ) {
                 android::status( "disabled", &*intent );
                 continue;
             }
@@ -301,6 +392,18 @@ std::optional<std::string> poll_input( const void *input_owner )
             if( auto action = screen.handler( *intent ) ) {
                 return action;
             }
+        }
+        // All reader adapters share a final Back path. A screen may handle
+        // cancel itself (for an inner page), but a missing custom cancel
+        // must not trap the user. Only a QUIT/CANCEL action actually
+        // registered by this owning input_context can be synthesized.
+        // Mandatory non-cancellable dialogs have no such action.
+        if( intent->action == "cancel" ) {
+            const input_context &context = *static_cast<const input_context *>( input_owner );
+            if( auto action = registered_intent( context, *intent ) ) {
+                return action;
+            }
+            android::status( "unsupported", &*intent );
         }
     }
     return std::nullopt;

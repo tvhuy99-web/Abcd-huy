@@ -7,7 +7,10 @@
 #include <unordered_set>
 
 #include "activity_actor_definitions.h"
+#include "a11y_android.h"
+#include "a11y_item_text.h"
 #include "a11y_input.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -76,6 +79,7 @@
 #include <algorithm>
 #include <iterator>
 #include <limits>
+#include <list>
 #include <map>
 #include <numeric>
 #include <set>
@@ -3564,6 +3568,16 @@ class inventory_selector::reader_session
                 return handle( intent );
             } ) {
             owner.active_reader = this;
+            context.register_action( "A11Y_PICK_POCKET_ITEM",
+                                     to_translation( "Open contained item actions" ) );
+        }
+
+        // The ordinary inventory loop consumes this validated item location,
+        // then opens the exact same inventory_item_menu as an ordinary row.
+        item_location take_contained_item() {
+            item_location selected = std::move( pending_contained_item );
+            pending_contained_item = item_location();
+            return selected;
         }
 
         ~reader_session() {
@@ -3575,6 +3589,12 @@ class inventory_selector::reader_session
                 return;
             }
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( context, owner.title );
+            // Internal reader selection is not a displayed native command.
+            snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
+            []( const a11y::semantic_node & node ) {
+                return node.id == "A11Y_PICK_POCKET_ITEM";
+            } ), snapshot.nodes.end() );
+            contained_item_bindings.clear();
             // R14.2 trade hook (trade_selector sessions only; every other
             // selector keeps the plain command snapshot). The trade actions
             // are registered on _ctxt_trade in the trade_selector
@@ -3590,6 +3610,10 @@ class inventory_selector::reader_session
             const trade_preset *trade_pricing =
                 dynamic_cast<const trade_preset *>( &owner.preset );
             const bool pickup_mode = dynamic_cast<const pickup_selector *>( &owner ) != nullptr;
+            const inventory_pick_selector *pick_owner =
+                dynamic_cast<const inventory_pick_selector *>( &owner );
+            const bool pocket_item_actions = pick_owner != nullptr &&
+                                             pick_owner->open_contained_item_menu;
             const bool drop_mode = dynamic_cast<const inventory_drop_selector *>( &owner ) != nullptr;
             const bool insert_mode = dynamic_cast<const inventory_insert_selector *>( &owner ) != nullptr;
             const bool compare_mode = dynamic_cast<const inventory_compare_selector *>( &owner ) != nullptr;
@@ -3695,7 +3719,7 @@ class inventory_selector::reader_session
                         return b.column == column && b.location == location;
                     } );
                     if( binding == bindings.end() ) {
-                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ), std::nullopt } );
+                        bindings.push_back( { column, location, "item:" + std::to_string( ++serial ) } );
                         binding = std::prev( bindings.end() );
                     }
                     entry->cache_denial( owner.preset );
@@ -3704,10 +3728,68 @@ class inventory_selector::reader_session
                     node.id = binding->id;
                     node.role = activation == "TOGGLE_ENTRY" ? "checkbox" : "button";
                     node.label = remove_color_tags( cells.empty() ? location->display_name() : cells.front() );
-                    node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
-                                               std::to_string( entry->chosen_count ),
-                                               std::to_string( entry->get_available_count() ) );
+                    // The game uses symbolic durability bars ("++") and a
+                    // superscript plus for pickup allow/deny rules. Keep the
+                    // real item unchanged; translate these visual markers
+                    // into meaningful detail instead of reading punctuation.
+                    const std::string durability_bar =
+                        remove_color_tags( location->durability_indicator() );
+                    bool durability_marker_removed = false;
+                    if( !durability_bar.empty() ) {
+                        const std::size_t mark = node.label.find( durability_bar );
+                        // Item stacks may put the count before the caption.
+                        // Do not delete a meaningful plus in an item name.
+                        if( mark != std::string::npos && ( mark == 0 ||
+                            ( mark < 9 && node.label[mark - 1] == ' ' ) ) ) {
+                            node.label.erase( mark, durability_bar.size() );
+                            durability_marker_removed = true;
+                        }
+                    }
+                    const std::string rules_marker = "⁺";
+                    bool pickup_rule_marker_removed = false;
+                    for( std::size_t mark = node.label.find( rules_marker );
+                         mark != std::string::npos;
+                         mark = node.label.find( rules_marker ) ) {
+                        node.label.erase( mark, rules_marker.size() );
+                        pickup_rule_marker_removed = true;
+                    }
+                    // Remove ordinary and non-breaking spaces left by a
+                    // deleted symbol, not the spacing between real words.
+                    for( std::size_t n = 0; n + 1 < node.label.size(); ) {
+                        if( node.label[n] == ' ' && node.label[n + 1] == ' ' ) {
+                            node.label.erase( n, 1 );
+                        } else {
+                            ++n;
+                        }
+                    }
+                    while( !node.label.empty() && ( node.label.front() == ' ' ||
+                           node.label.front() == '\t' ) ) {
+                        node.label.erase( 0, 1 );
+                    }
+                    const std::string nbsp = "\xC2\xA0";
+                    if( node.label.rfind( nbsp, 0 ) == 0 ) {
+                        node.label.erase( 0, nbsp.size() );
+                    }
+                    // A plain inventory selection opens the item's action menu;
+                    // it does not mark an amount. Do not say "Selected: 0"
+                    // in this mode. Multi-select pickup/drop screens still
+                    // need their selected and available quantity announced.
+                    if( activation == "TOGGLE_ENTRY" ) {
+                        node.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
+                                                   std::to_string( entry->chosen_count ),
+                                                   std::to_string( entry->get_available_count() ) );
+                    }
                     node.detail = location.describe( &owner.u );
+                    if( durability_marker_removed ) {
+                        node.detail += "\n" + std::string(
+                                           location->damage() < 0 ? _( "Reinforced item." ) :
+                                           location->damage() > 0 || location->degradation() > 0 ?
+                                           _( "Item shows wear or damage." ) :
+                                           _( "Item condition intact." ) );
+                    }
+                    if( pickup_rule_marker_removed ) {
+                        node.detail += "\n" + std::string( _( "Pickup allow or deny rule marker." ) );
+                    }
                     // Physical characteristics and equipment state for every
                     // inventory screen, without changing its selection rules.
                     node.detail += "\n" + string_format(
@@ -3816,36 +3898,25 @@ class inventory_selector::reader_session
                         snapshot.focus = node.id;
                     }
                     if( quantity_form ) {
-                        // R09.1 quantity form (R02.3) for multi-select
-                        // sessions: the applied value is chosen_count, the
-                        // domain is 0..get_available_count() with step 1.
-                        // "set_value" only stores a draft in the binding;
-                        // chosen_count changes solely through "apply" below.
-                        // CONFIRM sessions get no form: their count lives in
-                        // the caller's number popup.
-                        node.field_type = "int";
-                        node.has_field_range = true;
-                        node.field_min = 0.0;
-                        node.field_max = static_cast<double>( entry->get_available_count() );
-                        node.field_step = 1.0;
-                        node.applied_value = std::to_string( entry->chosen_count );
-                        node.actions = { "focus", "activate", "set_value", "apply", "cancel_draft" };
-                        if( binding->draft.has_value() ) {
-                            long long draft_value = 0;
-                            const long long available =
-                                static_cast<long long>( entry->get_available_count() );
-                            if( parse_count( *binding->draft, draft_value ) && draft_value >= 0 &&
-                                draft_value <= available ) {
-                                node.has_draft = true;
-                                node.draft_value = *binding->draft;
-                            } else {
-                                // The available count shrank under the
-                                // draft: drop it instead of publishing an
-                                // out-of-domain draft, which snapshot
-                                // validation would reject wholesale.
-                                binding->draft.reset();
-                            }
+                        // A single unit is an immediate checkbox. Only
+                        // stacks larger than one need a quantity chooser.
+                        const int available = entry->get_available_count();
+                        if( available > 1 ) {
+                            node.field_type = "int";
+                            node.has_field_range = true;
+                            node.field_min = 0.0;
+                            node.field_max = static_cast<double>( available );
+                            node.field_step = 1.0;
+                            node.applied_value = std::to_string( entry->chosen_count );
+                            // One completed number commits the selection.
+                            // Global CONFIRM performs the eventual item
+                            // transfer, never the number picker.
+                            node.actions = { "focus", "activate", "set_value", "read_detail" };
+                        } else {
+                            node.actions = { "focus", "activate", "read_detail" };
                         }
+                    } else {
+                        node.actions = { "focus", "activate", "read_detail" };
                     }
                     rows.push_back( std::move( node ) );
                     published.push_back( { entry, location } );
@@ -3942,14 +4013,36 @@ class inventory_selector::reader_session
                     rows[i].parent_id = rows[parent_row[i]].id;
                 }
             }
-            // R09.2 pocket nodes: one read-only "status" child per container
-            // pocket of a published item. A sealed pocket reports only that
-            // it is sealed: its contents are never listed or counted.
+            // R09.2 pocket statuses stay readable; pickup gains explicit,
+            // locally staged pocket-item rows under each accessible pocket.
+            // A user must long-press the container to enter this list.
+            pocket_selections.clear();
             std::vector<std::vector<a11y::semantic_node>> pockets_of( item_rows );
             std::vector<std::size_t> published_children( item_rows, 0 );
             for( std::size_t i = 0; i < item_rows; ++i ) {
                 if( tree_depth[i] > 0 ) {
                     ++published_children[parent_row[i]];
+                }
+            }
+            // Index direct child entries once per redraw instead of scanning
+            // every inventory column again for every pocket. Large backpacks
+            // and nearby pickup lists can contain hundreds of entries.
+            struct candidate_pocket_entry {
+                inventory_column *column;
+                inventory_entry *entry;
+            };
+            std::unordered_map<const item *, std::vector<candidate_pocket_entry>> children_by_parent;
+            if( pickup_mode && quantity_form ) {
+                for( inventory_column *column : owner.columns ) {
+                    for( inventory_entry *entry : column->get_entries( return_item, true ) ) {
+                        const item_location &location = entry->any_item();
+                        if( location && location.has_parent() ) {
+                            const item *parent = location.parent_item().get_item();
+                            if( parent != nullptr ) {
+                                children_by_parent[parent].push_back( { column, entry } );
+                            }
+                        }
+                    }
                 }
             }
             for( std::size_t i = 0; i < item_rows; ++i ) {
@@ -4018,7 +4111,174 @@ class inventory_selector::reader_session
                         pocket_node.depth = tree_depth[i] + 1;
                         ++published_children[i];
                     }
-                    pockets_of[i].push_back( std::move( pocket_node ) );
+                    // Accessible picker items are separate aliases of native inventory
+                    // rows, not new game objects. Only direct, unsealed contents
+                    // that the current pickup selector already knows may be selected.
+                    // The entire pocket selection is committed in one native intent;
+                    // closing the reader sub-list without Confirm changes nothing.
+                    if( pickup_mode && quantity_form && !pocket->sealed() &&
+                        pocket_node.depth >= 0 && pocket_node.depth < a11y::max_tree_depth ) {
+                        pocket_selection_binding pocket_binding;
+                        pocket_binding.id = pocket_node.id;
+                        pocket_binding.container = published[i].location;
+                        pocket_binding.pocket_index = pi;
+                        const std::list<const item *> contents = pocket->all_items_top();
+                        std::vector<item_location> seen_entries;
+                        std::vector<a11y::semantic_node> pocket_items;
+                        const auto candidates = children_by_parent.find( held );
+                        if( candidates != children_by_parent.end() ) {
+                            for( const candidate_pocket_entry &candidate : candidates->second ) {
+                                inventory_column *column = candidate.column;
+                                inventory_entry *entry = candidate.entry;
+                                const item_location &child = entry->any_item();
+                                if( !child || std::find( seen_entries.begin(), seen_entries.end(), child ) !=
+                                    seen_entries.end() ) {
+                                    continue;
+                                }
+                                bool one_inside = false;
+                                bool all_inside = true;
+                                for( const item_location &location : entry->locations ) {
+                                    const item *contained = location.get_item();
+                                    const bool inside = contained != nullptr &&
+                                                        location.parent_item() == published[i].location &&
+                                                        std::find( contents.begin(), contents.end(), contained ) != contents.end();
+                                    one_inside |= inside;
+                                    all_inside &= inside;
+                                }
+                                if( !one_inside ) {
+                                    continue;
+                                }
+                                seen_entries.push_back( child );
+                                entry->cache_denial( owner.preset );
+                                a11y::semantic_node contained;
+                                contained.id = "pocket-entry:" + pocket_binding.id + ":" +
+                                               std::to_string( pocket_items.size() );
+                                contained.role = "checkbox";
+                                contained.label = remove_color_tags( child->display_name(
+                                                                        entry->get_stack_size() ) );
+                                contained.value = string_format( _( "Selected: %1$s. Available: %2$s." ),
+                                                                 std::to_string( entry->chosen_count ),
+                                                                 std::to_string( entry->get_available_count() ) );
+                                contained.detail = remove_color_tags( child.describe( &owner.u ) );
+                                contained.enabled = all_inside && entry->is_selectable() &&
+                                                    entry->get_available_count() > 0;
+                                contained.disabled_reason = !all_inside ?
+                                                            _( "This stack spans multiple pockets. Select it in the main item list." ) :
+                                                            remove_color_tags( entry->denial.value_or( "" ) );
+                                contained.checked = entry->chosen_count > 0;
+                                contained.actions = { "focus", "read_detail" };
+                                contained.parent_id = pocket_binding.id;
+                                contained.depth = pocket_node.depth + 1;
+                                contained.field_type = "int";
+                                contained.has_field_range = true;
+                                contained.field_min = 0;
+                                contained.field_max = entry->get_available_count();
+                                contained.field_step = 1;
+                                contained.applied_value = std::to_string( entry->chosen_count );
+                                pocket_binding.items.push_back( { contained.id, column, child } );
+                                pocket_items.push_back( std::move( contained ) );
+                            }
+                        }
+                        pocket_node.field_type = "text";
+                        // A numeric source value distinguishes a truly empty
+                        // pocket from a populated pocket whose items are not
+                        // selectable in this inventory workflow.
+                        pocket_node.applied_value = std::to_string( pocket->size() );
+                        pocket_node.actions = { "focus", "set_value" };
+                        pocket_node.has_children = !pocket_items.empty();
+                        pocket_node.expanded = !pocket_items.empty();
+                        pocket_selections.push_back( std::move( pocket_binding ) );
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                        for( a11y::semantic_node &row : pocket_items ) {
+                            pockets_of[i].push_back( std::move( row ) );
+                        }
+                    } else if( !pickup_mode && !pocket->sealed() &&
+                               pocket_node.depth >= 0 && pocket_node.depth < a11y::max_tree_depth ) {
+                        // Ordinary Inventory now exposes real actionable
+                        // item locations from each unsealed pocket. The
+                        // selection is still processed by inventory_item_menu,
+                        // not by a synthetic item-use or transfer action.
+                        // Other selector modes remain read-only here.
+                        // Include collapsed children for spoken navigation.
+                        // Flatten nested containers with their path in the
+                        // spoken label so no item disappears behind a closed
+                        // bag within a bag. Respect sealed nested pockets.
+                        constexpr std::size_t max_pocket_read_rows = 96;
+                        std::vector<a11y::semantic_node> contents_rows;
+                        std::set<const item *> visited_contents;
+                        bool truncated_contents = false;
+                        tname::segment_bitset speech_segments = tname::unprefixed_tname;
+                        speech_segments.set( tname::segments::WHITEBLACKLIST, false );
+                        std::function<void( const item *, const item_location &,
+                                            const std::string &, unsigned int )> expose =
+                        [&]( const item *child, const item_location &parent_location,
+                             const std::string &ancestors, unsigned int level ) {
+                            if( child == nullptr || !visited_contents.insert( child ).second ) {
+                                return;
+                            }
+                            if( level > 5 || contents_rows.size() >= max_pocket_read_rows ) {
+                                truncated_contents = true;
+                                return;
+                            }
+                            const item_location contained( parent_location, const_cast<item *>( child ) );
+                            const bool actionable = pocket_item_actions && static_cast<bool>( contained );
+                            a11y::semantic_node item_node;
+                            item_node.id = "pocket-entry:" + pocket_node.id + ":" +
+                                           std::to_string( contents_rows.size() );
+                            item_node.role = actionable ? "button" : "status";
+                            item_node.actions = actionable ?
+                                                std::vector<std::string>{ "focus", "activate", "read_detail" } :
+                                                std::vector<std::string>{ "focus", "read_detail" };
+                            if( contained ) {
+                                contained_item_bindings.emplace_back( item_node.id, contained );
+                            }
+                            item_node.parent_id = pocket_node.id;
+                            item_node.depth = pocket_node.depth + 1;
+                            item_node.label = remove_color_tags( child->tname(
+                                                1, speech_segments, true ) );
+                            if( !ancestors.empty() ) {
+                                item_node.label = ancestors + " > " + item_node.label;
+                            }
+                            item_node.detail = item_node.label;
+                            item_node.enabled = true;
+                            const std::string child_path = item_node.label;
+                            contents_rows.push_back( std::move( item_node ) );
+                            if( level == 5 ) {
+                                return;
+                            }
+                            for( const item_pocket *inner : child->get_container_pockets() ) {
+                                if( inner->sealed() ) {
+                                    continue;
+                                }
+                                for( const item *grandchild : inner->all_items_top() ) {
+                                    expose( grandchild, contained, child_path, level + 1 );
+                                }
+                            }
+                        };
+                        for( const item *child : pocket->all_items_top() ) {
+                            expose( child, published[i].location, "", 0 );
+                        }
+                        if( truncated_contents ) {
+                            pocket_node.detail += "\n" +
+                                                  std::string( _( "Additional nested items not shown. "
+                                                                  "Try a shorter inventory list." ) );
+                        }
+                        // The raw internal "read_only" marker is not user-
+                        // facing language and must not be spoken by TTS.
+                        pocket_node.value.clear();
+                        pocket_node.applied_value = std::to_string( pocket->size() );
+                        pocket_node.has_children = !contents_rows.empty();
+                        pocket_node.expanded = !contents_rows.empty();
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                        for( a11y::semantic_node &row : contents_rows ) {
+                            pockets_of[i].push_back( std::move( row ) );
+                        }
+                    } else {
+                        // A sealed or non-browsable pocket remains status-only.
+                        pocket_node.value = pocket->sealed() ? "sealed" : "";
+                        pocket_node.applied_value = std::to_string( pocket->size() );
+                        pockets_of[i].push_back( std::move( pocket_node ) );
+                    }
                 }
             }
             for( std::size_t i = 0; i < item_rows; ++i ) {
@@ -4065,15 +4325,26 @@ class inventory_selector::reader_session
             inventory_column *column;
             item_location location;
             std::string id;
-            // Unapplied quantity draft (R09.1/R02.3), raw intent text. Only
-            // "apply" in handle() may turn it into a chosen_count change.
-            std::optional<std::string> draft;
         };
         inventory_selector &owner;
         input_context &context;
         std::string activation;
         reader_session *previous;
         std::vector<row_binding> bindings;
+        struct pocket_item_binding {
+            std::string id;
+            inventory_column *column;
+            item_location location;
+        };
+        struct pocket_selection_binding {
+            std::string id;
+            item_location container;
+            std::size_t pocket_index = 0;
+            std::vector<pocket_item_binding> items;
+        };
+        std::vector<pocket_selection_binding> pocket_selections;
+        std::vector<std::pair<std::string, item_location>> contained_item_bindings;
+        item_location pending_contained_item;
         std::size_t serial = 0;
         a11y::screen_scope screen;
 
@@ -4089,37 +4360,224 @@ class inventory_selector::reader_session
                    dynamic_cast<const inventory_compare_selector *>( &owner ) == nullptr;
         }
 
-        static bool parse_count( const std::string &text, long long &value ) {
-            if( text.empty() || text.size() > 18 ) {
+        // The ordinary selector owns the authoritative item selection.
+        // Clearing an existing ancestor/descendant selection before setting
+        // a new one prevents selecting both a bag and its individual contents.
+        // Resolve every row after a previous toggle, never retain pointers
+        // across selection-column repagination.
+        bool select_count( inventory_multiselector &multi, inventory_column *column,
+                           const item_location &location, const std::size_t count ) {
+            const auto is_ancestor = []( const item_location &ancestor, item_location child ) {
+                for( child = child.parent_item(); child; child = child.parent_item() ) {
+                    if( child == ancestor ) {
+                        return true;
+                    }
+                }
                 return false;
-            }
-            std::size_t pos = 0;
-            bool negative = false;
-            if( text[pos] == '-' ) {
-                negative = true;
-                ++pos;
-            }
-            if( pos == text.size() ) {
-                return false;
-            }
-            long long result = 0;
-            for( ; pos < text.size(); ++pos ) {
-                if( text[pos] < '0' || text[pos] > '9' ) {
+            };
+            if( count > 0 && dynamic_cast<const pickup_selector *>( &owner ) != nullptr ) {
+                const auto source_rows = column->get_entries( return_item, true );
+                const auto target = std::find_if( source_rows.begin(), source_rows.end(),
+                [&]( const inventory_entry *row ) { return row->any_item() == location; } );
+                if( target == source_rows.end() ) {
                     return false;
                 }
-                result = result * 10 + ( text[pos] - '0' );
+                std::vector<std::pair<inventory_column *, item_location>> conflicts;
+                for( inventory_column *candidate_column : owner.columns ) {
+                    for( inventory_entry *candidate : candidate_column->get_entries( return_item, true ) ) {
+                        if( candidate->chosen_count == 0 || candidate == *target ) {
+                            continue;
+                        }
+                        bool conflicts_with_target = false;
+                        for( const item_location &picked : ( *target )->locations ) {
+                            for( const item_location &other : candidate->locations ) {
+                                if( is_ancestor( picked, other ) || is_ancestor( other, picked ) ) {
+                                    conflicts_with_target = true;
+                                    break;
+                                }
+                            }
+                            if( conflicts_with_target ) {
+                                break;
+                            }
+                        }
+                        if( conflicts_with_target ) {
+                            conflicts.emplace_back( candidate_column, candidate->any_item() );
+                        }
+                    }
+                }
+                for( const auto &conflict : conflicts ) {
+                    const auto current = conflict.first->get_entries( return_item, true );
+                    const auto found = std::find_if( current.begin(), current.end(),
+                    [&]( const inventory_entry *row ) { return row->any_item() == conflict.second; } );
+                    if( found != current.end() && ( *found )->chosen_count > 0 ) {
+                        multi.toggle_entry( **found, 0 );
+                    }
+                }
             }
-            value = negative ? -result : result;
+            const auto rows = column->get_entries( return_item, true );
+            const auto target = std::find_if( rows.begin(), rows.end(),
+            [&]( const inventory_entry *row ) { return row->any_item() == location; } );
+            if( target == rows.end() ) {
+                return false;
+            }
+            multi.toggle_entry( **target, count );
             return true;
         }
 
         std::optional<std::string> handle( const a11y::semantic_intent &intent ) {
-            // R09.2: pocket nodes are read-only status nodes. They are not
-            // bindings: "focus" only reads them (no highlight change, no
-            // turn spent) and every other action is refused.
             if( intent.node.rfind( "pocket:", 0 ) == 0 ) {
-                return intent.action == "focus"
-                       ? std::optional<std::string>( "TIMEOUT" ) : std::nullopt;
+                if( intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+                // One atomic commit for the selected pocket. Its children
+                // were only staged on Android, so Back/Cancel cannot alter
+                // any selections already made in the outer item list.
+                const auto reject_pocket_change = []() -> std::optional<std::string> {
+                    a11y::android::announce(
+                        _( "Pocket contents changed or cannot be selected. Please open the pocket again." ), 1 );
+                    return "TIMEOUT";
+                };
+                if( intent.action != "set_value" || !has_quantity_form() ||
+                    dynamic_cast<const pickup_selector *>( &owner ) == nullptr ) {
+                    return reject_pocket_change();
+                }
+                const auto pb = std::find_if( pocket_selections.begin(), pocket_selections.end(),
+                [&]( const pocket_selection_binding &b ) { return b.id == intent.node; } );
+                inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
+                if( pb == pocket_selections.end() || multi == nullptr || !pb->container ) {
+                    return reject_pocket_change();
+                }
+                const item &container = *pb->container;
+                const std::vector<const item_pocket *> pockets = container.get_container_pockets();
+                if( pb->pocket_index >= pockets.size() || pockets[pb->pocket_index]->sealed() ) {
+                    return reject_pocket_change();
+                }
+                const std::list<const item *> contents = pockets[pb->pocket_index]->all_items_top();
+                std::set<std::string> unique_choices;
+                struct proposed_change {
+                    const pocket_item_binding *choice;
+                    std::size_t count;
+                };
+                std::vector<proposed_change> changes;
+                std::size_t start = 0;
+                while( start < intent.value.size() ) {
+                    const std::size_t stop = intent.value.find( ';', start );
+                    const std::string instruction = intent.value.substr( start,
+                                                    stop == std::string::npos ? std::string::npos : stop - start );
+                    const std::size_t equals = instruction.rfind( '=' );
+                    if( equals == std::string::npos || equals == 0 ) {
+                        return reject_pocket_change();
+                    }
+                    const std::string key = instruction.substr( 0, equals );
+                    const auto choice = std::find_if( pb->items.begin(), pb->items.end(),
+                    [&]( const pocket_item_binding &b ) { return b.id == key; } );
+                    if( choice == pb->items.end() || !unique_choices.insert( key ).second ) {
+                        return reject_pocket_change();
+                    }
+                    const auto rows = choice->column->get_entries( return_item, true );
+                    const auto found = std::find_if( rows.begin(), rows.end(),
+                    [&]( const inventory_entry *entry ) { return entry->any_item() == choice->location; } );
+                    if( found == rows.end() ) {
+                        return reject_pocket_change();
+                    }
+                    inventory_entry &entry = **found;
+                    entry.cache_denial( owner.preset );
+                    if( !entry.is_selectable() ) {
+                        return reject_pocket_change();
+                    }
+                    // Never let a stack spanning several different pockets
+                    // be silently selected from a single pocket.
+                    for( const item_location &loc : entry.locations ) {
+                        const item *inside = loc.get_item();
+                        if( inside == nullptr || loc.parent_item() != pb->container ||
+                            std::find( contents.begin(), contents.end(), inside ) == contents.end() ) {
+                            return reject_pocket_change();
+                        }
+                    }
+                    const auto amount = a11y::selected_quantity( instruction.substr( equals + 1 ),
+                                        static_cast<std::size_t>( entry.get_available_count() ) );
+                    if( !amount ) {
+                        return reject_pocket_change();
+                    }
+                    changes.push_back( { &*choice, *amount } );
+                    start = stop == std::string::npos ? intent.value.size() : stop + 1;
+                }
+                // All changes have been checked against the live pocket before
+                // any mutation; failure cannot leave a half-selected list.
+                for( const proposed_change &change : changes ) {
+                    if( !select_count( *multi, change.choice->column,
+                                       change.choice->location, change.count ) ) {
+                        return reject_pocket_change();
+                    }
+                }
+                return "TIMEOUT";
+            }
+            if( intent.node.rfind( "pocket-entry:", 0 ) == 0 ) {
+                if( intent.action == "read_detail" ) {
+                    // Ordinary Inventory's nested pocket rows and pickup's
+                    // staged selection rows both resolve to real item locations.
+                    const auto contained = std::find_if( contained_item_bindings.begin(),
+                                                        contained_item_bindings.end(),
+                    [&]( const std::pair<std::string, item_location> &binding ) {
+                        return binding.first == intent.node;
+                    } );
+                    if( contained != contained_item_bindings.end() && contained->second ) {
+                        a11y::announce_full_item_info( *contained->second,
+                                                       contained->second.describe( &owner.u ) );
+                        return "TIMEOUT";
+                    }
+                    for( const pocket_selection_binding &pocket : pocket_selections ) {
+                        const auto choice = std::find_if( pocket.items.begin(), pocket.items.end(),
+                        [&]( const pocket_item_binding &entry ) {
+                            return entry.id == intent.node;
+                        } );
+                        if( choice == pocket.items.end() || !pocket.container ) {
+                            continue;
+                        }
+                        const auto rows = choice->column->get_entries( return_item, true );
+                        const auto live = std::find_if( rows.begin(), rows.end(),
+                        [&]( const inventory_entry *entry ) {
+                            return entry->any_item() == choice->location;
+                        } );
+                        const std::vector<const item_pocket *> pockets =
+                            pocket.container->get_container_pockets();
+                        if( live != rows.end() && choice->location &&
+                            choice->location.parent_item() == pocket.container &&
+                            pocket.pocket_index < pockets.size() &&
+                            !pockets[pocket.pocket_index]->sealed() ) {
+                            const std::list<const item *> contents =
+                                pockets[pocket.pocket_index]->all_items_top();
+                            if( std::find( contents.begin(), contents.end(),
+                                           choice->location.get_item() ) != contents.end() ) {
+                                a11y::announce_full_item_info( *choice->location,
+                                                               choice->location.describe( &owner.u ) );
+                            }
+                        }
+                        return "TIMEOUT";
+                    }
+                    return "TIMEOUT";
+                }
+                if( intent.action == "focus" ) {
+                    return "TIMEOUT";
+                }
+                // Normal Inventory can open a contained item's *original*
+                // action menu. Resolve a live item_location from this
+                // snapshot, not a name/index saved across inventory redraws.
+                if( intent.action == "activate" &&
+                    dynamic_cast<const inventory_pick_selector *>( &owner ) != nullptr ) {
+                    const auto item = std::find_if( contained_item_bindings.begin(),
+                                                   contained_item_bindings.end(),
+                    [&]( const std::pair<std::string, item_location> &binding ) {
+                        return binding.first == intent.node;
+                    } );
+                    if( item != contained_item_bindings.end() && item->second ) {
+                        pending_contained_item = item->second;
+                        return "A11Y_PICK_POCKET_ITEM";
+                    }
+                }
+                // Pickup/drop quantity forms keep their existing atomic
+                // parent-pocket selection model.
+                return std::nullopt;
             }
             const auto binding = std::find_if( bindings.begin(), bindings.end(),
             [&]( const row_binding &b ) { return b.id == intent.node; } );
@@ -4135,65 +4593,52 @@ class inventory_selector::reader_session
                 return std::nullopt;
             }
             inventory_entry &entry = **found;
+            if( intent.action == "read_detail" ) {
+                const item_location live = entry.any_item();
+                if( live ) {
+                    a11y::announce_full_item_info( *live, live.describe( &owner.u ) );
+                }
+                return "TIMEOUT";
+            }
             if( intent.action == "focus" ) {
                 owner.highlight( binding->location );
                 return "TIMEOUT";
             }
             if( intent.action == "activate" && entry.is_selectable() &&
                 owner.highlight( binding->location ) ) {
-                // A row activation acts on one item even if keyboard category
-                // selection was previously active. Bulk actions remain commands.
+                if( has_quantity_form() && entry.get_available_count() == 1 ) {
+                    // Selecting one item never opens a number editor.
+                    inventory_multiselector *multi =
+                        dynamic_cast<inventory_multiselector *>( &owner );
+                    if( multi == nullptr ) {
+                        return std::nullopt;
+                    }
+                    select_count( *multi, binding->column, binding->location,
+                                  entry.chosen_count == 0 ? 1 : 0 );
+                    return "TIMEOUT";
+                }
+                // Preserve the existing action menu and comparison behavior.
                 owner.mode = navigation_mode::ITEM;
                 for( inventory_column *column : owner.columns ) {
                     column->on_mode_change( owner.mode );
                 }
                 return activation;
             }
-            if( !has_quantity_form() ) {
+            if( !has_quantity_form() || intent.action != "set_value" ||
+                !entry.is_selectable() || entry.get_available_count() <= 1 ) {
                 return std::nullopt;
             }
-            if( intent.action == "set_value" ) {
-                // The runtime already validated the value against the
-                // published domain (R02.4). Store the draft only; the
-                // applied chosen_count does not change here.
-                binding->draft = intent.value;
-                return "TIMEOUT";
+            // Revalidate against the LIVE row on the game thread. A complete
+            // numeric choice immediately updates the native selection; no
+            // extra Apply command or unapplied quantity draft remains.
+            const auto amount = a11y::selected_quantity( intent.value,
+                                static_cast<std::size_t>( entry.get_available_count() ) );
+            inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
+            if( !amount || multi == nullptr ) {
+                return std::nullopt;
             }
-            if( intent.action == "cancel_draft" ) {
-                binding->draft.reset();
-                return "TIMEOUT";
-            }
-            if( intent.action == "apply" ) {
-                if( !binding->draft.has_value() ) {
-                    return std::nullopt;
-                }
-                long long value = 0;
-                if( !parse_count( *binding->draft, value ) ) {
-                    binding->draft.reset();
-                    return std::nullopt;
-                }
-                if( !entry.is_selectable() ) {
-                    return std::nullopt;
-                }
-                // The entry was re-resolved by location above, at commit
-                // time; a vanished item already returned nullopt. Clamp to
-                // the live domain, then set the count through the
-                // multiselector's public API: toggle_entry( entry, count )
-                // wraps the protected set_chosen_count( entry, count ),
-                // refreshes the selection column and fires on_toggle()
-                // (trade panes recalculate through it). set_chosen_count
-                // itself is not reachable from this base-class session.
-                const long long available = static_cast<long long>( entry.get_available_count() );
-                const long long clamped = std::clamp( value, 0LL, available );
-                inventory_multiselector *multi = dynamic_cast<inventory_multiselector *>( &owner );
-                if( multi == nullptr ) {
-                    return std::nullopt;
-                }
-                multi->toggle_entry( entry, static_cast<std::size_t>( clamped ) );
-                binding->draft.reset();
-                return "TIMEOUT";
-            }
-            return std::nullopt;
+            select_count( *multi, binding->column, binding->location, *amount );
+            return "TIMEOUT";
         }
 };
 
@@ -4633,6 +5078,12 @@ item_location inventory_pick_selector::execute()
                 }
                 on_input( input );
             }
+        } else if( input.action == "A11Y_PICK_POCKET_ITEM" ) {
+            item_location contained = reader.take_contained_item();
+            if( contained && contained.get_item() != nullptr ) {
+                return contained;
+            }
+            add_msg( m_info, _( "That item is no longer in the pocket." ) );
         } else if( input.action == "ORGANIZE_MENU" ) {
             u.worn.organize_items_menu( u );
             return item_location();

@@ -25,6 +25,7 @@
 #include "bonuses.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_requirements.h"
 #include "a11y_runtime.h"
 #include "calendar.h"
@@ -186,6 +187,74 @@ static std::string get_cat_unprefixed( std::string_view prefixed_name )
     return std::string( prefixed_name.substr( 3, prefixed_name.size() - 3 ) );
 }
 
+// The Vietnamese game catalog can map practice titles to unrelated camp
+// blueprints. Preserve actual game data and provide separate, reviewed
+// accessible wording for common training sessions. Ordinary crafting and
+// the visual interface keep the upstream translation behavior.
+static std::string accessible_crafting_recipe_name( const recipe &rec )
+{
+    if( !a11y::enabled() || !rec.is_practice() || rec.practice_source_name.empty() ) {
+        return rec.result_name();
+    }
+    const std::string &original = rec.practice_source_name;
+    if( original == "computer (beginner)" ) {
+        return _( "Computer practice, beginner" );
+    }
+    if( original == "computer (intermediate)" ) {
+        return _( "Computer practice, intermediate" );
+    }
+    if( original == "computer (advanced)" ) {
+        return _( "Computer practice, advanced" );
+    }
+    if( original == "athletics (beginner)" ) {
+        return _( "Athletics practice, beginner" );
+    }
+    if( original == "athletics (intermediate)" ) {
+        return _( "Athletics practice, intermediate" );
+    }
+    if( original == "dancing" ) {
+        return _( "Dancing practice" );
+    }
+    if( original == "dodge (beginner)" ) {
+        return _( "Dodging practice, beginner" );
+    }
+    if( original == "unarmed (beginner)" ) {
+        return _( "Unarmed combat practice, beginner" );
+    }
+    if( original == "unarmed (intermediate)" ) {
+        return _( "Unarmed combat practice, intermediate" );
+    }
+    if( rec.skill_used ) {
+        return string_format( _( "Practice %1$s: %2$s" ), rec.skill_used->name(), original );
+    }
+    return string_format( _( "Practice: %s" ), original );
+}
+
+static std::string accessible_practice_description( const recipe &rec,
+        const Character &crafter )
+{
+    const std::string &original = rec.practice_source_name;
+    if( original == "computer (beginner)" ) {
+        return _( "Practice the basics of using a computer." );
+    }
+    if( original == "athletics (beginner)" ) {
+        return _( "Practice simple exercises such as push-ups, squats and crunches." );
+    }
+    if( original == "dancing" ) {
+        return _( "Practice dancing with an imaginary partner." );
+    }
+    if( original == "dodge (beginner)" ) {
+        return _( "Practice sidestepping and retreating to avoid attacks." );
+    }
+    if( original == "unarmed (beginner)" ) {
+        return _( "Practice shadowboxing to prepare for fighting without a weapon." );
+    }
+    // Show an accurate source description rather than an unrelated
+    // Vietnamese construction instruction until a reviewed translation exists.
+    return !rec.practice_source_description.empty() ? rec.practice_source_description :
+           rec.get_description( crafter );
+}
+
 // Ceil-rounded human-readable craft time.  Input is game turns (seconds).
 
 void load_recipe_category( const JsonObject &jsobj, const std::string &src )
@@ -258,8 +327,8 @@ static input_context make_crafting_context( bool highlight_unread_recipes )
     ctxt.register_action( "SCROLL_RECIPE_INFO_DOWN" );
     ctxt.register_action( "PAGE_UP", to_translation( "Fast scroll up" ) );
     ctxt.register_action( "PAGE_DOWN", to_translation( "Fast scroll down" ) );
-    ctxt.register_action( "HOME" );
-    ctxt.register_action( "END" );
+    ctxt.register_action( "HOME", to_translation( "Jump to beginning" ) );
+    ctxt.register_action( "END", to_translation( "Jump to end" ) );
     ctxt.register_action( "SCROLL_ITEM_INFO_UP" );
     ctxt.register_action( "SCROLL_ITEM_INFO_DOWN" );
     ctxt.register_action( "PREV_TAB" );
@@ -430,7 +499,7 @@ class crafting_ui_impl : public cataimgui::window
         void process_action( const std::string &action_in, input_context &ctxt );
         a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
         std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
-                const input_context &ctxt );
+                input_context &ctxt );
         void set_input_context( const input_context *ctxt ) {
             ctxt_ptr = ctxt;
         }
@@ -467,6 +536,11 @@ class crafting_ui_impl : public cataimgui::window
         int crafter_i;
 
         // --- Recipe list ---
+        // A first snapshot may land on an empty Favorites/Recent/hidden
+        // subcategory even though the player knows recipes. Recover once,
+        // but never silently reset a filter that the player requested.
+        bool initial_accessible_recipe_check_done = false;
+        bool reader_all_categories = false; // Accessible global All, not a subcategory.
         std::vector<const recipe *> current;
         std::vector<int> indent_vec;
         std::vector<availability> available;
@@ -607,15 +681,23 @@ crafting_ui_impl::crafting_ui_impl( Character *crafter, const recipe_id &goto_re
 
     result_info = std::make_unique<recipe_result_info_cache>( *crafter );
 
-    // Build category list (non-hidden categories that have known recipes)
+    // Build only real crafting categories. CC_* is a wildcard/dummy
+    // category for nested recipe grouping and Favorites/Recent/Hidden,
+    // not a navigable main category in accessible mode. Normal visual
+    // mode keeps its existing special tabs. The 2026-11-12 reader log
+    // showed swipes from Weapons landing on empty Favorites.
     crafting_cats.reserve( craft_cat_list.size() );
     for( const crafting_category &cat : craft_cat_list.get_all() ) {
-        if( !cat.is_hidden && !available_recipes->in_category( cat.id ).empty() ) {
+        if( !cat.is_hidden && ( !a11y::enabled() || !cat.is_wildcard ) &&
+            !available_recipes->in_category( cat.id ).empty() ) {
             crafting_cats.emplace_back( cat.id.str() );
         }
     }
     tab = tab_list( crafting_cats );
     subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
+    // The accessible crafting reader starts on the same global All tab
+    // that ImGui displays first. Thereafter semantic gestures own this state.
+    reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();
 
     if( goto_recipe.is_valid() ) {
         const std::vector<const recipe *> &gotocat =
@@ -710,6 +792,7 @@ void crafting_ui_impl::draw_controls()
             // Apply pending category change immediately so subcategory
             // tabs render with the correct list on the same frame
             if( pending_tab_index >= 0 ) {
+                reader_all_categories = false;
                 tab.set_index( pending_tab_index );
                 subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
                 recalc = true;
@@ -803,6 +886,20 @@ void crafting_ui_impl::draw_category_tabs()
 
     if( ImGui::BeginTabBar( "##CRAFT_CATS",
                             ImGuiTabBarFlags_FittingPolicyScroll ) ) {
+        if( a11y::enabled() ) {
+            const std::string all_label = std::string( _( "All categories" ) ) + "###cat_reader_all";
+            if( cataimgui::BeginTabItem( all_label.c_str(),
+                                        force_select_tab && reader_all_categories ) ) {
+                // BeginTabItem reports the selected tab even when nobody
+                // touched it. Do not let a stale ImGui selection undo a
+                // category chosen by a two-finger reader gesture.
+                if( ImGui::IsItemClicked() && !reader_all_categories ) {
+                    reader_all_categories = true;
+                    recalc = true;
+                }
+                ImGui::EndTabItem();
+            }
+        }
         for( size_t i = 0; i < crafting_cats.size(); ++i ) {
             std::string label = _( get_cat_unprefixed( crafting_cats[i] ) );
             if( is_cat_unread[crafting_cats[i]] ) {
@@ -811,10 +908,11 @@ void crafting_ui_impl::draw_category_tabs()
             // Stable tab ID so adding/removing " +" doesn't change identity
             label += "###cat_" + std::to_string( i );
             // Only force-select for one frame after programmatic tab change
-            bool should_select = force_select_tab &&
+            bool should_select = force_select_tab && !reader_all_categories &&
                                  ( tab.cur_index() == static_cast<int>( i ) );
             if( cataimgui::BeginTabItem( label.c_str(), should_select ) ) {
-                if( tab.cur_index() != static_cast<int>( i ) ) {
+                if( ( !a11y::enabled() || ImGui::IsItemClicked() ) &&
+                    ( reader_all_categories || tab.cur_index() != static_cast<int>( i ) ) ) {
                     pending_tab_index = static_cast<int>( i );
                 }
                 ImGui::EndTabItem();
@@ -829,7 +927,7 @@ void crafting_ui_impl::draw_category_tabs()
 
 void crafting_ui_impl::draw_subcategory_tabs()
 {
-    if( batch || !filterstring.empty() ) {
+    if( batch || !filterstring.empty() || reader_all_categories ) {
         return;
     }
 
@@ -855,7 +953,8 @@ void crafting_ui_impl::draw_subcategory_tabs()
             bool should_select = force_select_subtab &&
                                  ( subtab.cur_index() == static_cast<int>( i ) );
             if( cataimgui::BeginTabItem( label.c_str(), should_select ) ) {
-                if( subtab.cur_index() != static_cast<int>( i ) ) {
+                if( ( !a11y::enabled() || ImGui::IsItemClicked() ) &&
+                    subtab.cur_index() != static_cast<int>( i ) ) {
                     pending_subtab_index = static_cast<int>( i );
                 }
                 ImGui::EndTabItem();
@@ -2421,6 +2520,19 @@ void crafting_ui_impl::recalculate_recipes()
             recipe_subset filtered_recipes =
                 filter_recipes( *available_recipes, qry, *crafter, progress_callback );
             picking.insert( picking.end(), filtered_recipes.begin(), filtered_recipes.end() );
+        } else if( reader_all_categories ) {
+            // Only aggregate real, visible crafting categories. The raw
+            // recipe_subset also contains CC_* wildcard nested-category
+            // definitions (not craftable recipes), which inflated the
+            // spoken All count to 1121 while visible categories held 812.
+            // Checking against crafting_cats keeps All and each main
+            // category consistent and excludes hidden camp-only recipes.
+            for( const recipe *entry : *available_recipes ) {
+                if( std::find( crafting_cats.begin(), crafting_cats.end(),
+                               entry->category.str() ) != crafting_cats.end() ) {
+                    picking.push_back( entry );
+                }
+            }
         } else {
             const std::pair<std::vector<const recipe *>, bool> result = recipes_from_cat(
                         *available_recipes,
@@ -2430,7 +2542,7 @@ void crafting_ui_impl::recalculate_recipes()
             show_hidden = result.second;
         }
 
-        const bool skip_sort = ( subtab.cur() == "CSC_*_RECENT" );
+        const bool skip_sort = !reader_all_categories && ( subtab.cur() == "CSC_*_RECENT" );
         num_recipe = picking.size();
         recipe_list_data list_result = build_recipe_list(
                                            std::move( picking ), skip_hidden, skip_sort,
@@ -2529,18 +2641,90 @@ void crafting_ui_impl::invalidate_info_panels()
 
 a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &ctxt )
 {
+    // The first reader snapshot can precede ImGui draw_controls() in headless
+    // Android mode. Rebuild first so the spoken list starts with recipes,
+    // never with the native keybinding/command tail.
+    if( recalc && !crafting_cats.empty() ) {
+        recalculate_recipes();
+    }
+    // Recover every transient empty subtab during ImGui startup, not just
+    // the first snapshot. Never announce "no recipes" between real lists.
+    if( current.empty() && available_recipes && available_recipes->size() > 0 &&
+        filterstring.empty() && !batch && !reader_all_categories && !crafting_cats.empty() ) {
+        const std::size_t starting_category = static_cast<std::size_t>( tab.cur_index() );
+        for( std::size_t offset = 0; offset < crafting_cats.size(); ++offset ) {
+            tab.set_index( static_cast<int>( ( starting_category + offset ) % crafting_cats.size() ) );
+            const std::vector<std::string> &subcategories =
+                crafting_category_id( tab.cur() )->subcategories;
+            subtab = tab_list( subcategories );
+            for( std::size_t sub_index = 0; sub_index < subcategories.size(); ++sub_index ) {
+                if( subtab.cur() == "CSC_ALL" ) {
+                    break;
+                }
+                subtab.next();
+            }
+            recalculate_recipes();
+            if( !current.empty() ) {
+                force_select_tab = true;
+                force_select_subtab = true;
+                break;
+            }
+        }
+    }
+    if( !initial_accessible_recipe_check_done ) {
+        initial_accessible_recipe_check_done = true;
+        // The log now distinguishes genuinely unknown recipes from a
+        // category/filter that happens to show none. Do not manufacture
+        // starter knowledge or award recipes outside native game rules.
+        a11y::android::diagnostic_event( "CRAFT_RECIPE_SCOPE",
+                                         string_format( "learned=%d group=%d categories=%d visible=%d filtered=%d",
+                                                 static_cast<int>( crafter->get_learned_recipes().size() ),
+                                                 static_cast<int>( available_recipes->size() ),
+                                                 static_cast<int>( crafting_cats.size() ),
+                                                 static_cast<int>( current.size() ),
+                                                 filterstring.empty() ? 0 : 1 ) );
+    }
     auto snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
-    snapshot.summary += batch ? _( "Batch" ) :
-                        !filterstring.empty() ? string_format( _( "Filter: %s" ), filterstring ) :
-                        std::string( _( get_cat_unprefixed( tab.cur() ) ) ) + ". " +
-                        _( get_subcat_unprefixed( tab.cur(), subtab.cur() ) );
+    if( crafting_cats.empty() ) {
+        snapshot.summary += _( "No recipes available." );
+    } else {
+        snapshot.summary += batch ? _( "Batch" ) :
+                            !filterstring.empty() ? string_format( _( "Filter: %s" ), filterstring ) :
+                            reader_all_categories ? std::string( _( "All categories" ) ) :
+                            std::string( _( get_cat_unprefixed( tab.cur() ) ) ) + ". " +
+                            _( get_subcat_unprefixed( tab.cur(), subtab.cur() ) );
+        snapshot.summary += ". " + string_format( _( "%d recipes" ), static_cast<int>( current.size() ) );
+    }
+    // Pages bound the JNI snapshot cost for All (potentially >1000 recipes).
+    constexpr std::size_t reader_page_size = 80;
+    const std::size_t page_start = line >= 0 ?
+                                   ( static_cast<std::size_t>( line ) / reader_page_size ) * reader_page_size : 0;
+    const std::size_t page_end = std::min( current.size(), page_start + reader_page_size );
+    std::map<std::string, int> name_totals;
+    for( const recipe *entry : current ) {
+        ++name_totals[remove_color_tags( accessible_crafting_recipe_name( *entry ) )];
+    }
+    std::map<std::string, int> name_occurrences;
+    for( std::size_t i = 0; i < page_start; ++i ) {
+        ++name_occurrences[remove_color_tags( accessible_crafting_recipe_name( *current[i] ) )];
+    }
     std::vector<a11y::semantic_node> rows;
-    for( std::size_t i = 0; i < current.size(); ++i ) {
+    for( std::size_t i = page_start; i < page_end; ++i ) {
         const recipe &rec = *current[i];
         a11y::semantic_node node;
         node.id = "recipe:" + rec.ident().str() + ":" + std::to_string( i );
-        node.label = remove_color_tags( rec.result_name() );
+        node.actions = { "focus", "activate", "read_detail" };
+        const std::string base_name = remove_color_tags( accessible_crafting_recipe_name( rec ) );
+        node.label = base_name;
+        const int occurrence = ++name_occurrences[base_name];
+        if( name_totals[base_name] > 1 ) {
+            node.label += " " + string_format( _( "(recipe %1$d of %2$d)" ), occurrence,
+                                               name_totals[base_name] );
+        }
+        if( rec.is_nested() ) {
+            node.label = string_format( _( "Recipe group: %s" ), node.label );
+        }
         node.role = rec.is_nested() ? "treeitem" : "button";
         node.position = i + 1;
         node.total = current.size();
@@ -2568,9 +2752,48 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         }
         rows.push_back( std::move( node ) );
     }
+    if( current.size() > 1 ) {
+        // This command also wraps from recipe 1 to the last recipe.
+        a11y::semantic_node previous_page;
+        previous_page.id = "craft:page:previous";
+        previous_page.role = "button";
+        previous_page.label = _( "Previous recipe page" );
+        previous_page.actions = { "activate" };
+        rows.push_back( std::move( previous_page ) );
+    }
+    if( current.size() > 1 ) {
+        // This command also wraps from the final recipe back to recipe 1.
+        a11y::semantic_node next_page;
+        next_page.id = "craft:page:next";
+        next_page.role = "button";
+        next_page.label = _( "Next recipe page" );
+        next_page.actions = { "activate" };
+        rows.push_back( std::move( next_page ) );
+    }
     rows.insert( rows.end(), std::make_move_iterator( snapshot.nodes.begin() ),
                  std::make_move_iterator( snapshot.nodes.end() ) );
     snapshot.nodes = std::move( rows );
+    if( current.empty() ) {
+        // "No recipes in this subcategory" is not the same as knowing
+        // nothing. Give the actual native recipe count and a meaningful
+        // way to distinguish an empty filter from missing knowledge.
+        std::string reason;
+        if( available_recipes->size() == 0 ) {
+            reason = _( "No recipes learned or available to this crafter yet." );
+        } else if( !filterstring.empty() ) {
+            reason = string_format(
+                         _( "No recipes match this filter. %d recipes are available in the crafting group." ),
+                         static_cast<int>( available_recipes->size() ) );
+        } else {
+            reason = string_format(
+                         _( "No recipes in this category. %d recipes are available in the crafting group." ),
+                         static_cast<int>( available_recipes->size() ) );
+        }
+        a11y::append_document( snapshot, "craft:no-recipes",
+                               _( "No recipes shown." ), reason );
+        snapshot.focus = "craft:no-recipes";
+        return snapshot;
+    }
     if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
         static_cast<std::size_t>( line ) >= available.size() ) {
         return snapshot;
@@ -2607,8 +2830,29 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 text += part + "\n";
             }
             a11y::append_document( documents, "craft:details", _( "Recipe details" ), text );
+            // Do not depend on the visual ImGui panel having been drawn.
+            // Headless spoken mode can publish the recipe before that panel
+            // fills displayed_description; derive its real text directly.
+            std::string description;
+            if( rec.is_practice() && a11y::enabled() ) {
+                description = accessible_practice_description( rec, *crafter );
+            } else if( rec.is_nested() || rec.is_practice() ) {
+                description = rec.get_description( *crafter );
+            } else if( rec.result() ) {
+                if( !rec.variant().empty() ) {
+                    item result( rec.result() );
+                    result.set_itype_variant( rec.variant() );
+                    description = result.variant_description();
+                }
+                if( description.empty() ) {
+                    description = item::find_type( rec.result() )->description.translated();
+                }
+                if( description == "generic item template" ) {
+                    description.clear();
+                }
+            }
             a11y::append_document( documents, "craft:description", _( "Description" ),
-                                   displayed_description_recipe == &rec ? displayed_description : "" );
+                                   description );
             const temp_crafting_inventory &inventory = avail.inv_override ?
                     *avail.inv_override : crafter->crafting_inventory();
             a11y::append_requirements( documents, "craft:requirements", rec.simple_requirements(),
@@ -2706,8 +2950,52 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
 }
 
 std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic_intent &intent,
-        const input_context &ctxt )
+        input_context &ctxt )
 {
+    // Apply spoken tab/subtab controls on the native game thread before
+    // returning. Simply returning a keybinding ID from the semantic handler
+    // left category intents accepted in JNI but with no observable transition
+    // in the 2026-11-12 Android log.
+    if( intent.action == "activate" &&
+        ( intent.node == "PREV_TAB" || intent.node == "NEXT_TAB" ||
+          intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
+        if( reader_all_categories && ( intent.node == "LEFT" || intent.node == "RIGHT" ) ) {
+            a11y::android::announce(
+                _( "All categories has no subcategories. Swipe left or right with two fingers to select a main category." ),
+                1 );
+            a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV", "ignored=global_all_subcategory" );
+            return "TIMEOUT";
+        }
+        process_action( intent.node, ctxt );
+        if( recalc ) {
+            recalculate_recipes();
+        }
+        a11y::android::diagnostic_event( "CRAFT_CATEGORY_NAV",
+                                         "action=" + intent.node +
+                                         " all=" + std::to_string( reader_all_categories ? 1 : 0 ) +
+                                         " category=" + tab.cur() +
+                                         " subcategory=" + subtab.cur() +
+                                         " visible=" + std::to_string( current.size() ) );
+        return "TIMEOUT";
+    }
+    if( intent.action == "activate" && !current.empty() &&
+        ( intent.node == "craft:page:next" || intent.node == "craft:page:previous" ) ) {
+        constexpr int page_size = 80;
+        const int page = line / page_size;
+        const int first = ( page + ( intent.node == "craft:page:next" ? 1 : -1 ) ) * page_size;
+        if( intent.node == "craft:page:previous" ) {
+            // Crossing a real page boundary lands on its last recipe.
+            // At the first page, wrap directly to the final recipe.
+            line = first < 0 ? static_cast<int>( current.size() ) - 1 :
+                   std::min( first + page_size - 1, static_cast<int>( current.size() ) - 1 );
+        } else {
+            // Crossing forward lands on the next page's first recipe.
+            // At the final page, wrap to recipe 1.
+            line = first >= static_cast<int>( current.size() ) ? 0 : first;
+        }
+        invalidate_info_panels();
+        return "TIMEOUT";
+    }
     if( intent.node == "craft:batch" && intent.action == "set_text" ) {
         int quantity = 0;
         const auto parsed = std::from_chars( intent.value.data(), intent.value.data() + intent.value.size(),
@@ -2724,7 +3012,8 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
     }
     for( std::size_t i = 0; i < current.size(); ++i ) {
         const std::string id = "recipe:" + current[i]->ident().str() + ":" + std::to_string( i );
-        if( intent.node != id || ( intent.action != "focus" && intent.action != "activate" ) ) {
+        if( intent.node != id || ( intent.action != "focus" && intent.action != "activate" &&
+                                   intent.action != "read_detail" ) ) {
             continue;
         }
         if( line != static_cast<int>( i ) ) {
@@ -2735,6 +3024,46 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 manual_batch = line + 1;
             }
             invalidate_info_panels();
+        }
+        if( intent.action == "read_detail" ) {
+            // Read all the current original recipe documents, plus the
+            // complete item-info pane for the result when that pane exists.
+            // This is generated only for an explicit two-finger request.
+            const a11y::semantic_snapshot details = reader_snapshot( ctxt );
+            std::string complete;
+            for( const a11y::semantic_node &document : details.nodes ) {
+                if( document.role != "document" ||
+                    document.id.rfind( "craft:", 0 ) != 0 || document.detail.empty() ) {
+                    continue;
+                }
+                if( !complete.empty() ) {
+                    complete += "\n\n";
+                }
+                complete += document.label + "\n" + document.detail;
+            }
+            // Recalculation may invalidate the selected recipe while
+            // reader_snapshot rebuilds the visible list. Do not examine
+            // a different or out-of-range result after that update.
+            if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
+                current[line]->ident().str() + ":" + std::to_string( line ) !=
+                id.substr( std::string( "recipe:" ).size() ) ) {
+                return "TIMEOUT";
+            }
+            const recipe &rec = *current[line];
+            if( !rec.is_nested() && !rec.is_practice() ) {
+                int scroll_position = 0;
+                item_info_data item_data = result_info->get_result_data(
+                                               &rec, get_batch_size(), scroll_position, 80, true );
+                const std::string result_text = remove_color_tags(
+                                                    format_item_info( item_data.get_item_display(),
+                                                            item_data.get_item_compare() ) );
+                if( !result_text.empty() ) {
+                    complete += "\n\n" + std::string( _( "Item info" ) ) +
+                                "\n" + result_text;
+                }
+            }
+            a11y::announce_full_detail_text( complete );
+            return "TIMEOUT";
         }
         info_nav_active = false;
         rebuild_keybinding_tips();
@@ -2886,7 +3215,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
     } else if( action == "SCROLL_ITEM_INFO_DOWN" ) {
         item_info_scroll = cataimgui::scroll::page_down;
     } else if( action == "LEFT" ) {
-        if( !batch && filterstring.empty() ) {
+        if( !batch && filterstring.empty() && !reader_all_categories ) {
             std::string start = subtab.cur();
             do {
                 subtab.prev();
@@ -2897,7 +3226,7 @@ void crafting_ui_impl::process_action( const std::string &action_in,
             force_select_subtab = true;
         }
     } else if( action == "RIGHT" ) {
-        if( !batch && filterstring.empty() ) {
+        if( !batch && filterstring.empty() && !reader_all_categories ) {
             std::string start = subtab.cur();
             do {
                 subtab.next();
@@ -2908,17 +3237,46 @@ void crafting_ui_impl::process_action( const std::string &action_in,
             force_select_subtab = true;
         }
     } else if( action == "PREV_TAB" ) {
-        tab.prev();
-        subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
-        recalc = true;
-        force_select_tab = true;
-        force_select_subtab = true;
+        if( !batch ) {
+            if( a11y::enabled() && reader_all_categories ) {
+                reader_all_categories = false;
+                tab.set_index( static_cast<int>( crafting_cats.size() ) - 1 );
+            } else if( a11y::enabled() && tab.cur_index() == 0 ) {
+                reader_all_categories = true;
+            } else {
+                tab.prev();
+            }
+            filterstring.clear();
+            subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
+            for( std::size_t i = 0; i < crafting_category_id( tab.cur() )->subcategories.size() &&
+                 subtab.cur() != "CSC_ALL"; ++i ) {
+                subtab.next();
+            }
+            recalc = true;
+            force_select_tab = true;
+            force_select_subtab = true;
+        }
     } else if( action == "NEXT_TAB" ) {
-        tab.next();
-        subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
-        recalc = true;
-        force_select_tab = true;
-        force_select_subtab = true;
+        if( !batch ) {
+            if( a11y::enabled() && reader_all_categories ) {
+                reader_all_categories = false;
+                tab.set_index( 0 );
+            } else if( a11y::enabled() &&
+                       tab.cur_index() == static_cast<int>( crafting_cats.size() ) - 1 ) {
+                reader_all_categories = true;
+            } else {
+                tab.next();
+            }
+            filterstring.clear();
+            subtab = tab_list( crafting_category_id( tab.cur() )->subcategories );
+            for( std::size_t i = 0; i < crafting_category_id( tab.cur() )->subcategories.size() &&
+                 subtab.cur() != "CSC_ALL"; ++i ) {
+                subtab.next();
+            }
+            recalc = true;
+            force_select_tab = true;
+            force_select_subtab = true;
+        }
     } else if( action == "DOWN" ) {
         if( !previously_toggled_unread ) {
             last_line = line;

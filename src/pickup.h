@@ -2,6 +2,7 @@
 #ifndef CATA_SRC_PICKUP_H
 #define CATA_SRC_PICKUP_H
 
+#include <string>
 #include <vector>
 
 #include "coordinates.h"
@@ -41,6 +42,14 @@ struct pick_info {
     units::volume max_volume = -1_ml;
     units::mass picked_up_mass = 0_gram;
     units::mass max_mass = -1_gram;
+
+    // Readable outcome accumulated across multi-turn manual pickup. Never
+    // assume an item was collected merely because it was selected; only the
+    // actual successful transfer contributes to successes.
+    std::vector<std::string> a11y_successes;
+    std::vector<std::string> a11y_failures;
+    int a11y_success_count = 0;
+    int a11y_failure_count = 0;
 };
 
 /**

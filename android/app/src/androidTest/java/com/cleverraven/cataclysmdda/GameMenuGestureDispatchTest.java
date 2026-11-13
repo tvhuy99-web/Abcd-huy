@@ -20,12 +20,26 @@ import static org.junit.Assert.assertEquals;
 public final class GameMenuGestureDispatchTest {
     private static final class Actions implements ReaderGestureSurface.Listener {
         boolean playing;
+        boolean combatMode;
+        boolean customThreeFingerSwipe;
+        int combatMoves;
+        String lastCombatDirection = "";
+        int combatAttacks;
+        String lastCombatAttack = "";
+        int weaponInspections;
+        int combatReloads;
+        int savedThreeFingerSwipes;
         int backs;
+        int confirms;
+        int contextMenus;
         int scans;
+        int northScans;
         int sliderChanges;
         int actionMenus;
         int activations;
         int tripleFingerTaps;
+        int characterDetailReads;
+        int combatModeToggles;
         int fourFingerTaps;
         int fourFingerSwipes;
         int unassignedGestures;
@@ -51,18 +65,45 @@ public final class GameMenuGestureDispatchTest {
             return true;
         }
         @Override public void goBack() { backs++; }
+        @Override public void confirm() { confirms++; }
+        @Override public void openContextActions() { contextMenus++; }
         @Override public boolean movementPracticeEnabled() { return false; }
         @Override public void practiceMovementDirection(int dx, int dy) { }
         @Override public boolean worldMovementEnabled() { return false; }
         @Override public void moveDirection(int dx, int dy) { }
         @Override public boolean directWorldGesturesEnabled() { return playing; }
         @Override public void scanDirection(int dx, int dy) {
+            if (combatMode) {
+                combatMoves++;
+                lastCombatDirection = dx + "," + dy;
+                return;
+            }
             if (dx == 0 && dy == 1) { scans++; }
+            if (dx == 0 && dy == -1) { northScans++; }
         }
-        @Override public void twoFingerTap(int count) { }
+        @Override public void twoFingerTap(int count) {
+            if (count == 1) { details++; }
+        }
         @Override public void threeFingerTap() { tripleFingerTaps++; }
+        @Override public void characterDetails() { characterDetailReads++; }
+        @Override public void toggleCombatMode() { combatModeToggles++; }
         @Override public void openActionMenu() { actionMenus++; }
         @Override public boolean handleCustomGesture(String id) {
+            if ("swipe_3_right".equals(id) || "swipe_3_left".equals(id)
+                    || "swipe_3_up".equals(id) || "swipe_3_down".equals(id)) {
+                if (combatMode) { return true; } // Replaced by two fingers.
+                if (customThreeFingerSwipe) { savedThreeFingerSwipes++; return true; }
+            }
+            if (combatMode) {
+                if ("swipe_up_left".equals(id) || "swipe_up_right".equals(id)
+                        || "swipe_down_left".equals(id) || "swipe_down_right".equals(id)) {
+                    combatAttacks++;
+                    lastCombatAttack = id;
+                    return true;
+                }
+                if ("swipe_left_right".equals(id)) { combatReloads++; return true; }
+                if ("swipe_right_left".equals(id)) { weaponInspections++; return true; }
+            }
             if ("hold_1".equals(id)) { oneFingerHolds++; return true; }
             if ("hold_2".equals(id)) { twoFingerHolds++; return true; }
             if ("hold_3".equals(id)) { threeFingerHolds++; return true; }
@@ -106,6 +147,12 @@ public final class GameMenuGestureDispatchTest {
     private static void multiTouch(ReaderGestureSurface surface, long downTime,
                                    long eventTime, int action, int pointers,
                                    float offsetX) {
+        multiTouch(surface, downTime, eventTime, action, pointers, offsetX, 0);
+    }
+
+    private static void multiTouch(ReaderGestureSurface surface, long downTime,
+                                   long eventTime, int action, int pointers,
+                                   float offsetX, float offsetY) {
         MotionEvent.PointerProperties[] properties =
                 new MotionEvent.PointerProperties[pointers];
         MotionEvent.PointerCoords[] coords = new MotionEvent.PointerCoords[pointers];
@@ -116,7 +163,7 @@ public final class GameMenuGestureDispatchTest {
             properties[i].toolType = MotionEvent.TOOL_TYPE_FINGER;
             coords[i] = new MotionEvent.PointerCoords();
             coords[i].x = 50 + i * 45 + offsetX;
-            coords[i].y = 140;
+            coords[i].y = 140 + offsetY;
             coords[i].pressure = 1.0f;
             coords[i].size = 1.0f;
         }
@@ -139,13 +186,18 @@ public final class GameMenuGestureDispatchTest {
 
     private static void endMulti(ReaderGestureSurface surface, int count,
                                  long time, float dx) {
+        endMulti(surface, count, time, dx, 0);
+    }
+
+    private static void endMulti(ReaderGestureSurface surface, int count,
+                                 long time, float dx, float dy) {
         for (int fingers = count; fingers >= 2; fingers--) {
             multiTouch(surface, time, time + 180 + (count - fingers) * 20L,
                     MotionEvent.ACTION_POINTER_UP
                             | ((fingers - 1) << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
-                    fingers, dx);
+                    fingers, dx, dy);
         }
-        multiTouch(surface, time, time + 280, MotionEvent.ACTION_UP, 1, dx);
+        multiTouch(surface, time, time + 280, MotionEvent.ACTION_UP, 1, dx, dy);
     }
 
     private static void swipeTwoDown(ReaderGestureSurface surface) {
@@ -159,6 +211,19 @@ public final class GameMenuGestureDispatchTest {
                 MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
                 200, 210, true);
         touch(surface, start, start + 130, MotionEvent.ACTION_UP, 200, 0, false);
+    }
+
+    private static void swipeTwoUp(ReaderGestureSurface surface) {
+        long start = SystemClock.uptimeMillis();
+        touch(surface, start, start, MotionEvent.ACTION_DOWN, 210, 0, false);
+        touch(surface, start, start + 30,
+                MotionEvent.ACTION_POINTER_DOWN | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                210, 210, true);
+        touch(surface, start, start + 75, MotionEvent.ACTION_MOVE, 110, 100, true);
+        touch(surface, start, start + 100,
+                MotionEvent.ACTION_POINTER_UP | (1 << MotionEvent.ACTION_POINTER_INDEX_SHIFT),
+                110, 100, true);
+        touch(surface, start, start + 130, MotionEvent.ACTION_UP, 110, 0, false);
     }
 
     @Test
@@ -227,6 +292,62 @@ public final class GameMenuGestureDispatchTest {
     }
 
     @Test
+    public void doubleThreeFingerTapReadsDetailsWithoutOverridingOtherTaps() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long now = SystemClock.uptimeMillis();
+                startMulti(surface[0], 3, now);
+                endMulti(surface[0], 3, now, 0);
+                startMulti(surface[0], 3, now + 290);
+                endMulti(surface[0], 3, now + 290, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.characterDetailReads);
+                assertEquals(0, actions.tripleFingerTaps);
+                assertEquals(0, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void threeFingerTripleTapTogglesCombatNotUnassigned() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        final ReaderGestureSurface[] surface = new ReaderGestureSurface[1];
+        actions.playing = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                surface[0] = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface[0]);
+                long now = SystemClock.uptimeMillis();
+                for (int i = 0; i < 3; ++i) {
+                    startMulti(surface[0], 3, now + i * 180);
+                    endMulti(surface[0], 3, now + i * 180, 0);
+                }
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.combatModeToggles);
+                assertEquals(0, actions.unassignedGestures);
+                assertEquals(0, actions.characterDetailReads);
+            });
+        }
+    }
+
+    @Test
     public void fourFingerTapAndSwipeReachBindings() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Intent intent = new Intent(context, ReaderSetupActivity.class)
@@ -279,7 +400,150 @@ public final class GameMenuGestureDispatchTest {
     }
 
     @Test
-    public void singleFingerHoldOverridesDetailInWorldButNotMenus() throws Exception {
+    public void threeFingerSwipeNoLongerMovesInCombatAndRestoresCustomBindingOnMap() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long first = SystemClock.uptimeMillis();
+                startMulti(surface, 3, first);
+                multiTouch(surface, first, first + 145,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+                endMulti(surface, 3, first, 110);
+                assertEquals("Three fingers no longer walk in combat",
+                        0, actions.combatMoves);
+                assertEquals(0, actions.unassignedGestures);
+                actions.combatMode = false;
+                actions.customThreeFingerSwipe = true;
+                long second = SystemClock.uptimeMillis() + 400;
+                startMulti(surface, 3, second);
+                multiTouch(surface, second, second + 145,
+                        MotionEvent.ACTION_MOVE, 3, 110);
+                endMulti(surface, 3, second, 110);
+                assertEquals("Map swipe uses its saved custom binding",
+                        1, actions.savedThreeFingerSwipes);
+                assertEquals("No combat movement after returning to map",
+                        0, actions.combatMoves);
+                assertEquals(0, actions.unassignedGestures);
+            });
+        }
+    }
+
+    @Test
+    public void allFourTwoFingerCombatDirectionsAreDetectedWithoutWalkingOnMap() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                String[] directions = { "0,-1", "1,0", "0,1", "-1,0" };
+                float[] offsetsX = { 0, 120, 0, -120 };
+                float[] offsetsY = { -120, 0, 120, 0 };
+                for (int i = 0; i < directions.length; i++) {
+                    long start = SystemClock.uptimeMillis() + i * 400L;
+                    startMulti(surface, 2, start);
+                    multiTouch(surface, start, start + 145,
+                            MotionEvent.ACTION_MOVE, 2, offsetsX[i], offsetsY[i]);
+                    endMulti(surface, 2, start, offsetsX[i], offsetsY[i]);
+                    assertEquals("Two-finger combat walking direction",
+                            directions[i], actions.lastCombatDirection);
+                    assertEquals(i + 1, actions.combatMoves);
+                    assertEquals(0, actions.combatAttacks);
+                    assertEquals(0, actions.unassignedGestures);
+                }
+                actions.combatMode = false;
+                actions.customThreeFingerSwipe = true;
+                long mapStart = SystemClock.uptimeMillis() + 2200L;
+                startMulti(surface, 3, mapStart);
+                multiTouch(surface, mapStart, mapStart + 145,
+                        MotionEvent.ACTION_MOVE, 3, 0, -120);
+                endMulti(surface, 3, mapStart, 0, -120);
+                assertEquals("Saved map gesture must resume outside combat",
+                        1, actions.savedThreeFingerSwipes);
+                assertEquals("No combat move after leaving combat mode", 4, actions.combatMoves);
+            });
+        }
+    }
+
+    @Test
+    public void oneFingerBentCombatSwipesAttackDiagonally() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                String[] ids = {
+                    "swipe_up_left", "swipe_up_right", "swipe_down_left", "swipe_down_right"
+                };
+                float[] ys = { -120, -120, 120, 120 };
+                float[] xs = { -120, 120, -120, 120 };
+                for (int i = 0; i < ids.length; i++) {
+                    long start = SystemClock.uptimeMillis() + i * 440L;
+                    multiTouch(surface, start, start, MotionEvent.ACTION_DOWN, 1, 0, 0);
+                    multiTouch(surface, start, start + 100, MotionEvent.ACTION_MOVE, 1, 0, ys[i]);
+                    multiTouch(surface, start, start + 195, MotionEvent.ACTION_MOVE, 1, xs[i], ys[i]);
+                    multiTouch(surface, start, start + 220, MotionEvent.ACTION_UP, 1, xs[i], ys[i]);
+                    assertEquals("Bent one-finger attack direction", ids[i], actions.lastCombatAttack);
+                    assertEquals(i + 1, actions.combatAttacks);
+                    assertEquals("Attacks must not walk", 0, actions.combatMoves);
+                }
+            });
+        }
+    }
+
+    @Test
+    public void oneFingerWeaponInspectAndReloadRemainDistinct() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        actions.playing = true;
+        actions.combatMode = true;
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long first = SystemClock.uptimeMillis();
+                multiTouch(surface, first, first, MotionEvent.ACTION_DOWN, 1, 0, 0);
+                multiTouch(surface, first, first + 85, MotionEvent.ACTION_MOVE, 1, -120, 0);
+                multiTouch(surface, first, first + 180, MotionEvent.ACTION_MOVE, 1, 0, 0);
+                multiTouch(surface, first, first + 210, MotionEvent.ACTION_UP, 1, 0, 0);
+                assertEquals("Left then right reloads", 1, actions.combatReloads);
+                assertEquals("Reload is not inspection", 0, actions.weaponInspections);
+                long second = SystemClock.uptimeMillis() + 440L;
+                multiTouch(surface, second, second, MotionEvent.ACTION_DOWN, 1, 0, 0);
+                multiTouch(surface, second, second + 85, MotionEvent.ACTION_MOVE, 1, 120, 0);
+                multiTouch(surface, second, second + 180, MotionEvent.ACTION_MOVE, 1, 0, 0);
+                multiTouch(surface, second, second + 210, MotionEvent.ACTION_UP, 1, 0, 0);
+                assertEquals("Right then left inspects", 1, actions.weaponInspections);
+                assertEquals("Inspect does not reload", 1, actions.combatReloads);
+                assertEquals("Neither action may walk", 0, actions.combatMoves);
+            });
+        }
+    }
+
+    @Test
+    public void singleFingerHoldAlwaysOpensContextActions() throws Exception {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
         Intent intent = new Intent(context, ReaderSetupActivity.class)
                 .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
@@ -298,7 +562,8 @@ public final class GameMenuGestureDispatchTest {
             });
             Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
             scenario.onActivity(activity -> {
-                assertEquals(1, actions.oneFingerHolds);
+                assertEquals(0, actions.oneFingerHolds);
+                assertEquals(1, actions.contextMenus);
                 assertEquals(0, actions.details);
                 touch(surface[0], down[0], SystemClock.uptimeMillis(),
                         MotionEvent.ACTION_UP, 80, 0, false);
@@ -309,8 +574,9 @@ public final class GameMenuGestureDispatchTest {
             });
             Thread.sleep(ViewConfiguration.getLongPressTimeout() + 180L);
             scenario.onActivity(activity -> {
-                assertEquals(1, actions.oneFingerHolds);
-                assertEquals(1, actions.details);
+                assertEquals(0, actions.oneFingerHolds);
+                assertEquals(0, actions.details);
+                assertEquals(2, actions.contextMenus);
                 touch(surface[0], down[0], SystemClock.uptimeMillis(),
                         MotionEvent.ACTION_UP, 80, 0, false);
             });
@@ -377,6 +643,52 @@ public final class GameMenuGestureDispatchTest {
             scenario.onActivity(activity -> {
                 assertEquals(0, actions.threeFingerHolds);
                 endMulti(surface[0], 3, down[0], 110);
+            });
+        }
+    }
+
+    @Test
+    public void upSwipeConfirmsOnlyInMenusAndScansInWorld() {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                Actions actions = new Actions();
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                swipeTwoUp(surface);
+                assertEquals(1, actions.confirms);
+                assertEquals(0, actions.northScans);
+                actions.playing = true;
+                swipeTwoUp(surface);
+                assertEquals(1, actions.confirms);
+                assertEquals(1, actions.northScans);
+            });
+        }
+    }
+
+    @Test
+    public void twoFingerSingleTapReadsDetailInMenus() throws Exception {
+        Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        Intent intent = new Intent(context, ReaderSetupActivity.class)
+                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+                .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
+        final Actions actions = new Actions();
+        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+            scenario.onActivity(activity -> {
+                ReaderGestureSurface surface = new ReaderGestureSurface(activity, actions);
+                activity.setContentView(surface);
+                long start = SystemClock.uptimeMillis();
+                startMulti(surface, 2, start);
+                endMulti(surface, 2, start, 0);
+            });
+            Thread.sleep(ViewConfiguration.getDoubleTapTimeout() + 150L);
+            scenario.onActivity(activity -> {
+                assertEquals(1, actions.details);
+                assertEquals(0, actions.confirms);
+                assertEquals(0, actions.backs);
             });
         }
     }

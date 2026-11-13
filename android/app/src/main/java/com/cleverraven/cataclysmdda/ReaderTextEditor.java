@@ -3,6 +3,7 @@ package com.cleverraven.cataclysmdda;
 import android.app.Activity;
 import android.icu.text.BreakIterator;
 import android.text.InputType;
+import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -26,6 +27,12 @@ public final class ReaderTextEditor {
     private final Listener listener;
     private final boolean numeric;
     private final boolean integer;
+    // Only item-quantity pickers use one-touch completed numbers. Other
+    // numeric and text forms retain their existing draft/Apply workflow.
+    private final boolean quantityChoices;
+    // Ordinary text and number fields use the Android IME with two controls.
+    // Completed item quantities keep their dedicated one-step selector.
+    private final boolean nativeInputOnly;
     // Numeric domain from the form contract (R04.2). Null means the source
     // publishes no bound: classic number popups have no min/max at all,
     // only an edit step. The engine stays the authority; these values let
@@ -42,6 +49,8 @@ public final class ReaderTextEditor {
     private String group = "controls";
     private boolean uppercase;
     private boolean clearing;
+    private boolean replaceInitialNumberOnFirstDigit;
+    private String initialNumber = "";
     private long revision;
 
     private static final class Choice {
@@ -56,17 +65,29 @@ public final class ReaderTextEditor {
 
     public ReaderTextEditor(Activity activity, String initial, boolean numeric, boolean integer,
                             Double rangeMin, Double rangeMax, Double rangeStep, Listener listener) {
+        this(activity, initial, numeric, integer, rangeMin, rangeMax, rangeStep, false, listener);
+    }
+
+    public ReaderTextEditor(Activity activity, String initial, boolean numeric, boolean integer,
+                            Double rangeMin, Double rangeMax, Double rangeStep,
+                            boolean quantityChoices, Listener listener) {
         this.activity = activity;
         this.listener = listener;
         this.numeric = numeric;
         this.integer = integer;
+        this.quantityChoices = quantityChoices && numeric && integer
+                && rangeMin != null && rangeMin == 0.0
+                && rangeMax != null && rangeMax > 1.0
+                && rangeStep != null && rangeStep == 1.0;
+        this.nativeInputOnly = !this.quantityChoices;
         this.rangeMin = rangeMin;
         this.rangeMax = rangeMax;
         this.rangeStep = rangeStep;
         root = new LinearLayout(activity);
         root.setOrientation(LinearLayout.VERTICAL);
         TextView instructions = new TextView(activity);
-        instructions.setText(R.string.a11yEditorInstructions);
+        instructions.setText(this.quantityChoices
+                ? R.string.a11yQuantityInstructions : R.string.a11yNativeInputInstructions);
         instructions.setTextColor(0xffeeeeee);
         root.addView(instructions);
         field = new EditText(activity);
@@ -86,6 +107,14 @@ public final class ReaderTextEditor {
         choices = new LinearLayout(activity);
         choices.setOrientation(LinearLayout.VERTICAL);
         root.addView(choices);
+        // Number dialogs start on actual digits, not a long controls menu.
+        // One-finger up/down selects a digit; double-tap enters it.
+        if (numeric) {
+            group = this.quantityChoices ? "quantities" : "digits";
+            selected = 1;
+            initialNumber = initial;
+            replaceInitialNumberOnFirstDigit = true;
+        }
         build();
     }
 
@@ -99,7 +128,34 @@ public final class ReaderTextEditor {
     private void build() {
         revision++;
         items.clear();
-        if ("controls".equals(group)) {
+        if (nativeInputOnly) {
+            // TalkBack can focus the actual EditText and the Android IME.
+            // The game does not enable/disable TalkBack; the player does.
+            // No simulated letter/digit keyboard is displayed here.
+            group = "controls";
+            selected = 0;
+            add(R.string.ok, this::submitCurrent);
+            add(R.string.cancel, listener::cancel);
+            render();
+            return;
+        }
+        if ("quantities".equals(group)) {
+            // Each number is a whole choice, not a digit to be entered
+            // into a draft. One double tap commits and returns to the
+            // previous inventory selection screen.
+            add(R.string.a11yQuantityDeselect, () -> listener.submit("0"));
+            final int quickMax = (int) Math.min(9, Math.floor(rangeMax));
+            for (int count = 1; count <= quickMax; count++) {
+                final String number = Integer.toString(count);
+                items.add(new Choice(number, () -> listener.submit(number)));
+            }
+            if (rangeMax > 9) {
+                items.add(new Choice(string(R.string.a11yQuantityAll) + ": " + formatNumber(rangeMax),
+                        () -> listener.submit(formatNumber(rangeMax))));
+                add(R.string.a11yQuantityOther, () -> open("digits"));
+            }
+            add(R.string.a11yEditorCancel, listener::cancel);
+        } else if ("controls".equals(group)) {
             add(R.string.a11yEditorReadValue, () -> listener.speak(valueDescription()));
             if (!numeric) {
                 add(R.string.a11yEditorLetters, () -> open("letters"));
@@ -131,14 +187,7 @@ public final class ReaderTextEditor {
                     readCurrent();
                 }
             });
-            add(R.string.a11yEditorApply, () -> {
-                String error = validationError();
-                if (error != null) {
-                    listener.speak(error);
-                } else {
-                    listener.submit(getText());
-                }
-            });
+            add(R.string.a11yEditorApply, this::submitCurrent);
             add(R.string.a11yEditorCancel, listener::cancel);
         } else if ("tones".equals(group)) {
             add(R.string.a11yEditorKeyboardReturn, () -> open("controls"));
@@ -168,18 +217,24 @@ public final class ReaderTextEditor {
     private void open(String next) {
         clearing = false;
         group = next;
-        selected = 0;
+        selected = quantityChoices && "digits".equals(next) ? 1 : 0;
         build();
         readCurrent();
     }
 
     private void render() {
+        // Do not show an editable value from a previous choice beside a
+        // one-tap quantity list. Reveal the field only in manual entry.
+        field.setVisibility(quantityChoices && "quantities".equals(group)
+                ? View.GONE : View.VISIBLE);
         choices.removeAllViews();
         int start = selected / 16 * 16;
         for (int i = start; i < Math.min(start + 16, items.size()); i++) {
             final int index = i;
             Button button = new Button(activity);
-            button.setText(items.get(i).label);
+            button.setText(items.get(i).label + ". "
+                    + activity.getString(R.string.a11yControlButton) + ", "
+                    + activity.getString(R.string.a11yPosition, i + 1, items.size()));
             button.setSelected(i == selected);
             button.setOnClickListener(view -> { selected = index; activate(); });
             choices.addView(button);
@@ -205,8 +260,27 @@ public final class ReaderTextEditor {
 
     public void activate() { items.get(selected).action.run(); }
 
+    /** Used by the global two-finger Up confirmation, including digit view. */
+    public void submitCurrent() {
+        if (quantityChoices && "quantities".equals(group)) {
+            // Two-finger Up and the confirm action must activate the
+            // highlighted completed number, not submit the stale text
+            // retained in the editor field from the last selection.
+            activate();
+            return;
+        }
+        String error = validationError();
+        if (error != null) { listener.speak(error); }
+        else { listener.submit(getText()); }
+    }
+
+    /** Two-finger Down discards the entire draft, even from the digit view. */
+    public void cancelInput() { listener.cancel(); }
+
     public void readCurrent() {
-        listener.speak(items.get(selected).label + ", "
+        // Restore position feedback for all editor and keyboard choices.
+        listener.speak(items.get(selected).label + ". "
+                + activity.getString(R.string.a11yControlButton) + ", "
                 + activity.getString(R.string.a11yPosition, selected + 1, items.size()));
     }
 
@@ -224,6 +298,17 @@ public final class ReaderTextEditor {
 
     private void insert(String value) {
         clearing = false;
+        // Starting a numeric entry replaces the old value rather than
+        // turning, for example, 12 followed by 5 into an accidental 125.
+        if (numeric && "digits".equals(group) && replaceInitialNumberOnFirstDigit
+                && getText().equals(initialNumber)) {
+            field.setText(value);
+            field.setSelection(value.length());
+            replaceInitialNumberOnFirstDigit = false;
+            listener.speak(value);
+            return;
+        }
+        replaceInitialNumberOnFirstDigit = false;
         String text = getText();
         int position = caret(text);
         field.setText(text.substring(0, position) + value + text.substring(position));
@@ -320,6 +405,7 @@ public final class ReaderTextEditor {
 
     private void stepBy(int direction) {
         clearing = false;
+        replaceInitialNumberOnFirstDigit = false;
         double value;
         try {
             value = Double.parseDouble(getText().trim());
@@ -354,6 +440,11 @@ public final class ReaderTextEditor {
     }
 
     public boolean back() {
+        if (quantityChoices) {
+            if (!"quantities".equals(group)) { open("quantities"); return true; }
+            listener.cancel();
+            return true;
+        }
         if (!"controls".equals(group)) { open("controls"); return true; }
         listener.cancel();
         return true;

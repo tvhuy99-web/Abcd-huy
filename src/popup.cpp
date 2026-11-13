@@ -5,13 +5,16 @@
 #include <array>
 #include <memory>
 
+#include "avatar.h"
 #include "cached_options.h"
 #include "cata_imgui.h"
 #include "catacharset.h"
 #include "color.h"
+#include "game.h"
 #include "imgui/imgui.h"
 #include "input_context.h"
 #include "output.h"
+#include "player_activity.h"
 #include "string_formatter.h"
 #include "ui_manager.h"
 
@@ -340,10 +343,26 @@ query_popup::result query_popup::query_once()
     reader_snapshot.title = _( "Dialog" );
     reader_snapshot.summary = remove_color_tags( text );
     reader_snapshot.focus = "option:" + std::to_string( cur );
+    // Yes/No questions are spoken once at entry, then their actual choices
+    // are the whole swipe list (1 of 2, 2 of 2). Do not insert a fictitious
+    // "Dialog message" third item. Detail on either choice can still reread
+    // the exact original question whenever the player requests it.
+    const bool yes_no_prompt = category == "YESNO" || category == "YESNOQUIT";
+    if( !reader_snapshot.summary.empty() && !yes_no_prompt ) {
+        a11y::semantic_node question;
+        question.id = "dialog:message";
+        question.role = "document";
+        question.label = reader_snapshot.summary;
+        question.actions = { "focus" };
+        reader_snapshot.nodes.push_back( std::move( question ) );
+    }
     for( std::size_t i = 0; i < options.size(); ++i ) {
         a11y::semantic_node node;
         node.id = "option:" + std::to_string( i );
         node.label = ctxt.get_action_name( options[i].action );
+        if( yes_no_prompt ) {
+            node.detail = reader_snapshot.summary;
+        }
         node.selected = cur == i;
         node.position = i + 1;
         node.total = options.size();
@@ -436,12 +455,31 @@ std::shared_ptr<query_popup_impl> query_popup::create_or_get_impl()
 }
 query_popup::result query_popup::query()
 {
+    // The common confirmation layer handles explicit "NO" refusals for
+    // dialogs beyond the built-in interruption prompts. Remember only an
+    // identical question during the SAME ongoing task, never across new
+    // player actions. This does not apply to ordinary confirmation dialogs
+    // outside an activity, irreversible operations or prompts without NO.
+    const bool has_no_option = std::any_of( options.begin(), options.end(),
+    []( const query_option &option ) {
+        return option.action == "NO";
+    } );
+    const bool remember_no = a11y::enabled() && g != nullptr &&
+                             get_avatar().activity && has_no_option && !text.empty();
+    const std::string warning_key = "popup:" + category + ":" + remove_color_tags( text );
+    if( remember_no && get_avatar().activity.is_prompt_dismissed( warning_key ) ) {
+        return { false, "NO", {} };
+    }
+
     std::shared_ptr<query_popup_impl> ui = create_or_get_impl();
 
     result res;
     do {
         res = query_once();
     } while( res.wait_input );
+    if( remember_no && res.action == "NO" && get_avatar().activity ) {
+        get_avatar().activity.dismiss_prompt( warning_key );
+    }
     return res;
 }
 

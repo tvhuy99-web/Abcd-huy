@@ -524,6 +524,9 @@ const std::string &input_context::handle_input( const int timeout )
         if( !a11y::enabled() ) { reader_scope.reset(); }
         install_reader_scope();
         if( a11y::enabled() ) {
+            // Open the native walking gate only while the game is really
+            // waiting for an input_context action, not during simulation.
+            a11y::set_world_input_ready( this, true );
             if( auto action = a11y::poll_input( this ) ) {
                 // Raw-key screens need their own adapter; never enqueue fake keys.
                 const auto found = std::find( registered_actions.begin(), registered_actions.end(), *action );
@@ -600,6 +603,7 @@ const std::string &input_context::handle_input( const int timeout )
         // If it's an invalid key, just keep looping until the user
         // enters something proper.
     }
+    a11y::set_world_input_ready( this, false );
     inp_mngr.set_timeout( old_timeout );
     return *result;
 }

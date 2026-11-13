@@ -5,6 +5,9 @@
 #include <cmath>
 #include <initializer_list>
 #include <list>
+#include <optional>
+#include <set>
+#include <vector>
 #include <map>
 #include <sstream>
 #include <string>
@@ -13,7 +16,10 @@
 #include "action.h"
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
+#include "a11y_outcome.h"
 #include "a11y_perception.h"
+#include "a11y_quantity_selection.h"
 #include "a11y_runtime.h"
 #include "a11y_world.h"
 #include "activity_actor_definitions.h"
@@ -60,6 +66,7 @@
 #include "input_popup.h"
 #include "inventory_ui.h"
 #include "item.h"
+#include "item_location.h"
 #include "item_group.h"
 #include "itype.h"
 #include "iuse.h"
@@ -69,6 +76,7 @@
 #include "magic_enchantment.h"
 #include "magic_type.h"
 #include "map.h"
+#include "map_selector.h"
 #include "map_iterator.h"
 #include "mapdata.h"
 #include "mapsharing.h"
@@ -76,6 +84,7 @@
 #include "mdarray.h"
 #include "messages.h"
 #include "monster.h"
+#include "npc.h"
 #include "move_mode.h"
 #include "mtype.h"
 #include "mutation.h"
@@ -193,6 +202,13 @@ static bool has_vehicle_control( avatar &player_character );
 
 namespace
 {
+// These flags are set from a registered accessibility-only world action and
+// consumed by the normal per-turn action switch. Reset on every new command;
+// they never modify the existing native keyboard action bindings.
+int combat_attack_direction = -1;
+int combat_cycle_direction = 0;
+bool combat_reload_to_full = false;
+
 class user_turn
 {
 
@@ -245,6 +261,197 @@ class user_turn
 };
 } // namespace
 
+// A one-tile pickup shortcut for the spoken interaction hub. A single
+// individual item starts the real pickup activity immediately; every other
+// case gets a short reader-owned quantity list with one final confirmation.
+// No item is removed or moved until Character::pick_up validates the request.
+static void pickup_here_accessible()
+{
+    avatar &you = get_avatar();
+    map &here = get_map();
+    const tripoint_bub_ms pos = you.pos_bub();
+    if( here.has_flag( ter_furn_flag::TFLAG_SEALED, pos ) ||
+        here.only_liquid_in_liquidcont( pos ) || !here.has_items( pos ) ) {
+        add_msg( m_info, _( "There is nothing to pick up here." ) );
+        return;
+    }
+
+    struct pickup_choice {
+        std::vector<drop_location> sources;
+        std::string name;
+        int available = 0;
+        int selected = 0;
+    };
+    std::vector<pickup_choice> choices;
+    map_stack ground = here.i_at( pos );
+    for( item &it : ground ) {
+        const int quantity = it.count_by_charges() ? std::max( 1, it.charges ) : 1;
+        const std::string label = it.tname();
+        const item_location location( map_cursor( pos ), &it );
+        // Identically named ground items form one quantity row instead of
+        // requiring the listener to tick twenty indistinguishable entries.
+        const auto found = std::find_if( choices.begin(), choices.end(),
+        [&]( const pickup_choice &choice ) {
+            return choice.name == label;
+        } );
+        if( found != choices.end() ) {
+            found->sources.emplace_back( location, quantity );
+            found->available += quantity;
+        } else {
+            choices.push_back( { { { location, quantity } }, label,
+                                 quantity, 0 } );
+        }
+    }
+    if( choices.empty() ) {
+        add_msg( m_info, _( "There is nothing to pick up here." ) );
+        return;
+    }
+
+    if( choices.size() == 1 && choices.front().available == 1 ) {
+        drop_locations only;
+        only.emplace_back( choices.front().sources.front().first, 0 );
+        you.pick_up( only );
+        return;
+    }
+
+    input_context ctxt( "A11Y_PICKUP_HERE" );
+    ctxt.register_action( "ANY_INPUT" );
+    ctxt.register_action( "QUIT" );
+    ctxt.register_action( "CONFIRM" );
+    a11y::screen_scope reader( &ctxt, "pickup-here",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            return std::string( "QUIT" );
+        }
+        if( intent.node == "pickup-here:confirm" && intent.action == "activate" ) {
+            if( std::none_of( choices.begin(), choices.end(), []( const pickup_choice &choice ) {
+            return choice.selected > 0;
+            } ) ) {
+                add_msg( m_info, _( "No items selected." ) );
+                return std::string( "TIMEOUT" );
+            }
+            return std::string( "CONFIRM" );
+        }
+        for( std::size_t i = 0; i < choices.size(); ++i ) {
+            if( intent.node != "pickup-here:item:" + std::to_string( i ) ) {
+                continue;
+            }
+            pickup_choice &choice = choices[i];
+            if( intent.action == "read_detail" ) {
+                // A quantity row may combine multiple items with identical
+                // names but different condition or contents. Read each
+                // distinct original item record once without selecting or
+                // picking up any quantity.
+                std::set<std::string> distinct;
+                std::string complete;
+                for( const drop_location &source : choice.sources ) {
+                    if( !source.first.valid() ) {
+                        continue;
+                    }
+                    const std::string information =
+                        remove_color_tags( source.first->info( true ) );
+                    if( !distinct.insert( information ).second ) {
+                        continue;
+                    }
+                    if( !complete.empty() ) {
+                        complete += "\n\n";
+                    }
+                    complete += a11y::spoken_item_name( *source.first ) +
+                                "\n" + information;
+                }
+                a11y::announce_full_detail_text( complete );
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.action == "focus" ) {
+                return std::string( "TIMEOUT" );
+            }
+            if( choice.available == 1 && intent.action == "activate" ) {
+                choice.selected = choice.selected == 0 ? 1 : 0;
+                return std::string( "TIMEOUT" );
+            }
+            if( choice.available > 1 && intent.action == "set_value" ) {
+                const auto amount = a11y::selected_quantity( intent.value,
+                                    static_cast<std::size_t>( choice.available ) );
+                if( !amount ) {
+                    return std::nullopt;
+                }
+                // Choosing a number is the complete selection operation.
+                // Moving the items still requires the list's CONFIRM.
+                choice.selected = static_cast<int>( *amount );
+                return std::string( "TIMEOUT" );
+            }
+        }
+        return std::nullopt;
+    } );
+
+    while( true ) {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Pick up here" );
+        snapshot.focus = "pickup-here:item:0";
+        for( std::size_t i = 0; i < choices.size(); ++i ) {
+            const pickup_choice &choice = choices[i];
+            a11y::semantic_node node;
+            node.id = "pickup-here:item:" + std::to_string( i );
+            node.label = choice.name;
+            if( choice.available == 1 ) {
+                node.role = "checkbox";
+                node.checked = choice.selected == 1;
+                node.actions = { "focus", "activate", "read_detail" };
+            } else {
+                node.role = "checkbox";
+                node.checked = choice.selected > 0;
+                node.value = string_format( _( "%1$d of %2$d" ),
+                                            choice.selected, choice.available );
+                node.field_type = "int";
+                node.applied_value = std::to_string( choice.selected );
+                node.has_field_range = true;
+                node.field_min = 0.0;
+                node.field_max = static_cast<double>( choice.available );
+                node.field_step = 1.0;
+                node.actions = { "focus", "activate", "set_value", "read_detail" };
+            }
+            snapshot.nodes.push_back( std::move( node ) );
+        }
+        a11y::semantic_node confirm;
+        confirm.id = "pickup-here:confirm";
+        confirm.label = _( "Confirm pickup" );
+        confirm.role = "button";
+        snapshot.nodes.push_back( std::move( confirm ) );
+        reader.update( std::move( snapshot ) );
+
+        const std::string action = ctxt.handle_input();
+        if( action == "QUIT" ) {
+            return;
+        }
+        if( action == "CONFIRM" ) {
+            drop_locations selection;
+            for( const pickup_choice &choice : choices ) {
+                int remaining = choice.selected;
+                // Keep the original item handles and the requested total.
+                // Picking the entire source uses the engine's quantity=0
+                // convention; partial charged stacks use the precise count.
+                for( const drop_location &source : choice.sources ) {
+                    if( remaining <= 0 ) {
+                        break;
+                    }
+                    if( !source.first.valid() ) {
+                        continue;
+                    }
+                    const int take = std::min( remaining, source.second );
+                    selection.emplace_back( source.first, take == source.second ? 0 : take );
+                    remaining -= take;
+                }
+            }
+            if( !selection.empty() ) {
+                you.pick_up( selection );
+            } else {
+                add_msg( m_info, _( "Selected items are no longer available." ) );
+            }
+            return;
+        }
+    }
+}
+
 input_context game::get_player_input( std::string &action )
 {
     close_blocking_activity_reader();
@@ -279,7 +486,26 @@ input_context game::get_player_input( std::string &action )
         ctxt = get_default_mode_input_context();
     }
 
-    here.update_visibility_cache( pos.z() );
+    // Only engine-internal combat dispatch identifiers are registered:
+    // world_snapshot publishes separate semantic nodes and validates their
+    // enabled state. These names never appear in the ordinary action menu.
+    for( int i = 0; i < 8; ++i ) {
+        ctxt.register_action( "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i ),
+                              to_translation( "Attack a direction without walking" ) );
+    }
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_WEAPON_NEXT",
+                          to_translation( "Select next weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_WEAPON_PREV",
+                          to_translation( "Select previous weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
+                          to_translation( "Reload current weapon" ) );
+
+    // In spoken-only mode the reader refresh below owns the cache
+    // rebuild and visibility update. Avoid doing the same visibility
+    // scan once before entering the input loop and again at snapshot.
+    if( !a11y::android::suppress_world_visuals() ) {
+        here.update_visibility_cache( pos.z() );
+    }
     const visibility_variables &cache = here.get_visibility_variables_cache();
     const level_cache &map_cache = here.get_cache_ref( pos.z() );
     const auto &visibility_cache = map_cache.visibility_cache;
@@ -322,9 +548,42 @@ input_context game::get_player_input( std::string &action )
             return false;
         }
     };
-    std::unique_ptr<a11y::screen_scope> reader;
-    reader = std::make_unique<a11y::screen_scope>( &ctxt, "DEFAULTMODE",
+    // Keep the DEFAULTMODE frame across turns: an ordinary step must not
+    // temporarily turn the Android swipe surface into a waiting screen.
+    a11y::screen_scope *reader = nullptr;
+    reader = &a11y::bind_world_screen( &ctxt,
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "activate" && intent.node.rfind( "reader:combat:", 0 ) == 0 ) {
+            // Revalidate the native gate at dispatch time; a stale Android
+            // snapshot cannot attack during travel, activity or death cam.
+            if( !make_reader_snapshot().swipe_movement_allowed ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            for( int i = 0; i < 8; ++i ) {
+                if( intent.node == "reader:combat:attack:" + std::to_string( i ) ) {
+                    return "A11Y_INTERNAL_COMBAT_ATTACK_" + std::to_string( i );
+                }
+            }
+            if( intent.node == "reader:combat:aim-toggle" ) {
+                // A read-only setting change with no game turn or ammo cost.
+                target_handler::toggle_combat_precise_aim();
+                add_msg( m_info, target_handler::combat_precise_aim_enabled() ?
+                         _( "Combat precise aiming enabled." ) :
+                         _( "Combat quick fire enabled." ) );
+                return std::string( "TIMEOUT" );
+            }
+            if( intent.node == "reader:combat:weapon-next" ) {
+                return "A11Y_INTERNAL_COMBAT_WEAPON_NEXT";
+            }
+            if( intent.node == "reader:combat:weapon-prev" ) {
+                return "A11Y_INTERNAL_COMBAT_WEAPON_PREV";
+            }
+            if( intent.node == "reader:combat:reload" ) {
+                return "A11Y_INTERNAL_COMBAT_RELOAD";
+            }
+            return std::nullopt;
+        }
         // Multi-finger reads are verified against the live world snapshot.
         // They never enqueue movement, consume moves, or change the turn.
         if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
@@ -336,6 +595,10 @@ input_context game::get_player_input( std::string &action )
                 a11y::announce_linear_scan( -1, 0 );
             } else if( intent.node == "reader:scan:east" ) {
                 a11y::announce_linear_scan( 1, 0 );
+            } else if( intent.node == "reader:places" ) {
+                ui::omap::display_accessible_places();
+            } else if( intent.node == "reader:pickup_here" ) {
+                pickup_here_accessible();
             } else if( intent.node == "reader:coordinates" ) {
                 a11y::announce_player_coordinates();
             }
@@ -468,7 +731,66 @@ input_context game::get_player_input( std::string &action )
         if( a11y::enabled() ) {
             const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
             if( !reader_snapshot_published || reader_snapshot_epoch != current_epoch ) {
-                reader->update( make_reader_snapshot() );
+                // Sample build and publication separately so the next phone
+                // log can distinguish reader work from regular game turns.
+#if defined(__ANDROID__)
+                // Headless world rendering must still rebuild vision before
+                // the snapshot reads tiles. This is gameplay/reader state,
+                // never visual rendering and never skipped to gain speed.
+                if( a11y::android::suppress_world_visuals() ) {
+                    const bool profile = a11y::android::performance_profiling_enabled();
+                    const auto vision_started = profile ? std::chrono::steady_clock::now() :
+                                                std::chrono::steady_clock::time_point{};
+                    map &vision_map = get_map();
+                    const int z = get_avatar().posz();
+                    vision_map.build_map_cache( z );
+                    vision_map.update_visibility_cache( z );
+                    // Spoken-only world skips game::draw; use the identical scan.
+                    if( a11y::android::directional_sonar_enabled() ) {
+                        static std::chrono::steady_clock::time_point next_directional_scan{};
+                        const auto sonar_now = std::chrono::steady_clock::now();
+                        if( sonar_now >= next_directional_scan ) {
+                            next_directional_scan = sonar_now + std::chrono::milliseconds( 300 );
+                            const a11y::directional_sonar_result sonar =
+                                a11y::scan_directional_sonar( get_avatar().pos_bub( vision_map ) );
+                            a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );
+                        }
+                    }
+                    if( profile ) {
+                        const auto vision_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                   std::chrono::steady_clock::now() - vision_started ).count();
+                        a11y::android::performance_vision_sample( vision_ms );
+                        a11y::android::diagnostic_event( "WORLD_VISION_TIMING",
+                                "cache_visibility_ms=" + std::to_string( vision_ms ) +
+                                " mode=headless_reader" );
+                    }
+                }
+#endif
+                const bool profile_reader = a11y::android::performance_profiling_enabled();
+                const auto started = profile_reader ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+                a11y::semantic_snapshot next = make_reader_snapshot();
+                const auto built = profile_reader ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+                const std::size_t nodes = next.nodes.size();
+                reader->update( std::move( next ) );
+                // Only speak when the KNOWN overmap terrain changes.
+                // An internal submap cache shift alone is not a new area.
+                a11y::announce_area_transition();
+                const auto published = profile_reader ? std::chrono::steady_clock::now() :
+                                       std::chrono::steady_clock::time_point{};
+                if( profile_reader ) {
+                    const auto ms = []( const auto from, const auto to ) {
+                        return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+                    };
+                    const auto build_ms = ms( started, built );
+                    const auto publish_ms = ms( built, published );
+                    a11y::android::performance_reader_sample( build_ms + publish_ms );
+                    a11y::android::diagnostic_event( "WORLD_READER_TIMING",
+                            "build_ms=" + std::to_string( build_ms ) +
+                            " update_publish_ms=" + std::to_string( publish_ms ) +
+                            " nodes=" + std::to_string( nodes ) );
+                }
                 reader_snapshot_epoch = current_epoch;
                 reader_snapshot_published = true;
             }
@@ -486,7 +808,10 @@ input_context game::get_player_input( std::string &action )
 
     user_turn current_turn;
 
-    if( get_option<bool>( "ANIMATIONS" ) ) {
+    // Nothing in this animation loop is required for speech or gameplay.
+    // Avoid weather, minimap and tile-animation redraws while waiting for
+    // footsteps in the spoken-only world.
+    if( get_option<bool>( "ANIMATIONS" ) && !a11y::android::suppress_world_visuals() ) {
         const int TOTAL_VIEW = MAX_VIEW_DISTANCE * 2 + 1;
         point iStart( ( TERRAIN_WINDOW_WIDTH > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_WIDTH - TOTAL_VIEW ) / 2 : 0,
                       ( TERRAIN_WINDOW_HEIGHT > TOTAL_VIEW ) ? ( TERRAIN_WINDOW_HEIGHT - TOTAL_VIEW ) / 2 :
@@ -679,6 +1004,8 @@ input_context game::get_player_input( std::string &action )
         ctxt.reset_timeout();
     }
 
+    // Clear the handler referencing this call's local input_context.
+    a11y::unbind_world_screen();
     return ctxt;
 }
 
@@ -2020,6 +2347,58 @@ static void fire()
     }
 
     const item_location weapon = you.get_wielded_item();
+    if( a11y::enabled() && combat_attack_direction < 0 ) {
+        // The accessible Fire action is a gun chooser, not the generic
+        // holster "use" menu. A selected firearm is equipped with the
+        // engine's normal wield/location cost before aiming begins.
+        // This also works when a melee weapon is currently wielded.
+        std::vector<item_location> guns;
+        std::vector<std::string> labels;
+        for( item_location &loc : you.all_items_loc() ) {
+            if( loc && loc->is_gun() && !loc->is_gunmod() ) {
+                guns.push_back( loc );
+                labels.push_back( string_format( _( "%1$s. %2$d rounds loaded." ),
+                                                 loc->tname(), loc->ammo_remaining() ) );
+            }
+        }
+        if( !guns.empty() ) {
+            int choice = uilist( _( "Choose a gun to fire" ), labels );
+            if( choice < 0 || static_cast<std::size_t>( choice ) >= guns.size() ) {
+                return;
+            }
+            item_location selected = guns[choice];
+            if( !selected ) {
+                add_msg( m_info, _( "That gun is no longer available." ) );
+                return;
+            }
+            if( you.has_trait( trait_BRAWLER ) ) {
+                add_msg( m_bad, _( "You refuse to use ranged weapons." ) );
+                return;
+            }
+            if( you.has_trait( trait_GUNSHY ) && selected->is_firearm() ) {
+                add_msg( m_bad, _( "You refuse to use firearms." ) );
+                return;
+            }
+            if( you.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ||
+                ( you.has_flag( json_flag_HANDS_CANNOT_USE_FIREARMS ) && selected->is_firearm() ) ) {
+                add_msg( m_bad, _( "Your hands aren't suited for using firearms!" ) );
+                return;
+            }
+            if( !you.is_wielding( *selected ) ) {
+                // Standard location-aware wield validates conflicts and
+                // spends retrieval time, including when nested in holsters.
+                a11y::set_weapon_auto_stow( true );
+                const auto reset_auto_stow = on_out_of_scope( []() {
+                    a11y::set_weapon_auto_stow( false );
+                } );
+                if( !you.wield( selected ) ) {
+                    return;
+                }
+            }
+            avatar_action::fire_wielded_weapon( you );
+            return;
+        }
+    }
     // try reach weapon
     // used_weapon() returns null location if force unarmed is selected
     if( weapon && !you.used_weapon() && !weapon->is_gun() ) {
@@ -2054,6 +2433,30 @@ static void fire()
     }
     // try firing gun
     if( weapon && weapon->is_gun() && !weapon->gun_current_mode().melee() ) {
+        if( combat_attack_direction >= 0 ) {
+            // Quick combat shots must verify the actual *current firing
+            // mode* before starting an aim activity. An empty magazine,
+            // insufficient charges, an unavailable power source, blocked
+            // firing mode or unusable weapon is NOT a zero-range target.
+            // Leave the user on the world screen and speak the engine's
+            // specific reason instead of flashing a targeting menu.
+            const gun_mode selected_mode = weapon->gun_current_mode();
+            std::vector<std::string> reasons;
+            const bool mode_blocked = weapon->firing_mode_blocked( weapon->gun_get_mode_id() );
+            const bool usable = gunmode_checks_common( you, here, reasons, selected_mode );
+            const bool ammunition_ready = gunmode_checks_weapon( you, here, reasons, selected_mode );
+            if( mode_blocked || !usable || !ammunition_ready ) {
+                const std::string reason = reasons.empty() ?
+                                           _( "This firing mode cannot be used right now." ) :
+                                           reasons.front();
+                add_msg( m_bad, _( "Cannot fire: %1$s. %2$d rounds loaded. Reload or change weapons." ),
+                         reason, weapon->ammo_remaining() );
+                return;
+            }
+            // Queued once for the next native aim activity. No gun chooser
+            // or separate target confirmation for a combat swipe.
+            target_handler::queue_accessible_combat_shot( combat_attack_direction );
+        }
         avatar_action::fire_wielded_weapon( you );
         return;
     }
@@ -2525,17 +2928,21 @@ static std::map<action_id, std::string> get_actions_disabled_mounted()
     };
 }
 
-static std::vector<action_id> get_actions_move_mode()
+static bool is_move_mode_action( const action_id act )
 {
-    return std::vector<action_id> {
-        ACTION_CYCLE_MOVE,
-        ACTION_CYCLE_MOVE_REVERSE,
-        ACTION_RESET_MOVE,
-        ACTION_TOGGLE_RUN,
-        ACTION_TOGGLE_CROUCH,
-        ACTION_TOGGLE_PRONE,
-        ACTION_OPEN_MOVEMENT,
-    };
+    // Avoid allocating a fresh vector for every movement command.
+    switch( act ) {
+        case ACTION_CYCLE_MOVE:
+        case ACTION_CYCLE_MOVE_REVERSE:
+        case ACTION_RESET_MOVE:
+        case ACTION_TOGGLE_RUN:
+        case ACTION_TOGGLE_CROUCH:
+        case ACTION_TOGGLE_PRONE:
+        case ACTION_OPEN_MOVEMENT:
+            return true;
+        default:
+            return false;
+    }
 }
 
 bool game::do_regular_action( action_id &act, avatar &player_character,
@@ -2547,14 +2954,17 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
     const bool in_shell = player_character.has_active_mutation( trait_SHELL2 )
                           || player_character.has_active_mutation( trait_SHELL3 );
 
-    const std::map<action_id, std::string> actions_disabled_mounted = get_actions_disabled_mounted();
-    const std::map<action_id, std::string> actions_disabled_in_shell = get_actions_disabled_in_shell();
-    const std::map<action_id, std::string> actions_disabled_while_handless_shapeshifted =
-        get_actions_disabled_in_handless_temporary_shapeshift();
-
-    if( in_shell && actions_disabled_in_shell.count( act ) > 0 ) {
-        add_msg( m_info, actions_disabled_in_shell.at( act ) );
-        return true;
+    // Most turns are ordinary footsteps. Do not allocate and translate
+    // three maps of restricted action descriptions on every step. Build
+    // one only when the corresponding exceptional character state exists;
+    // translations are still resolved at use-time after language changes.
+    if( in_shell ) {
+        const auto actions_disabled_in_shell = get_actions_disabled_in_shell();
+        const auto blocked = actions_disabled_in_shell.find( act );
+        if( blocked != actions_disabled_in_shell.end() ) {
+            add_msg( m_info, blocked->second );
+            return true;
+        }
     }
 
     if( u.has_effect( effect_incorporeal ) && actions_disabled_in_incorporeal.count( act ) > 0 ) {
@@ -2562,20 +2972,25 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         return true;
     }
 
-    if( u.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) &&
-        actions_disabled_while_handless_shapeshifted.count( act ) > 0 ) {
-        add_msg( m_info, _( "You can't do that while shapeshifted." ) );
-        return true;
+    if( u.has_flag( json_flag_TEMPORARY_SHAPESHIFT_NO_HANDS ) ) {
+        const auto actions_disabled_while_handless_shapeshifted =
+            get_actions_disabled_in_handless_temporary_shapeshift();
+        if( actions_disabled_while_handless_shapeshifted.count( act ) > 0 ) {
+            add_msg( m_info, _( "You can't do that while shapeshifted." ) );
+            return true;
+        }
     }
 
-    if( player_character.is_mounted() && actions_disabled_mounted.count( act ) > 0 ) {
-        add_msg( m_info, actions_disabled_mounted.at( act ) );
-        return true;
+    if( player_character.is_mounted() ) {
+        const auto actions_disabled_mounted = get_actions_disabled_mounted();
+        const auto blocked = actions_disabled_mounted.find( act );
+        if( blocked != actions_disabled_mounted.end() ) {
+            add_msg( m_info, blocked->second );
+            return true;
+        }
     }
 
-    const std::vector<action_id> actions_move_mode = get_actions_move_mode();
-    const bool is_actions_move_mode = std::find( actions_move_mode.begin(),
-                                      actions_move_mode.end(), act ) != actions_move_mode.end();
+    const bool is_actions_move_mode = is_move_mode_action( act );
     // Are we performing an action that is not a move mode action?
     int desired_move_mode_cost = 0;
     if( player_character.is_waiting_to_change_mode_mode() && !is_actions_move_mode ) {
@@ -2700,6 +3115,22 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                 const tripoint_bub_ms pos_before = player_character.pos_bub();
                 const tripoint_bub_ms dest_tile = pos_before +
                                                   tripoint_rel_ms( dest_delta, 0 );
+                const auto keep_safety_stopped_route = [&]() {
+                    if( !a11y::enabled() || safe_mode != SAFE_MODE_STOP ||
+                        a11y::android::travel_state() != 1 ||
+                        !player_character.is_auto_moving() ) {
+                        return false;
+                    }
+                    // get_next_auto_move_direction() consumed this waypoint
+                    // before the move failed. Put that exact tile back so
+                    // "No, keep traveling" never loses or skips the dangerous
+                    // step, and require an explicit safe-mode decision later.
+                    player_character.get_auto_move_route().insert(
+                        player_character.get_auto_move_route().begin(), dest_tile );
+                    a11y::android::set_travel_state( 3 );
+                    add_msg( m_warning, _( "Travel stopped by safe mode. Route kept." ) );
+                    return true;
+                };
                 const ter_id ter_before = here.ter( dest_tile );
                 const furn_id furn_before = here.furn( dest_tile );
                 int veh_door_part_before = -1;
@@ -2713,7 +3144,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                                    "auto_move: move(%d,%d) FAILED at pos=(%d,%d), aborting",
                                    dest_delta.x(), dest_delta.y(),
                                    player_character.pos_bub().x(), player_character.pos_bub().y() );
-                    player_character.abort_automove();
+                    if( !keep_safety_stopped_route() ) {
+                        player_character.abort_automove();
+                    }
                 } else if( player_character.pos_bub() == pos_before &&
                            dest_delta != point_rel_ms::zero ) {
                     // General auto-move safety: catches cases where move() returns true
@@ -2741,7 +3174,9 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
                                        "auto_move: move(%d,%d) returned OK but pos unchanged at (%d,%d), aborting",
                                        dest_delta.x(), dest_delta.y(),
                                        pos_before.x(), pos_before.y() );
-                        player_character.abort_automove();
+                        if( !keep_safety_stopped_route() ) {
+                            player_character.abort_automove();
+                        }
                     }
                 }
 
@@ -3017,6 +3452,39 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_WIELD: {
+            if( combat_cycle_direction != 0 ) {
+                // Unarmed is a real entry in the cycle. Weapons retain the
+                // game's location-aware wield rules, retrieval costs and
+                // safe auto-stow when the former weapon fits in inventory.
+                std::vector<item_location> options;
+                for( item_location loc : player_character.all_items_loc() ) {
+                    if( loc && ( loc->is_gun() || loc->is_melee() ) &&
+                        player_character.can_wield( *loc ).success() ) {
+                        options.push_back( loc );
+                    }
+                }
+                const int total = static_cast<int>( options.size() ) + 1;
+                int current = 0; // index zero = unarmed
+                for( std::size_t i = 0; i < options.size(); ++i ) {
+                    if( player_character.is_wielding( *options[i] ) ) {
+                        current = static_cast<int>( i ) + 1;
+                        break;
+                    }
+                }
+                const int chosen = ( current + total + combat_cycle_direction ) % total;
+                a11y::set_weapon_auto_stow( true );
+                const auto clear_auto_stow = on_out_of_scope( []() {
+                    a11y::set_weapon_auto_stow( false );
+                } );
+                if( chosen == 0 ) {
+                    if( player_character.unwield() ) {
+                        add_msg( m_info, _( "Fighting unarmed." ) );
+                    }
+                } else if( player_character.wield( options[chosen - 1] ) ) {
+                    add_msg( m_info, _( "Wielding %s." ), player_character.weapname_simple() );
+                }
+                break;
+            }
             item_location loc = game_menus::inv::wield();
             if( loc ) {
                 player_character.wield( loc );
@@ -3037,7 +3505,16 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_RELOAD_WIELDED:
-            reload_wielded();
+            if( combat_reload_to_full ) {
+                const item_location held = player_character.get_wielded_item();
+                if( held && held->is_gun() ) {
+                    auto_reload_wielded();
+                } else {
+                    add_msg( m_info, _( "Wield a gun before reloading." ) );
+                }
+            } else {
+                reload_wielded();
+            }
             break;
 
         case ACTION_UNLOAD:
@@ -3542,6 +4019,8 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             break;
 
         case ACTION_AUTOATTACK:
+            // The game's original Autoattack command remains automatic:
+            // it chooses the best target in reach using native rules.
             avatar_action::autoattack( player_character, here );
             break;
 
@@ -3561,6 +4040,80 @@ bool game::handle_action()
     action_id act = ACTION_NULL;
     user_turn current_turn;
     avatar &player_character = get_avatar();
+
+    combat_attack_direction = -1;
+    combat_cycle_direction = 0;
+    combat_reload_to_full = false;
+
+    // The reader's travel buttons are UI-thread requests, never movement
+    // intents. Apply them only here on the game thread, before consuming the
+    // next waypoint. Pausing retains the authoritative route/activity intact,
+    // and does not spend a turn or bypass any safe-mode checks.
+    const int travel_control = a11y::android::take_travel_control();
+    if( !player_character.has_destination() ) {
+        a11y::android::set_travel_state( 0 );
+    } else if( !a11y::android::enabled() &&
+               ( a11y::android::travel_state() == 2 ||
+                 a11y::android::travel_state() == 3 ) ) {
+        // Disabling accessibility entirely must not trap native controls.
+        // Merely suspending the reader (screen lock, lost Android focus,
+        // TTS recovery) must NEVER silently resume an explicitly paused
+        // journey, especially one stopped because of danger.
+        a11y::android::set_travel_state( 1 );
+    }
+    if( player_character.has_destination() && travel_control == 3 &&
+        a11y::android::travel_state() != 0 ) {
+        player_character.abort_automove();
+        destination_preview.clear();
+        a11y::android::set_travel_state( 0 );
+        add_msg( m_info, _( "Automatic travel canceled. Returned to the map." ) );
+        return false;
+    }
+    if( player_character.has_destination() && travel_control == 1 &&
+        a11y::android::travel_state() == 1 ) {
+        a11y::android::set_travel_state( 2 );
+        add_msg( m_info, _( "Automatic travel paused. Your route is kept." ) );
+    } else if( player_character.has_destination() && travel_control == 4 &&
+               a11y::android::travel_state() == 3 && safe_mode == SAFE_MODE_STOP ) {
+        // Same safety semantics as ACTION_IGNORE_ENEMY: an explicit user
+        // choice for this warning only, not a global safemode shutdown.
+        for( auto &visible : player_character.get_mon_visible().new_seen_mon ) {
+            monster &critter = *visible;
+            critter.ignoring = rl_dist( player_character.pos_bub(), critter.pos_bub() );
+        }
+        set_safe_mode( SAFE_MODE_ON );
+        a11y::android::set_travel_state( 1 );
+        add_msg( m_info, _( "Enemy warning ignored for now. Safe mode remains on." ) );
+    } else if( player_character.has_destination() && travel_control == 2 &&
+               ( a11y::android::travel_state() == 2 ||
+                 a11y::android::travel_state() == 3 ) ) {
+        if( safe_mode == SAFE_MODE_STOP ) {
+            a11y::android::set_travel_state( 3 );
+            add_msg( m_warning, _( "Cannot resume: safe mode still blocks the route." ) );
+        } else {
+            a11y::android::set_travel_state( 1 );
+            add_msg( m_info, _( "Automatic travel resumed." ) );
+        }
+    }
+    if( player_character.has_destination() && safe_mode == SAFE_MODE_STOP &&
+        a11y::enabled() && a11y::android::travel_state() != 2 &&
+        a11y::android::travel_state() != 3 ) {
+        a11y::android::set_travel_state( 3 );
+        add_msg( m_warning, _( "Travel paused because safe mode detected a threat." ) );
+    }
+    if( player_character.has_destination() &&
+        ( a11y::android::travel_state() == 2 || a11y::android::travel_state() == 3 ) ) {
+        // Run the ordinary world reader without consuming the next waypoint.
+        // Its input wait times out quickly, allowing a queued Resume/Cancel
+        // to be processed on the next iteration. Ignore ordinary gameplay
+        // commands while a route is explicitly paused.
+        std::string ignored_action;
+        get_player_input( ignored_action );
+        return false;
+    }
+    if( player_character.has_destination() && a11y::enabled() ) {
+        a11y::android::set_travel_state( 1 );
+    }
     // Check if we have an auto-move destination
     if( player_character.has_destination() ) {
         act = player_character.get_next_auto_move_direction();
@@ -3608,7 +4161,54 @@ bool game::handle_action()
     }
 
     if( act == ACTION_NULL ) {
-        act = look_up_action( action );
+        // World combat commands are distinct from walking and never pass
+        // through the generic movement action lookup. The normal action
+        // pipeline below still handles costs, safemode and game turns.
+        if( a11y::enabled() && action.rfind( "A11Y_INTERNAL_COMBAT_ATTACK_", 0 ) == 0 ) {
+            const std::string direction = action.substr( 28 );
+            if( direction.size() == 1 && direction[0] >= '0' && direction[0] <= '7' ) {
+                const int dir = direction[0] - '0';
+                const item_location held = player_character.get_wielded_item();
+                if( held && held->is_gun() && !held->gun_current_mode().melee() ) {
+                    // Gun gestures retain their native directional firing
+                    // path and aim mode, unchanged.
+                    combat_attack_direction = dir;
+                    act = ACTION_FIRE;
+                } else {
+                    // CDDA's ordinary eight-direction movement is also its
+                    // melee control. Walking into a creature lets the game
+                    // decide whether to attack, displace, talk, or refuse;
+                    // an empty square follows the game's walking rules.
+                    // Do not invent a hostile-only filter or a no-move
+                    // fallback. Use the normal action pipeline so safety,
+                    // status effects, terrain, isometric rotation and turn
+                    // costs behave exactly as with a native movement key.
+                    constexpr action_id step_actions[8] = {
+                        ACTION_MOVE_FORTH, ACTION_MOVE_FORTH_RIGHT,
+                        ACTION_MOVE_RIGHT, ACTION_MOVE_BACK_RIGHT,
+                        ACTION_MOVE_BACK, ACTION_MOVE_BACK_LEFT,
+                        ACTION_MOVE_LEFT, ACTION_MOVE_FORTH_LEFT
+                    };
+                    act = step_actions[dir];
+                }
+            }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_NEXT" ) {
+            combat_cycle_direction = 1;
+            act = ACTION_WIELD;
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_PREV" ) {
+            combat_cycle_direction = -1;
+            act = ACTION_WIELD;
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_RELOAD" ) {
+            combat_reload_to_full = true;
+            act = ACTION_RELOAD_WIELDED;
+        }
+        if( act != ACTION_NULL ) {
+            user_action_counter += 1;
+            a11y::android::diagnostic_event( "COMBAT_NATIVE",
+                    "action=" + action );
+        } else {
+            act = look_up_action( action );
+        }
 
         if( act == ACTION_KEYBINDINGS ) {
             // already handled by input context
@@ -3680,7 +4280,7 @@ bool game::handle_action()
                     return target == player_character.pos_bub() &&
                            ( can_interact_at( ACTION_MOVE_UP, here, target ) ||
                              can_interact_at( ACTION_MOVE_DOWN, here, target ) );
-                } );
+                }, _( "No direct interaction." ) );
                 if( !mouse_target ) {
                     return false;
                 }
@@ -3780,9 +4380,29 @@ bool game::handle_action()
 
     // This has no action unless we're in a special game mode.
 #if defined(__ANDROID__)
-    const auto diagnostic_action_started = std::chrono::steady_clock::now();
-    const std::string diagnostic_action_name = action_ident( act );
-    if( act != ACTION_TIMEOUT ) {
+    const bool diagnostic_profile = a11y::android::performance_profiling_enabled();
+    const auto diagnostic_action_started = diagnostic_profile ? std::chrono::steady_clock::now() :
+                                            std::chrono::steady_clock::time_point{};
+    const std::string diagnostic_action_name = diagnostic_profile ? action_ident( act ) : "";
+    // A JNI-accepted direction is not proof of movement. Record the
+    // authoritative position before and after the original game action.
+    const bool walking_action = act == ACTION_MOVE_FORTH ||
+                                act == ACTION_MOVE_FORTH_RIGHT ||
+                                act == ACTION_MOVE_RIGHT ||
+                                act == ACTION_MOVE_BACK_RIGHT ||
+                                act == ACTION_MOVE_BACK ||
+                                act == ACTION_MOVE_BACK_LEFT ||
+                                act == ACTION_MOVE_LEFT ||
+                                act == ACTION_MOVE_FORTH_LEFT;
+    const bool diagnostic_walk = diagnostic_profile && walking_action;
+    std::optional<tripoint_abs_ms> diagnostic_before_position;
+    if( diagnostic_walk ) {
+        diagnostic_before_position = player_character.pos_abs();
+    }
+    if( diagnostic_profile && act != ACTION_TIMEOUT && !diagnostic_walk ) {
+        a11y::android::performance_step_sample( false );
+    }
+    if( diagnostic_profile && act != ACTION_TIMEOUT ) {
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "start action=" + diagnostic_action_name );
     }
@@ -3800,7 +4420,15 @@ bool game::handle_action()
     if( !player_character.is_dead_state() ) {
         if( !do_regular_action( act, player_character, mouse_target ) ) {
 #if defined(__ANDROID__)
-            if( act != ACTION_TIMEOUT ) {
+            if( diagnostic_walk ) {
+                a11y::android::performance_step_sample( false );
+                if( diagnostic_profile ) {
+                    a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
+                            "action=" + diagnostic_action_name +
+                            " result=action_rejected changed=false" );
+                }
+            }
+            if( diagnostic_profile && act != ACTION_TIMEOUT ) {
                 const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                          std::chrono::steady_clock::now() - diagnostic_action_started ).count();
                 a11y::android::diagnostic_event( "NATIVE_ACTION",
@@ -3819,6 +4447,13 @@ bool game::handle_action()
     }
 
     gamemode->post_action( act );
+#if defined(__ANDROID__)
+    if( walking_action && a11y::android::enabled() && !a11y::android::suspended() ) {
+        // Covers both manual walking and auto-travel, which may not pass
+        // through a waiting reader screen between successive steps.
+        a11y::announce_area_transition();
+    }
+#endif
 
     player_character.movecounter = ( !player_character.is_dead_state() ? ( before_action_moves -
                                      player_character.get_moves() ) : 0 );
@@ -3826,12 +4461,34 @@ bool game::handle_action()
                                     to_turn<int>( calendar::turn ), before_action_moves, player_character.movecounter,
                                     player_character.get_moves() );
 #if defined(__ANDROID__)
-    if( act != ACTION_TIMEOUT ) {
+    if( diagnostic_profile && act != ACTION_TIMEOUT ) {
         const auto elapsed = std::chrono::duration_cast<std::chrono::milliseconds>(
                                  std::chrono::steady_clock::now() - diagnostic_action_started ).count();
         a11y::android::diagnostic_event( "NATIVE_ACTION",
                                          "finished action=" + diagnostic_action_name +
                                          " elapsed_ms=" + std::to_string( elapsed ) );
+        if( diagnostic_walk ) {
+            const tripoint_abs_ms after = player_character.pos_abs();
+            const int dx = after.x() - diagnostic_before_position->x();
+            const int dy = after.y() - diagnostic_before_position->y();
+            const int dz = after.z() - diagnostic_before_position->z();
+            a11y::android::performance_step_sample( dx != 0 || dy != 0 || dz != 0 );
+            a11y::android::diagnostic_event( "WORLD_MOVE_RESULT",
+                    "action=" + diagnostic_action_name +
+                    " result=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "moved" ) :
+                                   std::string( "same_tile" ) ) +
+                    " changed=" + ( dx != 0 || dy != 0 || dz != 0 ? std::string( "true" ) :
+                                     std::string( "false" ) ) +
+                    " from_x=" + std::to_string( diagnostic_before_position->x() ) +
+                    " from_y=" + std::to_string( diagnostic_before_position->y() ) +
+                    " from_z=" + std::to_string( diagnostic_before_position->z() ) +
+                    " to_x=" + std::to_string( after.x() ) +
+                    " to_y=" + std::to_string( after.y() ) +
+                    " to_z=" + std::to_string( after.z() ) +
+                    " moves_spent=" + std::to_string( before_action_moves -
+                                                     player_character.get_moves() ) +
+                    " action_ms=" + std::to_string( elapsed ) );
+        }
     }
 #endif
     return !player_character.is_dead_state();

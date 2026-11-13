@@ -5211,7 +5211,7 @@
         { "id": "pond_brown", "fg": 220 },
         { "id": "v_runway", "fg": 262 },
         { "id": "two_story_light_green", "fg": 360 },
-        { "id": "unknown_terrain", "fg": 365 },
+        { "id": [ "unknown_terrain", "unknown" ], "fg": 365 },
         { "id": "drizzle", "fg": 385 },
         { "id": "flurries", "fg": 386 },
         { "id": "fog", "fg": 387 },

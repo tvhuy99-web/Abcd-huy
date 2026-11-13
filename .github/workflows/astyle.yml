@@ -33,7 +33,7 @@ jobs:
         persist-credentials: false
 
     - name: install dependencies
-      run: sudo apt-get install astyle
+      run: bash tools/accessibility/install_ci_packages.sh astyle
 
     - name: astyle check
       run: make astyle-check

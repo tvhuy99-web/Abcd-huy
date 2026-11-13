@@ -5,6 +5,9 @@
 #include "a11y_perception.h"
 #include "a11y_runtime.h"
 #include "map_memory.h"
+#if defined(__ANDROID__)
+#include "mapgen.h"
+#endif
 
 #include <algorithm>
 #include <bitset>
@@ -700,6 +703,8 @@ void game::setup( bool loading_saved_character )
 #endif
     a11y::replace_game_session();
 #if defined(__ANDROID__)
+    set_android_deferred_oter_mapgen_setup( loading_saved_character );
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_MAPGEN_LAZY enabled=" << loading_saved_character;
     // Requested Android accessibility fast path. Persist the enabled
     // setting even for installations that previously stored false.
     // Runtime JSON schema validation and load failures still throw.
@@ -1563,6 +1568,10 @@ static bool cancel_auto_move( Character &you, const std::string &text )
     if( query_yn( _( "%s Cancel auto move?" ), text ) )  {
         add_msg( m_warning, _( "%s Auto move canceled." ), text );
         you.abort_automove();
+        if( a11y::enabled() ) {
+            a11y::android::set_travel_state( 0 );
+            a11y::android::request_travel_map_return();
+        }
         return true;
     }
     return false;
@@ -1588,7 +1597,7 @@ bool game::cancel_activity_or_ignore_query( const distraction_type type, const s
     const std::string &action = query_popup()
                                 .preferred_keyboard_mode( keyboard_mode::keycode )
                                 .context( "CANCEL_ACTIVITY_OR_IGNORE_QUERY" )
-                                .message( force_uc && !is_keycode_mode_supported() ?
+                                .message( force_uc && !is_keycode_mode_supported() && !a11y::enabled() ?
                                           pgettext( "cancel_activity_or_ignore_query",
                                                   "<color_light_red>%s %s (Case Sensitive)</color>" ) :
                                           pgettext( "cancel_activity_or_ignore_query",
@@ -1605,7 +1614,15 @@ bool game::cancel_activity_or_ignore_query( const distraction_type type, const s
         u.cancel_activity();
         return true;
     }
-    if( action == "IGNORE" ) {
+    if( action == "NO" || action == "IGNORE" ) {
+        // Declining an interruption means keep doing the current activity.
+        // After NO (including Android Back), suppress subsequent interruption
+        // dialogs of *any* category for this same activity. A new player
+        // action starts with fresh confirmations; an automatic reload step
+        // inherits this decision via player_activity::inherit_distractions.
+        if( action == "NO" ) {
+            u.activity.ignore_followup_interruptions();
+        }
         u.activity.ignore_distraction( type );
         for( player_activity &activity : u.backlog ) {
             activity.ignore_distraction( type );
@@ -1677,12 +1694,22 @@ bool game::cancel_activity_query( const std::string &text )
     if( !u.activity ) {
         return false;
     }
+    // A generic cancellation warning also belongs to this *one* activity,
+    // not to the lifetime of the game. Refusing it twice must not keep
+    // interrupting the same task, but a new question or task can still ask.
+    const std::string prompt = text + " " + u.activity.get_stop_phrase();
+    if( a11y::enabled() && u.activity.is_prompt_dismissed( prompt ) ) {
+        return false;
+    }
     g->invalidate_main_ui_adaptor();
     if( query_yn( "%s %s", text, u.activity.get_stop_phrase() ) ) {
         u.cancel_activity();
         u.abort_automove();
         u.resume_backlog_activity();
         return true;
+    }
+    if( a11y::enabled() && u.activity ) {
+        u.activity.dismiss_prompt( prompt );
     }
     return false;
 }
@@ -2217,6 +2244,11 @@ int game::inventory_item_menu( item_location locThisItem,
                                                    u.get_wielded_item()->has_flag( flag_NO_UNWIELD ) ?
                                                    hint_rating::cant : hint_rating::good;
                 action_menu.reset();
+                if( a11y::enabled() ) {
+                    // The selected item's actions need their own named
+                    // reader screen, not a generic silent "Menu" popup.
+                    action_menu.title = string_format( _( "Actions for %s" ), oThisItem.tname() );
+                }
                 action_menu.allow_anykey = true;
                 float popup_width = 0.0;
                 const auto addentry = [&]( const char key, const std::string & text, const hint_rating hint ) {
@@ -2246,8 +2278,15 @@ int game::inventory_item_menu( item_location locThisItem,
                 addentry( 'T', pgettext( "action", "take off" ), rate_action_take_off( u, oThisItem ) );
                 addentry( 'd', pgettext( "action", "drop" ), rate_drop_item );
                 addentry( 'U', pgettext( "action", "unload" ), u.rate_action_unload( oThisItem ) );
-                addentry( 'r', pgettext( "action", "reload" ), u.rate_action_reload( oThisItem ) );
-                addentry( 'p', pgettext( "action", "part reload" ), u.rate_action_reload( oThisItem ) );
+                // "Reload" also inserts battery cells into flashlights
+                // and fuel into tools. Give screen-reader players an
+                // accurate label rather than the gun-only "Reload ammo".
+                addentry( 'r', a11y::enabled() ?
+                          _( "Reload item (ammo, battery or fuel)" ) :
+                          pgettext( "action", "reload" ), u.rate_action_reload( oThisItem ) );
+                addentry( 'p', a11y::enabled() ?
+                          _( "Partly reload item (ammo, battery or fuel)" ) :
+                          pgettext( "action", "part reload" ), u.rate_action_reload( oThisItem ) );
                 addentry( 'm', pgettext( "action", "mend" ), rate_action_mend( u, oThisItem ) );
                 addentry( 'D', pgettext( "action", "disassemble" ), rate_action_disassemble( u, oThisItem ) );
                 if( oThisItem.is_container() && !oThisItem.is_corpse() ) {
@@ -2325,7 +2364,11 @@ int game::inventory_item_menu( item_location locThisItem,
             }
 
             const int prev_selected = action_menu.selected;
-            ui_impl = action_menu.query( false );
+            // With the one-shot query, each focus swipe destroys the
+            // semantic screen scope and temporarily publishes "inactive".
+            // Keep it alive across navigation until an actual action is
+            // selected; retain the original one-step ImGui loop otherwise.
+            ui_impl = action_menu.query( a11y::enabled() );
             if( action_menu.ret >= 0 ) {
                 cMenu = action_menu.ret; /* Remember: hotkey == retval, see addentry above. */
             } else if( action_menu.ret == UILIST_UNBOUND && action_menu.ret_act == "RIGHT" ) {
@@ -3433,6 +3476,11 @@ void game::draw( ui_adaptor &ui )
         return;
     }
 
+#if defined(__ANDROID__)
+    const bool profile_render = a11y::android::performance_profiling_enabled();
+    const auto render_started = profile_render ? std::chrono::steady_clock::now() :
+                                std::chrono::steady_clock::time_point{};
+#endif
     try_activate_zone_sort_viewport();
 
     // Transient view_offset override for zone sort viewport lock.
@@ -3444,8 +3492,59 @@ void game::draw( ui_adaptor &ui )
 
     ter_view_p.z() = ( u.pos_bub() + u.view_offset ).z();
     here.build_map_cache( ter_view_p.z() );
+#if defined(__ANDROID__)
+    const auto render_cache_ready = profile_render ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
+#endif
     here.update_visibility_cache( ter_view_p.z() );
+#if defined(__ANDROID__)
+    const auto render_vision_ready = profile_render ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+#endif
 
+#if defined(__ANDROID__)
+    // Normal rendering and spoken-only worlds share the same eight-ray observer.
+    if( a11y::android::directional_sonar_enabled() ) {
+        static std::chrono::steady_clock::time_point next_directional_scan{};
+        const auto now = std::chrono::steady_clock::now();
+        if( now >= next_directional_scan ) {
+            next_directional_scan = now + std::chrono::milliseconds( 300 );
+            const a11y::directional_sonar_result sonar =
+                a11y::scan_directional_sonar( u.pos_bub( here ) );
+            a11y::android::directional_sonar_targets( sonar.creatures, sonar.items );
+        }
+    }
+#endif
+
+#if defined(__ANDROID__)
+    const auto render_sonar_ready = profile_render ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
+    if( a11y::android::suppress_world_visuals() ) {
+        // Spoken-only world mode still runs the cache, visibility and sonar
+        // updates above. Skip the expensive terrain, creature, animation and
+        // sidebar painting. Modal UI adaptors remain fully operational.
+        // Preserve the cursor contract even when no pixels are painted.
+        ui.set_cursor( w_terrain, -u.view_offset.xy().raw() + point( POSX, POSY ) );
+        u.view_offset = real_offset;
+        if( profile_render ) {
+            const auto ms = []( const auto from, const auto to ) {
+                return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+            };
+            const auto total_ms = ms( render_started, render_sonar_ready );
+            if( profile_render ) {
+                a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
+                        "mode=headless cache_ms=" + std::to_string(
+                            ms( render_started, render_cache_ready ) ) +
+                        " visibility_ms=" + std::to_string(
+                            ms( render_cache_ready, render_vision_ready ) ) +
+                        " sonar_ms=" + std::to_string(
+                            ms( render_vision_ready, render_sonar_ready ) ) +
+                        " total_ms=" + std::to_string( total_ms ) );
+            }
+        }
+        return;
+    }
+#endif
     werase( w_terrain );
     void_blink_curses();
     draw_ter();
@@ -3464,8 +3563,34 @@ void game::draw( ui_adaptor &ui )
         draw_blink_curses();
     }
     wnoutrefresh( w_terrain );
-
+#if defined(__ANDROID__)
+    const auto render_terrain_ready = profile_render ? std::chrono::steady_clock::now() :
+                                      std::chrono::steady_clock::time_point{};
+#endif
     draw_panels( true );
+#if defined(__ANDROID__)
+    if( profile_render ) {
+        const auto render_finished = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        const auto total_ms = ms( render_started, render_finished );
+        if( profile_render ) {
+            a11y::android::diagnostic_event( "WORLD_RENDER_BREAKDOWN",
+                    "mode=visual cache_ms=" + std::to_string(
+                        ms( render_started, render_cache_ready ) ) +
+                    " visibility_ms=" + std::to_string(
+                        ms( render_cache_ready, render_vision_ready ) ) +
+                    " sonar_ms=" + std::to_string(
+                        ms( render_vision_ready, render_sonar_ready ) ) +
+                    " terrain_ms=" + std::to_string(
+                        ms( render_sonar_ready, render_terrain_ready ) ) +
+                    " panels_ms=" + std::to_string(
+                        ms( render_terrain_ready, render_finished ) ) +
+                    " total_ms=" + std::to_string( total_ms ) );
+        }
+    }
+#endif
 
     // Ensure that the cursor lands on the character when everything is drawn.
     // This allows screen readers to describe the area around the player, making it
@@ -5576,7 +5701,7 @@ void game::examine( bool with_pickup )
                     : _( "Examine nearby objects" ),
         [&]( const tripoint_bub_ms &target ) {
             return can_examine_at( here, target, with_pickup );
-        } );
+        }, _( "Nothing to examine." ) );
     } else if( with_pickup ) {
         // Examine and/or pick up items
         examp = choose_adjacent_highlight( here, _( "Examine terrain, furniture, or items where?" ),
@@ -6092,10 +6217,11 @@ bool game::is_zones_manager_open() const
 
 std::optional<std::vector<tripoint_bub_ms>> game::safe_route_to( Character &who,
         const tripoint_bub_ms &target, int threshold,
-        const std::function<void( const std::string &msg )> &report ) const
+        const std::function<void( const std::string &msg )> &report,
+        bool require_visible_destination ) const
 {
     map &here = get_map();
-    if( !who.sees( here, target ) ) {
+    if( require_visible_destination && !who.sees( here, target ) ) {
         report( _( "You can't see the destination." ) );
         return std::nullopt;
     }
@@ -6366,6 +6492,9 @@ look_around_result game::look_around(
     // recomputes on every iteration before input is handled.
     a11y::screen_scope reader( &ctxt, "look-around",
     [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.node == "look:return_to_map" && intent.action == "activate" ) {
+            return "QUIT";
+        }
         return a11y::registered_intent( ctxt, intent );
     } );
 
@@ -6417,6 +6546,15 @@ look_around_result game::look_around(
         cursor.detail = cursor_text;
         cursor.actions = { "focus" };
         snapshot.nodes.push_back( cursor );
+        if( !select_zone && !is_moving_zone ) {
+            a11y::semantic_node exit;
+            exit.id = "look:return_to_map";
+            exit.label = _( "Return to map" );
+            exit.role = "button";
+            exit.actions = { "focus", "activate" };
+            exit.detail = _( "Close the observation cursor without moving the character." );
+            snapshot.nodes.push_back( std::move( exit ) );
+        }
 
         const auto add_selection = [&]( const tripoint_bub_ms & first,
                                         const tripoint_bub_ms & second ) {
@@ -6465,6 +6603,16 @@ look_around_result game::look_around(
     mark_main_ui_adaptor_resize();
 #endif
     do {
+        // The player explicitly canceled an automatic route from a modal.
+        // A leftover look-around cursor must not capture the return to the
+        // map. The request expires in two seconds if no such cursor exists.
+        // Zone selection is a different consequential workflow: never close
+        // it implicitly.
+        if( a11y::enabled() && !select_zone && !is_moving_zone &&
+            !u.has_destination() && a11y::android::take_travel_map_return() ) {
+            action = "QUIT";
+            break;
+        }
         u.view_offset = center - u.pos_bub();
         if( select_zone ) {
             if( has_first_point ) {
@@ -7544,6 +7692,74 @@ void game::reload_wielded( bool prompt )
     reload( weapon, prompt );
 }
 
+void game::auto_reload_wielded( int steps_remaining )
+{
+    item_location gun = u.get_wielded_item();
+    if( !gun || !gun->is_gun() ) {
+        add_msg( m_info, _( "You must be holding a gun to reload it." ) );
+        return;
+    }
+    if( gun->has_flag( flag_RELOAD_AND_SHOOT ) ) {
+        add_msg( m_info, _( "This gun loads ammunition when fired. Use its normal ammo selection." ) );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    // A loaded magazine or integral cylinder that has no free space is
+    // already full. Empty guns with no inserted magazine are not full.
+    if( gun->ammo_remaining() > 0 && gun->remaining_ammo_capacity() == 0 ) {
+        add_msg( m_info, _( "Automatic reload complete. %d rounds loaded." ),
+                 gun->ammo_remaining() );
+        avatar_action::fire_wielded_weapon( u );
+        return;
+    }
+
+    if( steps_remaining <= 0 ) {
+        add_msg( m_info, _( "Automatic reloading stopped at its safety limit." ) );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    std::vector<item::reload_option> choices;
+    u.list_ammo( gun, choices, false, true );
+
+    // If the weapon accepts a detachable magazine but only empty magazines
+    // are available, first load a compatible magazine via the same normal
+    // reload activity, then return to the gun.
+    if( choices.empty() ) {
+        for( item_location magazine : u.find_reloadables() ) {
+            if( !magazine || !magazine->is_magazine() ||
+                !gun->is_compatible( *magazine ).success() ) {
+                continue;
+            }
+            u.list_ammo( magazine, choices, false );
+            if( !choices.empty() ) {
+                break;
+            }
+        }
+    }
+    auto selected = std::find_if( choices.begin(), choices.end(),
+    []( const item::reload_option &opt ) {
+        return static_cast<bool>( opt ) && opt.qty() > 0 && opt.target && opt.ammo;
+    } );
+    if( selected == choices.end() ) {
+        add_msg( m_info, _( "Automatic reload stopped. %d rounds loaded; no compatible ammunition available." ),
+                 gun->ammo_remaining() );
+        if( gun->ammo_remaining() > 0 ) {
+            avatar_action::fire_wielded_weapon( u );
+        }
+        return;
+    }
+
+    const int extra_moves = selected->target->get_var( "dirt", 0 ) > 7800 ? 2500 : 0;
+    u.assign_activity( reload_activity_actor( std::move( *selected ), extra_moves,
+                       steps_remaining ) );
+}
+
 void game::reload_weapon( bool try_everything )
 {
     map &here = get_map();
@@ -7963,6 +8179,10 @@ std::vector<std::string> game::get_dangerous_tile( const tripoint_bub_ms &dest_l
 bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
                       const bool furniture_move )
 {
+#if defined(__ANDROID__)
+    const auto walk_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     if( u.has_flag( json_flag_PHASE_MOVEMENT ) ) {
         place_player( dest_loc );
         return true; // debug trait immunity to gravity, walls etc
@@ -8266,7 +8486,15 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
     bool moving = dest_loc != oldpos;
 
+#if defined(__ANDROID__)
+    const auto before_place = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     point_rel_sm submap_shift = place_player( dest_loc );
+#if defined(__ANDROID__)
+    const auto after_place = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     point_rel_ms ms_shift = coords::project_to<coords::ms>( submap_shift );
     oldpos = oldpos - ms_shift.raw();
 
@@ -8337,6 +8565,27 @@ bool game::walk_move( const tripoint_bub_ms &dest_loc, const bool via_ramp,
 
     on_move_effects();
 
+#if defined(__ANDROID__)
+    const auto walk_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              walk_finished - walk_started ).count();
+    if( a11y::android::performance_profiling_enabled() ) {
+        const auto place_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  after_place - before_place ).count();
+        const auto before_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   before_place - walk_started ).count();
+        const auto after_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  walk_finished - after_place ).count();
+        a11y::android::diagnostic_event( "WORLD_WALK_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " before_place_ms=" + std::to_string( before_ms ) +
+                " place_player_ms=" + std::to_string( place_ms ) +
+                " after_place_ms=" + std::to_string( after_ms ) +
+                " shift_x=" + std::to_string( submap_shift.x() ) +
+                " shift_y=" + std::to_string( submap_shift.y() ) );
+    }
+#endif
     return true;
 }
 
@@ -8494,6 +8743,10 @@ static void autopulp_or_butcher( avatar &u )
 
 point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 {
+#if defined(__ANDROID__)
+    const auto place_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     map &here = get_map();
     const optional_vpart_position vp1 = here.veh_at( dest_loc );
     if( const std::optional<std::string> label = vp1.get_label() ) {
@@ -8669,7 +8922,15 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         mon->process_triggers();
         here.creature_in_field( *mon );
     }
+#if defined(__ANDROID__)
+    const auto before_map_update = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     point_rel_sm submap_shift = update_map( u, z_level_changed );
+#if defined(__ANDROID__)
+    const auto after_map_update = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     // Important: don't use dest_loc after this line. `update_map` may have shifted the map
     // and dest_loc was not adjusted and therefore is still in the un-shifted system and probably wrong.
     // If you must use it you can calculate the position in the new, shifted system with
@@ -8733,7 +8994,15 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
 
     // Traps!
     // Try to detect.
+#if defined(__ANDROID__)
+    const auto before_search = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     u.search_surroundings();
+#if defined(__ANDROID__)
+    const auto after_search = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     if( u.is_mounted() ) {
         here.creature_on_trap( *u.mounted_creature );
     } else {
@@ -8839,6 +9108,28 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
                u.is_mounted() ) {
         add_msg( _( "There are vehicle controls here but you cannot reach them whilst mounted." ) );
     }
+#if defined(__ANDROID__)
+    const auto place_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              place_finished - place_started ).count();
+    if( a11y::android::performance_profiling_enabled() ) {
+        const auto update_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   after_map_update - before_map_update ).count();
+        const auto search_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                   after_search - before_search ).count();
+        a11y::android::diagnostic_event( "WORLD_PLACE_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " update_map_ms=" + std::to_string( update_ms ) +
+                " search_ms=" + std::to_string( search_ms ) +
+                " before_update_ms=" + std::to_string(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        before_map_update - place_started ).count() ) +
+                " after_update_ms=" + std::to_string(
+                    std::chrono::duration_cast<std::chrono::milliseconds>(
+                        place_finished - after_map_update ).count() ) );
+    }
+#endif
     return submap_shift;
 }
 
@@ -10661,6 +10952,11 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
         return point_rel_sm::zero;
     }
 
+#if defined(__ANDROID__)
+    a11y::android::performance_world_shift();
+    const auto shift_started = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     // this handles loading/unloading submaps that have scrolled on or off the viewport
     // NOLINTNEXTLINE(cata-use-named-point-constants)
     inclusive_rectangle<point_rel_sm> size_1( {-1, -1}, { 1, 1 } );
@@ -10671,6 +10967,10 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
         remaining_shift -= this_shift;
     }
 
+#if defined(__ANDROID__)
+    const auto after_map_shift = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     // Shift monsters
     shift_monsters( { shift, 0 } );
     const point_rel_ms shift_ms = coords::project_to<coords::ms>( shift );
@@ -10705,18 +11005,48 @@ point_rel_sm game::update_map( int &x, int &y, bool z_level_changed )
     // Put those in the active list.
     load_npcs();
 
+#if defined(__ANDROID__)
+    const auto after_npc_load = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
     // Make sure map cache is consistent since it may have shifted.
     for( int zlev = -OVERMAP_DEPTH; zlev <= OVERMAP_HEIGHT; ++zlev ) {
         here.invalidate_map_cache( zlev );
     }
     here.build_map_cache( here.get_abs_sub().z() );
+#if defined(__ANDROID__)
+    const auto after_cache_build = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
 
     // Spawn monsters if appropriate
     // This call will generate new monsters in addition to loading, so it's placed after NPC loading
     here.spawn_monsters( false ); // Static monsters
+#if defined(__ANDROID__)
+    const auto after_monster_spawn = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+#endif
 
     // Update what parts of the world map we can see
     update_overmap_seen();
+#if defined(__ANDROID__)
+    const auto shift_finished = a11y::android::performance_profiling_enabled() ?
+                            std::chrono::steady_clock::now() : std::chrono::steady_clock::time_point{};
+    const auto total_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              shift_finished - shift_started ).count();
+    if( a11y::android::performance_profiling_enabled() ) {
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_SHIFT_PROFILE",
+                "total_ms=" + std::to_string( total_ms ) +
+                " map_shift_ms=" + std::to_string( ms( shift_started, after_map_shift ) ) +
+                " npcs_ms=" + std::to_string( ms( after_map_shift, after_npc_load ) ) +
+                " cache_ms=" + std::to_string( ms( after_npc_load, after_cache_build ) ) +
+                " spawn_ms=" + std::to_string( ms( after_cache_build, after_monster_spawn ) ) +
+                " reveal_ms=" + std::to_string( ms( after_monster_spawn, shift_finished ) ) );
+    }
+#endif
 
     return shift;
 }

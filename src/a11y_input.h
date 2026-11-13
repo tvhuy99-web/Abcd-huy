@@ -8,6 +8,8 @@ class input_context;
 namespace a11y
 {
 semantic_snapshot command_snapshot( const input_context &context, const std::string &title );
+// Invalidate cached game-thread key descriptions on modal/lifecycle changes.
+void invalidate_command_snapshot_cache();
 std::optional<std::string> registered_intent( const input_context &context,
         const semantic_intent &intent );
 } // namespace a11y

@@ -7,7 +7,7 @@
     android:versionName="1.0"
     android:installLocation="auto">
 
-    <!-- Otopack is fetched directly from GitHub on first launch; Wi-Fi auto,
+    <!-- Bl@ck Edition is fetched directly from GitHub on first launch; Wi-Fi auto,
          metered downloads require an accessible confirmation. -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
@@ -63,9 +63,13 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+        <!-- A game task may host the internal log and settings pages.
+             singleInstance isolates every child Activity in another task,
+             causing Recents to show "Debug log" separately and Back to
+             return to the launcher instead of the paused game. -->
         <activity android:name="CataclysmDDA"
                   android:label="@string/app_name"
-                  android:launchMode="singleInstance"
+                  android:launchMode="singleTask"
                   android:keepScreenOn="true"
                   android:windowSoftInputMode="adjustNothing"
                   android:screenOrientation="fullUser"
@@ -74,7 +78,13 @@
         </activity>
         <activity android:name="ReaderSetupActivity"
                   android:exported="false"
-                  android:label="@string/a11yReaderSetup" />
+                  android:label="@string/a11yGameSettingsTitle" />
+        <activity android:name="AccessibilitySettingsActivity"
+                  android:exported="false"
+                  android:label="@string/a11yAccessibilitySettingsTitle" />
+        <activity android:name="BackupRestoreActivity"
+                  android:exported="false"
+                  android:label="@string/a11yBackupRestoreTitle" />
         <activity android:name="TtsSettingsActivity"
                   android:exported="false"
                   android:label="@string/a11yTtsSettingsTitle" />

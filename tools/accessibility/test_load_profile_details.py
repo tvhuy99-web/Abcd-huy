@@ -23,9 +23,11 @@ class LoadProfileDetailsTest(unittest.TestCase):
             "deferred", "remove_abstract", "finalize_craft_and_prune",
             "finalize_uncraft_and_prune", "book_links_and_reversible",
             "pseudo_uncraft_books", "nested_category_search",
-            "build_lookup_indices", "food_loops", "total"
+            "build_lookup_indices", "food_loops"
         ):
             self.assertIn('log_step( "' + stage + '" )', self.recipe)
+        # The final total is emitted directly with its absolute elapsed time.
+        self.assertIn("A11Y_LOAD_DETAIL phase=recipe step=total", self.recipe)
         self.assertIn("cleanup_ms=", self.recipe)
         self.assertIn("finalize_ms=", self.recipe)
         self.assertIn("input_ms=", self.recipe)

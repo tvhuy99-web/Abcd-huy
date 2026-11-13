@@ -279,6 +279,7 @@ void game_menus::inv::common()
     inventory_selector_preset inv_s_p = default_preset;
     inv_s_p.save_state = &inventory_ui_default_state;
     inventory_pick_selector inv_s( you, inv_s_p );
+    inv_s.open_contained_item_menu = true;
 
     inv_s.set_title( _( "Inventory" ) );
     inv_s.set_hint( string_format(
@@ -316,6 +317,7 @@ void game_menus::inv::common( item_location &loc )
     static const std::set<int> loop_options = { { '\0', '=', 'f' } };
 
     container_inventory_selector inv_s( you, loc );
+    inv_s.open_contained_item_menu = true;
 
     inv_s.set_title( string_format( _( "Inventory of %s" ), loc->tname() ) );
     inv_s.set_hint( string_format(

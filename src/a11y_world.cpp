@@ -1,6 +1,9 @@
 #include "a11y_world.h"
 
 #include <algorithm>
+#include <array>
+#include <cmath>
+#include <cstdint>
 #include <cstdlib>
 #include <initializer_list>
 #include <map>
@@ -10,10 +13,12 @@
 #include <vector>
 #include "a11y_android.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_body.h"
 #include "a11y_outcome.h"
 #include "a11y_perception.h"
 #include "a11y_runtime.h"
+#include "action.h"
 #include "avatar.h"
 #include "bodypart.h"
 #include "calendar.h"
@@ -27,16 +32,25 @@
 #include "game.h"
 #include "input_context.h"
 #include "item.h"
+#include "item_location.h"
+#include "lightmap.h"
 #include "map.h"
 #include "messages.h"
 #include "move_mode.h"
+#include "monster.h"
+#include "mtype.h"
+#include "npc.h"
 #include "output.h"
 #include "options.h"
+#include "overmap_types.h"
+#include "overmapbuffer.h"
 #include "point.h"
+#include "ranged.h"
 #include "string_formatter.h"
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
+#include "veh_type.h"
 #include "vehicle.h"
 #include "vpart_position.h"
 
@@ -48,6 +62,10 @@ static const efftype_id effect_bleed( "bleed" );
 static const efftype_id effect_bite( "bite" );
 static const efftype_id effect_infected( "infected" );
 static const efftype_id effect_sleep( "sleep" );
+static const efftype_id effect_incorporeal_nearby( "incorporeal" );
+static const trait_id trait_shell2_nearby( "SHELL2" );
+static const trait_id trait_shell3_nearby( "SHELL3" );
+static const json_character_flag no_hands_nearby( "TEMPORARY_SHAPESHIFT_NO_HANDS" );
 
 struct bodypart_status {
     bodypart_id id;
@@ -315,14 +333,70 @@ std::string noteworthy_category( const tile_observation &tile )
     return _( "Noteworthy information" );
 }
 
+// Speak a short, useful event when entering an interesting tile. Ordinary
+// floor tiles stay silent. Use only the already observed information: never
+// reveal items hidden inside a closed container or invisible hazards.
+std::string short_tile_alert( const tile_observation &tile )
+{
+    if( !tile.known_traps.empty() ) {
+        return string_format( _( "Trap: %s." ), tile.known_traps.front() );
+    }
+    if( !tile.seen_creatures.empty() ) {
+        return string_format( _( "Creature: %s." ), tile.seen_creatures.front() );
+    }
+    if( !tile.special_perceptions.empty() ) {
+        return tile.special_perceptions.front();
+    }
+    if( !tile.fields.empty() ) {
+        return string_format( _( "Hazard: %s." ), tile.fields.front() );
+    }
+    if( tile.impassable ) {
+        return string_format( _( "Obstacle: %s." ), tile.terrain );
+    }
+    if( tile.route_feature ) {
+        return string_format( _( "Route feature: %s." ), tile.terrain );
+    }
+    if( !tile.heard_marker.empty() ) {
+        return string_format( _( "Sound marker: %s." ), tile.heard_marker );
+    }
+    if( !tile.vehicle.empty() ) {
+        return string_format( _( "Vehicle: %s." ), tile.vehicle );
+    }
+    if( !tile.seen_items.empty() ) {
+        if( tile.seen_items.size() == 1 ) {
+            return string_format( _( "Item here: %s." ), tile.seen_items.front() );
+        }
+        if( tile.seen_items.size() == 2 ) {
+            return string_format( _( "Items here: %1$s, %2$s." ),
+                                  tile.seen_items[0], tile.seen_items[1] );
+        }
+        return string_format( _( "Items here: %1$s and %2$d other types." ),
+                              tile.seen_items.front(),
+                              static_cast<int>( tile.seen_items.size() - 1 ) );
+    }
+    if( !tile.furniture.empty() ) {
+        return string_format( _( "Furniture: %s." ), tile.furniture );
+    }
+    return noteworthy_category( tile ) + ". " + tile.terrain;
+}
+
 std::string player_status()
 {
     const avatar &viewer = get_avatar();
-    std::string result = display::time_string( viewer ) + ". " +
-                         string_format( _( "Hunger: %s" ), display::hunger_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Thirst: %s" ), display::thirst_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Sleepiness: %s" ), display::sleepiness_text_color( viewer ).first ) + ". " +
-                         string_format( _( "Pain: %s" ), display::pain_text_color( viewer ).first );
+    std::string result = display::time_string( viewer );
+    // The native sidebar uses an empty label for neutral statuses. Spoken
+    // summaries must not say "Hunger: . Pain: ." or invent a severity;
+    // keep only readings the game actually supplies.
+    const auto append_if_present = [&result]( const char *heading, const std::string &reading ) {
+        const std::string clean = remove_color_tags( reading );
+        if( !clean.empty() ) {
+            result += ". " + string_format( heading, clean );
+        }
+    };
+    append_if_present( _( "Hunger: %s" ), display::hunger_text_color( viewer ).first );
+    append_if_present( _( "Thirst: %s" ), display::thirst_text_color( viewer ).first );
+    append_if_present( _( "Sleepiness: %s" ), display::sleepiness_text_color( viewer ).first );
+    append_if_present( _( "Pain: %s" ), display::pain_text_color( viewer ).first );
     const int stamina = viewer.get_stamina_max() > 0 ? 100 * viewer.get_stamina() / viewer.get_stamina_max() : 0;
     result += ". " + string_format( _( "Stamina: %d%%" ), stamina );
     // R10.1: the remaining sidebar facts. Temperature and weariness are
@@ -542,7 +616,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     here.role = noteworthy_here ? "alert" : "document";
     here.value = current_tile.terrain;
     if( noteworthy_here ) {
-        here.value = noteworthy_category( current_tile ) + ". " + current_tile.terrain;
+        here.value = short_tile_alert( current_tile );
     }
     if( camera_offset ) {
         here.label = _( "Death camera center" );
@@ -550,6 +624,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                             "or accept your fate to finish watching." );
     }
     result.nodes.push_back( std::move( here ) );
+    // A separate, read-only location node lets Android distinguish two
+    // consecutive noteworthy tiles with identical descriptions. This never
+    // appears in the automatic spoken alert, so footsteps remain quiet.
+    const tripoint_abs_ms avatar_position = get_avatar().pos_abs();
+    semantic_node location = document( "world:tile_position", _( "Current position" ), "" );
+    location.value = string_format( "%d,%d,%d",
+                                    avatar_position.x(), avatar_position.y(), avatar_position.z() );
+    location.actions = { "focus" };
+    result.nodes.push_back( std::move( location ) );
     for( int distance = 1; distance <= scan_depth; ++distance ) {
         for( const int dz : { distance, -distance } ) {
             const tile_observation vertical = observe_memory_tile(
@@ -572,7 +655,66 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( std::move( node ) );
         }
     }
-    result.nodes.push_back( document( "world:status", _( "Character status" ), player_status() ) );
+    // Both shortcuts read the exact same captured turn. Avoid computing
+    // the fairly detailed health/effects summary twice per footstep.
+    const std::string status_summary = player_status();
+    result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
+    const avatar &character = get_avatar();
+    std::string character_details = string_format(
+                                        _( "Character information. %s." ), character.get_name() );
+    character_details += " " + string_format(
+                             _( "Strength: %1$d. Dexterity: %2$d. Intelligence: %3$d. Perception: %4$d." ),
+                             character.get_str(), character.get_dex(),
+                             character.get_int(), character.get_per() );
+    character_details += " " + status_summary;
+    // Blank labels mean neutral need states, not unavailable statistics.
+    // Speak them only in this requested full character read. Keep the
+    // short status summary unchanged to avoid repetitive live alerts.
+    const auto append_neutral_need = [&character_details]( const char *label,
+                                     const std::string &current ) {
+        if( current.empty() ) {
+            character_details += " " + string_format( label, _( "Normal" ) ) + ".";
+        }
+    };
+    append_neutral_need( _( "Hunger: %s" ), display::hunger_text_color( character ).first );
+    append_neutral_need( _( "Thirst: %s" ), display::thirst_text_color( character ).first );
+    append_neutral_need( _( "Sleepiness: %s" ), display::sleepiness_text_color( character ).first );
+
+    // Every number below comes from the existing game state. Nutrition is
+    // a genuine percent of healthy calorie reserves; never invent hunger,
+    // thirst or sleepiness percentages.
+    character_details += " " + string_format( _( "Energy reserves: %d%%" ),
+                         static_cast<int>( std::lround( 100.0f * character.get_kcal_percent() ) ) ) + ".";
+    const std::string mood = remove_color_tags( display::morale_face_color( character ).first );
+    if( !mood.empty() && mood != "ERR" ) {
+        character_details += " " + string_format( _( "Mood: %s" ), mood ) + ".";
+    }
+    character_details += " " + string_format( _( "Focus: %d" ), character.get_focus() ) + ".";
+    character_details += " " + string_format( _( "Speed: %d" ), character.get_speed() ) + ".";
+    // The current moves counter can be negative. It does not mean
+    // "number of moves already spent" or "maximum moves this turn".
+    character_details += " " + string_format( _( "Movement points: %d" ),
+                         character.get_moves() ) + ".";
+    character_details += " " + string_format( _( "Flat-ground move cost: %d" ),
+                         character.run_cost( 100, false ) ) + ".";
+    const auto weariness_progress = character.weariness_transition_progress();
+    if( weariness_progress.second > 0 ) {
+        character_details += " " + string_format( _( "Weariness to next level: %d" ),
+                             weariness_progress.first ) + ".";
+    }
+    character_details += " " + string_format( _( "Activity level: %s" ),
+                         display::activity_text_color( character ).first ) + ".";
+    character_details += " " + string_format( _( "Activity penalty: %s" ),
+                         display::activity_malus_str( character ) ) + ".";
+    // The player's existing local sound volume meter, not an invented
+    // noise system or a percentage.
+    character_details += " " + string_format( _( "Sound level: %d" ), character.volume ) + ".";
+    const std::string held_item = remove_color_tags( character.weapname_simple() );
+    if( !held_item.empty() ) {
+        character_details += " " + string_format( _( "Wielding: %s." ), held_item );
+    }
+    result.nodes.push_back( document( "world:character_detail", _( "Character information" ),
+                                      std::move( character_details ) ) );
     if( !status_alert_history.empty() ) {
         // Session alert history (R10.4): the last status transitions the
         // monitor announced, newest last, with approximate ages. This is a
@@ -678,6 +820,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( button( "reader:scan:south", _( "Scan 16 tiles south" ), "" ) );
     result.nodes.push_back( button( "reader:scan:west", _( "Scan 16 tiles west" ), "" ) );
     result.nodes.push_back( button( "reader:scan:east", _( "Scan 16 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
+    result.nodes.push_back( button( "reader:pickup_here", _( "Pick up here" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
     // Nearby observations are read-only. A tile selection never walks, attacks
     // or constructs a route. Direction commands below use the normal engine.
@@ -825,6 +969,96 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                     && !viewer.has_destination()
                                     && !viewer.has_destination_activity()
                                     && !viewer.has_effect( effect_sleep );
+    // Eight-direction combat gestures use the same engine rules as the
+    // corresponding native keys. A gun fires; otherwise normal movement
+    // bumps into monsters for melee, interacts with NPCs, or walks into
+    // empty space. No hostile-only restriction or forced standstill.
+    // The existing eligibility gate prevents use in incompatible modes.
+    const int combat_steps[8][2] = {
+        { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+        { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+    };
+    const item_location combat_held = viewer.get_wielded_item();
+    const bool ranged_combat = combat_held && combat_held->is_gun() &&
+                               !combat_held->gun_current_mode().melee();
+    for( int i = 0; i < 8; ++i ) {
+        const std::string dir_name = relative_name( combat_steps[i][0], combat_steps[i][1] );
+        semantic_node attack = button( "reader:combat:attack:" + std::to_string( i ),
+                                       ranged_combat ? string_format( _( "Fire %s" ), dir_name ) :
+                                       string_format( _( "Move or attack %s" ), dir_name ),
+                                       ranged_combat ?
+                                       _( "Fire the wielded gun in this direction." ) :
+                                       _( "Use normal movement: attack or interact if occupied, otherwise walk." ) );
+        attack.enabled = result.swipe_movement_allowed;
+        result.nodes.push_back( std::move( attack ) );
+    }
+    const bool precise_aim = target_handler::combat_precise_aim_enabled();
+    semantic_node aim_toggle = button( "reader:combat:aim-toggle",
+                                       precise_aim ? _( "Switch to quick fire" ) :
+                                       _( "Switch to precise aiming" ),
+                                       precise_aim ?
+                                       _( "Precise aiming is active. Directional gun attacks aim and fire automatically." ) :
+                                       _( "Quick fire is active. Directional gun attacks fire immediately." ) );
+    aim_toggle.enabled = result.swipe_movement_allowed;
+    result.nodes.push_back( std::move( aim_toggle ) );
+    for( const std::pair<std::string, std::string> &command : {
+                std::pair<std::string, std::string>{ "reader:combat:weapon-next", _( "Next weapon" ) },
+                { "reader:combat:weapon-prev", _( "Previous weapon" ) },
+                { "reader:combat:reload", _( "Reload wielded gun" ) }
+            } ) {
+        semantic_node node = button( command.first, command.second,
+                                     _( "Uses the native weapon and ammunition rules. No walking." ) );
+        node.enabled = result.swipe_movement_allowed;
+        if( node.id == "reader:combat:reload" ) {
+            const item_location held = viewer.get_wielded_item();
+            node.value = held && held->is_gun() ?
+                         string_format( _( "Ammunition remaining: %d." ), held->ammo_remaining() ) :
+                         _( "No gun wielded." );
+        }
+        result.nodes.push_back( std::move( node ) );
+    }
+    // Read the actual wielded item without activating it or using ammo.
+    // A right-left one-finger gesture speaks this read-only status node.
+    const item_location wielded = viewer.get_wielded_item();
+    std::string weapon_report;
+    if( !wielded ) {
+        weapon_report = _( "Your hands are empty." );
+    } else if( wielded->is_gun() ) {
+        weapon_report = string_format( _( "Wielding %1$s. %2$d rounds loaded." ),
+                                       wielded->tname(), wielded->ammo_remaining() );
+    } else {
+        weapon_report = string_format( _( "Wielding %s." ), wielded->tname() );
+    }
+    result.nodes.push_back( document( "reader:combat:weapon-status",
+                                      _( "Wielded weapon" ), weapon_report ) );
+    // Names, hostility, distance and health come exclusively from the
+    // game's visible/targetable creature set. Never reveal hidden enemies.
+    std::vector<Creature *> enemies = viewer.get_targetable_creatures( 16, false );
+    enemies.erase( std::remove_if( enemies.begin(), enemies.end(), [&]( const Creature *enemy ) {
+        return enemy == nullptr || enemy == &viewer ||
+               enemy->attitude_to( viewer ) != Creature::Attitude::HOSTILE;
+    } ), enemies.end() );
+    std::sort( enemies.begin(), enemies.end(), [&]( const Creature *first, const Creature *second ) {
+        return rl_dist( viewer.pos_bub(), first->pos_bub() ) <
+               rl_dist( viewer.pos_bub(), second->pos_bub() );
+    } );
+    std::string enemy_report;
+    for( const Creature *enemy : enemies ) {
+        const tripoint_rel_ms relative = enemy->pos_bub() - viewer.pos_bub();
+        if( !enemy_report.empty() ) {
+            enemy_report += " ";
+        }
+        enemy_report += string_format(
+                            _( "%1$s, %2$s, %3$d HP remaining." ),
+                            enemy->disp_name(), relative_name( relative.x(), relative.y() ),
+                            std::max( 0, enemy->get_hp() ) );
+    }
+    if( enemy_report.empty() ) {
+        enemy_report = _( "No visible hostile creatures nearby." );
+    }
+    result.nodes.push_back( document( "reader:combat:enemies",
+                                      _( "Visible hostile creatures" ), enemy_report ) );
+
     auto commands = command_snapshot( context, result.title );
     const std::string active_mode = viewer.current_movement_mode()->name();
     const std::string chosen_mode = viewer.get_desired_move_mode()->name();
@@ -833,13 +1067,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.id == "reset_move" || node.id == "open_movement" ||
             node.id == "toggle_run" || node.id == "toggle_crouch" ||
             node.id == "toggle_prone" ) {
-            // Queued mode and active stance are not necessarily the same.
-            node.label += string_format( _( " (selected: %s)" ), chosen_mode );
+            // All reader screens obtain the selected movement mode from
+            // command_snapshot(); only world-specific detail belongs here.
             node.detail = string_format( _( "Now: %1$s. Selected: %2$s." ),
                                          active_mode, chosen_mode );
         } else if( node.id == "auto_travel_mode" ) {
-            const bool auto_on = g && g->auto_travel_mode;
-            node.label = auto_on ? _( "Auto travel: on" ) : _( "Auto travel: off" );
             node.detail = _( "When on, directional movement may follow a longer path. "
                              "It does not select a destination." );
         } else if( node.id == "grab" ) {
@@ -859,14 +1091,18 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                  "Selecting it grabs it immediately." );
             }
         } else if( node.id == "haul" || node.id == "haul_toggle" ) {
-            node.label = viewer.is_hauling() ? _( "Hauling: on" ) : _( "Hauling: off" );
             node.detail = string_format( _( "Items selected: %1$d. Autohaul: %2$s." ),
-                                          static_cast<int>( viewer.haul_list.size() ),
-                                          viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
+                                         static_cast<int>( viewer.haul_list.size() ),
+                                         viewer.is_autohauling() ? _( "on" ) : _( "off" ) );
         } else if( node.id == "interact" || node.id == "examine" ||
                    node.id == "examine_and_pickup" ) {
             node.detail = _( "Opens a spoken list of visible, nearby objects. "
                              "Browse freely; selecting an object uses the original game action." );
+        } else if( node.id == "smash" && viewer.controlling_vehicle ) {
+            // When driving, the native Smash key engages the handbrake.
+            // The contextual menu must never call that "Smash".
+            node.label = _( "Apply handbrake" );
+            node.detail = _( "Apply the vehicle handbrake. This is not an attack." );
         } else if( node.id == "open" || node.id == "close" || node.id == "smash" ) {
             node.detail = _( "Choose a target, then listen for the result. "
                              "The action may spend time or damage property." );
@@ -876,8 +1112,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             node.detail = _( "Mark items from your tile and all eight neighboring tiles, "
                              "then confirm. Browsing does not pick anything up." );
         } else if( node.id == "butcher" ) {
-            node.detail = _( "Process corpses or disassemble items on your current tile. "
-                             "Requirements and time depend on the selected work." );
+            node.detail = _( "Process corpses, cut up materials or disassemble items on "
+                             "your current tile. Requirements and time depend on the work." );
         } else if( node.id == "inventory" ) {
             node.detail = _( "Browse carried items. Select an item for its original action "
                              "menu. Browsing never uses or drops an item." );
@@ -910,11 +1146,219 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
         }
         result.nodes.push_back( std::move( node ) );
     }
+
+    // Only the second comprehensive-menu group consumes these hidden
+    // capabilities. Other hubs and the engine's original actions stay intact.
+    // All checks run on the game thread after visibility has been updated.
+    {
+        map &nearby_map = get_map();
+        const tripoint_bub_ms player_pos = viewer.pos_bub( nearby_map );
+        std::map<std::string, std::string> nearby_actions;
+        const bool in_shell = viewer.has_active_mutation( trait_shell2_nearby ) ||
+                              viewer.has_active_mutation( trait_shell3_nearby );
+        const bool incorporeal = viewer.has_effect( effect_incorporeal_nearby );
+        const bool handless = viewer.has_flag( no_hands_nearby );
+        const bool mounted = viewer.is_mounted();
+        const bool ordinary_mount = mounted &&
+                                    ( !viewer.mounted_creature ||
+                                      !viewer.mounted_creature->has_flag( mon_flag_RIDEABLE_MECH ) );
+        const auto permitted = [&]( const std::string & id ) {
+            if( in_shell && ( id == "open" || id == "close" || id == "smash" ||
+                              id == "examine" || id == "examine_and_pickup" ||
+                              id == "pickup" || id == "pickup_all" ||
+                              id == "reader:pickup_here" || id == "grab" ||
+                              id == "haul" || id == "haul_toggle" ||
+                              id == "butcher" || id == "loot" ||
+                              id == "control_vehicle" ) ) {
+                return false;
+            }
+            if( incorporeal && ( id == "open" || id == "close" || id == "smash" ||
+                                 id == "pickup" || id == "pickup_all" ||
+                                 id == "reader:pickup_here" || id == "grab" ||
+                                 id == "haul" || id == "haul_toggle" ||
+                                 id == "butcher" || id == "loot" ) ) {
+                return false;
+            }
+            if( handless && ( id == "open" || id == "close" || id == "pickup" ||
+                              id == "pickup_all" || id == "reader:pickup_here" ||
+                              id == "grab" || id == "haul" ||
+                              id == "haul_toggle" || id == "butcher" ||
+                              id == "loot" || id == "control_vehicle" ) ) {
+                return false;
+            }
+            if( mounted && ( id == "open" || id == "pickup" || id == "pickup_all" ||
+                             id == "reader:pickup_here" || id == "grab" ||
+                             id == "haul" || id == "haul_toggle" ||
+                             id == "butcher" || id == "loot" ) ) {
+                return false;
+            }
+            if( ordinary_mount && id == "close" ) {
+                return false;
+            }
+            return true;
+        };
+        const auto offer = [&]( const std::string & id, const std::string & hint ) {
+            if( permitted( id ) ) {
+                nearby_actions.emplace( id, hint );
+            }
+        };
+        if( viewer.get_grab_type() != object_type::NONE ) {
+            offer( "grab", "" );
+        }
+        if( viewer.is_hauling() ) {
+            offer( "haul_toggle", "" );
+        }
+        // Native Smash is repurposed as the handbrake while driving.
+        if( viewer.controlling_vehicle ) {
+            offer( "smash", "" );
+        }
+        if( viewer.in_vehicle ) {
+            if( const optional_vpart_position vp = nearby_map.veh_at( player_pos ) ) {
+                if( vp.part_with_feature( "CONTROLS", true ) ) {
+                    offer( "control_vehicle", vp->vehicle().name );
+                }
+            }
+        }
+        for( int dy = -1; dy <= 1; ++dy ) {
+            for( int dx = -1; dx <= 1; ++dx ) {
+                const tripoint_bub_ms target = player_pos + tripoint_rel_ms( dx, dy, 0 );
+                const tile_observation seen = observe_tile( target );
+                if( seen.source != observation_source::visible ) {
+                    continue;
+                }
+                std::string object_name = !seen.furniture.empty() ? seen.furniture :
+                                          !seen.vehicle.empty() ? seen.vehicle :
+                                          !seen.seen_creatures.empty() ? seen.seen_creatures.front() :
+                                          !seen.seen_items.empty() ? seen.seen_items.front() : seen.terrain;
+                const std::string hint = object_name + ", " +
+                                         relative_position_name( dx, dy, 0 );
+                const auto offer_interact = [&]( const std::string & id ) {
+                    if( permitted( id ) ) {
+                        offer( id, hint );
+                        offer( "interact", hint );
+                    }
+                };
+                if( can_interact_at( ACTION_EXAMINE, nearby_map, target ) ) {
+                    offer_interact( "examine" );
+                }
+                if( can_interact_at( ACTION_EXAMINE_AND_PICKUP, nearby_map, target ) ) {
+                    offer_interact( "examine_and_pickup" );
+                }
+                if( can_interact_at( ACTION_PICKUP, nearby_map, target ) ) {
+                    offer_interact( "pickup" );
+                    offer( "pickup_all", hint );
+                    offer( "haul", hint );
+                    offer( "haul_toggle", hint );
+                    // Loot is a zone-based activity. The game still checks whether
+                    // suitable zones and items are available when launched.
+                    offer( "loot", hint );
+                    if( target == player_pos ) {
+                        offer( "reader:pickup_here", hint );
+                    }
+                }
+                if( can_interact_at( ACTION_OPEN, nearby_map, target ) ) {
+                    offer_interact( "open" );
+                }
+                if( can_interact_at( ACTION_CLOSE, nearby_map, target ) ) {
+                    offer_interact( "close" );
+                }
+                const Creature *creature = get_creature_tracker().creature_at( target );
+                if( dynamic_cast<const npc *>( creature ) &&
+                    can_interact_at( ACTION_CHAT, nearby_map, target ) ) {
+                    offer_interact( "chat" );
+                }
+                if( target == player_pos ) {
+                    if( can_interact_at( ACTION_BUTCHER, nearby_map, target ) ) {
+                        offer_interact( "butcher" );
+                    }
+                    if( can_interact_at( ACTION_MOVE_UP, nearby_map, target ) ) {
+                        offer( "LEVEL_UP", hint );
+                        offer( "interact", hint );
+                    }
+                    if( can_interact_at( ACTION_MOVE_DOWN, nearby_map, target ) ) {
+                        offer( "LEVEL_DOWN", hint );
+                        offer( "interact", hint );
+                    }
+                }
+                if( !viewer.controlling_vehicle &&
+                    can_interact_at( ACTION_SMASH, nearby_map, target ) ) {
+                    offer( "smash", hint );
+                }
+                if( target != player_pos &&
+                    ( ( nearby_map.has_furn( target ) &&
+                        nearby_map.furn( target ).obj().is_movable() ) ||
+                      ( nearby_map.veh_at( target ) &&
+                        !nearby_map.veh_at( target ).part_with_feature(
+                            VPFLAG_WALL_MOUNTED, false ) ) ) ) {
+                    offer( "grab", hint );
+                }
+            }
+        }
+        for( const std::string &id : {
+                    "interact", "open", "close", "examine", "examine_and_pickup",
+                    "reader:pickup_here", "pickup", "pickup_all", "chat",
+                    "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
+                    "butcher", "loot", "control_vehicle", "smash"
+                } ) {
+            semantic_node marker;
+            marker.id = "reader:nearby:available:" + id;
+            marker.role = "status";
+            marker.label = marker.id;
+            marker.actions = { "focus" };
+            const auto found = nearby_actions.find( id );
+            marker.enabled = found != nearby_actions.end();
+            if( marker.enabled ) {
+                marker.value = found->second;
+            }
+            result.nodes.push_back( std::move( marker ) );
+        }
+    }
     return result;
 }
 
 // Deliberately bypass observe_tile() and its visibility/memory restrictions:
 // this explicit assistive scan reveals the live map, even behind walls.
+unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
+{
+    unrestricted_tile tile;
+    map &here = get_map();
+    if( !here.inbounds( position ) ) {
+        return tile;
+    }
+    tile.terrain = remove_color_tags( here.tername( position ) );
+    if( here.has_furn( position ) ) {
+        tile.furniture = remove_color_tags( here.furnname( position ) );
+    }
+    tile.impassable = here.impassable( position );
+    for( const auto &entry : here.field_at( position ) ) {
+        tile.fields.push_back( remove_color_tags( entry.second.name() ) );
+    }
+    const trap &hazard = here.tr_at( position );
+    if( !hazard.is_null() ) {
+        tile.traps.push_back( remove_color_tags( hazard.name() ) );
+    }
+    const Creature *creature = get_creature_tracker().creature_at( position, true );
+    if( creature != nullptr && creature != &get_avatar() ) {
+        tile.creatures.push_back( remove_color_tags( creature->disp_name() ) );
+    }
+    const optional_vpart_position vehicle = here.veh_at( position );
+    if( vehicle ) {
+        tile.vehicle = remove_color_tags( vehicle->vehicle().name );
+    }
+    std::map<std::string, int> counts;
+    for( const item &obj : here.i_at( position ) ) {
+        const std::string name = spoken_item_name( obj );
+        if( !name.empty() ) {
+            ++counts[name];
+        }
+    }
+    for( const auto &entry : counts ) {
+        tile.items.push_back( entry.second == 1 ? entry.first :
+                              string_format( _( "%1$s [%2$d]" ), entry.first, entry.second ) );
+    }
+    return tile;
+}
+
 void announce_linear_scan( const int dx, const int dy )
 {
     if( std::abs( dx ) + std::abs( dy ) != 1 ) {
@@ -922,8 +1366,6 @@ void announce_linear_scan( const int dx, const int dy )
     }
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
-    // The swipe itself supplies the direction. Announce the observations
-    // immediately, without repeating the gesture or the 16-tile range.
     std::string spoken;
     for( int distance = 1; distance <= 16; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( dx * distance, dy * distance, 0 );
@@ -931,36 +1373,32 @@ void announce_linear_scan( const int dx, const int dy )
         if( !here.inbounds( pos ) ) {
             detail = _( "Outside loaded map" );
         } else {
-            detail = here.tername( pos );
-            if( here.has_furn( pos ) ) {
-                detail += ". " + here.furnname( pos );
+            const unrestricted_tile tile = scan_unrestricted_tile( pos );
+            detail = tile.terrain;
+            if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
+                detail += ". " + tile.furniture;
             }
-            if( here.impassable( pos ) ) {
+            if( tile.impassable ) {
                 detail += ". " + std::string( _( "Impassable" ) );
             }
-            for( const auto &entry : here.field_at( pos ) ) {
-                detail += ". " + entry.second.name();
+            for( const std::string &field : tile.fields ) {
+                detail += ". " + field;
             }
-            const trap &hazard = here.tr_at( pos );
-            if( !hazard.is_null() ) {
-                detail += ". " + string_format( _( "Trap: %s" ), hazard.name() );
+            for( const std::string &hazard : tile.traps ) {
+                detail += ". " + string_format( _( "Trap: %s" ), hazard );
             }
-            const Creature *creature = get_creature_tracker().creature_at( pos, true );
-            if( creature != nullptr && creature != &get_avatar() ) {
-                detail += ". " + creature->disp_name();
+            for( const std::string &creature : tile.creatures ) {
+                detail += ". " + creature;
             }
-            const optional_vpart_position vp = here.veh_at( pos );
-            if( vp ) {
-                detail += ". " + string_format( _( "Vehicle: %s" ), vp->vehicle().name );
+            if( !tile.vehicle.empty() ) {
+                detail += ". " + string_format( _( "Vehicle: %s" ), tile.vehicle );
             }
-            std::map<std::string, int> items;
-            for( const item &obj : here.i_at( pos ) ) {
-                ++items[obj.tname()];
-            }
-            for( const auto &entry : items ) {
-                detail += ". " + entry.first;
-                if( entry.second > 1 ) {
-                    detail += " " + std::to_string( entry.second );
+            if( !tile.items.empty() ) {
+                // Distinguish the furniture from items on the same tile.
+                // Never assert that items are inside an actual container.
+                detail += ". " + std::string( _( "Items:" ) );
+                for( const std::string &name : tile.items ) {
+                    detail += " " + name + ".";
                 }
             }
         }
@@ -969,17 +1407,105 @@ void announce_linear_scan( const int dx, const int dy )
         }
         spoken += string_format( _( "Tile %1$d: %2$s." ), distance, detail );
     }
-    // Native calls never read game state off-thread. Android handles the
-    // prefixed utterance as long-form TTS rather than a short event notice.
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
+}
+
+void announce_area_transition()
+{
+    // Game thread only. The absolute overmap tile is independent of map
+    // bubble shifts: walking across an internal submap boundary is not
+    // itself a new area. Reset across world loads/lifecycle generations.
+    static std::uint64_t previous_epoch = 0;
+    static std::optional<tripoint_abs_omt> previous_tile;
+    static std::string previous_area;
+    const std::uint64_t current_epoch = a11y::android::lifecycle_epoch();
+    if( current_epoch != previous_epoch ) {
+        previous_epoch = current_epoch;
+        previous_tile.reset();
+        previous_area.clear();
+    }
+    const tripoint_abs_omt omt = get_avatar().pos_abs_omt();
+    if( previous_tile && *previous_tile == omt ) {
+        return;
+    }
+    const om_vision_level vision = overmap_buffer.seen( omt );
+    if( vision == om_vision_level::unseen ) {
+        // Never announce unseen terrain. Recheck when the observer learns it.
+        return;
+    }
+    const oter_id &terrain = overmap_buffer.ter_existing( omt );
+    if( !terrain.is_valid() ) {
+        return;
+    }
+    const std::string area = remove_color_tags( terrain->get_name( vision ) );
+    if( area.empty() ) {
+        return;
+    }
+    if( previous_tile && !previous_area.empty() && area != previous_area ) {
+        a11y::android::announce( string_format( _( "Entering area: %s." ), area ), 1 );
+#if defined(__ANDROID__)
+        a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
+                "from=" + previous_area + " to=" + area );
+#endif
+    }
+    previous_tile = omt;
+    previous_area = area;
 }
 
 void announce_player_coordinates()
 {
-    const tripoint_abs_ms pos = get_avatar().pos_abs();
-    a11y::android::announce(
-        string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
-                       pos.x(), pos.y(), pos.z() ), 1 );
+    const avatar &viewer = get_avatar();
+    const tripoint_abs_ms pos = viewer.pos_abs();
+    const std::string coordinates = string_format( _( "Coordinates. X %1$d. Y %2$d. Z %3$d." ),
+                                            pos.x(), pos.y(), pos.z() );
+    // Speak the known overmap place first. Never reveal undiscovered
+    // terrain when the current overmap location has not been seen.
+    std::string spoken = string_format( _( "Area: %1$s. %2$s" ), _( "Unknown" ), coordinates );
+
+    // The overmap already names forests, roads, buildings and other areas.
+    // Use exactly what the character knows; never expose an unseen terrain
+    // or generate new overmap data merely to announce coordinates.
+    const tripoint_abs_omt omt = viewer.pos_abs_omt();
+    const om_vision_level vision = overmap_buffer.seen( omt );
+    if( vision != om_vision_level::unseen ) {
+        const oter_id &terrain = overmap_buffer.ter_existing( omt );
+        if( terrain.is_valid() ) {
+            const std::string area = remove_color_tags( terrain->get_name( vision ) );
+            if( !area.empty() ) {
+                spoken = string_format( _( "Area: %1$s. %2$s" ), area, coordinates );
+            }
+        }
+    }
+    // Native lighting classification at the player's actual tile. Use
+    // the lightmap, never the brighter general outdoor sky level.
+    const lit_level light = get_map().light_at( viewer.pos_bub() );
+    std::string lighting;
+    switch( light ) {
+        case lit_level::BRIGHT:
+            lighting = _( "Very bright" );
+            break;
+        case lit_level::LIT:
+            lighting = _( "Well lit" );
+            break;
+        case lit_level::LOW:
+            lighting = _( "Dim" );
+            break;
+        case lit_level::DARK:
+            lighting = _( "Dark" );
+            break;
+        default:
+            lighting = _( "Unknown" );
+            break;
+    }
+    spoken += " " + string_format( _( "Lighting: %s" ), lighting ) + ".";
+    spoken += " " + string_format( _( "Weather: %s" ),
+                                   display::weather_text_color( viewer ).first ) + ".";
+    // Exact with a watch, approximate if the sky is visible, otherwise
+    // unavailable. The native display routine already enforces this.
+    const std::string game_time = display::time_string( viewer );
+    spoken += " " + string_format( _( "Time: %s" ),
+                                   game_time == _( "???" ) ? _( "Unknown" ) : game_time ) + ".";
+    a11y::android::announce( spoken, 1 );
 }
 
 semantic_snapshot activity_snapshot( const input_context &context )

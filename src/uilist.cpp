@@ -995,7 +995,11 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
             node.value = remove_color_tags( entry.a11y_value.empty() ? entry.ctxt : entry.a11y_value );
             node.checked = entry.a11y_checked.value_or( false );
             node.detail = remove_color_tags( entry.desc );
-            node.enabled = allow_confirm && ( entry.enabled || allow_disabled );
+            // Character creator steps announce unavailable choices and their
+            // reason on focus. Other UILIST dialogs retain allow_disabled's
+            // existing behavior, including optional confirm-time popups.
+            const bool creator_step = input_category.rfind( "character-creator-step-", 0 ) == 0;
+            node.enabled = allow_confirm && ( entry.enabled || ( allow_disabled && !creator_step ) );
             node.selected = selected == index;
             if( !entry.enabled && allow_disabled && !entry.a11y_disabled_reason.empty() ) {
                 if( !node.detail.empty() ) {
@@ -1003,8 +1007,10 @@ void uilist::update_reader( a11y::screen_scope &reader, const input_context &ctx
                 }
                 node.detail += remove_color_tags( entry.a11y_disabled_reason );
             }
-            node.position = i + 1;
-            node.total = fentries.size();
+            if( input_category != "nearby-target" ) {
+                node.position = i + 1;
+                node.total = fentries.size();
+            }
             if( !node.enabled ) {
                 node.disabled_reason = entry.a11y_disabled_reason.empty() ?
                                        _( "This entry cannot be selected." ) : entry.a11y_disabled_reason;

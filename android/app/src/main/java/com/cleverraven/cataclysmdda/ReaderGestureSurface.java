@@ -25,8 +25,22 @@ public final class ReaderGestureSurface extends LinearLayout {
         void navigate(int delta);
         /** Adjust a focused game setting, if it is a numeric or choice field. */
         boolean adjustFocusedSetting(int delta);
+        /** Optional date/hour navigation in the character creator calendar. */
+        default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
+        /** Nearby exploration: vertical changes category, horizontal changes target. */
+        default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
+        /** Crafting only: one finger horizontally explores recipes. */
+        default boolean handleCraftingRecipeSwipe(int horizontal) { return false; }
+        /** Crafting only: one finger vertically switches the active subcategory. */
+        default boolean handleCraftingSubcategorySwipe(int vertical) { return false; }
+        /** Crafting only: two fingers horizontally switch main categories, including All. */
+        default boolean handleCraftingMainCategorySwipe(int horizontal) { return false; }
         /** Back out of a game menu without opening a secondary reader panel. */
         void goBack();
+        /** Confirm the current native menu, selection or editor without guessing an action. */
+        default void confirm() { }
+        /** Open advanced commands without changing the focused gameplay item. */
+        default void openContextActions() { }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -35,6 +49,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         void scanDirection(int dx, int dy);
         void twoFingerTap(int count);
         void threeFingerTap();
+        /** Fixed shortcut: two three-finger taps read the current character. */
+        default void characterDetails() { }
+        /** Reserved three-finger triple tap: switch live-world combat/map mode. */
+        default void toggleCombatMode() { }
         /** Three sequential single-finger taps open the native action menu. */
         void openActionMenu();
         boolean handleCustomGesture(String gestureId);
@@ -101,6 +119,18 @@ public final class ReaderGestureSurface extends LinearLayout {
             public boolean onDown(MotionEvent event) { return true; }
 
             @Override
+            public boolean onSingleTapConfirmed(MotionEvent event) {
+                // Do not consume the first tap while game speech is playing.
+                // Only a *confirmed* solitary tap stops narration; a double
+                // tap, swipe or hold must retain its own gesture action.
+                if( !listener.directWorldGesturesEnabled() && previousTapOwner != null
+                        && previousTapOwner.equals(listener.gestureContext()) ) {
+                    listener.stopSpeech();
+                }
+                return true;
+            }
+
+            @Override
             public boolean onDoubleTap(MotionEvent event) {
                 // Defer only gameplay's second tap until a third tap is ruled
                 // out. Menus keep immediate double-tap activation.
@@ -119,14 +149,9 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger_long_press"
                             + " context=" + owner);
                     longPressHandled = true;
-                    // A custom one-finger hold overrides its old Detail
-                    // action only while playing. Menu long-press keeps
-                    // opening the gesture-assignment picker as before.
-                    if (!listener.directWorldGesturesEnabled()
-                            || !listener.handleCustomGesture(
-                                    ReaderGestureBindings.idForHold(1))) {
-                        listener.detail();
-                    }
+                    // Holding one finger always opens context actions.
+                    // It cannot be overwritten, even by a legacy binding.
+                    listener.openContextActions();
                 }
             }
 
@@ -161,8 +186,9 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     static int navigationDeltaForHorizontalSwipe(float dx, boolean leftHanded) {
-        int delta = dx > 0 ? 1 : -1;
-        return leftHanded ? -delta : delta;
+        // Spoken lists keep one direction policy regardless of handedness.
+        // World movement and other directional gestures remain untouched.
+        return dx > 0 ? 1 : -1;
     }
 
     private boolean valid() {
@@ -358,10 +384,16 @@ public final class ReaderGestureSurface extends LinearLayout {
                 int count = worldTapCount;
                 String expectedOwner = worldTapOwner;
                 clearWorldTaps();
-                if (count == 2 && expectedOwner != null
-                        && expectedOwner.equals(listener.gestureContext())
+                if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
                         && listener.directWorldGesturesEnabled()) {
-                    listener.activate();
+                    if (count == 1) {
+                        // Resolve single tap only after excluding two and
+                        // three taps, so a tap used to silence TTS never
+                        // blocks activation or the triple-tap action hub.
+                        listener.stopSpeech();
+                    } else if (count == 2) {
+                        listener.activate();
+                    }
                 }
             };
             handler.postDelayed(worldTapTimeout, ViewConfiguration.getDoubleTapTimeout());
@@ -403,16 +435,31 @@ public final class ReaderGestureSurface extends LinearLayout {
     private void dispatchMultiTap(int fingers, int count) {
         SessionDebugLog.event("GESTURE", "multi_tap fingers=" + fingers
                 + " count=" + count);
+        // All two-finger taps have built-in actions (one tap also works in
+        // menus); the first two three-finger taps are reserved for location
+        // and character status. Handle these BEFORE custom bindings.
+        if (fingers == 2) {
+            if (count == 1 || listener.directWorldGesturesEnabled()) {
+                listener.twoFingerTap(count);
+            }
+            return;
+        }
         if (!listener.directWorldGesturesEnabled()) { return; }
+        if (fingers == 3 && count == 1) {
+            listener.threeFingerTap();
+            return;
+        }
+        if (fingers == 3 && count == 2) {
+            listener.characterDetails();
+            return;
+        }
+        if (fingers == 3 && count == 3) {
+            listener.toggleCombatMode();
+            return;
+        }
         String gesture = ReaderGestureBindings.idForTap(fingers, count);
         if (gesture == null || listener.handleCustomGesture(gesture)) { return; }
-        if (fingers == 2) {
-            listener.twoFingerTap(count);
-        } else if (fingers == 3 && count == 1) {
-            listener.threeFingerTap();
-        } else if (fingers >= 3) {
-            listener.unassignedMultiGesture(gesture);
-        }
+        listener.unassignedMultiGesture(gesture);
     }
 
     private static String cardinal(float dx, float dy, float minimum) {
@@ -560,6 +607,53 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP || multiFingerMoved) {
                 cancelMultiHold();
             }
+            // In crafting, only two-finger LEFT/RIGHT changes the main
+            // category. Leave two-finger UP/DOWN entirely to the established
+            // Confirm/Back handlers below, including within crafting.
+            if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
+                    && !cancelled && owner != null && owner.equals(listener.gestureContext())
+                    && !listener.directWorldGesturesEnabled()
+                    && event.getEventTime() - downTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())) {
+                boolean left = TwoFingerBackGesture.matchesLeft(event, backPointerIds,
+                        backPointerStartX, backPointerStartY, backPointerCount,
+                        listener.swipeDistancePx());
+                boolean right = !left && TwoFingerBackGesture.matchesRight(event, backPointerIds,
+                        backPointerStartX, backPointerStartY, backPointerCount,
+                        listener.swipeDistancePx());
+                if ((left || right) && listener.handleCraftingMainCategorySwipe(left ? -1 : 1)) {
+                    SessionDebugLog.event("GESTURE", "crafting_main_category_two_fingers="
+                            + (left ? "left" : "right"));
+                    ignoreUntilPointersReleased = true;
+                    multiple = false;
+                    backPointerCount = 0;
+                    cancelled = true;
+                    owner = null;
+                    previousTapOwner = null;
+                    clearMultiTap();
+                    return true;
+                }
+            }
+            // Two fingers up confirms on native menus and number editors only.
+            // Keep the world map's existing 16-tile directional scan intact.
+            if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
+                    && !cancelled && owner != null && owner.equals(listener.gestureContext())
+                    && !listener.directWorldGesturesEnabled()
+                    && event.getEventTime() - downTime
+                            <= Math.max(1500L, listener.swipeDurationLimitMs())
+                    && TwoFingerBackGesture.matchesUp(event, backPointerIds,
+                            backPointerStartX, backPointerStartY, backPointerCount,
+                            listener.swipeDistancePx())) {
+                ignoreUntilPointersReleased = true;
+                multiple = false;
+                backPointerCount = 0;
+                cancelled = true;
+                owner = null;
+                previousTapOwner = null;
+                clearMultiTap();
+                listener.confirm();
+                return true;
+            }
             // Two fingers down means Back on menus/forms. In active gameplay
             // it keeps its existing 16-tile scan action.
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
@@ -590,10 +684,14 @@ public final class ReaderGestureSurface extends LinearLayout {
                         + " duration_ms=" + (event.getEventTime() - downTime)
                         + " dx=" + (multiLastX - multiStartX)
                         + " dy=" + (multiLastY - multiStartY));
+                // Modal two-finger taps also reach the detail dispatcher.
+                // Two-finger up/down remain Back/Confirm above. Horizontal
+                // two-finger crafting switches were handled on POINTER_UP.
+                // Only a live world uses remaining gestures for scanning.
                 boolean permitted = !cancelled && owner != null
                         && owner.equals(listener.gestureContext())
                         && event.getEventTime() - downTime <= listener.swipeDurationLimitMs()
-                        && listener.directWorldGesturesEnabled();
+                        && (listener.directWorldGesturesEnabled() || maxPointers == 2);
                 float dx = multiLastX - multiStartX;
                 float dy = multiLastY - multiStartY;
                 float threshold = listener.swipeDistancePx();
@@ -602,13 +700,16 @@ public final class ReaderGestureSurface extends LinearLayout {
                     if (direction != null) {
                         clearMultiTap();
                         if (maxPointers == 2) {
-                            // Two-finger swipes are dedicated to the 16-tile scan,
-                            // not among the 33 assignable shortcut gestures.
-                            listener.scanDirection("right".equals(direction) ? 1
-                                    : "left".equals(direction) ? -1 : 0,
-                                    "down".equals(direction) ? 1
-                                    : "up".equals(direction) ? -1 : 0);
-                        } else {
+                            // Only live-world two-finger swipes scan. Modal taps
+                            // are still received, and modal up/down already
+                            // took their dedicated confirmation/back paths.
+                            if (listener.directWorldGesturesEnabled()) {
+                                listener.scanDirection("right".equals(direction) ? 1
+                                        : "left".equals(direction) ? -1 : 0,
+                                        "down".equals(direction) ? 1
+                                        : "up".equals(direction) ? -1 : 0);
+                            }
+                        } else if (maxPointers >= 3 && listener.directWorldGesturesEnabled()) {
                             String gesture = ReaderGestureBindings.idForSwipe(
                                     maxPointers, direction);
                             if (gesture != null && !listener.handleCustomGesture(gesture)) {
@@ -650,8 +751,13 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger=" + gesture
                             + " duration_ms=" + (event.getEventTime() - downTime));
                     clearMultiTap();
-                    if (!listener.handleCustomGesture(gesture)
-                            && gesture.indexOf('_', "swipe_".length()) < 0) {
+                    boolean handled = listener.handleCustomGesture(gesture);
+                    if (handled) {
+                        // A bent or out-and-back swipe can end at the touch
+                        // origin. Consume it before tap recognition below,
+                        // or reload/weapon inspection could also trigger tap.
+                        swipeHandled = true;
+                    } else if (gesture.indexOf('_', "swipe_".length()) < 0) {
                         handleSwipe(event.getX() - firstX, event.getY() - firstY);
                     }
                 }
@@ -672,6 +778,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     && !activatedByDoubleTap
                     && Math.max(Math.abs(dx), Math.abs(dy)) < listener.swipeDistancePx()
                     && event.getEventTime() - downTime <= listener.swipeDurationLimitMs();
+            // Retain the first tap even when TTS was active. The second
+            // tap must still activate the focused item.
             previousTapOwner = tap ? owner : null;
             if (tap && listener.directWorldGesturesEnabled()) {
                 queueWorldTap(event, owner);
@@ -686,6 +794,22 @@ public final class ReaderGestureSurface extends LinearLayout {
         SessionDebugLog.event("GESTURE", "swipe dx=" + dx + " dy=" + dy
                 + " world_move=" + listener.worldMovementEnabled());
         swipeHandled = true;
+        int horizontal = Math.abs(dx) >= Math.abs(dy) * 1.35f ? (dx > 0 ? 1 : -1) : 0;
+        int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleCreatorCalendarSwipe(horizontal, vertical)) {
+            return;
+        }
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleSurroundingsSwipe(horizontal, vertical)) {
+            return;
+        }
+        if (horizontal != 0 && listener.handleCraftingRecipeSwipe(horizontal)) {
+            return;
+        }
+        if (vertical != 0 && listener.handleCraftingSubcategorySwipe(vertical)) {
+            return;
+        }
         int[] direction = directionForSwipe(dx, dy);
         if (direction != null && listener.movementPracticeEnabled()) {
             listener.practiceMovementDirection(direction[0], direction[1]);

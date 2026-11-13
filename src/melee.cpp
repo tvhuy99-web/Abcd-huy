@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "anatomy.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -608,6 +609,7 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
                                        const matec_id &force_technique,
                                        bool allow_unarmed, int forced_movecost )
 {
+    Messages::mute_combat_speech unrelated_speech( !is_avatar() && !t.is_avatar() );
     map &here = get_map();
 
     // Prevent player from melee-attacking creatures that are swimming under terrain.
@@ -889,6 +891,19 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
             }
             sfx::generate_melee_sound( cur_weap, pos_bub(), t.pos_bub(), true, t.is_monster(), material );
             int dam = dealt_dam.total_damage();
+            if( is_avatar() && a11y::enabled() && t.is_monster() ) {
+                const int remaining_hp = std::max( 0, t.get_hp() );
+                if( dam > 0 && critical_hit ) {
+                    add_msg( m_good, _( "Critical hit on %1$s. %2$d damage. %3$d HP remaining." ),
+                             t.disp_name(), dam, remaining_hp );
+                } else if( dam > 0 ) {
+                    add_msg( m_good, _( "Hit %1$s. %2$d damage. %3$d HP remaining." ),
+                             t.disp_name(), dam, remaining_hp );
+                } else {
+                    add_msg( m_info, _( "Your melee attack hit %s but dealt no damage." ),
+                             t.disp_name() );
+                }
+            }
             melee::melee_stats.damage_amount += dam;
 
             if( can_train_melee ) {
@@ -899,6 +914,9 @@ bool Character::melee_attack_abstract( Creature &t, bool allow_special,
             // Treat monster as seen if we see it before or after the attack
             if( seen || player_character.sees( here, t ) ) {
                 std::string message = melee_message( technique, *this, dealt_dam );
+                // The original detailed result stays in the native log, but
+                // the accessibility summary above is the only spoken hit.
+                Messages::mute_combat_speech original_melee_hit( is_avatar() && t.is_monster() );
                 player_hit_message( this, message, t, dam, critical_hit, technique.id != tec_none,
                                     dealt_dam.wp_hit );
             } else {

@@ -1,12 +1,15 @@
 name: Android accessibility baseline and candidate
 
 on:
-  # Build the current integration branch into an installable, reproducibly
-  # signed ARM64 APK. Future pushes produce in-place updates with the same
+  # Build the accessibility integration and the character-cache test branch
+  # into reproducibly signed ARM64 APKs. Future pushes use the same
   # package name and the same checked-in accessibility testing certificate.
   push:
     branches:
       - integration/reader-vietnamese-20261107
+      - perf/character-blueprint-cache-20261108
+      - perf/reader-swipe-latency-20261109
+      - feat/one-step-quantity-selection-20261110
     paths:
       - '.github/workflows/android-accessibility.yml'
       - 'android/**'
@@ -14,6 +17,7 @@ on:
       - 'lang/**'
       - 'data/**'
       - 'tools/accessibility/**'
+      - 'tests/a11y_context_test.cpp'
   workflow_dispatch:
     inputs:
       compare_baseline:
@@ -67,10 +71,12 @@ jobs:
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
           log-accepted-android-sdk-licenses: false
-      - name: Install build dependencies
+      - name: Install build dependencies with Ubuntu mirror fallback
+        run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
+      - name: Compile Vulkan shader artifacts for Android assets
         run: |
-          sudo apt-get update
-          sudo apt-get install -y gettext ccache
+          python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
+          test -s data/shaders/grayscale.frag.spv
       - name: Record build identity
         env:
           BUILD_KIND: ${{ matrix.name }}
@@ -83,6 +89,48 @@ jobs:
           cp android/gradle.properties build-evidence/gradle.properties
           echo "Build: $BUILD_KIND" >> "$GITHUB_STEP_SUMMARY"
           cat build-evidence/commit.txt >> "$GITHUB_STEP_SUMMARY"
+      # A Java/translation/asset-only commit can reuse the full native ARM64
+      # library set built from the exact same inputs. Never restore a library
+      # when any native source/header/build flag has changed.
+      # VERSION is derived from these inputs (not the git SHA) so the
+      # compiled native version remains correct on Java-only APK updates.
+      - name: Fingerprint native inputs
+        if: matrix.name == 'candidate'
+        id: native-inputs
+        env:
+          NATIVE_FINGERPRINT: ${{ hashFiles('src/**', 'android/app/jni/**', 'android/app/build.gradle', 'android/build.gradle', 'android/gradle.properties', 'android/settings.gradle') }}
+        run: |
+          test -n "$NATIVE_FINGERPRINT"
+          echo "fingerprint=$NATIVE_FINGERPRINT" >> "$GITHUB_OUTPUT"
+          echo "native_version=native-${NATIVE_FINGERPRINT:0:12}" >> "$GITHUB_OUTPUT"
+          printf 'native_inputs_sha256=%s\n' "$NATIVE_FINGERPRINT" > build-evidence/native.txt
+      # Cache the ENTIRE runtime library set, not only libmain.so. With
+      # EXCLUDE_NATIVE_LIBS, CMake does not copy SDL3 and libc++ dependencies.
+      # A previous libmain-only cache produced an APK that passed CI but
+      # failed on device with dlopen: libSDL3.so not found.
+      - name: Reuse verified native ARM64 library set when source is unchanged
+        if: matrix.name == 'candidate'
+        id: cached-native
+        uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: android/app/src/main/jniLibs/arm64-v8a/
+          key: a11y-native-libs-v2-ndk28-arm64-${{ steps.native-inputs.outputs.fingerprint }}
+      - name: Validate native libraries restored from exact fingerprint
+        if: matrix.name == 'candidate' && steps.cached-native.outputs.cache-hit == 'true'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          directory = Path('android/app/src/main/jniLibs/arm64-v8a')
+          required = ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                      'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+          for name in required:
+              lib = directory / name
+              if not lib.is_file() or lib.stat().st_size < 100000:
+                  raise SystemExit(f'Cached native runtime library missing: {lib}')
+              if lib.open('rb').read(5) != b'\x7fELF\x02':
+                  raise SystemExit(f'Cached native runtime library is not ELF64: {lib}')
+              print(f'Exact native-cache hit: {name}: {lib.stat().st_size} bytes')
+          PY
       - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
         with:
           path: ~/.cache/ccache
@@ -90,19 +138,55 @@ jobs:
           restore-keys: |
             a11y-android-arm64-ndk28-${{ matrix.name }}-
             a11y-android-arm64-ndk28-
+      - name: Download Gradle distribution (retry transient network failures)
+        working-directory: android
+        run: |
+          for attempt in 1 2 3; do
+            echo "Gradle bootstrap attempt ${attempt}/3"
+            if bash ./gradlew --version; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Gradle distribution could not be downloaded after 3 attempts" >&2
+              exit 1
+            fi
+            sleep $((attempt * 20))
+          done
       - name: Build installable debug APK
         working-directory: android
         env:
           BUILD_KIND: ${{ matrix.name }}
+          NATIVE_FINGERPRINT: ${{ steps.native-inputs.outputs.fingerprint }}
+          NATIVE_VERSION: ${{ steps.native-inputs.outputs.native_version }}
+          REUSED_NATIVE: ${{ steps.cached-native.outputs.cache-hit }}
           CCACHE_DIR: /home/runner/.cache/ccache
-          CCACHE_MAXSIZE: 2G
+          CCACHE_MAXSIZE: 3G
+          CCACHE_BASEDIR: ${{ github.workspace }}
         run: |
           set -o pipefail
+          # Cache statistics matter: restoring gigabytes is not proof of a
+          # compiler cache hit. Record hits/misses and cache evictions.
+          ccache --set-config=max_size=3G
+          ccache --zero-stats
+          native_args=()
           if [[ "$BUILD_KIND" == baseline ]]; then
             task_build_command=assembleExperimentalDebug
             task_signing_args=()
           else
             task_build_command=assembleAccessibilityDebug
+            apk_version="$(git rev-parse --short=8 HEAD)"
+            native_args=("-Poverride_version=$NATIVE_VERSION"
+                         "-Paccessibility_apk_version=$apk_version")
+            echo "apk_revision=$apk_version" >> ../build-evidence/native.txt
+            if [[ "$REUSED_NATIVE" == 'true' ]]; then
+              # The exact-fingerprint cache contains libmain.so plus all
+              # SDL3/C++ dependencies. Validation above checked each file.
+              test -s app/src/main/jniLibs/arm64-v8a/libSDL3.so
+              native_args+=("-PEXCLUDE_NATIVE_LIBS=true")
+              echo 'native_mode=prebuilt_verified' >> ../build-evidence/native.txt
+            else
+              echo 'native_mode=compile_and_seed_cache' >> ../build-evidence/native.txt
+            fi
             # Never silently fall back to an ephemeral Android debug keystore.
             # GitHub's workflow run number monotonically increases across
             # pushes of this workflow. The base reserves space for older tests.
@@ -110,7 +194,8 @@ jobs:
             task_signing_args=(-Paccessibility_test_signing=true
                                "-Poverride_versionCode=${version_code}")
           fi
-          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
+          bash ./gradlew --no-daemon --console=plain -Pj=3 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
+          ccache --show-stats --verbose | tee ../build-evidence/ccache.txt
       - name: Verify APK contents and checksums
         env:
           BUILD_KIND: ${{ matrix.name }}
@@ -129,7 +214,19 @@ jobs:
               for apk in apks:
                   with zipfile.ZipFile(apk) as archive:
                       names = archive.namelist()
-                      for required in ('lib/arm64-v8a/libmain.so', 'assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo'):
+                      # An APK with just libmain.so is NOT installable:
+                      # Android's dlopen also needs all five dependent libs.
+                      required_libs = (
+                          'libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                          'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+                      for lib in required_libs:
+                          required = 'lib/arm64-v8a/' + lib
+                          if required not in names:
+                              raise SystemExit(f'{apk}: missing runtime library {required}')
+                          if not archive.read(required).startswith(b'\x7fELF\x02'):
+                              raise SystemExit(f'{apk}: invalid ARM64 ELF {required}')
+                      for required in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
+                                       'assets/data/shaders/grayscale.frag.spv'):
                           if required not in names:
                               raise SystemExit(f'{apk}: missing {required}')
                   signer = pathlib.Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0/apksigner'
@@ -153,6 +250,27 @@ jobs:
                           f"certificate_sha256={expected}\n", encoding='utf-8')
                   out.write(f'{hashlib.sha256(apk.read_bytes()).hexdigest()}  {apk}\n')
           PY
+      - name: Seed exact native cache from verified installable APK
+        if: success() && matrix.name == 'candidate' && steps.cached-native.outputs.cache-hit != 'true'
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import zipfile
+          apks = sorted(Path('android/app/build/outputs/apk').rglob('*.apk'))
+          if len(apks) != 1:
+              raise SystemExit(f'Expected one ARM64 APK, got {len(apks)}')
+          required = ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                      'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so')
+          directory = Path('android/app/src/main/jniLibs/arm64-v8a')
+          directory.mkdir(parents=True, exist_ok=True)
+          with zipfile.ZipFile(apks[0]) as archive:
+              for name in required:
+                  native = archive.read('lib/arm64-v8a/' + name)
+                  if not native.startswith(b'\x7fELF\x02') or len(native) < 100000:
+                      raise SystemExit(f'Native APK library failed ELF64 sanity check: {name}')
+                  (directory / name).write_bytes(native)
+                  print(f'Seeded verified native runtime: {name}: {len(native)} bytes')
+          PY
       - name: Summarize stable test identity and artifact
         if: success() && matrix.name == 'candidate'
         run: |
@@ -160,6 +278,7 @@ jobs:
             echo '### Installable accessibility APK'
             echo 'Package: `com.cleverraven.cataclysmdda.accessibility`'
             echo 'Signing: checked-in stable accessibility testing keystore'
+            cat build-evidence/native.txt
             cat build-evidence/package.txt
             cat build-evidence/SHA256SUMS
             echo 'Download from workflow artifact: `android-arm64-candidate`'

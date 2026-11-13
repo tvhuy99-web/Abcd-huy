@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <array>
 #include <climits>
+#include <chrono>
 #include <cmath>
 #include <cstdlib>
 #include <optional>
@@ -15,6 +16,9 @@
 #include <utility>
 
 #include "active_item_cache.h"
+#if defined(__ANDROID__)
+#include "a11y_android.h"
+#endif
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "avatar.h"
@@ -9064,7 +9068,10 @@ void map::reconcile_loaded_items( const reconcile_scope scope )
             for( int gridz = zmin; gridz <= zmax; gridz++ ) {
                 const tripoint_rel_sm grid( gridx, gridy, gridz );
                 submap *const sm = get_submap_at_grid( grid );
-                if( sm == nullptr ) {
+                // A uniform submap has no per-tile items (get_items returns
+                // an empty colony). Avoid walking every tile on empty rock
+                // and open-air levels whenever the reality bubble shifts.
+                if( sm == nullptr || sm->is_uniform() ) {
                     continue;
                 }
                 for( int sx = 0; sx < SEEX; ++sx ) {
@@ -9203,11 +9210,23 @@ void map::shift( const point_rel_sm &sp )
         return;
     }
 
+#if defined(__ANDROID__)
+    const bool shift_profile = a11y::android::performance_profiling_enabled();
+    const auto shift_begin = shift_profile ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+    long long load_new_grids_ms = 0;
+    int newly_loaded_columns = 0;
+#endif
     const tripoint_abs_sm abs = get_abs_sub();
     std::vector<tripoint_rel_sm> loaded_grids;
 
     const int zmin = -OVERMAP_DEPTH;
     const int zmax = OVERMAP_HEIGHT;
+    // A one-submap shift loads at most the incoming edge(s), never the
+    // entire bubble. Reserve these slots up front to avoid reallocations.
+    const int incoming_edges = ( std::abs( sp.x() ) + std::abs( sp.y() ) ) * my_MAPSIZE -
+                               std::abs( sp.x() * sp.y() );
+    loaded_grids.reserve( incoming_edges * ( zmax - zmin + 1 ) );
 
     const int x_start = sp.x() >= 0 ? 0 : my_MAPSIZE - 1;
     const int x_stop = sp.x() >= 0 ? my_MAPSIZE : -1;
@@ -9231,6 +9250,10 @@ void map::shift( const point_rel_sm &sp )
             }
         }
     }
+#if defined(__ANDROID__)
+    const auto unloaded_at = shift_profile ? std::chrono::steady_clock::now() :
+                              std::chrono::steady_clock::time_point{};
+#endif
     set_abs_sub( abs + sp );
 
     g->shift_destination_preview( { -sp.x() * SEEX, -sp.y() * SEEY } );
@@ -9268,6 +9291,10 @@ void map::shift( const point_rel_sm &sp )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto caches_shifted_at = shift_profile ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+#endif
     for( int gridx = x_start; gridx != x_stop; gridx += x_step ) {
         for( int gridy = y_start; gridy != y_stop; gridy += y_step ) {
             if( gridx + sp.x() != x_stop && gridy + sp.y() != y_stop ) {
@@ -9283,7 +9310,18 @@ void map::shift( const point_rel_sm &sp )
                     update_vehicle_list( cur_submap, gridz );
                 }
             } else {
+#if defined(__ANDROID__)
+                const auto load_started = shift_profile ? std::chrono::steady_clock::now() :
+                                          std::chrono::steady_clock::time_point{};
+#endif
                 loadn( { gridx, gridy }, true );
+#if defined(__ANDROID__)
+                if( shift_profile ) {
+                    ++newly_loaded_columns;
+                    load_new_grids_ms += std::chrono::duration_cast<std::chrono::milliseconds>(
+                                             std::chrono::steady_clock::now() - load_started ).count();
+                }
+#endif
 
                 for( int gridz = zmin; gridz <= zmax; gridz++ ) {
                     loaded_grids.emplace_back( gridx, gridy, gridz );
@@ -9292,6 +9330,10 @@ void map::shift( const point_rel_sm &sp )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto loaded_at = shift_profile ? std::chrono::steady_clock::now() :
+                           std::chrono::steady_clock::time_point{};
+#endif
     rebuild_vehicle_level_caches();
 
     g->setremoteveh( remoteveh );
@@ -9303,16 +9345,41 @@ void map::shift( const point_rel_sm &sp )
             support_cache_dirty.insert( pt + point( -sp.x() * SEEX, -sp.y() * SEEY ) );
         }
     }
+#if defined(__ANDROID__)
+    const auto vehicles_at = shift_profile ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     // actualize after loading all submaps to prevent errors
     // with entities at the edges
     for( tripoint_rel_sm loaded_grid : loaded_grids ) {
         actualize( loaded_grid );
     }
+#if defined(__ANDROID__)
+    const auto actualized_at = shift_profile ? std::chrono::steady_clock::now() :
+                               std::chrono::steady_clock::time_point{};
+#endif
     if( !loaded_grids.empty() ) {
         // A shift walks the bubble it now has, so the crafts it scrolled away from are
         // not seen and must keep the claims their leases still cover.
         reconcile_loaded_items( reconcile_scope::additive );
     }
+#if defined(__ANDROID__)
+    if( shift_profile ) {
+        const auto done = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_SUBMAP_SHIFT_PHASE",
+                "unload_ms=" + std::to_string( ms( shift_begin, unloaded_at ) ) +
+                " grid_cache_ms=" + std::to_string( ms( unloaded_at, caches_shifted_at ) ) +
+                " copy_and_load_ms=" + std::to_string( ms( caches_shifted_at, loaded_at ) ) +
+                " new_submaps_ms=" + std::to_string( load_new_grids_ms ) +
+                " loaded_columns=" + std::to_string( newly_loaded_columns ) +
+                " vehicles_ms=" + std::to_string( ms( loaded_at, vehicles_at ) ) +
+                " actualize_ms=" + std::to_string( ms( vehicles_at, actualized_at ) ) +
+                " reconcile_ms=" + std::to_string( ms( actualized_at, done ) ) );
+    }
+#endif
 }
 
 void map::vertical_shift( const int newz )
@@ -9435,11 +9502,36 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
     }
 
     if( map_incomplete ) {
+#if defined(__ANDROID__)
+        // Missing submaps may require a full overmap tile to be generated.
+        // Let the screen reader announce that expensive operation before
+        // it blocks the game thread; at most one notice per five seconds.
+        if( this == &bubble_map && a11y::android::enabled() ) {
+            static std::chrono::steady_clock::time_point last_mapgen_notice;
+            const auto now = std::chrono::steady_clock::now();
+            if( now - last_mapgen_notice >= std::chrono::seconds( 5 ) ) {
+                a11y::android::announce( _( "Generating a new map area. Please wait." ), 1 );
+                last_mapgen_notice = now;
+            }
+        }
+        const bool profile_mapgen = a11y::android::performance_profiling_enabled();
+        const auto generation_started = profile_mapgen ? std::chrono::steady_clock::now() :
+                                        std::chrono::steady_clock::time_point{};
+#endif
         smallmap tmp_map;
         swap_map swap( *tmp_map.cast_to_map() );
         tmp_map.main_cleanup_override( false );
         tmp_map.generate( grid_abs_omt, calendar::turn, true );
         _main_requires_cleanup |= main_inbounds && tmp_map.is_main_cleanup_queued();
+#if defined(__ANDROID__)
+        if( profile_mapgen ) {
+            const auto generation_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                           std::chrono::steady_clock::now() - generation_started ).count();
+            a11y::android::diagnostic_event( "WORLD_MAPGEN_PHASE",
+                    "generate_ms=" + std::to_string( generation_ms ) +
+                    " omt=" + grid_abs_omt.to_string() );
+        }
+#endif
 
         for( int gridz = -OVERMAP_DEPTH; gridz <= OVERMAP_HEIGHT; gridz++ ) {
             const tripoint_abs_sm pos = {grid_sm_base.xy(), gridz };
@@ -9455,6 +9547,9 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
     const int stop_z = zlevels ? OVERMAP_HEIGHT : abs_sub.z();
 
     submap *tmpsub;
+    // Weather is constant during this synchronous load. Resolve the
+    // generator once rather than once for every loaded Z level.
+    const weather_generator &wgen = get_weather().get_cur_weather_gen();
 
     for( int z = start_z; z <= stop_z; z++ ) {
         const tripoint_abs_sm pos = { grid_abs_sub.xy(), z };
@@ -9512,7 +9607,6 @@ void map::loadn( const point_bub_sm &grid, bool update_vehicles )
         }
         // When a submap is loaded into the reality bubble, apply
         // temperature-based phase changes
-        const weather_generator &wgen = get_weather().get_cur_weather_gen();
         const tripoint_abs_sm pos_sm = { grid_abs_sub.xy(), z };
         const tripoint_abs_ms sm_abs_ms = project_to<coords::ms>( pos_sm );
         const tripoint_bub_ms sm_origin = get_bub( sm_abs_ms );
@@ -9974,6 +10068,17 @@ void map::actualize( const tripoint_rel_sm &grid )
     process_items_in_vehicles( *tmpsub );
     process_items_in_submap( *tmpsub, grid );
     explosion_handler::process_explosions();
+    // Uniform rock floors and open air have no furniture, tile items, fields
+    // or traps; none of the per-tile seasonal updates below can change them.
+    // The vehicle/item processing above still runs, and the touch timestamp
+    // must be advanced just as it would after the ordinary scan.
+    if( tmpsub->is_uniform() ) {
+        const ter_id terrain = tmpsub->get_ter( point_sm_ms::zero );
+        if( terrain == ter_t_rock_floor || terrain == ter_t_open_air ) {
+            tmpsub->last_touched = calendar::turn;
+            return;
+        }
+    }
     for( int x = 0; x < SEEX; x++ ) {
         for( int y = 0; y < SEEY; y++ ) {
             const tripoint_bub_ms pnt =  rebase_bub( coords::project_to<coords::ms>( grid ) + point( x, y ) );
@@ -10991,9 +11096,18 @@ std::vector<int> map::vision_parts_key( const tripoint_bub_ms &origin,
 
 void map::build_map_cache( const int zlev, bool skip_lightmap )
 {
+#if defined(__ANDROID__)
+    const bool profile_cache = a11y::android::performance_profiling_enabled();
+    const auto cache_start = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     const int minz = zlevels ? -OVERMAP_DEPTH : zlev;
     const int maxz = zlevels ? OVERMAP_HEIGHT : zlev;
     build_scene_caches();
+#if defined(__ANDROID__)
+    const auto scene_done = profile_cache ? std::chrono::steady_clock::now() :
+                            std::chrono::steady_clock::time_point{};
+#endif
     bool seen_cache_dirty = false;
     bool camera_cache_dirty = false;
     for( int z = minz; z <= maxz; z++ ) {
@@ -11001,6 +11115,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         seen_cache_dirty |= build_vision_transparency_cache( z );
     }
 
+#if defined(__ANDROID__)
+    const auto transparency_done = profile_cache ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+#endif
     avatar &u = get_avatar();
     const Character::moncam_cache_t mcache = u.get_active_moncams();
     // a camera's cast reads its position, range and eye height for ledges; kept
@@ -11051,6 +11169,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         }
 #endif
     }
+#if defined(__ANDROID__)
+    const auto avatar_done = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     if( camera_cache_dirty ) {
         camera_fov_moncams = std::move( moncams );
         for( Character::cached_moncam const &mon : mcache ) {
@@ -11061,6 +11183,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
         }
     }
+#if defined(__ANDROID__)
+    const auto camera_done = profile_cache ? std::chrono::steady_clock::now() :
+                             std::chrono::steady_clock::time_point{};
+#endif
     // Light sources that change with no notice to the lightmap: characters,
     // glowing or burning monsters, and vehicle lamps that lose power or break.
     // A level relights only if its own sources changed.
@@ -11139,6 +11265,10 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
         }
     }
 
+#if defined(__ANDROID__)
+    const auto sources_done = profile_cache ? std::chrono::steady_clock::now() :
+                              std::chrono::steady_clock::time_point{};
+#endif
     if( seen_cache_dirty ) {
         refresh_vision_levels();
     }
@@ -11157,6 +11287,23 @@ void map::build_map_cache( const int zlev, bool skip_lightmap )
             }
         }
     }
+#if defined(__ANDROID__)
+    if( profile_cache ) {
+        const auto finished = std::chrono::steady_clock::now();
+        const auto ms = []( const auto from, const auto to ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( to - from ).count();
+        };
+        a11y::android::diagnostic_event( "WORLD_CACHE_PHASE",
+                "skip_lightmap=" + std::string( skip_lightmap ? "true" : "false" ) +
+                " scene_ms=" + std::to_string( ms( cache_start, scene_done ) ) +
+                " transparency_ms=" + std::to_string( ms( scene_done, transparency_done ) ) +
+                " avatar_fov_ms=" + std::to_string( ms( transparency_done, avatar_done ) ) +
+                " camera_ms=" + std::to_string( ms( avatar_done, camera_done ) ) +
+                " light_sources_ms=" + std::to_string( ms( camera_done, sources_done ) ) +
+                " lightmap_ms=" + std::to_string( ms( sources_done, finished ) ) +
+                " total_ms=" + std::to_string( ms( cache_start, finished ) ) );
+    }
+#endif
 }
 
 int map::lowest_vision_level( const int zlev ) const

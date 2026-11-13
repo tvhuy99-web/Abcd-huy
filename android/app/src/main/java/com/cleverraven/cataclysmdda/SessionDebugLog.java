@@ -1,14 +1,12 @@
 package com.cleverraven.cataclysmdda;
 
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.os.Build;
 import android.os.SystemClock;
 import android.util.Log;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.RandomAccessFile;
@@ -20,72 +18,72 @@ import java.util.TimeZone;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Per-process, crash-recoverable, bounded diagnostic journal.
+ * One journal per game launch. The user controls all recording with exactly
+ * one persistent switch. OFF means no events, measurements, crash logging or
+ * native diagnostics, with no auto-enable, auto-pause or hidden exceptions.
  *
- * A clean exit deletes the active log and marker; an abnormal process death
- * leaves both, which the next launch retains separately for explicit export.
- * Never uploads anything, never stores gesture coordinates beyond the app,
- * and never records text-field contents or credentials intentionally.
+ * Every new process discards the preceding launch's active journal. Enabling
+ * during a launch starts/appends to only that launch's file, and disabling
+ * never destroys data already captured for the current launch. The user
+ * explicitly exports it before the next launch if needed.
+ *
+ * Log files remain local and size-bounded, without automatic uploading.
  */
 public final class SessionDebugLog {
     static final long MAX_BYTES = 5L * 1024 * 1024;
     private static final long KEEP_BYTES = 4L * 1024 * 1024;
     private static final String PREFS = "session_debug_log";
     private static final String ACTIVE = "active.txt";
-    private static final String MARKER = "active.marker";
-    private static final String CRASH = "crash_recovery.txt";
     private static final Object LOCK = new Object();
     private static SessionDebugLog instance;
+
     private final Context app;
-    private final File directory;
     private final File activeFile;
-    private final File markerFile;
-    private final File crashFile;
     private final Thread.UncaughtExceptionHandler previousHandler;
     private final AtomicBoolean fatal = new AtomicBoolean();
-    private volatile boolean closed;
+    private final long launchId;
+    private volatile boolean recording;
+    private boolean closed;
 
     private SessionDebugLog(Context context) {
         app = context.getApplicationContext();
-        directory = new File(app.getFilesDir(), "session_debug");
-        directory.mkdirs();
-        activeFile = new File(directory, ACTIVE);
-        markerFile = new File(directory, MARKER);
-        crashFile = new File(directory, CRASH);
+        launchId = System.currentTimeMillis();
+        File directory = new File(app.getFilesDir(), "session_debug");
+        if (!directory.exists() && !directory.mkdirs()) {
+            Log.w("SessionDebugLog", "Could not create session log directory");
+        }
+        File freshJournal = new File(directory, ACTIVE);
 
-        // A marker is created before events. If the process disappeared
-        // without a clean exit, its last file can still be exported.
-        if (markerFile.exists() && activeFile.exists() && activeFile.length() > 0) {
-            if (crashFile.exists() && !crashFile.delete()) {
-                Log.w("SessionDebugLog", "Could not replace older crash journal");
-            }
-            if (!activeFile.renameTo(crashFile)) {
-                try {
-                    copyFile(activeFile, crashFile);
-                    if (!activeFile.delete()) {
-                        Log.w("SessionDebugLog", "Could not clear recovered file");
-                    }
-                } catch (IOException error) {
-                    Log.e("SessionDebugLog", "Recovering previous journal failed", error);
-                }
+        // Never resurrect a previous launch, whether it ended normally or
+        // crashed. Also clean up legacy crash-recovery files on upgrade.
+        if (freshJournal.exists() && !freshJournal.delete()) {
+            try (FileOutputStream empty = new FileOutputStream(freshJournal, false)) {
+                empty.flush();
+            } catch (IOException error) {
+                Log.e("SessionDebugLog", "Cannot reset previous launch log", error);
+                // A unique fallback prevents accidentally appending to a
+                // previous launch even if deleting/truncating active.txt
+                // failed on this device.
+                freshJournal = new File(directory, "active-" + launchId + ".txt");
             }
         }
-        try (FileOutputStream out = new FileOutputStream(activeFile, false);
-                FileOutputStream marker = new FileOutputStream(markerFile, false)) {
-            out.flush();
-            marker.write("open".getBytes(StandardCharsets.UTF_8));
-            marker.getFD().sync();
-        } catch (IOException error) {
-            Log.e("SessionDebugLog", "Starting session failed", error);
+        activeFile = freshJournal;
+        for (String legacy : new String[] {"active.marker", "crash_recovery.txt"}) {
+            File oldFile = new File(directory, legacy);
+            if (oldFile.exists() && !oldFile.delete()) {
+                Log.w("SessionDebugLog", "Could not delete old " + legacy);
+            }
         }
+        recording = enabled(app);
+
         previousHandler = Thread.getDefaultUncaughtExceptionHandler();
         Thread.setDefaultUncaughtExceptionHandler((thread, error) -> {
-            if (fatal.compareAndSet(false, true) && enabled(app)) {
+            if (fatal.compareAndSet(false, true) && recording) {
                 try {
-                    recordForce("FATAL", "thread=" + thread.getName()
+                    record("FATAL", "thread=" + thread.getName()
                             + " exception=" + Log.getStackTraceString(error));
                 } catch (Throwable ignored) {
-                    // Always delegate the original crash after best-effort logging.
+                    // Delegate the original crash, even if journaling fails.
                 }
             }
             if (previousHandler != null) {
@@ -95,11 +93,13 @@ public final class SessionDebugLog {
                 System.exit(10);
             }
         });
-        record("SESSION", "START app=" + app.getPackageName()
-                + " version=" + BuildConfig.VERSION_NAME
-                + " sdk=" + Build.VERSION.SDK_INT
-                + " device=" + Build.MANUFACTURER + "/" + Build.MODEL
-                + " sessionId=" + System.currentTimeMillis());
+        if (recording) {
+            record("SESSION", "START app=" + app.getPackageName()
+                    + " version=" + BuildConfig.VERSION_NAME
+                    + " sdk=" + Build.VERSION.SDK_INT
+                    + " device=" + Build.MANUFACTURER + "/" + Build.MODEL
+                    + " sessionId=" + launchId);
+        }
     }
 
     public static void start(Context context) {
@@ -110,75 +110,53 @@ public final class SessionDebugLog {
         }
     }
 
-    private static SessionDebugLog current() {
-        synchronized (LOCK) { return instance; }
+    /** No SharedPreferences lookups, I/O or clock reads when recording is off. */
+    public static boolean isRecording() {
+        SessionDebugLog log = instance;
+        return log != null && log.recording && !log.closed;
     }
 
     public static void event(String category, String detail) {
-        SessionDebugLog log = current();
-        if (log != null) { log.record(category, detail); }
+        SessionDebugLog log = instance;
+        if (log != null && log.recording) {
+            log.record(category, detail);
+        }
     }
 
     public static boolean enabled(Context context) {
         return context.getApplicationContext().getSharedPreferences(
-                PREFS, Context.MODE_PRIVATE).getBoolean("enabled", true);
+                PREFS, Context.MODE_PRIVATE).getBoolean("enabled", false);
     }
 
     public static void setEnabled(Context context, boolean enabled) {
         start(context);
-        SessionDebugLog log = current();
-        if (log == null) { return; }
-        if (!enabled) { log.record("CONTROL", "recording=OFF"); }
-        context.getApplicationContext().getSharedPreferences(
-                PREFS, Context.MODE_PRIVATE).edit().putBoolean("enabled", enabled).apply();
-        if (enabled) { log.record("CONTROL", "recording=ON"); }
+        synchronized (LOCK) {
+            SessionDebugLog log = instance;
+            if (log == null || log.closed || log.recording == enabled) {
+                return;
+            }
+            // The switch is authoritative. No native perf auto-pause may
+            // change it. On OFF the guard takes effect before any later I/O.
+            log.recording = enabled;
+            context.getApplicationContext().getSharedPreferences(
+                    PREFS, Context.MODE_PRIVATE).edit()
+                    .putBoolean("enabled", enabled).apply();
+            if (enabled) {
+                log.recordLocked("SESSION", "RECORDING_ENABLED sessionId=" + log.launchId
+                        + " app=" + log.app.getPackageName()
+                        + " version=" + BuildConfig.VERSION_NAME);
+            }
+        }
     }
 
-    public static boolean hasCrash(Context context) {
-        start(context);
-        SessionDebugLog log = current();
-        return log != null && log.crashFile.exists() && log.crashFile.length() > 0;
-    }
-
-    /** Export snapshots are bounded and independent of subsequent deletion. */
-    public static byte[] snapshot(Context context, boolean crash) {
+    /** Only the current launch. Exporting after OFF remains possible. */
+    public static byte[] snapshot(Context context) {
         start(context);
         synchronized (LOCK) {
             SessionDebugLog log = instance;
             if (log == null) { return new byte[0]; }
-            File file = crash ? log.crashFile : log.activeFile;
             try {
-                byte[] own = readBounded(file);
-                if (own.length == 0) { return own; }
-                // Also attach the engine's own debug/crash tail. Native errors
-                // do not always reach the Java accessibility callback.
-                File external = log.app.getExternalFilesDir(null);
-                if (external == null) { return own; }
-                File config = new File(external, "config");
-                String[] sources = crash
-                        ? new String[] {"crash.log", "debug.log.prev", "debug.log"}
-                        : new String[] {"crash.log", "debug.log"};
-                ByteArrayOutputStream combined = new ByteArrayOutputStream();
-                combined.write(own);
-                for (String name : sources) {
-                    File nativeFile = new File(config, name);
-                    if (!nativeFile.isFile()) { continue; }
-                    byte[] section = readTail(nativeFile, 192 * 1024);
-                    combined.write(("\n[NATIVE_LOG " + name + " latest_bytes="
-                            + section.length + "]\n").getBytes(StandardCharsets.UTF_8));
-                    combined.write(section);
-                    combined.write('\n');
-                }
-                byte[] result = combined.toByteArray();
-                if (result.length <= MAX_BYTES) { return result; }
-                int begin = result.length - (int) MAX_BYTES + 64;
-                while (begin < result.length && result[begin] != '\n') { begin++; }
-                if (begin < result.length) { begin++; }
-                ByteArrayOutputStream bounded = new ByteArrayOutputStream();
-                bounded.write("[EXPORT TRUNCATED TO 5 MiB]\n"
-                        .getBytes(StandardCharsets.UTF_8));
-                bounded.write(result, begin, result.length - begin);
-                return bounded.toByteArray();
+                return readBounded(log.activeFile);
             } catch (IOException error) {
                 Log.e("SessionDebugLog", "Export failed", error);
                 return new byte[0];
@@ -191,68 +169,55 @@ public final class SessionDebugLog {
         synchronized (LOCK) {
             SessionDebugLog log = instance;
             if (log == null) { return; }
-            if (log.crashFile.exists() && !log.crashFile.delete()) {
-                Log.w("SessionDebugLog", "Cannot clear crash log");
-            }
-            try (FileOutputStream ignored = new FileOutputStream(log.activeFile, false)) {
-                // Clearing is explicit; leave an empty active log for new events.
-            } catch (IOException error) {
-                Log.e("SessionDebugLog", "Cannot clear active log", error);
+            if (log.activeFile.exists() && !log.activeFile.delete()) {
+                Log.w("SessionDebugLog", "Could not delete current session log");
             }
         }
     }
 
-    /**
-     * Only a confirmed normal quit clears the active journal. Pausing or
-     * losing the window is not exit and never discards diagnostic evidence.
-     */
+    /** Quit never writes while OFF. The next launch resets the file. */
     public static void finishNormally() {
-        SessionDebugLog log = current();
-        if (log == null) { return; }
         synchronized (LOCK) {
-            if (log.closed || log.fatal.get()) { return; }
-            log.recordForce("SESSION", "NORMAL_EXIT delete_active");
+            SessionDebugLog log = instance;
+            if (log == null || log.closed || log.fatal.get()) { return; }
+            if (log.recording) {
+                log.recordLocked("SESSION", "NORMAL_EXIT sessionId=" + log.launchId);
+            }
             log.closed = true;
-            if (log.activeFile.exists() && !log.activeFile.delete()) {
-                Log.w("SessionDebugLog", "Cannot delete finished journal");
-            }
-            if (log.markerFile.exists() && !log.markerFile.delete()) {
-                Log.w("SessionDebugLog", "Cannot delete session marker");
-            }
-            // Older crash-recovery evidence survives until manual export/delete.
+            log.recording = false;
             Thread.setDefaultUncaughtExceptionHandler(log.previousHandler);
             instance = null;
         }
     }
 
     private void record(String category, String detail) {
-        if (closed || !enabled(app)) { return; }
-        recordForce(category, detail);
+        if (!recording || closed) { return; }
+        synchronized (LOCK) {
+            if (!recording || closed) { return; }
+            recordLocked(category, detail);
+        }
     }
 
-    private void recordForce(String category, String detail) {
-        synchronized (LOCK) {
-            if (closed) { return; }
-            String timestamp = utcNow();
-            String data = detail == null ? "" : detail;
-            data = data.replace("\r", "\\r").replace("\n", "\\n");
-            // One very large stack trace cannot evict an entire session.
-            if (data.length() > 24576) {
-                data = data.substring(0, 24576) + " [event_truncated]";
+    /** Caller must hold LOCK and have already checked recording. */
+    private void recordLocked(String category, String detail) {
+        if (!recording || closed) { return; }
+        String data = detail == null ? "" : detail;
+        data = data.replace("\r", "\\r").replace("\n", "\\n");
+        if (data.length() > 24576) {
+            data = data.substring(0, 24576) + " [event_truncated]";
+        }
+        String line = utcNow() + " | elapsed_ms=" + SystemClock.elapsedRealtime()
+                + " | " + category + " | " + data + "\n";
+        byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
+        try {
+            if (activeFile.length() + bytes.length > MAX_BYTES) {
+                trimOldest();
             }
-            String line = timestamp + " | elapsed_ms=" + SystemClock.elapsedRealtime()
-                    + " | " + category + " | " + data + "\n";
-            byte[] bytes = line.getBytes(StandardCharsets.UTF_8);
-            try {
-                if (activeFile.length() + bytes.length > MAX_BYTES) {
-                    trimOldest();
-                }
-                try (FileOutputStream out = new FileOutputStream(activeFile, true)) {
-                    out.write(bytes);
-                }
-            } catch (IOException error) {
-                Log.e("SessionDebugLog", "Journal write failed", error);
+            try (FileOutputStream out = new FileOutputStream(activeFile, true)) {
+                out.write(bytes);
             }
+        } catch (IOException error) {
+            Log.e("SessionDebugLog", "Journal write failed", error);
         }
     }
 
@@ -282,33 +247,10 @@ public final class SessionDebugLog {
         }
     }
 
-    private static byte[] readTail(File file, int length) throws IOException {
-        try (RandomAccessFile in = new RandomAccessFile(file, "r");
-                ByteArrayOutputStream out = new ByteArrayOutputStream()) {
-            long begin = Math.max(0L, in.length() - length);
-            in.seek(begin);
-            if (begin > 0) { in.readLine(); }
-            byte[] buf = new byte[8192];
-            int count;
-            while ((count = in.read(buf)) >= 0) { out.write(buf, 0, count); }
-            return out.toByteArray();
-        }
-    }
-
-    private static void copyFile(File source, File destination) throws IOException {
-        try (FileInputStream in = new FileInputStream(source);
-                FileOutputStream out = new FileOutputStream(destination, false)) {
-            byte[] buffer = new byte[8192];
-            int count;
-            while ((count = in.read(buffer)) >= 0) { out.write(buffer, 0, count); }
-        }
-    }
-
     private static String utcNow() {
         SimpleDateFormat time = new SimpleDateFormat(
                 "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", Locale.US);
         time.setTimeZone(TimeZone.getTimeZone("UTC"));
         return time.format(new Date());
     }
-
 }

@@ -28,6 +28,8 @@
 #include "input_enums.h"
 #include "item.h"
 #include "item_location.h"
+#include "iuse.h"
+#include "iuse_actor.h"
 #include "line.h"
 #include "map.h"
 #include "map_iterator.h"
@@ -616,6 +618,10 @@ std::optional<input_event> hotkey_for_action( const action_id action,
 
 bool can_butcher_at( map &here, const tripoint_bub_ms &p )
 {
+    // The native butcher action refuses inaccessible sealed tiles.
+    if( here.has_flag( ter_furn_flag::TFLAG_SEALED, p ) ) {
+        return false;
+    }
     map_stack items = here.i_at( p );
     // Early exit when there's definitely nothing to butcher
     if( items.empty() ) {
@@ -638,7 +644,29 @@ bool can_butcher_at( map &here, const tripoint_bub_ms &p )
             has_item = true;
         }
     }
-    return has_corpse || has_item;
+    if( has_corpse || has_item ) {
+        return true;
+    }
+    // Native game::butcher also cuts salvageable items with a salvage tool.
+    // Match that capability instead of hiding the action on salvage-only tiles.
+    static const std::string salvage_string = "salvage";
+    const auto has_salvage_use = []( const item & tool ) {
+        return tool.get_usable_item( salvage_string ) != nullptr;
+    };
+    for( item *tool : player_character.items_with( has_salvage_use ) ) {
+        item *usable = tool->get_usable_item( salvage_string );
+        const salvage_actor *actor = dynamic_cast<const salvage_actor *>(
+                                          usable->get_use( salvage_string )->get_actor_ptr() );
+        if( actor == nullptr ) {
+            continue;
+        }
+        for( item &candidate : items ) {
+            if( actor->valid_to_cut_up( nullptr, candidate ) ) {
+                return true;
+            }
+        }
+    }
+    return false;
 }
 
 bool can_move_vertical_at( const map &here, const tripoint_bub_ms &p, int movez )
@@ -751,7 +779,8 @@ bool can_interact_at( action_id action, map &here, const tripoint_bub_ms &p )
 // Accessibility list: browse every currently visible, actionable adjacent tile
 // before selecting one. No action runs until a menu entry is activated.
 std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::string &title,
-        const std::function<bool( const tripoint_bub_ms & )> &allowed )
+        const std::function<bool( const tripoint_bub_ms & )> &allowed,
+        const std::string &empty_reason )
 {
     static const std::array<tripoint_rel_ms, 9> offsets = {
         tripoint_rel_ms( 0, 0, 0 ), tripoint_rel_ms( 0, -1, 0 ),
@@ -768,24 +797,67 @@ std::optional<tripoint_bub_ms> choose_accessible_nearby_target( const std::strin
 
     const tripoint_bub_ms origin = get_avatar().pos_bub( get_map() );
     std::vector<tripoint_bub_ms> targets;
+    std::string visible_object;
     uilist menu;
     menu.title = title;
-    menu.text = _( "Nearby objects. Choose an entry to interact; cancel to do nothing." );
+    // The first real object should be heard immediately, without a tutorial.
+    menu.input_category = "nearby-target";
+    menu.text.clear();
     for( std::size_t i = 0; i < offsets.size(); ++i ) {
         const tripoint_bub_ms target = origin + offsets[i];
         // Never list live hidden terrain or unseen creatures from the engine's
         // interaction check. The perception layer owns visibility restrictions.
         const a11y::tile_observation observed = a11y::observe_tile( target );
-        if( observed.source != a11y::observation_source::visible || !allowed( target ) ) {
+        if( observed.source != a11y::observation_source::visible ) {
+            continue;
+        }
+        if( visible_object.empty() ) {
+            if( !observed.furniture.empty() ) {
+                visible_object = observed.furniture;
+            } else if( !observed.vehicle.empty() ) {
+                visible_object = observed.vehicle;
+            } else if( !observed.seen_items.empty() ) {
+                visible_object = observed.seen_items.front();
+            }
+        }
+        if( !allowed( target ) ) {
             continue;
         }
         const int index = static_cast<int>( targets.size() );
         targets.push_back( target );
-        menu.addentry( index, true, -1, string_format( _( "%1$s: %2$s" ),
-                       directions[i], a11y::describe_tile( observed ) ) );
+        // Read only the most useful object on this tile by default.
+        // The complete perception-safe description remains in the row's
+        // explicit detail, including any other objects sharing the tile.
+        std::string name = observed.terrain;
+        if( !observed.seen_items.empty() ) {
+            name = observed.seen_items.front();
+        }
+        if( !observed.furniture.empty() ) {
+            name = observed.furniture;
+        }
+        if( !observed.vehicle.empty() ) {
+            name = observed.vehicle;
+        }
+        if( !observed.seen_creatures.empty() ) {
+            name = observed.seen_creatures.front();
+        }
+        if( observed.door != a11y::door_state::none ) {
+            name = !observed.furniture.empty() ? observed.furniture : observed.terrain;
+            const std::string state = observed.door == a11y::door_state::locked ? _( "Locked" ) :
+                                observed.door == a11y::door_state::closed ? _( "Closed" ) :
+                                _( "Open" );
+            name += " (" + state + ")";
+        }
+        menu.addentry_desc( index, true, -1,
+                            string_format( _( "%1$s. %2$s" ), name, directions[i] ),
+                            a11y::describe_tile( observed ) );
     }
     if( targets.empty() ) {
-        add_msg( m_info, _( "No visible objects here can be examined or interacted with." ) );
+        if( visible_object.empty() ) {
+            add_msg( m_info, "%s", empty_reason );
+        } else {
+            add_msg( m_info, _( "%1$s: %2$s" ), visible_object, empty_reason );
+        }
         return std::nullopt;
     }
     menu.query();
@@ -824,6 +896,7 @@ action_id handle_interact( map &here, const tripoint_bub_ms &pos )
     }
 
     if( valid_actions.empty() ) {
+        add_msg( m_info, _( "No direct action for this object." ) );
         return ACTION_NULL;
     }
 

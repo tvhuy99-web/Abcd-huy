@@ -1971,6 +1971,29 @@ int worldfactory::show_worldgen_basic( WORLD *world )
     std::unique_ptr<a11y::screen_scope> reader = std::make_unique<a11y::screen_scope>(
             &ctxt, "world-generation", [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         const auto selection = accessible_selection.find( intent.node );
+        if( intent.action == "set_value" && selection != accessible_selection.end() &&
+            intent.node.compare( 0, std::string( "worldgen:slider:" ).size(),
+                                 "worldgen:slider:" ) == 0 ) {
+            const int slider_index = selection->second - 1;
+            if( slider_index < 0 || static_cast<size_t>( slider_index ) >= wg_slevels.size() ) {
+                return std::nullopt;
+            }
+            // The runtime has already checked the numeric range and step
+            // against the currently published slider field. Preserve the
+            // native LEFT/RIGHT update path, including its custom-options
+            // confirmation. Never allow a reader request to skip levels.
+            const int requested = std::stoi( intent.value );
+            const int current = wg_slevels[slider_index];
+            if( std::abs( requested - current ) > 1 ) {
+                return std::nullopt;
+            }
+            sel_opt = selection->second;
+            accessible_focus = intent.node;
+            if( requested == current ) {
+                return "A11Y_INTERNAL_WORLDGEN_FOCUS";
+            }
+            return requested > current ? "RIGHT" : "LEFT";
+        }
         if( intent.action == "focus" || intent.action == "activate" ) {
             if( selection != accessible_selection.end() ) {
                 sel_opt = selection->second;
@@ -2019,25 +2042,19 @@ int worldfactory::show_worldgen_basic( WORLD *world )
             option.value = value;
             option.detail = remove_color_tags( slider.level_desc( wg_slevels[i] ).translated() );
             option.selected = sel_opt == static_cast<int>( i + 1 );
+            // The Android reader already adjusts ranged integer fields
+            // with a one-finger vertical swipe (up +1, down -1). Publish
+            // the native level index and bounds, while speaking its name.
+            // Avoid separate decrease/increase items in the spoken list.
+            option.field_type = "int";
+            option.applied_value = std::to_string( wg_slevels[i] );
+            option.has_field_range = true;
+            option.field_min = 0;
+            option.field_max = slider.count() - 1;
+            option.field_step = 1;
+            option.actions = { "focus", "activate", "set_value" };
             snapshot.nodes.push_back( std::move( option ) );
             accessible_selection.emplace( "worldgen:slider:" + id, static_cast<int>( i + 1 ) );
-
-            for( const bool increase : { false, true } ) {
-                const std::string action_id = "worldgen:slider:" + id +
-                                              ( increase ? ":increase" : ":decrease" );
-                a11y::semantic_node adjustment;
-                adjustment.id = action_id;
-                adjustment.label = string_format( increase ? _( "Increase %s" ) : _( "Decrease %s" ), label );
-                adjustment.value = value;
-                adjustment.enabled = increase ? wg_slevels[i] + 1 < slider.count() : wg_slevels[i] > 0;
-                if( !adjustment.enabled ) {
-                    adjustment.disabled_reason = increase ? _( "This option is already at its highest value." ) :
-                                                 _( "This option is already at its lowest value." );
-                }
-                snapshot.nodes.push_back( std::move( adjustment ) );
-                accessible_selection.emplace( action_id, static_cast<int>( i + 1 ) );
-                accessible_actions.emplace( action_id, increase ? "RIGHT" : "LEFT" );
-            }
         }
 
         const int finish_index = static_cast<int>( wg_sliders.size() + 1 );
@@ -2078,6 +2095,10 @@ int worldfactory::show_worldgen_basic( WORLD *world )
         accessible_selection.emplace( "worldgen:mods", static_cast<int>( wg_sliders.size() + 5 ) );
         accessible_actions.emplace( "worldgen:mods", "PICK_MODS" );
 
+        // Spoken world-creation rows and auxiliary commands are separate
+        // lists. Do not tell a reader user "item 1 of 32" when they are
+        // actually browsing the seven world-creation controls.
+        const size_t content_count = snapshot.nodes.size();
         auto commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
@@ -2088,8 +2109,11 @@ int worldfactory::show_worldgen_basic( WORLD *world )
             snapshot.focus = accessible_focus;
         }
         for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
-            snapshot.nodes[i].position = static_cast<int>( i + 1 );
-            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+            const bool is_content = i < content_count;
+            snapshot.nodes[i].position = static_cast<int>(
+                                             is_content ? i + 1 : i - content_count + 1 );
+            snapshot.nodes[i].total = static_cast<int>(
+                                          is_content ? content_count : snapshot.nodes.size() - content_count );
         }
         reader->update( std::move( snapshot ) );
     };

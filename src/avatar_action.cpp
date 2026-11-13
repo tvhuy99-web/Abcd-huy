@@ -239,7 +239,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( ( !g->check_safe_mode_allowed() ) || in_shell ) {
         if( in_shell ) {
             add_msg( m_warning, _( "You can't move while in your shell.  Deactivate it to go mobile." ) );
-            a11y::record_action_outcome( a11y::action_outcome_kind::blocked, "your shell" );
+            a11y::record_action_outcome( a11y::action_outcome_kind::blocked, _( "your shell" ) );
         }
         return false;
     }
@@ -441,8 +441,11 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     }
 
     if( !you.move_effects( attacking ) ) {
-        // move_effects determined we could not move, waste all moves
+        // move_effects determined we could not move, waste all moves.
+        // No destination blocker can be assumed from this condition.
         you.set_moves( 0 );
+        a11y::record_action_outcome( a11y::action_outcome_kind::blocked,
+                                     _( "your condition" ) );
         return false;
     }
 
@@ -485,6 +488,7 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
         } else if( critter.has_flag( mon_flag_IMMOBILE ) || critter.has_effect( effect_harnessed ) ||
                    critter.has_effect( effect_ridden ) || critter.has_flag( json_flag_CANNOT_MOVE ) ) {
             add_msg( m_info, _( "You can't displace your %s." ), critter.name() );
+            a11y::record_action_outcome( a11y::action_outcome_kind::blocked, critter.disp_name() );
             return false;
         }
         // Successful displacing is handled (much) later
@@ -515,6 +519,8 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
     if( you.has_flag( json_flag_CANNOT_MOVE ) ) {
         you.add_msg_if_player( m_bad,
                                _( "You cannot move!" ) );
+        a11y::record_action_outcome( a11y::action_outcome_kind::blocked,
+                                     _( "your condition" ) );
         return false;
     }
 

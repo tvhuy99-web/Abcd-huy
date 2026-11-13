@@ -561,6 +561,9 @@ class aim_activity_actor : public activity_actor
          * Implies aborted = true
          */
         bool reload_requested = false;
+        // Accessible aiming requests a complete, time-costed reload instead
+        // of the original one-step manual ammo picker.
+        bool auto_reload_requested = false;
         /**
          * A friendly creature may enter line of fire during aim-and-shoot,
          * and that generates a warning to proceed/abort. If player decides to
@@ -2332,7 +2335,8 @@ class plant_seed_activity_actor : public activity_actor
 class reload_activity_actor : public activity_actor
 {
     public:
-        explicit reload_activity_actor( item::reload_option &&opt, int extra_moves = 0 );
+        explicit reload_activity_actor( item::reload_option &&opt, int extra_moves = 0,
+                                        int auto_reload_steps = 0 );
 
         const activity_id &get_type() const override {
             static const activity_id ACT_RELOAD( "ACT_RELOAD" );
@@ -2360,6 +2364,12 @@ class reload_activity_actor : public activity_actor
         int quantity = 0;
         int seconds_per_round = 0;
         int already_loaded = 0;
+        // Optional continuation for accessible "Reload until full".
+        // Every iteration is another regular, time-costed ACT_RELOAD.
+        int auto_reload_steps = 0;
+        int initial_weapon_ammo = 0;
+        int initial_target_ammo = 0;
+        bool initial_weapon_has_magazine = false;
         // MAGAZINE_WELL pocket index in target_loc->contents. Negative =
         // first-compatible-well fallback.
         int pocket_index = -1;

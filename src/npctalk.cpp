@@ -23,6 +23,7 @@
 
 #include "achievement.h"
 #include "a11y_document.h"
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "action.h"
@@ -2863,6 +2864,10 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
     // Construct full line
     std::string challenge = dynamic_line( topic );
     gen_responses( topic );
+    // Preserve whether this is quoted NPC speech or an unquoted action.
+    // Dialogue history uses the same distinction for its speaker prefix.
+    const bool npc_speech = !challenge.empty() && challenge.front() != '*' &&
+                            challenge.front() != '&';
 
     // Put quotes around challenge (unless it's an action)
     if( challenge[0] != '*' && challenge[0] != '&' ) {
@@ -2904,6 +2909,12 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         }
     }
     apply_speaker_effects( topic );
+
+    // A screen reader must hear the NPC's actual answer, not just the first
+    // response button. The history document remains available on demand.
+    const std::string spoken_reply = npc_speech && !speaker_name( d_img ).empty() ?
+                                     string_format( _( "%1$s: %2$s" ), speaker_name( d_img ), challenge ) :
+                                     challenge;
 
     if( responses.empty() ) {
         debugmsg( "No dialogue responses" );
@@ -3056,6 +3067,7 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
         reader.update( std::move( snapshot ) );
     };
     size_t response_ind = response_hotkeys.size();
+    bool reply_announced = false;
     bool okay;
     do {
         std::string action;
@@ -3067,6 +3079,12 @@ talk_topic dialogue::opt_imgui( dialogue_imgui_impl &d_img, const talk_topic &to
             // For reasons unclear to me, we must manually invalidate and redraw the windows here, or else they will stack up.
             ui_manager::invalidate_all_ui_adaptors();
             update_reader();
+            // Announce once per newly constructed dialogue topic, after its
+            // snapshot exists. Do not repeat on response focus or redraw.
+            if( !reply_announced && a11y::enabled() ) {
+                a11y::android::announce( remove_color_tags( spoken_reply ), 1 );
+                reply_announced = true;
+            }
             ui_manager::redraw();
             action = ctxt.handle_input();
 

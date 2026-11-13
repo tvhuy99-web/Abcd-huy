@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="a11yQuantityInstructions">Chọn số lượng. Chạm số để đánh dấu ngay. Quay lại để hủy.</string>
+    <string name="a11yQuantityDeselect">Bỏ chọn vật phẩm, số không</string>
+    <string name="a11yQuantityAll">Chọn tất cả số lượng có sẵn</string>
+    <string name="a11yQuantityOther">Nhập số lượng khác</string>
     <string name="a11yEditorTitle">Sửa giá trị</string>
     <string name="a11yEditorInstructions">Nhập hoặc sửa văn bản. Áp dụng chỉ chuyển giá trị vào ô; xác nhận riêng trong game. Quay lại để hủy.</string>
     <string name="a11yEditorValue">Giá trị hiện tại</string>
@@ -40,4 +44,27 @@
     <string name="a11yEditorNotANumber">Hãy nhập số.</string>
     <string name="a11yEditorOutOfRange">Giá trị phải từ %1$s đến %2$s.</string>
     <string name="a11yEditorStepMismatch">Giá trị phải theo bước %1$s tính từ %2$s.</string>
+    <string name="a11yPocketOpen">Mở ngăn chứa</string>
+    <string name="a11yPocketOtherActions">Các lệnh khác</string>
+    <string name="a11yPocketActions">Thao tác với vật phẩm</string>
+    <string name="a11yPocketChoose">Chọn ngăn chứa</string>
+    <string name="a11yPocketItems">Vật phẩm trong ngăn</string>
+    <string name="a11yPocketEmpty">Không có vật phẩm trong ngăn này.</string>
+    <string name="a11yPocketNotSelectable">Không có vật phẩm có thể chọn trong ngăn này.</string>
+    <string name="a11yPocketConfirm">Xác nhận lựa chọn trong ngăn</string>
+    <string name="a11yPocketCancel">Hủy lựa chọn trong ngăn</string>
+    <string name="a11yPocketSelectionSent">Đã gửi lựa chọn trong ngăn. Trở về danh sách vật phẩm.</string>
+    <string name="a11yPocketSelectionError">Không thể gửi lựa chọn. Vui lòng thử lại.</string>
+    <string name="a11yPocketRow">%1$s. Chọn %2$d, có %3$d. Mục %4$d trên %5$d.</string>
+    <string name="a11yPocketSealed">Ngăn đang niêm phong, không thể mở.</string>
+    <string name="a11yPocketInstructions">Chọn vật phẩm rồi xác nhận để trở về danh sách ngoài. Chưa nhặt đồ cho tới khi xác nhận danh sách ngoài. Hủy sẽ bỏ lựa chọn mới trong ngăn.</string>
+    <string name="a11yTravelMoving">Đang di chuyển tự động. Tuyến đường đang hoạt động.</string>
+    <string name="a11yTravelPaused">Đã tạm dừng di chuyển. Tuyến đường vẫn được giữ.</string>
+    <string name="a11yTravelSafetyStopped">Đã dừng vì cảnh báo an toàn. Tuyến đường vẫn được giữ. Chỉ tiếp tục khi an toàn hoặc chủ động bỏ qua kẻ địch.</string>
+    <string name="a11yTravelIgnoreWarning">Bỏ qua cảnh báo kẻ địch lần này</string>
+    <string name="a11yTravelResume">Tiếp tục di chuyển</string>
+    <string name="a11yTravelPause">Tạm dừng di chuyển</string>
+    <string name="a11yTravelCancel">Hủy chuyến đi và trở về bản đồ</string>
+    <string name="a11yTravelRequestAccepted">Đã nhận lệnh điều khiển chuyến đi.</string>
+    <string name="a11yTravelRequestUnavailable">Không thể thực hiện lệnh này trong trạng thái hiện tại.</string>
 </resources>

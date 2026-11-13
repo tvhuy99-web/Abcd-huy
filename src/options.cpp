@@ -1764,15 +1764,17 @@ void options_manager::add_options_general()
 
 
         std::vector<id_and_option> const soundpacks = build_soundpacks_list();
+        const bool has_black_edition = std::any_of( soundpacks.begin(), soundpacks.end(),
+        []( const id_and_option & option ) { return option.first == "Bl@ck Edition soundpack"; } );
         const bool has_otopack = std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) { return option.first == "otopack"; } );
         add( "SOUNDPACKS", page_id, to_translation( "Choose soundpack" ),
              to_translation( "Choose the soundpack you want to use.  Requires restart." ),
-             soundpacks, has_otopack ? "otopack" : (
+             soundpacks, has_black_edition ? "Bl@ck Edition soundpack" : ( has_otopack ? "otopack" : (
                  std::any_of( soundpacks.begin(), soundpacks.end(),
         []( const id_and_option & option ) {
             return option.first == "CC-Sounds";
-        } )  ? "CC-Sounds" : "basic" ),
+        } )  ? "CC-Sounds" : "basic" ) ),
         COPT_NO_SOUND_HIDE
            ); // populate the options dynamically
 
@@ -3786,10 +3788,20 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             row.position = static_cast<int>( snapshot.nodes.size() + 1 );
             row.selected = static_cast<int>( i ) == iCurrentLine;
             if( item.type == ItemType::GroupHeader ) {
-                row.role = "checkbox";
-                row.label = find_group( item.data ).name_.translated();
-                row.value = groups_state[item.data] ? _( "Expanded" ) : _( "Collapsed" );
-                row.checked = groups_state[item.data];
+                // A collapsible world-options GROUP is not a boolean option.
+                // Read it as a group, not "unchecked checkbox, collapsed,
+                // collapsed". The tree's native expanded state is spoken
+                // once by the reader. Keep other options screens unchanged.
+                if( world_options_only ) {
+                    row.role = "button";
+                    row.label = string_format( _( "Options group: %s" ),
+                                               find_group( item.data ).name_.translated() );
+                } else {
+                    row.role = "checkbox";
+                    row.label = find_group( item.data ).name_.translated();
+                    row.value = groups_state[item.data] ? _( "Expanded" ) : _( "Collapsed" );
+                    row.checked = groups_state[item.data];
+                }
                 row.detail = remove_color_tags( item.fmt_tooltip( item.group, current_options ) );
                 // Tree node (R02.1): expanding/collapsing goes through the
                 // dedicated intents in the handler, not a gameplay action.
@@ -3979,6 +3991,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
             }
         }
 
+        // Tree content already has sibling positions. Count command nodes
+        // only within their own command list, never across the page.
+        const size_t content_count = snapshot.nodes.size();
         auto commands = a11y::command_snapshot( ctxt, snapshot.title );
         for( a11y::semantic_node &node : commands.nodes ) {
             snapshot.nodes.push_back( std::move( node ) );
@@ -3996,14 +4011,9 @@ std::string options_manager::show( bool ingame, const bool world_options_only, b
                 snapshot.focus = snapshot.nodes.empty() ? std::string() : snapshot.nodes.front().id;
             }
         }
-        for( size_t i = 0; i < snapshot.nodes.size(); ++i ) {
-            // Tree nodes keep their sibling position/total from the pass
-            // above; flat nodes (commands) keep the whole-list numbering.
-            if( snapshot.nodes[i].depth >= 0 ) {
-                continue;
-            }
-            snapshot.nodes[i].position = static_cast<int>( i + 1 );
-            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() );
+        for( size_t i = content_count; i < snapshot.nodes.size(); ++i ) {
+            snapshot.nodes[i].position = static_cast<int>( i - content_count + 1 );
+            snapshot.nodes[i].total = static_cast<int>( snapshot.nodes.size() - content_count );
         }
         reader->update( std::move( snapshot ) );
     };
@@ -4744,13 +4754,13 @@ void options_manager::load()
     }
 #endif
 
-    // Automatically use the optional Otopack only when the player has not
-    // selected a different soundpack. The downloader installs it before the
-    // native engine loads its sound configuration.
-    if( SOUNDPACKS.find( "otopack" ) != SOUNDPACKS.end() &&
+    // Use the soundpack installed by Android before the native engine starts.
+    // Migrate the previous auto-downloaded Otopack, but preserve other choices.
+    if( SOUNDPACKS.find( "Bl@ck Edition soundpack" ) != SOUNDPACKS.end() &&
         ( get_option( "SOUNDPACKS" ).getValue() == "basic" ||
-          get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ) ) {
-        get_option( "SOUNDPACKS" ).setValue( "otopack" );
+          get_option( "SOUNDPACKS" ).getValue() == "Menu_Sound_Test" ||
+          get_option( "SOUNDPACKS" ).getValue() == "otopack" ) ) {
+        get_option( "SOUNDPACKS" ).setValue( "Bl@ck Edition soundpack" );
     }
 
     update_global_locale();

@@ -27,21 +27,29 @@ class FastLoadAndAnnouncements(unittest.TestCase):
     def test_new_messages_survive_native_snapshot_invalidation(self):
         # The supplied crash log shows SNAPSHOT inactive, then
         # GAME_SPEECH "Nothing to open here", but no TTS_REQUEST.
-        self.assertIn("if (snapshot == null && !loading) {", self.controller)
+        self.assertIn("if (!loading && (snapshot == null", self.controller)
         self.assertIn("pendingGameMessages.addLast(", self.controller)
         self.assertIn("speech.setContext(next.contextKey());", self.controller)
         self.assertIn("replayBufferedGameMessages();", self.controller)
-        self.assertIn("MAX_BUFFERED_MESSAGES = 8", self.controller)
+        self.assertNotIn("MAX_BUFFERED_MESSAGES = 8", self.controller)
+        self.assertIn("pendingGameMessages.addLast(", self.controller)
+        self.assertNotIn("pendingGameMessages.removeFirst();\n                    SessionDebugLog.event", self.controller)
         self.assertIn("pendingGameMessages.clear();", self.controller)
         self.assertIn('"GAME_MESSAGE_BUFFERED"', self.controller)
-        self.assertIn('"GAME_MESSAGE_DROPPED"', self.controller)
+        self.assertIn("orderedGameEvents.addLast(", self.queue)
+        self.assertIn("orderedGameEvents.removeFirst()", self.queue)
 
-    def test_new_game_message_preempts_stale_focus(self):
+    def test_new_game_messages_wait_for_each_other_in_arrival_order(self):
         self.assertIn("GAME_EVENT = FOCUS", self.queue)
         self.assertIn("ReaderSpeechQueue.GAME_EVENT", self.controller)
         self.assertIn("messageLevel, 15000", self.controller)
         self.assertIn("ReaderSpeechQueue.URGENT", self.controller)
         self.assertIn("speech.say(\"loading-progress\"", self.controller)
+        self.assertIn("!isOrderedGameEvent(active)", self.queue)
+        self.assertIn("isOrderedGameEvent(active) || active.context.equals(contextKey)", self.queue)
+        self.assertIn("orderedGameEvents.clear();", self.queue)
+        self.assertLess(self.queue.index("orderedGameEvents.removeFirst()"),
+                        self.queue.index("Request best = null;"))
 
     def test_skip_verification_is_on_for_android_and_existing_users(self):
         debug_option = self.options.split(

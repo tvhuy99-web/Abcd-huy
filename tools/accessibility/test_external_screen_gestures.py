@@ -11,27 +11,32 @@ class ExternalScreenGestures(unittest.TestCase):
     def test_two_finger_down_goes_back_without_one_finger_fallthrough(self):
         detector = (JAVA / "TwoFingerBackGesture.java").read_text(encoding="utf-8")
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
-        setup = (JAVA / "ReaderSetupActivity.java").read_text(encoding="utf-8")
+        # The retired ReaderSetupActivity redirects to AccessibilitySettingsActivity.
+        # The two new screens use the shared, tested voice surface.
+        accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
+        backup = (JAVA / "BackupRestoreActivity.java").read_text(encoding="utf-8")
         self.assertIn("dy1 >= minimumDistance && dy2 >= minimumDistance", detector)
         self.assertIn("Math.abs(dx1) * 1.35f", detector)
         self.assertIn("ACTION_POINTER_UP", detector)
-        for code in (surface, setup):
-            self.assertIn("TwoFingerBackGesture.matches(", code)
-            self.assertIn("ignoreUntilPointersReleased", code)
-            self.assertIn("ACTION_POINTER_UP", code)
+        self.assertIn("TwoFingerBackGesture.matches(", surface)
+        self.assertIn("ignoreUntilPointersReleased", surface)
+        self.assertIn("ACTION_POINTER_UP", surface)
         self.assertIn("listener.goBack();", surface)
-        self.assertIn("ReaderSetupActivity.this.onBackPressed();", setup)
-        self.assertIn("return super.dispatchTouchEvent(event)", setup)
+        for code in (accessibility, backup):
+            self.assertIn("BootstrapSelfVoiceSurface", code)
+            self.assertIn("surface.setContent(controls);", code)
+            self.assertIn("@Override public void goBack() { finish(); }", code)
 
     def test_vertical_swipe_changes_focused_slider_and_reads_value(self):
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
-        setup = (JAVA / "ReaderSetupActivity.java").read_text(encoding="utf-8")
+        accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
         tts = (JAVA / "TtsSettingsActivity.java").read_text(encoding="utf-8")
         self.assertIn("adjustFocusedSetting(dy < 0 ? 1 : -1)", surface)
         self.assertIn("bar.setProgress(", surface)
         self.assertIn("speakFocused();", surface)
-        self.assertIn("adjustSelfVoiceSetting(dy < 0 ? 1 : -1)", setup)
-        self.assertIn("speakFocusedControl();", setup)
+        self.assertIn("distance.setOnSeekBarChangeListener(", accessibility)
+        self.assertIn("duration.setOnSeekBarChangeListener(", accessibility)
+        self.assertIn("bar.setContentDescription(description)", accessibility)
         for name in ("rate", "pitch", "volume"):
             self.assertIn(name + ".setContentDescription(", tts)
 

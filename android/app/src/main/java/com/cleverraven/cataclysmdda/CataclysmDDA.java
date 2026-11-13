@@ -162,6 +162,12 @@ public class CataclysmDDA extends SDLActivity {
         if (reader != null) { reader.onGameCue(name); }
     }
 
+    /** Visible nearest targets on eight rays, split into creatures and items. */
+    public void onAccessibilityDirectionalSonar(int[] creatures, int[] items) {
+        GameReaderController reader = readerController;
+        if (reader != null) { reader.onDirectionalSonarTargets(creatures, items); }
+    }
+
     /**
      * SDL debug messages have no semantic game nodes. They need an emergency
      * reader panel even if the game menu never finished initializing.
@@ -187,6 +193,8 @@ public class CataclysmDDA extends SDLActivity {
 
     /** Native engine diagnostic events do not depend on TTS being enabled. */
     public void onAccessibilityNativeDiagnostic(String category, String detail) {
+        // The manual log switch is the sole authority. Native never changes
+        // it in response to latency thresholds or gameplay conditions.
         SessionDebugLog.event(category, detail);
     }
 
@@ -214,6 +222,23 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
+    /** Open the two added entries in the original native game Settings list. */
+    public void onAccessibilityOpenAccessibilitySettings() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, AccessibilitySettingsActivity.class));
+            }
+        });
+    }
+
+    public void onAccessibilityOpenBackupRestore() {
+        runOnUiThread(() -> {
+            if (!isFinishing() && !isDestroyed()) {
+                startActivity(new Intent(this, BackupRestoreActivity.class));
+            }
+        });
+    }
+
     /** Launch the separate native game-audio controls from Settings. */
     public void onAccessibilityOpenSoundSettings(int music, int effects, boolean enabled) {
         runOnUiThread(() -> {
@@ -230,6 +255,13 @@ public class CataclysmDDA extends SDLActivity {
     static native void nativeQueueSoundSettings(int music, int effects, boolean enabled);
 
     static native void nativeConfigureReader(boolean enabled, boolean suspended);
+    static native void nativeConfigureReaderPerformance(boolean spokenOnlyWorld,
+                                                        boolean performanceProfile);
+    static native void nativeConfigureDirectionalSonar(boolean enabled);
+    static native boolean nativeWorldStepReady();
+    static native int nativeCancelPendingWorldSteps();
+    static native int nativeTravelState();
+    static native boolean nativeTravelControl(int action);
     static native boolean nativeReaderIntent(long session, long frame, long generation,
             long revision, long request, String node, String action, String value);
 

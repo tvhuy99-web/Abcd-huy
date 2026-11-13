@@ -552,7 +552,12 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
     avatar &you = get_avatar();
 
     item_location weapon = get_weapon();
-    if( !weapon || !avatar_action::can_fire_weapon( you, here, *weapon ) ) {
+    // Permit opening the accessible aim menu with an empty gun so its
+    // Reload button is reachable. No shooting rule is relaxed: the native
+    // target status still blocks the Fire command until ammo is available.
+    const bool empty_gun_menu = a11y::enabled() && weapon && weapon->is_gun() &&
+                                weapon->ammo_remaining() == 0;
+    if( !weapon || ( !empty_gun_menu && !avatar_action::can_fire_weapon( you, here, *weapon ) ) ) {
         aborted = true;
         act.moves_left = 0;
         return;
@@ -596,6 +601,9 @@ void aim_activity_actor::do_turn( player_activity &act, Character &who )
 void aim_activity_actor::finish( player_activity &act, Character &who )
 {
     map &here = get_map();
+    // A one-gesture combat shot returns to the world after firing even
+    // when AIM_AFTER_FIRING is enabled. Normal targeting keeps its setting.
+    const bool quick_combat_shot = target_handler::take_accessible_combat_shot_completed();
 
     act.set_to_null();
     item_location weapon = get_weapon();
@@ -606,9 +614,12 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     if( aborted ) {
         unload_RAS_weapon();
         if( reload_requested ) {
-            // Reload the gun / select different arrows
-            // May assign ACT_RELOAD
-            g->reload_wielded( true );
+            // Both reload paths retain the engine's time-costed activity.
+            if( auto_reload_requested ) {
+                g->auto_reload_wielded();
+            } else {
+                g->reload_wielded( true );
+            }
         }
         restore_view();
         return;
@@ -617,7 +628,7 @@ void aim_activity_actor::finish( player_activity &act, Character &who )
     gun_mode gun = weapon->gun_current_mode();
     who.fire_gun( here, fin_trajectory.back(), gun.qty, *gun, reload_loc );
 
-    if( !get_option<bool>( "AIM_AFTER_FIRING" ) ||
+    if( quick_combat_shot || !get_option<bool>( "AIM_AFTER_FIRING" ) ||
         weapon.get_item()->has_fault_of_type( gun_mechanical_simple ) ) {
         restore_view();
         return;
@@ -658,6 +669,7 @@ void aim_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "initial_view_offset", initial_view_offset );
     jsout.member( "aborted", aborted );
     jsout.member( "reload_requested", reload_requested );
+    jsout.member( "auto_reload_requested", auto_reload_requested );
     jsout.member( "abort_if_no_targets", abort_if_no_targets );
     jsout.member( "should_unload_RAS", should_unload_RAS );
 
@@ -681,6 +693,7 @@ std::unique_ptr<activity_actor> aim_activity_actor::deserialize( JsonValue &jsin
     data.read( "initial_view_offset", actor.initial_view_offset );
     data.read( "aborted", actor.aborted );
     data.read( "reload_requested", actor.reload_requested );
+    data.read( "auto_reload_requested", actor.auto_reload_requested );
     data.read( "abort_if_no_targets", actor.abort_if_no_targets );
     data.read( "should_unload_RAS", actor.should_unload_RAS );
 
@@ -3104,7 +3117,47 @@ void pickup_activity_actor::do_turn( player_activity &, Character &who )
     // If there are items left we ran out of moves, so continue the activity
     // Otherwise, we are done.
     if( !keep_going || target_items.empty() ) {
-        if( !stash_successful && !autopickup ) {
+        if( a11y::enabled() && !autopickup ) {
+            // The old "Some items were not picked up!" did not identify a
+            // single failed item or its reason. Collect across all turns
+            // before speaking once, and name only transfers verified by
+            // Pickup::do_pickup(), not merely selected items.
+            if( !keep_going ) {
+                for( const item_location &leftover : target_items ) {
+                    ++info.a11y_failure_count;
+                    if( info.a11y_failures.size() < 24 ) {
+                        info.a11y_failures.push_back( leftover ?
+                            string_format( _( "%s: Pickup stopped before this item." ),
+                                           leftover->display_name() ) :
+                            _( "A selected item is no longer available." ) );
+                    }
+                }
+            }
+            const int failed = info.a11y_failure_count;
+            const int collected = info.a11y_success_count;
+            if( failed > 0 || collected > 0 || !stash_successful ) {
+                std::string result = string_format(
+                    _( "Pickup finished. Collected %1$d item groups; failed %2$d item groups." ),
+                    collected, failed );
+                if( !info.a11y_successes.empty() ) {
+                    result += " " + std::string( _( "Collected:" ) );
+                    for( const std::string &name : info.a11y_successes ) {
+                        result += " " + name + ".";
+                    }
+                }
+                if( !info.a11y_failures.empty() ) {
+                    result += " " + std::string( _( "Not collected:" ) );
+                    for( const std::string &failure : info.a11y_failures ) {
+                        result += " " + failure + ".";
+                    }
+                }
+                if( failed > static_cast<int>( info.a11y_failures.size() ) ||
+                    collected > static_cast<int>( info.a11y_successes.size() ) ) {
+                    result += " " + std::string( _( "Some additional item details were omitted from this summary." ) );
+                }
+                add_msg( failed > 0 || !stash_successful ? m_bad : m_good, "%s", result );
+            }
+        } else if( !stash_successful && !autopickup ) {
             add_msg( m_bad, _( "Some items were not picked up!" ) );
         }
 
@@ -8313,8 +8366,10 @@ std::unique_ptr<activity_actor> insert_item_activity_actor::deserialize( JsonVal
     return actor.clone();
 }
 
-reload_activity_actor::reload_activity_actor( item::reload_option &&opt, int extra_moves )
+reload_activity_actor::reload_activity_actor( item::reload_option &&opt, int extra_moves,
+        int auto_steps )
 {
+    auto_reload_steps = auto_steps;
     moves_total = opt.moves() + extra_moves;
     quantity = opt.qty();
     pocket_index = opt.pocket_index;
@@ -8342,10 +8397,16 @@ bool reload_activity_actor::can_reload() const
     return true;
 }
 
-void reload_activity_actor::start( player_activity &act, Character &/*who*/ )
+void reload_activity_actor::start( player_activity &act, Character &who )
 {
     act.moves_total = moves_total;
     act.moves_left = moves_total;
+    if( auto_reload_steps > 0 ) {
+        const item_location gun = who.get_wielded_item();
+        initial_weapon_ammo = gun ? gun->ammo_remaining() : 0;
+        initial_weapon_has_magazine = gun && gun->magazine_current() != nullptr;
+        initial_target_ammo = target_loc ? target_loc->ammo_remaining() : 0;
+    }
 }
 
 void reload_activity_actor::reload_msg( Character &who, bool finished )
@@ -8369,7 +8430,12 @@ void reload_activity_actor::reload_msg( Character &who, bool finished )
         if( reloadable.has_flag( flag_RELOAD_ONE ) && !ammo_uses_speedloader &&
             !ammo_uses_speedloader_clip ) {
 
-            add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+            if( a11y::enabled() ) {
+                add_msg( m_neutral, _( "Loaded %1$d %2$s into %3$s. %4$d rounds in gun." ),
+                         qty, ammo_name, reloadable_name, reloadable.ammo_remaining() );
+            } else {
+                add_msg( m_neutral, _( "You insert %dx %s into the %s." ), qty, ammo_name, reloadable_name );
+            }
         } else if( finished && a11y::enabled() ) {
             // Most gun reloads previously produced only a sound at finish.
             // Report completion after ammunition has actually been moved.
@@ -8501,7 +8567,43 @@ void reload_activity_actor::finish( player_activity &act, Character &who )
     reload( act, who, quantity - already_loaded );
     already_loaded += quantity - already_loaded;
     reload_msg( who, true );
+    // One automatic reload consists of successive native timed activities.
+    // Preserve any user-declined interruption across those steps, otherwise
+    // every new cartridge may open the same warning again.
+    const std::optional<player_activity> earlier_activity =
+        auto_reload_steps > 0 && who.is_avatar() ?
+        std::optional<player_activity>( act ) : std::nullopt;
     act.set_to_null();
+
+    if( auto_reload_steps > 0 && who.is_avatar() ) {
+        const item_location gun = who.get_wielded_item();
+        const bool progressed = ( target_loc && target_loc->ammo_remaining() > initial_target_ammo ) ||
+                                ( gun && ( gun->ammo_remaining() > initial_weapon_ammo ||
+                                           ( !initial_weapon_has_magazine &&
+                                             gun->magazine_current() != nullptr ) ) );
+        if( progressed && gun && gun->is_gun() ) {
+            // This is the actual count after the engine's timed reload;
+            // report progress from the gun, never an estimated quantity.
+            // The reload event above already announces the actual count;
+            // do not repeat it with an extra per-round progress sentence.
+            // One completed native reload, then schedule another if required.
+            // This never creates ammo or bypasses the action's move cost.
+            g->auto_reload_wielded( auto_reload_steps - 1 );
+            if( earlier_activity && who.activity ) {
+                who.activity.inherit_distractions( *earlier_activity );
+            }
+        } else {
+            // The final count is sufficient: avoid an additional duplicate
+            // narration about the same reload failure.
+            if( gun && gun->is_gun() ) {
+                add_msg( m_info, _( "Reload ended with %d rounds loaded." ), gun->ammo_remaining() );
+            }
+            if( gun && gun->is_gun() && gun->ammo_remaining() > 0 ) {
+                avatar_action::fire_wielded_weapon( get_avatar() );
+            }
+        }
+        return;
+    }
 
     // Auto-chain sibling wells so the player is not prompted once per well.
     // Inventory only - map items were not part of the player's original pick
@@ -8566,6 +8668,10 @@ void reload_activity_actor::serialize( JsonOut &jsout ) const
     jsout.member( "ammo_loc", ammo_loc );
     jsout.member( "seconds_per_round", seconds_per_round );
     jsout.member( "already_loaded", already_loaded );
+    jsout.member( "auto_reload_steps", auto_reload_steps );
+    jsout.member( "initial_weapon_ammo", initial_weapon_ammo );
+    jsout.member( "initial_target_ammo", initial_target_ammo );
+    jsout.member( "initial_weapon_has_magazine", initial_weapon_has_magazine );
 
     jsout.end_object();
 }
@@ -8586,6 +8692,10 @@ std::unique_ptr<activity_actor> reload_activity_actor::deserialize( JsonValue &j
     data.read( "ammo_loc", actor.ammo_loc );
     data.read( "seconds_per_round", actor.seconds_per_round );
     data.read( "already_loaded", actor.already_loaded );
+    data.read( "auto_reload_steps", actor.auto_reload_steps );
+    data.read( "initial_weapon_ammo", actor.initial_weapon_ammo );
+    data.read( "initial_target_ammo", actor.initial_target_ammo );
+    data.read( "initial_weapon_has_magazine", actor.initial_weapon_has_magazine );
     if( actor.ammo_loc ) {
         actor.ammo_id = actor.ammo_loc->type->id;
     }

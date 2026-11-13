@@ -1,5 +1,8 @@
 #include "creature.h"
 
+#include "a11y_android.h"
+#include "a11y_runtime.h"
+
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -1343,6 +1346,11 @@ projectile_attack_results Creature::select_body_part_projectile_attack(
 void Creature::messaging_projectile_attack( const Creature *source,
         const projectile_attack_results &hit_selection, const int total_damage ) const
 {
+    // Keep the original projectile impact in message history, but let the
+    // player's actual-damage summary replace redundant hit speech. The
+    // player as victim is never muted, regardless of who fired the shot.
+    // Unrelated NPC-to-creature hits are muted at the same structured point.
+    Messages::mute_combat_speech impact_speech( source != nullptr && !is_avatar() );
     const map &here = get_map();
 
     const tripoint_bub_ms pos = pos_bub( here );
@@ -1524,6 +1532,7 @@ void Creature::deal_projectile_attack( map *here, Creature *source, dealt_projec
     }
 
     impact.mult_damage( hit_selection.damage_mult );
+    const double impact_after_accuracy = impact.total_damage();
 
     if( proj_effects.count( ammo_effect_NOGIB ) > 0 ) {
         float dmg_ratio = static_cast<float>( impact.total_damage() ) / get_hp_max( hit_selection.bp_hit );
@@ -1560,6 +1569,16 @@ void Creature::deal_projectile_attack( map *here, Creature *source, dealt_projec
     proj.apply_effects_nodamage( *this, dealt_dam.bp_hit, soaked_through );
 
     int total_dam = dealt_dam.total_damage();
+    if( source != nullptr && source->is_avatar() && a11y::enabled() &&
+        a11y::android::performance_profiling_enabled() ) {
+        // A diagnostic, not a speech message. It distinguishes grazing,
+        // low-damage ammunition and armor without changing ballistics.
+        a11y::android::diagnostic_event( "COMBAT_BALLISTIC",
+                                         string_format( "target_monster=%d aim=%.3f hit_multiplier=%.3f raw=%.1f after_accuracy=%.1f post_armor=%d hp_after=%d",
+                                                        is_monster() ? 1 : 0, goodhit, hit_selection.damage_mult,
+                                                        static_cast<double>( proj.impact.total_damage() ),
+                                                        impact_after_accuracy, total_dam, get_hp() ) );
+    }
 
     if( print_messages ) {
         messaging_projectile_attack( source, hit_selection, total_dam );

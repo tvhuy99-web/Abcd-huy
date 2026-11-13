@@ -3,6 +3,10 @@
 #include <algorithm>
 #include <cmath>
 #include <cstddef>
+#if defined(__ANDROID__)
+#include <chrono>
+#endif
+#include <map>
 #include <functional>
 #include <iterator>
 #include <list>
@@ -1515,6 +1519,14 @@ void vehicle_prototype::save_vehicle_as_prototype( const vehicle &veh,
  */
 void vehicles::finalize_prototypes()
 {
+#if defined(__ANDROID__)
+    // Prototypes repeat the same part/fuel combinations across vehicles.
+    // Cache only immutable item-type compatibility, never vehicle state.
+    std::map<std::pair<itype_id, itype_id>, bool> fuel_fits_cache;
+    std::size_t fuel_hits = 0;
+    std::size_t fuel_misses = 0;
+    const auto prototype_started = std::chrono::steady_clock::now();
+#endif
     map &here = get_map(); // TODO: Determine if this is good enough.
     vehicle_prototype_factory.finalize();
     for( const vehicle_prototype &const_proto : vehicles::get_all_prototypes() ) {
@@ -1615,7 +1627,21 @@ void vehicles::finalize_prototypes()
                 }
             }
 
-            if( item( &*base ).can_contain( item( pt.fuel ) ).success() || base->magazine ) {
+#if defined(__ANDROID__)
+            const auto cache_key = std::make_pair( base->get_id(), pt.fuel );
+            auto can_hold = fuel_fits_cache.find( cache_key );
+            if( can_hold == fuel_fits_cache.end() ) {
+                const bool compatible = item( &*base ).can_contain( item( pt.fuel ) ).success();
+                can_hold = fuel_fits_cache.emplace( cache_key, compatible ).first;
+                ++fuel_misses;
+            } else {
+                ++fuel_hits;
+            }
+            const bool fuel_compatible = can_hold->second;
+#else
+            const bool fuel_compatible = item( &*base ).can_contain( item( pt.fuel ) ).success();
+#endif
+            if( fuel_compatible || base->magazine ) {
                 if( !item::type_is_defined( pt.fuel ) ) {
                     debugmsg( "init_vehicles: tank %s specified invalid fuel in %s",
                               pt.part.c_str(), proto.id.str() );
@@ -1650,6 +1676,14 @@ void vehicles::finalize_prototypes()
             }
         }
     }
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=vehicle_prototypes" <<
+                              " fuel_hits=" << fuel_hits <<
+                              " fuel_misses=" << fuel_misses <<
+                              " elapsed_ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - prototype_started ).count();
+#endif
 }
 
 static std::vector<vpart_category> vpart_categories_all;

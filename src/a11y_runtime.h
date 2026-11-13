@@ -18,6 +18,8 @@ bool suspended();
 void synchronize_lifecycle();
 void replace_game_session();
 bool bound_to( const void *input_owner );
+// Open/close the single-flight native world input window on the game thread.
+void set_world_input_ready( const void *input_owner, bool ready );
 // Activates scopes that were constructed (and published a snapshot) while
 // the reader was disabled or suspended, so a screen that is already open
 // when the reader becomes available starts serving the reader without
@@ -27,6 +29,13 @@ bool bound_to( const void *input_owner );
 bool activate_pending_scopes( const void *input_owner );
 std::optional<std::string> poll_input( const void *input_owner );
 void announce_game_message( const std::string &text, bool urgent );
+
+// Keep DEFAULTMODE's semantic frame across ordinary game turns. Only its
+// game-thread input handler is rebound at each input wait; none of the
+// character or map state is accessed from an Android callback.
+class screen_scope;
+screen_scope &bind_world_screen( const void *input_owner, intent_handler handler );
+void unbind_world_screen();
 
 // Game-thread scope beside the actual input_context. The pointer is only a
 // local binding identity; it is never serialized, retained by Java or used
@@ -42,6 +51,7 @@ class screen_scope
         screen_scope( screen_scope && ) = delete;
         screen_scope &operator=( screen_scope && ) = delete;
         void update( semantic_snapshot snapshot, bool force_revision = false );
+        void rebind( const void *input_owner, intent_handler handler );
 
     private:
         void activate();

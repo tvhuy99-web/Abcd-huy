@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_world.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -80,6 +81,24 @@
 #include "visitable.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
+
+namespace
+{
+bool accessibility_weapon_auto_stow = false;
+} // namespace
+
+namespace a11y
+{
+void set_weapon_auto_stow( bool enabled )
+{
+    accessibility_weapon_auto_stow = enabled;
+}
+
+bool weapon_auto_stow_enabled()
+{
+    return accessibility_weapon_auto_stow;
+}
+} // namespace a11y
 
 static const activity_id ACT_MOVE_ITEMS( "ACT_MOVE_ITEMS" );
 
@@ -912,6 +931,15 @@ bool Character::dispose_item( item_location &&obj, const std::string &prompt )
     } );
 
     worn.holster_opts( opts, obj, *this );
+
+    // Accessible Fire is already an explicit request to switch weapons.
+    // Prefer the game's existing store-in-inventory action, with its normal
+    // capacity check and time cost, instead of opening an incidental menu.
+    // Never silently drop, spill, wear or destroy a held item. If storage is
+    // impossible, leave the normal decision menu intact.
+    if( a11y::weapon_auto_stow_enabled() && !bucket && opts.front().enabled ) {
+        return opts.front().action();
+    }
 
     int w = utf8_width( menu.text, true ) + 4;
     for( const dispose_option &e : opts ) {

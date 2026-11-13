@@ -1,7 +1,6 @@
 package com.cleverraven.cataclysmdda;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.net.Uri;
@@ -10,20 +9,23 @@ import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.CheckBox;
 import android.widget.LinearLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import java.io.OutputStream;
 import java.util.Locale;
 
-/** Three visible controls, with an explicit crash-recovery export choice. */
+/** One manual recording switch, spoken-only toggle, export and clear. */
 public final class DebugLogActivity extends Activity {
     private static final int EXPORT_FILE_REQUEST = 1917;
     private BootstrapSelfVoiceSurface surface;
     private AndroidSpeech speech;
     private boolean foreground;
     private byte[] pendingExport;
-    private boolean exportingCrash;
     private long utteranceSequence;
+    private LinearLayout mainControls;
+    private Button clearButton;
+    private boolean confirmingClear;
 
     @Override
     protected void onCreate(Bundle state) {
@@ -38,7 +40,7 @@ public final class DebugLogActivity extends Activity {
             @Override public void stopSpeech() {
                 if (speech != null) { speech.cancel(); }
             }
-            @Override public void goBack() { finish(); }
+            @Override public void goBack() { DebugLogActivity.this.onBackPressed(); }
             @Override public boolean leftHandedNavigation() {
                 return reader.isLeftHandedNavigation();
             }
@@ -50,80 +52,113 @@ public final class DebugLogActivity extends Activity {
                 return reader.getSwipeDurationLimitMs();
             }
         });
-        LinearLayout controls = new LinearLayout(this);
-        controls.setOrientation(LinearLayout.VERTICAL);
+        mainControls = new LinearLayout(this);
+        mainControls.setOrientation(LinearLayout.VERTICAL);
         int padding = Math.round(16 * getResources().getDisplayMetrics().density);
-        controls.setPadding(padding, padding, padding, padding);
+        mainControls.setPadding(padding, padding, padding, padding);
 
         CheckBox enabled = new CheckBox(this);
         enabled.setText(R.string.a11yDebugLogEnabled);
         enabled.setChecked(SessionDebugLog.enabled(this));
-        enabled.setOnCheckedChangeListener((button, checked) ->
-                SessionDebugLog.setEnabled(this, checked));
-        controls.addView(enabled);
+        enabled.setOnCheckedChangeListener((button, checked) -> {
+            SessionDebugLog.setEnabled(this, checked);
+            // Stop/start the native timing switch immediately, even though
+            // the game activity is paused behind this Android settings UI.
+            // This JNI method changes atomics only, not world/game state.
+            try {
+                CataclysmDDA.nativeConfigureReaderPerformance(
+                        reader.isSpokenOnlyWorldEnabled(), checked);
+            } catch (UnsatisfiedLinkError unavailable) {
+                // The next foreground reader rebind also applies the switch.
+            }
+        });
+        mainControls.addView(enabled);
 
         Button export = new Button(this);
         export.setText(R.string.a11yDebugLogExport);
-        export.setOnClickListener(view -> chooseExport());
-        controls.addView(export);
+        export.setOnClickListener(view -> exportLog());
+        mainControls.addView(export);
 
-        Button clear = new Button(this);
-        clear.setText(R.string.a11yDebugLogClear);
-        clear.setOnClickListener(view -> new AlertDialog.Builder(this)
-                .setMessage(R.string.a11yDebugLogConfirmClear)
-                .setPositiveButton(android.R.string.ok, (dialog, which) -> {
-                    SessionDebugLog.clear(this);
-                    Toast.makeText(this, R.string.a11yDebugLogCleared,
-                            Toast.LENGTH_SHORT).show();
-                })
-                .setNegativeButton(android.R.string.cancel, null)
-                .show());
-        controls.addView(clear);
+        clearButton = new Button(this);
+        clearButton.setText(R.string.a11yDebugLogClear);
+        clearButton.setOnClickListener(view -> showClearConfirmation());
+        mainControls.addView(clearButton);
 
         setContentView(surface);
-        surface.setContent(controls);
+        surface.setContent(mainControls);
 
         speech = new AndroidSpeech(this, new AndroidSpeech.Listener() {
             @Override public void onState(AndroidSpeech.State state) {
                 if (state == AndroidSpeech.State.READY && foreground && !usesTalkBack()) {
                     surface.speakFocused();
-                    if (SessionDebugLog.hasCrash(DebugLogActivity.this)) {
-                        speakText(getString(R.string.a11yDebugLogCrashAvailable));
-                    }
                 }
             }
             @Override public void onUtterance(String id, AndroidSpeech.Event event) { }
         });
     }
 
-    private void chooseExport() {
-        if (SessionDebugLog.hasCrash(this)) {
-            new AlertDialog.Builder(this)
-                    .setTitle(R.string.a11yDebugLogExport)
-                    .setItems(new CharSequence[]{
-                            getString(R.string.a11yDebugLogPreviousCrash),
-                            getString(R.string.a11yDebugLogCurrentSession)
-                    }, (dialog, selected) -> exportLog(selected == 0))
-                    .show();
+    /** Keep confirmation inside the same self-voiced gesture surface.
+     * A platform AlertDialog steals touches and leaves the internal reader
+     * unable to activate the positive or negative button.
+     */
+    private void showClearConfirmation() {
+        confirmingClear = true;
+        clearButton.setText(R.string.a11yDebugLogClear);
+        LinearLayout confirmation = new LinearLayout(this);
+        confirmation.setOrientation(LinearLayout.VERTICAL);
+        TextView question = new TextView(this);
+        question.setText(R.string.a11yDebugLogConfirmClear);
+        confirmation.addView(question);
+
+        Button confirm = new Button(this);
+        confirm.setText(R.string.a11yDebugLogConfirmClearAction);
+        confirm.setOnClickListener(view -> {
+            SessionDebugLog.clear(this);
+            Toast.makeText(this, R.string.a11yDebugLogCleared,
+                    Toast.LENGTH_SHORT).show();
+            // Speak the result when focus returns, even without TalkBack.
+            clearButton.setText(getString(R.string.a11yDebugLogCleared)
+                    + ". " + getString(R.string.a11yDebugLogClear));
+            showMainControls();
+        });
+        confirmation.addView(confirm);
+
+        Button cancel = new Button(this);
+        cancel.setText(R.string.a11yTtsCancel);
+        cancel.setOnClickListener(view -> showMainControls());
+        confirmation.addView(cancel);
+        surface.setContent(confirmation);
+    }
+
+    private void showMainControls() {
+        confirmingClear = false;
+        // The third control remains Clear. Returning to it avoids making the
+        // user navigate from the checkbox after cancelling a confirmation.
+        surface.setContent(mainControls, 2);
+    }
+
+    @Override
+    public void onBackPressed() {
+        if (confirmingClear) {
+            showMainControls();
         } else {
-            exportLog(false);
+            super.onBackPressed();
         }
     }
 
-    private void exportLog(boolean crash) {
-        SessionDebugLog.event("CONTROL", "export_requested crash=" + crash);
-        byte[] bytes = SessionDebugLog.snapshot(this, crash);
+    private void exportLog() {
+        // Export includes only events explicitly captured in this launch.
+        // It remains available after recording is manually switched off.
+        byte[] bytes = SessionDebugLog.snapshot(this);
         if (bytes.length == 0) {
             Toast.makeText(this, R.string.a11yDebugLogEmpty, Toast.LENGTH_SHORT).show();
             return;
         }
         pendingExport = bytes;
-        exportingCrash = crash;
         Intent picker = new Intent(Intent.ACTION_CREATE_DOCUMENT);
         picker.addCategory(Intent.CATEGORY_OPENABLE);
         picker.setType("text/plain");
-        picker.putExtra(Intent.EXTRA_TITLE, crash
-                ? "cataclysm-crash-recovery.txt" : "cataclysm-session-debug.txt");
+        picker.putExtra(Intent.EXTRA_TITLE, "cataclysm-session-debug.txt");
         try {
             startActivityForResult(picker, EXPORT_FILE_REQUEST);
         } catch (RuntimeException failure) {
@@ -150,8 +185,7 @@ public final class DebugLogActivity extends Activity {
             if (stream == null) { throw new java.io.IOException("No output stream"); }
             stream.write(bytes);
             stream.flush();
-            SessionDebugLog.event("CONTROL", "export_complete crash="
-                    + exportingCrash + " bytes=" + bytes.length);
+            SessionDebugLog.event("CONTROL", "export_complete bytes=" + bytes.length);
             Toast.makeText(this, R.string.a11yDebugLogExported, Toast.LENGTH_SHORT).show();
         } catch (Exception error) {
             SessionDebugLog.event("ERROR", "export_failed " + error);

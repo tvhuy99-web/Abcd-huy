@@ -1,4 +1,6 @@
 #include "a11y_perception.h"
+#include "a11y_item_text.h"
+#include "a11y_world.h"
 
 #include <map>
 #include <unordered_set>
@@ -33,7 +35,7 @@ namespace
 {
 void add_known_items( std::map<std::string, int> &names, const item &value )
 {
-    ++names[value.tname()];
+    ++names[spoken_item_name( value )];
     // This is the same knowledge-aware container traversal as tile information.
     // all_items_ptr() would expose contents the character has not discovered.
     for( const item *content : value.all_known_contents() ) {
@@ -238,6 +240,37 @@ tile_observation observe_tile( const tripoint_bub_ms &position )
     return result;
 }
 
+directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin )
+{
+    // Keep the existing eight compass rays and 16-tile range. Match the
+    // unrestricted assistive map scan: furniture, walls and closed doors
+    // must not hide creatures or items on later tiles of the same ray.
+    static constexpr int dx[8] = { 0, 1, 1, 1, 0, -1, -1, -1 };
+    static constexpr int dy[8] = { -1, -1, 0, 1, 1, 1, 0, -1 };
+    directional_sonar_result result;
+    map &here = get_map();
+    for( int direction = 0; direction < 8; ++direction ) {
+        for( int distance = 1; distance <= 16; ++distance ) {
+            const tripoint_bub_ms target = origin + tripoint_rel_ms(
+                    dx[direction] * distance, dy[direction] * distance, 0 );
+            if( !here.inbounds( target ) ) {
+                break;
+            }
+            const unrestricted_tile tile = scan_unrestricted_tile( target );
+            if( result.creatures[direction] < 0 && !tile.creatures.empty() ) {
+                result.creatures[direction] = distance;
+            }
+            if( result.items[direction] < 0 && !tile.items.empty() ) {
+                result.items[direction] = distance;
+            }
+            if( result.creatures[direction] > 0 && result.items[direction] > 0 ) {
+                break;
+            }
+        }
+    }
+    return result;
+}
+
 tile_observation observe_memory_tile( const tripoint_bub_ms &position )
 {
     tile_observation result;
@@ -264,14 +297,21 @@ std::string describe_tile( const tile_observation &observation )
             result = _( "Remembered, not currently visible: " );
         }
         result += observation.terrain;
-        if( !observation.furniture.empty() ) { result += ". " + observation.furniture; }
+        // Terrain and furniture can have the same translated name. Do not
+        // announce an identical fact twice (e.g. "floor. floor").
+        if( !observation.furniture.empty() && observation.furniture != observation.terrain ) {
+            result += ". " + observation.furniture;
+        }
         if( observation.door != door_state::none ) {
             const std::string state = observation.door == door_state::locked ? _( "Locked" ) :
                                       observation.door == door_state::closed ? _( "Closed" ) :
                                       _( "Open" );
             result += ". " + string_format( _( "Door: %s" ), state );
         }
-        if( observation.source == observation_source::visible && observation.impassable ) {
+        if( observation.source == observation_source::visible && observation.impassable &&
+            observation.door != door_state::closed && observation.door != door_state::locked ) {
+            // A locked/closed door already explains why this tile cannot
+            // be crossed. Avoid reading "Door: closed. Impassable" twice.
             result += ". " + std::string( _( "Impassable" ) );
         }
         for( const auto &field : observation.fields ) { result += ". " + field; }
@@ -286,8 +326,7 @@ std::string describe_tile( const tile_observation &observation )
         for( const auto &perception : observation.special_perceptions ) { result += ". " + perception; }
     }
     if( !observation.heard_marker.empty() ) {
-        result += ". " + string_format( _( "Near this marker, you heard %s. "
-                                            "The marker is approximate and may not be the sound source's position." ),
+        result += ". " + string_format( _( "Heard near here: %s. Position approximate." ),
                                          observation.heard_marker );
     }
     return remove_color_tags( result );

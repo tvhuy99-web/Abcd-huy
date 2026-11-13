@@ -1,6 +1,7 @@
 #pragma once
 #ifndef CATA_SRC_A11Y_PERCEPTION_H
 #define CATA_SRC_A11Y_PERCEPTION_H
+#include <array>
 #include <string>
 #include <vector>
 #include "coords_fwd.h"
@@ -29,6 +30,19 @@ struct tile_observation {
     bool impassable = false;
     bool route_feature = false;
 };
+// Eight rays: North, NE, East, SE, South, SW, West, NW.
+// Sonar uses unrestricted map tiles, even behind obstacles. Negative distance
+// means no creature or item of that kind was detected within 16 tiles.
+struct directional_sonar_result {
+    std::array<int, 8> creatures;
+    std::array<int, 8> items;
+    directional_sonar_result() {
+        creatures.fill( -1 );
+        items.fill( -1 );
+    }
+};
+directional_sonar_result scan_directional_sonar( const tripoint_bub_ms &origin );
+
 // All callers run on the game thread after updating the game's visibility
 // cache for this z-level. Unknown/memory branches never read live tile content.
 tile_observation observe_tile( const tripoint_bub_ms &position );

@@ -154,7 +154,7 @@ public final class SoundSettingsActivity extends Activity {
     private boolean usesTalkBack() {
         AccessibilityManager manager = (AccessibilityManager)
                 getSystemService(ACCESSIBILITY_SERVICE);
-        return manager != null && manager.isEnabled();
+        return manager != null && manager.isTouchExplorationEnabled();
     }
 
     private void speakLocal(String text) {

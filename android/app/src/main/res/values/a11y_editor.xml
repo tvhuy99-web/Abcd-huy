@@ -1,5 +1,9 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
+    <string name="a11yQuantityInstructions">Select quantity. Tap a number to mark it immediately. Back cancels.</string>
+    <string name="a11yQuantityDeselect">Deselect this item, zero</string>
+    <string name="a11yQuantityAll">All available</string>
+    <string name="a11yQuantityOther">Enter a different quantity</string>
     <string name="a11yEditorTitle">Edit value</string>
     <string name="a11yEditorInstructions">Edit text. Apply submits the value; confirm separately in the game. Back cancels.</string>
     <string name="a11yEditorValue">Current value</string>
@@ -40,4 +44,27 @@
     <string name="a11yEditorNotANumber">Enter a number.</string>
     <string name="a11yEditorOutOfRange">Value must be %1$s to %2$s.</string>
     <string name="a11yEditorStepMismatch">Use steps of %1$s from %2$s.</string>
+    <string name="a11yPocketOpen">Open pocket</string>
+    <string name="a11yPocketOtherActions">Other commands</string>
+    <string name="a11yPocketActions">Container actions</string>
+    <string name="a11yPocketChoose">Choose a pocket</string>
+    <string name="a11yPocketItems">Items in pocket</string>
+    <string name="a11yPocketEmpty">There are no items in this pocket.</string>
+    <string name="a11yPocketNotSelectable">There are no selectable items in this pocket.</string>
+    <string name="a11yPocketConfirm">Confirm pocket selection</string>
+    <string name="a11yPocketCancel">Cancel pocket selection</string>
+    <string name="a11yPocketSelectionSent">Pocket selection submitted. Returned to item list.</string>
+    <string name="a11yPocketSelectionError">Could not submit the selection. Please try again.</string>
+    <string name="a11yPocketRow">%1$s. Selected %2$d, available %3$d. Item %4$d of %5$d.</string>
+    <string name="a11yPocketSealed">This pocket is sealed and cannot be opened.</string>
+    <string name="a11yPocketInstructions">Choose items here, then confirm to return to the main item list. Nothing is picked up until you confirm the main list. Cancel discards changes made here.</string>
+    <string name="a11yTravelMoving">Automatic travel in progress. Route is active.</string>
+    <string name="a11yTravelPaused">Automatic travel paused. Route retained.</string>
+    <string name="a11yTravelSafetyStopped">Travel stopped by safe mode. Route retained. Continue only when safe, or deliberately ignore this threat.</string>
+    <string name="a11yTravelIgnoreWarning">Ignore this enemy warning</string>
+    <string name="a11yTravelResume">Resume travel</string>
+    <string name="a11yTravelPause">Pause travel</string>
+    <string name="a11yTravelCancel">Cancel trip and return to map</string>
+    <string name="a11yTravelRequestAccepted">Travel command received.</string>
+    <string name="a11yTravelRequestUnavailable">Travel command unavailable in the current state.</string>
 </resources>

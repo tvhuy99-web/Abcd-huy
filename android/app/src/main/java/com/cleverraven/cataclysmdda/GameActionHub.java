@@ -20,12 +20,15 @@ final class GameActionHub {
     static final int OPEN_GROUP = 1;
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
-    static final int OPEN_TTS = 4;
-    static final int OPEN_READER_SETUP = 5;
+    // The second Android Settings hub has been removed.
+    static final int OPEN_DEBUG_LOG = 10;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
-    // Nested menu, not a seventeenth root category.
+    static final int OPEN_FAVORITES = 8;
+    // Keep native group numbers stable for existing saved gesture targets.
     static final int DIRECTIONS = 16;
+    static final int FAVORITES = 17;
+    static final int COMBAT = 8;
 
     static final class Entry {
         final String label;
@@ -46,16 +49,17 @@ final class GameActionHub {
                 case OPEN_GROUP: return "hub:group:" + group;
                 case OPEN_SEARCH: return "hub:search";
                 case OPEN_ALL: return "hub:all";
-                case OPEN_TTS: return "hub:tts";
-                case OPEN_READER_SETUP: return "hub:reader_setup";
+                case OPEN_DEBUG_LOG: return "hub:debug_log";
                 case OPEN_DIRECTIONS: return "hub:directions";
+                case OPEN_FAVORITES: return "hub:favorites";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
                 default: return null;
             }
         }
     }
 
-    // Root index zero is search. Groups 1..15 are the requested sections.
+    // Group IDs 1..15 and SEARCH=0 remain stable for saved shortcuts.
+    // The root *display order* is Favorites, groups 1..15, then Search.
     static final int[] TITLES = {
             R.string.a11yHubSearch,
             R.string.a11yHubNearby,
@@ -88,14 +92,16 @@ final class GameActionHub {
 
     private static final String[][] ACTIONS = {
             {},
-            { "interact", "open", "close", "examine", "pickup", "pickup_all", "chat",
-                    "LEVEL_UP", "LEVEL_DOWN", "grab", "butcher", "smash", "look" },
-            { "look", "peek", "listitems", "listitems", "map", "sky", "center", "zones" },
+            { "interact", "open", "close", "examine", "examine_and_pickup",
+                    "reader:pickup_here", "pickup", "pickup_all", "chat",
+                    "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
+                    "butcher", "loot", "control_vehicle", "smash" },
+            { "listitems", "reader:places", "map", "sky", "center", "zones" },
             { "LEVEL_UP", "LEVEL_DOWN", "open_movement", "cycle_move",
                     "cycle_move_reverse", "reset_move", "toggle_run", "toggle_crouch",
                     "toggle_prone", "wait", "pause", "auto_travel_mode" },
             { "interact", "open", "close", "examine", "examine_and_pickup",
-                    "pickup", "pickup_all", "smash", "grab", "haul", "haul_toggle",
+                    "reader:pickup_here", "pickup", "pickup_all", "smash", "grab", "haul", "haul_toggle",
                     "butcher", "chat", "peek" },
             { "inventory", "advinv", "pickup", "pickup_all", "drop", "drop_adj",
                     "compare", "organize", "apply", "apply_wielded", "item_action_menu",
@@ -104,7 +110,8 @@ final class GameActionHub {
                     "workout", "apply", "player_data" },
             { "wear", "take_off", "wield", "sort_armor", "mend", "compare", "reload_item",
                     "reload_weapon", "reload_wielded", "unload", "pick_style" },
-            { "fire", "fire_burst", "throw", "throw_wielded", "autoattack",
+            { "reader:combat:aim-toggle", "fire", "fire_burst", "throw",
+                    "throw_wielded", "autoattack",
                     "select_fire_mode", "select_default_ammo", "reload_item",
                     "reload_weapon", "reload_wielded", "unload", "pick_style",
                     "cast_spell", "recast_spell", "safemode", "autosafe",
@@ -123,12 +130,8 @@ final class GameActionHub {
                     "open_distraction_manager" },
             { "messages", "help", "HELP_KEYBINDINGS", "look", "map",
                     "player_data", "diary" },
-            { "save", "quicksave", "quickload", "main_menu", "open_options",
-                    "open_autopickup", "open_autonotes", "open_safemode",
-                    "open_color", "open_world_mods", "open_distraction_manager",
-                    "help", "HELP_KEYBINDINGS", "debug", "debug",
-                    "toggle_panel_adm", "toggle_pixel_minimap", "toggle_fullscreen",
-                    "zoom_in", "zoom_out" }
+            { "save", "quicksave", "quickload", "open_options",
+                    "open_world_mods", "open_distraction_manager", "help", "debug" }
     };
 
     private static String normalized(String source) {
@@ -138,17 +141,38 @@ final class GameActionHub {
         return plain.toLowerCase(Locale.ROOT).trim();
     }
 
-    private static void addNode(List<Entry> result, ReaderSnapshot snapshot, String id,
-                                Set<String> seen) {
+    // Every hub section uses the same semantic value published by the
+    // native game. A command may be repeated in Combat, Automation, Search
+    // and Favorites, but its current state must never diverge between them.
+    private static String spokenNodeLabel(Context context, ReaderSnapshot.Node node) {
+        String label = node.label;
+        // The hub is a list of concise actions, not a second document
+        // reader. Read live state for actionable entries, but never inject
+        // an entire long read-only document into its one-line label.
+        if (!"document".equals(node.role) && !"status".equals(node.role)
+                && !node.value.isEmpty() && !node.value.equals(label)
+                && !label.endsWith(". " + node.value)) {
+            label += ". " + node.value;
+        }
+        if ("checkbox".equals(node.role)) {
+            label += ". " + context.getString(node.checked
+                    ? R.string.a11yChecked : R.string.a11yUnchecked);
+        }
+        return label;
+    }
+
+    private static void addNode(List<Entry> result, Context context,
+                                ReaderSnapshot snapshot, String id, Set<String> seen) {
         if (!seen.add(id)) { return; }
         ReaderSnapshot.Node node = snapshot.find(id);
         if (node != null && (node.actions.contains("activate")
                 || "document".equals(node.role) || "world:here".equals(id))) {
-            result.add(new Entry(node.label, id, EXECUTE, 0));
+            result.add(new Entry(spokenNodeLabel(context, node), id, EXECUTE, 0));
         }
     }
 
-    private static void addCommandMatches(List<Entry> result, ReaderSnapshot snapshot,
+    private static void addCommandMatches(List<Entry> result, Context context,
+                                          ReaderSnapshot snapshot,
                                           String query) {
         String needle = normalized(query);
         for (ReaderSnapshot.Node node : snapshot.nodes) {
@@ -159,22 +183,85 @@ final class GameActionHub {
                     + node.detail).contains(needle)) {
                 continue;
             }
-            result.add(new Entry(node.label, node.id, EXECUTE, 0));
+            result.add(new Entry(spokenNodeLabel(context, node), node.id, EXECUTE, 0));
         }
     }
 
-    static List<Entry> entries(Context context, ReaderSnapshot snapshot, int section, String query) {
+    private static Entry fromFavorite(Context context, ReaderSnapshot snapshot,
+                                      ReaderFavorites.Favorite favorite) {
+        String target = favorite.target;
+        if (target.startsWith("action:")) {
+            String action = target.substring("action:".length());
+            ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(action);
+            // Preserve saved favorites outside the context where they were
+            // selected. Do not claim that an absent command is executable.
+            String label = node == null ? favorite.label : spokenNodeLabel(context, node);
+            if (node == null || !node.enabled || (!node.actions.contains("activate")
+                    && !"document".equals(node.role))) {
+                label += " (" + context.getString(R.string.a11yHubFavoriteUnavailable) + ")";
+            }
+            return new Entry(label, action, EXECUTE, 0);
+        }
+        if (target.startsWith("hub:group:")) {
+            try {
+                int group = Integer.parseInt(target.substring("hub:group:".length()));
+                if (group > 0 && group < TITLES.length) {
+                    return new Entry(context.getString(TITLES[group]), "", OPEN_GROUP, group);
+                }
+            } catch (NumberFormatException ignored) {
+                return null;
+            }
+        }
+        switch (target) {
+            case "hub:search":
+                return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
+            case "hub:all":
+                return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
+            // Convert only a favorite for the retired duplicate Settings hub
+            // into the already published Options action, when available.
+            case "hub:settings":
+                ReaderSnapshot.Node options = snapshot == null
+                        ? null : snapshot.find("open_options");
+                if (options == null || !options.enabled
+                        || !options.actions.contains("activate")) { return null; }
+                return new Entry(spokenNodeLabel(context, options),
+                        "open_options", EXECUTE, 0);
+            case "hub:tts":
+            case "hub:reader_setup":
+                return null;
+            case "hub:debug_log":
+                return new Entry(context.getString(R.string.a11yDebugLogTitle),
+                        "", OPEN_DEBUG_LOG, 0);
+            case "hub:directions":
+                return new Entry(context.getString(R.string.a11yHubChooseDirection), "",
+                        OPEN_DIRECTIONS, 0);
+            default:
+                return null;
+        }
+    }
+
+    static List<Entry> entries(Context context, ReaderSnapshot snapshot, int section,
+                               String query, ReaderFavorites favorites) {
         List<Entry> result = new ArrayList<>();
         if (section == ROOT) {
-            for (int i = 0; i < TITLES.length; i++) {
-                result.add(new Entry(context.getString(TITLES[i]), "",
-                        i == 0 ? OPEN_SEARCH : OPEN_GROUP, i));
+            result.add(new Entry(context.getString(R.string.a11yHubFavorites),
+                    "", OPEN_FAVORITES, FAVORITES));
+            for (int i = 1; i < TITLES.length; i++) {
+                result.add(new Entry(context.getString(TITLES[i]), "", OPEN_GROUP, i));
+            }
+            result.add(new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH));
+            return result;
+        }
+        if (section == FAVORITES) {
+            for (ReaderFavorites.Favorite favorite : favorites.items()) {
+                Entry entry = fromFavorite(context, snapshot, favorite);
+                if (entry != null) { result.add(entry); }
             }
             return result;
         }
         if (snapshot == null) { return result; }
         if (section == SEARCH) {
-            addCommandMatches(result, snapshot, query);
+            addCommandMatches(result, context, snapshot, query);
             return result;
         }
         if (section == DIRECTIONS) {
@@ -188,6 +275,21 @@ final class GameActionHub {
             return result;
         }
 
+        // Group 2 is a contextual list; all other groups stay unchanged.
+        if (section == 1) {
+            for (String id : ACTIONS[section]) {
+                ReaderSnapshot.Node action = snapshot.find(id);
+                ReaderSnapshot.Node available = snapshot.find("reader:nearby:available:" + id);
+                if (action == null || !action.enabled || !action.actions.contains("activate")
+                        || available == null || !available.enabled) {
+                    continue;
+                }
+                String label = spokenNodeLabel(context, action);
+                if (!available.value.isEmpty()) { label += ". " + available.value; }
+                result.add(new Entry(label, id, EXECUTE, 0));
+            }
+            return result;
+        }
         Set<String> seen = new HashSet<>();
         if (section == 3) {
             for (String direction : DIRECTION_ACTIONS) {
@@ -203,23 +305,22 @@ final class GameActionHub {
         if (section == 2) {
             for (String id : new String[] { "reader:scan:north", "reader:scan:south",
                     "reader:scan:west", "reader:scan:east", "world:here" }) {
-                addNode(result, snapshot, id, seen);
+                addNode(result, context, snapshot, id, seen);
             }
         } else if (section == 14) {
             for (String id : new String[] { "world:status", "world:messages",
                     "reader:coordinates", "world:here", "world:last_outcome",
                     "world:alert_history" }) {
-                addNode(result, snapshot, id, seen);
+                addNode(result, context, snapshot, id, seen);
             }
             result.add(new Entry(context.getString(R.string.a11yHubAllCommands),
                     "", OPEN_ALL, 0));
-        } else if (section == 15) {
-            result.add(new Entry(context.getString(R.string.a11yHubTts),
-                    "", OPEN_TTS, 0));
-            result.add(new Entry(context.getString(R.string.a11yHubReaderSetup),
-                    "", OPEN_READER_SETUP, 0));
         }
-        for (String id : ACTIONS[section]) { addNode(result, snapshot, id, seen); }
+        for (String id : ACTIONS[section]) { addNode(result, context, snapshot, id, seen); }
+        if (section == 15) {
+            result.add(new Entry(context.getString(R.string.a11yDebugLogTitle),
+                    "", OPEN_DEBUG_LOG, 0));
+        }
 
         // Any new native commands remain discoverable via the unfiltered
         // "All commands" catalogue even if they have no curated category.

@@ -7,6 +7,7 @@
 #include <vector>
 
 #include "a11y_semantics.h"
+#include "a11y_runtime.h"
 #include "color.h"
 #include "input_context.h"
 #include "input_popup.h"
@@ -34,8 +35,9 @@ static std::string calendar_granularity_name( const calendar_ui::granularity gra
 class calendar_accessibility_callback : public uilist_callback
 {
     public:
-        explicit calendar_accessibility_callback( const calendar_ui::granularity max_granularity ) :
-            max_granularity( max_granularity ) {}
+        explicit calendar_accessibility_callback( const calendar_ui::granularity max_granularity,
+                                                bool concise = false ) :
+            max_granularity( max_granularity ), concise( concise ) {}
 
         void describe_accessibility_action( const std::string &action, const int selected,
                                             a11y::semantic_node &node ) const override {
@@ -47,7 +49,10 @@ class calendar_accessibility_callback : public uilist_callback
                 return;
             }
 
-            if( selected < 0 || selected > static_cast<int>( max_granularity ) ) {
+            const int selected_field = concise ?
+                                       ( selected == 0 ? static_cast<int>( calendar_ui::granularity::day ) :
+                                         static_cast<int>( calendar_ui::granularity::hour ) ) : selected;
+            if( selected_field < 0 || selected_field > static_cast<int>( max_granularity ) ) {
                 node.enabled = false;
                 node.disabled_reason = string_format(
                                           _( "This field is more precise than the allowed limit of %s." ),
@@ -56,7 +61,7 @@ class calendar_accessibility_callback : public uilist_callback
             }
 
             std::string unit;
-            switch( static_cast<calendar_ui::granularity>( selected ) ) {
+            switch( static_cast<calendar_ui::granularity>( selected_field ) ) {
                 case calendar_ui::granularity::year: unit = _( "year" ); break;
                 case calendar_ui::granularity::season: unit = _( "season" ); break;
                 case calendar_ui::granularity::day: unit = _( "day" ); break;
@@ -74,11 +79,12 @@ class calendar_accessibility_callback : public uilist_callback
 
     private:
         calendar_ui::granularity max_granularity;
+        bool concise;
 };
 } // namespace
 
 time_point calendar_ui::select_time_point( time_point initial_value, std::string_view title,
-        calendar_ui::granularity granularity_level )
+        calendar_ui::granularity granularity_level, bool creator_reader )
 {
     time_point return_value = initial_value;
     auto set_turn = [&]( const int initial, const time_duration & factor, const char *const msg,
@@ -100,11 +106,13 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
     };
 
     uilist smenu;
-    calendar_accessibility_callback accessibility_callback( granularity_level );
+    const bool simple_reader = creator_reader && a11y::enabled();
+    calendar_accessibility_callback accessibility_callback( granularity_level, simple_reader );
     static const auto years = []( const time_point & p ) {
         return static_cast<int>( ( p - calendar::turn_zero ) / calendar::year_length() );
     };
-    int iSel = smenu.ret;
+    int iSel = 0;
+    bool finished = false;
     do {
         smenu.reset();
         smenu.title = title;
@@ -113,12 +121,17 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                                      colorize( to_string( return_value ), c_light_cyan ) );
         smenu.desc_enabled = true;
         smenu.allow_additional = true;
-        smenu.input_category = "CALENDAR_UI";
+        smenu.input_category = simple_reader ? "character-creator-calendar" : "CALENDAR_UI";
         smenu.additional_actions = {
             { "LEFT", to_translation( "Decrease value" ) },
             { "RIGHT", to_translation( "Increase value" ) },
             { "RESET", to_translation( "Reset value" ) }
         };
+        if( simple_reader ) {
+            // Two-finger Up finishes, two-finger Down cancels. Only the
+            // date/day and hour controls are surfaced in this concise view.
+            smenu.additional_actions.emplace_back( "CALENDAR_DONE", to_translation( "Done" ) );
+        }
         smenu.callback = &accessibility_callback;
         smenu.footer_text += string_format( _( "Press <color_light_green>%s</color> to decrease value.\n" ),
                                             input_context( smenu.input_category ).get_desc( "LEFT" ) );
@@ -130,18 +143,22 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                                  _( "Press <color_light_green>%s</color> when done selecting time point." ),
                                  input_context( smenu.input_category ).get_desc( "UILIST.QUIT" ) );
 
-        smenu.addentry( static_cast<int>( calendar_ui::granularity::year ), true,
-                        'y', "%s: %d", _( "year" ), years( return_value ) + 1 );
-        smenu.addentry( static_cast<int>( calendar_ui::granularity::season ), true,
-                        's', "%s: %s", _( "season" ), calendar::name_season( season_of_year( return_value ) ) );
+        if( !simple_reader ) {
+            smenu.addentry( static_cast<int>( calendar_ui::granularity::year ), true,
+                            'y', "%s: %d", _( "year" ), years( return_value ) + 1 );
+            smenu.addentry( static_cast<int>( calendar_ui::granularity::season ), true,
+                            's', "%s: %s", _( "season" ), calendar::name_season( season_of_year( return_value ) ) );
+        }
         smenu.addentry( static_cast<int>( calendar_ui::granularity::day ), true,
                         'd', "%s: %d", _( "day" ), day_of_season<int>( return_value ) + 1 );
         smenu.addentry( static_cast<int>( calendar_ui::granularity::hour ), true,
                         'h', "%s: %d", _( "hour" ), hour_of_day<int>( return_value ) );
-        smenu.addentry( static_cast<int>( calendar_ui::granularity::minute ), true,
-                        'm', "%s: %d", _( "minute" ), minute_of_hour<int>( return_value ) );
-        smenu.addentry( static_cast<int>( calendar_ui::granularity::turn ), true,
-                        't', "%s: %d", _( "turn" ), to_turns<int>( return_value - calendar::turn_zero ) );
+        if( !simple_reader ) {
+            smenu.addentry( static_cast<int>( calendar_ui::granularity::minute ), true,
+                            'm', "%s: %d", _( "minute" ), minute_of_hour<int>( return_value ) );
+            smenu.addentry( static_cast<int>( calendar_ui::granularity::turn ), true,
+                            't', "%s: %d", _( "turn" ), to_turns<int>( return_value - calendar::turn_zero ) );
+        }
 
         for( uilist_entry &entry : smenu.entries ) {
             if( entry.retval > static_cast<int>( granularity_level ) ) {
@@ -156,6 +173,11 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
 
         int auto_value = 0;
         switch( smenu.ret ) {
+            case UILIST_CANCEL:
+                if( simple_reader ) {
+                    return initial_value;
+                }
+                break;
             case static_cast<int>( calendar_ui::granularity::year ):
                 set_turn( years( return_value ) + 1, calendar::year_length(), _( "Set year to?" ) );
                 break;
@@ -177,6 +199,10 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                           string_format( _( "Set turn to?  (One day is %i turns)" ), to_turns<int>( 1_days ) ).c_str() );
                 break;
             case UILIST_ADDITIONAL:
+                if( simple_reader && smenu.ret_act == "CALENDAR_DONE" ) {
+                    finished = true;
+                    break;
+                }
                 if( smenu.ret_act == "LEFT" ) {
                     auto_value = -1;
                 } else if( smenu.ret_act == "RIGHT" ) {
@@ -186,7 +212,10 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                     return_value = initial_value;
                 }
                 if( auto_value != 0 ) {
-                    switch( smenu.selected ) {
+                    const int selected_field = simple_reader ?
+                                               ( smenu.selected == 0 ? static_cast<int>( calendar_ui::granularity::day ) :
+                                                 static_cast<int>( calendar_ui::granularity::hour ) ) : smenu.selected;
+                    switch( selected_field ) {
                         case static_cast<int>( calendar_ui::granularity::year ):
                             set_turn( years( return_value ) + 1, calendar::year_length(), "", auto_value );
                             break;
@@ -215,6 +244,6 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                 break;
         }
         iSel = smenu.selected;
-    } while( smenu.ret != UILIST_CANCEL );
+    } while( simple_reader ? !finished : smenu.ret != UILIST_CANCEL );
     return return_value;
 }

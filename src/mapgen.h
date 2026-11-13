@@ -656,6 +656,11 @@ bool has_update_mapgen_for( const update_mapgen_id & );
  * Sets the above after init, and initializes mapgen_function_json instances as well
  */
 void calculate_mapgen_weights(); // throws
+#if defined(__ANDROID__)
+// On Android saved-game resumes, compile overmap mapgens when first requested.
+// New character creation and normal verification keep eager preparation.
+void set_android_deferred_oter_mapgen_setup( bool enabled );
+#endif
 
 void check_mapgen_definitions();
 

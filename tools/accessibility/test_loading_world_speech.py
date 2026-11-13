@@ -31,7 +31,7 @@ class LoadingWorldSpeech(unittest.TestCase):
         self.assertIn('message.startsWith("A11Y_LOADING:")', reader)
         # World commands temporarily invalidate snapshots. New ordinary
         # messages must be buffered, while loading announcements remain live.
-        self.assertIn("if (snapshot == null && !loading) {", reader)
+        self.assertIn("if (!loading && (snapshot == null", reader)
         self.assertIn("replayBufferedGameMessages();", reader)
         self.assertIn("lastLoadingStatus = spokenMessage;", reader)
         self.assertNotIn("loadingSilenceWarning", reader)

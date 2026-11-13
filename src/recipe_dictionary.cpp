@@ -32,6 +32,7 @@
 #include "item_factory.h"
 #include "item_location.h"
 #include "itype.h"
+#include "loading_ui.h"
 #include "mapgen.h"
 #include "math_parser_type.h"
 #include "mod_tracker.h"
@@ -748,6 +749,13 @@ void recipe_dictionary::finalize_internal( std::map<recipe_id, recipe> &obj )
                                       kind << " done=" << processed << " total=" << obj.size() <<
                                       " elapsed_ms=" << std::chrono::duration_cast<std::chrono::milliseconds>(
                                           now - loop_started ).count();
+            // Finalizing a slow recipe can take more than a minute. The outer
+            // loading stage is displayed only once, so refresh it here with
+            // honest progress instead of leaving screen-reader users silent.
+            loading_ui::show( _( "Finalizing" ),
+                              string_format( "%s: %d/%d", _( "Crafting recipes" ),
+                                             static_cast<int>( processed ),
+                                             static_cast<int>( obj.size() ) ) );
             last_progress = now;
         }
 #endif

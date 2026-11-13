@@ -14,6 +14,78 @@ final class TwoFingerBackGesture {
                 && dy2 >= Math.abs(dx2) * 1.35f;
     }
 
+    /** An upward confirmation must be as deliberate as a downward Back swipe. */
+    static boolean isUpSwipe(float dx1, float dy1, float dx2, float dy2,
+                             float minimumDistance) {
+        return dy1 <= -minimumDistance && dy2 <= -minimumDistance
+                && -dy1 >= Math.abs(dx1) * 1.35f
+                && -dy2 >= Math.abs(dx2) * 1.35f;
+    }
+
+    /** Both fingers must move horizontally in the same direction.
+     * Vertical back/confirm gestures must never match horizontal crafting.
+     */
+    static boolean isLeftSwipe(float dx1, float dy1, float dx2, float dy2,
+                               float minimumDistance) {
+        return dx1 <= -minimumDistance && dx2 <= -minimumDistance
+                && -dx1 >= Math.abs(dy1) * 1.35f
+                && -dx2 >= Math.abs(dy2) * 1.35f;
+    }
+
+    static boolean isRightSwipe(float dx1, float dy1, float dx2, float dy2,
+                                float minimumDistance) {
+        return dx1 >= minimumDistance && dx2 >= minimumDistance
+                && dx1 >= Math.abs(dy1) * 1.35f
+                && dx2 >= Math.abs(dy2) * 1.35f;
+    }
+
+    /** The same stable pointer IDs are required for the horizontal gestures. */
+    static boolean matchesLeft(MotionEvent event, int[] ids, float[] startX,
+                               float[] startY, int count, float minimumDistance) {
+        if (count != 2 || event.getPointerCount() != 2
+                || event.getActionMasked() != MotionEvent.ACTION_POINTER_UP) {
+            return false;
+        }
+        int first = event.findPointerIndex(ids[0]);
+        int second = event.findPointerIndex(ids[1]);
+        if (first < 0 || second < 0 || first == second) { return false; }
+        return isLeftSwipe(event.getX(first) - startX[0],
+                event.getY(first) - startY[0],
+                event.getX(second) - startX[1],
+                event.getY(second) - startY[1], minimumDistance);
+    }
+
+    static boolean matchesRight(MotionEvent event, int[] ids, float[] startX,
+                                float[] startY, int count, float minimumDistance) {
+        if (count != 2 || event.getPointerCount() != 2
+                || event.getActionMasked() != MotionEvent.ACTION_POINTER_UP) {
+            return false;
+        }
+        int first = event.findPointerIndex(ids[0]);
+        int second = event.findPointerIndex(ids[1]);
+        if (first < 0 || second < 0 || first == second) { return false; }
+        return isRightSwipe(event.getX(first) - startX[0],
+                event.getY(first) - startY[0],
+                event.getX(second) - startX[1],
+                event.getY(second) - startY[1], minimumDistance);
+    }
+
+    /** The same stable pointer identities are used for both directions. */
+    static boolean matchesUp(MotionEvent event, int[] ids, float[] startX,
+                             float[] startY, int count, float minimumDistance) {
+        if (count != 2 || event.getPointerCount() != 2
+                || event.getActionMasked() != MotionEvent.ACTION_POINTER_UP) {
+            return false;
+        }
+        int first = event.findPointerIndex(ids[0]);
+        int second = event.findPointerIndex(ids[1]);
+        if (first < 0 || second < 0 || first == second) { return false; }
+        return isUpSwipe(event.getX(first) - startX[0],
+                event.getY(first) - startY[0],
+                event.getX(second) - startX[1],
+                event.getY(second) - startY[1], minimumDistance);
+    }
+
     /** Inspect both pointers while still present at ACTION_POINTER_UP. */
     static boolean matches(MotionEvent event, int[] ids, float[] startX,
                            float[] startY, int count, float minimumDistance) {

@@ -723,10 +723,14 @@ class game
         /// @param target pathfinding destination tile
         /// @param threshold distance in tiles from target that is considered "arrived" at destination
         /// @param report when pathfinding fails triggers this function with a translated error string as parameter
+        /// @param require_visible_destination defaults to the original direct line-of-sight rule;
+        ///        the accessible surroundings list may navigate to an out-of-sight target
+        ///        while retaining the normal hazard-aware route search
         /// @return safe route if one was found, or std::nullopt
         std::optional<std::vector<tripoint_bub_ms>> safe_route_to( Character &who,
                 const tripoint_bub_ms &target, int threshold,
-                const std::function<void( const std::string &msg )> &report ) const;
+                const std::function<void( const std::string &msg )> &report,
+                bool require_visible_destination = true ) const;
 
         // Look at nearby terrain ';', or select zone points
         std::optional<tripoint_bub_ms> look_around();
@@ -1004,6 +1008,8 @@ class game
 
         void reload_item(); // Reload an item
         void reload_wielded( bool prompt = false );
+        // Native ACT_RELOAD chain for the accessible aiming reload button.
+        void auto_reload_wielded( int steps_remaining = 256 );
         void reload_weapon( bool try_everything = true ); // Reload a wielded gun/tool  'r'
         void insert_item(); // Insert items to container  'v'
         void insert_item( drop_locations &targets );

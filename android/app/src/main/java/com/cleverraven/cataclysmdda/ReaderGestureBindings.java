@@ -6,6 +6,7 @@ import android.content.SharedPreferences;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -97,6 +98,43 @@ final class ReaderGestureBindings {
             R.string.a11yBindHold3
     };
 
+    // Fixed live-world gestures, including the combat-mode toggle on a
+    // three-finger triple tap, never enter the customizable picker, and
+    // a saved pre-upgrade assignment is ignored and removed at read time.
+    // Two-finger directional swipes and one-finger double/triple taps are
+    // built into ReaderGestureSurface, not into this configurable array.
+    static boolean isReserved(String gesture) {
+        return "swipe_up".equals(gesture) || "swipe_down".equals(gesture)
+                || "swipe_left".equals(gesture) || "swipe_right".equals(gesture)
+                || "tap_2_1".equals(gesture) || "tap_2_2".equals(gesture)
+                || "tap_2_3".equals(gesture) || "tap_3_1".equals(gesture)
+                || "tap_3_2".equals(gesture) || "tap_3_3".equals(gesture)
+                || "hold_1".equals(gesture);
+    }
+
+    static final String[] CUSTOM_IDS;
+    static final int[] CUSTOM_LABELS;
+    static {
+        ArrayList<String> gestures = new ArrayList<>();
+        ArrayList<Integer> labels = new ArrayList<>();
+        for (int i = 0; i < IDS.length; i++) {
+            if (!isReserved(IDS[i])) {
+                gestures.add(IDS[i]);
+                labels.add(LABELS[i]);
+            }
+        }
+        CUSTOM_IDS = gestures.toArray(new String[0]);
+        CUSTOM_LABELS = new int[labels.size()];
+        for (int i = 0; i < labels.size(); i++) { CUSTOM_LABELS[i] = labels.get(i); }
+    }
+
+    static int customIndexOf(String gesture) {
+        for (int i = 0; i < CUSTOM_IDS.length; i++) {
+            if (CUSTOM_IDS[i].equals(gesture)) { return i; }
+        }
+        return -1;
+    }
+
     static final class Assignment {
         final String displacedTarget;
         final String displacedGesture;
@@ -111,6 +149,15 @@ final class ReaderGestureBindings {
 
     ReaderGestureBindings(Context context) {
         store = context.getApplicationContext().getSharedPreferences(STORE, Context.MODE_PRIVATE);
+        // Migrate older user maps: an already assigned gesture must never
+        // silently replace its built-in gameplay action after an upgrade.
+        String oldMap = store.getString(KEY, "{}");
+        for (String gesture : IDS) {
+            if (isReserved(gesture) && oldMap.contains("\"" + gesture + "\"")) {
+                writeBindings(readBindings());
+                break;
+            }
+        }
     }
 
     static int indexOf(String gesture) {
@@ -146,7 +193,7 @@ final class ReaderGestureBindings {
         catch (JSONException bad) { return result; }
         for (String gesture : IDS) {
             String target = data.optString(gesture, "");
-            if (!target.isEmpty() && target.length() <= 256
+            if (!isReserved(gesture) && !target.isEmpty() && target.length() <= 256
                     && (target.startsWith("action:") || target.startsWith("hub:"))
                     && !result.containsValue(target)) {
                 result.put(gesture, target);
@@ -156,7 +203,7 @@ final class ReaderGestureBindings {
     }
 
     synchronized String targetFor(String gesture) {
-        if (indexOf(gesture) < 0) { return null; }
+        if (indexOf(gesture) < 0 || isReserved(gesture)) { return null; }
         return readBindings().get(gesture);
     }
 
@@ -173,7 +220,8 @@ final class ReaderGestureBindings {
      * any old custom binding for the target is cleared. No duplicate wins.
      */
     synchronized Assignment assign(String gesture, String target) {
-        if (indexOf(gesture) < 0 || target == null || target.length() > 256 ||
+        if (indexOf(gesture) < 0 || isReserved(gesture)
+                || target == null || target.length() > 256 ||
                 !(target.startsWith("action:") || target.startsWith("hub:"))) {
             throw new IllegalArgumentException("Unknown gesture or target");
         }

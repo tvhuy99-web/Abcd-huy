@@ -13,6 +13,7 @@ class HubMovementTest(unittest.TestCase):
         cls.hub = (JAVA / "GameActionHub.java").read_text("utf-8")
         cls.ctrl = (JAVA / "GameReaderController.java").read_text("utf-8")
         cls.world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
+        cls.input = (ROOT / "src/a11y_input.cpp").read_text("utf-8")
         cls.handle = (ROOT / "src/handle_action.cpp").read_text("utf-8")
         cls.avatar = (ROOT / "src/avatar.cpp").read_text("utf-8")
         cls.game = (ROOT / "src/game.cpp").read_text("utf-8")
@@ -48,8 +49,9 @@ class HubMovementTest(unittest.TestCase):
         self.assertIn("action_outcome_kind::stance_changed", self.outcome)
 
     def test_auto_route_and_wait_feedback(self):
-        self.assertIn("Auto travel: on", self.world)
-        self.assertIn("Auto travel: off", self.world)
+        self.assertIn('id == "auto_travel_mode" && g', self.input)
+        self.assertIn('node.value = g->auto_travel_mode ?', self.input)
+        self.assertIn('_( "Currently on" ) : _( "Currently off" )', self.input)
         self.assertIn("No route in that direction.", self.handle)
         self.assertIn("Auto travel on. Choose a direction to find a path.",
                       self.handle)

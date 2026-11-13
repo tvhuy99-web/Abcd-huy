@@ -7,13 +7,17 @@
 #include <imgui/imgui_internal.h>
 #include <iterator>
 #include <list>
+#include <map>
 #include <memory>
 #include <set>
 #include <tuple>
 #include <utility>
 
+#include "a11y_perception.h"
+#include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "a11y_semantics.h"
+#include "a11y_world.h"
 #include "avatar.h"
 #include "avatar_action.h"
 #include "cata_utility.h"
@@ -23,6 +27,7 @@
 #include "debug.h"
 #include "enums.h"
 #include "enum_traits.h"
+#include "field.h"
 #include "game.h"
 #include "game_constants.h"
 #include "game_inventory.h"
@@ -32,6 +37,7 @@
 #include "item_contents.h"
 #include "item_location.h"
 #include "item_search.h"
+#include "line.h"
 #include "map.h"
 #include "mapdata.h"
 #include "messages.h"
@@ -730,9 +736,17 @@ surroundings_menu::surroundings_menu( avatar &you, map &m, std::optional<tripoin
     stored_view_offset( you.view_offset ),
     min_width( min_width )
 {
-    item_data.init( you, m );
-    monster_data.init( you );
-    terfurn_data.init( you, m );
+#if defined(__ANDROID__)
+    // The accessible list scans its own 20-tile square. The visual tab
+    // scanners still use their original 60-tile radius when a11y is off.
+    if( !a11y::enabled() ) {
+#endif
+        item_data.init( you, m );
+        monster_data.init( you );
+        terfurn_data.init( you, m );
+#if defined(__ANDROID__)
+    }
+#endif
 
     highlight_new = get_option<bool>( "HIGHLIGHT_UNREAD_ITEMS" );
     switch_tab = uistate.vmenu_tab;
@@ -1195,12 +1209,39 @@ void surroundings_menu::draw_examine_info()
 }
 
 #if defined(__ANDROID__)
+// Include only terrain/furniture that changes navigation, is a hazard,
+// or has a useful interaction. Ordinary floors, walls, grass, roads, and
+// decorative furniture must not fill the spoken nearby list.
+static bool noteworthy_nearby_feature( const map_data_common_t &type,
+                                       const tripoint_bub_ms &position )
+{
+    return type.has_flag( ter_furn_flag::TFLAG_DOOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_GOES_UP ) ||
+           type.has_flag( ter_furn_flag::TFLAG_GOES_DOWN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_LADDER ) ||
+           type.has_flag( ter_furn_flag::TFLAG_ELEVATOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_RAMP_UP ) ||
+           type.has_flag( ter_furn_flag::TFLAG_RAMP_DOWN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_CONSOLE ) ||
+           type.has_flag( ter_furn_flag::TFLAG_SIGN ) ||
+           type.has_flag( ter_furn_flag::TFLAG_AUTODOC ) ||
+           type.has_flag( ter_furn_flag::TFLAG_AUTODOC_COUCH ) ||
+           type.has_flag( ter_furn_flag::TFLAG_TRANSLOCATOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_NO_FLOOR ) ||
+           type.has_flag( ter_furn_flag::TFLAG_PIT_FILLABLE ) ||
+           type.can_examine( position );
+}
+
 void surroundings_menu::execute_accessible()
 {
-    // Same 60-tile visibility-bound search as the visual tabs. Unlike the
-    // grouped visual lists, every visible location is a separate row, so
-    // order and the chosen walking target are unambiguous.
+    // A 20-tile *half-width* in BOTH axes, not 20 total entries or a
+    // circular radius. All 41 x 41 offsets are visited exactly once.
+    // Expanding square rings naturally read nearest to farthest without
+    // ranking creatures over items, doors, or other useful objects.
+    constexpr int scan_half_width = 20;
+    enum class nearby_kind { unclassified, creature, environment, item };
     struct nearby_row {
+        nearby_kind kind;
         std::string label;
         tripoint_bub_ms target;
         tripoint_rel_ms relative;
@@ -1209,44 +1250,151 @@ void surroundings_menu::execute_accessible()
     };
     std::vector<nearby_row> nearby;
     const tripoint_bub_ms origin = you.pos_bub();
-    const auto add_row = [&]( const std::string &category, const std::string &name,
-    const tripoint_rel_ms & relative, int stop_distance ) {
-        nearby.push_back( { category + ": " + name, origin + relative, relative,
-                            static_cast<int>( rl_dist( tripoint_rel_ms(), relative ) ),
-                            stop_distance } );
+    map &here = get_map();
+    std::set<const vehicle *> seen_vehicles;
+    const auto add_row = [&]( const std::string &name, const tripoint_rel_ms &relative,
+                              int stop_distance, nearby_kind kind ) {
+        if( !name.empty() ) {
+            nearby.push_back( { kind, name, origin + relative, relative,
+                                std::max( std::abs( relative.x() ), std::abs( relative.y() ) ),
+                                stop_distance } );
+        }
     };
-    for( const auto *group : item_data.item_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                add_row( _( "Item" ), entry.entity->tname(), entry.pos, 0 );
+
+    for( int distance = 0; distance <= scan_half_width; ++distance ) {
+        for( int dy = -distance; dy <= distance; ++dy ) {
+            for( int dx = -distance; dx <= distance; ++dx ) {
+                if( std::max( std::abs( dx ), std::abs( dy ) ) != distance ) {
+                    continue;
+                }
+                const tripoint_rel_ms relative( dx, dy, 0 );
+                const tripoint_bub_ms position = origin + relative;
+                if( !here.inbounds( position ) ) {
+                    continue;
+                }
+                // Preserve heard markers, but inspect raw map objects
+                // exactly like the 16-tile assisted scan. Do not include
+                // ordinary empty floors, grass or roads in this list.
+                const a11y::tile_observation observed = a11y::observe_tile( position );
+                const a11y::unrestricted_tile tile = a11y::scan_unrestricted_tile( position );
+                if( tile.creatures.empty() ) {
+                    for( const std::string &perception : observed.special_perceptions ) {
+                        add_row( remove_color_tags( perception ), relative, 1, nearby_kind::unclassified );
+                    }
+                }
+                if( !observed.heard_marker.empty() ) {
+                    add_row( remove_color_tags( observed.heard_marker ), relative, 1,
+                             nearby_kind::unclassified );
+                }
+                for( const std::string &creature : tile.creatures ) {
+                    add_row( creature, relative, 1, nearby_kind::creature );
+                }
+                for( const std::string &item_name : tile.items ) {
+                    add_row( item_name, relative, 0, nearby_kind::item );
+                }
+                for( const std::string &hazard : tile.traps ) {
+                    add_row( hazard, relative, 1, nearby_kind::environment );
+                }
+                // Only dangerous active fields are useful in a flat
+                // surrounding list; ordinary blood and residue stay out.
+                for( const auto &entry : here.field_at( position ) ) {
+                    if( entry.second.is_field_alive() && entry.second.is_dangerous() ) {
+                        add_row( remove_color_tags( entry.second.name() ), relative, 1,
+                                 nearby_kind::environment );
+                    }
+                }
+                const optional_vpart_position part = here.veh_at( position );
+                if( part && !tile.vehicle.empty() &&
+                    seen_vehicles.insert( &part->vehicle() ).second ) {
+                    add_row( tile.vehicle, relative, 1, nearby_kind::environment );
+                }
+                const ter_t &terrain = *here.ter( position );
+                if( noteworthy_nearby_feature( terrain, position ) ) {
+                    add_row( tile.terrain, relative, tile.impassable ? 1 : 0,
+                             nearby_kind::environment );
+                }
+                // Ordinary furniture is still a meaningful object. A locker
+                // must not vanish simply because it has no special flags.
+                if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
+                    add_row( tile.furniture, relative, tile.impassable ? 1 : 0,
+                             nearby_kind::environment );
+                }
             }
         }
     }
-    for( const auto *group : monster_data.monster_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                add_row( _( "Creature" ), entry.entity->disp_name(), entry.pos, 1 );
-            }
-        }
-    }
-    for( const auto *group : terfurn_data.terfurn_list ) {
-        for( const auto &entry : group->entities ) {
-            if( entry.entity ) {
-                const tripoint_bub_ms target = origin + entry.pos;
-                add_row( _( "Terrain or furniture" ), entry.entity->name(), entry.pos,
-                         get_map().impassable( target ) ? 1 : 0 );
-            }
-        }
-    }
+    // Rings already provide nearest-first order. Stable ties preserve the
+    // scan order; never impose a category or threat priority.
     std::stable_sort( nearby.begin(), nearby.end(),
     []( const nearby_row &lhs, const nearby_row &rhs ) {
-        if( lhs.distance != rhs.distance ) {
-            return lhs.distance < rhs.distance;
-        }
-        return lhs.label < rhs.label;
+        return lhs.distance < rhs.distance;
     } );
     constexpr std::size_t page_size = 80;
+    // 0 All, 1 creatures/NPCs, 2 places/environment, 3 items.
+    // The original nearby list is immutable and remains nearest-first;
+    // switching a category only changes its filtered index, never a route.
+    int selected_category = 0;
     std::size_t page = 0;
+    bool focus_last_on_page = false;
+    const auto filtered_indices = [&]() {
+        std::vector<std::size_t> result;
+        for( std::size_t i = 0; i < nearby.size(); ++i ) {
+            const nearby_kind kind = nearby[i].kind;
+            if( selected_category == 0 ||
+                ( selected_category == 1 && kind == nearby_kind::creature ) ||
+                ( selected_category == 2 && kind == nearby_kind::environment ) ||
+                ( selected_category == 3 && kind == nearby_kind::item ) ) {
+                result.push_back( i );
+            }
+        }
+        return result;
+    };
+    const auto category_label = [&]() {
+        switch( selected_category ) {
+            case 1: return std::string( _( "Creatures and NPCs" ) );
+            case 2: return std::string( _( "Places and environment" ) );
+            case 3: return std::string( _( "Items" ) );
+            default: return std::string( _( "All" ) );
+        }
+    };
+    const auto relative_words = []( const tripoint_rel_ms &relative ) {
+        if( relative == tripoint_rel_ms() ) {
+            return std::string( _( "Current tile" ) );
+        }
+        const int x = relative.x();
+        const int y = relative.y();
+        std::string words;
+        if( x != 0 && y != 0 && std::abs( x ) == std::abs( y ) ) {
+            // A diagonal is a single direction and a single tile count.
+            const direction dir = y < 0 ?
+                                  ( x < 0 ? direction::NORTHWEST : direction::NORTHEAST ) :
+                                  ( x < 0 ? direction::SOUTHWEST : direction::SOUTHEAST );
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( dir ), std::abs( x ) );
+        } else if( x == 0 && y != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ) );
+        } else if( y == 0 && x != 0 ) {
+            words = string_format( _( "%1$s, %2$d tiles" ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
+        } else if( x != 0 && y != 0 ) {
+            // Unequal offsets are not diagonal tile counts: keep both axes.
+            words = string_format( _( "%1$s %2$d tiles, %3$s %4$d tiles" ),
+                                   direction_name( y < 0 ? direction::NORTH : direction::SOUTH ),
+                                   std::abs( y ),
+                                   direction_name( x < 0 ? direction::WEST : direction::EAST ),
+                                   std::abs( x ) );
+        }
+        if( relative.z() ) {
+            if( !words.empty() ) {
+                words += ", ";
+            }
+            words += string_format( relative.z() > 0 ? _( "Level above %d" ) :
+                                    _( "Level below %d" ), std::abs( relative.z() ) );
+        }
+        return words;
+    };
     input_context ctxt( "SURROUNDINGS" );
     ctxt.register_action( "ANY_INPUT" );
     ctxt.register_action( "QUIT" );
@@ -1256,31 +1404,88 @@ void surroundings_menu::execute_accessible()
         if( intent.action == "focus" ) {
             return std::string( "TIMEOUT" );
         }
-        if( intent.action != "activate" ) {
+        if( intent.action != "activate" && intent.action != "read_detail" ) {
             return std::nullopt;
         }
-        if( intent.node == "nearby:page:next" ) {
-            page = std::min( page + 1, ( nearby.size() - 1 ) / page_size );
+        if( intent.node == "nearby:filter:next" ||
+            intent.node == "nearby:filter:previous" ) {
+            selected_category = ( selected_category +
+                                  ( intent.node == "nearby:filter:next" ? 1 : 3 ) ) % 4;
+            page = 0;
+            focus_last_on_page = false;
             return std::string( "TIMEOUT" );
         }
-        if( intent.node == "nearby:page:previous" ) {
-            page = page > 0 ? page - 1 : 0;
+        const std::vector<std::size_t> filtered = filtered_indices();
+        // When there are multiple pages, left/right navigation wraps
+        // across the *entire* filtered list, not inside the last page.
+        const std::size_t page_count = ( filtered.size() + page_size - 1 ) / page_size;
+        if( intent.node == "nearby:page:next" && page_count > 1 ) {
+            page = ( page + 1 ) % page_count;
+            focus_last_on_page = false;
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node == "nearby:page:previous" && page_count > 1 ) {
+            page = ( page + page_count - 1 ) % page_count;
+            focus_last_on_page = true;
             return std::string( "TIMEOUT" );
         }
         const std::size_t start = page * page_size;
-        const std::size_t end = std::min( start + page_size, nearby.size() );
+        const std::size_t end = std::min( start + page_size, filtered.size() );
         for( std::size_t i = start; i < end; ++i ) {
-            if( intent.node != "nearby:target:" + std::to_string( i ) ) {
+            const std::size_t row_index = filtered[i];
+            if( intent.node != "nearby:target:" + std::to_string( row_index ) ) {
                 continue;
             }
-            const nearby_row &target = nearby[i];
-            // Use the engine's own hazard-aware route finder. A creature or
-            // impassable tile is approached to one tile away, never entered.
+            const nearby_row &target = nearby[row_index];
+            if( intent.action == "read_detail" && target.kind == nearby_kind::item ) {
+                // Re-observe this precise tile before reading. A nearby row
+                // is a stack label, not an item pointer, and must never
+                // resolve to a different stack after a world update.
+                const a11y::unrestricted_tile visible = a11y::scan_unrestricted_tile( target.target );
+                if( std::find( visible.items.begin(), visible.items.end(),
+                               target.label ) == visible.items.end() ||
+                    !here.inbounds( target.target ) ) {
+                    return std::string( "TIMEOUT" );
+                }
+                std::map<std::string, int> counts;
+                for( const item &obj : here.i_at( target.target ) ) {
+                    ++counts[a11y::spoken_item_name( obj )];
+                }
+                std::set<std::string> spoken_descriptions;
+                std::string full;
+                for( const item &obj : here.i_at( target.target ) ) {
+                    const std::string name = a11y::spoken_item_name( obj );
+                    const int count = counts[name];
+                    const std::string grouped = count == 1 ? name :
+                                                string_format( _( "%1$s [%2$d]" ), name, count );
+                    if( grouped != target.label ) {
+                        continue;
+                    }
+                    const std::string description = remove_color_tags( obj.info( true ) );
+                    if( !spoken_descriptions.insert( description ).second ) {
+                        continue;
+                    }
+                    // One request may represent a stack with multiple
+                    // distinct states. Assemble one long document, not a
+                    // burst of independent TTS messages that can evict
+                    // earlier paragraphs from the queue.
+                    if( !full.empty() ) {
+                        full += "\n\n";
+                    }
+                    full += name + "\n" + relative_words( target.relative ) +
+                            "\n" + description;
+                }
+                a11y::announce_full_detail_text( full );
+                return std::string( "TIMEOUT" );
+            }
+            // Find a real hazard-aware route even when the selected nearby
+            // object is behind a wall or outside current line of sight.
+            // Creatures and obstacles are still approached one tile away.
             const std::optional<std::vector<tripoint_bub_ms>> route =
             g->safe_route_to( you, target.target, target.stop_distance,
             []( const std::string & reason ) {
                 add_msg( m_info, "%s", reason );
-            } );
+            }, false );
             if( !route ) {
                 return std::string( "TIMEOUT" );
             }
@@ -1295,73 +1500,69 @@ void surroundings_menu::execute_accessible()
         return std::nullopt;
     } );
 
-    const auto relative_words = []( const tripoint_rel_ms &relative ) {
-        if( relative == tripoint_rel_ms() ) {
-            return std::string( _( "Current tile" ) );
-        }
-        std::string words;
-        if( relative.y() ) {
-            words = string_format( relative.y() < 0 ? _( "North %d" ) : _( "South %d" ),
-                                   std::abs( relative.y() ) );
-        }
-        if( relative.x() ) {
-            if( !words.empty() ) {
-                words += ", ";
-            }
-            words += string_format( relative.x() < 0 ? _( "West %d" ) : _( "East %d" ),
-                                    std::abs( relative.x() ) );
-        }
-        if( relative.z() ) {
-            if( !words.empty() ) {
-                words += ", ";
-            }
-            words += string_format( relative.z() > 0 ? _( "Level above %d" ) :
-                                    _( "Level below %d" ), std::abs( relative.z() ) );
-        }
-        return words;
-    };
     while( true ) {
+        const std::vector<std::size_t> filtered = filtered_indices();
         a11y::semantic_snapshot snapshot;
-        snapshot.title = _( "Nearby objects, nearest first" );
-        snapshot.summary = _( "Select an entry to walk toward it. "
-                              "The game avoids dangerous tiles and reports unreachable targets." );
-        if( nearby.empty() ) {
+        snapshot.title = _( "Nearby" );
+        snapshot.summary = filtered.empty() ?
+                           string_format( _( "%s. No entries." ), category_label() ) :
+                           string_format( _( "%1$s. %2$d entries." ), category_label(),
+                                          static_cast<int>( filtered.size() ) );
+        // Gesture-only controls are commands, never ordinary list items.
+        // One-finger vertical swipes trigger these through the Android
+        // reader; horizontal swipes visit actual objects and may change page.
+        a11y::semantic_node previous_category;
+        previous_category.id = "nearby:filter:previous";
+        previous_category.role = "command";
+        previous_category.label = _( "Previous category" );
+        snapshot.nodes.push_back( std::move( previous_category ) );
+        a11y::semantic_node next_category;
+        next_category.id = "nearby:filter:next";
+        next_category.role = "command";
+        next_category.label = _( "Next category" );
+        snapshot.nodes.push_back( std::move( next_category ) );
+        if( filtered.empty() ) {
             a11y::semantic_node empty;
             empty.id = "nearby:empty";
             empty.role = "document";
-            empty.label = _( "Nothing visible nearby." );
+            empty.label = _( "No entries in this category." );
             empty.actions = { "focus" };
             snapshot.focus = empty.id;
             snapshot.nodes.push_back( std::move( empty ) );
         } else {
             const std::size_t start = page * page_size;
-            const std::size_t end = std::min( start + page_size, nearby.size() );
-            if( page > 0 ) {
+            const std::size_t end = std::min( start + page_size, filtered.size() );
+            if( filtered.size() > page_size ) {
                 a11y::semantic_node previous;
                 previous.id = "nearby:page:previous";
+                previous.role = "command";
                 previous.label = _( "Previous page" );
                 snapshot.nodes.push_back( std::move( previous ) );
             }
             for( std::size_t i = start; i < end; ++i ) {
-                const nearby_row &entry = nearby[i];
+                const std::size_t row_index = filtered[i];
+                const nearby_row &entry = nearby[row_index];
                 a11y::semantic_node node;
-                node.id = "nearby:target:" + std::to_string( i );
+                node.id = "nearby:target:" + std::to_string( row_index );
                 node.role = "listitem";
                 node.label = entry.label;
-                node.value = string_format( _( "%1$d tiles away. %2$s." ),
-                                            entry.distance, relative_words( entry.relative ) );
-                node.detail = _( "Activate to begin safe automatic travel toward this location." );
-                node.position = static_cast<int>( i ) + 1;
-                node.total = static_cast<int>( nearby.size() );
+                if( entry.kind == nearby_kind::item ) {
+                    node.actions.push_back( "read_detail" );
+                }
+                // Direction already includes tile count.
+                node.value = relative_words( entry.relative );
                 snapshot.nodes.push_back( std::move( node ) );
             }
-            if( end < nearby.size() ) {
+            if( filtered.size() > page_size ) {
                 a11y::semantic_node next;
                 next.id = "nearby:page:next";
+                next.role = "command";
                 next.label = _( "Next page" );
                 snapshot.nodes.push_back( std::move( next ) );
             }
-            snapshot.focus = "nearby:target:" + std::to_string( start );
+            snapshot.focus = "nearby:target:" + std::to_string(
+                                 filtered[focus_last_on_page ? end - 1 : start] );
+            focus_last_on_page = false;
         }
         reader.update( std::move( snapshot ) );
         if( ctxt.handle_input() == "QUIT" ) {

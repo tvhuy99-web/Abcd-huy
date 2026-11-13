@@ -10,6 +10,7 @@
 #include <vector>
 
 #include "a11y_document.h"
+#include "a11y_item_text.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "cata_assert.h"
@@ -418,7 +419,8 @@ void help_window::show()
         }
         static const std::string topic_prefix = "help:topic:";
         if( intent.node.rfind( topic_prefix, 0 ) == 0 &&
-            ( intent.action == "focus" || intent.action == "activate" ) ) {
+            ( intent.action == "focus" || intent.action == "activate" ||
+              intent.action == "read_detail" ) ) {
             const std::string suffix = intent.node.substr( topic_prefix.size() );
             int option = -1;
             const char *const begin = suffix.data();
@@ -427,6 +429,26 @@ void help_window::show()
             if( parsed.ec != std::errc() || parsed.ptr != end ||
                 cats.find( option ) == cats.end() ) {
                 return std::nullopt;
+            }
+            if( intent.action == "read_detail" ) {
+                // Reproduce the game's translated help paragraphs, including
+                // character-aware tag substitution, without opening a topic.
+                const help_category &category = cats.at( option );
+                Character &viewer = get_player_character();
+                std::string document = remove_color_tags( category.name.translated() );
+                for( const auto &paragraph : category.paragraphs ) {
+                    if( paragraph.second == MM_SEPARATOR ) {
+                        continue;
+                    }
+                    std::string words = paragraph.first.translated();
+                    parse_tags( words, viewer, viewer );
+                    words = remove_color_tags( words );
+                    if( !words.empty() ) {
+                        document += "\n\n" + words;
+                    }
+                }
+                a11y::announce_full_detail_text( document );
+                return std::string( "TIMEOUT" );
             }
             if( intent.action == "focus" ) {
                 // Browsing must not arm the selection loop's CONFIRM
@@ -481,6 +503,7 @@ void help_window::show()
                 a11y::semantic_node node;
                 node.id = "help:topic:" + std::to_string( cat.first );
                 node.role = "listitem";
+                node.actions = { "focus", "activate", "read_detail" };
                 node.label = name;
                 node.value = status;
                 if( !hotkey.empty() ) {

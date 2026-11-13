@@ -157,6 +157,15 @@ public final class ReaderPreferences {
         values.edit().putBoolean("haptic_cues", enabled).apply();
     }
 
+    /** Independent directional sonar is opt-in, unlike regular spoken output. */
+    public boolean isDirectionalSonarEnabled() {
+        return values.getBoolean("directional_sonar", false);
+    }
+
+    public void setDirectionalSonarEnabled(boolean enabled) {
+        values.edit().putBoolean("directional_sonar", enabled).apply();
+    }
+
     // Optional verified voice selection can re-enable an explicitly disabled reader.
     public void confirmHeardAndEnable(boolean permitNetworkVoice, float rate) {
         values.edit().putBoolean("enabled", true)
@@ -166,6 +175,15 @@ public final class ReaderPreferences {
 
     public void disable() {
         values.edit().putBoolean("enabled", false).apply();
+    }
+
+    /** Spoken-only mode is the default in the dedicated accessibility APK. */
+    public boolean isSpokenOnlyWorldEnabled() {
+        return values.getBoolean("spoken_only_world", BuildConfig.FLAVOR.equals("accessibility"));
+    }
+
+    public void setSpokenOnlyWorldEnabled(boolean enabled) {
+        values.edit().putBoolean("spoken_only_world", enabled).apply();
     }
 
     public boolean isFastMovementEnabled() {
@@ -227,11 +245,13 @@ public final class ReaderPreferences {
     }
 
     public int getHorizontalSwipeAction() {
-        return getGestureAction("horizontal_swipe_action", TRIAL_HORIZONTAL_ACTION);
+        // Navigating menus is an essential control, not a remappable action.
+        // Old persisted mappings and gesture trials are intentionally inert.
+        return GESTURE_ACTION_NAVIGATE;
     }
 
     public int getVerticalSwipeAction() {
-        return getGestureAction("vertical_swipe_action", TRIAL_VERTICAL_ACTION);
+        return GESTURE_ACTION_NAVIGATE;
     }
 
     private int getGestureAction(String confirmedKey, String trialKey) {

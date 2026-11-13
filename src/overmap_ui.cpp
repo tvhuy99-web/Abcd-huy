@@ -3222,6 +3222,358 @@ std::pair<std::string, nc_color> oter_symbol_and_color( const tripoint_abs_omt &
     return ret;
 }
 
+// A concise, map-scale destination catalogue for the Android screen reader.
+// Read only already known overmap tiles. Ordinary ground/roads are not
+// destinations; houses and shops remain independent even in the same city.
+void ui::omap::display_accessible_places()
+{
+#if defined(__ANDROID__)
+    if( !a11y::enabled() ) {
+        display();
+        return;
+    }
+    constexpr int scan_tiles = 500;
+    constexpr int tiles_per_omt = 24;
+    constexpr std::size_t page_size = 80;
+    constexpr int radius = scan_tiles / tiles_per_omt + 2;
+    struct place {
+        std::string name;
+        tripoint_abs_omt target;
+        int distance;
+        int dx;
+        int dy;
+        std::string natural_group;
+    };
+    avatar &you = get_avatar();
+    const tripoint_abs_omt origin = you.pos_abs_omt();
+    const tripoint_abs_ms player_pos = you.pos_abs();
+    const auto distance_to = [&]( const tripoint_abs_omt & target ) {
+        // An overmap tile describes 24x24 local tiles. Use its center, not
+        // the distance in overmap units, for the player's 500-tile limit.
+        const tripoint_abs_ms center = project_to<coords::ms>( target );
+        return std::max( std::abs( center.x() + tiles_per_omt / 2 - player_pos.x() ),
+                         std::abs( center.y() + tiles_per_omt / 2 - player_pos.y() ) );
+    };
+    std::vector<place> found;
+    for( int dy = -radius; dy <= radius; ++dy ) {
+        for( int dx = -radius; dx <= radius; ++dx ) {
+            const tripoint_abs_omt target = origin + tripoint_rel_omt( dx, dy, 0 );
+            const int distance = distance_to( target );
+            if( distance > scan_tiles ) {
+                continue;
+            }
+            // Outlines/vague terrain can be misleading. Do not expose the
+            // true terrain id, building type or undiscovered secret locations.
+            const om_vision_level vision = overmap_buffer.seen( target );
+            if( vision <= om_vision_level::outlines ) {
+                continue;
+            }
+            const oter_id terrain = overmap_buffer.ter_existing( target );
+            if( !terrain.is_valid() ) {
+                continue;
+            }
+            const std::string type = terrain->get_type_id().str();
+            const bool natural = terrain->is_lake() || terrain->is_river() ||
+                                 terrain->is_water() || terrain->is_wooded();
+            const oter_travel_cost_type cost = terrain->get_travel_cost_type();
+            const bool ordinary = cost == oter_travel_cost_type::highway ||
+                                  cost == oter_travel_cost_type::road ||
+                                  cost == oter_travel_cost_type::dirt_road ||
+                                  cost == oter_travel_cost_type::trail ||
+                                  cost == oter_travel_cost_type::field ||
+                                  cost == oter_travel_cost_type::crop_field ||
+                                  cost == oter_travel_cost_type::air ||
+                                  cost == oter_travel_cost_type::roof ||
+                                  type == "empty" || type == "open_air" ||
+                                  type == "solid_earth" || type == "rock";
+            if( ordinary && !natural && !overmap_buffer.has_note( target ) ) {
+                continue;
+            }
+            const std::string natural_group = terrain->is_lake() ? "lake" :
+                                              terrain->is_river() ? "river" :
+                                              terrain->is_wooded() ? "woods" :
+                                              terrain->is_water() ? "water" : "";
+            // Use the game-translated name at the player's actual knowledge
+            // level. Mod-provided buildings are included automatically.
+            found.push_back( { terrain->get_name( vision ), target, distance, dx, dy,
+                               natural_group } );
+            if( overmap_buffer.has_note( target ) ) {
+                const std::string &note = overmap_buffer.note( target );
+                const std::size_t text_start = std::get<2>( overmap_ui::get_note_display_info( note ) );
+                const std::string label = note.substr( text_start );
+                if( !label.empty() ) {
+                    found.push_back( { label, target, distance, dx, dy, "" } );
+                }
+            }
+        }
+    }
+    // One entry per connected natural landmark. This prevents a large lake or
+    // forest becoming hundreds of identical rows. Never merge buildings:
+    // neighboring houses and shops must remain separate destinations.
+    std::map<std::pair<int, int>, std::size_t> nature_at;
+    for( std::size_t i = 0; i < found.size(); ++i ) {
+        if( !found[i].natural_group.empty() ) {
+            nature_at.emplace( std::make_pair( found[i].dx, found[i].dy ), i );
+        }
+    }
+    std::set<std::pair<int, int>> visited;
+    std::vector<place> places;
+    for( std::size_t i = 0; i < found.size(); ++i ) {
+        const place &candidate = found[i];
+        if( candidate.natural_group.empty() ) {
+            places.push_back( candidate );
+            continue;
+        }
+        const auto key = std::make_pair( candidate.dx, candidate.dy );
+        if( !visited.insert( key ).second ) {
+            continue;
+        }
+        place closest = candidate;
+        std::vector<std::pair<int, int>> queue { key };
+        for( std::size_t q = 0; q < queue.size(); ++q ) {
+            const auto [x, y] = queue[q];
+            for( const auto [nx, ny] : { std::make_pair( x - 1, y ),
+                                        std::make_pair( x + 1, y ),
+                                        std::make_pair( x, y - 1 ),
+                                        std::make_pair( x, y + 1 ) } ) {
+                const auto next = std::make_pair( nx, ny );
+                const auto next_it = nature_at.find( next );
+                if( next_it == nature_at.end() ||
+                    found[next_it->second].natural_group != candidate.natural_group ||
+                    !visited.insert( next ).second ) {
+                    continue;
+                }
+                queue.push_back( next );
+                const place &other = found[next_it->second];
+                if( other.distance < closest.distance ) {
+                    closest = other;
+                }
+            }
+        }
+        places.push_back( std::move( closest ) );
+    }
+    // City names are landmarks in their own right; the buildings in each
+    // city remain separate entries. Do not name an undiscovered city.
+    const tripoint_abs_sm origin_sm = project_to<coords::sm>( player_pos );
+    for( const city_reference &city_ref : overmap_buffer.get_cities_near( origin_sm,
+            scan_tiles / 12 + 2 ) ) {
+        if( !city_ref || city_ref.city->name.empty() ) {
+            continue;
+        }
+        const tripoint_abs_omt pos = project_to<coords::omt>( city_ref.abs_sm_pos );
+        const int distance = distance_to( pos );
+        if( distance > scan_tiles ||
+            overmap_buffer.seen( pos ) <= om_vision_level::outlines ) {
+            continue;
+        }
+        const tripoint_rel_omt offset = pos - origin;
+        places.push_back( { city_ref.city->name, pos, distance, offset.x(), offset.y(), "" } );
+    }
+    std::stable_sort( places.begin(), places.end(),
+    []( const place &lhs, const place &rhs ) {
+        return lhs.distance < rhs.distance;
+    } );
+    const auto direction_words = []( const int dx, const int dy ) {
+        if( dx == 0 && dy == 0 ) {
+            return std::string( _( "Current location" ) );
+        }
+        if( dy < 0 ) {
+            return std::string( dx < 0 ? _( "northwest" ) :
+                                dx > 0 ? _( "northeast" ) : _( "north" ) );
+        }
+        if( dy > 0 ) {
+            return std::string( dx < 0 ? _( "southwest" ) :
+                                dx > 0 ? _( "southeast" ) : _( "south" ) );
+        }
+        return std::string( dx < 0 ? _( "west" ) : _( "east" ) );
+    };
+    std::size_t page = 0;
+    std::optional<std::size_t> selected;
+    input_context ctxt( "OVERMAP_PLACES" );
+    ctxt.register_action( "ANY_INPUT" );
+    ctxt.register_action( "QUIT" );
+    a11y::screen_scope reader( &ctxt, "places",
+    [&]( const a11y::semantic_intent & intent ) -> std::optional<std::string> {
+        if( intent.action == "cancel" ) {
+            // Two-level navigation: return from travel mode selection to
+            // the place list first; another Back then exits to the world.
+            if( selected ) {
+                selected.reset();
+                return std::string( "TIMEOUT" );
+            }
+            return std::string( "QUIT" );
+        }
+        if( intent.action == "focus" ) {
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.action != "activate" ) {
+            return std::nullopt;
+        }
+        if( intent.node == "places:page:next" && !places.empty() ) {
+            page = std::min( page + 1, ( places.size() - 1 ) / page_size );
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node == "places:page:previous" ) {
+            page = page > 0 ? page - 1 : 0;
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node == "places:back" ) {
+            selected.reset();
+            return std::string( "TIMEOUT" );
+        }
+        if( intent.node.rfind( "places:target:", 0 ) == 0 && !selected ) {
+            const std::size_t start = page * page_size;
+            const std::size_t end = std::min( start + page_size, places.size() );
+            for( std::size_t i = start; i < end; ++i ) {
+                if( intent.node == "places:target:" + std::to_string( i ) ) {
+                    selected = i;
+                    return std::string( "TIMEOUT" );
+                }
+            }
+        }
+        if( !selected || *selected >= places.size() ) {
+            return std::nullopt;
+        }
+        const bool driving = intent.node == "places:mode:drive";
+        if( intent.node != "places:mode:walk" &&
+            intent.node != "places:mode:run" && !driving ) {
+            return std::nullopt;
+        }
+        if( driving && !( you.in_vehicle && you.controlling_vehicle ) ) {
+            add_msg( m_info, _( "You are not controlling a vehicle." ) );
+            return std::string( "TIMEOUT" );
+        }
+        tripoint_abs_omt destination = places[*selected].target;
+        // Recheck the discovery boundary when starting a route. The known
+        // place may have changed since the list was opened.
+        if( overmap_buffer.seen( destination ) <= om_vision_level::outlines ) {
+            add_msg( m_info, _( "This destination is no longer known." ) );
+            return std::string( "TIMEOUT" );
+        }
+        // Walkers approach water from known dry land. Never route directly
+        // into the middle of a lake or river just because it was selected.
+        const oter_id terrain = overmap_buffer.ter_existing( destination );
+        if( !driving && terrain.is_valid() && terrain->is_water() ) {
+            std::optional<tripoint_abs_omt> shore;
+            int shortest = scan_tiles + tiles_per_omt * 2;
+            for( int dy = -1; dy <= 1; ++dy ) {
+                for( int dx = -1; dx <= 1; ++dx ) {
+                    if( dx == 0 && dy == 0 ) {
+                        continue;
+                    }
+                    const tripoint_abs_omt adjacent = destination + tripoint_rel_omt( dx, dy, 0 );
+                    if( overmap_buffer.seen( adjacent ) <= om_vision_level::outlines ) {
+                        continue;
+                    }
+                    const oter_id land = overmap_buffer.ter_existing( adjacent );
+                    if( !land.is_valid() || land->is_water() ) {
+                        continue;
+                    }
+                    const int distance = distance_to( adjacent );
+                    if( distance < shortest ) {
+                        shortest = distance;
+                        shore = adjacent;
+                    }
+                }
+            }
+            if( !shore ) {
+                add_msg( m_info, _( "No known shore is reachable near this place." ) );
+                return std::string( "TIMEOUT" );
+            }
+            destination = *shore;
+        }
+        if( !driving && destination == you.pos_abs_omt() ) {
+            add_msg( m_info, _( "You are already in the selected map area." ) );
+            return std::string( "TIMEOUT" );
+        }
+        std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, driving );
+        if( route.empty() ) {
+            add_msg( m_info, _( "No travel route to the selected place." ) );
+            return std::string( "TIMEOUT" );
+        }
+        you.omt_path = std::move( route );
+        if( driving ) {
+            you.assign_activity( autodrive_activity_actor() );
+        } else {
+            you.reset_move_mode();
+            you.set_desired_movement_mode( move_mode_id(
+                                            intent.node == "places:mode:run" ? "run" : "walk" ) );
+            you.assign_activity( ACT_TRAVELLING );
+        }
+        return std::string( "QUIT" );
+    } );
+    while( true ) {
+        a11y::semantic_snapshot snapshot;
+        snapshot.title = _( "Explore places" );
+        if( places.empty() ) {
+            a11y::semantic_node empty;
+            empty.id = "places:empty";
+            empty.role = "document";
+            empty.label = _( "No known destinations nearby." );
+            empty.actions = { "focus" };
+            snapshot.focus = empty.id;
+            snapshot.nodes.push_back( std::move( empty ) );
+        } else if( selected ) {
+            snapshot.title = _( "Choose travel mode" );
+            snapshot.summary.clear();
+            for( const auto &[id, label] : {
+                     std::make_pair( "places:mode:walk", _( "Walk" ) ),
+                     std::make_pair( "places:mode:run", _( "Run" ) )
+                 } ) {
+                a11y::semantic_node mode;
+                mode.id = id;
+                mode.role = "button";
+                mode.label = label;
+                snapshot.nodes.push_back( std::move( mode ) );
+            }
+            if( you.in_vehicle && you.controlling_vehicle ) {
+                a11y::semantic_node drive;
+                drive.id = "places:mode:drive";
+                drive.label = _( "Drive" );
+                snapshot.nodes.push_back( std::move( drive ) );
+            }
+            a11y::semantic_node back;
+            back.id = "places:back";
+            back.label = _( "Back" );
+            snapshot.nodes.push_back( std::move( back ) );
+            snapshot.focus = "places:mode:walk";
+        } else {
+            const std::size_t start = page * page_size;
+            const std::size_t end = std::min( start + page_size, places.size() );
+            if( page > 0 ) {
+                a11y::semantic_node previous;
+                previous.id = "places:page:previous";
+                previous.label = _( "Previous page" );
+                snapshot.nodes.push_back( std::move( previous ) );
+            }
+            for( std::size_t i = start; i < end; ++i ) {
+                const place &p = places[i];
+                a11y::semantic_node row;
+                row.id = "places:target:" + std::to_string( i );
+                row.role = "listitem";
+                row.label = p.name;
+                row.value = string_format( _( "%1$s, about %2$d tiles" ),
+                                           direction_words( p.dx, p.dy ), p.distance );
+                snapshot.nodes.push_back( std::move( row ) );
+            }
+            if( end < places.size() ) {
+                a11y::semantic_node next;
+                next.id = "places:page:next";
+                next.label = _( "Next page" );
+                snapshot.nodes.push_back( std::move( next ) );
+            }
+            snapshot.focus = "places:target:" + std::to_string( start );
+        }
+        reader.update( std::move( snapshot ) );
+        if( ctxt.handle_input() == "QUIT" ) {
+            return;
+        }
+    }
+#else
+    display();
+#endif
+}
+
 void ui::omap::display()
 {
     g->overmap_data = overmap_ui::overmap_draw_data_t(); //reset data

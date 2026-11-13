@@ -1,4 +1,4 @@
-"""Guard the approved 16-group menu and 36 latest-wins shortcuts."""
+"""Guard 16 menu groups, 36 recognizers and default-protected shortcuts."""
 import re
 import unittest
 from pathlib import Path
@@ -63,12 +63,12 @@ class ComprehensiveHubRestore(unittest.TestCase):
 
     def test_search_and_gameplay_are_safely_separated(self):
         self.assertIn("Normalizer.normalize(source", self.hub)
-        self.assertIn("addCommandMatches(result, snapshot, query)", self.hub)
+        self.assertIn("addCommandMatches(result, context, snapshot, query)", self.hub)
         self.assertIn("R.string.a11yHubAllCommands", self.hub)
         self.assertIn("private void searchHub()", self.ctrl)
         self.assertIn("snapshot.find(item.node)", self.ctrl)
         self.assertIn("hubIndex = hubRootIndex", self.ctrl)
-        self.assertIn("ReaderGestureBindings.IDS.length + 2", self.ctrl)
+        self.assertIn("ReaderGestureBindings.CUSTOM_IDS.length + 2", self.ctrl)
 
 
 if __name__ == "__main__":

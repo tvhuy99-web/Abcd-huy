@@ -20,6 +20,7 @@
 #include "ascii_art.h"
 #include "behavior.h"
 #include "bionics.h"
+#include "blueprint_cache.h"
 #include "bodygraph.h"
 #include "bodypart.h"
 #include "butchery_requirements.h"
@@ -543,8 +544,23 @@ void DynamicDataLoader::load_data_from_path( const cata_path &path, const std::s
     for( const cata_path &file : files ) {
         try {
             // parse it
+#if defined(__ANDROID__)
+            const auto json_started = std::chrono::steady_clock::now();
+#endif
             JsonValue jsin = json_loader::from_path( file );
+#if defined(__ANDROID__)
+            const auto json_parsed = std::chrono::steady_clock::now();
+#endif
             load_all_from_json( jsin, src, path, file );
+#if defined(__ANDROID__)
+            const auto json_loaded = std::chrono::steady_clock::now();
+            blueprint_cache::record_json_timing(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_parsed - json_started ).count(),
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_loaded - json_parsed ).count() );
+            blueprint_cache::record_source( file.get_unrelative_path() );
+#endif
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }
@@ -576,8 +592,23 @@ void DynamicDataLoader::load_mod_data_from_path( const cata_path &path, const st
     for( const cata_path &file : files ) {
         try {
             // parse it
+#if defined(__ANDROID__)
+            const auto json_started = std::chrono::steady_clock::now();
+#endif
             JsonValue jsin = json_loader::from_path( file );
+#if defined(__ANDROID__)
+            const auto json_parsed = std::chrono::steady_clock::now();
+#endif
             load_all_from_json( jsin, src, path, file );
+#if defined(__ANDROID__)
+            const auto json_loaded = std::chrono::steady_clock::now();
+            blueprint_cache::record_json_timing(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_parsed - json_started ).count(),
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_loaded - json_parsed ).count() );
+            blueprint_cache::record_source( file.get_unrelative_path() );
+#endif
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }
@@ -615,8 +646,23 @@ void DynamicDataLoader::load_mod_interaction_files_from_path( const cata_path &p
     for( const std::pair<const mod_id, cata_path> &file : files ) {
         try {
             // parse it
+#if defined(__ANDROID__)
+            const auto json_started = std::chrono::steady_clock::now();
+#endif
             JsonValue jsin = json_loader::from_path( file.second );
+#if defined(__ANDROID__)
+            const auto json_parsed = std::chrono::steady_clock::now();
+#endif
             load_all_from_json( jsin, string_format( "%s#%s", src, file.first.str() ), path, file.second );
+#if defined(__ANDROID__)
+            const auto json_loaded = std::chrono::steady_clock::now();
+            blueprint_cache::record_json_timing(
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_parsed - json_started ).count(),
+                std::chrono::duration_cast<std::chrono::microseconds>(
+                    json_loaded - json_parsed ).count() );
+            blueprint_cache::record_source( file.second.get_unrelative_path() );
+#endif
         } catch( const JsonError &err ) {
             throw std::runtime_error( err.what() );
         }
@@ -806,6 +852,9 @@ void DynamicDataLoader::unload_data()
 
 void DynamicDataLoader::finalize_loaded_data()
 {
+#if defined(__ANDROID__)
+    blueprint_cache::finish_sources();
+#endif
     cata_assert( !finalized && "Can't finalize the data twice." );
     cata_assert( !stream_cache && "Expected stream cache to be null before finalization" );
 

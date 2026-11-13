@@ -39,6 +39,8 @@ namespace omap
  * Display overmap centered at the player's position.
  */
 void display();
+/** Reader-only list of already discovered landmarks within 500 local tiles. */
+void display_accessible_places();
 /**
  * Display overmap centered at starting_pos.
  */

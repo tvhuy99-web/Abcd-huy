@@ -1,4 +1,4 @@
-"""Regression contracts for the 36 persistent world action shortcuts."""
+"""Regression contracts for 36 recognized gestures, only 25 customizable."""
 import re
 import unittest
 from pathlib import Path
@@ -82,7 +82,7 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("if (action == MotionEvent.ACTION_POINTER_UP", src)
         self.assertIn("listener.handleCustomGesture(gesture)", src)
         self.assertIn(
-            "singleFingerHoldOverridesDetailInWorldButNotMenus", device
+            "singleFingerHoldAlwaysOpensContextActions", device
         )
         self.assertIn(
             "twoAndThreeFingerHoldsFireOnceWithoutBecomingTaps", device

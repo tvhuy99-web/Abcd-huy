@@ -168,10 +168,45 @@ task fetchSdl3Aars {
             def zipName = "${entry.name}-devel-${entry.version}-android.zip"
             def zipFile = new File(cacheDir, zipName)
             if (!zipFile.exists()) {
-                def url = "https://github.com/libsdl-org/${entry.repo}/releases/download/release-${entry.version}/${zipName}"
-                println("Downloading ${url}")
-                new URL(url).withInputStream { input ->
-                    zipFile.withOutputStream { output -> output << input }
+                // SDL hosts the same official release ZIPs on libsdl.org.
+                // Prefer that mirror when GitHub Releases returns gateway errors.
+                def mirrorPath = entry.repo == 'SDL' ? 'release' : "projects/${entry.repo}/release"
+                def urls = [
+                    "https://www.libsdl.org/${mirrorPath}/${zipName}",
+                    "https://github.com/libsdl-org/${entry.repo}/releases/download/release-${entry.version}/${zipName}"
+                ]
+                // Write to a temporary path to avoid caching incomplete ZIPs.
+                def partialFile = new File(cacheDir, "${zipName}.part")
+                boolean downloaded = false
+                for (int attempt = 1; attempt <= 6 && !downloaded; attempt++) {
+                    def url = urls[(attempt - 1) % urls.size()]
+                    partialFile.delete()
+                    try {
+                        println("Downloading ${url} (attempt ${attempt}/6)")
+                        def connection = new URL(url).openConnection()
+                        connection.connectTimeout = 60000
+                        connection.readTimeout = 120000
+                        connection.getInputStream().withCloseable { input ->
+                            partialFile.withOutputStream { output -> output << input }
+                        }
+                        def partialDigest = java.security.MessageDigest.getInstance('SHA-256')
+                        partialFile.eachByte(8192) { buf, len -> partialDigest.update(buf, 0, len) }
+                        def partialSha = partialDigest.digest().collect { String.format('%02x', it) }.join('')
+                        if (partialSha != entry.zipSha256) {
+                            throw new IOException("SHA256 mismatch for ${zipName}")
+                        }
+                        if (!partialFile.renameTo(zipFile)) {
+                            throw new IOException("Could not move downloaded ${zipName} into cache")
+                        }
+                        downloaded = true
+                    } catch (Exception error) {
+                        partialFile.delete()
+                        if (attempt == 6) {
+                            throw new GradleException("Could not download ${zipName} after 6 attempts", error)
+                        }
+                        println("Download failed: ${error.message}. Retrying.")
+                        Thread.sleep(attempt * 15000L)
+                    }
                 }
             }
             def md = java.security.MessageDigest.getInstance('SHA-256')
@@ -342,7 +377,11 @@ android {
         minSdkVersion override_minSdkVersion
         targetSdkVersion override_targetSdkVersion
         versionCode Integer.valueOf(override_versionCode)
-        versionName rootProject.file(version_header_path).text.split('\"')[1]
+        // APK identity can advance for Java-only changes while the embedded
+        // native VERSION remains stable for a verified libmain.so cache hit.
+        versionName project.hasProperty('accessibility_apk_version')
+                    ? project.property('accessibility_apk_version').toString()
+                    : rootProject.file(version_header_path).text.split('\"')[1]
         if (buildAsApplication) {
             applicationId "com.cleverraven.cataclysmdda"
         }

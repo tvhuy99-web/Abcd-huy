@@ -15,6 +15,7 @@
 #include <vector>
 
 #include "activity_actor_definitions.h"
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
@@ -401,6 +402,10 @@ class target_ui
 
         // Updates 'targets' for current range
         void update_target_list();
+
+        // Aim at the first visible creature on this ray, or at the range edge.
+        // Do not filter friendlies or require any creature to be present.
+        tripoint_bub_ms directional_shot_target( int dx, int dy );
 
         // Semantic view of targets the game currently permits and knows how to aim at.
         a11y::semantic_snapshot reader_snapshot();
@@ -1254,7 +1259,52 @@ int Character::fire_gun( map &here, const tripoint_bub_ms &target, int shots, it
         dispersion_sources dispersion = total_gun_dispersion( gun, recoil_total(), proj.shot_spread );
 
         dealt_projectile_attack shot;
+        if( is_avatar() && a11y::android::performance_profiling_enabled() ) {
+            a11y::android::diagnostic_event( "COMBAT_SHOT",
+                                             string_format( "weapon=%s ammo=%s range=%d recoil=%.1f raw_impact=%.1f",
+                                                            gun.typeId().str(), projectile_use_ammo_id.str(),
+                                                            rl_dist( pos_bub( here ), aim ), recoil_total(),
+                                                            static_cast<double>( proj.impact.total_damage() ) ) );
+        }
+        // Only the redundant impact narration is muted in
+        // Creature::messaging_projectile_attack. Keep all other warnings
+        // during projectile simulation, including collateral player damage.
         projectile_attack( shot, proj, &here, pos_bub( here ), aim, dispersion, this, in_veh, wp_attack );
+        if( is_avatar() && a11y::enabled() ) {
+            bool struck_creature = false;
+            for( const auto &hit : shot.targets_hit ) {
+                if( hit.second.first <= 0 || !hit.first ) {
+                    continue;
+                }
+                struck_creature = true;
+                const Creature &victim = *hit.first;
+                const int actual_damage = hit.second.second;
+                if( actual_damage <= 0 ) {
+                    add_msg( m_info, _( "Your shot hit %s but dealt no damage." ), victim.disp_name() );
+                } else if( victim.is_monster() ) {
+                    const int remaining_hp = std::max( 0, victim.get_hp() );
+                    if( victim.is_dead_state() ) {
+                        add_msg( m_good, _( "You shot and killed %1$s. %2$d damage." ),
+                                 victim.disp_name(), actual_damage );
+                    } else if( shot.targets_hit.size() == 1 &&
+                               shot.missed_by >= accuracy_standard ) {
+                        // A grazing hit can reduce a powerful bullet to a
+                        // point of damage. Tell the user that it was a graze.
+                        add_msg( m_info, _( "You grazed %1$s. %2$d damage. %3$d HP remaining." ),
+                                 victim.disp_name(), actual_damage, remaining_hp );
+                    } else {
+                        add_msg( m_good, _( "You shot %1$s. %2$d damage. %3$d HP remaining." ),
+                                 victim.disp_name(), actual_damage, remaining_hp );
+                    }
+                } else {
+                    add_msg( m_good, _( "You shot %1$s for %2$d damage." ),
+                             victim.disp_name(), actual_damage );
+                }
+            }
+            if( !struck_creature ) {
+                add_msg( m_info, _( "Your shot did not hit any creature." ) );
+            }
+        }
         if( !shot.targets_hit.empty() ) {
             hits++;
         }
@@ -2877,6 +2927,52 @@ double Character::gun_value( const item &weap, int ammo ) const
     return std::max( 0.0, gun_value );
 }
 
+namespace
+{
+std::optional<int> pending_accessible_combat_shot;
+bool accessible_combat_precise_aim = true;
+bool pending_accessible_combat_precise_aim = false;
+bool accessible_combat_shot_completed = false;
+} // namespace
+
+bool target_handler::combat_precise_aim_enabled()
+{
+    return accessible_combat_precise_aim;
+}
+
+void target_handler::toggle_combat_precise_aim()
+{
+    accessible_combat_precise_aim = !accessible_combat_precise_aim;
+}
+
+void target_handler::queue_accessible_combat_shot( int direction )
+{
+    pending_accessible_combat_shot = direction;
+    pending_accessible_combat_precise_aim = accessible_combat_precise_aim;
+    accessible_combat_shot_completed = false;
+}
+
+std::optional<int> target_handler::take_accessible_combat_shot()
+{
+    std::optional<int> pending = pending_accessible_combat_shot;
+    pending_accessible_combat_shot.reset();
+    return pending;
+}
+
+bool target_handler::take_accessible_combat_precise_aim()
+{
+    const bool precise = pending_accessible_combat_precise_aim;
+    pending_accessible_combat_precise_aim = false;
+    return precise;
+}
+
+bool target_handler::take_accessible_combat_shot_completed()
+{
+    const bool completed = accessible_combat_shot_completed;
+    accessible_combat_shot_completed = false;
+    return completed;
+}
+
 target_handler::trajectory target_ui::run()
 {
     if( mode == TargetMode::Spell && !no_mana && !casting->can_cast( *you ) ) {
@@ -3005,9 +3101,23 @@ target_handler::trajectory target_ui::run()
     bool skip_redraw = false;
     std::optional<tripoint_bub_ms> accessible_target_selection;
     std::optional<tripoint_rel_ms> accessible_cursor_delta;
+    std::optional<int> accessible_fire_direction;
+    bool accessible_auto_reload = false;
+    // A direct combat swipe supplies the same internal fire-direction
+    // command used by the eight-direction targeting screen, without waiting
+    // for another tap. The engine still owns ammo, recoil, ballistics and
+    // safety confirmations.
+    const std::optional<int> automatic_combat_shot = mode == TargetMode::Fire ?
+            target_handler::take_accessible_combat_shot() : std::nullopt;
+    const bool automatic_precise_combat_shot = automatic_combat_shot &&
+            target_handler::take_accessible_combat_precise_aim();
+    if( automatic_combat_shot ) {
+        accessible_fire_direction = *automatic_combat_shot;
+        action = "A11Y_INTERNAL_FIRE_DIRECTION";
+    }
     std::unique_ptr<a11y::screen_scope> reader;
     const auto refresh_reader = [this, &reader, &accessible_target_selection,
-                                 &accessible_cursor_delta]() {
+                                 &accessible_cursor_delta, &accessible_fire_direction, &accessible_auto_reload]() {
         if( !a11y::enabled() ) {
             reader.reset();
             return;
@@ -3024,11 +3134,39 @@ target_handler::trajectory target_ui::run()
             ctxt.register_action( "A11Y_INTERNAL_MOVE_CURSOR",
                                   to_translation( "Move the aim point from the reader" ) );
         }
+        if( std::find( actions.begin(), actions.end(),
+                       "A11Y_INTERNAL_FIRE_DIRECTION" ) == actions.end() ) {
+            ctxt.register_action( "A11Y_INTERNAL_FIRE_DIRECTION",
+                                  to_translation( "Fire once in a selected direction" ) );
+        }
+        if( std::find( actions.begin(), actions.end(),
+                       "A11Y_INTERNAL_AUTO_RELOAD" ) == actions.end() ) {
+            ctxt.register_action( "A11Y_INTERNAL_AUTO_RELOAD",
+                                  to_translation( "Reload the gun to capacity" ) );
+        }
         if( !reader ) {
             reader = std::make_unique<a11y::screen_scope>( &ctxt, "targeting",
             [this, &accessible_target_selection,
-             &accessible_cursor_delta]( const a11y::semantic_intent &intent )
+             &accessible_cursor_delta, &accessible_fire_direction,
+             &accessible_auto_reload]( const a11y::semantic_intent &intent )
             -> std::optional<std::string> {
+                if( intent.action == "activate" && mode == TargetMode::Fire ) {
+                    if( intent.node == "target:aimed-shot" ) {
+                        // Use the engine's existing multi-turn aimed-shot
+                        // state machine, not a made-up damage bonus.
+                        return "AIMED_SHOT";
+                    }
+                    if( intent.node == "target:auto-reload" ) {
+                        accessible_auto_reload = true;
+                        return "A11Y_INTERNAL_AUTO_RELOAD";
+                    }
+                    for( int i = 0; i < 8; ++i ) {
+                        if( intent.node == "target:fire-direction:" + std::to_string( i ) ) {
+                            accessible_fire_direction = i;
+                            return "A11Y_INTERNAL_FIRE_DIRECTION";
+                        }
+                    }
+                }
                 if( intent.action == "activate" && status != Status::OutOfAmmo ) {
                     for( std::size_t i = 0; i < targets.size(); ++i ) {
                         if( intent.node == "target:" + std::to_string( i ) ) {
@@ -3074,7 +3212,12 @@ target_handler::trajectory target_ui::run()
         reader->update( reader_snapshot() );
     };
     for( ;; action.clear() ) {
-        refresh_reader();
+        // The direct combat swipe has already chosen a firing direction.
+        // Do not publish the targeting screen's default "North" focus for
+        // a modal that will immediately fire and close.
+        if( !( automatic_combat_shot && action == "A11Y_INTERNAL_FIRE_DIRECTION" ) ) {
+            refresh_reader();
+        }
         if( !skip_redraw ) {
             g->invalidate_main_ui_adaptor();
             ui_manager::redraw();
@@ -3095,6 +3238,89 @@ target_handler::trajectory target_ui::run()
         // Handle received input
         if( handle_cursor_movement( action, skip_redraw ) ) {
             continue;
+        } else if( action == "A11Y_INTERNAL_FIRE_DIRECTION" ) {
+            if( !accessible_fire_direction || mode != TargetMode::Fire ) {
+                continue;
+            }
+            const int steps[8][2] = {
+                { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+                { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+            };
+            const int chosen = *accessible_fire_direction;
+            accessible_fire_direction.reset();
+            if( chosen < 0 || chosen >= 8 ) {
+                continue;
+            }
+            const tripoint_bub_ms shot = directional_shot_target( steps[chosen][0], steps[chosen][1] );
+            if( shot == src ) {
+                const std::string why = string_format(
+                                            _( "Cannot fire in that direction. Weapon range: %d tiles." ), range );
+                if( automatic_combat_shot ) {
+                    // This modal is about to close. Defer speech until the
+                    // stable world snapshot, or its context change cuts it off.
+                    a11y::android::announce( "A11Y_COMBAT_ALERT:" + why, 3 );
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
+                add_msg( m_info, "%s", why );
+                continue;
+            }
+            set_cursor_pos( shot );
+            if( status != Status::Good ) {
+                const std::string why = _( "The weapon cannot fire right now. Check ammunition and firing mode." );
+                if( automatic_combat_shot ) {
+                    a11y::android::announce( "A11Y_COMBAT_ALERT:" + why, 3 );
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
+                add_msg( m_info, "%s", why );
+                continue;
+            }
+            if( !confirm_non_enemy_target() ) {
+                // The existing friendly/neutral target confirmation still
+                // applies. A refusal never fires and never moves the avatar.
+                if( automatic_combat_shot ) {
+                    loop_exit_code = ExitCode::Abort;
+                    break;
+                }
+                continue;
+            }
+            // Both modes retain the native target, friendly-fire check,
+            // ammunition and ACT_AIM activity. Only the aim input differs.
+            set_last_target();
+            if( automatic_combat_shot ) {
+                // Keep the normal return-to-world behavior after an
+                // aim-and-fire activity that may require multiple turns.
+                accessible_combat_shot_completed = true;
+            }
+            if( automatic_precise_combat_shot ) {
+                // Take the most precise threshold the wielded gun actually
+                // exposes. This is the original game's aim-and-shoot loop.
+                const auto best = std::find_if( aim_types.rbegin(), aim_types.rend(),
+                []( const aim_type & type ) {
+                    return type.has_threshold;
+                } );
+                if( best != aim_types.rend() ) {
+                    if( action_aim_and_shoot( best->action ) ) {
+                        loop_exit_code = ExitCode::Fire;
+                    } else {
+                        timed_out_action = best->action;
+                        loop_exit_code = ExitCode::Timeout;
+                    }
+                    break;
+                }
+            }
+            // Quick fire (or a gun without native aiming thresholds).
+            loop_exit_code = ExitCode::Fire;
+            break;
+        } else if( action == "A11Y_INTERNAL_AUTO_RELOAD" ) {
+            if( accessible_auto_reload && mode == TargetMode::Fire && activity != nullptr ) {
+                accessible_auto_reload = false;
+                activity->auto_reload_requested = true;
+                loop_exit_code = ExitCode::Reload;
+                break;
+            }
+            accessible_auto_reload = false;
         } else if( action == "A11Y_INTERNAL_SELECT_TARGET" ) {
             if( accessible_target_selection &&
                 std::find( targets.begin(), targets.end(), *accessible_target_selection ) != targets.end() ) {
@@ -3244,6 +3470,24 @@ target_handler::trajectory target_ui::run()
     return traj;
 }
 
+tripoint_bub_ms target_ui::directional_shot_target( int dx, int dy )
+{
+    map &here = get_map();
+    tripoint_bub_ms fallback = src;
+    for( int step = 1; step <= range; ++step ) {
+        const tripoint_bub_ms tile = src + tripoint_rel_ms( dx * step, dy * step, 0 );
+        if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
+            break;
+        }
+        fallback = tile;
+        Creature *creature = get_creature_tracker().creature_at( tile, true );
+        if( creature != nullptr && creature != you && pl_sees( *creature ) ) {
+            return tile;
+        }
+    }
+    return fallback;
+}
+
 a11y::semantic_snapshot target_ui::reader_snapshot()
 {
     constexpr std::size_t max_accessible_targets = 256;
@@ -3331,6 +3575,106 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
         }
     }
     snapshot.nodes.push_back( std::move( cursor ) );
+
+    if( mode == TargetMode::Fire ) {
+        // The primary Android reader view shows eight directions. All other
+        // original targeting nodes and engine commands remain in this
+        // snapshot for the long-press advanced view.
+        const int steps[8][2] = {
+            { 0, -1 }, { 1, -1 }, { 1, 0 }, { 1, 1 },
+            { 0, 1 }, { -1, 1 }, { -1, 0 }, { -1, -1 }
+        };
+        const std::string names[8] = {
+            _( "North" ), _( "Northeast" ), _( "East" ), _( "Southeast" ),
+            _( "South" ), _( "Southwest" ), _( "West" ), _( "Northwest" )
+        };
+        map &here = get_map();
+        for( int i = 0; i < 8; ++i ) {
+            a11y::semantic_node direction;
+            direction.id = "target:fire-direction:" + std::to_string( i );
+            direction.role = "button";
+            direction.label = names[i];
+            direction.actions = { "focus", "activate" };
+            const tripoint_bub_ms shot = directional_shot_target( steps[i][0], steps[i][1] );
+            direction.enabled = shot != src && status != Status::OutOfAmmo;
+            if( !direction.enabled ) {
+                direction.disabled_reason = _( "The current gun cannot fire in this direction." );
+            }
+            // Describe visible creatures regardless of attitude. Do not reveal
+            // an unseen creature or forbid firing when the ray looks empty.
+            std::string seen;
+            int creature_count = 0;
+            for( int step = 1; step <= range; ++step ) {
+                const tripoint_bub_ms tile = src + tripoint_rel_ms( steps[i][0] * step,
+                                                                   steps[i][1] * step, 0 );
+                if( !here.inbounds( tile ) || dist_fn( tile ) > range ) {
+                    break;
+                }
+                Creature *creature = get_creature_tracker().creature_at( tile, true );
+                if( creature == nullptr || creature == you || !pl_sees( *creature ) ) {
+                    continue;
+                }
+                ++creature_count;
+                if( creature_count <= 3 ) {
+                    if( !seen.empty() ) {
+                        seen += ", ";
+                    }
+                    seen += string_format( _( "%1$s, %2$d tiles" ), creature->disp_name(), dist_fn( tile ) );
+                }
+            }
+            direction.value = string_format( _( "Weapon range: %d tiles." ), range );
+            if( relevant != nullptr ) {
+                direction.value += " " + string_format(
+                                       _( "Ammunition remaining: %d." ), relevant->ammo_remaining() );
+            }
+            if( !direction.enabled ) {
+                // Never say 'You can still fire' for a disabled direction.
+                // This used to contradict the following disabled_reason.
+                direction.value += " " + direction.disabled_reason;
+            } else if( creature_count > 0 ) {
+                direction.value += " " + seen;
+                if( creature_count > 3 ) {
+                    direction.value += string_format( _( " and %d more visible creatures." ),
+                                                     creature_count - 3 );
+                }
+            } else if( shot != src && you->sees( here, shot ) ) {
+                direction.value += " " + string_format(
+                                       _( "No visible creature. %1$s at %2$d tiles. You can fire." ),
+                                       here.tername( shot ), dist_fn( shot ) );
+            } else {
+                direction.value += " ";
+                direction.value += _( "No visible creature. You can still fire in this direction." );
+            }
+            direction.detail = _( "Double tap to fire once toward this direction without choosing a tile. "
+                                  "Hold one finger for all original aiming controls." );
+            snapshot.nodes.push_back( std::move( direction ) );
+        }
+        // Deliberate aimed fire is a separate choice from the instant
+        // directional shot. First select a visible target or move the aim
+        // cursor, then activate this node. Aimed fire consumes normal turns,
+        // recoil and ammunition through action_aim_and_shoot().
+        a11y::semantic_node aimed;
+        aimed.id = "target:aimed-shot";
+        aimed.role = "button";
+        aimed.label = _( "Aim carefully and fire" );
+        aimed.detail = _( "Aim at the current target and fire when steady. Uses normal aiming time and ammunition." );
+        aimed.enabled = status == Status::Good && dst != src;
+        aimed.actions = { "focus", "activate" };
+        if( !aimed.enabled ) {
+            aimed.disabled_reason = _( "Select an aim point and a loaded gun first." );
+        }
+        snapshot.nodes.push_back( std::move( aimed ) );
+
+        a11y::semantic_node reload;
+        reload.id = "target:auto-reload";
+        reload.role = "button";
+        reload.label = _( "Reload until full" );
+        reload.value = string_format( _( "Ammunition remaining: %d." ), relevant->ammo_remaining() );
+        reload.detail = _( "Double tap to reload using the game's normal timed activities. "
+                           "It stops when the gun is full or no compatible ammunition remains." );
+        reload.actions = { "focus", "activate" };
+        snapshot.nodes.push_back( std::move( reload ) );
+    }
 
     if( mode == TargetMode::Fire && relevant != nullptr ) {
         const gun_mode gun = relevant->gun_current_mode();
@@ -3544,13 +3888,17 @@ a11y::semantic_snapshot target_ui::reader_snapshot()
     // These engine-only dispatch results are never player commands.
     snapshot.nodes.erase( std::remove_if( snapshot.nodes.begin(), snapshot.nodes.end(),
     []( const a11y::semantic_node &node ) {
-        return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR";
+        return node.id == "A11Y_INTERNAL_SELECT_TARGET" || node.id == "A11Y_INTERNAL_MOVE_CURSOR" ||
+               node.id == "A11Y_INTERNAL_FIRE_DIRECTION" ||
+               node.id == "A11Y_INTERNAL_AUTO_RELOAD";
     } ), snapshot.nodes.end() );
-    snapshot.focus = "target:cursor";
-    for( std::size_t i = 0; i < count; ++i ) {
-        if( targets[i] == dst ) {
-            snapshot.focus = "target:" + std::to_string( i );
-            break;
+    snapshot.focus = mode == TargetMode::Fire ? "target:fire-direction:0" : "target:cursor";
+    if( mode != TargetMode::Fire ) {
+        for( std::size_t i = 0; i < count; ++i ) {
+            if( targets[i] == dst ) {
+                snapshot.focus = "target:" + std::to_string( i );
+                break;
+            }
         }
     }
     return snapshot;

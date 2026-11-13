@@ -20,6 +20,7 @@
 
 #include "activity_actor_definitions.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_runtime.h"
 #include "advanced_inv_area.h"
 #include "advanced_inv_listitem.h"
@@ -42,6 +43,7 @@
 #include "imgui/imgui.h"
 #include "input.h"
 #include "input_context.h"
+#include "input_popup.h"
 #include "inventory_ui.h"
 #include "item.h"
 #include "item_category.h"
@@ -2079,6 +2081,7 @@ class advanced_inventory::reader_session
                 a11y::semantic_node node;
                 node.id = id;
                 node.role = "button";
+                node.actions = { "focus", "activate", "read_detail" };
                 node.label = remove_color_tags( entry.name.empty() ?
                                                  location->display_name() : entry.name );
                 node.value = string_format(
@@ -2206,6 +2209,14 @@ class advanced_inventory::reader_session
             } );
             if( found == spane.items.end() ) {
                 return std::nullopt;
+            }
+            if( intent.action == "read_detail" ) {
+                const item_location live = found->items.front();
+                if( live ) {
+                    a11y::announce_full_item_info( *live,
+                                                   live.describe( &get_player_character() ) );
+                }
+                return "TIMEOUT";
             }
             if( intent.action == "focus" ) {
                 spane.index = static_cast<int>( std::distance( spane.items.begin(), found ) );
@@ -2557,9 +2568,23 @@ bool advanced_inventory::query_charges( aim_location destarea, const advanced_in
         if( amount <= 0 ) {
             popup_getkey( _( "The destination is already full." ) );
         } else {
-            // In test_mode always use max possible
-            // TODO: maybe a way to provide a custom amount?
-            test_mode ? amount = possible_max : query_int( amount, false, popupmsg );
+            // Quantity one is a complete choice: never open a count
+            // editor just to select the only valid amount.
+            if( possible_max == 1 || test_mode ) {
+                amount = possible_max;
+            } else if( a11y::enabled() ) {
+                // The shared native quantity popup publishes bounded
+                // one-tap choices for screen-reader users.  A chosen
+                // number exits immediately; cancellation must NOT keep
+                // the old (usually maximum) amount and move items.
+                number_input_popup<int> choice( 20, amount, _( "Select quantity" ) );
+                choice.set_description( popupmsg );
+                choice.set_accessible_quantity_max( possible_max );
+                const int selected = choice.query();
+                amount = choice.quantity_cancelled() ? 0 : selected;
+            } else {
+                query_int( amount, false, popupmsg );
+            }
         }
         if( amount <= 0 ) {
             return false;

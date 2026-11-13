@@ -18,6 +18,9 @@
 
 #include "action.h"
 #include "a11y_runtime.h"
+#if defined(__ANDROID__)
+#include "a11y_android.h"
+#endif
 #include "a11y_world.h"
 #include "activity_type.h"
 #include "avatar.h"
@@ -410,8 +413,16 @@ void monmove()
     g->cleanup_dead();
     map &m = get_map();
     avatar &u = get_avatar();
-
+#if defined(__ANDROID__)
+    const bool profile_ai = a11y::android::performance_profiling_enabled();
+    unsigned int active_monsters = 0;
+    unsigned int active_npcs = 0;
+#endif
     for( monster &critter : g->all_monsters() ) {
+#if defined(__ANDROID__)
+        const auto monster_started = profile_ai ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+#endif
         if( !m.inbounds( critter.pos_abs() ) ) {
             continue;
         }
@@ -486,6 +497,20 @@ void monmove()
                 u.wake_up();
             }
         }
+#if defined(__ANDROID__)
+        if( profile_ai ) {
+            ++active_monsters;
+            const auto monster_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                        std::chrono::steady_clock::now() - monster_started ).count();
+            if( monster_ms >= 40 ) {
+                a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
+                        "kind=monster name=" + critter.name() +
+                        " elapsed_ms=" + std::to_string( monster_ms ) +
+                        " x=" + std::to_string( critter.pos_abs().x() ) +
+                        " y=" + std::to_string( critter.pos_abs().y() ) );
+            }
+        }
+#endif
     }
 
     g->cleanup_dead();
@@ -497,9 +522,33 @@ void monmove()
 
     // Now, do active NPCs.
     for( npc &guy : g->all_npcs() ) {
+#if defined(__ANDROID__)
+        const auto npc_started = profile_ai ? std::chrono::steady_clock::now() :
+                                 std::chrono::steady_clock::time_point{};
+#endif
         process_npc_turn( m, guy );
+#if defined(__ANDROID__)
+        if( profile_ai ) {
+            ++active_npcs;
+            const auto npc_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                    std::chrono::steady_clock::now() - npc_started ).count();
+            if( npc_ms >= 40 ) {
+                a11y::android::diagnostic_event( "WORLD_AI_HOTSPOT",
+                        "kind=npc elapsed_ms=" + std::to_string( npc_ms ) +
+                        " x=" + std::to_string( guy.pos_abs().x() ) +
+                        " y=" + std::to_string( guy.pos_abs().y() ) );
+            }
+        }
+#endif
     }
     g->cleanup_dead();
+#if defined(__ANDROID__)
+    if( profile_ai ) {
+        a11y::android::diagnostic_event( "WORLD_AI_COUNTS",
+                "monsters=" + std::to_string( active_monsters ) +
+                " npcs=" + std::to_string( active_npcs ) );
+    }
+#endif
 }
 
 void overmap_npc_move()
@@ -737,7 +786,33 @@ bool game::do_turn()
                 if( !u.activity && uquit != QUIT_WATCH
                     && ( !u.has_distant_destination() || calendar::once_every( 10_seconds ) ) ) {
                     wait_popup_reset();
+#if defined(__ANDROID__)
+                    const bool headless = a11y::android::suppress_world_visuals();
+                    const bool profile = a11y::android::performance_profiling_enabled();
+                    const auto draw_started = profile ? std::chrono::steady_clock::now() :
+                                              std::chrono::steady_clock::time_point{};
+                    if( !headless ) {
+                        // Menus and the ordinary renderer still redraw normally.
+                        // The spoken-only world does not need an ImGui/SDL frame
+                        // before every walking input: snapshot and input are
+                        // maintained independently.
+                        if( a11y::enabled() ) {
+                            ui_manager::redraw_invalidated();
+                        } else {
+                            ui_manager::redraw();
+                        }
+                    }
+                    if( profile ) {
+                        const auto draw_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                                                 std::chrono::steady_clock::now() - draw_started ).count();
+                        a11y::android::performance_draw_sample( draw_ms );
+                        a11y::android::diagnostic_event( "WORLD_DRAW_TIMING",
+                                "draw_ms=" + std::to_string( draw_ms ) +
+                                ( headless ? " mode=headless_skip" : " mode=invalidated_only" ) );
+                    }
+#else
                     ui_manager::redraw();
+#endif
                 }
 
                 if( queue_screenshot ) {
@@ -799,6 +874,11 @@ bool game::do_turn()
         calc_driving_offset( veh );
     }
 
+#if defined(__ANDROID__)
+    const bool world_profile = a11y::android::performance_profiling_enabled();
+    const auto world_sim_started = world_profile ? std::chrono::steady_clock::now() :
+                                   std::chrono::steady_clock::time_point{};
+#endif
     scent_map &scent = get_scent();
     // No-scent debug mutation has to be processed here or else it takes time to start working
     if( !u.has_flag( json_flag_NO_SCENT ) ) {
@@ -822,10 +902,22 @@ bool game::do_turn()
     const int levz = m.get_abs_sub().z();
     // Update vision caches for monsters. If this turns out to be expensive,
     // consider a stripped down cache just for monsters.
+#if defined(__ANDROID__)
+    const auto before_monster_cache = world_profile ? std::chrono::steady_clock::now() :
+                                      std::chrono::steady_clock::time_point{};
+#endif
     m.build_map_cache( levz, true );
+#if defined(__ANDROID__)
+    const auto after_monster_cache = world_profile ? std::chrono::steady_clock::now() :
+                                     std::chrono::steady_clock::time_point{};
+#endif
 
     // process monster and npc turn
     monmove();
+#if defined(__ANDROID__)
+    const auto after_monster_turn = world_profile ? std::chrono::steady_clock::now() :
+                                    std::chrono::steady_clock::time_point{};
+#endif
 
     if( calendar::once_every( time_between_npc_OM_moves ) ) {
         overmap_npc_move();
@@ -836,8 +928,30 @@ bool game::do_turn()
 
     // replenish avatar moves
     u.process_turn();
+#if defined(__ANDROID__)
+    if( world_profile ) {
+        const auto now = std::chrono::steady_clock::now();
+        const auto ms = []( const auto start, const auto end ) {
+            return std::chrono::duration_cast<std::chrono::milliseconds>( end - start ).count();
+        };
+        const auto total_ms = ms( world_sim_started, now );
+        a11y::android::performance_sim_sample( total_ms );
+        a11y::android::diagnostic_event( "WORLD_SIM_TIMING",
+                "total_ms=" + std::to_string( total_ms ) +
+                " before_cache_ms=" + std::to_string(
+                    ms( world_sim_started, before_monster_cache ) ) +
+                " cache_ms=" + std::to_string(
+                    ms( before_monster_cache, after_monster_cache ) ) +
+                " monsters_ms=" + std::to_string(
+                    ms( after_monster_cache, after_monster_turn ) ) +
+                " player_turn_ms=" + std::to_string( ms( after_monster_turn, now ) ) );
+    }
+#endif
 
-    if( u.get_moves() < 0 && get_option<bool>( "FORCE_REDRAW" ) ) {
+    if( u.get_moves() < 0 && get_option<bool>( "FORCE_REDRAW" )
+        && !a11y::android::suppress_world_visuals() ) {
+        // FORCE_REDRAW is visual-only. Spoken-only walking must not incur
+        // a full SDL present after every simulated world turn.
         ui_manager::redraw();
         refresh_display();
     }

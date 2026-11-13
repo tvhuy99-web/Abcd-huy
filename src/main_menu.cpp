@@ -27,6 +27,7 @@
 
 #include "auto_pickup.h"
 #include "avatar.h"
+#include "blueprint_cache.h"
 #include "cata_path.h"
 #include "cata_scope_helpers.h"
 #include "cata_utility.h"
@@ -587,6 +588,9 @@ void main_menu::init_strings()
 #if defined(__ANDROID__)
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "TTS Settings" ) );
     vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Sound Settings" ) );
+    // Append to the ORIGINAL game Settings list, preserving every old entry.
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Accessibility Settings" ) );
+    vSettingsSubItems.emplace_back( pgettext( "Main Menu|Settings", "Backup and Restore" ) );
 #endif
 
     vSettingsHotkeys.clear();
@@ -1159,6 +1163,10 @@ bool main_menu::opening_screen()
                             get_option<int>( "MUSIC_VOLUME" ),
                             get_option<int>( "SOUND_EFFECT_VOLUME" ),
                             get_option<bool>( "SOUND_ENABLED" ) );
+                    } else if( sel2 == 9 ) { // Native accessibility preferences
+                        a11y::android::open_accessibility_settings();
+                    } else if( sel2 == 10 ) { // Native backup and restore controls
+                        a11y::android::open_backup_restore();
 #endif
                     }
                     break;
@@ -1379,9 +1387,22 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
     world_generator->save_last_world_info();
     world_generator->set_active_world( world );
 
+#if defined(__ANDROID__)
+    std::vector<std::string> cache_mod_ids;
+    for( const mod_id &mod : world->active_mod_order ) {
+        cache_mod_ids.push_back( mod.str() );
+    }
+    blueprint_cache::begin( ( world->folder_path() /
+                             ( savegame.base_path() + ".loadcache" ) ).get_unrelative_path(),
+                            getVersionString(), cache_mod_ids,
+                            ( world->folder_path() / PATH_INFO::worldoptions() ).get_unrelative_path() );
+#endif
     try {
         g->setup( true );
     } catch( const std::exception &err ) {
+#if defined(__ANDROID__)
+        blueprint_cache::clear();
+#endif
         debugmsg( "Error: %s", err.what() );
         if( a11y::enabled() ) {
             // R20.1: a failed load must speak and must offer a way back.
@@ -1402,6 +1423,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         debugmsg( "Error: %s", err.what() );
     }
     if( loaded ) {
+#if defined(__ANDROID__)
+        blueprint_cache::persist();
+#endif
         cleanup.cancel();
         if( a11y::android::enabled() && !a11y::android::suspended() ) {
             a11y::android::announce( "A11Y_LOADING:" +
@@ -1410,6 +1434,9 @@ bool main_menu::load_game( std::string const &worldname, save_t const &savegame 
         return true;
     }
 
+#if defined(__ANDROID__)
+    blueprint_cache::clear();
+#endif
     if( a11y::enabled() ) {
         // game::load fails silently (or through debugmsg) for a damaged,
         // missing or incompatible character save. Name the save, state

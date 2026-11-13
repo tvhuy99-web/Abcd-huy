@@ -20,46 +20,71 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
             "utf-8"
         )
 
-    def test_radius_is_still_60_for_all_three_sources(self):
+    def test_visual_list_keeps_original_search(self):
+        # The native visual tabs are unchanged; Android reader has its own
+        # separate 20-tile square and skips the 60-tile tab initialization.
         self.assertIn("const int radius = 60;", self.header)
         self.assertIn("closest_points_first( pos, radius )", self.menu)
         self.assertIn("get_visible_creatures( radius )", self.menu)
-        self.assertIn("you.sees( get_map(), points_p_it )", self.menu)
-        self.assertIn("m.sees_some_items( points_p_it, you )", self.menu)
+        self.assertIn("if( !a11y::enabled() )", self.menu)
 
     def test_flat_nearest_first_items_creatures_terrain(self):
         self.assertIn("void surroundings_menu::execute_accessible()",
                       self.menu)
-        for category in ("item_data.item_list",
-                         "monster_data.monster_list",
-                         "terfurn_data.terfurn_list"):
-            self.assertIn(category, self.menu)
-        self.assertIn("for( const auto &entry : group->entities )",
-                      self.menu)
+        self.assertIn("a11y::observe_tile( position )", self.menu)
+        self.assertIn("a11y::scan_unrestricted_tile( position )", self.menu)
+        self.assertIn("tile.items", self.menu)
+        self.assertIn("tile.creatures", self.menu)
+        self.assertIn("tile.traps", self.menu)
+        self.assertIn("tile.vehicle", self.menu)
         self.assertIn("std::stable_sort( nearby.begin(), nearby.end()",
                       self.menu)
         self.assertIn("lhs.distance < rhs.distance", self.menu)
         self.assertIn('"nearby:target:"', self.menu)
-        self.assertIn("entry.distance, relative_words", self.menu)
+        # Spoken direction includes the only distance phrase, but the
+        # underlying distance still drives nearest-first sorting.
+        self.assertIn("node.value = relative_words( entry.relative );",
+                      self.menu)
 
     def test_page_without_shrinking_radius_or_snapshot_overflow(self):
         self.assertIn("constexpr std::size_t page_size = 80;", self.menu)
         self.assertIn('"nearby:page:next"', self.menu)
         self.assertIn('"nearby:page:previous"', self.menu)
         self.assertIn("const std::size_t end = std::min(", self.menu)
-        self.assertIn("node.total = static_cast<int>( nearby.size() );",
-                      self.menu)
+        # No spoken position counters on each entry.
+        self.assertNotIn("node.total = static_cast<int>( nearby.size() );",
+                         self.menu)
 
     def test_selected_target_uses_safety_aware_pathfinder(self):
         self.assertIn("g->safe_route_to( you, target.target", self.menu)
         self.assertIn("you.set_destination( *route );", self.menu)
         self.assertIn("if( !route )", self.menu)
         self.assertIn("if( route->empty() )", self.menu)
-        self.assertIn("get_map().impassable( target ) ? 1 : 0", self.menu)
-        self.assertIn("entry.entity->disp_name()", self.menu)
-        self.assertIn("entry.entity->tname()", self.menu)
+        self.assertIn("tile.impassable ? 1 : 0", self.menu)
+        self.assertIn("for( const std::string &creature : tile.creatures )", self.menu)
+        self.assertIn("for( const std::string &item_name : tile.items )", self.menu)
         self.assertIn("if( a11y::enabled() )", self.menu)
         self.assertIn("execute_accessible();", self.menu)
+
+    def test_out_of_sight_nearby_destinations_can_be_routed_safely(self):
+        # Only the spoken nearby list relaxes the direct visibility gate.
+        # The path still uses the game's obstacle and danger avoidance.
+        call = self.menu.split(
+            "g->safe_route_to( you, target.target", 1
+        )[1].split("if( !route )", 1)[0]
+        self.assertIn("}, false );", call)
+        header = (SRC / "game.h").read_text("utf-8")
+        self.assertIn("bool require_visible_destination = true", header)
+        self.assertIn(
+            "require_visible_destination && !who.sees( here, target )",
+            self.game,
+        )
+        self.assertIn("if( is_dangerous_tile( p ) )", self.game)
+        self.assertIn("who.get_pathfinding_settings()", self.game)
+        self.assertIn("you.set_destination( *route );", self.menu)
+        # Preserve the non-accessible behavior.
+        self.assertIn('} else if( action == "TRAVEL_TO" && path_end )', self.menu)
+        self.assertIn("if( !you.sees( get_map(), *path_end ) )", self.menu)
 
     def test_current_tile_alert_is_readable(self):
         self.assertIn('here.role = noteworthy_here ? "alert" : "document"',

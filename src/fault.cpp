@@ -1,6 +1,9 @@
 #include "fault.h"
 
 #include <utility>
+#if defined(__ANDROID__)
+#include <chrono>
+#endif
 #include <vector>
 
 #include "debug.h"
@@ -43,6 +46,12 @@ std::multimap<fault_fix_id, std::pair<std::string, int>> reqs_temp_storage;
 
 // Have a list of faults by type, the type right now is item prefix to avoid adding more JSON data
 std::map<std::string, std::vector<fault_id>> faults_by_type;
+
+#if defined(__ANDROID__)
+// requirement_data::finalize() traverses every crafting requirement.
+// Each fault fix must not repeat the global pass for all earlier fixes.
+bool fault_requirements_finalized = false;
+#endif
 
 } // namespace
 
@@ -95,12 +104,28 @@ void faults::reset()
     fault_factory.reset();
     fault_fixes_factory.reset();
     faults_by_type.clear();
+#if defined(__ANDROID__)
+    fault_requirements_finalized = false;
+#endif
 }
 
 void faults::finalize()
 {
+#if defined(__ANDROID__)
+    const auto started = std::chrono::steady_clock::now();
+#endif
     fault_factory.finalize();
+#if defined(__ANDROID__)
+    const auto fault_ms = std::chrono::duration_cast<std::chrono::milliseconds>(
+                              std::chrono::steady_clock::now() - started ).count();
+#endif
     fault_fixes_factory.finalize();
+#if defined(__ANDROID__)
+    DebugLog( D_INFO, D_MAIN ) << "A11Y_LOAD_DETAIL phase=faults fault_factory_ms=" <<
+                              fault_ms << " fixes_factory_ms=" <<
+                              std::chrono::duration_cast<std::chrono::milliseconds>(
+                                  std::chrono::steady_clock::now() - started ).count() - fault_ms;
+#endif
 
     for( const fault &f : fault_factory.get_all() ) {
         if( !f.type().empty() ) {
@@ -378,7 +403,16 @@ void fault_fix::finalize()
     for( const fault_id &fid : faults_removed ) {
         const_cast<fault &>( *fid ).fixes.emplace( id );
     }
+#if defined(__ANDROID__)
+    // Preserve the first fix's original finalization order. The canonical
+    // crafting-requirements pass still runs later in DynamicDataLoader.
+    if( !fault_requirements_finalized ) {
+        requirement_data::finalize();
+        fault_requirements_finalized = true;
+    }
+#else
     requirement_data::finalize();
+#endif
 }
 
 void fault_fix::check() const
