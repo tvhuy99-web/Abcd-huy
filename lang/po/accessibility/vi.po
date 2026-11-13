@@ -4572,6 +4572,12 @@ msgstr "Thời gian dự kiến: %s"
 msgid "All categories"
 msgstr "Tất cả"
 
+msgid "Reload item (ammo, battery or fuel)"
+msgstr "Nạp vật phẩm (đạn, pin hoặc nhiên liệu)"
+
+msgid "Partly reload item (ammo, battery or fuel)"
+msgstr "Nạp một phần (đạn, pin hoặc nhiên liệu)"
+
 msgid "All categories has no subcategories. Swipe left or right with two fingers to select a main category."
 msgstr "Danh mục Tất cả không có danh mục phụ. Vuốt hai ngón sang trái hoặc sang phải để chọn danh mục chính."
 
