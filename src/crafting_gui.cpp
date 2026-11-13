@@ -187,6 +187,74 @@ static std::string get_cat_unprefixed( std::string_view prefixed_name )
     return std::string( prefixed_name.substr( 3, prefixed_name.size() - 3 ) );
 }
 
+// The Vietnamese game catalog can map practice titles to unrelated camp
+// blueprints. Preserve actual game data and provide separate, reviewed
+// accessible wording for common training sessions. Ordinary crafting and
+// the visual interface keep the upstream translation behavior.
+static std::string accessible_crafting_recipe_name( const recipe &rec )
+{
+    if( !a11y::enabled() || !rec.is_practice() || rec.practice_source_name.empty() ) {
+        return rec.result_name();
+    }
+    const std::string &original = rec.practice_source_name;
+    if( original == "computer (beginner)" ) {
+        return _( "Computer practice, beginner" );
+    }
+    if( original == "computer (intermediate)" ) {
+        return _( "Computer practice, intermediate" );
+    }
+    if( original == "computer (advanced)" ) {
+        return _( "Computer practice, advanced" );
+    }
+    if( original == "athletics (beginner)" ) {
+        return _( "Athletics practice, beginner" );
+    }
+    if( original == "athletics (intermediate)" ) {
+        return _( "Athletics practice, intermediate" );
+    }
+    if( original == "dancing" ) {
+        return _( "Dancing practice" );
+    }
+    if( original == "dodge (beginner)" ) {
+        return _( "Dodging practice, beginner" );
+    }
+    if( original == "unarmed (beginner)" ) {
+        return _( "Unarmed combat practice, beginner" );
+    }
+    if( original == "unarmed (intermediate)" ) {
+        return _( "Unarmed combat practice, intermediate" );
+    }
+    if( rec.skill_used ) {
+        return string_format( _( "Practice %1$s: %2$s" ), rec.skill_used->name(), original );
+    }
+    return string_format( _( "Practice: %s" ), original );
+}
+
+static std::string accessible_practice_description( const recipe &rec,
+        const Character &crafter )
+{
+    const std::string &original = rec.practice_source_name;
+    if( original == "computer (beginner)" ) {
+        return _( "Practice the basics of using a computer." );
+    }
+    if( original == "athletics (beginner)" ) {
+        return _( "Practice simple exercises such as push-ups, squats and crunches." );
+    }
+    if( original == "dancing" ) {
+        return _( "Practice dancing with an imaginary partner." );
+    }
+    if( original == "dodge (beginner)" ) {
+        return _( "Practice sidestepping and retreating to avoid attacks." );
+    }
+    if( original == "unarmed (beginner)" ) {
+        return _( "Practice shadowboxing to prepare for fighting without a weapon." );
+    }
+    // Show an accurate source description rather than an unrelated
+    // Vietnamese construction instruction until a reviewed translation exists.
+    return !rec.practice_source_description.empty() ? rec.practice_source_description :
+           rec.get_description( crafter );
+}
+
 // Ceil-rounded human-readable craft time.  Input is game turns (seconds).
 
 void load_recipe_category( const JsonObject &jsobj, const std::string &src )
@@ -2635,11 +2703,11 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
     const std::size_t page_end = std::min( current.size(), page_start + reader_page_size );
     std::map<std::string, int> name_totals;
     for( const recipe *entry : current ) {
-        ++name_totals[remove_color_tags( entry->result_name() )];
+        ++name_totals[remove_color_tags( accessible_crafting_recipe_name( *entry ) )];
     }
     std::map<std::string, int> name_occurrences;
     for( std::size_t i = 0; i < page_start; ++i ) {
-        ++name_occurrences[remove_color_tags( current[i]->result_name() )];
+        ++name_occurrences[remove_color_tags( accessible_crafting_recipe_name( *current[i] ) )];
     }
     std::vector<a11y::semantic_node> rows;
     for( std::size_t i = page_start; i < page_end; ++i ) {
@@ -2647,7 +2715,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         a11y::semantic_node node;
         node.id = "recipe:" + rec.ident().str() + ":" + std::to_string( i );
         node.actions = { "focus", "activate", "read_detail" };
-        const std::string base_name = remove_color_tags( rec.result_name() );
+        const std::string base_name = remove_color_tags( accessible_crafting_recipe_name( rec ) );
         node.label = base_name;
         const int occurrence = ++name_occurrences[base_name];
         if( name_totals[base_name] > 1 ) {
@@ -2766,7 +2834,9 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             // Headless spoken mode can publish the recipe before that panel
             // fills displayed_description; derive its real text directly.
             std::string description;
-            if( rec.is_nested() || rec.is_practice() ) {
+            if( rec.is_practice() && a11y::enabled() ) {
+                description = accessible_practice_description( rec, *crafter );
+            } else if( rec.is_nested() || rec.is_practice() ) {
                 description = rec.get_description( *crafter );
             } else if( rec.result() ) {
                 if( !rec.variant().empty() ) {
