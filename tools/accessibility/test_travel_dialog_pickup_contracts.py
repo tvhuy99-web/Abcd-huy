@@ -9,6 +9,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "src"
 JAVA = ROOT / "android/app/src/main/java/com/cleverraven/cataclysmdda"
+
+
 def read(file):
     return file.read_text("utf-8")
 
