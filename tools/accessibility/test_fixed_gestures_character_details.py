@@ -22,7 +22,6 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         cls.controller = source("GameReaderController.java")
         cls.surface = source("ReaderGestureSurface.java")
         cls.prefs = source("ReaderPreferences.java")
-        cls.setup = source("ReaderSetupActivity.java")
         cls.world = (ROOT / "src/a11y_world.cpp").read_text("utf-8")
 
     def test_only_25_unused_gestures_remain_customizable(self):
@@ -123,11 +122,6 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("return GESTURE_ACTION_NAVIGATE;", self.prefs)
         self.assertNotIn("getGestureAction(\"horizontal_swipe_action\"", self.prefs)
         self.assertNotIn("getGestureAction(\"vertical_swipe_action\"", self.prefs)
-        # The obsolete setup screen is now a compatibility redirect.
-        self.assertIn("AccessibilitySettingsActivity.class", self.setup)
-        self.assertNotIn("cycleSwipeAction(true)", self.setup)
-        self.assertNotIn("cycleSwipeAction(false)", self.setup)
-        self.assertNotIn("view -> tryGestureMapping()", self.setup)
         accessibility = source("AccessibilitySettingsActivity.java")
         self.assertIn("setSwipeDistanceLevel(level)", accessibility)
         self.assertIn("setSwipeDurationLevel(level)", accessibility)

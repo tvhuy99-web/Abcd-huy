@@ -47,7 +47,7 @@ class CharacterCreatorSixSteps(unittest.TestCase):
 
     def test_attributes_and_skills_have_retryable_value_picker(self):
         self.assertIn('choices.input_category = "character-creator-value";', self.source)
-        # STT 30: the picker used to list a fixed 1-10 for every value,
+        # the picker used to list a fixed 1-10 for every value,
         # but stats range 4-20. It now takes min/max from the caller.
         self.assertIn('value <= max_value', self.source)
         self.assertIn(
@@ -65,7 +65,7 @@ class CharacterCreatorSixSteps(unittest.TestCase):
         self.assertIn('Not enough points for this attribute.', self.source)
         self.assertIn('Not enough points for this skill.', self.source)
         self.assertIn(
-            # STT 30: include_zero is gone — min_value already says
+            # include_zero is gone — min_value already says
             # whether zero is offered (skills 0-10, stats 4-20).
             'skill_queried->name(), previous_skill_level,\n'
             '                                                      MIN_SKILL, MAX_SKILL,',

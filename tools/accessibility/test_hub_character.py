@@ -20,7 +20,7 @@ class CharacterHubTest(unittest.TestCase):
     def test_mutations_consistently_check_stamina(self):
         self.assertEqual(self.mutation.count(
             "!mut_data.stamina || get_stamina() >= mut_data.cost"), 2)
-        # STT 54: both activation paths now report the specific shortage
+        # both activation paths now report the specific shortage
         # through activation_shortage(); the generic message survives
         # only as its fallback, so it appears once, not twice.
         self.assertEqual(self.mutation.count(

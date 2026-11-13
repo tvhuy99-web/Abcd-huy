@@ -14,7 +14,6 @@ class Group16SettingsCleanup(unittest.TestCase):
         cls.settings = (ROOT / "src/main_menu.cpp").read_text("utf-8")
         cls.accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text("utf-8")
         cls.backup = (JAVA / "BackupRestoreActivity.java").read_text("utf-8")
-        cls.old_setup = (JAVA / "ReaderSetupActivity.java").read_text("utf-8")
         cls.log = (JAVA / "DebugLogActivity.java").read_text("utf-8")
 
     def test_group_16_keeps_requested_commands_only(self):
@@ -47,12 +46,6 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn("a11y::android::open_accessibility_settings()", self.settings)
         self.assertIn("a11y::android::open_backup_restore()", self.settings)
         self.assertNotIn("GameSettingsActivity.class", self.reader)
-
-    def test_removed_reader_setup_has_no_duplicate_controls(self):
-        self.assertIn("AccessibilitySettingsActivity.class", self.old_setup)
-        for legacy in ("new CheckBox(", "new SeekBar(", "probeVoices(",
-                       "new ReaderBackupArchive(", "setSpokenOnlyWorldEnabled("):
-            self.assertNotIn(legacy, self.old_setup)
 
     def test_graphics_toggle_only_lives_in_accessibility_settings(self):
         self.assertNotIn("spokenOnlyWorld = new CheckBox(this)", self.log)

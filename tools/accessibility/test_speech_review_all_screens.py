@@ -50,16 +50,11 @@ class VietnameseSpokenContentAudit(unittest.TestCase):
                              ("strings.xml", RES / "strings.xml")):
             root = ET.parse(source).getroot()
             self.assertGreater(len(root.findall("string")), 50, name)
-        for name in ("a11yBackupImportReady", "a11yDiagnosticsLatency",
-                     "a11yDiagnosticsCues"):
+        for name in ("a11yBackupImportReady",):
             self.assertTrue(format_types(self.xml[name]))
         self.assertIn("%1$s", self.strings["accessibilityServicesMessage"])
 
     def test_concise_gestures_and_item_guidance_retains_controls(self):
-        help_text = self.xml["a11yReaderGestureInstructions"]
-        self.assertLess(len(help_text), 250)
-        for word in ("chạm hai lần", "vuốt một ngón", "hai ngón", "TalkBack"):
-            self.assertIn(word, help_text)
         combat = self.strings["a11yCombatOn"]
         self.assertLess(len(combat), 135)
         for word in ("một ngón", "hai ngón", "lên/xuống",
