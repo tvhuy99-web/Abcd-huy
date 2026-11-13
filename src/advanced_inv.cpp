@@ -121,6 +121,51 @@ std::string enum_to_string<aim_entry>( const aim_entry v )
 namespace
 {
 std::unique_ptr<advanced_inventory> advinv;
+
+// Pending reader-only transfer (STT 51): action_move_item() only knows a
+// transfer was *requested* -- the activity runs after AIM closes and AIM
+// reopens when it ends. Remember what was requested, how many of that type
+// the destination pane already held, and which pane it was, so display()
+// can verify the result on re-entry instead of claiming success it never
+// saw. Cleared when the result is announced, when the session ends without
+// a re-entry (create_advanced_inv() below), and on the next transfer.
+// Only the single-item path records here; MOVE_ALL_ITEMS moves many types
+// and is not covered. Not serialized: a save/load mid-activity loses it.
+struct pending_aim_transfer {
+    itype_id type;
+    int amount = 0;
+    int dest_baseline = 0;
+    aim_location destarea = NUM_AIM_LOCATIONS;
+    advanced_inventory::side dest_side = advanced_inventory::side::left;
+    // Wielded items never appear in a pane, so a wield transfer is
+    // verified against the wielded item instead of the destination pane.
+    bool check_wielded = false;
+    std::string item_name;
+    std::string src_name;
+    std::string dest_name;
+};
+std::optional<pending_aim_transfer> pending_transfer;
+
+// Units of one type in a pane: charges for charge-counted items, one per
+// item location otherwise -- the same counting action_move_item() and
+// start_activity() use when building the activity.
+int count_type_in_pane( const advanced_inventory_pane &pane, const itype_id &type )
+{
+    int total = 0;
+    for( const advanced_inv_listitem &entry : pane.items ) {
+        if( entry.items.empty() || entry.id != type ) {
+            continue;
+        }
+        if( entry.items.front()->count_by_charges() ) {
+            for( const item_location &loc : entry.items ) {
+                total += loc->charges;
+            }
+        } else {
+            total += static_cast<int>( entry.items.size() );
+        }
+    }
+    return total;
+}
 } // namespace
 
 void create_advanced_inv()
@@ -133,6 +178,9 @@ void create_advanced_inv()
     if( uistate.transfer_save.exit_code != aim_exit::re_entry || get_avatar().activity.is_null() ) {
         advinv.reset();
         cancel_aim_processing();
+        // No re-entry follows, so a pending transfer can never be
+        // verified now (e.g. the activity was never assigned).
+        pending_transfer.reset();
     }
 }
 
@@ -1687,6 +1735,11 @@ bool advanced_inventory::action_move_item( advanced_inv_listitem *sitem,
     // but are potentially at a different place).
     recalc = true;
     cata_assert( amount_to_move > 0 );
+    // start_activity() below consumes amount_to_move for non-charge items
+    // (it decrements it while building the activity), so remember the
+    // requested amount now: the "Transfer requested" message and the
+    // pending-transfer record below must both report it, not the leftover.
+    const int requested_amount = amount_to_move;
 
     if( srcarea == AIM_CONTAINER && destarea == AIM_INVENTORY &&
         spane.container.held_by( player_character ) ) {
@@ -1769,9 +1822,28 @@ bool advanced_inventory::action_move_item( advanced_inv_listitem *sitem,
     // The activity may still be pending. Never claim it already completed.
     if( exit && a11y::enabled() ) {
         add_msg( m_info, _( "Transfer requested: %1$d of %2$s, from %3$s to %4$s." ),
-                 amount_to_move, it_copy.tname(),
+                 requested_amount, it_copy.tname(),
                  remove_color_tags( squares[srcarea].name ),
                  remove_color_tags( squares[destarea].name ) );
+        // Remember the request so display() can announce the verified
+        // result when AIM reopens after the activity ends (STT 51). The
+        // destination pane is an AIM_ALL aggregate when the player picked
+        // a destination from "all surrounding squares": its count mixes
+        // several squares, so a transfer between two of them would look
+        // like nothing moved -- skip recording in that case.
+        if( dpane.get_area() != AIM_ALL ) {
+            pending_aim_transfer record;
+            record.type = sitem->items.front()->typeId();
+            record.amount = requested_amount;
+            record.dest_baseline = count_type_in_pane( dpane, record.type );
+            record.destarea = destarea;
+            record.dest_side = dest;
+            record.check_wielded = destarea == AIM_WIELD;
+            record.item_name = it_copy.tname();
+            record.src_name = remove_color_tags( squares[srcarea].name );
+            record.dest_name = remove_color_tags( squares[destarea].name );
+            pending_transfer = std::move( record );
+        }
     }
     // if dest was AIM_ALL then we used query_destination and should undo that
     if( restore_area ) {
@@ -1894,6 +1966,14 @@ void advanced_inventory::process_action( const std::string &input_action )
         }
         // In case we've merged faved and unfaved items
         recalc = true;
+        // STT 262: the reader does not re-read the snapshot when only
+        // the command result changed, so confirm the toggle out loud.
+        if( a11y::enabled() ) {
+            add_msg( m_info,
+                     sitem->items.front()->is_favorite ? _( "%s is now a favorite." ) :
+                     _( "%s is no longer a favorite." ),
+                     sitem->items.front()->tname() );
+        }
     } else if( action == "MOVE_SINGLE_ITEM" ||
                action == "MOVE_VARIABLE_ITEM" ||
                action == "MOVE_ITEM_STACK" ) {
@@ -1909,6 +1989,15 @@ void advanced_inventory::process_action( const std::string &input_action )
     } else if( action == "SORT" ) {
         if( show_sort_menu( spane ) ) {
             recalc = true;
+            // STT 262: confirm the new sort order; cancelling the menu
+            // (show_sort_menu() false) announces nothing.
+            if( a11y::enabled() ) {
+                if( spane.sortby == SORTBY_NONE ) {
+                    add_msg( m_info, _( "Sorting cleared." ) );
+                } else {
+                    add_msg( m_info, _( "Sorted by %s." ), get_sortname( spane.sortby ) );
+                }
+            }
         }
     } else if( action == "FILTER" ) {
         const std::string &filter = spane.get_filter();
@@ -1933,9 +2022,22 @@ void advanced_inventory::process_action( const std::string &input_action )
             }
         } while( !spopup->canceled() && !spopup->confirmed() );
         filter_edit = false;
+        // STT 262: confirm the applied filter; cancelling restores the
+        // old filter and announces nothing.
+        if( a11y::enabled() && !spopup->canceled() ) {
+            const std::string applied_filter = spane.get_filter();
+            if( applied_filter.empty() ) {
+                add_msg( m_info, _( "Filter cleared." ) );
+            } else {
+                add_msg( m_info, _( "Filter: %1$s." ), applied_filter );
+            }
+        }
         spopup = nullptr;
     } else if( action == "RESET_FILTER" ) {
         spane.set_filter( "" );
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "Filter cleared." ) );
+        }
     } else if( action == "TOGGLE_AUTO_PICKUP" ) {
         if( sitem == nullptr ) {
             return;
@@ -1948,6 +2050,13 @@ void advanced_inventory::process_action( const std::string &input_action )
             sitem->autopickup = true;
         }
         recalc = true;
+        // STT 262: confirm the new auto-pickup state for the item.
+        if( a11y::enabled() ) {
+            add_msg( m_info,
+                     sitem->autopickup ? _( "Auto-pickup on for %s." ) :
+                     _( "Auto-pickup off for %s." ),
+                     sitem->items.front()->tname() );
+        }
     } else if( action == "EXAMINE" ) {
         if( sitem == nullptr ) {
             return;
@@ -1994,6 +2103,16 @@ void advanced_inventory::process_action( const std::string &input_action )
         src = right;
     } else if( action == "TOGGLE_TAB" ) {
         src = dest;
+        // STT 262: the snapshot summary carries the new source /
+        // destination, but the reader only re-reads it when the focus
+        // changes -- announce the swap itself. Same msgid as the
+        // snapshot summary, so no new string is needed.
+        if( a11y::enabled() ) {
+            const side new_dest = src == left ? right : left;
+            add_msg( m_info, _( "Source: %1$s. Destination: %2$s." ),
+                     remove_color_tags( squares[panes[src].get_area()].name ),
+                     remove_color_tags( squares[panes[new_dest].get_area()].name ) );
+        }
     } else if( action == "TOGGLE_VEH" ) {
         if( squares[spane.get_area()].can_store_in_vehicle() ) {
             // swap the panes if going vehicle will show the same tile
@@ -2209,6 +2328,14 @@ class advanced_inventory::reader_session
                 return !entry.items.empty() && entry.items.front() == binding->location;
             } );
             if( found == spane.items.end() ) {
+                // STT 261: say *why* the binding is stale before
+                // returning nullopt. Java still speaks its own
+                // "reselect the item" prompt for the nullopt, so the
+                // player hears the reason first, then the instruction.
+                if( a11y::enabled() ) {
+                    add_msg( m_info,
+                             _( "That item is no longer in the source pane. It may have been moved." ) );
+                }
                 return std::nullopt;
             }
             if( intent.action == "read_detail" ) {
@@ -2313,6 +2440,49 @@ void advanced_inventory::display()
                 spopup->query_string( /*loop=*/false, /*draw_only=*/true );
             }
         } );
+    }
+
+    // Announce the verified result of a transfer whose activity just
+    // ended (STT 51). This display() call is the re-entry after the
+    // activity: the return entry is still recorded and the player has no
+    // activity running. While an activity is still running (for example
+    // the MOVE_ALL_ITEMS processing re-entry) the record is left alone
+    // for the later re-entry that really follows the activity.
+    // Verification is a live recount, never the request: an interrupted
+    // activity reports how much actually arrived, including none.
+    if( a11y::enabled() && pending_transfer.has_value() &&
+        save_state->exit_code == aim_exit::re_entry && player_character.activity.is_null() ) {
+        const pending_aim_transfer record = *pending_transfer;
+        pending_transfer.reset();
+        int moved = 0;
+        if( record.check_wielded ) {
+            const item_location wielded = player_character.get_wielded_item();
+            moved = wielded && wielded->typeId() == record.type ? record.amount : 0;
+        } else {
+            // The destination pane may have swapped sides while the
+            // activity ran; recount whichever pane points at it now.
+            advanced_inventory::side dest_side = record.dest_side;
+            if( panes[dest_side].get_area() != record.destarea ) {
+                dest_side = panes[dest_side == left ? right : left].get_area() == record.destarea
+                            ? ( dest_side == left ? right : left ) : dest_side;
+            }
+            if( panes[dest_side].get_area() == record.destarea ) {
+                recalc_pane( dest_side );
+                moved = count_type_in_pane( panes[dest_side], record.type ) - record.dest_baseline;
+            }
+        }
+        moved = std::clamp( moved, 0, record.amount );
+        if( moved >= record.amount ) {
+            add_msg( m_info, _( "Transfer finished: %1$d of %2$s, from %3$s to %4$s." ),
+                     record.amount, record.item_name, record.src_name, record.dest_name );
+        } else if( moved > 0 ) {
+            add_msg( m_info,
+                     _( "Transfer partly finished: moved %1$d of %2$d %3$s from %4$s to %5$s." ),
+                     moved, record.amount, record.item_name, record.src_name, record.dest_name );
+        } else {
+            add_msg( m_info, _( "Transfer did not finish: no %1$s moved from %2$s to %3$s." ),
+                     record.item_name, record.src_name, record.dest_name );
+        }
     }
 
     while( !exit ) {

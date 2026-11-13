@@ -964,10 +964,10 @@ msgstr ""
 "Bạn đưa %1$s đơn vị, giá %2$s. NPC đưa %3$s đơn vị, giá %4$s. Số dư: %5$s."
 
 msgid "Balance is acceptable to the trader."
-msgstr "Có thể giao dịch."
+msgstr "Số dư này được người giao dịch chấp nhận."
 
 msgid "Balance exceeds the trader's current limit."
-msgstr "Vượt giới hạn giao dịch."
+msgstr "Số dư vượt quá giới hạn hiện tại của người giao dịch."
 
 msgid "Bank balance: %1$s. Trade adjustment: %2$s."
 msgstr "Số dư tài khoản: %1$s. Điều chỉnh giao dịch: %2$s."
@@ -2754,7 +2754,7 @@ msgid "No adjacent mines"
 msgstr "Không có mìn kề bên"
 
 msgid "No companion on this mission is ready to return yet."
-msgstr "Chưa có đồng đội sẵn sàng."
+msgstr "Chưa có đồng đội nào trong nhiệm vụ này sẵn sàng trở về."
 
 msgid "No companions."
 msgstr "Không có đồng đội."
@@ -2799,8 +2799,10 @@ msgstr "Chưa đặt được tuyến: ô đích chưa được khám phá."
 msgid "No route was set: unable to find a path to the destination."
 msgstr "Chưa đặt được tuyến: không tìm được đường tới điểm đến."
 
+
 msgid "No trade took place.  Nothing was exchanged."
-msgstr "Không giao dịch."
+msgstr "Không có giao dịch nào diễn ra. Không có gì được trao đổi."
+
 
 msgid "No zone is selected."
 msgstr "Chưa chọn vùng nào."
@@ -3686,7 +3688,7 @@ msgstr "Ô %1$d, %2$s."
 
 #, c-format
 msgid "Coordinates.  X %1$d. Y %2$d. Z %3$d."
-msgstr "X %1$d, Y %2$d, Z %3$d."
+msgstr "Tọa độ. X %1$d, Y %2$d, Z %3$d."
 
 #, c-format
 msgid "Area: %1$s. %2$s"
@@ -5085,6 +5087,7 @@ msgid "Options group: %s"
 msgstr "Nhóm tùy chọn: %s"
 
 #, c-format
+
 msgid "World \"%s\" reset.  All of its saves were removed."
 msgstr "Đã đặt lại thế giới \"%s\". Mọi bản lưu của thế giới đã bị xóa."
 
@@ -5100,3 +5103,544 @@ msgstr "Trong tầm tương tác. Kích hoạt để trò chuyện."
 
 msgid "Within radio range.  Activate to talk."
 msgstr "Trong tầm liên lạc vô tuyến. Kích hoạt để trò chuyện."
+
+msgid ""
+"A danger radius of %d map tiles is set at the cursor. Open the prompt to "
+"remove it or choose another radius."
+msgstr ""
+"Con trỏ đang có bán kính nguy hiểm %d ô bản đồ. Mở hộp thoại để xóa hoặc "
+"chọn bán kính khác."
+
+msgid ""
+"Choose the displayed search result and return to the map at that location. "
+"This does not start travel."
+msgstr ""
+"Chọn kết quả tìm kiếm đang hiển thị và quay lại bản đồ tại vị trí đó. Thao "
+"tác này không bắt đầu di chuyển."
+
+msgid "Close the search results and return to the previous map cursor."
+msgstr "Đóng kết quả tìm kiếm và quay lại vị trí con trỏ bản đồ trước đó."
+
+#, c-format
+msgid ""
+"Coordinates: X %1$d, Y %2$d, level %3$d. Distance from the player: %4$d map "
+"tiles, %5$s. Activating this result returns to the map at this location; it "
+"does not start travel."
+msgstr ""
+"Tọa độ: X %1$d, Y %2$d, tầng %3$d. Cách người chơi: %4$d ô bản đồ, %5$s. "
+"Kích hoạt kết quả này sẽ quay lại bản đồ tại vị trí đó; không bắt đầu di "
+"chuyển."
+
+msgid "Create a danger note at the cursor, then choose its danger radius."
+msgstr ""
+"Tạo ghi chú nguy hiểm tại con trỏ, rồi chọn bán kính nguy hiểm của nó."
+
+#, c-format
+msgid ""
+"Create a point of interest for the mission screen at X %1$d, Y %2$d, level "
+"%3$d."
+msgstr ""
+"Tạo điểm đáng chú ý cho màn hình nhiệm vụ tại X %1$d, Y %2$d, tầng %3$d."
+
+#, c-format
+msgid "Create or edit a map note at X %1$d, Y %2$d, level %3$d."
+msgstr "Tạo hoặc sửa ghi chú bản đồ tại X %1$d, Y %2$d, tầng %3$d."
+
+#, c-format
+msgid "Danger area radius: %d map tiles."
+msgstr "Bán kính vùng nguy hiểm: %d ô bản đồ."
+
+#, c-format
+msgid "Decrease the selected %s by one."
+msgstr "Giảm %s đã chọn đi một."
+
+msgid "Delete the note at the current cursor after confirmation."
+msgstr "Xóa ghi chú tại con trỏ hiện tại sau khi xác nhận."
+
+msgid "Deletes this note after confirmation."
+msgstr "Xóa ghi chú này sau khi xác nhận."
+
+msgid "Enemy warning ignored for now. Safe mode remains on."
+msgstr "Đã bỏ qua cảnh báo địch lúc này. Chế độ an toàn vẫn bật."
+
+#, c-format
+msgid "Increase the selected %s by one."
+msgstr "Tăng %s đã chọn lên một."
+
+#, c-format
+msgid ""
+"Map coordinates: X %1$d, Y %2$d, level %3$d. Relative location from player: "
+"%4$s."
+msgstr ""
+"Tọa độ bản đồ: X %1$d, Y %2$d, tầng %3$d. Vị trí tương đối so với người "
+"chơi: %4$s."
+
+#, c-format
+msgid ""
+"Map note: %1$s. Overmap coordinates: X %2$d, Y %3$d, level %4$d. Relative "
+"location: %5$s. %6$s"
+msgstr ""
+"Ghi chú bản đồ: %1$s. Tọa độ bản đồ lớn: X %2$d, Y %3$d, tầng %4$d. Vị trí "
+"tương đối: %5$s. %6$s"
+
+msgid ""
+"Move the map cursor one overmap level higher without moving the player."
+msgstr ""
+"Di chuyển con trỏ bản đồ lên một tầng bản đồ lớn mà không di chuyển người "
+"chơi."
+
+msgid "Move the map cursor one overmap level lower without moving the player."
+msgstr ""
+"Di chuyển con trỏ bản đồ xuống một tầng bản đồ lớn mà không di chuyển người "
+"chơi."
+
+msgid "Move the map cursor to the player's current location."
+msgstr "Di chuyển con trỏ bản đồ đến vị trí hiện tại của người chơi."
+
+msgid "Move to the next matching map tile."
+msgstr "Chuyển đến ô bản đồ khớp tiếp theo."
+
+msgid "Move to the previous matching map tile."
+msgstr "Chuyển đến ô bản đồ khớp trước đó."
+
+msgid "Moves the map cursor to the destination and does not start travel."
+msgstr "Di chuyển con trỏ bản đồ đến đích và không bắt đầu di chuyển."
+
+msgid "Next page"
+msgstr "Trang sau"
+
+msgid "No danger radius is set for this note."
+msgstr "Ghi chú này chưa có bán kính nguy hiểm."
+
+#, c-format
+msgid ""
+"Open the map notes list for level %d. Selecting a note moves the map cursor "
+"there; it does not start travel."
+msgstr ""
+"Mở danh sách ghi chú bản đồ của tầng %d. Chọn một ghi chú sẽ di chuyển con "
+"trỏ bản đồ đến đó; không bắt đầu di chuyển."
+
+msgid "Open the prompt to set a danger radius for the note at the cursor."
+msgstr "Mở hộp thoại để đặt bán kính nguy hiểm cho ghi chú tại con trỏ."
+
+msgid "Opens the danger-area radius controls for this note."
+msgstr "Mở điều khiển bán kính vùng nguy hiểm cho ghi chú này."
+
+msgid "Opens the note editor for this map location."
+msgstr "Mở trình sửa ghi chú cho vị trí này trên bản đồ."
+
+#, c-format
+msgid ""
+"Overmap coordinates: X %1$d, Y %2$d, level %3$d. Distance from player: %4$d "
+"map tiles. %5$s %6$s"
+msgstr ""
+"Tọa độ bản đồ lớn: X %1$d, Y %2$d, tầng %3$d. Cách người chơi: %4$d ô bản "
+"đồ. %5$s %6$s"
+
+msgid "Overmap search results"
+msgstr "Kết quả tìm kiếm bản đồ lớn"
+
+#, c-format
+msgid ""
+"Planned destination: %1$s. Coordinates: X %2$d, Y %3$d, level %4$d. Route "
+"length: %5$d map tiles. Relative location: %6$s."
+msgstr ""
+"Đích đã định: %1$s. Tọa độ: X %2$d, Y %3$d, tầng %4$d. Độ dài tuyến: %5$d ô "
+"bản đồ. Vị trí tương đối: %6$s."
+
+msgid "Previous page"
+msgstr "Trang trước"
+
+msgid "Restore the original date and time."
+msgstr "Khôi phục ngày và giờ ban đầu."
+
+#, c-format
+msgid ""
+"Search for %1$s. Result %2$d of %3$d. %4$s. Coordinates: X %5$d, Y %6$d, "
+"level %7$d. Distance from the player: %8$d map tiles, %9$s."
+msgstr ""
+"Tìm kiếm %1$s. Kết quả %2$d trên %3$d. %4$s. Tọa độ: X %5$d, Y %6$d, tầng "
+"%7$d. Cách người chơi: %8$d ô bản đồ, %9$s."
+
+#, c-format
+msgid "Search result %1$d of %2$d"
+msgstr "Kết quả tìm kiếm %1$d trên %2$d"
+
+msgid "Select a date or time field first."
+msgstr "Hãy chọn một trường ngày hoặc giờ trước."
+
+msgid "Select a map note first."
+msgstr "Hãy chọn một ghi chú bản đồ trước."
+
+msgid ""
+"Select the current map coordinates and close the map. This action does not "
+"start travel."
+msgstr ""
+"Chọn tọa độ bản đồ hiện tại và đóng bản đồ. Thao tác này không bắt đầu di "
+"chuyển."
+
+msgid ""
+"Selecting this note returns to the map at its location; it does not start "
+"travel."
+msgstr ""
+"Chọn ghi chú này sẽ quay lại bản đồ tại vị trí của nó; không bắt đầu di "
+"chuyển."
+
+msgid ""
+"Set a direct route to the current map tile. Choosing the existing route "
+"again may open the travel confirmation."
+msgstr ""
+"Đặt tuyến trực tiếp đến ô bản đồ hiện tại. Chọn lại tuyến hiện có có thể mở "
+"hộp thoại xác nhận di chuyển."
+
+msgid ""
+"Set the current map tile as the route destination. Choosing the existing "
+"route again may open the travel confirmation."
+msgstr ""
+"Đặt ô bản đồ hiện tại làm đích của tuyến. Chọn lại tuyến hiện có có thể mở "
+"hộp thoại xác nhận di chuyển."
+
+msgid ""
+"Show or hide map notes visually. The reader still describes a note at the "
+"cursor."
+msgstr ""
+"Hiện hoặc ẩn ghi chú bản đồ trên hình ảnh. Trình đọc vẫn mô tả ghi chú tại "
+"con trỏ."
+
+msgid ""
+"Starts travel to this destination after the game's confirmation prompt."
+msgstr "Bắt đầu di chuyển đến đích này sau hộp thoại xác nhận của game."
+
+msgid "The cursor is already at the highest overmap level."
+msgstr "Con trỏ đã ở tầng bản đồ lớn cao nhất."
+
+msgid "The cursor is already at the lowest overmap level."
+msgstr "Con trỏ đã ở tầng bản đồ lớn thấp nhất."
+
+msgid "There is no map note at the current cursor."
+msgstr "Không có ghi chú bản đồ nào tại con trỏ hiện tại."
+
+#, c-format
+msgid "This field is more precise than the allowed limit of %s."
+msgstr "Trường này chính xác hơn giới hạn cho phép là %s."
+
+msgid ""
+"Toggle whether direction input moves the cursor several map tiles at once."
+msgstr "Bật/tắt việc phím hướng di chuyển con trỏ nhiều ô bản đồ cùng lúc."
+
+msgid ""
+"When enabled, keep the overmap open and follow the player during automatic "
+"travel."
+msgstr ""
+"Khi bật, giữ bản đồ lớn mở và theo dõi người chơi trong lúc di chuyển tự "
+"động."
+
+#, c-format
+msgid "Now tracking mission: %s. Travel has not started."
+msgstr "Đang theo dõi nhiệm vụ: %s. Chưa bắt đầu di chuyển."
+
+#, c-format
+msgid "Now tracking point of interest: %s. Travel has not started."
+msgstr "Đang theo dõi điểm quan tâm: %s. Chưa bắt đầu di chuyển."
+
+msgid "Out of contact range."
+msgstr "Ngoài tầm liên hệ."
+
+#, c-format
+msgid "Cannot contact %s now."
+msgstr "Không thể liên lạc với %s ngay lúc này."
+
+msgid "Do you wish to bring your allies back into your party?"
+msgstr "Bạn có muốn đưa đồng minh trở lại đội của mình không?"
+
+msgid "Already in progress by:"
+msgstr "Đang được thực hiện bởi:"
+
+msgid "You cannot cast this spell because you cannot attack."
+msgstr "Bạn không thể thi triển phép này vì bạn không thể tấn công."
+
+msgid ""
+"You cannot cast this spell while mute because it requires spoken words."
+msgstr "Bạn không thể thi triển phép này khi đang bị câm vì phép cần lời nói."
+
+msgid ""
+"You cannot cast this spell because you are missing a required component."
+msgstr ""
+"Bạn không thể thi triển phép này vì bạn đang thiếu một thành phần bắt buộc."
+
+msgid "Talk to… (No one nearby to talk to)"
+msgstr "Nói chuyện… (Không có ai ở gần để nói chuyện)"
+
+#, c-format
+msgid "About %s"
+msgstr "Về %s"
+
+msgid "About the speaker"
+msgstr "Về người đang nói chuyện"
+
+#, c-format
+msgid "Trade: %s"
+msgstr "Giao dịch: %s"
+
+#, c-format
+msgid "Reward: %s"
+msgstr "Phần thưởng: %s"
+
+#, c-format
+msgid "Pay: %s"
+msgstr "Trả giá: %s"
+
+#, c-format
+msgid "Trading with %s."
+msgstr "Đang giao dịch với %s."
+
+msgid "On a companion mission.  Out of contact range."
+msgstr "Đang làm nhiệm vụ đồng hành. Ngoài tầm liên hệ."
+
+msgid "You need a radio to contact them."
+msgstr "Bạn cần có bộ đàm để liên lạc với họ."
+
+#, c-format
+msgid "Trait points left: %d."
+msgstr "Điểm đặc tính còn lại: %d."
+
+msgid "Enter name.  Cancel to keep the current name."
+msgstr "Nhập tên. Hủy để giữ tên hiện tại."
+
+#, c-format
+msgid "World options randomized: %s"
+msgstr "Đã thay đổi ngẫu nhiên các tùy chọn thế giới: %s"
+
+#, c-format
+msgid "Copying settings from world \"%s\"."
+msgstr "Đang sao chép cài đặt từ thế giới \"%s\"."
+
+msgid "This mod cannot be moved up in the load order."
+msgstr "Không thể di chuyển mod này lên trên trong thứ tự tải."
+
+msgid "This mod cannot be moved down in the load order."
+msgstr "Không thể di chuyển mod này xuống dưới trong thứ tự tải."
+
+msgid "Failed to save the list of active mods as default."
+msgstr "Không lưu được danh sách mod đang bật làm mặc định."
+
+msgid "Has details."
+msgstr "Có chi tiết."
+
+#, c-format
+msgid "Also removed from the load order: %s."
+msgstr "Cũng đã gỡ khỏi thứ tự tải: %s."
+
+#, c-format
+msgid "Removed the previous core mod: %s."
+msgstr "Đã gỡ mod lõi trước đó: %s."
+
+#, c-format
+msgid "World \"%s\" could not be deleted."
+msgstr "Không thể xóa thế giới \"%s\"."
+
+#, c-format
+msgid "World \"%s\" could not be reset."
+msgstr "Không thể đặt lại thế giới \"%s\"."
+
+#, c-format
+msgid "Selected world: %s."
+msgstr "Đã chọn thế giới: %s."
+
+msgid "ImGui demonstration"
+msgstr "Minh họa ImGui"
+
+msgid ""
+"This developer demonstration does not provide accessible game controls. "
+"Choose Back to return to Settings."
+msgstr ""
+"Bản minh họa cho nhà phát triển này không cung cấp điều khiển game có thể "
+"truy cập. Chọn Quay lại để trở về Cài đặt."
+
+#, c-format
+msgid "Transfer finished: %1$d of %2$s, from %3$s to %4$s."
+msgstr "Đã chuyển xong: %1$d %2$s từ %3$s tới %4$s."
+
+#, c-format
+msgid "Transfer partly finished: moved %1$d of %2$d %3$s from %4$s to %5$s."
+msgstr ""
+"Chuyển chưa xong hết: đã chuyển %1$d trong số %2$d %3$s từ %4$s tới %5$s."
+
+#, c-format
+msgid "Transfer did not finish: no %1$s moved from %2$s to %3$s."
+msgstr "Chuyển chưa xong: chưa chuyển được %1$s nào từ %2$s tới %3$s."
+
+msgid "That item is no longer in the source pane. It may have been moved."
+msgstr "Món đó không còn trong ngăn nguồn nữa. Có thể nó đã được chuyển đi."
+
+#, c-format
+msgid "%s is now a favorite."
+msgstr "%s giờ là món yêu thích."
+
+#, c-format
+msgid "%s is no longer a favorite."
+msgstr "%s không còn là món yêu thích nữa."
+
+#, c-format
+msgid "Sorted by %s."
+msgstr "Đã sắp xếp theo %s."
+
+msgid "Sorting cleared."
+msgstr "Đã bỏ sắp xếp."
+
+msgid "Filter cleared."
+msgstr "Đã xóa bộ lọc."
+
+#, c-format
+msgid "Auto-pickup on for %s."
+msgstr "Đã bật tự nhặt cho %s."
+
+#, c-format
+msgid "Auto-pickup off for %s."
+msgstr "Đã tắt tự nhặt cho %s."
+
+#, c-format
+msgid "Too hungry to activate %s."
+msgstr "Quá đói nên không thể kích hoạt %s."
+
+#, c-format
+msgid "Too thirsty to activate %s."
+msgstr "Quá khát nên không thể kích hoạt %s."
+
+#, c-format
+msgid "Too sleepy to activate %s."
+msgstr "Quá buồn ngủ nên không thể kích hoạt %s."
+
+#, c-format
+msgid "Not enough mana to activate %s."
+msgstr "Không đủ mana để kích hoạt %s."
+
+#, c-format
+msgid "Not enough stamina to activate %s."
+msgstr "Không đủ thể lực để kích hoạt %s."
+
+#, c-format
+msgid "Tab: %s."
+msgstr "Tab: %s."
+
+#, c-format
+msgid "Picked up %s for reordering."
+msgstr "Đã nhặt %s lên để sắp xếp lại."
+
+#, c-format
+msgid "%1$s placed at position %2$d of %3$d."
+msgstr "Đã đặt %1$s ở vị trí %2$d trong số %3$d."
+
+#, c-format
+msgid "%1$s is now worn on the left side."
+msgstr "%1$s giờ được mặc ở bên trái."
+
+#, c-format
+msgid "%1$s is now worn on the right side."
+msgstr "%1$s giờ được mặc ở bên phải."
+
+#, c-format
+msgid "Could not swap the side for %s."
+msgstr "Không thể đổi bên cho %s."
+
+#, c-format
+msgid "%1$s hidden."
+msgstr "Đã ẩn %1$s."
+
+#, c-format
+msgid "%1$s shown."
+msgstr "Đã hiện %1$s."
+
+msgid "Armor sorted by layer."
+msgstr "Đã sắp xếp giáp theo lớp."
+
+#, c-format
+msgid "Armor sorted by layer. Innermost: %s."
+msgstr "Đã sắp xếp giáp theo lớp. Trong cùng: %s."
+
+#, c-format
+msgid "Side: %s."
+msgstr "Bên: %s."
+
+#, c-format
+msgid "%1$d of %2$d slots free"
+msgstr "%1$d trong số %2$d khe còn trống"
+
+msgid "Select quantity"
+msgstr "Chọn số lượng"
+
+msgid "Quantity"
+msgstr "Số lượng"
+
+#, c-format
+msgid "Armor layer changed: %1$s, position %2$d of %3$d."
+msgstr "Đã đổi lớp giáp: %1$s, vị trí %2$d trong số %3$d."
+
+#, c-format
+msgid "Not enough resources to activate %s."
+msgstr "Không đủ tài nguyên để kích hoạt %s."
+
+msgid "You stop eating or drinking."
+msgstr "Bạn ngừng ăn hoặc uống."
+
+msgid "You stop giving first aid."
+msgstr "Bạn ngừng sơ cứu."
+
+msgid "You stop treating the wound."
+msgstr "Bạn ngừng điều trị vết thương."
+
+msgid "You stop your workout session."
+msgstr "Bạn ngừng buổi tập luyện."
+
+msgid "You board the vehicle."
+msgstr "Bạn lên xe."
+
+msgid "You get out of the vehicle."
+msgstr "Bạn xuống xe."
+
+msgid "Next weapon"
+msgstr "Vũ khí tiếp theo"
+
+msgid "Previous weapon"
+msgstr "Vũ khí trước đó"
+
+msgid "Reload wielded gun"
+msgstr "Nạp đạn cho súng đang cầm"
+
+msgid "Uses the native weapon and ammunition rules. No walking."
+msgstr "Dùng quy tắc vũ khí và đạn dược gốc của game. Không di chuyển."
+
+msgid "Reload the last save? Any progress not saved will be lost. Continue?"
+msgstr ""
+"Tải lại bản lưu gần nhất? Mọi tiến trình chưa lưu sẽ bị mất. Tiếp tục?"
+
+msgid "Snake body"
+msgstr "Thân rắn"
+
+#, c-format
+msgid "Body next to the head: %s."
+msgstr "Thân rắn kề đầu: %s."
+
+msgid "No part of the body is next to the head."
+msgstr "Không có phần thân nào kề đầu."
+
+#, c-format
+msgid "Blocked: you cannot move %s. The edge of the field is there."
+msgstr "Bị chặn: bạn không thể di chuyển %s. Mép sân ở đó."
+
+#, c-format
+msgid "Level %d complete! You scored 500 points."
+msgstr "Hoàn thành cấp %d! Bạn được 500 điểm."
+
+#, c-format
+msgid "Level %d complete!"
+msgstr "Hoàn thành cấp %d!"
+
+msgid "Blocked by a wall."
+msgstr "Bị tường chặn."
+
+msgid "The package cannot be pushed that way."
+msgstr "Không thể đẩy kiện hàng theo hướng đó."
+
+msgid "At the edge: you cannot move further in that direction."
+msgstr "Đã ở mép: bạn không thể di chuyển xa hơn theo hướng đó."

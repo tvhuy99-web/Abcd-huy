@@ -206,10 +206,6 @@ public final class ReaderPreferences {
         return values.getBoolean("left_handed_navigation", false);
     }
 
-    public void setLeftHandedNavigation(boolean enabled) {
-        values.edit().putBoolean("left_handed_navigation", enabled).apply();
-    }
-
     /** Minimum swipe distance in dp: short, standard, long. */
     public int getSwipeDistanceDp() {
         switch (values.getInt("swipe_distance_level", 1)) {
@@ -343,16 +339,5 @@ public final class ReaderPreferences {
     private static int normalizeGestureAction(int action) {
         return action >= GESTURE_ACTION_NAVIGATE && action <= GESTURE_ACTION_NONE
                ? action : GESTURE_ACTION_NAVIGATE;
-    }
-
-    public void restoreGestureDefaults() {
-        trialPendingInMemory = false;
-        trialStartedElapsedMs = 0L;
-        values.edit().remove("left_handed_navigation").remove("swipe_distance_level")
-        .remove("swipe_duration_level").remove("horizontal_swipe_action")
-        .remove("vertical_swipe_action").remove("world_gesture_bindings_v1")
-        .remove(TRIAL_HORIZONTAL_ACTION)
-        .remove(TRIAL_VERTICAL_ACTION).remove(LEGACY_GESTURE_TRIAL_PENDING)
-        .remove(LEGACY_GESTURE_TRIAL_DEADLINE).apply();
     }
 }

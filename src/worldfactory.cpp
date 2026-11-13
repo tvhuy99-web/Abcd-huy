@@ -12,6 +12,7 @@
 #include <unordered_map>
 #include <utility>
 
+#include "a11y_android.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
 #include "cata_utility.h"
@@ -192,8 +193,17 @@ WORLD *worldfactory::make_new_world( bool show_prompt, const std::string &world_
             if( show_worldgen_basic( retworld.get() ) < 0 ) {
                 return nullptr;
             }
-        } else if( show_worldgen_advanced( retworld.get() ) < 0 ) {
-            return nullptr;
+        } else {
+            if( a11y::enabled() ) {
+                // The copy flow reuses the create-world screens with the
+                // same titles, so a reader user otherwise cannot tell
+                // this is a copy of another world (STT 190).
+                popup( "%s", string_format( _( "Copying settings from world \"%s\"." ),
+                                            world_to_copy ) );
+            }
+            if( show_worldgen_advanced( retworld.get() ) < 0 ) {
+                return nullptr;
+            }
         }
     }
 
@@ -487,8 +497,16 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
             ++it;
         }
     }
+    // Announce an automatic pick: the player never saw a list, so the
+    // chosen world would otherwise be silent (STT 195).
+    const auto announce_auto_pick = []( const std::string &name ) {
+        if( a11y::enabled() ) {
+            a11y::android::announce( string_format( _( "Selected world: %s." ), name ), 1 );
+        }
+    };
     // If there is only one world to pick from, autoreturn it.
     if( world_names.size() == 1 ) {
+        announce_auto_pick( world_names[0] );
         return get_world( world_names[0] );
     }
     // If there are no worlds to pick from, immediately try to make one.
@@ -499,10 +517,12 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
     else if( !show_prompt ) {
         for( const std::string &name : world_names ) {
             if( get_world( name )->world_saves.empty() ) {
+                announce_auto_pick( name );
                 return get_world( name );
             }
         }
         // if there isn't any, adhere to old logic: return the alphabetically first one
+        announce_auto_pick( world_names[0] );
         return get_world( world_names[0] );
     }
 
@@ -1579,6 +1599,22 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             }
             return detail;
         };
+        // Swiping reads label + value, never detail (STT 193a), and the
+        // full detail is only published for the selected row. The spoken
+        // value therefore carries a short cue when the row has a detail
+        // worth hearing, so the player knows the detail gesture applies.
+        // Cheap field check mirroring mod_detail above; the full text is
+        // still built only for the selected row.
+        const auto mod_has_detail = []( const mod_id &id ) {
+            if( !id.is_valid() ) {
+                return true; // "This mod is missing: %s."
+            }
+            const MOD_INFORMATION &info = *id;
+            return !info.description.empty() || !info.authors.empty() ||
+                   !info.maintainers.empty() || !info.dependencies.empty() ||
+                   !info.conflicts.empty() || !info.version.empty() ||
+                   !info.category.second.empty() || info.obsolete;
+        };
 
         const std::vector<mod_id> &available_mods = all_tabs[iCurrentTab].mods;
         cursel[0] = available_mods.empty() ? 0 : std::min( cursel[0], available_mods.size() - 1 );
@@ -1605,6 +1641,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
             node.value = std::find( active_mod_order.begin(), active_mod_order.end(), id ) != active_mod_order.end() ?
                          _( "Already in load order" ) : _( "Available to add" );
+            if( mod_has_detail( id ) ) {
+                node.value += " " + std::string( _( "Has details." ) );
+            }
             if( !id.is_valid() ) {
                 node.enabled = false;
                 node.disabled_reason = _( "This mod is missing and cannot be added." );
@@ -1651,6 +1690,9 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             node.label = id.is_valid() ? id->name() : _( "Missing mod" );
             node.value = string_format( _( "Load order position %1$lu of %2$lu" ), i + 1,
                                         active_mod_order.size() );
+            if( mod_has_detail( id ) ) {
+                node.value += " " + std::string( _( "Has details." ) );
+            }
             node.selected = active_header == 1 && cursel[1] == i;
             if( node.selected ) {
                 node.detail = mod_detail( id );
@@ -1801,12 +1843,26 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             }
         } else if( action == "MOVE_MOD_DOWN" ) {
             if( active_header == 1 && active_mod_order.size() > 1 ) {
-                mman_ui->try_shift( '+', cursel[1], active_mod_order );
+                if( a11y::enabled() &&
+                    !mman_ui->can_shift_down( cursel[1], active_mod_order ) ) {
+                    // try_shift stays silent when the move is refused
+                    // (edge of the list, or blocked by a core or a
+                    // dependency), and the unchanged focus is not
+                    // re-read either (STT 191).
+                    popup( _( "This mod cannot be moved down in the load order." ) );
+                } else {
+                    mman_ui->try_shift( '+', cursel[1], active_mod_order );
+                }
             }
             recalc_start = true;
         } else if( action == "MOVE_MOD_UP" ) {
             if( active_header == 1 && active_mod_order.size() > 1 ) {
-                mman_ui->try_shift( '-', cursel[1], active_mod_order );
+                if( a11y::enabled() &&
+                    !mman_ui->can_shift_up( cursel[1], active_mod_order ) ) {
+                    popup( _( "This mod cannot be moved up in the load order." ) );
+                } else {
+                    mman_ui->try_shift( '-', cursel[1], active_mod_order );
+                }
             }
             recalc_start = true;
         } else if( action == "NEXT_CATEGORY_TAB" ) {
@@ -1838,6 +1894,11 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             if( mman->set_default_mods( active_mod_order ) ) {
                 popup( _( "Saved list of active mods as default" ) );
                 draw_modselection_borders( win, ctxt );
+            } else if( a11y::enabled() ) {
+                // The success popup above is the only feedback; a failed
+                // write was silent, so the player believed the default
+                // mods were saved (STT 192).
+                popup( _( "Failed to save the list of active mods as default." ) );
             }
         } else if( action == "VIEW_MOD_DESCRIPTION" ) {
             if( const MOD_INFORMATION *selmod = get_selected_mod() ) {
@@ -2353,6 +2414,24 @@ int worldfactory::show_worldgen_basic( WORLD *world )
                 // randomize
                 for( int i = 0; i < static_cast<int>( wg_sliders.size() ); i++ ) {
                     wg_slevels[i] = wg_sliders[i]->random_level();
+                }
+                if( a11y::enabled() ) {
+                    // The focused row is the Randomize action itself, so
+                    // its value does not change and the reader does not
+                    // re-read any row. Announce the new values outright
+                    // (STT 187); the snapshot below still carries them
+                    // for browsing.
+                    std::string summary;
+                    for( size_t i = 0; i < wg_sliders.size(); ++i ) {
+                        const option_slider &slider = wg_sliders[i].obj();
+                        if( !summary.empty() ) {
+                            summary += ", ";
+                        }
+                        summary += slider.name().translated() + ": " +
+                                   slider.level_name( wg_slevels[i] ).translated();
+                    }
+                    a11y::android::announce(
+                        string_format( _( "World options randomized: %s" ), summary ), 1 );
                 }
             }
         } else if( navigate_ui_list( action, sel_opt, 1, wg_sliders.size() + 2, true ) ) {

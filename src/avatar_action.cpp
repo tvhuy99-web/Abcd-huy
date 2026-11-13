@@ -615,7 +615,18 @@ bool avatar_action::move( avatar &you, map &m, const tripoint_rel_ms &d )
 
     const tripoint_abs_ms old_abs_pos = you.pos_abs();
     const tripoint_abs_ms abs_dest_loc = here.get_abs( dest_loc );
+    const bool was_in_vehicle = you.in_vehicle;
     if( g->walk_move( dest_loc, via_ramp ) ) {
+        // Walking out of a vehicle was silent; the player only learned
+        // it from the destination tile's description. Announced here --
+        // the walk-out path -- rather than in map::unboard_vehicle,
+        // which also runs on death, teleport, despawning, being thrown
+        // from the car and character swaps, where "you get out" would be
+        // wrong. Boarding has its own announcement in
+        // map::board_vehicle. Reader-only, so sighted play is unchanged.
+        if( was_in_vehicle && !you.in_vehicle && a11y::enabled() ) {
+            add_msg( m_info, _( "You get out of the vehicle." ) );
+        }
         // AUTOPEEK: If safe mode would be triggered after the move, look around and move back
         if( g->safe_mode == SAFE_MODE_ON && !you.is_running() &&
             you.pos_abs() == abs_dest_loc ) {
@@ -786,6 +797,15 @@ void avatar_action::swim( map &m, avatar &you, const tripoint_bub_ms &p )
     bool diagonal = p.x() != you_pos.x() && p.y() != you_pos.y();
     if( you.in_vehicle ) {
         m.unboard_vehicle( you.pos_bub() );
+        // Swimming out of a vehicle was silent. Announced here -- the
+        // swim-out path -- rather than in map::unboard_vehicle, which
+        // also runs on death, teleport, despawning and being thrown from
+        // the car, where "you get out" would be wrong. Walking out on
+        // land is announced in avatar_action::move instead.
+        // Reader-only, so sighted play is unchanged.
+        if( a11y::enabled() ) {
+            add_msg( m_info, _( "You get out of the vehicle." ) );
+        }
     }
     if( you.is_mounted() && m.veh_at( you.pos_bub() ).part_with_feature( VPFLAG_BOARDABLE, true ) ) {
         add_msg( m_warning, _( "You cannot board a vehicle while mounted." ) );

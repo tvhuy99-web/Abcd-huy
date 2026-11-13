@@ -557,7 +557,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         || "DEFAULTMODE".equals(next.category)
                         || "activity".equals(next.category)
                         || "overmap".equals(next.category)
-                        || "OPTIONS".equals(next.category);
+                        || "OPTIONS".equals(next.category)
+                        // STT 32: character creation was never re-read when
+                        // the selection changed, so +/-1 adjustments were
+                        // silent on the Java side (the C++ announce is the
+                        // other channel; both are kept, they say different
+                        // things). STT 262/266/267: the same gap hid
+                        // advanced-inventory and armor-layer updates.
+                        || "CHARACTER_CREATION".equals(next.category)
+                        || next.category.startsWith("character-creator-step-")
+                        || "advanced-inventory".equals(next.category)
+                        || "armor-layers".equals(next.category);
                 if (!changedContext && announcesSelection && next.category.equals(snapshot.category)) {
                     for (ReaderSnapshot.Node node : next.nodes) {
                         if (node.selected) {
@@ -634,7 +644,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || "mod-selection".equals(next.category)
                             || "active-world-mods".equals(next.category)
                             || "world-options".equals(next.category)
-                            || "OPTIONS".equals(next.category))) {
+                            || "OPTIONS".equals(next.category)
+                            // STT 32/262/266/267: the selected-flag loop above
+                            // cannot see a +/-1 or command that only changes
+                            // the focused row's value (points left, sort or
+                            // filter state, armor position), so re-read the
+                            // focused row when its value/detail changes, the
+                            // same way the world-generation screens do.
+                            || "CHARACTER_CREATION".equals(next.category)
+                            || next.category.startsWith("character-creator-step-")
+                            || "advanced-inventory".equals(next.category)
+                            || "armor-layers".equals(next.category))) {
                         ReaderSnapshot.Node previousFocus = snapshot.find(focus);
                         ReaderSnapshot.Node nextFocus = next.find(focus);
                         if (previousFocus != null && nextFocus != null
@@ -783,7 +803,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 // primary content instead of reading the long command tail.
                 ReaderSnapshot.Node focusedNode = next.find(focus);
                 if (!commandPaletteOpen && focusedNode != null
-                        && isAuxiliaryCommand(focusedNode)) {
+                        && isAuxiliaryCommand(focusedNode)
+                        // STT 102: a focused direction command in a minigame
+                        // is a real control, not the command tail: keep the
+                        // focus there so the player can double-tap again to
+                        // keep moving in the same direction.
+                        && !(isMinigameCategory(next.category)
+                                && isDirectionCommand(focusedNode))) {
                     List<ReaderSnapshot.Node> primary = visibleNodes();
                     if (!primary.isEmpty() && !isAuxiliaryCommand(primary.get(0))) {
                         focus = primary.get(0).id;
@@ -881,6 +907,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             + " ui_update_ms=" + (SystemClock.elapsedRealtime() - parsedAt)
                             + " nodes=" + next.nodes.size());
                 }
+                // STT 101: a summary that changed while the context and the
+                // focus stayed the same is new information (a minigame move,
+                // win or loss; a new Source/Destination; a new armor tab).
+                // Only read it when it really changed, so a repeatedly
+                // published game-over summary is spoken once, and never
+                // while a document or the command palette owns the swipes.
+                boolean summaryChanged = !changedContext && previousSnapshot != null
+                        && readsSummaryOnChange(next.category)
+                        && !next.summary.trim().isEmpty()
+                        && !next.summary.equals(previousSnapshot.summary)
+                        && previous.equals(focus)
+                        && !documentReader.isOpen() && !commandPaletteOpen;
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
                 } else if (enteredMenu && "SCROLLABLE_TEXT".equals(next.category)
@@ -914,7 +952,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || "CHARACTER_CREATION".equals(next.category)) {
                         // A creator step has a deliberately short introduction;
                         // the first choice is read when the player browses it.
-                        feedback(introduction);
+                        // STT 207: on the summary tab (CHARACTER_CREATION)
+                        // the snapshot.summary ("Character: … Scenario: …
+                        // Profession: …") was never spoken on entry because
+                        // only the title was read. The C++ side currently
+                        // appends the summary to the title as a bridge, so
+                        // speak it as well only when the title does not
+                        // already contain it: the line is heard exactly
+                        // once either way, and stays heard if the C++
+                        // bridge is ever removed.
+                        String creatorIntroduction = introduction;
+                        if ("CHARACTER_CREATION".equals(next.category)
+                                && !next.summary.trim().isEmpty()
+                                && !next.title.contains(next.summary.trim())) {
+                            creatorIntroduction = introduction + ". " + next.summary.trim();
+                        }
+                        feedback(creatorIntroduction);
                     } else if ("places".equals(next.category)
                             || "nearby-target".equals(next.category)
                             || "pickup-here".equals(next.category)) {
@@ -925,6 +978,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 } else if (selectionChanged) {
                     readCurrent();
+                } else if (summaryChanged) {
+                    // STT 101 (and 411/412/413): the summary itself is the
+                    // feedback for this update; reading the focused row
+                    // instead would repeat its old label. Blocked moves and
+                    // level wins keep their own C++ announces, which say
+                    // something different and arrive first.
+                    feedback(next.summary.trim());
                 } else if (!usesTouchExploration() && (changedContext || !previous.equals(focus))) {
                     readCurrent();
                 }
@@ -985,7 +1045,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Keep the actual map generation and all other gameplay messages;
         // do not let this one sentence enter the buffered or spoken FIFO.
         if ("Đang tạo khu vực bản đồ mới. Vui lòng chờ.".equals(spokenMessage)
-                || "Creating a new map area. Please wait.".equals(spokenMessage)) {
+                || "Generating a new map area. Please wait.".equals(spokenMessage)) {
             SessionDebugLog.event("MAPGEN_SPEECH_SUPPRESSED", "movement_mapgen_notice");
             return;
         }
@@ -1198,6 +1258,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // and their 1/2, 2/2 markers prevent an endless-list impression.
         int spokenPosition = node.position;
         int spokenTotal = node.total;
+        // STT 102: minigame snapshots assign position/total over every
+        // node, including commands hidden behind long press, so the C++
+        // numbers count rows the player can never swipe to. Recompute
+        // from the swipe list instead, so the spoken position always
+        // matches what swiping reaches (status rows plus the direction
+        // commands now kept in the list).
+        boolean minigamePositions = snapshot != null
+                && isMinigameCategory(snapshot.category);
+        if (minigamePositions) {
+            spokenPosition = 0;
+            spokenTotal = 0;
+        }
         if ((spokenPosition <= 0 || spokenTotal <= 0) && snapshot != null
                 && !"DEFAULTMODE".equals(snapshot.category)) {
             List<ReaderSnapshot.Node> siblings = visibleNodes();
@@ -1343,11 +1415,51 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return null;
     }
 
+    /** Minigame screens (STT 101/102): their screen_scope category is the
+     * game id, not an input-context id. */
+    private static boolean isMinigameCategory(String category) {
+        return "robot-finds-kitten".equals(category) || "snake".equals(category)
+                || "sokoban".equals(category) || "lightson".equals(category);
+    }
+
+    /**
+     * Screens whose summary is the event itself (STT 101): a minigame
+     * summary changes after every move and on win/lose, an
+     * advanced-inventory summary carries the new Source/Destination
+     * (STT 262), and an armor-layers summary is the new tab name
+     * (STT 267). Other screens keep their existing behaviour: the
+     * calendar summary would repeat the old/new date already spoken
+     * from the focused row's value (STT 211), and dialogue already
+     * announces the spoken line as a game event (STT 73).
+     */
+    private static boolean readsSummaryOnChange(String category) {
+        return isMinigameCategory(category)
+                || "advanced-inventory".equals(category)
+                || "armor-layers".equals(category);
+    }
+
     /** Only auxiliary screen controls go into the hold menu, never dialogue choices. */
     private static boolean isAuxiliaryCommand(ReaderSnapshot.Node node) {
         return "command".equals(node.role) || node.id.startsWith("group:")
                 || node.id.startsWith("action:") || node.id.startsWith("category:")
                 || "filter".equals(node.id) || "filter:clear".equals(node.id);
+    }
+
+    /**
+     * STT 102: a direction command of a minigame (node id is the action
+     * id from a11y::command_snapshot, e.g. "UP"). Directions are the
+     * controls the player uses on every move, so in minigames they stay
+     * in the swipe list instead of hiding behind long press. Every other
+     * auxiliary command still hides behind long press.
+     */
+    private static boolean isDirectionCommand(ReaderSnapshot.Node node) {
+        if (!"command".equals(node.role)) { return false; }
+        switch (node.id) {
+            case "UP": case "DOWN": case "LEFT": case "RIGHT":
+            case "LEFTUP": case "RIGHTUP": case "LEFTDOWN": case "RIGHTDOWN":
+                return true;
+            default: return false;
+        }
     }
 
     private List<ReaderSnapshot.Node> pocketNodes(String parent) {
@@ -1450,6 +1562,31 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         render();
         if (announce) { readCurrent(); }
+    }
+
+    /**
+     * STT 268: cancelling item selection goes back one level, to the
+     * pocket list (stage 2), instead of leaving the picker entirely,
+     * so the player can pick another pocket without reopening from the
+     * start. Only when there is a list to return to: with a single
+     * pocket the list would immediately reopen the same pocket, so
+     * exiting is still the right outcome. Uncommitted amounts for the
+     * abandoned pocket are dropped, like a full reset. Back uses the
+     * same rollback as Cancel.
+     */
+    private void cancelPocketPicker() {
+        if (pocketStage == 3 && pocketNodes(pocketContainerId).size() > 1) {
+            String pocket = pocketCurrentId;
+            pocketDrafts.clear();
+            pocketCurrentId = "";
+            pocketStage = 2;
+            focus = pocket;
+            root.cancelGesture();
+            render();
+            readCurrent();
+        } else {
+            resetPocketPicker(true);
+        }
     }
 
     private void openPocketChoices() {
@@ -1611,7 +1748,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
             if (POCKET_CANCEL_NODE.equals(focus)) {
-                resetPocketPicker(true);
+                cancelPocketPicker();
                 return;
             }
             ReaderSnapshot.Node item = snapshot == null ? null : snapshot.find(focus);
@@ -1743,7 +1880,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         Button cancel = new Button(activity);
         cancel.setText(R.string.a11yPocketCancel);
         cancel.setSelected(POCKET_CANCEL_NODE.equals(focus));
-        cancel.setOnClickListener(v -> resetPocketPicker(true));
+        cancel.setOnClickListener(v -> cancelPocketPicker());
         rows.addView(cancel);
     }
 
@@ -1812,7 +1949,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (!isAuxiliaryCommand(node)) { containsContent = true; break; }
         }
         if (containsContent) {
-            result.removeIf(GameReaderController::isAuxiliaryCommand);
+            // STT 102: in minigames the direction commands are the
+            // controls the player uses on every move; keep them in the
+            // swipe list (double-tap to move) instead of hiding them
+            // behind long press. Every other command stays behind
+            // long press, as on every other mixed screen.
+            if (isMinigameCategory(snapshot.category)) {
+                result.removeIf(node -> isAuxiliaryCommand(node) && !isDirectionCommand(node));
+            } else {
+                result.removeIf(GameReaderController::isAuxiliaryCommand);
+            }
         } else if ("crafting".equals(snapshot.category)
                 || "construction".equals(snapshot.category)
                 || "inventory".equals(snapshot.category)
@@ -3381,8 +3527,20 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
 
     private int hubEmptyLabel() {
-        return hubSection == GameActionHub.FAVORITES ? R.string.a11yHubFavoritesEmpty
-                : hubSection == 1 ? R.string.a11yHubNearbyNoActions : R.string.a11yHubEmpty;
+        if (hubSection == GameActionHub.FAVORITES) {
+            return R.string.a11yHubFavoritesEmpty;
+        }
+        if (hubSection == 1) {
+            return R.string.a11yHubNearbyNoActions;
+        }
+        // STT 240: a search that matches nothing says so explicitly
+        // instead of the generic "no available entries", so the player
+        // knows to change the keyword. The string already exists in
+        // values/a11y_reader.xml (EN) and values-vi (VI).
+        if (hubSection == GameActionHub.SEARCH && !hubQuery.trim().isEmpty()) {
+            return R.string.a11yHubNoMatches;
+        }
+        return R.string.a11yHubEmpty;
     }
 
     private List<GameActionHub.Entry> hubEntries() {
@@ -4096,7 +4254,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
-    public void stopSpeech() { speech.stop(); }
+    public void stopSpeech() {
+        // STT 175: a single tap is the reader's speech control. While
+        // something is speaking (or still queued) it stops it, as before.
+        // When the queue is idle, the same tap resumes the last utterance
+        // from the chunk where it was cut off (ReaderSpeechQueue.resume(),
+        // which falls back to repeating from the start when nothing was
+        // cut off mid-utterance). The speaking/pending check comes from
+        // the queue's own stats so a resume attempt can never discard
+        // speech that is still waiting to be spoken.
+        ReaderSpeechQueue.Stats stats = speech.snapshotStats();
+        if (stats.speaking || stats.pending > 0) {
+            speech.stop();
+        } else {
+            speech.resume();
+        }
+    }
 
     public void onBackPressed() {
         SessionDebugLog.event("ACTION", "back focus=" + focus
@@ -4105,7 +4278,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
         if (pocketStage != 0) {
-            resetPocketPicker(true); // Back has the same rollback as Cancel.
+            cancelPocketPicker(); // Back has the same rollback as Cancel.
             return;
         }
         if (commandPaletteOpen) { closeContextActions(); return; }

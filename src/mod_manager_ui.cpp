@@ -3,6 +3,7 @@
 #include <algorithm>
 #include <exception>
 
+#include "a11y_runtime.h"
 #include "color.h"
 #include "debug.h"
 #include "dependency_tree.h"
@@ -132,7 +133,13 @@ void mod_ui::try_add( const mod_id &mod_to_add,
         //  (more than 0 active elements) && (active[0] is a CORE) && active[0] is not the add candidate
         if( !active_list.empty() && active_list[0]->core && active_list[0] != mod_to_add ) {
             // remove existing core
+            const std::string old_core_name = active_list[0]->name();
             try_rem( 0, active_list );
+            if( a11y::enabled() ) {
+                // try_rem only reports dependents; the replaced core
+                // itself would otherwise go unmentioned (STT 193b).
+                popup( _( "Removed the previous core mod: %s." ), old_core_name );
+            }
         }
 
         // add to start of active_list if it doesn't already exist in it
@@ -153,7 +160,15 @@ void mod_ui::try_add( const mod_id &mod_to_add,
         }
 
         if( new_core && !active_list.empty() ) {
+            // The new core replaces whatever core is currently first.
+            // try_rem below also drops that core's dependents; report the
+            // core itself here, the dependents are reported there (STT 193b).
+            const bool had_core = active_list[0].is_valid() && active_list[0]->core;
+            const std::string old_core_name = had_core ? active_list[0]->name() : std::string();
             try_rem( 0, active_list );
+            if( a11y::enabled() && had_core ) {
+                popup( _( "Removed the previous core mod: %s." ), old_core_name );
+            }
             active_list.insert( active_list.begin(), mods_to_add[0] );
             mods_to_add.erase( mods_to_add.begin() );
         }
@@ -180,9 +195,11 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
     std::vector<mod_id> dependents = mm_tree.get_dependents_of_X_as_strings( mod.ident );
 
     // search through the rest of the active list for mods that depend on this one
+    std::vector<std::string> removed_dependents;
     for( auto &i : dependents ) {
         auto rem = std::find( active_list.begin(), active_list.end(), i );
         if( rem != active_list.end() ) {
+            removed_dependents.push_back( i.is_valid() ? i->name() : i.str() );
             active_list.erase( rem );
         }
     }
@@ -190,6 +207,14 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
                                         sel_string );
     if( rem != active_list.end() ) {
         active_list.erase( rem );
+    }
+    if( a11y::enabled() && !removed_dependents.empty() ) {
+        // Removing one mod silently drops every mod that depends on it;
+        // the refreshed list alone never says what went away (STT 193b).
+        // The removed mod itself needs no announcement: the player just
+        // activated its removal and the list re-reads without it.
+        popup( _( "Also removed from the load order: %s." ),
+               enumerate_as_string( removed_dependents ) );
     }
 }
 

@@ -54,7 +54,13 @@ class TouchToSilenceTest(unittest.TestCase):
             "public boolean stopForTouch()", 1)[0]
         self.assertIn("clearRequests();", stop)
         self.assertIn("speech.cancel();", stop)
-        self.assertIn("public void stopSpeech() { speech.stop(); }", self.controller)
+        # STT 175: a single tap toggles speech — it still stops while
+        # anything is speaking or queued, and resumes from the cut-off
+        # chunk only when the queue is idle.
+        speech = self.controller.split("public void stopSpeech()", 1)[1].split(
+            "public void onBackPressed()", 1)[0]
+        self.assertIn("speech.stop();", speech)
+        self.assertIn("speech.resume();", speech)
 
 
 if __name__ == "__main__":

@@ -4,6 +4,7 @@
 #include <memory>
 
 #include "a11y_android.h"
+#include "a11y_runtime.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_type.h"
@@ -50,6 +51,7 @@ static const activity_id ACT_NULL( "ACT_NULL" );
 static const activity_id ACT_PICKAXE( "ACT_PICKAXE" );
 static const activity_id ACT_PICKUP( "ACT_PICKUP" );
 static const activity_id ACT_READ( "ACT_READ" );
+static const activity_id ACT_TREAT_WOUND( "ACT_TREAT_WOUND" );
 static const activity_id ACT_TRAVELLING( "ACT_TRAVELLING" );
 static const activity_id ACT_VEHICLE( "ACT_VEHICLE" );
 static const activity_id ACT_WORKOUT_ACTIVE( "ACT_WORKOUT_ACTIVE" );
@@ -408,6 +410,13 @@ void player_activity::canceled( Character &who )
 {
     if( *this && actor ) {
         actor->canceled( *this, who );
+    }
+    // fix_wound_activity_actor has no canceled() override (its header is
+    // outside this fix's scope), so wound treatment would otherwise end
+    // silently when interrupted: the wound was not treated. Reader-only,
+    // like wait_activity_actor::canceled.
+    if( *this && type == ACT_TREAT_WOUND && who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_warning, _( "You stop treating the wound." ) );
     }
     activity_handlers::clean_may_activity_occupancy_items_var( who );
     get_event_bus().send<event_type::character_finished_activity>( who.getID(), type, true );

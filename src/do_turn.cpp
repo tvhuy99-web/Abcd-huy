@@ -927,6 +927,18 @@ bool game::do_turn()
 
     // replenish avatar moves
     u.process_turn();
+
+    // Status changes (worsening bleeding, new infection, hunger/thirst/
+    // pain crossing a threshold) were only announced from the input-wait
+    // path in handle_action.cpp, so nothing was spoken while a long
+    // activity ran -- sleeping, waiting or treatment -- and a player who
+    // died in their sleep heard no warning at all. The monitor itself
+    // guards on the reader being enabled and rate-limits repeats, so
+    // this is a no-op for sighted play and for the walking loop, which
+    // already calls it. Waking the player on worsening bleeding is a
+    // separate, larger change (interrupting the sleep activity) and is
+    // deliberately not done here.
+    a11y::announce_status_changes();
 #if defined(__ANDROID__)
     if( world_profile ) {
         const auto now = std::chrono::steady_clock::now();

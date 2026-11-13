@@ -3653,16 +3653,21 @@ static std::string spell_reader_info( const spell &sp, Character &guy )
 // magic type's data-driven cannot-cast message, the failed caster
 // condition message (the same text the info panel and the cast path
 // print), and the cast path's not-enough-energy message from
-// Character::cast_spell. can_cast branches that own no message (cannot
-// attack, mute verbal spells, missing components) yield an empty reason
-// and the shared uilist adapter falls back to its generic sentence.
+// Character::cast_spell. The three branches can_cast rejects without
+// owning a message get one here instead of yielding an empty reason
+// (which made the shared uilist adapter fall back to its generic
+// sentence): cannot-attack, mute verbal spells, and missing components.
+// The component branch names the missing items via list_missing(), whose
+// availability flags were just refreshed by the can_make_with_inventory
+// call in the same branch, so the list names exactly what is absent
+// (tools, qualities and components alike).
 static std::string spell_reader_disabled_reason( const spell &sp, Character &guy )
 {
     if( sp.can_cast( guy ) ) {
         return std::string();
     }
     if( guy.has_flag( json_flag_CANNOT_ATTACK ) ) {
-        return std::string();
+        return _( "You cannot cast this spell because you cannot attack." );
     }
     const spell_type &sp_type = sp.id().obj();
     if( sp_type.magic_type.has_value() ) {
@@ -3678,12 +3683,22 @@ static std::string spell_reader_disabled_reason( const spell &sp, Character &guy
         return sp.failed_caster_condition_message();
     }
     if( guy.is_mute() && !guy.has_flag( json_flag_SILENT_SPELL ) && sp.has_flag( spell_flag::VERBAL ) ) {
-        return std::string();
+        return _( "You cannot cast this spell while mute because it requires spoken words." );
     }
     if( !sp_type.spell_components.is_empty() &&
         !sp_type.spell_components->can_make_with_inventory( &guy,
                 guy.crafting_inventory( guy.pos_bub(), 0, false ), return_true<item> ) ) {
-        return std::string();
+        const std::string missing = sp.components().list_missing();
+        const std::string lead =
+            _( "You cannot cast this spell because you are missing a required component." );
+        if( missing.empty() ) {
+            return lead;
+        }
+        // list_missing() ends each section with a newline; drop the trailing
+        // blank line so the spoken reason does not end in silence.
+        const std::size_t last_text = missing.find_last_not_of( "\n" );
+        return lead + "\n" + ( last_text == std::string::npos ?
+                               missing : missing.substr( 0, last_text + 1 ) );
     }
     if( !guy.magic->has_enough_energy( guy, sp ) ) {
         return string_format( _( "You don't have enough %s to cast the spell." ), sp.energy_string() );

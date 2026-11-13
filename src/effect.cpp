@@ -6,6 +6,7 @@
 #include <optional>
 #include <unordered_set>
 
+#include "a11y_runtime.h"
 #include "bodypart.h"
 #include "cata_assert.h"
 #include "character.h"
@@ -837,6 +838,14 @@ std::string effect::disp_desc( bool reduced ) const
     ret += string_format( _( "Effect started: <color_white>%s</color>" ), timestr );
     if( debug_mode ) {
         ret += string_format( _( "Effect ends in: <color_white>%s</color>" ), to_string( duration ) );
+    } else if( a11y::enabled() && !is_permanent() && duration > 0_turns ) {
+        // The remaining time exists in the data but is otherwise only
+        // shown in debug mode, so the reader's Effects document (which
+        // prints disp_desc()) could never say how long an effect lasts.
+        // Reader-only: sighted play without the reader is unchanged.
+        // Permanent effects have no meaningful end time and are skipped.
+        ret += string_format( _( "Effect ends in: <color_white>%s</color>" ),
+                              to_string_clipped( duration ) );
     }
     //Newline if necessary
     if( !ret.empty() && ret.back() != '\n' ) {

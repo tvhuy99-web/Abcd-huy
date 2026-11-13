@@ -10,6 +10,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_android.h"
 #include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -465,9 +466,24 @@ int sokoban_game::start_game()
         std::string action;
         if( check_win() ) {
             //we won yay
+            // STT 411: the win auto-advances to the next level and this
+            // iteration publishes no snapshot, so the win itself was never
+            // announced -- the player only noticed the new level and score
+            // when re-reading the summary. Announce it at once; the next
+            // level's own summary (new level, new score) is published right
+            // after and says something different, so this does not repeat it.
             if( !mAlreadyWon[iCurrentLevel] ) {
                 iScore += 500;
                 mAlreadyWon[iCurrentLevel] = true;
+                if( a11y::enabled() ) {
+                    a11y::android::announce(
+                        string_format( _( "Level %d complete! You scored 500 points." ),
+                                       iCurrentLevel + 1 ),
+                        1 );
+                }
+            } else if( a11y::enabled() ) {
+                a11y::android::announce(
+                    string_format( _( "Level %d complete!" ), iCurrentLevel + 1 ), 1 );
             }
             action = "NEXT";
 
@@ -576,6 +592,21 @@ int sokoban_game::start_game()
                     iMoves++;
                     iTotalMoves++;
                 }
+            }
+            if( !bMovePlayer && a11y::enabled() ) {
+                // STT 411: the board does not change, so the snapshot is
+                // identical and the reader would otherwise stay silent: the
+                // player cannot tell a blocked push from a gesture the game
+                // never received. Announce the blocked push at once, exactly
+                // as a blocked world step is announced. A wall ahead and a
+                // package that cannot move are told apart: only the wall
+                // case has sMoveTo == "#".
+                if( sMoveTo == "#" ) {
+                    a11y::android::announce( _( "Blocked by a wall." ), 3 );
+                } else {
+                    a11y::android::announce( _( "The package cannot be pushed that way." ), 3 );
+                }
+                a11y::android::cue( "blocked" );
             }
         }
 

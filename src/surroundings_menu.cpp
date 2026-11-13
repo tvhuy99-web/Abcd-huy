@@ -26,6 +26,7 @@
 #include "catacharset.h"
 #include "character.h"
 #include "creature.h"
+#include "creature_tracker.h"
 #include "debug.h"
 #include "enums.h"
 #include "enum_traits.h"
@@ -1441,6 +1442,25 @@ void surroundings_menu::execute_accessible()
                 continue;
             }
             const nearby_row &target = nearby[row_index];
+            if( intent.action == "read_detail" && target.kind == nearby_kind::creature ) {
+                // Re-observe this precise tile before reading, like the
+                // item branch below: a row is a name label, not a
+                // creature pointer, and must never resolve to a different
+                // creature after a world update. HP is already published
+                // for visible hostiles by the world's "Visible hostile
+                // creatures" document, in the same wording reused here.
+                const Creature *creature = get_creature_tracker().creature_at( target.target, true );
+                if( creature == nullptr ||
+                    remove_color_tags( creature->disp_name() ) != target.label ||
+                    !here.inbounds( target.target ) ) {
+                    return std::string( "TIMEOUT" );
+                }
+                a11y::announce_full_detail_text( string_format(
+                    _( "%1$s, %2$s, %3$d HP remaining." ),
+                    creature->disp_name(), relative_words( target.relative ),
+                    std::max( 0, creature->get_hp() ) ) );
+                return std::string( "TIMEOUT" );
+            }
             if( intent.action == "read_detail" && target.kind == nearby_kind::item ) {
                 // Re-observe this precise tile before reading. A nearby row
                 // is a stack label, not an item pointer, and must never
@@ -1550,7 +1570,7 @@ void surroundings_menu::execute_accessible()
                 node.id = "nearby:target:" + std::to_string( row_index );
                 node.role = "listitem";
                 node.label = entry.label;
-                if( entry.kind == nearby_kind::item ) {
+                if( entry.kind == nearby_kind::item || entry.kind == nearby_kind::creature ) {
                     node.actions.push_back( "read_detail" );
                 }
                 // Direction already includes tile count.

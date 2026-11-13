@@ -3,6 +3,7 @@
     <string name="a11yDirectionalSonar">Âm thanh định hướng cho vật phẩm và sinh vật ở gần</string>
     <string name="a11yDirectionalSonarExplanation">Khi bật, vật phẩm nhìn thấy phát tiếng bíp; NPC và quái vật nhìn thấy phát tiếng sonar cũ. Quét tám hướng, tối đa 16 ô mỗi hướng. Kênh trái phải và cao độ giúp phân biệt hướng. Khi có cả hai loại, cả hai đều phát. Tắt để ngừng quét và phát.</string>
     <string name="a11yBackupRequiresRestart">Game đang mở nên không thể khôi phục. Hãy đóng hẳn ứng dụng, mở lại Thiết lập trình đọc trước khi vào game rồi chọn khôi phục.</string>
+    <string name="a11yBackupRestoreDeferred">Đã xác nhận. Game đang mở nên chưa thay gì cả. Hãy đóng hẳn ứng dụng rồi mở lại; bản khôi phục sẽ được áp dụng trước khi game bắt đầu.</string>
     <string name="a11yBackupRecoveryFailed">Khôi phục chưa hoàn tất. Bản dự phòng gốc vẫn được giữ. Đừng mở game; hãy xử lý lỗi bộ nhớ rồi khởi động lại để thử tiếp.</string>
     <string name="a11yReaderSearch">Tìm lệnh hoặc mục</string>
     <string name="a11yReaderSearchCount">Có %1$d mục phù hợp</string>
@@ -110,6 +111,9 @@
     <string name="a11yBootstrapNoSpace">Không còn đủ dung lượng trống để cài dữ liệu trò chơi. Hãy giải phóng dung lượng rồi thử lại. Dữ liệu trò chơi hiện có của bạn chưa bị thay đổi.</string>
     <string name="a11yDisableInternalReader">Tắt trình đọc nội bộ</string>
     <string name="a11yReaderEnabledNotice">Đã lưu giọng. Trình đọc đang bật.</string>
+    <string name="a11yTtsMissingLanguage">Ngôn ngữ đang chọn chưa có dữ liệu giọng. Hãy cài dữ liệu giọng trong cài đặt Android.</string>
+    <string name="a11yTtsMissingVoice">Giọng đang chọn chưa được cài. Hãy chọn giọng khác hoặc cài giọng này trong cài đặt Android.</string>
+    <string name="a11yTtsNetworkRequired">Giọng này cần kết nối mạng. Hãy bật mạng hoặc chọn giọng dùng được ngoại tuyến.</string>
     <string name="a11yReaderDisabledNotice">Đã tắt trình đọc nội bộ.</string>
     <string name="a11yDocContinue">Đọc tiếp tài liệu</string>
     <string name="a11yDocNextParagraph">Đoạn sau</string>

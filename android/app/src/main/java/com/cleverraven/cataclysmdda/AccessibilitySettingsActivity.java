@@ -3,6 +3,7 @@ package com.cleverraven.cataclysmdda;
 import android.app.Activity;
 import android.content.Context;
 import android.os.Bundle;
+import android.view.View;
 import android.view.accessibility.AccessibilityManager;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -59,6 +60,10 @@ public final class AccessibilitySettingsActivity extends Activity {
         controls.addView(sonarHelp);
 
         TextView distanceValue = new TextView(this);
+        // Visible label only: the SeekBar below announces the same value
+        // through its contentDescription, so this must not be a second
+        // spoken item in the navigation order.
+        distanceValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         controls.addView(distanceValue);
         SeekBar distance = new SeekBar(this);
         distance.setMax(2);
@@ -84,6 +89,10 @@ public final class AccessibilitySettingsActivity extends Activity {
         distance.setContentDescription(distanceValue.getText());
 
         TextView durationValue = new TextView(this);
+        // Visible label only: the SeekBar below announces the same value
+        // through its contentDescription, so this must not be a second
+        // spoken item in the navigation order.
+        durationValue.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
         controls.addView(durationValue);
         SeekBar duration = new SeekBar(this);
         duration.setMax(2);

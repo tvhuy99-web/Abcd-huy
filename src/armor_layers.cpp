@@ -781,6 +781,14 @@ struct armor_layers_reader {
             if( !covered.empty() ) {
                 append_line( string_format( _( "Covers: %s" ), body_part_names( covered ) ) );
             }
+            // STT 282: a sided item's current side was invisible here,
+            // so the reader could not say which side it is on before
+            // offering CHANGE_SIDE. BOTH means no side is set; omit the
+            // line rather than guessing one.
+            if( worn_item.is_sided() && worn_item.get_side() != side::BOTH ) {
+                append_line( string_format( _( "Side: %s." ),
+                                            worn_item.get_side() == side::LEFT ? _( "left" ) : _( "right" ) ) );
+            }
             if( tab_bp == bodypart_str_id::NULL_ID() ) {
                 // No single body part on the "All" tab: publish the
                 // item's average encumbrance across its portions.
@@ -812,6 +820,16 @@ struct armor_layers_reader {
                     tabindex = static_cast<int>( i );
                     leftListIndex = 0;
                     selected = -1;
+                    // STT 267: the new tab's first item is what the
+                    // reader focuses next, not the tab name -- announce
+                    // the tab itself. Same msgid as the keyboard-path
+                    // tab switch in the loop below.
+                    if( a11y::enabled() ) {
+                        const bodypart_id &new_tab = armor_cat[i];
+                        guy.add_msg_if_player( m_info, _( "Tab: %s." ),
+                                               new_tab == bodypart_str_id::NULL_ID() ? _( "All" ) :
+                                               body_part_name_as_heading( new_tab, 1 ) );
+                    }
                     return "TIMEOUT";
                 }
                 if( intent.action == "focus" ) {
@@ -1302,6 +1320,14 @@ void outfit::sort_armor( Character &guy )
             tabindex = inc_clamp_wrap( tabindex, action == "RIGHT" || action == "NEXT_TAB", tabcount );
             leftListIndex = leftListOffset = 0;
             selected = -1;
+            // STT 267: announce the new tab; the reader focuses the
+            // tab's first item next, which never says the tab name.
+            if( a11y::enabled() ) {
+                const bodypart_id &new_tab = armor_cat[tabindex];
+                guy.add_msg_if_player( m_info, _( "Tab: %s." ),
+                                       new_tab == bodypart_str_id::NULL_ID() ? _( "All" ) :
+                                       body_part_name_as_heading( new_tab, 1 ) );
+            }
         } else if( action == "PAGE_DOWN" ) {
             if( rightListOffset + rightListLines < rightListSize ) {
                 rightListOffset++;
@@ -1312,11 +1338,26 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "MOVE_ARMOR" && leftListIndex < leftListSize ) {
             if( selected >= 0 ) {
+                // STT 266: putting the item down ends the carry; confirm
+                // the final position. (Dragging itself already announces
+                // "Armor layer changed" on every move via
+                // shift_selected_item().)
+                if( a11y::enabled() ) {
+                    guy.add_msg_if_player( m_info, _( "%1$s placed at position %2$d of %3$d." ),
+                                           tmp_worn[leftListIndex]->tname(), leftListIndex + 1,
+                                           leftListSize );
+                }
                 selected = -1;
             } else {
                 item &item_to_check = *tmp_worn[leftListIndex];
                 if( !item_to_check.has_flag( flag_INTEGRATED ) ) {
                     selected = leftListIndex;
+                    // STT 266: picking the item up starts the carry;
+                    // until now it was silent.
+                    if( a11y::enabled() ) {
+                        guy.add_msg_if_player( m_info, _( "Picked up %s for reordering." ),
+                                               item_to_check.tname() );
+                    }
                 } else {
                     popup( _( "Can't move your integrated armor!" ) );
                 }
@@ -1327,7 +1368,25 @@ void outfit::sort_armor( Character &guy )
                 if( player_character.query_yn( _( "Swap side for %s?" ),
                                                colorize( tmp_worn[leftListIndex]->tname(),
                                                        tmp_worn[leftListIndex]->color_in_inventory() ) ) ) {
-                    guy.change_side( *tmp_worn[leftListIndex] );
+                    item &swapped = *tmp_worn[leftListIndex];
+                    const std::string swapped_name = swapped.tname();
+                    // STT 280: change_side() itself only says the side
+                    // was swapped, never which side it is on now; the
+                    // rigid / one-per-layer failures are silent too.
+                    if( guy.change_side( swapped ) ) {
+                        // swap_side() toggles LEFT <-> RIGHT; from BOTH
+                        // it stays BOTH, so only name a definite side.
+                        if( a11y::enabled() && swapped.get_side() != side::BOTH ) {
+                            guy.add_msg_if_player( m_info,
+                                                   swapped.get_side() == side::LEFT ?
+                                                   _( "%1$s is now worn on the left side." ) :
+                                                   _( "%1$s is now worn on the right side." ),
+                                                   swapped_name );
+                        }
+                    } else if( a11y::enabled() ) {
+                        guy.add_msg_if_player( m_info, _( "Could not swap the side for %s." ),
+                                               swapped_name );
+                    }
                 }
             }
         } else if( action == "TOGGLE_CLOTH" ) {
@@ -1336,6 +1395,16 @@ void outfit::sort_armor( Character &guy )
                     tmp_worn[leftListIndex]->set_flag( json_flag_HIDDEN );
                 } else {
                     tmp_worn[leftListIndex]->unset_flag( json_flag_HIDDEN );
+                }
+                // STT 283: hiding / showing was completely silent; the
+                // "Hidden." line only appears when the item is focused
+                // again afterwards.
+                if( a11y::enabled() ) {
+                    const item &toggled = *tmp_worn[leftListIndex];
+                    guy.add_msg_if_player( m_info,
+                                           toggled.has_flag( json_flag_HIDDEN ) ? _( "%1$s hidden." ) :
+                                           _( "%1$s shown." ),
+                                           toggled.tname() );
                 }
             }
         } else if( action == "SORT_ARMOR" ) {
@@ -1350,6 +1419,17 @@ void outfit::sort_armor( Character &guy )
             }
             );
             guy.calc_encumbrance();
+            // STT 278: sorting was silent; confirm it and name the new
+            // innermost item so the player hears the new order's start
+            // without re-browsing the whole list.
+            if( a11y::enabled() ) {
+                if( worn.empty() ) {
+                    guy.add_msg_if_player( m_info, _( "Armor sorted by layer." ) );
+                } else {
+                    guy.add_msg_if_player( m_info, _( "Armor sorted by layer. Innermost: %s." ),
+                                           worn.front().tname() );
+                }
+            }
         } else if( action == "EQUIP_ARMOR" ) {
             mid_pane.offset = 0;
             // filter inventory for all items that are armor/clothing
@@ -1436,6 +1516,14 @@ void outfit::sort_armor( Character &guy )
             if( leftListIndex < leftListSize ) {
                 item &item_to_toggle = *tmp_worn[leftListIndex];
                 item_to_toggle.set_favorite( !item_to_toggle.is_favorite );
+                // STT 280: the favorite toggle was silent. Same msgids
+                // as the advanced-inventory toggle.
+                if( a11y::enabled() ) {
+                    guy.add_msg_if_player( m_info,
+                                           item_to_toggle.is_favorite ? _( "%s is now a favorite." ) :
+                                           _( "%s is no longer a favorite." ),
+                                           item_to_toggle.tname() );
+                }
             }
         } else if( action == "ASSIGN_INVLETS" ) {
             // prompt first before doing this (yes, yes, more popups...)

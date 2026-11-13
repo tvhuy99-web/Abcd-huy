@@ -6225,6 +6225,12 @@ void consume_activity_actor::canceled( player_activity &, Character &who )
 {
     if( who.is_avatar() ) {
         uistate.consume_uistate.clear();
+        // Eating/drinking has no finish() result when interrupted, so the
+        // player otherwise hears nothing: the food or drink was not
+        // consumed. Reader-only, like wait_activity_actor::canceled.
+        if( a11y::enabled() ) {
+            who.add_msg_if_player( m_warning, _( "You stop eating or drinking." ) );
+        }
     }
 }
 
@@ -7248,9 +7254,15 @@ void workout_activity_actor::finish( player_activity &act, Character &who )
     }
 }
 
-void workout_activity_actor::canceled( player_activity &/*act*/, Character &/*who*/ )
+void workout_activity_actor::canceled( player_activity &/*act*/, Character &who )
 {
     stop_time = calendar::turn;
+    // The finish() message ("You finish your workout session.") never runs
+    // when the workout is interrupted, so the player otherwise hears
+    // nothing. Reader-only, like wait_activity_actor::canceled.
+    if( who.is_avatar() && a11y::enabled() ) {
+        who.add_msg_if_player( m_warning, _( "You stop your workout session." ) );
+    }
 }
 
 bool workout_activity_actor::query_keep_training( player_activity &act, Character &who )
@@ -10952,6 +10964,12 @@ void firstaid_activity_actor::canceled( player_activity &, Character &who )
 {
     if( who.is_avatar() ) {
         uistate.consume_uistate.clear();
+        // First aid has no finish() result when interrupted, so the player
+        // otherwise hears nothing: the patient was not treated.
+        // Reader-only, like wait_activity_actor::canceled.
+        if( a11y::enabled() ) {
+            who.add_msg_if_player( m_warning, _( "You stop giving first aid." ) );
+        }
     }
 }
 

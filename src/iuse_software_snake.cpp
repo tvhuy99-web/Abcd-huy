@@ -159,7 +159,7 @@ int snake_game::start_game()
             }
             return std::nullopt;
         }
-        if( intent.node == "snake:fruit" ) {
+        if( intent.node == "snake:fruit" || intent.node == "snake:body" ) {
             // Observation only: no action is injected (see above).
             return std::nullopt;
         }
@@ -276,6 +276,75 @@ int snake_game::start_game()
                                                  iFruitPosX + 1, iFruitPosY + 1, fruit_relative )
                                 : _( "No fruit yet." );
             snapshot.nodes.push_back( fruit_node );
+
+            // STT 100: the snapshot used to publish the head, the fruit and
+            // the steering commands, but nothing about the body, so a blind
+            // player could not know where their own snake was and could only
+            // avoid biting it by remembering the whole path. Publish the
+            // body cells next to the head, both as a clause of the summary
+            // and as a browsable node. Only the cells next to the head can
+            // kill on the next step, and the wrap is applied exactly as in
+            // the main loop below, so the cell entered by steering off an
+            // edge is reported too. Every body cell next to the head is
+            // lethal: the self-collision check runs before the tail is
+            // trimmed, so even the tail's current cell kills.
+            const auto body_next_to_head = [&]( int dy, int dx ) -> bool {
+                int ny = head_y + dy;
+                int nx = head_x + dx;
+                if( ny == 0 ) {
+                    ny += FULL_SCREEN_HEIGHT - 2;
+                } else if( ny == FULL_SCREEN_HEIGHT - 1 ) {
+                    ny -= FULL_SCREEN_HEIGHT - 2;
+                }
+                if( nx == 0 ) {
+                    nx += FULL_SCREEN_WIDTH - 2;
+                } else if( nx == FULL_SCREEN_WIDTH - 1 ) {
+                    nx -= FULL_SCREEN_WIDTH - 2;
+                }
+                const auto row_it = mSnakeBody.find( ny );
+                if( row_it == mSnakeBody.end() ) {
+                    return false;
+                }
+                const auto cell_it = row_it->second.find( nx );
+                return cell_it != row_it->second.end() && cell_it->second;
+            };
+            std::vector<std::string> body_directions;
+            if( body_next_to_head( -1, 0 ) ) {
+                body_directions.push_back( _( "north" ) );
+            }
+            if( body_next_to_head( 1, 0 ) ) {
+                body_directions.push_back( _( "south" ) );
+            }
+            if( body_next_to_head( 0, -1 ) ) {
+                body_directions.push_back( _( "west" ) );
+            }
+            if( body_next_to_head( 0, 1 ) ) {
+                body_directions.push_back( _( "east" ) );
+            }
+            std::string body_text;
+            if( body_directions.empty() ) {
+                body_text = _( "No part of the body is next to the head." );
+            } else {
+                std::string joined;
+                for( size_t i = 0; i < body_directions.size(); ++i ) {
+                    if( i > 0 ) {
+                        joined += ", ";
+                    }
+                    joined += body_directions[i];
+                }
+                body_text = string_format( _( "Body next to the head: %s." ), joined );
+            }
+            // Appended, not folded into the format above, so the existing
+            // summary msgid keeps its translation.
+            snapshot.summary += " " + body_text;
+
+            a11y::semantic_node body_node;
+            body_node.id = "snake:body";
+            body_node.role = "status";
+            body_node.label = _( "Snake body" );
+            body_node.detail = body_text;
+            body_node.actions = { "focus" };
+            snapshot.nodes.push_back( body_node );
         }
 
         a11y::append_document( snapshot, "snake:rules", _( "Snake rules" ), rules_text );

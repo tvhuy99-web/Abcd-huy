@@ -1,6 +1,7 @@
 #include "iuse_software_lightson.h"
 #include "a11y_semantics.h"
 
+#include "a11y_android.h"
 #include "a11y_document.h"
 #include "a11y_input.h"
 #include "a11y_runtime.h"
@@ -300,8 +301,21 @@ int lightson_game::start_game()
         }
         std::string action = ctxt.handle_input();
         if( const std::optional<tripoint_rel_ms> vec = ctxt.get_direction_rel_ms( action ) ) {
+            const point old_position = position;
             position.y = clamp( position.y + vec->y(), 0, level_size.y - 1 );
             position.x = clamp( position.x + vec->x(), 0, level_size.x - 1 );
+            if( position == old_position && a11y::enabled() ) {
+                // STT 413: the cursor is pinned at the edge, so the board
+                // does not change, the snapshot is identical and the reader
+                // would otherwise stay silent: the player cannot tell a
+                // blocked move from a gesture the game never received.
+                // Announce it at once, exactly as a blocked world step is
+                // announced. (The win still goes through its popup, so no
+                // announcement is added for it here.)
+                a11y::android::announce(
+                    _( "At the edge: you cannot move further in that direction." ), 3 );
+                a11y::android::cue( "blocked" );
+            }
         } else if( action == "TOGGLE_SPACE" || action == "TOGGLE_5" ) {
             toggle_lights();
             win = check_win();

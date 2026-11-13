@@ -198,7 +198,7 @@ void talk_function::mission_reward( npc &p )
 
     int mission_value = miss->get_value();
     p.op_of_u.owed += mission_value;
-    npc_trading::trade( p, 0, _( "Reward" ) );
+    npc_trading::trade( p, 0, string_format( _( "Reward: %s" ), p.get_name() ) );
 }
 
 void talk_function::buy_chicken( npc &p )
@@ -228,7 +228,11 @@ void spawn_animal( npc &p, const mtype_id &mon )
 
 void talk_function::start_trade( npc &p )
 {
-    npc_trading::trade( p.get_trade_delegate(), 0, _( "Trade" ) );
+    // Name the trader in the title: the header used to read just "Trade",
+    // and when trading through a delegate that need not be the NPC being
+    // spoken to, the reader had no way to tell who the other party was.
+    npc &trader = p.get_trade_delegate();
+    npc_trading::trade( trader, 0, string_format( _( "Trade: %s" ), trader.get_name() ) );
 }
 
 void talk_function::sort_loot( npc &p )
@@ -1143,7 +1147,7 @@ bool npc_trading::pay_npc( npc &np, int cost )
         return true;
     }
 
-    return npc_trading::trade( np, cost, _( "Pay:" ) );
+    return npc_trading::trade( np, cost, string_format( _( "Pay: %s" ), np.get_name() ) );
 }
 
 namespace talk_function

@@ -1087,7 +1087,17 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                 const npc &follower = *followers[i];
                 std::string contact;
                 if( follower.has_companion_mission() ) {
-                    contact = _( "On a companion mission.  Use Contact to recall." );
+                    // Promise recall only when it can actually be done:
+                    // CONFIRM is hidden when the follower is out of
+                    // contact (can_confirm stays false below), so a row
+                    // that still says "Use Contact to recall" promises
+                    // an action that does not exist.
+                    const bool recallable = can_contact( get_avatar(), follower ) ||
+                                            can_radio_contact( get_avatar(), follower ) ==
+                                            radio_contact_result::YES;
+                    contact = recallable ?
+                              _( "On a companion mission.  Use Contact to recall." ) :
+                              _( "On a companion mission.  Out of contact range." );
                 } else if( can_contact( get_avatar(), follower ) ) {
                     contact = _( "Within interaction range.  Activate to talk." );
                 } else if( can_radio_contact( get_avatar(), follower ) == radio_contact_result::YES ) {
@@ -1250,13 +1260,17 @@ a11y::semantic_snapshot faction_ui::reader_snapshot() const
                     append_field( details,
                                   _( "You know someone from this faction you can contact by radio." ) );
                     if( !has_radio( get_avatar() ) ) {
-                        append_field( details, _( "Even if you do not have a radio right now." ) );
+                        // Do not offer CONFIRM when there is no radio to
+                        // call with: pressing it only reported the failure
+                        // afterwards. State what is missing instead, and
+                        // leave can_confirm false so the command is hidden.
+                        append_field( details, _( "You need a radio to contact them." ) );
                     } else {
                         append_field( details, string_format(
                                            _( "Press [%s] to radio the faction representative" ),
                                            ctxt.get_desc( "CONFIRM" ) ) );
+                        can_confirm = true;
                     }
-                    can_confirm = true;
                 }
                 append_field( details, other->desc.translated() );
             } else {
