@@ -1294,7 +1294,7 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 }
             }
         }
-        for( const std::string &id : {
+        for( const std::string id : {
                     "interact", "open", "close", "examine", "examine_and_pickup",
                     "reader:pickup_here", "pickup", "pickup_all", "chat",
                     "LEVEL_UP", "LEVEL_DOWN", "grab", "haul", "haul_toggle",
