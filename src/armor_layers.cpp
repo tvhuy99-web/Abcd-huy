@@ -781,7 +781,7 @@ struct armor_layers_reader {
             if( !covered.empty() ) {
                 append_line( string_format( _( "Covers: %s" ), body_part_names( covered ) ) );
             }
-            // STT 282: a sided item's current side was invisible here,
+            // a sided item's current side was invisible here,
             // so the reader could not say which side it is on before
             // offering CHANGE_SIDE. BOTH means no side is set; omit the
             // line rather than guessing one.
@@ -820,7 +820,7 @@ struct armor_layers_reader {
                     tabindex = static_cast<int>( i );
                     leftListIndex = 0;
                     selected = -1;
-                    // STT 267: the new tab's first item is what the
+                    // the new tab's first item is what the
                     // reader focuses next, not the tab name -- announce
                     // the tab itself. Same msgid as the keyboard-path
                     // tab switch in the loop below.
@@ -1320,7 +1320,7 @@ void outfit::sort_armor( Character &guy )
             tabindex = inc_clamp_wrap( tabindex, action == "RIGHT" || action == "NEXT_TAB", tabcount );
             leftListIndex = leftListOffset = 0;
             selected = -1;
-            // STT 267: announce the new tab; the reader focuses the
+            // announce the new tab; the reader focuses the
             // tab's first item next, which never says the tab name.
             if( a11y::enabled() ) {
                 const bodypart_id &new_tab = armor_cat[tabindex];
@@ -1338,7 +1338,7 @@ void outfit::sort_armor( Character &guy )
             }
         } else if( action == "MOVE_ARMOR" && leftListIndex < leftListSize ) {
             if( selected >= 0 ) {
-                // STT 266: putting the item down ends the carry; confirm
+                // putting the item down ends the carry; confirm
                 // the final position. (Dragging itself already announces
                 // "Armor layer changed" on every move via
                 // shift_selected_item().)
@@ -1352,7 +1352,7 @@ void outfit::sort_armor( Character &guy )
                 item &item_to_check = *tmp_worn[leftListIndex];
                 if( !item_to_check.has_flag( flag_INTEGRATED ) ) {
                     selected = leftListIndex;
-                    // STT 266: picking the item up starts the carry;
+                    // picking the item up starts the carry;
                     // until now it was silent.
                     if( a11y::enabled() ) {
                         guy.add_msg_if_player( m_info, _( "Picked up %s for reordering." ),
@@ -1370,7 +1370,7 @@ void outfit::sort_armor( Character &guy )
                                                        tmp_worn[leftListIndex]->color_in_inventory() ) ) ) {
                     item &swapped = *tmp_worn[leftListIndex];
                     const std::string swapped_name = swapped.tname();
-                    // STT 280: change_side() itself only says the side
+                    // change_side() itself only says the side
                     // was swapped, never which side it is on now; the
                     // rigid / one-per-layer failures are silent too.
                     if( guy.change_side( swapped ) ) {
@@ -1396,7 +1396,7 @@ void outfit::sort_armor( Character &guy )
                 } else {
                     tmp_worn[leftListIndex]->unset_flag( json_flag_HIDDEN );
                 }
-                // STT 283: hiding / showing was completely silent; the
+                // hiding / showing was completely silent; the
                 // "Hidden." line only appears when the item is focused
                 // again afterwards.
                 if( a11y::enabled() ) {
@@ -1419,7 +1419,7 @@ void outfit::sort_armor( Character &guy )
             }
             );
             guy.calc_encumbrance();
-            // STT 278: sorting was silent; confirm it and name the new
+            // sorting was silent; confirm it and name the new
             // innermost item so the player hears the new order's start
             // without re-browsing the whole list.
             if( a11y::enabled() ) {
@@ -1516,7 +1516,7 @@ void outfit::sort_armor( Character &guy )
             if( leftListIndex < leftListSize ) {
                 item &item_to_toggle = *tmp_worn[leftListIndex];
                 item_to_toggle.set_favorite( !item_to_toggle.is_favorite );
-                // STT 280: the favorite toggle was silent. Same msgids
+                // the favorite toggle was silent. Same msgids
                 // as the advanced-inventory toggle.
                 if( a11y::enabled() ) {
                     guy.add_msg_if_player( m_info,

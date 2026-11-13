@@ -466,7 +466,7 @@ int sokoban_game::start_game()
         std::string action;
         if( check_win() ) {
             //we won yay
-            // STT 411: the win auto-advances to the next level and this
+            // the win auto-advances to the next level and this
             // iteration publishes no snapshot, so the win itself was never
             // announced -- the player only noticed the new level and score
             // when re-reading the summary. Announce it at once; the next
@@ -594,7 +594,7 @@ int sokoban_game::start_game()
                 }
             }
             if( !bMovePlayer && a11y::enabled() ) {
-                // STT 411: the board does not change, so the snapshot is
+                // the board does not change, so the snapshot is
                 // identical and the reader would otherwise stay silent: the
                 // player cannot tell a blocked push from a gesture the game
                 // never received. Announce the blocked push at once, exactly

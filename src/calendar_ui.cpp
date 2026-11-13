@@ -168,7 +168,7 @@ time_point calendar_ui::select_time_point( time_point initial_value, std::string
                                                 calendar_granularity_name( granularity_level ) );
             }
         }
-        // STT 211 (G11): the old/new date comparison lives only in smenu.text,
+        // (G11): the old/new date comparison lives only in smenu.text,
         // which the reader publishes as the snapshot summary, and the Java
         // reader does not speak that summary when entering this menu. Attach
         // the same comparison to the first (initially focused) row's

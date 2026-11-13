@@ -2681,7 +2681,7 @@ void character_creator_ui::update_uilist_entries()
                 if( prof_id == u.prof->ident() ) {
                     entry.a11y_value += ". " + std::string( _( "Current choice" ) );
                 }
-                // STT 203: the header pane shows the mod origin, but the reader
+                // the header pane shows the mod origin, but the reader
                 // entry did not. Publish it as part of the spoken value.
                 entry.a11y_value += ". " + get_origin( prof_id->src );
                 entry.enabled = prof_id->can_pick().success();
@@ -2769,7 +2769,7 @@ void character_creator_ui::update_uilist_entries()
                                                   char_creation::stat_level_description(
                                                           cc_uistate.stats[i] ),
                                                   CHARACTER_STAT_MIN, CHARACTER_STAT_MAX );
-                // STT 31: the tab title alone cannot carry the per-tab pool
+                // the tab title alone cannot carry the per-tab pool
                 // once the user moves between rows, so each focused row also
                 // states the remaining stat points (spoken as the node value).
                 entry.a11y_value += " " + string_format( _( "Stat points left: %d." ),
@@ -2790,7 +2790,7 @@ void character_creator_ui::update_uilist_entries()
                 trait_entry.text_color = u.has_trait( current_trait ) ? COL_SELECTED : COL_NOT_SELECTED;
                 trait_entry.a11y_checked = u.has_trait( current_trait );
                 trait_entry.a11y_value = string_format( _( "Trait point value: %d" ), current_trait->points );
-                // STT 31: trait_points_left was published nowhere on this tab
+                // trait_points_left was published nowhere on this tab
                 // (only inside the summary document); state it on each focused row.
                 trait_entry.a11y_value += " " + string_format( _( "Trait points left: %d." ),
                                               multi_pool( u ).trait_points_left );
@@ -2890,7 +2890,7 @@ void character_creator_ui::update_uilist_entries()
                                          ? string_format( _( "Level: %d" ), own_level )
                                          : string_format( _( "Level: %1$d + %2$d from profession or background" ),
                                                  own_level, bonus_level );
-                // STT 31: state the remaining skill points on each focused row,
+                // state the remaining skill points on each focused row,
                 // like the stat rows do (the title alone is not re-read on move).
                 skill_entry.a11y_value += " " + string_format( _( "Skill points left: %d." ),
                                               creator_points.skill_points_left );
@@ -2915,7 +2915,7 @@ void character_creator_ui::update_uilist_entries()
                 case CHARCREATOR_SKILLS: step_label = _( "Set skills" ); break;
                 default: break;
             }
-            // STT 31: the title used to report the combined pool
+            // the title used to report the combined pool
             // (skill_points_left) on every tab, e.g. 6 remaining while only
             // 2 stat points were left. Report this tab's own pool instead;
             // scenario/profession/background keep the combined total.
@@ -3433,7 +3433,7 @@ bool character_creator_ui::display()
                 append_character_reader_summary( snapshot, you );
                 snapshot.title = string_format( _( "Summary.  Step 7 of 7. Points remaining: %d." ),
                                                 multi_pool( you ).skill_points_left );
-                // STT 207 (C++ part): the reader's tab-entry feedback reads
+                // (C++ part): the reader's tab-entry feedback reads
                 // only the title, so the summary line built by
                 // append_character_reader_summary ("Character: … Scenario: …
                 // Profession: …") was never spoken on entry. Append it to
@@ -3942,7 +3942,7 @@ bool character_creator_ui::handle_action( const std::string &action )
 {
     avatar &you = get_avatar();
 
-    // STT 32: the ±1 commands used to clamp only to the hard 4-20 / 0-10
+    // the ±1 commands used to clamp only to the hard 4-20 / 0-10
     // range with no points check and no feedback, so the player could
     // overspend without knowing. Trial-apply like the value picker does:
     // refuse (and revert) when this step would push the tab's pool below
@@ -4061,7 +4061,7 @@ bool character_creator_ui::handle_action( const std::string &action )
         // We don't need to check at the top as you won't be able to edit the name
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
-            // STT 208: announce the new name (reuses the translated
+            // announce the new name (reuses the translated
             // "Name: %s" string); without this the player had to swipe
             // back over the rows to learn the result.
             if( a11y::enabled() ) {
@@ -4078,7 +4078,7 @@ bool character_creator_ui::handle_action( const std::string &action )
         }
         if( !MAP_SHARING::isSharing() ) {
             you.pick_name();
-            // STT 208: as above, announce the new name right away.
+            // as above, announce the new name right away.
             if( a11y::enabled() ) {
                 a11y::android::announce( string_format( _( "Name: %1$s" ), you.name ), 1 );
             }
@@ -4249,7 +4249,7 @@ static std::optional<int> choose_accessible_creation_value( const std::string &l
         int current, int min_value, int max_value,
         const std::function<std::optional<std::string>( int )> &validate )
 {
-    // List the full valid range (STT 30/205): stats are 4-20, skills 0-10.
+    // List the full valid range: stats are 4-20, skills 0-10.
     // The old code hardcoded 1-10, so valid stats 11-20 were only reachable
     // through the silent manual number dialog and 1-3 were offered then rejected.
     int initial_index = std::clamp( current, min_value, max_value ) - min_value;
