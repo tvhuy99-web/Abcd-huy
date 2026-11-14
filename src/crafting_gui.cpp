@@ -258,6 +258,34 @@ static std::string accessible_practice_description( const recipe &rec,
            rec.get_description( crafter );
 }
 
+static std::string accessible_recipe_description( const recipe &rec, const Character &crafter )
+{
+    // Work directly from the selected recipe. reader_documents may still
+    // contain the previously focused recipe when the detail screen opens.
+    if( rec.is_practice() && a11y::enabled() ) {
+        return accessible_practice_description( rec, crafter );
+    }
+    if( rec.is_nested() || rec.is_practice() ) {
+        return rec.get_description( crafter );
+    }
+    if( !rec.result() ) {
+        return {};
+    }
+    std::string description;
+    if( !rec.variant().empty() ) {
+        item result( rec.result() );
+        result.set_itype_variant( rec.variant() );
+        description = result.variant_description();
+    }
+    if( description.empty() ) {
+        description = item::find_type( rec.result() )->description.translated();
+    }
+    if( description == "generic item template" ) {
+        description.clear();
+    }
+    return description;
+}
+
 // Ceil-rounded human-readable craft time.  Input is game turns (seconds).
 
 void load_recipe_category( const JsonObject &jsobj, const std::string &src )
@@ -3062,14 +3090,13 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 a11y::semantic_node intro;
                 intro.id = "craft:detail:intro";
                 intro.role = "document";
-                intro.label = _( "Description" );
-                for( const a11y::semantic_node &document : reader_documents ) {
-                    if( document.id == "craft:description" ) {
-                        intro.detail = document.detail;
-                        break;
-                    }
-                }
-                intro.actions = { "focus", "read_detail" };
+                intro.label = _( "Read details" );
+                // This text is spoken automatically on first entry. Build
+                // it from the selected recipe, not a potentially stale cache.
+                intro.detail = accessible_recipe_description( rec, *crafter );
+                // One-finger double-tap also reads the complete recipe/item
+                // information; the two-finger request remains available.
+                intro.actions = { "focus", "activate", "read_detail" };
                 detail.push_back( std::move( intro ) );
                 append_reader_requirement_nodes( detail, "craft:detail", rec.simple_requirements(),
                                                  *crafter, inventory, rec.get_component_filter(),
@@ -3135,26 +3162,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             // Do not depend on the visual ImGui panel having been drawn.
             // Headless spoken mode can publish the recipe before that panel
             // fills displayed_description; derive its real text directly.
-            std::string description;
-            if( rec.is_practice() && a11y::enabled() ) {
-                description = accessible_practice_description( rec, *crafter );
-            } else if( rec.is_nested() || rec.is_practice() ) {
-                description = rec.get_description( *crafter );
-            } else if( rec.result() ) {
-                if( !rec.variant().empty() ) {
-                    item result( rec.result() );
-                    result.set_itype_variant( rec.variant() );
-                    description = result.variant_description();
-                }
-                if( description.empty() ) {
-                    description = item::find_type( rec.result() )->description.translated();
-                }
-                if( description == "generic item template" ) {
-                    description.clear();
-                }
-            }
             a11y::append_document( documents, "craft:description", _( "Description" ),
-                                   description );
+                                   accessible_recipe_description( rec, *crafter ) );
             const temp_crafting_inventory &inventory = avail.inv_override ?
                     *avail.inv_override : crafter->crafting_inventory();
             a11y::append_requirements( documents, "craft:requirements", rec.simple_requirements(),
@@ -3321,8 +3330,10 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 return "TIMEOUT";
             }
         }
-        if( intent.action == "read_detail" ) {
-            // The detail screen's own two-finger readout. Name and intro
+        if( intent.action == "read_detail" ||
+            ( intent.action == "activate" && intent.node == "craft:detail:intro" ) ) {
+            // The detail screen's two-finger readout and the accessible
+            // one-finger "Read details" action. Name and intro
             // read the full recipe detail; a requirement focus describes
             // the required item itself.
             if( intent.node == "craft:detail:name" || intent.node == "craft:detail:intro" ) {

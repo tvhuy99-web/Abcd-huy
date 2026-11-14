@@ -909,6 +909,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // the saved position is kept for a later visit.
                     documentReader.clear();
                 }
+                // Opening a recipe detail pane does not change the native
+                // "crafting" context. Detect the new intro node explicitly
+                // so its actual description speaks without a two-finger tap.
+                // Returning from the batch-size chooser must stay silent.
+                boolean enteredCraftRecipeDetail = "crafting".equals(next.category)
+                        && next.find("craft:detail:intro") != null
+                        && (previousSnapshot == null
+                            || (previousSnapshot.find("craft:detail:intro") == null
+                                && previousSnapshot.find("craft:detail:qty:current") == null));
                 boolean enteredMenu = nativeLayerChanged || enteredTreeLayer
                         || (changedContext && next.find("world:here") == null);
                 ReaderSnapshot.Node nextTile = next.find("world:here");
@@ -986,6 +995,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !documentReader.isOpen() && !commandPaletteOpen;
                 if (worldView) {
                     if (newlyNoteworthy) { feedback(nextTile.value); }
+                } else if (enteredCraftRecipeDetail
+                        && next.find("craft:detail:name") != null) {
+                    // Speak name + actual description exactly once on entry.
+                    // Keep the name focused, so normal left/right swipes,
+                    // Cancel, quantity, and Craft remain unchanged.
+                    ReaderSnapshot.Node title = next.find("craft:detail:name");
+                    ReaderSnapshot.Node intro = next.find("craft:detail:intro");
+                    StringBuilder introduction = new StringBuilder(nodeText(title, false));
+                    if (intro != null) {
+                        introduction.append(". ").append(intro.label);
+                        if (!intro.detail.trim().isEmpty()) {
+                            introduction.append(". ").append(intro.detail);
+                        }
+                    }
+                    speakInlineDetail(introduction.toString());
                 } else if (enteredMenu && "SCROLLABLE_TEXT".equals(next.category)
                         && next.find(focus) != null
                         && "document".equals(next.find(focus).role)) {

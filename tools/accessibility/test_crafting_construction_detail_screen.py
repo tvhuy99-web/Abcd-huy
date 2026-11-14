@@ -41,6 +41,38 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertIn('snapshot.focus = "craft:detail:name";', detail)
 
+
+    def test_recipe_description_is_spoken_once_on_entry_without_two_finger_tap(self):
+        # The native detail pane immediately exposes the CURRENT recipe text,
+        # not the cached description of the previously selected recipe.
+        self.assertIn('intro.label = _( "Read details" );', CRAFT)
+        self.assertIn('intro.detail = accessible_recipe_description( rec, *crafter );',
+                      CRAFT)
+        self.assertIn('intro.actions = { "focus", "activate", "read_detail" };',
+                      CRAFT)
+        self.assertIn("static std::string accessible_recipe_description(", CRAFT)
+        java = (ROOT / "android/app/src/main/java/com/cleverraven/"
+                "cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
+        self.assertIn('boolean enteredCraftRecipeDetail = "crafting".equals(next.category)',
+                      java)
+        self.assertIn('next.find("craft:detail:intro") != null', java)
+        self.assertIn('previousSnapshot.find("craft:detail:qty:current") == null',
+                      java)
+        self.assertIn('} else if (enteredCraftRecipeDetail', java)
+        self.assertIn('speakInlineDetail(introduction.toString());', java)
+        self.assertIn('msgid "Read details"\\nmsgstr "Đọc chi tiết"', VI)
+
+    def test_read_details_works_with_one_finger_and_two_fingers(self):
+        intent = _region(CRAFT, "std::optional<std::string> crafting_ui_impl::reader_intent(",
+                         "    // Apply spoken tab/subtab controls")
+        self.assertIn(
+            '( intent.action == "activate" && intent.node == "craft:detail:intro" )',
+            intent)
+        self.assertIn(
+            "full_recipe_detail_text( *current[line], reader_detail_quantity )",
+            intent)
+        self.assertIn('if( intent.action == "read_detail" ||', intent)
+
     def test_requirement_focuses_announce_have_and_need(self):
         helper = _region(CRAFT, "static int reader_requirement_have(",
                          "std::string crafting_ui_impl::full_recipe_detail_text")
