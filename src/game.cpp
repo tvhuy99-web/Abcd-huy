@@ -5356,8 +5356,16 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
             // otherwise reaching it would not place the avatar in a seat.
             for( const tripoint_bub_ms &candidate : here.points_in_radius( origin, 16 ) ) {
                 const optional_vpart_position found = here.veh_at( candidate );
-                if( !found || !found->part_with_feature( "CONTROLS", true ) ||
-                    !found->part_with_feature( "BOARDABLE", true ) ) {
+                if( !found || !found->part_with_feature( "CONTROLS", true ) ) {
+                    continue;
+                }
+                const std::optional<vpart_reference> boardable =
+                    found->part_with_feature( "BOARDABLE", true );
+                // Never attempt to displace an existing passenger, enter a
+                // locked vehicle or walk after a moving one.
+                if( !boardable || found->vehicle().is_locked ||
+                    found->vehicle().is_moving() ||
+                    found->vehicle().get_passenger( boardable->part_index() ) ) {
                     continue;
                 }
                 seats.push_back( candidate );
@@ -5377,13 +5385,21 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
                 return;
             }
             const tripoint_bub_ms selected = seats[choices.ret];
+            const optional_vpart_position target = here.veh_at( selected );
+            const std::optional<vpart_reference> boardable =
+                target ? target->part_with_feature( "BOARDABLE", true ) : std::nullopt;
+            if( !target || !boardable ||
+                !target->part_with_feature( "CONTROLS", true ) ||
+                target->vehicle().is_locked || target->vehicle().is_moving() ||
+                target->vehicle().get_passenger( boardable->part_index() ) ) {
+                add_msg( m_info, _( "The selected driver seat is no longer available." ) );
+                return;
+            }
+            if( !target->vehicle().handle_potential_theft( u ) ) {
+                return;
+            }
             if( selected == origin ) {
-                if( const optional_vpart_position found = here.veh_at( selected ) ) {
-                    if( !found->vehicle().handle_potential_theft( u ) ) {
-                        return;
-                    }
-                    here.board_vehicle( selected, &u );
-                }
+                here.board_vehicle( selected, &u );
                 return;
             }
             const std::optional<std::vector<tripoint_bub_ms>> route = safe_route_to(

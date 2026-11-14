@@ -20,7 +20,7 @@ GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 class AccessibleVehicleContracts(unittest.TestCase):
     def test_three_modes_only_appear_when_on_board(self):
-        self.assertIn('next.find("reader:vehicle:seat") != null', CTRL)
+        self.assertIn('snapshot.find("reader:vehicle:seat") != null', CTRL)
         self.assertIn("int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;", CTRL)
         self.assertIn('next.find("reader:vehicle:seat") == null', CTRL)
         self.assertIn("vehicleMode = false;", CTRL)
@@ -87,6 +87,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("safe_route_to(", GAME)
         self.assertIn("u.set_destination( *route );", GAME)
         self.assertIn("here.board_vehicle( selected, &u );", GAME)
+        self.assertIn("get_passenger( boardable->part_index() )", GAME)
+        self.assertIn("The selected driver seat is no longer available.", GAME)
 
     def test_obstacle_sensing_ignores_player_visibility(self):
         self.assertIn("veh.immediate_path( &here )", WORLD)
@@ -101,6 +103,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("velocity > 0 && cruise_velocity > 0", VEH)
         self.assertIn("std::clamp( 8 + velocity / 800, 8, 24 )", VEH)
         self.assertIn("handbrake( here );", VEH)
+        self.assertIn("velocity != 0 && cruise_velocity != 0", VEH)
+        self.assertIn("std::abs( velocity ) / 500", VEH)
+        self.assertIn("reverse ? 180_degrees : 0_degrees", WORLD)
+        self.assertIn("requested_distance", VEH)
 
     def test_speech_is_deferred_to_next_vehicle_snapshot(self):
         self.assertIn("pendingVehicleRoadReport", CTRL)

@@ -728,10 +728,14 @@ void vehicle::autopilot_patrol( map *here )
     drive_to_local_target( here, autodrive_local_target, false );
 }
 
-std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &rotate )
+std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &rotate,
+        const int requested_distance )
 {
     std::set<point_abs_ms> points_to_check;
-    const int distance_to_check = 10 + ( velocity / 800 );
+    // Preserve native autopilot behavior unless the accessibility sensor
+    // explicitly requests a longer braking horizon.
+    const int distance_to_check = requested_distance > 0 ?
+                                  std::clamp( requested_distance, 1, 60 ) : 10 + ( velocity / 800 );
     units::angle adjusted_angle = normalize( face.dir() + rotate );
     // clamp to multiples of 15.
     adjusted_angle = round_to_multiple_of( adjusted_angle, vehicles::steer_increment );
@@ -6725,15 +6729,16 @@ void vehicle::gain_moves( map &here )
     const avatar &driver = get_avatar();
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
-        velocity > 0 && cruise_velocity > 0 ) {
+        velocity != 0 && cruise_velocity != 0 ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
+            const bool reverse = velocity < 0;
             const std::optional<a11y::vehicle_obstacle> hazard =
-                a11y::vehicle_obstacle_ahead( *this, here );
-            // Keep the requested eight-tile warning at low speed and
-            // start braking earlier as speed rises. The native handbrake
-            // may still skid or fail to stop a very fast vehicle in time.
-            const int braking_range = std::clamp( 8 + velocity / 800, 8, 24 );
+                a11y::vehicle_obstacle_ahead( *this, here, reverse );
+            // Warn from eight tiles at low speed; extend the horizon as
+            // the vehicle accelerates in either direction. This is an
+            // emergency aid, not a promise that handbraking stops instantly.
+            const int braking_range = std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 );
             if( hazard && hazard->distance <= braking_range ) {
                 cruise_velocity = 0;
                 handbrake( here );

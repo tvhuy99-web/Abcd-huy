@@ -727,11 +727,13 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             controls.actions = { "focus" };
             result.nodes.push_back( std::move( controls ) );
 
+            const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
             const std::string speed = local_driver ?
+                                      ( reversing ? std::string( _( "Reversing." ) ) + " " : "" ) +
                                       string_format(
                                           _( "Current speed: %1$d %3$s. Target speed: %2$d %3$s." ),
-                                          static_cast<int>( std::lround( convert_velocity( veh.velocity, VU_VEHICLE ) ) ),
-                                          static_cast<int>( std::lround( convert_velocity( veh.cruise_velocity, VU_VEHICLE ) ) ),
+                                          static_cast<int>( std::lround( convert_velocity( std::abs( veh.velocity ), VU_VEHICLE ) ) ),
+                                          static_cast<int>( std::lround( convert_velocity( std::abs( veh.cruise_velocity ), VU_VEHICLE ) ) ),
                                           velocity_units( VU_VEHICLE ) ) :
                                       _( "Speed is unavailable until you take control." );
             result.nodes.push_back( document( "reader:vehicle:speed",
@@ -741,6 +743,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                                 _( "Engine stopped." ) );
             vehicle_detail += " " + string_format( _( "Direction: %s." ),
                                                  veh.face.to_string_azimuth_from_north() );
+            // Report the requested steering angle separately. Turning the
+            // wheel does not rotate the vehicle body until it moves.
+            tileray desired_heading;
+            desired_heading.init( veh.turn_dir );
+            vehicle_detail += " " + string_format( _( "Requested heading: %s." ),
+                                                 desired_heading.to_string_azimuth_from_north() );
             vehicle_detail += " " + speed;
             if( local_driver ) {
                 const std::string fuel = display::vehicle_fuel_percent_text_color(
@@ -757,11 +765,16 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             if( veh.skidding ) {
                 vehicle_detail += " " + std::string( _( "Warning: vehicle is skidding." ) );
             }
-            const std::optional<vehicle_obstacle> hazard = vehicle_obstacle_ahead( veh, get_map() );
+            const std::optional<vehicle_obstacle> hazard =
+                vehicle_obstacle_ahead( veh, get_map(), reversing );
             const std::string road = hazard ?
-                                     string_format( _( "%1$s ahead, about %2$d tiles." ),
+                                     string_format( reversing ?
+                                                    _( "%1$s behind, about %2$d tiles." ) :
+                                                    _( "%1$s ahead, about %2$d tiles." ),
                                                     hazard->label, hazard->distance ) :
-                                     _( "No blocking obstacle detected along the checked forward path." );
+                                     std::string( reversing ?
+                                                  _( "No obstacle found along the checked reverse path." ) :
+                                                  _( "No blocking obstacle detected along the checked forward path." ) );
             vehicle_detail += " " + road;
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
@@ -1530,9 +1543,17 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
 // Project the actual vehicle footprint forward with the game's existing
 // native predictor. Examine current map entities directly; neither visual
 // range nor the avatar's line of sight is used for collision assistance.
-std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here )
+std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
+        const bool reverse )
 {
-    const std::set<point_abs_ms> projected = veh.immediate_path( &here );
+    // Look through the true map, including positions behind walls or beyond
+    // visual range. Extend the path beyond the braking threshold and past
+    // the car's own body, including when backing up.
+    const int horizon = std::clamp( 20 + std::abs( veh.velocity ) / 400, 20, 60 );
+    const units::angle desired_delta = normalize( veh.turn_dir - veh.face.dir() +
+                                      ( reverse ? 180_degrees : 0_degrees ) );
+    const std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
+                                            horizon );
     std::optional<vehicle_obstacle> nearest;
     const point_bub_ms origin = veh.pos_bub( here ).xy();
     const int z = veh.pos_bub( here ).z();

@@ -1102,7 +1102,8 @@ class vehicle
         }
         bool handle_potential_theft( Character const &you, bool check_only = false, bool prompt = true );
         // project a tileray forward to predict obstacles
-        std::set<point_abs_ms> immediate_path( map *here, const units::angle &rotate = 0_degrees );
+        std::set<point_abs_ms> immediate_path( map *here, const units::angle &rotate = 0_degrees,
+                                                int requested_distance = 0 );
         std::set<point_abs_ms> collision_check_points; // NOLINT(cata-serialize)
         void autopilot_patrol( map *here );
         units::angle get_angle_from_targ( const tripoint_abs_ms &targ ) const;

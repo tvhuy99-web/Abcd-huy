@@ -35,7 +35,8 @@ struct vehicle_obstacle {
     int distance = 0;
     std::string label;
 };
-std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here );
+std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
+        bool reverse = false );
 
 // explore_cursor, when set, is the explore-mode cursor position relative to
 // the avatar. The scan is then centered on the cursor instead of the avatar
