@@ -768,6 +768,16 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( document( "reader:vehicle:road",
                                               _( "Road ahead" ), road ) );
             if( local_driver ) {
+                // Keep direction selection separate from requested speed.
+                // These buttons are validated again on the native game thread.
+                result.nodes.push_back( button( "reader:vehicle:forward",
+                                                _( "Select forward driving" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:reverse",
+                                                _( "Select reverse driving" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:faster",
+                                                _( "Increase target driving speed" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:slower",
+                                                _( "Decrease target driving speed" ), "" ) );
                 result.nodes.push_back( button( "reader:vehicle:brake",
                                                 _( "Emergency handbrake" ),
                                                 _( "Applies the native vehicle handbrake." ) ) );
