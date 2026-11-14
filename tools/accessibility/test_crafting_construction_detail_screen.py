@@ -229,9 +229,11 @@ class DetailScreenSharedTest(unittest.TestCase):
         craft_groups = _region(CRAFT, "static void append_reader_requirement_nodes(",
                                '// Resolve a "…:req:<kind>:<group>:<alt>"')
         self.assertIn("add_requirement_header( group.size() );", craft_groups)
-        construction_groups = _region(CONSTRUCTION,
-                                     "static void append_reader_requirement_nodes(",
-                                     "construction_id construction_menu")
+        construction_groups = _region(
+            CONSTRUCTION,
+            "static void append_reader_requirement_nodes(",
+            "construction_id construction_menu",
+        )
         self.assertNotIn("add_requirement_header(", construction_groups)
 
     def test_new_strings_are_translated(self):
