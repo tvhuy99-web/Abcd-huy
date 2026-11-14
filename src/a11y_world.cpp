@@ -757,6 +757,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                 result.nodes.push_back( button( "reader:vehicle:brake",
                                                 _( "Emergency handbrake" ),
                                                 _( "Applies the native vehicle handbrake." ) ) );
+                result.nodes.push_back( button( "reader:vehicle:heading:left",
+                                                _( "Turn vehicle heading left by 45 degrees" ),
+                                                _( "Requests three native 15-degree steering increments." ) ) );
+                result.nodes.push_back( button( "reader:vehicle:heading:right",
+                                                _( "Turn vehicle heading right by 45 degrees" ),
+                                                _( "Requests three native 15-degree steering increments." ) ) );
                 if( veh.has_part( "HORN" ) ) {
                     result.nodes.push_back( button( "reader:vehicle:horn",
                                                     _( "Sound vehicle horn" ),
