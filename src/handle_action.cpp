@@ -136,6 +136,10 @@
 #include "sdltiles.h"
 #endif
 
+// A heading gesture requests 45 degrees through the original steering physics.
+// Consumed by the next native vehicle move only; reset on each input turn.
+static int a11y_steering_nudge = 1;
+
 static const bionic_id bio_remote( "bio_remote" );
 
 static const character_modifier_id
@@ -511,6 +515,10 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Emergency vehicle handbrake" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HORN",
                           to_translation( "Sound the vehicle horn" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_LEFT",
+                          to_translation( "Vehicle heading left by 45 degrees" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_RIGHT",
+                          to_translation( "Vehicle heading right by 45 degrees" ) );
 
     // In spoken-only mode the reader refresh below owns the cache
     // rebuild and visibility update. Avoid doing the same visibility
@@ -600,13 +608,21 @@ input_context game::get_player_input( std::string &action )
         // Never accept a cached Android focus from a passenger or remote car.
         if( intent.action == "activate" &&
             ( intent.node == "reader:vehicle:brake" ||
-              intent.node == "reader:vehicle:horn" ) ) {
+              intent.node == "reader:vehicle:horn" ||
+              intent.node == "reader:vehicle:heading:left" ||
+              intent.node == "reader:vehicle:heading:right" ) ) {
             const optional_vpart_position seated = get_map().veh_at( u.pos_bub( get_map() ) );
             if( !seated || !u.controlling_vehicle ||
                 !seated->vehicle().player_in_control( get_map(), u ) ||
                 ( g && g->remoteveh() == &seated->vehicle() ) ) {
                 a11y::android::status( "blocked", &intent );
                 return std::nullopt;
+            }
+            if( intent.node == "reader:vehicle:heading:left" ) {
+                return "A11Y_INTERNAL_VEHICLE_HEADING_LEFT";
+            }
+            if( intent.node == "reader:vehicle:heading:right" ) {
+                return "A11Y_INTERNAL_VEHICLE_HEADING_RIGHT";
             }
             if( intent.node == "reader:vehicle:brake" ) {
                 return "A11Y_INTERNAL_VEHICLE_BRAKE";
@@ -2993,7 +3009,10 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
     } else if( has_vehicle_control( player_character ) ) {
         // vehicle control uses x for steering and y for ac/deceleration,
         // so no rotation needed
-        pldrive( get_delta_from_movement_action( act, iso_rotate::no ) );
+        const point_rel_ms direction = get_delta_from_movement_action( act, iso_rotate::no );
+        const int nudge = a11y_steering_nudge;
+        a11y_steering_nudge = 1;
+        pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
     } else {
         const int pre_walk_moves = player_character.get_moves();
         point_rel_ms dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
@@ -4085,6 +4104,7 @@ bool game::handle_action()
     user_turn current_turn;
     avatar &player_character = get_avatar();
 
+    a11y_steering_nudge = 1;
     combat_attack_direction = -1;
     combat_cycle_direction = 0;
     combat_reload_to_full = false;
@@ -4235,6 +4255,14 @@ bool game::handle_action()
                     };
                     act = step_actions[dir];
                 }
+            }
+        } else if( a11y::enabled() &&
+                   ( action == "A11Y_INTERNAL_VEHICLE_HEADING_LEFT" ||
+                     action == "A11Y_INTERNAL_VEHICLE_HEADING_RIGHT" ) ) {
+            if( veh_ctrl && player_character.controlling_vehicle ) {
+                a11y_steering_nudge = 3;
+                act = action == "A11Y_INTERNAL_VEHICLE_HEADING_LEFT" ?
+                      ACTION_MOVE_LEFT : ACTION_MOVE_RIGHT;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_BRAKE" ) {
             // Smash is already the native driving handbrake. Use that same
