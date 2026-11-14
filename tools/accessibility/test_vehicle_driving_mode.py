@@ -104,6 +104,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_speech_is_deferred_to_next_vehicle_snapshot(self):
         self.assertIn("pendingVehicleRoadReport", CTRL)
+        self.assertIn("pendingVehicleSpeedReport", CTRL)
+        self.assertIn('next.find("reader:vehicle:speed")', CTRL)
         self.assertIn('next.find("reader:vehicle:road")', CTRL)
         self.assertIn("if (vehicleMode && directWorldGesturesEnabled())", CTRL)
 
