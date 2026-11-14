@@ -5644,3 +5644,12 @@ msgstr "Không thể đẩy kiện hàng theo hướng đó."
 
 msgid "At the edge: you cannot move further in that direction."
 msgstr "Đã ở mép: bạn không thể di chuyển xa hơn theo hướng đó."
+
+msgid "Enter a quantity manually"
+msgstr "Nhập số lượng thủ công"
+
+msgid "Construction builds one at a time; quantity is fixed at 1."
+msgstr "Xây dựng làm từng cái một; số lượng cố định là 1."
+
+msgid "Construct"
+msgstr "Xây dựng"
