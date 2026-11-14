@@ -41,7 +41,6 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertIn('snapshot.focus = "craft:detail:name";', detail)
 
-
     def test_recipe_description_is_spoken_once_on_entry_without_two_finger_tap(self):
         # The native detail pane immediately exposes the CURRENT recipe text,
         # not the cached description of the previously selected recipe.
@@ -60,7 +59,7 @@ class CraftingDetailScreenTest(unittest.TestCase):
                       java)
         self.assertIn('} else if (enteredCraftRecipeDetail', java)
         self.assertIn('speakInlineDetail(introduction.toString());', java)
-        self.assertIn('msgid "Read details"\\nmsgstr "Đọc chi tiết"', VI)
+        self.assertIn('msgid "Read details"\nmsgstr "Đọc chi tiết"', VI)
 
     def test_read_details_works_with_one_finger_and_two_fingers(self):
         intent = _region(CRAFT, "std::optional<std::string> crafting_ui_impl::reader_intent(",
