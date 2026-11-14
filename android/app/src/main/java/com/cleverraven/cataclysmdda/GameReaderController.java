@@ -44,6 +44,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private final TextView status;
     private final LinearLayout rows;
     private final Handler handler = new Handler(Looper.getMainLooper());
+    private static final String GESTURE_READER_OFF_KEY = "gesture-reader-off";
+    private boolean readerOffAfterAnnouncement;
+    private boolean announceReaderEnabledAfterInit;
+    private final Runnable finishReaderOffGesture = () -> {
+        if (!readerOffAfterAnnouncement) { return; }
+        readerOffAfterAnnouncement = false;
+        applyReaderGestureEnabled(false);
+    };
     private final LinkedHashMap<Long, Long> pendingIntentTimes = new LinkedHashMap<>();
     // Native actions invalidate their snapshot briefly. Messages arriving in
     // this gap must be read after the next snapshot instead of disappearing.
@@ -264,6 +272,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         speech.setCompletionListener(new ReaderSpeechQueue.CompletionListener() {
             @Override
             public void onFinished(String key) {
+                if (GESTURE_READER_OFF_KEY.equals(key)) {
+                    handler.post(finishReaderOffGesture);
+                }
                 if (key.equals(documentReader.speechKey())) {
                     documentReader.markFinished();
                 }
@@ -271,6 +282,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
             @Override
             public void onInterrupted(String key) {
+                if (GESTURE_READER_OFF_KEY.equals(key)) {
+                    handler.post(finishReaderOffGesture);
+                }
                 if (key.equals(documentReader.speechKey())) {
                     documentReader.markInterrupted();
                 }
@@ -312,7 +326,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderDiagnostics.get().event("speech_" + state.name().toLowerCase(Locale.ROOT));
         updateNativeState(false);
         if (state == AndroidSpeech.State.READY && !usesTouchExploration()) {
-            readCurrent();
+            if (announceReaderEnabledAfterInit && preferences.isEnabled()) {
+                announceReaderEnabledAfterInit = false;
+                speech.say("gesture-reader-on", activity.getString(R.string.a11yReaderGestureOn),
+                        ReaderSpeechQueue.FOCUS);
+            } else {
+                readCurrent();
+            }
         } else if (state == AndroidSpeech.State.FAILED || state == AndroidSpeech.State.MISSING_LANGUAGE
                 || state == AndroidSpeech.State.MISSING_VOICE
                 || state == AndroidSpeech.State.NETWORK_REQUIRED) {
@@ -4382,11 +4402,66 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
+    /** A fixed shortcut only outside the active world map; TalkBack owns its gestures. */
+    public boolean canToggleReaderOutsideWorld() {
+        return !closed && foreground && windowFocused && !usesTouchExploration()
+                && (!preferences.isEnabled() || !directWorldGesturesEnabled());
+    }
+
+    public void toggleReaderOutsideWorld() {
+        if (!canToggleReaderOutsideWorld() || readerOffAfterAnnouncement) { return; }
+        if (!preferences.isEnabled()) {
+            applyReaderGestureEnabled(true);
+            return;
+        }
+        if (!speech.isReady()) {
+            applyReaderGestureEnabled(false);
+            return;
+        }
+        // Let the confirmation finish before shutting down its own TTS engine.
+        speech.stop();
+        readerOffAfterAnnouncement = true;
+        speech.say(GESTURE_READER_OFF_KEY,
+                activity.getString(R.string.a11yReaderDisabledNotice),
+                ReaderSpeechQueue.FOCUS);
+        handler.postDelayed(finishReaderOffGesture, 3000L);
+    }
+
+    private void applyReaderGestureEnabled(boolean enabled) {
+        if (closed) { return; }
+        handler.removeCallbacks(finishReaderOffGesture);
+        readerOffAfterAnnouncement = false;
+        announceReaderEnabledAfterInit = false;
+        preferences.setEnabled(enabled);
+        presentationEpoch++;
+        root.cancelGesture();
+        if (enabled) {
+            root.setVisibility(View.VISIBLE);
+            announceReaderEnabledAfterInit = true;
+            if (!speech.isReady()) { speech.initialize(preferences); }
+            render();
+        } else {
+            speech.clearForLifecycle();
+            pendingGameMessages.clear();
+            sonar.setWorldActive(false);
+            root.setVisibility(View.GONE);
+        }
+        updateNativeState(true);
+        if (enabled && speech.isReady() && foreground && windowFocused) {
+            announceReaderEnabledAfterInit = false;
+            speech.say("gesture-reader-on", activity.getString(R.string.a11yReaderGestureOn),
+                    ReaderSpeechQueue.FOCUS);
+        }
+        SessionDebugLog.event("READER_GESTURE_TOGGLE", "enabled=" + enabled);
+    }
+
     public boolean isEnabled() { return preferences.isEnabled(); }
 
     @Override
     public void close() {
         if (closed) { return; }
+        handler.removeCallbacks(finishReaderOffGesture);
+        readerOffAfterAnnouncement = false;
         combatMode = false;
         closed = true;
         foreground = false;

@@ -51,6 +51,7 @@
     <string name="a11yTtsMissingVoice">Giọng đang chọn chưa được cài. Hãy chọn giọng khác hoặc cài giọng này trong cài đặt Android.</string>
     <string name="a11yTtsNetworkRequired">Giọng này cần kết nối mạng. Hãy bật mạng hoặc chọn giọng dùng được ngoại tuyến.</string>
     <string name="a11yReaderDisabledNotice">Đã tắt trình đọc nội bộ.</string>
+    <string name="a11yReaderGestureOn">Đã bật trình đọc nội bộ.</string>
     <string name="a11yDocParagraphPosition">Đoạn %1$d trên %2$d</string>
     <string name="a11yDocStart">Đầu tài liệu</string>
     <string name="a11yDocEnd">Cuối tài liệu</string>

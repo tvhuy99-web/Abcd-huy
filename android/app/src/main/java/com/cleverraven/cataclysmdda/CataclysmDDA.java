@@ -43,6 +43,8 @@ public class CataclysmDDA extends SDLActivity {
 
     private NativeUI nativeUI = new NativeUI(CataclysmDDA.this);
     private volatile GameReaderController readerController;
+    // Remains active at Activity level when the internal reader surface is hidden.
+    private ReaderThreeFingerDoubleTap readerToggleGesture;
     private int lastImeLeft = -1;
     private int lastImeTop = -1;
     private int lastImeRight = -1;
@@ -72,6 +74,7 @@ public class CataclysmDDA extends SDLActivity {
         SessionDebugLog.start(this);
         SessionDebugLog.event("LIFECYCLE", "game_activity_onCreate");
         super.onCreate(savedInstanceState);
+        readerToggleGesture = new ReaderThreeFingerDoubleTap(this);
         if (mLayout != null) {
             mLayout.setVisibility(View.INVISIBLE);
         }
@@ -97,6 +100,7 @@ public class CataclysmDDA extends SDLActivity {
     protected void onPause() {
         SessionDebugLog.event("LIFECYCLE", "game_activity_onPause");
         GameReaderController reader = readerController;
+        if (readerToggleGesture != null) { readerToggleGesture.reset(); }
         if (reader != null) { reader.onPause(); }
         super.onPause();
     }
@@ -120,6 +124,26 @@ public class CataclysmDDA extends SDLActivity {
         // when another finger joins a gesture. Our transparent reader surface
         // receives the pointer sequence after this Activity-level guard.
         GameReaderController reader = readerController;
+        if (event != null && reader != null && readerToggleGesture != null
+                && reader.canToggleReaderOutsideWorld()) {
+            int result = readerToggleGesture.observe(event);
+            if (result == ReaderThreeFingerDoubleTap.CAPTURE) {
+                // SDL/the reader may have seen the first pointer. Cancel that
+                // sequence before owning the three-finger gesture ourselves.
+                MotionEvent cancel = MotionEvent.obtain(event);
+                cancel.setAction(MotionEvent.ACTION_CANCEL);
+                super.dispatchTouchEvent(cancel);
+                cancel.recycle();
+                return true;
+            }
+            if (result == ReaderThreeFingerDoubleTap.TOGGLE) {
+                reader.toggleReaderOutsideWorld();
+                return true;
+            }
+            if (result == ReaderThreeFingerDoubleTap.CONSUME) { return true; }
+        } else if (readerToggleGesture != null) {
+            readerToggleGesture.reset();
+        }
         if (event != null && reader != null && reader.isEnabled()
                 && !reader.usesTouchExploration() && getWindow() != null) {
             int action = event.getActionMasked();
@@ -286,6 +310,7 @@ public class CataclysmDDA extends SDLActivity {
     @Override
     public void onWindowFocusChanged(boolean hasFocus) {
         super.onWindowFocusChanged(hasFocus);
+        if (!hasFocus && readerToggleGesture != null) { readerToggleGesture.reset(); }
         GameReaderController reader = readerController;
         if (reader != null) { reader.onWindowFocusChanged(hasFocus); }
         if (hasFocus) {

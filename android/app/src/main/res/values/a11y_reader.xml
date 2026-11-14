@@ -51,6 +51,7 @@
     <string name="a11yTtsMissingVoice">The selected voice is not installed. Choose another voice or install it in Android settings.</string>
     <string name="a11yTtsNetworkRequired">This voice needs a network connection. Connect to a network or choose a voice that works offline.</string>
     <string name="a11yReaderDisabledNotice">Internal reader is off.</string>
+    <string name="a11yReaderGestureOn">Internal reader is on.</string>
     <string name="a11yDocParagraphPosition">Paragraph %1$d of %2$d</string>
     <string name="a11yDocStart">Start of the document</string>
     <string name="a11yDocEnd">End of the document</string>

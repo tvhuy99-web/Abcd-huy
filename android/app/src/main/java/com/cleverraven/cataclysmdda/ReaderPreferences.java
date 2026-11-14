@@ -24,6 +24,11 @@ public final class ReaderPreferences {
         return values.getBoolean("enabled", BuildConfig.FLAVOR.equals("accessibility"));
     }
 
+    public void setEnabled(boolean enabled) {
+        values.edit().putBoolean("auto_reader_default_20261107", true)
+                .putBoolean("enabled", enabled).apply();
+    }
+
     public boolean permitsNetworkVoice() {
         return values.getBoolean("network_voice_consent", false);
     }
