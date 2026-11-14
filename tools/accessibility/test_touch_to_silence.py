@@ -54,7 +54,7 @@ class TouchToSilenceTest(unittest.TestCase):
             "public boolean stopForTouch()", 1)[0]
         self.assertIn("clearRequests();", stop)
         self.assertIn("speech.cancel();", stop)
-        # STT 175: a single tap toggles speech — it still stops while
+        # a single tap toggles speech — it still stops while
         # anything is speaking or queued, and resumes from the cut-off
         # chunk only when the queue is idle.
         speech = self.controller.split("public void stopSpeech()", 1)[1].split(

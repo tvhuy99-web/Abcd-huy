@@ -116,8 +116,8 @@ với quyết định đó. Bài **TX-21** trong `TESTING.vi.md` phân loại ri
 `ad5ecf0`, bảng 78 tệp trong
 `RECOVERY-RECONCILIATION-2026-10-23.vi.md`). **Bản chưa commit phía thứ
 ba của người dùng không có trong máy này**, nên phần hòa giải từng hunk
-cho 8 tệp đã liệt kê trong tài liệu hòa giải (ReaderPreferences,
-GameReaderController, ReaderGestureSurface, ReaderSetupActivity, hai
+cho 7 tệp đã liệt kê trong tài liệu hòa giải (ReaderPreferences,
+GameReaderController, ReaderGestureSurface, hai
 tệp `a11y_reader.xml`, `a11y_world.cpp/.h`) **chưa thực hiện được và
 không được tuyên bố là đã hòa giải**. Khi người dùng cung cấp bản
 local đó, R00.1 phải mở lại theo từng hunk cho 8 tệp trên. Liên quan:
@@ -133,14 +133,6 @@ nhịp **đã công bố trong mã và tài liệu R18**, không giấu. Nghiệ
 người khiếm thị ở giai đoạn 3 quyết định giữ chính sách theo lượt hay
 mở lại R18.4; nếu bản theo lượt bị kết luận là không còn là Snake, mục
 đó phải mở lại chứ không được coi là đã xong.
-
-### 3.4. Âm cứu hộ — tệp thật, giọng máy, chờ thay giọng tự nhiên
-
-6 tệp MP3 cứu hộ trong `res/raw/` là **âm thật** do eSpeak NG sinh
-offline (không phải placeholder), có provenance và transcript trong
-`R06-RESCUE-AUDIO-ASSETS.vi.md`, đặt tên để thay nguyên tệp khi có
-giọng tự nhiên. Giới hạn giữ nguyên: giọng robot; **nghe rõ thuộc giai
-đoạn 2/3** — không suy "có tệp" thành "nghe được".
 
 ### 3.5. Chưa ghim ở manifest phạm vi (mục 8 của SCOPE-MANIFEST)
 
@@ -221,7 +213,6 @@ chưa đo; chẩn đoán và khung đo đã chuẩn bị ở R21.
 | Điều kiện của kế hoạch | Trạng thái tại đóng giai đoạn 1 |
 | --- | --- |
 | Còn nguồn chưa hòa giải | **Còn một phần, ghi công khai:** hai phía có trong máy đã hòa giải ở R00; phía local thứ ba chưa có trong máy nên chưa hòa giải được (mục 3.2). Giai đoạn 1 đóng với ràng buộc này tường minh, chờ người dùng cung cấp bản local để mở lại R00.1. |
-| Tài sản cứu hộ chỉ placeholder | Đạt: 6 tệp âm thật có nội dung đọc (giọng máy eSpeak NG), provenance rõ (mục 3.4). |
 | Minigame/xe/vùng không có đường chơi | Đạt ở mức viết mã: 5/5 minigame, 4/4 hành trình xe + điều khiển động cơ, 3/3 hành trình vùng đều đã viết, chờ kiểm thử. Snake có chính sách theo lượt đã công bố (mục 3.3). |
 | Chưa phân loại hết phạm vi | Đạt: điểm đầu vào chưa phân loại = 0 trong phạm vi đã ghim, đã rà lại ở R23.2. |
 

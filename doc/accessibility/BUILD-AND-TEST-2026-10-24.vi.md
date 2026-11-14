@@ -14,7 +14,7 @@
 
 ## Các vấn đề đã sửa
 
-1. Đưa đủ 6 MP3 cứu hộ và 4 WAV âm hiệu do người dùng cung cấp vào kho.
+1. Đưa đủ 4 WAV âm hiệu do người dùng cung cấp vào kho.
 2. Nối Áp dụng/Hủy nháp vào menu điều khiển nội bộ; đọc thay đổi giá trị
    nháp, giá trị đã áp dụng và lỗi trường. Giữ cả nút native cho TalkBack.
 3. Dùng giao dịch thư mục chung cho installer và restore. Nếu phục hồi

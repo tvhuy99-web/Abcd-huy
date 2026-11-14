@@ -3,11 +3,11 @@
 > **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
 
 Tài liệu này ghi kết quả rà soát R05.1–R05.4 trên nền đã có từ R00.2/R00.3
-(cờ engine cho vuốt di chuyển, trial dùng đồng hồ đơn điệu), R03 (cửa kiểm
+(cờ engine cho vuốt di chuyển), R03 (cửa kiểm
 quyền intent, suspend/resume, TalkBack) và R04 (điều khiển dùng chung).
 Trạng thái: **đã viết, chờ kiểm thử** (xem `REMAINING-CODE-BACKLOG.json`):
 chưa build, chưa chạy test, chưa tạo APK trong đợt này. Test ID sẽ chạy ở
-giai đoạn 2: T07, T09–T12, T19, T50, T64.
+giai đoạn 2: T09–T12, T19, T50, T64.
 
 Phần lớn R05 đã đạt từ các mục trước; đợt này **rà soát lại từng điểm bằng
 đường mã**, chỉ sửa đúng các khe hở tìm thấy (mục 3 và mục 5), không viết
@@ -17,51 +17,14 @@ recognizer / bản đồ cử chỉ / ngưỡng thành các phần riêng
 `AccessibilityGestureThresholds`, `AccessibilityGestureSettings`). CDDA đạt
 cùng cách tách đó theo cấu trúc sẵn có: recognizer + phân vùng hướng nằm ở
 `ReaderGestureSurface`, bản đồ hai trục + ngưỡng (khoảng cách dp, thời lượng
-ms, tay thuận) nằm ở `ReaderPreferences`, hành động nằm ở
+ms) nằm ở `ReaderPreferences`, hành động nằm ở
 `GameReaderController`. Không chép mã C#.
 
-## 1. R05.1 — Gán hai trục, trial 45 giây, cấu hình đã xác nhận là thứ duy nhất sống sót
+## 1. R05.1 — Gán hai trục, cấu hình đã xác nhận
 
-**Kết luận: đã đạt tại R00.3, rà soát lại ở R05 — không sửa.** Bằng chứng
-đường mã trong `ReaderPreferences.java` hiện tại:
-
-- Gán hai trục còn đúng: `horizontal_swipe_action` / `vertical_swipe_action`
-  là cấu hình đã xác nhận; ứng viên của trial ở hai khóa
-  `trial_horizontal_swipe_action` / `trial_vertical_swipe_action` riêng.
-  `beginGestureMapTrial` ép ít nhất một trục là `GESTURE_ACTION_NAVIGATE`
-  (không bao giờ mất đường duyệt menu một ngón). Thời lượng mặc định giữ
-  nguyên `GESTURE_MAP_TRIAL_MS = 45_000`.
-- Deadline đơn điệu: `SystemClock.elapsedRealtime()`; không còn
-  `System.currentTimeMillis()` và không còn khóa deadline/pending nào được
-  ghi xuống đĩa (`gesture_map_trial_pending`, `gesture_map_trial_deadline`
-  chỉ còn là tên khóa legacy để dọn).
-- Pending + thời điểm bắt đầu chỉ ở biến tĩnh bộ nhớ tiến trình
-  (`trialPendingInMemory`, `trialStartedElapsedMs`) — bắt buộc là static vì
-  `ReaderSetupActivity` (bắt đầu trial) và `GameReaderController` (đếm giờ,
-  xác nhận) là hai instance khác nhau.
-- **Trường hợp ứng viên sót sau process chết (điểm rà soát kỹ nhất đợt
-  này): đã kín.** Constructor của `ReaderPreferences`: nếu tiến trình hiện
-  tại không có trial sống (`!trialPendingInMemory`) mà trên đĩa còn bất kỳ
-  khóa trial nào (hai khóa ứng viên mới ghi hoặc hai khóa legacy) thì xóa
-  tất cả. Vì vậy ứng viên do `beginGestureMapTrial` ghi ngay trước khi
-  process chết chỉ là dữ liệu trơ: lần khởi động sau, instance
-  `ReaderPreferences` đầu tiên (Setup/Controller đều tạo ngay khi mở) dọn
-  nó trước khi bất kỳ `getGestureAction` nào đọc, và `getGestureAction`
-  vốn chỉ đọc ứng viên khi `isGestureMapTrialActive()` — vốn cần pending
-  trong bộ nhớ. Restart / reboot / process chết đều trả cấu hình đã xác
-  nhận. Ghi chú trung thực: `apply()` của Android cập nhật bản đồ trong bộ
-  nhớ đồng bộ trước khi ghi đĩa, nên không có cửa sổ nào mà ứng viên trên
-  đĩa tồn tại mà constructor không thấy.
-- Hết hạn: `isGestureMapTrialActive()` tự hoàn trial khi quá 45 giây kể từ
-  `startGestureMapTrialTimer()` (gọi ở `GameReaderController.onResume`);
-  runnable đếm giờ `scheduleGestureMapTrialTimeout` hoàn trial, hủy cử chỉ
-  đang dở và xóa trạng thái practice còn sót (R00.3).
-- TalkBack: listener đổi trạng thái khám phá chạm trong
-  `GameReaderController` hoàn trial đang chờ ngay khi TalkBack bật
-  (`revertedTrial`), đọc thông báo hoàn ánh xạ; khi TalkBack đang bật,
-  `ReaderSetupActivity.tryGestureMapping()` từ chối bắt đầu trial
-  (`a11yGestureMappingTalkBack`) — không có thay đổi cấu hình nào diễn ra
-  trong lúc người dùng không thử được bằng cử chỉ của bộ đọc.
+**Kết luận: gán hai trục giữ nguyên.** `horizontal_swipe_action` /
+`vertical_swipe_action` là cấu hình đã xác nhận; ít nhất một trục luôn là
+`GESTURE_ACTION_NAVIGATE` (không bao giờ mất đường duyệt menu một ngón).
 
 ## 2. R05.2 — Bài tập luyện cử chỉ trong ngữ cảnh độc lập
 
@@ -76,7 +39,7 @@ kỹ năng kế hoạch yêu cầu:
 | Không gửi gameplay | `practiceMovementDirection` không gọi `send(...)` ở bất kỳ nhánh nào; `movementPracticeEnabled()` cố ý không đòi cờ engine vì bài luyện không phải intent gameplay (ghi chú trong mã từ R00.2) | Đạt |
 | Thoát | Chạm hai lần (`activate()` → `endMovementPractice`) hoặc Back (`onBackPressed` → `endMovementPractice`); thoát đọc `a11yReaderMovementPracticeExited` và **không đổi cấu hình thật** (fast movement giữ nguyên, tiến độ trong phiên bị xóa) | Đạt |
 | Học lại | Vào lại bài luyện đặt `movementPracticeDirections = 0` — đếm lại từ đầu. **Đợt này bổ sung:** chuỗi hướng dẫn `a11yReaderMovementPracticeInstructions` (Anh + Việt) nay nói rõ điều này ("starting practice again resets your progress…"), trước đây người dùng không được cho biết | Đã sửa ở R05 |
-| Duyệt / chọn / đọc / hủy (kỹ năng cử chỉ chung) | Không nằm trong bài tám hướng mà ở cơ chế cử chỉ chung, được bài trial ánh xạ ở Setup + trợ giúp luyện: duyệt = vuốt theo ánh xạ trục (ít nhất một trục luôn là duyệt); chọn = chạm hai lần; đọc = nhấn giữ (`detail`) hoặc ánh xạ `READ_CURRENT`; hủy = Back mở Reader controls / mục "Cancel one game menu". Chuỗi trợ giúp `a11yReaderGestureInstructions` (Anh + Việt) mô tả đủ cả bốn | Đạt, ghi rõ phân bổ này để giai đoạn 2 kiểm đúng chỗ |
+| Duyệt / chọn / đọc / hủy (kỹ năng cử chỉ chung) | Không nằm trong bài tám hướng mà ở cơ chế cử chỉ chung + trợ giúp luyện: duyệt = vuốt theo ánh xạ trục (ít nhất một trục luôn là duyệt); chọn = chạm hai lần; đọc = nhấn giữ (`detail`) hoặc ánh xạ `READ_CURRENT`; hủy = Back mở Reader controls / mục "Cancel one game menu". Chuỗi trợ giúp `a11yReaderGestureInstructions` (Anh + Việt) mô tả đủ cả bốn | Đạt, ghi rõ phân bổ này để giai đoạn 2 kiểm đúng chỗ |
 
 Hai giới hạn giữ nguyên có ghi nhận:
 
@@ -86,8 +49,6 @@ Hai giới hạn giữ nguyên có ghi nhận:
   sổ hành trình ("vùng luyện trong game"); tách nhãn hướng khỏi snapshot
   sẽ tạo nguồn tên hướng thứ hai có nguy cơ lệch bản đồ. Để nguyên, ghi
   vào mục 6.
-- Hai bài tập không sống cùng lúc: vào practice thì hoàn trial trước, trial
-  hết hạn thì xóa practice (R00.3, rà soát lại — còn đúng).
 
 ## 3. R05.3 — Di chuyển nhanh qua quyền engine, hủy cử chỉ khi đổi chế độ, hướng bản đồ/isometric, khóa xe/remote
 
@@ -110,8 +71,8 @@ Cơ chế nền đã có: chuỗi pointer thuộc về một "owner" là chuỗi
 thái controls/editor); owner đổi thì `valid()` sai và vuốt không được phân
 phát; `ACTION_CANCEL`/đa điểm chỉ hủy, không sinh intent. Các điểm đổi chế
 độ đã gọi `root.cancelGesture()` từ trước: mở editor/form/search, mở
-controls, vào practice, xác nhận/hoàn trial, hết hạn trial, mất focus cửa
-sổ, tạm dừng (`onPause`), đổi trạng thái TalkBack, đóng controller.
+controls, vào practice, mất focus cửa sổ, tạm dừng (`onPause`), đổi trạng
+thái TalkBack, đóng controller.
 
 **Khe hở tìm thấy và đã sửa ở R05** (`GameReaderController.java`): nhánh
 đổi ngữ cảnh màn trong `receive()` (snapshot thuộc context mới) đặt lại
@@ -180,8 +141,7 @@ có nhãn, duyệt bằng vuốt ánh xạ hoặc chạm trực tiếp:
 | Dừng đọc | case 4 — `stopSpeech()`; ngoài controls còn có nút Stop speech ở hàng công cụ và chạm hai ngón trên bề mặt |
 | Hủy thao tác | case 5 — gửi intent `cancel` qua cửa R03, chỉ tác động màn sở hữu |
 | Quay lại / thoát lớp phủ | case 0 — Return; Back cũng đóng controls |
-| Khôi phục mặc định cử chỉ | case 6 (Reader setup) → `ReaderSetupActivity`: nút "Restore default gesture settings" là nút thường, nằm trong danh sách tự đọc của Setup (`button()` tự thêm vào `selfVoiceControls`) nên duyệt một ngón tới được; nó gọi `ReaderPreferences.restoreGestureDefaults()` — xóa ánh xạ trục, tay thuận, ngưỡng, ứng viên trial và trạng thái trial trong bộ nhớ, giữ nguyên `fast_movement` và `movement_practice_complete` (bất đối xứng đã ghi ở R00.3) |
-| Thoát cấu hình lỗi | Trial sai tự hoàn sau 45 giây hoặc khi TalkBack bật (mục 1); practice thoát bằng Back/chạm hai lần và không đổi cấu hình; fast movement tắt được ở case 11 của controls. Không chức năng cứu hộ nào đòi vuốt chéo, vuốt hai ngón hay cử chỉ khó: chạm hai ngón duy nhất trong hệ là lối tắt dừng đọc, và dừng đọc luôn có nút thay thế |
+| Thoát cấu hình lỗi | Practice thoát bằng Back/chạm hai lần và không đổi cấu hình; fast movement tắt được ở case 11 của controls. Không chức năng cứu hộ nào đòi vuốt chéo, vuốt hai ngón hay cử chỉ khó: chạm hai ngón duy nhất trong hệ là lối tắt dừng đọc, và dừng đọc luôn có nút thay thế |
 
 ### 4.2 Hoán vị tám hướng — quyết định: HOÃN, có truy vết
 
@@ -227,13 +187,13 @@ Chỉ hai tệp mã/nguồn lực cộng tài liệu và sổ sách:
   (mục 2).
 - Tài liệu này; cập nhật `REMAINING-CODE-BACKLOG.json` (R05.1–R05.4) và
   ghi chú hành trình `luyen-tap-cu-chi` trong `JOURNEY-LEDGER.json`
-  (sửa bằng chứng: bài luyện nằm ở `GameReaderController`, Setup là nơi
-  bắt đầu trial ánh xạ — bản ghi cũ ghi nhầm vùng luyện ở Setup).
+  (sửa bằng chứng: bài luyện nằm ở `GameReaderController` — bản ghi cũ
+  ghi nhầm vùng luyện ở Setup).
   Trạng thái của hành trình không đổi: đã viết, chờ kiểm thử.
 
 Không đổi chữ ký công khai, không đổi schema snapshot, không đổi
 preference nào. Các bài test nguồn hiện có
-(`ReaderGestureSurfaceTest`, `ReaderSetupActivityTest`) không tham chiếu
+(`ReaderGestureSurfaceTest`) không tham chiếu
 chuỗi hướng dẫn hay các điểm hủy mới — tính nhất quán này kiểm bằng grep,
 không phải bằng chạy test.
 
@@ -242,8 +202,8 @@ không phải bằng chạy test.
 1. **Chưa biên dịch/chưa chạy** (đúng giai đoạn 1): các sửa đổi Java là
    thêm lời gọi tới phương thức đã tồn tại (`ReaderGestureSurface.cancelGesture`
    công khai, `root` là trường sẵn có ở mọi điểm sửa) và sửa chuỗi tài
-   nguyên; tính biên dịch/chạy được chỉ xác nhận ở giai đoạn 2 (T07,
-   T09–T12, T19, T50, T64).
+   nguyên; tính biên dịch/chạy được chỉ xác nhận ở giai đoạn 2 (T09–T12,
+   T19, T50, T64).
 2. Bài luyện tám hướng vẫn cần màn thế giới (mục 2): người dùng ở menu
    chính chưa nạp nhân vật chưa luyện được. Muốn bỏ giới hạn này phải có
    quyết định riêng về nguồn nhãn hướng ngoài snapshot; không tự ý làm

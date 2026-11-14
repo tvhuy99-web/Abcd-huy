@@ -17,7 +17,6 @@ public final class ReaderGestureSurface extends LinearLayout {
     public interface Listener {
         boolean usesTouchExploration();
         String gestureContext();
-        boolean leftHandedNavigation();
         int horizontalSwipeAction();
         int verticalSwipeAction();
         float swipeDistancePx();
@@ -185,9 +184,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         return new int[] { dx > 0 ? 1 : -1, dy > 0 ? 1 : -1 };
     }
 
-    static int navigationDeltaForHorizontalSwipe(float dx, boolean leftHanded) {
-        // Spoken lists keep one direction policy regardless of handedness.
-        // World movement and other directional gestures remain untouched.
+    static int navigationDeltaForHorizontalSwipe(float dx) {
         return dx > 0 ? 1 : -1;
     }
 
@@ -822,7 +819,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             }
         } else if (Math.abs(dx) >= Math.abs(dy) * 1.35f) {
             performMappedSwipeAction(listener.horizontalSwipeAction(),
-                                     navigationDeltaForHorizontalSwipe(dx, listener.leftHandedNavigation()));
+                                     navigationDeltaForHorizontalSwipe(dx));
         } else if (Math.abs(dy) >= Math.abs(dx) * 1.35f) {
             // For numeric/choice fields, vertical swipes change the value;
             // on ordinary menu items, retain the configured vertical action.
@@ -836,12 +833,6 @@ public final class ReaderGestureSurface extends LinearLayout {
         switch (action) {
             case ReaderPreferences.GESTURE_ACTION_NAVIGATE:
                 listener.navigate(navigationDelta);
-                break;
-            case ReaderPreferences.GESTURE_ACTION_DETAIL:
-                listener.detail();
-                break;
-            case ReaderPreferences.GESTURE_ACTION_READ_CURRENT:
-                listener.readCurrent();
                 break;
             default:
                 // A disabled mapping is intentionally inert and never becomes

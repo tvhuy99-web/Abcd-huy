@@ -137,7 +137,7 @@ void mod_ui::try_add( const mod_id &mod_to_add,
             try_rem( 0, active_list );
             if( a11y::enabled() ) {
                 // try_rem only reports dependents; the replaced core
-                // itself would otherwise go unmentioned (STT 193b).
+                // itself would otherwise go unmentioned.
                 popup( _( "Removed the previous core mod: %s." ), old_core_name );
             }
         }
@@ -162,7 +162,7 @@ void mod_ui::try_add( const mod_id &mod_to_add,
         if( new_core && !active_list.empty() ) {
             // The new core replaces whatever core is currently first.
             // try_rem below also drops that core's dependents; report the
-            // core itself here, the dependents are reported there (STT 193b).
+            // core itself here, the dependents are reported there.
             const bool had_core = active_list[0].is_valid() && active_list[0]->core;
             const std::string old_core_name = had_core ? active_list[0]->name() : std::string();
             try_rem( 0, active_list );
@@ -210,7 +210,7 @@ void mod_ui::try_rem( size_t selection, std::vector<mod_id> &active_list )
     }
     if( a11y::enabled() && !removed_dependents.empty() ) {
         // Removing one mod silently drops every mod that depends on it;
-        // the refreshed list alone never says what went away (STT 193b).
+        // the refreshed list alone never says what went away.
         // The removed mod itself needs no announcement: the player just
         // activated its removal and the list re-reads without it.
         popup( _( "Also removed from the load order: %s." ),

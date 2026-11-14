@@ -984,7 +984,7 @@ construction_id construction_menu( const bool blueprint )
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
         if( intent.action == "activate" && !constructs.empty() &&
             ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) ) {
-            // Same 80-row paging as the crafting menu (STT 333):
+            // Same 80-row paging as the crafting menu:
             // crossing a page boundary lands on the new page, wrapping
             // at either end instead of swiping through the whole list.
             constexpr int page_size = 80;
@@ -1119,7 +1119,7 @@ construction_id construction_menu( const bool blueprint )
                 snapshot.summary += ". " + string_format( _( "Filter: %s" ), filter );
             }
             std::vector<a11y::semantic_node> rows;
-            // Same 80-row paging as the crafting menu (STT 333): only
+            // Same 80-row paging as the crafting menu: only
             // the page holding the selection is published, plus page
             // commands below. The visual list is untouched.
             constexpr std::size_t reader_page_size = 80;
@@ -1134,7 +1134,7 @@ construction_id construction_menu( const bool blueprint )
                 node.position = i + 1;
                 node.total = constructs.size();
                 node.selected = static_cast<int>( i ) == select;
-                // STT 72: player_can_build does not check light, so
+                // player_can_build does not check light, so
                 // "Buildable here" was announced for rows that fail at
                 // CONFIRM with "It is too dark…" and close the menu.
                 // Say so on the row itself, before the player confirms,

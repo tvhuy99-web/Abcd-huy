@@ -10,7 +10,7 @@ Kết quả build, kiểm thử mở rộng và checksum APK mới ở
 
 ## Các thay đổi
 
-- Bổ sung đủ 6 MP3 cứu hộ và 4 WAV âm hiệu từ gói người dùng gửi; mã kiểm tra,
+- Bổ sung đủ 4 WAV âm hiệu từ gói người dùng gửi; mã kiểm tra,
   dung lượng và thời lượng ở AUDIO-MANIFEST-2026-10-24.json.
 - Menu điều khiển nội bộ có Áp dụng/Hủy nháp cho trường đang chọn; giá trị
   nháp/đã áp dụng và lỗi trường được đọc khi thay đổi.

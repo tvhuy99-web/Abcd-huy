@@ -100,7 +100,7 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
         self.assertIn('add(R.string.a11yEditorApply, this::submitCurrent)', self.editor)
         self.assertIn('node.actions.contains("set_value")', self.controller)
         self.assertIn('openFormEditor(node)', self.controller)
-        self.assertIn('if (quantityChoices)', self.editor)
+        self.assertIn('if (quantityChoices && "quantities".equals(group))', self.editor)
 
     def test_vietnamese_accessibility_copy(self):
         vi = (RES / "values-vi/a11y_editor.xml").read_text("utf-8")

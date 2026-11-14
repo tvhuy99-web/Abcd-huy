@@ -137,9 +137,6 @@ public final class AccessibilitySettingsActivity extends Activity {
             @Override public void speak(String id, String text) { speakText(text); }
             @Override public void stopSpeech() { if (speech != null) { speech.cancel(); } }
             @Override public void goBack() { finish(); }
-            @Override public boolean leftHandedNavigation() {
-                return new ReaderPreferences(AccessibilitySettingsActivity.this).isLeftHandedNavigation();
-            }
             @Override public float swipeDistancePx() {
                 return new ReaderPreferences(AccessibilitySettingsActivity.this).getSwipeDistanceDp()
                         * getResources().getDisplayMetrics().density;

@@ -11,8 +11,8 @@ class ExternalScreenGestures(unittest.TestCase):
     def test_two_finger_down_goes_back_without_one_finger_fallthrough(self):
         detector = (JAVA / "TwoFingerBackGesture.java").read_text(encoding="utf-8")
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
-        # The retired ReaderSetupActivity redirects to AccessibilitySettingsActivity.
-        # The two new screens use the shared, tested voice surface.
+        # The retired ReaderSetupActivity is gone; the two new screens use
+        # the shared, tested voice surface.
         accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
         backup = (JAVA / "BackupRestoreActivity.java").read_text(encoding="utf-8")
         self.assertIn("dy1 >= minimumDistance && dy2 >= minimumDistance", detector)

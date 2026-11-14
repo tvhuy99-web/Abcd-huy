@@ -197,7 +197,7 @@ WORLD *worldfactory::make_new_world( bool show_prompt, const std::string &world_
             if( a11y::enabled() ) {
                 // The copy flow reuses the create-world screens with the
                 // same titles, so a reader user otherwise cannot tell
-                // this is a copy of another world (STT 190).
+                // this is a copy of another world.
                 popup( "%s", string_format( _( "Copying settings from world \"%s\"." ),
                                             world_to_copy ) );
             }
@@ -498,7 +498,7 @@ WORLD *worldfactory::pick_world( bool show_prompt, bool empty_only )
         }
     }
     // Announce an automatic pick: the player never saw a list, so the
-    // chosen world would otherwise be silent (STT 195).
+    // chosen world would otherwise be silent.
     const auto announce_auto_pick = []( const std::string &name ) {
         if( a11y::enabled() ) {
             a11y::android::announce( string_format( _( "Selected world: %s." ), name ), 1 );
@@ -1599,7 +1599,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             }
             return detail;
         };
-        // Swiping reads label + value, never detail (STT 193a), and the
+        // Swiping reads label + value, never detail, and the
         // full detail is only published for the selected row. The spoken
         // value therefore carries a short cue when the row has a detail
         // worth hearing, so the player knows the detail gesture applies.
@@ -1848,7 +1848,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
                     // try_shift stays silent when the move is refused
                     // (edge of the list, or blocked by a core or a
                     // dependency), and the unchanged focus is not
-                    // re-read either (STT 191).
+                    // re-read either.
                     popup( _( "This mod cannot be moved down in the load order." ) );
                 } else {
                     mman_ui->try_shift( '+', cursel[1], active_mod_order );
@@ -1897,7 +1897,7 @@ int worldfactory::show_worldgen_tab_modselection( const catacurses::window &win,
             } else if( a11y::enabled() ) {
                 // The success popup above is the only feedback; a failed
                 // write was silent, so the player believed the default
-                // mods were saved (STT 192).
+                // mods were saved.
                 popup( _( "Failed to save the list of active mods as default." ) );
             }
         } else if( action == "VIEW_MOD_DESCRIPTION" ) {
@@ -2419,7 +2419,7 @@ int worldfactory::show_worldgen_basic( WORLD *world )
                     // The focused row is the Randomize action itself, so
                     // its value does not change and the reader does not
                     // re-read any row. Announce the new values outright
-                    // (STT 187); the snapshot below still carries them
+                    // the snapshot below still carries them
                     // for browsing.
                     std::string summary;
                     for( size_t i = 0; i < wg_sliders.size(); ++i ) {

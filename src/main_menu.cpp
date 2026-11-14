@@ -1682,7 +1682,7 @@ void main_menu::world_tab( const std::string &worldname )
 
     // Returns false when the world folder (delete) or its saves (reset)
     // survived the removal, so the caller can report the failure instead
-    // of the unconditional success popup (STT 194). delete_world itself
+    // of the unconditional success popup. delete_world itself
     // reports nothing, and its signature cannot change here.
     auto clear_world = [this, &worldname]( bool do_delete ) -> bool {
         // NOLINTNEXTLINE(cata-use-localized-sorting)

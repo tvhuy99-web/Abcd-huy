@@ -187,11 +187,11 @@ Không tự ý tắt TalkBack. Không yêu cầu người dùng tắt TalkBack t
 
 1. Màn hình Java khởi động có nhãn, thứ tự focus và nút native dùng được với TalkBack.
 2. Cho chọn “Dùng bộ đọc tích hợp”, “Giữ trình đọc hệ thống” hoặc “Hướng dẫn thiết lập”. Mô tả đúng mức hỗ trợ thực tế của từng lựa chọn.
-3. Khởi tạo TTS, phát thử và yêu cầu người dùng xác nhận đã nghe rõ. Không chỉ kiểm tra mã trả về thành công.
-4. Thiếu giọng tiếng Việt: giải thích bằng đường còn nghe được, cho mở cài đặt TTS, thử giọng có sẵn hoặc quay lại. Nếu mọi nguồn đọc đều không hoạt động, dùng thông báo thu âm ngắn đi kèm cho hướng dẫn phục hồi, không cho bước vào gameplay im lặng.
+3. Khởi tạo TTS và phát thử; không bắt buộc xác nhận đã nghe (xem `AUTO-START-2026-11-07.vi.md`). Không chỉ kiểm tra mã trả về thành công.
+4. Thiếu giọng tiếng Việt: giải thích bằng đường còn nghe được, cho mở cài đặt TTS, thử giọng có sẵn hoặc quay lại. Nếu mọi nguồn đọc đều không hoạt động, dùng TalkBack làm đường phục hồi, không cho bước vào gameplay im lặng.
 5. Đọc tiến độ cài/nâng dữ liệu theo mốc; báo dung lượng thiếu, lỗi giải nén và cách thử lại.
 6. Hướng dẫn cách quay về điện thoại và bật lại TalkBack theo cài đặt thực tế của máy. Không giả định mọi máy đều có phím tắt hai nút âm lượng hoạt động.
-7. Chỉ chuyển sang cử chỉ nội bộ sau khi người dùng chọn và hoàn tất bước thử. Lưu lựa chọn an toàn trước khi vào engine.
+7. Chỉ chuyển sang cử chỉ nội bộ sau khi người dùng chọn. Lưu lựa chọn an toàn trước khi vào engine.
 8. Chạy hướng dẫn cử chỉ trong vùng luyện tập không tiêu hao lượt, có trợ giúp và nút bỏ qua rõ ràng.
 
 ### 6.3. Các trạng thái phối hợp
@@ -212,10 +212,10 @@ Không suy ra hành vi từ tên gói dịch vụ hoặc từ `isEnabled()` đơ
 
 - Lệnh “Tôi đang ở đâu?” đọc màn hình, mục đang chọn, chế độ điều khiển và cách quay lại.
 - “Hủy” đóng một tầng đang hoạt động; ở gốc thì không tự thoát hay chờ một lượt.
-- Bảng trợ giúp có mục dừng lời, đọc lại, thiết lập giọng, khôi phục cử chỉ và mở màn hình phục hồi native.
+- Bảng trợ giúp có mục dừng lời, đọc lại, thiết lập giọng và mở màn hình phục hồi native.
 - Phím Back phải có hành vi được đọc và thử trên cả điều hướng nút lẫn điều hướng cử chỉ Android.
 - Có thao tác cứu hộ toàn cục đã kiểm thử, nhưng không đặt toàn bộ khả năng cứu hộ vào một cử chỉ bốn ngón khó làm hoặc phím hệ thống mà app không chắc nhận được.
-- Đổi ánh xạ cử chỉ phải có nút trả mặc định và thời gian thử; nếu người dùng không xác nhận cấu hình mới thì tự khôi phục cấu hình điều khiển cũ, không đụng bản lưu game.
+- Đổi ánh xạ cử chỉ giữ ít nhất một trục duyệt; không đụng bản lưu game.
 
 ## 7. Ngữ cảnh, điều khiển và trung tâm lệnh
 
@@ -245,7 +245,7 @@ Cả hai đều dùng cùng bộ hành động, kết quả và bộ đọc. Kh�
 | Chạm hai ngón | Dừng lời đọc | Dừng lời đọc; không tiêu hao lượt |
 | Nút Back hoặc mục Quay lại | Hủy một tầng | Mở bảng điều khiển/thoát có lựa chọn, không thoát tức thì |
 
-Đây là ánh xạ cần thử với người dùng, chưa phải kết quả khảo sát cử chỉ. Mọi chức năng phải có đường qua menu một ngón; đọc lại, quét và trợ giúp không bắt buộc chạm ba ngón. Cho đổi tay thuận, khoảng vuốt và thời gian nhận dạng. Dùng đơn vị theo mật độ màn hình và thời gian đơn điệu.
+Đây là ánh xạ cần thử với người dùng, chưa phải kết quả khảo sát cử chỉ. Mọi chức năng phải có đường qua menu một ngón; đọc lại, quét và trợ giúp không bắt buộc chạm ba ngón. Cho đổi khoảng vuốt và thời gian nhận dạng. Dùng đơn vị theo mật độ màn hình và thời gian đơn điệu.
 
 ### 7.3. Điểm chặn sự kiện phải đúng
 
@@ -682,8 +682,6 @@ Mỗi bài ghi: build/commit, cấu hình nội dung, thiết bị/Android/voice
 **T05 — Thiếu dung lượng/cài dữ liệu lỗi.** Nghe nguyên nhân, thử lại hoặc thoát; không báo “đã vào game” khi chưa sẵn sàng.
 
 **T06 — Dịch vụ trợ năng khác.** Bật một dịch vụ không đọc màn hình; không bắt tắt vô lý. Với TalkBack bật lại, người dùng vẫn điều khiển được đường phục hồi.
-
-**T07 — Thử đổi cử chỉ.** Đặt cấu hình khó sử dụng rồi không xác nhận; trở lại cấu hình cũ, giữ bản lưu game.
 
 **T08 — Hồ sơ realtime cũ.** Tải cấu hình `TURN_DURATION>0`, nghe cảnh báo và chọn cách chơi trước khi vào nguy hiểm. Với cấu hình theo lượt, nghe lâu không tự tạo lượt.
 

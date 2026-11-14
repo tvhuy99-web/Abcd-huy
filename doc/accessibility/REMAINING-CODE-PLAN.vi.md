@@ -17,7 +17,7 @@ Phụ thuộc: Nguồn và bản sao đã xác định.
 - **R00.3**: hòa giải hai phiên bản bài luyện cử chỉ, controller, chuỗi Việt/Anh và action focus/activate; tránh trùng preference, hai bài tập cạnh tranh hoặc quay lùi adapter mới.
 - **R00.4**: chốt commit tích hợp mới, ghi nguồn từng phần; giữ các xóa local như quyết định riêng, không đưa xóa asset vào thay đổi trợ năng nếu chưa rõ mục đích.
 
-Bài liên quan: T07, T09, T10, T11, T12, T19, T28, T50, T53, T54, T55, T62.
+Bài liên quan: T09, T10, T11, T12, T19, T28, T50, T53, T54, T55, T62.
 
 ## R01 — Đóng phạm vi và sổ hành trình
 
@@ -67,12 +67,12 @@ Bài liên quan: T13, T14, T15, T16, T17, T18, T31, T33, T38, T59, T60.
 
 Phụ thuộc: R04.
 
-- **R05.1**: giữ gán hai trục và mặc định 45 giây; thay deadline bằng thời gian đơn điệu, lưu riêng cấu hình đã xác nhận; restart/reboot/hết hạn/TalkBack trả cấu hình đã xác nhận.
+- **R05.1**: giữ gán hai trục; lưu riêng cấu hình đã xác nhận.
 - **R05.2**: đóng bài tập duyệt/chọn/đọc/hủy/tám hướng trong ngữ cảnh độc lập, không gửi gameplay; đọc từng hướng và tiến độ, có đường thoát hoặc học lại.
 - **R05.3**: chuyển di chuyển nhanh qua quyền engine ở R00/R03; hủy gesture khi đổi chế độ; định nghĩa hướng bản đồ/isometric và không dùng cử chỉ đi bộ cho tăng ga hoặc remote.
-- **R05.4**: cung cấp trợ giúp một ngón, tôi đang ở đâu, dừng/đọc lại/hủy/khôi phục; nếu giữ yêu cầu đổi tám hướng thì thêm bảng hoán vị hợp lệ và vùng thử riêng trên cùng cơ chế, không viết một hệ preference thứ hai.
+- **R05.4**: cung cấp trợ giúp một ngón, tôi đang ở đâu, dừng/đọc lại/hủy; nếu giữ yêu cầu đổi tám hướng thì thêm bảng hoán vị hợp lệ và vùng thử riêng trên cùng cơ chế, không viết một hệ preference thứ hai.
 
-Bài liên quan: T07, T09, T10, T11, T12, T19, T50, T64.
+Bài liên quan: T09, T10, T11, T12, T19, T50, T64.
 
 ## R06 — Giọng, khởi động và cài dữ liệu
 
@@ -80,7 +80,6 @@ Phụ thuộc: R05.
 
 - **R06.1**: thêm bộ chọn engine/voice/ngôn ngữ, dữ liệu offline/network, thử giọng theo lựa chọn nháp rồi xác nhận/lưu; giữ thanh tốc độ đang có và không tự chấp nhận giọng mạng.
 - **R06.2**: nối health/timeout/retry có giới hạn, đổi engine/voice bị mất và phục hồi sau binder/process; thống nhất chủ sở hữu backend, không tạo TTS mỗi câu hoặc giữ Activity cũ.
-- **R06.3**: thêm đường cứu hộ bằng âm Việt đóng gói, không phụ thuộc TTS đang lỗi; điều khiển retry/chọn nguồn đọc/cài đặt/quay lại bằng thao tác nghe được; không giả định app tự điều khiển được màn cài đặt Android.
 - **R06.4**: cài/nâng dữ liệu bằng staging, kiểm tra hoàn tất rồi chuyển đổi, journal/rollback sau lỗi hoặc kill; đọc thiếu dung lượng/chép/giải nén, retry và thoát mà không báo game sẵn sàng sớm.
 
 Bài liên quan: T01, T02, T03, T04, T05, T06, T08, T53, T54, T55, T56, T57, T63.
@@ -256,10 +255,10 @@ Phụ thuộc: R21.
 
 - **R22.1**: viết fixture/scenario/save tái tạo được cho tri thức giống nhau-bí mật khác nhau, cây túi, kho, vết thương, chiến đấu, xe, vùng, trại, ability và minigame; không dùng save cá nhân làm điều kiện.
 - **R22.2**: hoàn thiện bài có giá trị cho schema/Unicode/token/input/quyền biết, tích hợp gameplay và lỗi TTS/vòng đời; ghi oracle trạng thái game, không chỉ assertion tên hàm hoặc chuỗi nguồn.
-- **R22.3**: mở rộng T01–T64 bằng bài riêng cho form/bảng/cây, engine/voice/cứu hộ, smart controller/Study Zone/quy tắc, máy tính, từng minigame và trại; gán fixture và loại máy/cấu hình cho từng bài.
+- **R22.3**: mở rộng T01–T64 bằng bài riêng cho form/bảng/cây, engine/voice, smart controller/Study Zone/quy tắc, máy tính, từng minigame và trại; gán fixture và loại máy/cấu hình cho từng bài.
 - **R22.4**: viết hướng dẫn nghe từ người mới, lệnh/cử chỉ/phục hồi/backup, mẫu báo lỗi và hồ sơ candidate/checksum/signing/upgrade; đánh dấu tài liệu APK thử giọng cũ là lịch sử để không lẫn mã mới.
 
-Bài liên quan: T01, T02, T03, T04, T05, T06, T07, T08, T09, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T48, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64.
+Bài liên quan: T01, T02, T03, T04, T05, T06, T08, T09, T10, T11, T12, T13, T14, T15, T16, T17, T18, T19, T20, T21, T22, T23, T24, T25, T26, T27, T28, T29, T30, T31, T32, T33, T34, T35, T36, T37, T38, T39, T40, T41, T42, T43, T44, T45, T46, T47, T48, T49, T50, T51, T52, T53, T54, T55, T56, T57, T58, T59, T60, T61, T62, T63, T64.
 
 ## R23 — Đóng giai đoạn viết mã và ghim ứng viên
 

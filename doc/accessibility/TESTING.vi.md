@@ -139,7 +139,7 @@ lưu/tải). Theo đó:
   chưa chứng minh UI chạy.
 - **Emulator**: các bài về nhãn/nút, lỗi/khởi tạo, dừng lời, recreate,
   opt-in mạng, vòng đời và thoát — nay áp cho các màn của bộ đọc gameplay
-  và các Activity nền (khởi động, thiết lập, cứu hộ), không chỉ Activity
+  và các Activity nền (khởi động, thiết lập), không chỉ Activity
   thử giọng. APK UI-only không có engine game; emulator chạy không âm
   thanh. Không coi bài emulator là kiểm thử giọng Việt nghe thật hoặc
   TalkBack.
@@ -209,7 +209,7 @@ Trạng thái của cả 64 bài: **chưa chạy — chưa có PASS mới.**
   (3) mở cài đặt TTS hệ thống rồi quay lại bằng đường của app; (4) thử lại
   hoặc thoát.
 - Oracle: tại mọi trạng thái đều có ít nhất một đường nghe được (lời của
-  engine còn dùng được hoặc clip cứu hộ — xem thêm TX-07); số lần hộp
+  engine còn dùng được); số lần hộp
   thoại lặp lại hữu hạn; quay lại được màn thiết lập mà không mất tiến
   trình thiết lập.
 
@@ -252,20 +252,6 @@ Trạng thái của cả 64 bài: **chưa chạy — chưa có PASS mới.**
 - Oracle: không có yêu cầu tắt dịch vụ vô lý; khi TalkBack bật giữa
   phiên, cử chỉ dang dở bị hủy, dữ liệu game giữ nguyên, và chỉ còn một
   kênh đọc focus (không hai giọng đọc cùng một mục).
-
-**T07 — Thử đổi cử chỉ.**
-*Đặt cấu hình khó sử dụng rồi không xác nhận; trở lại cấu hình cũ, giữ bản lưu game.*
-
-- Tiền điều kiện: bộ đọc đã bật; có cấu hình cử chỉ đã xác nhận trước đó;
-  có bản lưu game đang chơi dở.
-- Fixture: không cần fixture — dùng bản cài sạch/mặc định.
-- Môi trường: host-Java; Android-giả-lập (xác nhận).
-- Các bước: (1) bắt đầu thử ánh xạ cử chỉ mới (thời gian thử theo đồng hồ
-  đơn điệu); (2) đặt cấu hình khó dùng; (3) để hết hạn thử mà không xác
-  nhận; (4) kiểm tra cấu hình và bản lưu.
-- Oracle: sau hết hạn, cấu hình điều khiển quay về đúng bản đã xác nhận
-  trước đó; bản lưu game không bị đụng; không ý định gameplay nào phát
-  sinh từ bài luyện/thử.
 
 **T08 — Hồ sơ realtime cũ.**
 *Tải cấu hình `TURN_DURATION>0`, nghe cảnh báo và chọn cách chơi trước khi vào nguy hiểm. Với cấu hình theo lượt, nghe lâu không tự tạo lượt.*
@@ -1124,7 +1110,7 @@ Trạng thái của mọi bài TX: **chưa chạy — chưa có PASS mới.**
   dưới ngưỡng, mọi ô Allowed/Not allowed khớp `npc_skill_preferences`
   thật. Bài này là nơi chốt ngưỡng/phương án phân trang mà R16 để mở.
 
-### 3.2. Giọng, âm cứu hộ, cue và các hệ thống chuyên biệt
+### 3.2. Giọng, cue và các hệ thống chuyên biệt
 
 **TX-06 — Engine/voice: TTS lỗi, timeout và hồi phục giữa phiên (R06/R21).**
 
@@ -1140,24 +1126,8 @@ Trạng thái của mọi bài TX: **chưa chạy — chưa có PASS mới.**
   giọng đang dùng, giọng cần mạng không tự được chấp nhận); lỗi giữa
   phiên không khóa game và không nhận chuỗi di chuyển tự lặp; hồi phục
   thành công nối lại đúng engine/voice đã lưu, hồi phục thất bại mở
-  đường cứu hộ nghe được; voice bị mất có đường phục hồi rõ ràng thay vì
+  đường phục hồi qua TalkBack; voice bị mất có đường phục hồi rõ ràng thay vì
   im lặng.
-
-**TX-07 — Âm cứu hộ: clip mp3 đóng gói khi TTS lỗi/thiếu giọng (R06).**
-
-- Tiền điều kiện: thiết bị ở trạng thái TTS lỗi hoặc thiếu giọng Việt
-  (như T03/T04) tại màn khởi động/thiết lập.
-- Fixture: không cần fixture — dùng bản cài sạch/mặc định.
-- Môi trường: máy-thật-TalkBack.
-- Các bước: (1) đưa app vào trạng thái TTS lỗi ở SplashScreen/thiết lập;
-  (2) nghe các clip cứu hộ được phát (thử lại, chọn nguồn đọc, mở cài
-  đặt, quay lại, thiếu dung lượng); (3) chọn một lệnh cứu hộ bằng thao
-  tác một ngón; (4) xử lý xong trạng thái kẹt và quay lại luồng chính.
-- Oracle: người dùng thoát khỏi trạng thái kẹt mà không cần TTS đang lỗi
-  (lệnh chọn bằng một ngón thực thi đúng lệnh đã nghe); nội dung clip
-  khớp lệnh thật của nút đi kèm; độ rõ của giọng clip được ghi riêng
-  trong hồ sơ (asset eSpeak NG phải nghiệm thu bằng tai ở bài này —
-  phát được file không tính là nghe rõ).
 
 **TX-08 — Audio focus, đổi đầu ra và cue khi focus bị từ chối (R21).**
 
@@ -1450,7 +1420,7 @@ Tên trong sổ: không có mã TX riêng — hành trình `backup-export-import
   ghi được; có thể tạo import lỗi (thiếu tệp/sai manifest/trùng tên).
 - Fixture: F-15 vòng đời/hai nhân vật.
 - Môi trường: Android-giả-lập; máy-thật-TalkBack (xác nhận picker thật).
-- Các bước: (1) nghe hướng dẫn backup trong ReaderSetupActivity rồi mở
+- Các bước: (1) nghe hướng dẫn backup trong BackupRestoreActivity rồi mở
   picker; (2) xuất bản sao; (3) kiểm chứng bản sao (manifest khớp số
   tệp/tổng byte); (4) khôi phục bản sao bằng nút xác nhận riêng; (5)
   nhập một bản lỗi và một bản chứa đường `../`/cây ngoài phạm vi backup;
@@ -1602,8 +1572,7 @@ Tên trong sổ: `TX-debug-menu`, `TX-editmap`, `TX-wish` — hành trình
 | TX-03 | — (không có) | `safemode-va-auto-pickup`; `tuy-chon-game` |
 | TX-04 | — (không có) | `cay-tui-va-vat-chua`; `quet-ban-do-va-bo-loc` |
 | TX-05 | — (không có) | `study-zone` |
-| TX-06 | — (không có) | `chon-engine-va-voice`; `thu-giong-va-bat-bo-doc` |
-| TX-07 | — (không có) | `am-cuu-ho-khong-phu-thuoc-tts` |
+| TX-06 | — (không có) | `chon-engine-va-voice` |
 | TX-08 | — (không có) | `nghe-thong-bao-moi` (đường âm/cue của R21) |
 | TX-09 | — (không có) | `doc-o-hien-tai-va-xung-quanh`; `canh-bao-nguong-sinh-ton` |
 | TX-10 | — (không có) | `smart-controller` |
@@ -1666,12 +1635,12 @@ Danh mục này chỉ được chạy khi đủ các điều kiện sau:
      (T12–T14, T20–T30, TX-01, TX-03–TX-05) và các bài engine
      (T31–T52, TX-10–TX-14, TX-21–TX-23, TX-28–TX-31).
    - Vòng 2 (host-Java): hàng đợi, validate gương, đầu vào
-     (T04, T07, T10, T11, T60, TX-01, TX-06, TX-26).
+     (T04, T10, T11, T60, TX-01, TX-06, TX-26).
    - Vòng 3 (Android-giả-lập): vòng đời, recreate, process death, file
      picker (T05, T15, T53–T55, T57, T58, TX-24, TX-25, TX-27, TX-32).
-   - Vòng 4 (máy-thật-TalkBack): giọng Việt, âm cứu hộ, audio focus,
+   - Vòng 4 (máy-thật-TalkBack): giọng Việt, audio focus,
      cue/rung, phiên dài, gói phát hành (T01–T03, T06, T56, T61, T63,
-     TX-06–TX-09, TX-20).
+     TX-06, TX-08–TX-09, TX-20).
    - Vòng 5 (nghiệm-thu-người-dùng): T64 và các bài chơi trọn ván/trọn
      luồng trên máy thật của người dùng (TX-15–TX-20 và các hành trình
      nâng cao đã qua bốn vòng trước).

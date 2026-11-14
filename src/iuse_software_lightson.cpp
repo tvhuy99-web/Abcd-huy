@@ -305,7 +305,7 @@ int lightson_game::start_game()
             position.y = clamp( position.y + vec->y(), 0, level_size.y - 1 );
             position.x = clamp( position.x + vec->x(), 0, level_size.x - 1 );
             if( position == old_position && a11y::enabled() ) {
-                // STT 413: the cursor is pinned at the edge, so the board
+                // the cursor is pinned at the edge, so the board
                 // does not change, the snapshot is identical and the reader
                 // would otherwise stay silent: the player cannot tell a
                 // blocked move from a gesture the game never received.

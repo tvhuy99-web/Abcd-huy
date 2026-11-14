@@ -81,10 +81,10 @@ chơi; hoàn thành activity là của chính avatar). Không cue nào đọc d�
 liệu trực tiếp, nên không cue nào lộ thêm thông tin.
 
 **Mặc định TẮT, chọn tham gia rõ ràng:** hai khóa mới trong
-`ReaderPreferences` (`sound_cues`, `haptic_cues`, đều mặc định false) và
-hai hộp kiểm trong `ReaderSetupActivity` (mục "Cue âm thanh và rung",
-lưu ngay như hộp kiểm tay trái của R05; bật lên thì phát mẫu
-`activity_done` qua một player ngắn hạn để nghe/sờ đúng thứ vừa bật).
+`ReaderPreferences` (`sound_cues`, `haptic_cues`, đều mặc định false).
+Công tắc bật/tắt cue từng nằm ở màn thiết lập cũ nên
+hiện không còn UI bật/tắt cue; hệ cue được giữ nguyên theo quyết định
+của Robert (xem `DEAD-CODE-INVENTORY.md` §3.2).
 Tắt cả hai = mất đúng 0 thông tin, vì cue chỉ nhân đôi lời.
 
 **Audio focus — ranh giới ghi rõ như R20:** lớp Java vẫn KHÔNG giữ
@@ -101,9 +101,6 @@ không có Vibrator → listener báo một lần mỗi player qua chuỗi
 bị này. Lời đọc vẫn tiếp tục bình thường.") và đếm `cue_unavailable`.
 Bốn tệp WAV được tổng hợp ngoại tuyến (sóng sine, 22050 Hz mono 16-bit,
 biên độ ≤ 0,5, có fade) trong `res/raw/` — thay được bằng tệp cùng tên.
-
-`RescueAudioPlayer` (R06) không được dùng lại cho cue: nó cắt clip đang
-phát và không có focus/ducking — chỉ mượn mẫu đóng gói tệp.
 
 ## R21.3 — Tiếng Việt: rà toàn bộ chuỗi R07–R20, thuật ngữ, fallback đánh vần
 
@@ -174,17 +171,12 @@ mục riêng, cùng một văn bản Việt tự nhiên. Đơn vị và hướng
 số engine công bố, không đổi hệ đo.
 
 **Fallback khi không có dịch:** chuỗi chưa dịch vẫn được nói nguyên văn
-tiếng Anh (hành vi gettext chuẩn — không bịa dịch tại chỗ). Bổ sung điều
-khiển đọc **"Đánh vần mục hiện tại"** (`a11yReaderSpell`, control cơ số
-13 trong `GameReaderController`): đọc mục đang focus qua
-`ReaderDocumentReader.spellText` — tách grapheme tiếng Việt bằng ICU
-BreakIterator, tối đa 120 grapheme kèm ghi chú cắt — để kiểm chứng
-chính xác từng chữ của tên chưa có dịch hoặc tên ngoại ngữ.
+tiếng Anh (hành vi gettext chuẩn — không bịa dịch tại chỗ).
 
-Chuỗi Java của chính mục này (cue, chẩn đoán, đánh vần): 21 khóa mới,
-thêm đối xứng vào cả `res/values/a11y_reader.xml` và
-`res/values-vi/a11y_reader.xml` (152 → 173 khóa mỗi phía, tập khóa khớp
-nhau — parity là bất biến đã kiểm).
+Chuỗi Java của chính mục này nay chỉ còn 4 khóa cue (`a11yCuesHeading`,
+`a11ySoundCues`, `a11yHapticCues`, `a11yCueUnavailable`), có ở cả
+`res/values/a11y_reader.xml` và `res/values-vi/a11y_reader.xml`; mục chẩn
+đoán không có chuỗi đọc báo cáo, mục đánh vần không còn điều khiển.
 
 ## R21.4 — Chẩn đoán, lịch sử thông báo đầy đủ, chuẩn bị đo hiệu năng
 
@@ -194,7 +186,7 @@ chia sẻ trung thực duy nhất):
 
 - *Sự kiện:* vòng đệm 200 mục, mỗi mục là `T+<giây>s <mã>` (đồng hồ đơn
   điệu từ lúc tiến trình sống), mã là literal nội bộ (`lifecycle_resume`,
-  `speech_ready`, `receipt_stale`, …). Báo cáo lấy 30 mục mới nhất.
+  `speech_ready`, `receipt_stale`, …). Không có báo cáo đọc lại các mục này.
 - *Bộ đếm:* map mã → số lần: `announce_info/urgent`, `receipt_<mã>`,
   `cue_<tên>`, `cue_unavailable`, `cue_focus_denied`.
 - *Thống kê hàng lời:* `ReaderSpeechQueue.snapshotStats()` — đã đọc
@@ -216,15 +208,8 @@ thật sự bắt đầu đọc: giữ lần gần nhất + chậm nhất. Đây
 không kèm ngưỡng nào và không kết luận đạt/chưa đạt — giai đoạn 2 dùng
 chính điểm đo này trên máy thật.
 
-**Báo cáo đọc được:** nút "Đọc báo cáo chẩn đoán" trong
-`ReaderSetupActivity` (mục "Chẩn đoán"): chưa có phiên bộ đọc nào trong
-tiến trình → nói rõ điều đó; có thì đọc tiêu đề + thời gian tiến trình,
-dòng lời đọc, dòng độ trễ (kèm câu "Đây chỉ là số đo; không có ngưỡng
-nào được tuyên bố."), hàng đợi hiện tại, số thông báo, số biên nhận bị
-từ chối, số cue và sự cố cue, rồi 30 sự kiện gần nhất (mã sự kiện là
-literal kỹ thuật tiếng Anh — như mã trạng thái C++ — phần còn lại của
-báo cáo theo ngôn ngữ giao diện). Toàn bộ qua các chuỗi định dạng mới ở
-cả hai tệp `a11y_reader.xml` (21 khóa mới của mục này, xem R21.3).
+**Báo cáo đọc được:** không có. `ReaderDiagnostics` chỉ thu thập số đếm
+và sự kiện; không màn hình nào đọc lại báo cáo.
 
 **Hành trình lịch sử thông báo đầy đủ** (`src/messages.cpp`,
 `dialog::reader_update` — nối tiếp scope chống kẹt `MESSAGE_LOG` của

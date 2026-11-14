@@ -640,7 +640,7 @@ void avatar::power_mutations()
         }
     } );
 
-    // Reader-only failure reason (STT 54): the generic "Not enough
+    // Reader-only failure reason: the generic "Not enough
     // resources" message never said which resource was short, so the
     // player had to leave the screen and check every status value. Name
     // the first requirement that fails, in the same order the activation

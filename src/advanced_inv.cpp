@@ -122,7 +122,7 @@ namespace
 {
 std::unique_ptr<advanced_inventory> advinv;
 
-// Pending reader-only transfer (STT 51): action_move_item() only knows a
+// Pending reader-only transfer: action_move_item() only knows a
 // transfer was *requested* -- the activity runs after AIM closes and AIM
 // reopens when it ends. Remember what was requested, how many of that type
 // the destination pane already held, and which pane it was, so display()
@@ -1826,7 +1826,7 @@ bool advanced_inventory::action_move_item( advanced_inv_listitem *sitem,
                  remove_color_tags( squares[srcarea].name ),
                  remove_color_tags( squares[destarea].name ) );
         // Remember the request so display() can announce the verified
-        // result when AIM reopens after the activity ends (STT 51). The
+        // result when AIM reopens after the activity ends. The
         // destination pane is an AIM_ALL aggregate when the player picked
         // a destination from "all surrounding squares": its count mixes
         // several squares, so a transfer between two of them would look
@@ -1966,7 +1966,7 @@ void advanced_inventory::process_action( const std::string &input_action )
         }
         // In case we've merged faved and unfaved items
         recalc = true;
-        // STT 262: the reader does not re-read the snapshot when only
+        // the reader does not re-read the snapshot when only
         // the command result changed, so confirm the toggle out loud.
         if( a11y::enabled() ) {
             add_msg( m_info,
@@ -1989,7 +1989,7 @@ void advanced_inventory::process_action( const std::string &input_action )
     } else if( action == "SORT" ) {
         if( show_sort_menu( spane ) ) {
             recalc = true;
-            // STT 262: confirm the new sort order; cancelling the menu
+            // confirm the new sort order; cancelling the menu
             // (show_sort_menu() false) announces nothing.
             if( a11y::enabled() ) {
                 if( spane.sortby == SORTBY_NONE ) {
@@ -2022,7 +2022,7 @@ void advanced_inventory::process_action( const std::string &input_action )
             }
         } while( !spopup->canceled() && !spopup->confirmed() );
         filter_edit = false;
-        // STT 262: confirm the applied filter; cancelling restores the
+        // confirm the applied filter; cancelling restores the
         // old filter and announces nothing.
         if( a11y::enabled() && !spopup->canceled() ) {
             const std::string applied_filter = spane.get_filter();
@@ -2050,7 +2050,7 @@ void advanced_inventory::process_action( const std::string &input_action )
             sitem->autopickup = true;
         }
         recalc = true;
-        // STT 262: confirm the new auto-pickup state for the item.
+        // confirm the new auto-pickup state for the item.
         if( a11y::enabled() ) {
             add_msg( m_info,
                      sitem->autopickup ? _( "Auto-pickup on for %s." ) :
@@ -2103,7 +2103,7 @@ void advanced_inventory::process_action( const std::string &input_action )
         src = right;
     } else if( action == "TOGGLE_TAB" ) {
         src = dest;
-        // STT 262: the snapshot summary carries the new source /
+        // the snapshot summary carries the new source /
         // destination, but the reader only re-reads it when the focus
         // changes -- announce the swap itself. Same msgid as the
         // snapshot summary, so no new string is needed.
@@ -2328,7 +2328,7 @@ class advanced_inventory::reader_session
                 return !entry.items.empty() && entry.items.front() == binding->location;
             } );
             if( found == spane.items.end() ) {
-                // STT 261: say *why* the binding is stale before
+                // say *why* the binding is stale before
                 // returning nullopt. Java still speaks its own
                 // "reselect the item" prompt for the nullopt, so the
                 // player hears the reason first, then the instruction.
@@ -2443,7 +2443,7 @@ void advanced_inventory::display()
     }
 
     // Announce the verified result of a transfer whose activity just
-    // ended (STT 51). This display() call is the re-entry after the
+    // ended. This display() call is the re-entry after the
     // activity: the return entry is still recorded and the player has no
     // activity running. While an activity is still running (for example
     // the MOVE_ALL_ITEMS processing re-entry) the record is left alone

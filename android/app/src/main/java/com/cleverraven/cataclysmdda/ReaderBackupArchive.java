@@ -554,12 +554,6 @@ public final class ReaderBackupArchive {
         return false;
     }
 
-    private static List<String> allTreeNames() {
-        List<String> result = new ArrayList<>();
-        Collections.addAll(result, BACKUP_TREES);
-        return result;
-    }
-
     // ------------------------------------------------------------------
     // Staged summary and journal (same fsync discipline as R06 install)
     // ------------------------------------------------------------------

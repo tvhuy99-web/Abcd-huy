@@ -277,7 +277,7 @@ int snake_game::start_game()
                                 : _( "No fruit yet." );
             snapshot.nodes.push_back( fruit_node );
 
-            // STT 100: the snapshot used to publish the head, the fruit and
+            // the snapshot used to publish the head, the fruit and
             // the steering commands, but nothing about the body, so a blind
             // player could not know where their own snake was and could only
             // avoid biting it by remembering the whole path. Publish the

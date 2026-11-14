@@ -2,9 +2,7 @@
 
 > **TƯ LIỆU LỊCH SỬ, KHÔNG PHẢI HƯỚNG DẪN APK HIỆN TẠI (chú giải 13/11/2026):** Những phát biểu về nhánh, giai đoạn, hành trình, kiểm thử hoặc APK thuộc mốc ban đầu. Xem [trạng thái hiện hành](STATUS.md), [đặc tả](CURRENT-REFERENCE.vi.md), [hướng dẫn](USER-GUIDE.vi.md) và [kiểm chứng](VALIDATION-MATRIX.vi.md). **Không dùng số đếm/đường thao tác bên dưới để tuyên bố bản mới đã nghiệm thu.**
 
-Trạng thái: **đã viết, chờ kiểm thử** cho R06.1, R06.2, R06.4;
-R06.3 **mã đã viết và asset đã có thật**, với hai điểm mở ghi rõ ở
-mục 3 (giọng asset là eSpeak NG, `CLIP_WELCOME` chưa nối luồng).
+Trạng thái: **đã viết, chờ kiểm thử** cho R06.1, R06.2, R06.4.
 Chưa build, chưa chạy test, chưa giả lập, chưa tạo APK trong đợt
 này. Test ID sẽ chạy ở giai đoạn 2: T01–T06, T08, T53–T57, T63
 (theo `REMAINING-CODE-BACKLOG.json`).
@@ -24,8 +22,8 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
   một instance TTS **tạm thời chỉ để dò**, luôn `shutdown()` trước khi
   gọi callback, không bao giờ phát tiếng — không vi phạm nguyên tắc
   một chủ sở hữu phát tiếng tại một thời điểm. Timeout dò 8 giây.
-- `ReaderSetupActivity` thêm ba nút chu trình trong danh sách điều
-  khiển tự đọc (cùng thứ tự focus với các điều khiển cũ):
+- Màn cài đặt giọng (`TtsSettingsActivity`) có ba nút chu trình trong
+  danh sách điều khiển tự đọc (cùng thứ tự focus với các điều khiển cũ):
   `a11y_voice_language` (ngôn ngữ đọc — chỉ chu trình qua các ngôn
   ngữ thật sự có trong danh sách giọng của engine đã dò),
   `a11y_voice_engine` (`Mặc định hệ thống` + từng engine đã cài),
@@ -46,7 +44,7 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
   từng được nghe mẫu không thể lọt xuống bộ nhớ.
 - Giọng mạng không bao giờ tự chấp nhận: mọi điểm khởi tạo vẫn suy
   `offlineOnly = !permitsNetworkVoice()` từ cùng một khóa đồng ý
-  `network_voice_consent` hiện có (queue, Splash, Setup — xem mục 2);
+  `network_voice_consent` hiện có (queue, Splash, màn cài đặt giọng — xem mục 2);
   chọn giọng mạng mà chưa bật đồng ý thì mẫu rơi vào trạng thái
   `NETWORK_REQUIRED` như trước, không phát.
 - Thanh tốc độ giữ nguyên 0,5–3,0 (SeekBar 25 nấc 0,1 trong Setup;
@@ -84,10 +82,9 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
   - Process chết: queue được controller tạo lại và `initialize` đọc
     lại preferences như trước; lựa chọn giọng đã dọn ở trên nên lần
     khởi động sau không lặp lại lỗi giọng đã mất.
-- Chủ sở hữu backend: giữ đúng ba chủ sở hữu theo vòng đời đang có —
-  `SplashScreen` (bootstrap, đóng ở `onDestroy`), `ReaderSetupActivity`
-  (đóng ở `onDestroy`), `ReaderSpeechQueue` trong
-  `GameReaderController` (đóng qua `close()` của controller). Không
+- Chủ sở hữu backend: giữ đúng hai chủ sở hữu theo vòng đời đang có —
+  `SplashScreen` (bootstrap, đóng ở `onDestroy`) và `ReaderSpeechQueue`
+  trong `GameReaderController` (đóng qua `close()` của controller). Không
   tạo TTS mỗi câu (queue giữ một `AndroidSpeech` duy nhất); lớp
   `AndroidSpeech` chỉ giữ `applicationContext`. Instance dò của
   `probeVoices` là ngoại lệ có chủ đích: không phát tiếng, tự hủy
@@ -100,48 +97,6 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
   đó còn biên dịch được; chữ ký công khai cũ
   (`initialize` 3 và 4 tham số, các trạng thái cũ) không đổi. Chưa
   chạy bài test này (giai đoạn 1).
-
-## 3. R06.3 — Âm cứu hộ đóng gói
-
-- Lớp mới `RescueAudioPlayer`: phát MP3 trong `res/raw` bằng
-  `MediaPlayer`, một player cho mỗi màn hình sở hữu, thay clip khi
-  phát clip mới, `stop()` ở `onPause`, `release()` ở `onDestroy`.
-  Không hề chạm TTS.
-- Asset: **6 clip thật**, transcript/nguồn/đo kiểm ở
-  `R06-RESCUE-AUDIO-ASSETS.vi.md`. Nói thẳng: dự định dùng giọng
-  Microsoft qua edge-tts **thất bại trong môi trường này** (lỗi SSL
-  khi nối trực tiếp, treo qua proxy), nên asset hiện tại là giọng
-  **eSpeak NG** (`vi`, sinh ngoại tuyến) — có tiếng nói thật, đo
-  3,9–25,0 giây bằng ffprobe, nhưng nghe máy móc. Độ rõ phải nghiệm
-  thu trên máy thật ở giai đoạn 2/3; thay giọng tự nhiên sau này chỉ
-  là thay tệp cùng tên tài nguyên.
-- Nối luồng:
-  - `SplashScreen`: khi backend bootstrap báo `FAILED` /
-    `MISSING_LANGUAGE` / `MISSING_VOICE` / `NETWORK_REQUIRED` ngoài
-    lúc đang cài đặt, hiện **màn cứu hộ** (`showBootstrapRescueScreen`)
-    gồm 5 nút thường đúng thứ tự clip `CLIP_TTS_FAILED` mô tả:
-    nghe lại hướng dẫn, thử lại giọng đọc (đóng hẳn backend cũ, tạo
-    mới bằng lựa chọn đã lưu), mở cài đặt giọng Android (chỉ bắn
-    intent `TTS_SETTINGS`, lỗi thì rơi về `ACTION_SETTINGS`, lỗi
-    nữa thì quay lại màn cứu hộ — app không điều khiển màn cài đặt),
-    mở thiết lập bộ đọc, quay lại (khởi động lại Splash). Nếu cài
-    đặt vừa chạy xong mà giọng vẫn hỏng, màn cứu hộ cũng hiện thay
-    vì để người dùng kẹt ở màn cài đặt im lặng.
-  - Lỗi cài đặt: màn lỗi bootstrap nay có nút "Nghe lại hướng dẫn"
-    đứng đầu và tự phát clip khớp loại lỗi — `CLIP_INSTALL_FAILED`,
-    riêng hết dung lượng là `CLIP_NO_SPACE` — thứ tự nút khớp
-    transcript (nghe lại → thử cài lại → cài đặt → thoát).
-  - `ReaderSetupActivity`: các trạng thái lỗi giọng phát
-    `CLIP_SETUP_FAILED` một lần cho mỗi đợt lỗi (clip này cố ý không
-    nêu thứ tự nút vì màn thiết lập có nhiều điều khiển), cộng nút
-    thường `a11yRescueHelp` "Nghe hướng dẫn cứu hộ" trong danh sách
-    điều khiển. Khi TalkBack đang bật, các đường này nhường cho
-    TalkBack như mọi luồng self-voice khác (`usesSystemAccessibility`
-    / `shouldSelfVoiceBootstrap` giữ nguyên).
-- Điểm mở: hằng `CLIP_WELCOME` và asset chào đã có nhưng **chưa nối**
-  vào luồng phát nào — phát chào vô điều kiện có nguy cơ chồng với
-  self-voice; cần quyết định điểm phát (dự kiến cùng màn cứu hộ) ở
-  vòng sau của R06.3 hoặc R21. Không ghi là đã dùng.
 
 ## 4. R06.4 — Cài / nâng dữ liệu bằng staging, journal, rollback
 
@@ -159,8 +114,8 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
    tổng byte giải nén chính xác (cùng danh sách `asset_files.txt`
    hoặc đường duyệt APK như cũ). Dung lượng trống <
    tổng đo + 32 MB dự phòng → lỗi `ERR_NO_SPACE` **trước khi đụng
-   vào dữ liệu đang sống**, hiện chuỗi `a11yBootstrapNoSpace` và
-   clip `CLIP_NO_SPACE`; thử lại / thoát ở màn lỗi như cũ.
+   vào dữ liệu đang sống**, hiện chuỗi `a11yBootstrapNoSpace`;
+   thử lại / thoát ở màn lỗi như cũ.
 3. **Staging**: copy toàn bộ vào `.reader_install_staging` (cùng ổ
    với cây sống). Lỗi ở bước này không mất gì: cây sống nguyên vẹn.
 4. **Kiểm chứng hoàn tất trên đĩa**: đếm lại cây staging —
@@ -192,11 +147,11 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
 | Trạng thái | Đường tiếp / thoát nghe được |
 | --- | --- |
 | Cài sạch thành công | Tiến độ đọc theo mốc 10% → màn cài đặt khởi động (bootstrap hoặc hộp thoại) |
-| Thiếu dung lượng | Lỗi `no_space` + chuỗi + clip riêng; thử lại / cài đặt / thoát; dữ liệu cũ nguyên vẹn |
+| Thiếu dung lượng | Lỗi `no_space` + chuỗi; thử lại / cài đặt / thoát; dữ liệu cũ nguyên vẹn |
 | Lỗi copy / kiểm chứng / hoán đổi | Thông điệp phân loại + chi tiết; thử lại tự khôi phục staging/rollback trước |
 | Bị kill giữa hoán đổi | Lần mở sau: journal `SWAPPING` → khôi phục rollback rồi cài lại; không vào game bằng dữ liệu dở |
-| Thiếu giọng Việt / giọng đã lưu bị gỡ | Trạng thái rõ ràng ở Setup; queue rơi về giọng mặc định một lần + thông báo; clip cứu hộ ở Splash/Setup |
-| TTS lỗi hẳn | Màn cứu hộ Splash (5 nút + clip) hoặc clip + nút thường ở Setup; mở được cài đặt hệ thống và quay lại |
+| Thiếu giọng Việt / giọng đã lưu bị gỡ | Trạng thái rõ ràng ở màn cài đặt giọng; queue rơi về giọng mặc định một lần + thông báo |
+| TTS lỗi hẳn | Thông báo lỗi nói được; mở được cài đặt hệ thống và quay lại |
 | Engine chết thoáng qua khi đang chơi | Queue tự thử lại 2 lần có giới hạn trước khi báo lỗi |
 
 ## 6. Chỗ chưa chắc
@@ -210,7 +165,6 @@ sung đúng phần kế hoạch R06 còn thiếu, bằng chứng theo từng m�
   copy cũ; vòng đo byte dùng đúng cùng tên đó nên tiêu chí hoàn tất
   tự nhất quán, nhưng nếu có asset không mở được thì cả đo và copy
   cùng lỗi `copy` — cần một bài giai đoạn 2 với gói APK thật.
-- Độ rõ của giọng eSpeak NG và việc thay giọng tự nhiên: xem mục 3.
 - Kiểm chứng hoán đổi khi rename khác ổ: staging/rollback/cây sống
   đều nằm dưới cùng `externalFilesDir` nên rename là cùng hệ thống
   tệp theo thiết kế; máy có cấu hình lưu trữ lạ cần kiểm ở giai

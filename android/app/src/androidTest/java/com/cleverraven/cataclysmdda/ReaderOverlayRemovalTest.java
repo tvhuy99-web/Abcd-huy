@@ -38,13 +38,13 @@ public final class ReaderOverlayRemovalTest {
     @Test
     public void startupAndBackHaveNoReaderControlButtons() {
         Context context = InstrumentationRegistry.getInstrumentation().getTargetContext();
-        Intent intent = new Intent(context, ReaderSetupActivity.class)
-                .putExtra(ReaderSetupActivity.EXTRA_DISABLE_SELF_VOICE, true)
+        Intent intent = new Intent(context, AccessibilitySettingsActivity.class)
                 .addFlags(Intent.FLAG_ACTIVITY_NEW_TASK);
         final GameReaderController[] controller = new GameReaderController[1];
-        try (ActivityScenario<ReaderSetupActivity> scenario = ActivityScenario.launch(intent)) {
+        try (ActivityScenario<AccessibilitySettingsActivity> scenario = ActivityScenario.launch(intent)) {
             scenario.onActivity(activity -> {
-                new ReaderPreferences(activity).confirmHeardAndEnable(false, 1.0f);
+                new ReaderPreferences(activity).saveTtsSettings(true, null, null,
+                        ReaderPreferences.DEFAULT_SPEECH_LANGUAGE, false, 1.0f, 1.0f, 1.0f);
                 LinearLayout parent = new LinearLayout(activity);
                 activity.setContentView(parent);
                 controller[0] = new GameReaderController(new AttachedGameActivity(activity), parent);

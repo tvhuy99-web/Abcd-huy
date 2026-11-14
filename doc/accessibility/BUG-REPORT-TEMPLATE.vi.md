@@ -100,21 +100,16 @@ Lý do chọn mức này: [điền một hoặc hai câu]
 
 ## 10. Chẩn đoán đính kèm
 
-Đường chẩn đoán hiện có trong mã là báo cáo đọc thành lời trong màn hình Thiết lập bộ đọc, mục Chẩn đoán, nút Đọc báo cáo chẩn đoán. Xem `USER-GUIDE.vi.md`, mục 12, và `R21-SPEECH-AUDIO-VI-DIAGNOSTICS.vi.md`, mục R21.4.
+Đường chẩn đoán hiện có trong mã là nhật ký gỡ lỗi phiên (`SessionDebugLog`, màn `DebugLogActivity`): bật ghi, xuất ra tệp `cataclysm-session-debug.txt` và gửi kèm. Xem `R21-SPEECH-AUDIO-VI-DIAGNOSTICS.vi.md`, mục R21.4.
 
-Báo cáo chỉ chứa mã và số. Báo cáo không chứa nội dung câu đã đọc, không chứa nội dung thông báo của game, và không chứa tên bản lưu, tên thế giới hay tên nhân vật. Báo cáo chỉ sống trong lần chạy hiện tại của ứng dụng và không ghi xuống đĩa, nên hãy nghe và ghi lại trước khi đóng ứng dụng.
+Nhật ký chỉ ghi các sự kiện mã đã ghi rõ (mã sự kiện + chi tiết kỹ thuật), nhưng một số sự kiện có kèm nội dung câu đã đọc thành lời; nhật ký chỉ sống trong lần chạy hiện tại của ứng dụng và không ghi xuống đĩa trừ khi xuất, nên hãy xuất trước khi đóng ứng dụng, đọc lại tệp và xóa dòng nào chứa thông tin riêng tư trước khi gửi.
 
 Điền phần đã ghi lại được:
 
-- Đã nghe báo cáo chẩn đoán trong cùng lần chạy với lỗi chưa: [đã nghe và ghi lại / chưa nghe / đã đóng ứng dụng nên mất báo cáo]
-- Thời gian tiến trình đã chạy, theo báo cáo: [điền số giây đã nghe, hoặc ghi không ghi được]
-- Lời đọc, theo báo cáo: đã đọc xong [ ], bị ngắt [ ], bị bỏ vì trùng [ ], bị bỏ vì hết hạn [ ], bị đẩy ra khi hàng đợi đầy [ ]
-- Độ trễ bắt đầu đọc gần nhất và chậm nhất, theo báo cáo: [điền hai số mili giây đã nghe, hoặc ghi chưa đo được]. Lưu ý nguyên văn của báo cáo: đây chỉ là số đo; không có ngưỡng nào được tuyên bố.
-- Thông báo trò chơi, theo báo cáo: thường [ ], khẩn cấp [ ]
-- Ý định bị từ chối, theo báo cáo: đã cũ [ ], bị vô hiệu [ ], giá trị không hợp lệ [ ], không hỗ trợ [ ]
-- Cue và sự cố cue, theo báo cáo: [điền các số đã nghe, hoặc ghi không dùng cue]
-- Ba mươi sự kiện gần nhất, chép lại các mã sự kiện đã nghe: [điền các mã, giữ nguyên chữ tiếng Anh của mã]
-- Hình thức gửi kèm: [chép tay vào báo lỗi này / ghi âm báo cáo / khác — ghi rõ]
+- Đã bật ghi nhật ký gỡ lỗi trước khi lỗi xảy ra chưa: [đã bật / chưa bật — nếu chưa bật, lỗi có thể không có trong nhật ký]
+- Đã xuất tệp `cataclysm-session-debug.txt` trong cùng lần chạy với lỗi chưa: [đã xuất và gửi kèm / chưa xuất / đã đóng ứng dụng nên mất nhật ký]
+- Đã đọc lại tệp trước khi gửi và xóa dòng chứa thông tin riêng tư chưa: [đã đọc và xóa / chưa đọc]
+- Hình thức gửi kèm: [đính kèm tệp xuất ra / chép tay nội dung liên quan vào báo lỗi này / khác — ghi rõ]
 
 ## 11. Dữ liệu đính kèm và cam kết riêng tư
 

@@ -819,7 +819,7 @@ void avatar::power_bionics()
         append_tab( "bionics:tab:active", _( "Active" ), TAB_ACTIVE, active.size(), 1 );
         append_tab( "bionics:tab:passive", _( "Passive" ), TAB_PASSIVE, passive.size(), 2 );
 
-        // Bionic slots per body part (STT 286): the screen draws
+        // Bionic slots per body part: the screen draws
         // "Torso: 3/8" (used/total) on the side, but the snapshot had no
         // node for it, so the reader could not report free slots before
         // the player tries an install and hits the "not enough space"

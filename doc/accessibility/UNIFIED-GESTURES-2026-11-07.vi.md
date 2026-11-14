@@ -6,7 +6,7 @@
 
 | Khu vực | Hai ngón vuốt xuống | Một ngón vuốt lên/xuống trên thanh số/đơn lựa chọn |
 |---|---|---|
-| Cài đặt khởi động, trợ giúp và cứu hộ | Quay lại màn trước hoặc thoát khi thích hợp | Tăng/giảm thanh nếu có |
+| Cài đặt khởi động và trợ giúp | Quay lại màn trước hoặc thoát khi thích hợp | Tăng/giảm thanh nếu có |
 | Cài đặt TTS và cấu hình giọng phụ | Quay lại/hủy thay đổi chưa lưu | Tăng/giảm tốc độ, cao độ, âm lượng và các thiết lập có thanh trượt |
 | Menu chính và các menu game có trợ năng | Hủy một cấp menu/điều hướng quay lại | Thay đổi trường có miền giá trị và bước hợp lệ; dùng cơ chế bản nháp của game |
 | Trong quá trình chơi nhân vật trực tiếp | **Giữ quét bản đồ theo hướng**, không coi là Quay lại | Giữ cử chỉ di chuyển nhân vật; không tự điều chỉnh mục |

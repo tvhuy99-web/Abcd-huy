@@ -55,7 +55,7 @@
       "test_bo_sung": [],
       "trang_thai_viet": "da-viet-cho-kiem-thu",
       "trang_thai_kiem_thu": "chua-thu",
-      "ghi_chu": "R06.4: tiến độ vẫn đọc theo mốc 10%; luồng cài nay qua staging/journal/rollback (hành trình cai-dat-staging-rollback đã viết). Lỗi hết dung lượng có thông điệp và clip riêng (a11yBootstrapNoSpace, CLIP_NO_SPACE).",
+      "ghi_chu": "R06.4: tiến độ vẫn đọc theo mốc 10%; luồng cài nay qua staging/journal/rollback (hành trình cai-dat-staging-rollback đã viết). Lỗi hết dung lượng có thông điệp riêng (a11yBootstrapNoSpace).",
       "fixtures": []
     },
     {
@@ -98,7 +98,7 @@
       "quyen_biet": "Khong lien quan tri thuc nhan vat",
       "adapter": "rieng (Java)",
       "bang_chung": [
-        "ReaderSetupActivity.java (mo cai dat giong, fallback khi may khong nhan action giong doc)",
+        "TtsSettingsActivity.java (mo cai dat giong, fallback khi may khong nhan action giong doc)",
         "AndroidSpeech.java (kiem tra giong that khop locale, khong fallback tham)"
       ],
       "muc_phu_trach": [
@@ -110,67 +110,7 @@
       "test_bo_sung": [],
       "trang_thai_viet": "da-viet-cho-kiem-thu",
       "trang_thai_kiem_thu": "chua-thu",
-      "ghi_chu": "R06.1 bổ sung: chọn engine/voice/ngôn ngữ theo nháp tại ReaderSetupActivity, nhãn offline/mạng, mẫu thử đóng băng lựa chọn, chỉ ghi sau xác nhận (xem R06-VOICE-BOOT.vi.md mục 1). Đường phục hồi khi thiếu giọng nay còn có clip cứu hộ đóng gói (hành trình am-cuu-ho-khong-phu-thuoc-tts).",
-      "fixtures": []
-    },
-    {
-      "id": "am-cuu-ho-khong-phu-thuoc-tts",
-      "nhom_be_mat": "Khoi dong Java",
-      "ten": "Am cuu ho tieng Viet dong goi khi TTS loi/thieu giong",
-      "duong_vao": "Trang thai TTS loi o SplashScreen/setup",
-      "truong_va_tham_so": "Cac lenh nghe duoc: thu lai, chon nguon doc, mo cai dat, quay lai",
-      "xac_nhan_va_huy": "Chon lenh cuu ho bang thao tac mot ngon",
-      "ket_qua": "Thoat khoi trang thai ket ma khong can TTS dang loi",
-      "quyen_biet": "Khong lien quan tri thuc nhan vat",
-      "adapter": "rieng (Java)",
-      "bang_chung": [
-        "RescueAudioPlayer.java",
-        "android/app/src/main/res/raw/a11y_rescue_*.mp3 (6 clip, ffprobe 3,9–25,0s)",
-        "SplashScreen.java (showBootstrapRescueScreen, showBootstrapInstallationError)",
-        "ReaderSetupActivity.java (playRescueClipOnce, nút a11yRescueHelp)",
-        "doc/accessibility/R06-RESCUE-AUDIO-ASSETS.vi.md"
-      ],
-      "muc_phu_trach": [
-        "R06"
-      ],
-      "test_ids": [
-        "T03",
-        "T04"
-      ],
-      "test_bo_sung": [],
-      "trang_thai_viet": "da-viet-cho-kiem-thu",
-      "trang_thai_kiem_thu": "chua-thu",
-      "ghi_chu": "Đã viết ở commit R06. Asset là giọng eSpeak NG (edge-tts/Microsoft không sinh được trong môi trường này - xem tài liệu asset); độ rõ phải nghiệm thu máy thật ở giai đoạn 2/3. CLIP_WELCOME có asset nhưng chưa nối luồng phát.",
-      "fixtures": []
-    },
-    {
-      "id": "thu-giong-va-bat-bo-doc",
-      "nhom_be_mat": "Khoi dong Java",
-      "ten": "Thu giong, chinh toc do 0,5-3,0 va xac nhan bat bo doc",
-      "duong_vao": "ReaderSetupActivity tu Splash/man canh bao tro nang",
-      "truong_va_tham_so": "Toc do doc, cau mau, trang thai nghe het cau thu",
-      "xac_nhan_va_huy": "Xac nhan sau khi nghe het mau; huy tra cau hinh cu",
-      "ket_qua": "Bo doc bat/tat dung lua chon da luu",
-      "quyen_biet": "Khong lien quan tri thuc nhan vat",
-      "adapter": "rieng (Java)",
-      "bang_chung": [
-        "ReaderSetupActivity.java",
-        "ReaderPreferences.java (isEnabled = enabled && heard_confirmation)",
-        "ReaderSpeechQueue.java",
-        "AndroidSpeech.java"
-      ],
-      "muc_phu_trach": [
-        "R06"
-      ],
-      "test_ids": [
-        "T01",
-        "T02",
-        "T04"
-      ],
-      "test_bo_sung": [],
-      "trang_thai_viet": "da-viet-cho-kiem-thu",
-      "trang_thai_kiem_thu": "chua-thu",
-      "ghi_chu": "Chua kiem thu TTS that; chon engine/voice la hanh trinh rieng chua viet.",
+      "ghi_chu": "R06.1 bổ sung: chọn engine/voice/ngôn ngữ theo nháp tại màn cài đặt giọng (TtsSettingsActivity), nhãn offline/mạng, mẫu thử đóng băng lựa chọn, chỉ ghi sau xác nhận (xem R06-VOICE-BOOT.vi.md mục 1).",
       "fixtures": []
     },
     {
@@ -184,7 +124,7 @@
       "quyen_biet": "Khong lien quan tri thuc nhan vat",
       "adapter": "rieng (Java)",
       "bang_chung": [
-        "ReaderSetupActivity.java (truong ban nhap R06.1 :61-75; 3 nut chon ngon ngu/engine/giong :135-152; muc Voice selection :791+, cycleVoiceEngine :876; nut thu giong dong bang ban nhap da test :245-257; nut xac nhan 'heard' moi goi preferences.saveSpeechSelection :274-282; invalidateSampleForChangedSettings :1368)",
+        "TtsSettingsActivity.java (man cai dat giong: truong ban nhap, 3 nut chon ngon ngu/engine/giong, nut thu giong dong bang ban nhap da test, nut xac nhan 'heard' moi goi preferences.saveSpeechSelection, invalidateSampleForChangedSettings)",
         "AndroidSpeech.java (EngineOption :33; VoiceOption :49 gom networkRequired; probeVoices :77; initialize(engineName, language, rate, offlineOnly, voiceName) :205; findVoice :300)",
         "ReaderPreferences.java:65-95 (khoa speech_engine/speech_voice/speech_language, saveSpeechSelection/clearSpeechSelection)"
       ],
@@ -199,14 +139,14 @@
       "test_bo_sung": [],
       "trang_thai_viet": "da-viet-cho-kiem-thu",
       "trang_thai_kiem_thu": "chua-thu",
-      "ghi_chu": "R06.1 (commit 3c8e6f8c): bo chon engine/voice/ngon ngu doc trong ReaderSetupActivity theo co che nhap-then-xac-nhan: doi lua chon chi sua ban nhap; nut thu giong doc mau bang dung gia tri ban nhap da dong bang; chi khi nguoi dung xac nhan da nghe duoc moi ghi preference qua saveSpeechSelection; doi ban nhap sau khi thu thi huy hieu luc mau thu (invalidateSampleForChangedSettings) nen ban nhap chua thu khong bao gio duoc luu. Dong nay truoc R23 ghi chua-viet do chua lat trang thai sau R06.",
+      "ghi_chu": "R06.1 (commit 3c8e6f8c): bo chon engine/voice/ngon ngu doc trong man cai dat giong (TtsSettingsActivity) theo co che nhap-then-xac-nhan: doi lua chon chi sua ban nhap; nut thu giong doc mau bang dung gia tri ban nhap da dong bang; chi khi nguoi dung xac nhan da nghe duoc moi ghi preference qua saveSpeechSelection; doi ban nhap sau khi thu thi huy hieu luc mau thu (invalidateSampleForChangedSettings) nen ban nhap chua thu khong bao gio duoc luu. Dong nay truoc R23 ghi chua-viet do chua lat trang thai sau R06.",
       "fixtures": []
     },
     {
       "id": "bat-tat-bo-doc-va-phoi-hop-talkback",
       "nhom_be_mat": "Khoi dong Java",
       "ten": "Bat/tat bo doc noi bo va phoi hop TalkBack/touch exploration",
-      "duong_vao": "ReaderSetupActivity; trang thai touch exploration doi giua phien",
+      "duong_vao": "AccessibilitySettingsActivity; trang thai touch exploration doi giua phien",
       "truong_va_tham_so": "Trang thai bo doc, che do doc noi bo/announce qua TalkBack",
       "xac_nhan_va_huy": "Bat/tat co xac nhan; tat bo doc tra quyen cho bo doc he thong",
       "ket_qua": "Khong phat TTS noi bo khi dang announce qua TalkBack; khong khoa duong phuc hoi",
@@ -805,24 +745,21 @@
       "id": "luyen-tap-cu-chi",
       "nhom_be_mat": "Menu chung",
       "ten": "Luyen tap cu chi: duyet/chon/doc/huy va tam huong trong ngu canh doc lap",
-      "duong_vao": "Man the gioi (can world:here); vao bai luyen tam huong tu Reader controls trong GameReaderController; thu anh xa cu chi bat dau tu ReaderSetupActivity",
-      "truong_va_tham_so": "Huong da dem du, tien do, cau hinh thu 45 giay (dong ho don dieu sau R00)",
-      "xac_nhan_va_huy": "Thoat/hoc lai bat ky luc nao; het han tra cau hinh da xac nhan",
+      "duong_vao": "Man the gioi (can world:here); vao bai luyen tam huong tu Reader controls trong GameReaderController",
+      "truong_va_tham_so": "Huong da dem du, tien do",
+      "xac_nhan_va_huy": "Thoat/hoc lai bat ky luc nao",
       "ket_qua": "Khong gui lenh gameplay nao tu bai luyen",
       "quyen_biet": "Khong lien quan tri thuc nhan vat",
       "adapter": "rieng (Java)",
       "bang_chung": [
         "GameReaderController.java (bai luyen tam huong: beginMovementPractice/practiceMovementDirection, khong gui intent gameplay)",
         "ReaderGestureSurface.java (phan vung 8 huong, re nhanh practice -> worldMovementEnabled -> anh xa menu)",
-        "ReaderPreferences.java (trial 45 giay dung elapsedRealtime trong bo nho - R00.3, ra soat lai o R05)",
-        "ReaderSetupActivity.java (bat dau trial anh xa cu chi, khoi phuc mac dinh cu chi)",
         "doc/accessibility/R05-GESTURES.vi.md (bang chung R05.1-R05.4)"
       ],
       "muc_phu_trach": [
         "R05"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -3032,7 +2969,7 @@
       "adapter": "rieng",
       "bang_chung": [
         "android/.../ReaderBackupArchive.java (lop moi: exportTo/stageImport/restoreStagedImport/recoverInterruptedSwap; manifest + journal BACKUP_SWAPPING/BACKUP_COMMITTED nhu mau R06)",
-        "android/.../ReaderSetupActivity.java (muc Backup: 5 nut a11y_backup_*; huong dan noi truoc khi mo picker SAF, hai buoc tuong minh)",
+        "android/.../BackupRestoreActivity.java (muc Backup: 5 nut export/import/mo picker/xac nhan khoi phuc/huy khoi phuc; huong dan noi truoc khi mo picker SAF, hai buoc tuong minh)",
         "android/.../CDDADocumentsProvider.java (giu nguyen: goc externalFilesDir, FLAG_SUPPORTS_CREATE, openDocument/createDocument/deleteDocument; luong tro nang dung SAF doc lap)"
       ],
       "muc_phu_trach": [
@@ -3221,7 +3158,7 @@
       },
       {
         "lop": "E-be-mat-java",
-        "mo_ta": "Dialog native Android (NativeUI.java: popup/queryYN/singleChoiceList - bi gate !a11y::enabled() o ca 3 caller C++; khi bo doc tat la widget Android chuan do TalkBack doc) va cac be mat Java rieng: SplashScreen, ReaderSetupActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, ReaderTextEditor, CDDADocumentsProvider (file picker SAF).",
+        "mo_ta": "Dialog native Android (NativeUI.java: popup/queryYN/singleChoiceList - bi gate !a11y::enabled() o ca 3 caller C++; khi bo doc tat la widget Android chuan do TalkBack doc) va cac be mat Java rieng: SplashScreen, AccessibilitySettingsActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, ReaderTextEditor, CDDADocumentsProvider (file picker SAF).",
         "trang_thai": "da phan loai"
       },
       {
@@ -3238,7 +3175,7 @@
       "register_action dong (24 diem manual_review) - action chi biet o runtime.",
       "Toan bo SDL event loop (sdltiles.cpp CheckMessages/SDL_PollEvent/get_input_event), gamepad, quick-shortcut bar va touch joystick - khong mau nao bat duoc; bo doc chi chan su kien pointer truoc ImGui/touch legacy.",
       "Call site query_yn/query_ynq/query_int/popup (hang tram) - khong chua mau do; hoi tu ve popup.cpp/NativeUI nen muc noi quyet dinh o hai diem hoi tu do.",
-      "Be mat Java ngoai dialog: ReaderSetupActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, CataclysmDDA (gan reader + Back + JNI), ReaderTextEditor, CDDADocumentsProvider.",
+      "Be mat Java ngoai dialog: AccessibilitySettingsActivity, BootstrapSelfVoiceSurface, GameReaderController/ReaderGestureSurface, CataclysmDDA (gan reader + Back + JNI), ReaderTextEditor, CDDADocumentsProvider.",
       "Constructor/factory dong: item_factory iuse actors, activity_actor deserialize, DynamicDataLoader (188 loader), talk topic JSON, du lieu recipe/computer.",
       "Widget ImGui ngoai mau do (RadioButton/Combo/ListBox/TreeNode/MenuItem/Drag*, wrapper cata_imgui::action_button/draw_filter) va cac cataimgui::window subclass la don vi man that nhung cong cu chi dem call roi rac; tang khung cata_imgui.cpp/.h co 0 a11y.",
       "Dinh nghia ham bi cong cu dem nhu call site (input_context.cpp:229,234 va input_context.h:249,260 la declaration/definition cua register_action) - nhieu cu phap da ghi nhan."

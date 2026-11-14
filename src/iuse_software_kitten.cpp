@@ -459,7 +459,7 @@ void robot_finds_kitten::process_input()
                        otherwise stay silent: announce the blocked move at
                        once, exactly as a blocked world step is announced,
                        so the player can tell it apart from a gesture the
-                       game never received. (STT 412) */
+                       game never received. */
                     if( a11y::enabled() ) {
                         std::string direction_word;
                         if( action == "UP" ) {

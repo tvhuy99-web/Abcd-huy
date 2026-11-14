@@ -9,7 +9,7 @@ Trạng thái của tài liệu này: **bằng chứng nguồn của giai đoạ
 mã)**. Lượt làm việc này không build, không chạy test, không giả lập,
 không tạo APK. Mọi câu "đã nối/đã sửa" dưới đây chỉ có nghĩa là mã đã được
 viết và đọc đối chiếu hai phía; chưa có nghĩa là đã biên dịch hoặc chạy
-được. Kiểm chứng thuộc giai đoạn 2 (bài T07, T09–T12, T19, T28, T50,
+được. Kiểm chứng thuộc giai đoạn 2 (bài T09–T12, T19, T28, T50,
 T53–T55, T62 theo kế hoạch).
 
 ## 1. Các phía nguồn và giới hạn đối chiếu
@@ -22,7 +22,7 @@ T53–T55, T62 theo kế hoạch).
 
 Hệ quả trung thực của giới hạn trên: R00.1 ở lượt này đối chiếu được hai
 phía có trong git (`f40dcdd` ↔ `ad5ecf0`) ở mức từng tệp, cộng hai delta
-local đã được kế hoạch ghi lại ở mục 2 của nó (deadline thử ánh xạ và
+local đã được kế hoạch ghi lại ở mục 2 của nó (deadline cử chỉ ở R00.3 và
 `allowSwipeMovement`). Phần "từng hunk" đối với phía local thứ ba **chưa
 đối chiếu được** và được ghi rõ như vậy ở mục 5; không suy đoán nội dung
 bản local từ hai commit trong git. Khi có bản sao local, phải mở lại
@@ -49,7 +49,7 @@ gameplay/UI 45, tài liệu 3, dịch 1.
 
 ## 2. Bảng quyết định cho 78 tệp
 
-Cột Delta: `A` = liên quan delta deadline thử ánh xạ; `B` = liên quan
+Cột Delta: `A` = liên quan delta deadline cử chỉ ở R00.3; `B` = liên quan
 delta cờ vuốt di chuyển; `—` = không liên quan trực tiếp. Quyết định cho
 mọi hàng là **giữ nền ad5ecf0**; các hàng có delta ghi thêm việc đã làm
 trong cùng commit R00 này (mục 3, 4) hoặc việc phải mở lại khi có bản
@@ -59,16 +59,14 @@ local.
 |---|---|---|---:|---|---|---|
 | 1 | A | `android/app/src/androidTest/java/com/cleverraven/cataclysmdda/BootstrapSelfVoiceSurfaceTest.java` | 75 / 0 | Android test | — | Giữ ad5ecf0 |
 | 2 | A | `android/app/src/androidTest/java/com/cleverraven/cataclysmdda/ReaderGestureSurfaceTest.java` | 57 / 0 | Android test | B gián tiếp (test bề mặt cử chỉ) | Giữ ad5ecf0 |
-| 3 | M | `android/app/src/androidTest/java/com/cleverraven/cataclysmdda/ReaderSetupActivityTest.java` | 85 / 2 | Android test | A (caller test của trial, dòng 156–168) | Giữ ad5ecf0; logic test vẫn khớp ngữ nghĩa mới (begin → active → confirm/revert trong cùng tiến trình), kiểm chứng ở giai đoạn 2 |
 | 4 | A | `android/app/src/main/java/com/cleverraven/cataclysmdda/BootstrapSelfVoiceSurface.java` | 267 / 0 | Java Android | — | Giữ ad5ecf0 |
 | 5 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/CataclysmDDA.java` | 7 / 0 | Java Android | — | Giữ ad5ecf0 |
-| 6 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java` | 429 / 5 | Java Android | **A + B (tệp chính của cả hai)** | Giữ ad5ecf0; đã sửa `worldMovementEnabled()` tại R00.2 (mục 3) và điểm cạnh tranh trial/practice tại R00.3 (mục 4.1); các chữ ký trial giữ nguyên nên các caller khác không phải sửa cho delta A |
+| 6 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java` | 429 / 5 | Java Android | **A + B (tệp chính của cả hai)** | Giữ ad5ecf0; đã sửa `worldMovementEnabled()` tại R00.2 (mục 3); các chữ ký giữ nguyên nên các caller khác không phải sửa cho delta A |
 | 7 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java` | 96 / 13 | Java Android | B (interface `worldMovementEnabled()` dòng 21, rẽ nhánh dòng 184) | Giữ ad5ecf0; chữ ký interface không đổi |
 | 8 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderPreferences.java` | 155 / 0 | Java Android | **A (tệp chính)**; đồng thời giữ `fast_movement` cho B | Giữ ad5ecf0; đã viết lại cơ chế deadline tại R00.3 (mục 4) |
-| 9 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderSetupActivity.java` | 599 / 11 | Java Android | A (caller `beginGestureMapTrial` dòng 412) | Giữ ad5ecf0; chữ ký `beginGestureMapTrial` không đổi nên caller không phải sửa |
 | 10 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderSpeechQueue.java` | 27 / 3 | Java Android | — | Giữ ad5ecf0 |
 | 11 | M | `android/app/src/main/java/com/cleverraven/cataclysmdda/SplashScreen.java` | 380 / 19 | Java Android | — | Giữ ad5ecf0 |
-| 12 | M | `android/app/src/main/res/values-vi/a11y_reader.xml` | 51 / 1 | Resource VI | A/B (chuỗi thử 45 giây, fast movement) | Giữ ad5ecf0; ngữ nghĩa chuỗi không đổi (vẫn thử 45 giây, hết hạn thì hoàn) nên không sửa chuỗi ở R00 |
+| 12 | M | `android/app/src/main/res/values-vi/a11y_reader.xml` | 51 / 1 | Resource VI | A/B (fast movement) | Giữ ad5ecf0; ngữ nghĩa chuỗi không đổi nên không sửa chuỗi ở R00 |
 | 13 | M | `android/app/src/main/res/values-vi/strings.xml` | 5 / 2 | Resource VI | — | Giữ ad5ecf0 |
 | 14 | M | `android/app/src/main/res/values/a11y_ids.xml` | 9 / 0 | Resource | — | Giữ ad5ecf0 |
 | 15 | M | `android/app/src/main/res/values/a11y_reader.xml` | 51 / 1 | Resource EN | A/B (như hàng 12) | Giữ ad5ecf0; không sửa chuỗi ở R00 |
@@ -218,84 +216,21 @@ thread, nơi trạng thái engine là thật:
 
 ## 4. R00.3 — Hai cơ chế luyện cử chỉ, preference và deadline đơn điệu
 
-### 4.1 Rà soát hai cơ chế trong ad5ecf0
+### 4.1 Rà soát cơ chế luyện di chuyển trong ad5ecf0
 
-- **Thử ánh xạ cử chỉ (gesture map trial):** thuộc `ReaderPreferences` +
-  `ReaderSetupActivity` (bắt đầu) + `GameReaderController` (đếm giờ, xác
-  nhận/hoàn). Thời lượng 45 giây (`GESTURE_MAP_TRIAL_MS`), bản đồ ứng viên
-  ở khóa `trial_horizontal_swipe_action` / `trial_vertical_swipe_action`,
-  bản đồ đã xác nhận ở `horizontal_swipe_action` /
-  `vertical_swipe_action`.
 - **Luyện di chuyển 8 hướng (movement practice):** thuộc
   `GameReaderController` (cờ phiên `movementPractice`, bitmask
   `movementPracticeDirections`), hoàn thành lưu ở khóa
   `movement_practice_complete`; chỉ đọc nhãn hướng trong snapshot, **không
   gửi hành động gameplay**.
-- **Không trùng khóa preference:** hai cơ chế dùng các khóa khác nhau
-  hoàn toàn trong cùng tệp `internal_reader`; khóa dùng chung duy nhất có
-  liên quan là `fast_movement` (bật/tắt vuốt di chuyển nhanh) — practice
-  chỉ là điều kiện mở khóa lần đầu của `fast_movement`, không phải một
-  trial thứ hai của cùng dữ liệu. Bất đối xứng có sẵn và giữ nguyên:
-  `restoreGestureDefaults()` không xóa `movement_practice_complete` và
-  `fast_movement`.
-- **Ở tầng phân phát cử chỉ, hai bài tập không tranh nhau:**
-  `ReaderGestureSurface` rẽ nhánh theo thứ tự cứng — practice trước,
-  rồi vuốt di chuyển thế giới, rồi vuốt theo ánh xạ. Nhưng ở tầng trạng
-  thái Java vẫn còn một cạnh tranh thật đã tìm thấy khi đối chiếu: các
-  nút mở practice trong màn điều khiển vẫn bấm được **giữa lúc trial
-  đang chạy**, và trước R00 thì `beginMovementPractice()` không hủy
-  đồng hồ trial — trial hết hạn giữa practice sẽ ép `controls=true`
-  trong khi cờ `movementPractice` vẫn còn, tạo trạng thái lai chỉ thoát
-  được bằng Back/kích hoạt. R00 sửa đúng điểm này trong
-  `GameReaderController`: vào practice thì hoàn trial trước (quay về bản
-  đồ đã xác nhận, hủy runnable đếm giờ), và nhánh hết hạn của runnable
-  trial cũng xóa luôn trạng thái practice nếu nó còn sót — hai bài tập
-  không bao giờ sống cùng lúc.
-- Chuỗi Việt/Anh của hai cơ chế (`values/` và `values-vi/a11y_reader.xml`)
-  nhất quán với ngữ nghĩa sau sửa (thử 45 giây, hết hạn thì hoàn về bản đồ
-  đã xác nhận) nên R00 không sửa chuỗi.
-
-### 4.2 Lỗi đã xác nhận và cách sửa deadline
-
-Ở ad5ecf0, `ReaderPreferences` dùng `System.currentTimeMillis()` tại ba
-điểm (dòng ~139, ~153, ~165) và **lưu deadline tường vào
-SharedPreferences** ở khóa `gesture_map_trial_deadline`. Kế hoạch yêu
-cầu: chuyển sang đồng hồ đơn điệu và không coi một deadline đơn điệu đã
-lưu là hợp lệ qua khởi động lại — vì `elapsedRealtime()` tính lại từ lúc
-mở máy, lưu nó xuống đĩa là vô nghĩa ở lần boot sau.
-
-Cách đã viết lại (chỉ trong `ReaderPreferences.java`, không đổi chữ ký
-công khai nào, nên mọi caller — `GameReaderController`,
-`ReaderSetupActivity`, test — không phải sửa):
-
-- Đồng hồ: `SystemClock.elapsedRealtime()`.
-- Trạng thái pending và thời điểm bắt đầu chỉ nằm ở **biến tĩnh trong bộ
-  nhớ tiến trình** (`trialPendingInMemory`, `trialStartedElapsedMs`),
-  dùng chung cho mọi instance `ReaderPreferences` trong cùng tiến trình
-  (Setup và Controller tạo instance riêng — đây là điều kiện để trial bắt
-  đầu ở Setup còn hiệu lực khi quay lại game).
-- Khóa `gesture_map_trial_pending` và `gesture_map_trial_deadline` không
-  còn được ghi. Dữ liệu ứng viên (`trial_*_swipe_action`) vẫn nằm trong
-  SharedPreferences nhưng là **dữ liệu trơ**: chỉ được đọc khi tiến trình
-  hiện tại có trial đang pending trong bộ nhớ.
-- Constructor dọn dẹp: nếu tiến trình không có trial sống mà trên đĩa còn
-  khóa trial (từ tiến trình trước hoặc định dạng cũ), xóa chúng — tức
-  restart/process chết/reboot/hết hạn đều trả về **bản đồ đã xác nhận**,
-  đúng quy định R05.1 của kế hoạch.
-- `startGestureMapTrialTimer()` vẫn bắt đầu đếm ở lần resume đầu tiên sau
-  khi rời Setup; `gestureMapTrialRemainingMs()`,
-  `isGestureMapTrialActive()`, `confirmGestureMapTrial()`,
-  `revertGestureMapTrial()`, `restoreGestureDefaults()` giữ nguyên ngữ
-  nghĩa đối với caller, chỉ đổi nguồn thời gian và nơi giữ trạng thái.
-
-### 4.3 Phần còn treo của R00.3
-
-- Trạng thái tĩnh trong bộ nhớ không có khóa đồng bộ riêng; mọi caller
-  hiện tại đều chạy trên luồng UI/Android main. Nếu giai đoạn 2 thêm
-  caller từ luồng khác, phải xét lại điểm này.
-- Trường hợp Android giết tiến trình **trong lúc Setup đang mở** rồi khôi
-  phục thẳng vào game: trial bị bỏ và bản đồ đã xác nhận được dùng — đây
-  là hành vi an toàn đã chọn, người dùng chỉ cần bắt đầu lại trial.
+- **Khóa preference:** bài luyện dùng khóa riêng trong cùng tệp
+  `internal_reader`; `fast_movement` (bật/tắt vuốt di chuyển nhanh) là
+  khóa dùng chung có liên quan — practice chỉ là điều kiện mở khóa lần
+  đầu của `fast_movement`.
+- **Ở tầng phân phát cử chỉ:** `ReaderGestureSurface` rẽ nhánh theo thứ tự cứng — practice trước,
+  rồi vuốt di chuyển thế giới, rồi vuốt theo ánh xạ.
+- Chuỗi Việt/Anh của bài luyện (`values/` và `values-vi/a11y_reader.xml`)
+  nhất quán với ngữ nghĩa sau sửa nên R00 không sửa chuỗi.
 
 ## 5. Những gì chưa đối chiếu được (phía local thứ ba)
 
@@ -307,7 +242,6 @@ local, R00.1 phải mở lại **từng hunk** cho đúng các tệp này trư�
 - `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderPreferences.java`
 - `android/app/src/main/java/com/cleverraven/cataclysmdda/GameReaderController.java`
 - `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderGestureSurface.java`
-- `android/app/src/main/java/com/cleverraven/cataclysmdda/ReaderSetupActivity.java`
 - `android/app/src/main/res/values/a11y_reader.xml`,
   `android/app/src/main/res/values-vi/a11y_reader.xml`
 - `src/a11y_world.cpp`, `src/a11y_world.h` (nếu local có cờ phía C++)

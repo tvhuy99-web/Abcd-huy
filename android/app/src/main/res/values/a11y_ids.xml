@@ -1,11 +1,5 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <item type="id" name="a11y_backup_export" />
-    <item type="id" name="a11y_backup_import" />
-    <item type="id" name="a11y_backup_open_picker" />
-    <item type="id" name="a11y_backup_confirm_restore" />
-    <item type="id" name="a11y_backup_cancel_restore" />
     <item type="id" name="a11y_sound_cues" />
     <item type="id" name="a11y_haptic_cues" />
-    <item type="id" name="a11y_diagnostics_read" />
 </resources>

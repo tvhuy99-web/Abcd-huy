@@ -7,7 +7,7 @@
     "ke-hoach": "Chưa bắt đầu viết.",
     "da-viet-cho-kiem-thu": "Mã/tài liệu đã viết và có bằng chứng nguồn; chưa build/test (giai đoạn 1). Không đồng nghĩa hoàn thành hay nghiệm thu."
   },
-  "tong_dau_viec": 96,
+  "tong_dau_viec": 95,
   "items": [
     {
       "id": "R00.1",
@@ -19,7 +19,6 @@
         "G0"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -46,7 +45,6 @@
         "G0"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -73,7 +71,6 @@
         "G0"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -100,7 +97,6 @@
         "G0"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -569,7 +565,7 @@
       "id": "R05.1",
       "muc": "R05",
       "tieu_de_muc": "Cử chỉ, luyện tập và cứu hộ",
-      "noi_dung": "giữ gán hai trục và mặc định 45 giây; thay deadline bằng thời gian đơn điệu, lưu riêng cấu hình đã xác nhận; restart/reboot/hết hạn/TalkBack trả cấu hình đã xác nhận.",
+      "noi_dung": "giữ gán hai trục; lưu riêng cấu hình đã xác nhận.",
       "phu_thuoc": [
         "R04"
       ],
@@ -578,7 +574,6 @@
         "G2"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -589,7 +584,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đóng ở R05 (xem R05-GESTURES.vi.md mục 1): bản chất đã đạt tại R00.3, R05 rà soát lại bằng đường mã, không sửa. Gán hai trục + mặc định 45 giây giữ nguyên; deadline elapsedRealtime trong bộ nhớ tiến trình, không lưu deadline; cấu hình đã xác nhận lưu riêng. Điểm rà kỹ: ứng viên trial ghi ngay trước process chết bị constructor dọn (không có trial sống trong bộ nhớ mà đĩa còn khóa trial thì xóa hết) nên restart/reboot/process chết/hết hạn/TalkBack bật đều trả cấu hình đã xác nhận. Chưa build/test; test ID chạy ở giai đoạn 2."
+      "ghi_chu": "Đóng ở R05 (xem R05-GESTURES.vi.md mục 1). Gán hai trục + cấu hình đã xác nhận lưu riêng giữ nguyên."
     },
     {
       "id": "R05.2",
@@ -604,7 +599,6 @@
         "G2"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -615,7 +609,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 2). Bài luyện tám hướng trong GameReaderController: phân vùng 8 hướng, đọc tên hướng + tiến độ X/8 (Anh/Việt), không gọi send() ở bất kỳ nhánh nào, thoát bằng chạm hai lần/Back không đổi cấu hình thật; kỹ năng duyệt/chọn/đọc/hủy nằm ở cơ chế cử chỉ chung + trial ánh xạ ở Setup và được trợ giúp mô tả đủ. Bổ sung ở R05: chuỗi hướng dẫn bài luyện (Anh + Việt) nói rõ thoát bất cứ lúc nào và vào lại đếm lại từ đầu (đường học lại). Giới hạn giữ nguyên có ghi nhận: bài luyện cần màn thế giới vì nhãn hướng lấy từ node lệnh của snapshot. Chưa build/test."
+      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 2). Bài luyện tám hướng trong GameReaderController: phân vùng 8 hướng, đọc tên hướng + tiến độ X/8 (Anh/Việt), không gọi send() ở bất kỳ nhánh nào, thoát bằng chạm hai lần/Back không đổi cấu hình thật; kỹ năng duyệt/chọn/đọc/hủy nằm ở cơ chế cử chỉ chung và được trợ giúp mô tả đủ. Bổ sung ở R05: chuỗi hướng dẫn bài luyện (Anh + Việt) nói rõ thoát bất cứ lúc nào và vào lại đếm lại từ đầu (đường học lại). Giới hạn giữ nguyên có ghi nhận: bài luyện cần màn thế giới vì nhãn hướng lấy từ node lệnh của snapshot. Chưa build/test."
     },
     {
       "id": "R05.3",
@@ -630,7 +624,6 @@
         "G2"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -656,7 +649,6 @@
         "G2"
       ],
       "test_ids": [
-        "T07",
         "T09",
         "T10",
         "T11",
@@ -667,7 +659,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 4). Cứu hộ một ngón đã có và được rà soát bằng đường mã: Reader controls (nút thường/Back) chứa trợ giúp (case 7), tôi đang ở đâu (case 1), đọc lại (case 3), dừng đọc (case 4 + nút Stop speech + chạm hai ngón thay thế lẫn nhau), hủy (case 5, intent cancel qua cửa R03), khôi phục mặc định cử chỉ qua case 6 -> ReaderSetupActivity (nút thường trong danh sách tự đọc của Setup gọi restoreGestureDefaults); thoát cấu hình lỗi không cần cử chỉ khó (trial tự hoàn sau 45 giây/TalkBack bật, practice thoát bằng Back). Hoán vị tám hướng: QUYẾT ĐỊNH HOÃN có truy vết - rà soát kế hoạch gốc PLAN.vi.md (dòng 230/232/T19), IMPLEMENTATION/COVERAGE/STATUS, sổ hành trình và gói GnollHack tham khảo đều không có yêu cầu hoán vị nào ngoài câu điều kiện trong chính kế hoạch còn lại; không viết bảng hoán vị, không hệ preference thứ hai, giữ cơ chế hai trục. Mở lại R05.4 khi có yêu cầu truy vết được (kể cả từ bản local còn thiếu của R00). Chưa build/test."
+      "ghi_chu": "Đóng ở commit R05 (xem R05-GESTURES.vi.md mục 4). Cứu hộ một ngón đã có và được rà soát bằng đường mã: Reader controls (nút thường/Back) chứa trợ giúp (case 7), tôi đang ở đâu (case 1), đọc lại (case 3), dừng đọc (case 4 + nút Stop speech + chạm hai ngón thay thế lẫn nhau), hủy (case 5, intent cancel qua cửa R03); thoát cấu hình lỗi không cần cử chỉ khó (practice thoát bằng Back). Hoán vị tám hướng: QUYẾT ĐỊNH HOÃN có truy vết - rà soát kế hoạch gốc PLAN.vi.md (dòng 230/232/T19), IMPLEMENTATION/COVERAGE/STATUS, sổ hành trình và gói GnollHack tham khảo đều không có yêu cầu hoán vị nào ngoài câu điều kiện trong chính kế hoạch còn lại; không viết bảng hoán vị, không hệ preference thứ hai, giữ cơ chế hai trục. Mở lại R05.4 khi có yêu cầu truy vết được (kể cả từ bản local còn thiếu của R00). Chưa build/test."
     },
     {
       "id": "R06.1",
@@ -697,7 +689,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 1). Bộ chọn engine/voice/ngôn ngữ ở ReaderSetupActivity làm việc trên bản NHÁP (probe bằng AndroidSpeech.probeVoices - instance dò ngắn hạn, luôn shutdown, không phát tiếng); nhãn giọng ghi rõ offline hay cần mạng (VoiceOption.networkRequired + chuỗi a11yVoiceOfflineData/a11yVoiceNetworkData Anh+Việt); nghe mẫu bằng đúng bộ nháp đã đóng băng (testedEngine/Voice/Language), đổi nháp là vô hiệu mẫu qua invalidateSampleForChangedSettings; chỉ nút xác nhận sau mẫu mới ghi ReaderPreferences.saveSpeechSelection + confirmHeardAndEnable. Giọng mạng không bao giờ tự chấp nhận: cờ offlineOnly vẫn suy từ network_voice_consent ở mọi điểm khởi tạo (queue, Splash, Setup). Thanh tốc độ 0,5–3,0 giữ nguyên. Chưa build/test."
+      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 1). Bộ chọn engine/voice/ngôn ngữ ở màn cài đặt giọng (TtsSettingsActivity) làm việc trên bản NHÁP (probe bằng AndroidSpeech.probeVoices - instance dò ngắn hạn, luôn shutdown, không phát tiếng); nhãn giọng ghi rõ offline hay cần mạng (VoiceOption.networkRequired + chuỗi a11yVoiceOfflineData/a11yVoiceNetworkData Anh+Việt); nghe mẫu bằng đúng bộ nháp đã đóng băng (testedEngine/Voice/Language), đổi nháp là vô hiệu mẫu qua invalidateSampleForChangedSettings; chỉ nút xác nhận sau mẫu mới ghi ReaderPreferences.saveSpeechSelection + confirmHeardAndEnable. Giọng mạng không bao giờ tự chấp nhận: cờ offlineOnly vẫn suy từ network_voice_consent ở mọi điểm khởi tạo (queue, Splash, màn cài đặt giọng). Thanh tốc độ 0,5–3,0 giữ nguyên. Chưa build/test."
     },
     {
       "id": "R06.2",
@@ -730,36 +722,6 @@
       "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 2). AndroidSpeech giữ timeout khởi tạo 8s và timeout bắt đầu phát 6s; thêm trạng thái MISSING_VOICE và khởi tạo theo tên giọng. ReaderSpeechQueue: thử lại FAILED tối đa 2 lần (+1s, +3s) rồi mới báo lỗi; giọng đã lưu bị mất thì rơi về giọng mặc định đúng một lần, xóa lựa chọn cũ khỏi preferences và báo qua Listener.onVoiceRecovered (GameReaderController hiện thông báo). Ba chủ sở hữu backend giữ nguyên theo vòng đời (Splash/Setup/queue trong Controller - mỗi nơi một instance, đóng ở onDestroy/close, context là application ở AndroidSpeech); probe dò giọng là instance tạm không phát tiếng. Fakes ở tools/accessibility đã mở rộng (Voice.getName, TextToSpeech.getEngines/getVoices/getDefaultEngine/setVoice/EngineInfo) để bài host T-speech biên dịch được ở giai đoạn 2 - chưa chạy. Chưa build/test."
     },
     {
-      "id": "R06.3",
-      "muc": "R06",
-      "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
-      "noi_dung": "thêm đường cứu hộ bằng âm Việt đóng gói, không phụ thuộc TTS đang lỗi; điều khiển retry/chọn nguồn đọc/cài đặt/quay lại bằng thao tác nghe được; không giả định app tự điều khiển được màn cài đặt Android.",
-      "phu_thuoc": [
-        "R05"
-      ],
-      "cong": [
-        "G1"
-      ],
-      "test_ids": [
-        "T01",
-        "T02",
-        "T03",
-        "T04",
-        "T05",
-        "T06",
-        "T08",
-        "T53",
-        "T54",
-        "T55",
-        "T56",
-        "T57",
-        "T63"
-      ],
-      "test_bo_sung": [],
-      "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Mã đã viết, asset ĐÃ có thật ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 3 và R06-RESCUE-AUDIO-ASSETS.vi.md). RescueAudioPlayer phát MP3 đóng gói qua MediaPlayer, không qua TTS. 6 clip tiếng Việt thật, đo bằng ffprobe (3,9–25,0 giây). Nguồn giọng NÓI THẬT: edge-tts/giọng Microsoft KHÔNG sinh được trong môi trường này (SSL lỗi khi nối trực tiếp, treo qua proxy) nên asset hiện tại là giọng eSpeak NG (vi, ngoại tuyến) - nghe máy móc, phải nghiệm thu độ rõ ở giai đoạn 2/3 và có thể thay tệp cùng tên khi có giọng tự nhiên. Màn cứu hộ Splash có 5 nút thường đúng thứ tự clip mô tả (nghe lại/thử lại giọng/cài đặt giọng/thiết lập bộ đọc/quay lại); lỗi cài đặt phát clip riêng (kèm biến thể hết dung lượng); Setup phát clip riêng và có nút nghe hướng dẫn cứu hộ. CLIP_WELCOME có asset nhưng CHƯA nối luồng phát - ghi mở, không tính là đã dùng. Chưa build/test."
-    },
-    {
       "id": "R06.4",
       "muc": "R06",
       "tieu_de_muc": "Giọng, khởi động và cài dữ liệu",
@@ -787,7 +749,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 4). InstallProgramTask viết lại: đo tổng byte thật bằng cách stream assets, kiểm tra dung lượng trống (usable >= tổng đo + 32MB dự phòng) trước khi đụng vào dữ liệu; copy vào cây staging (.reader_install_staging), kiểm chứng trên đĩa (số tệp + tổng byte khớp cả ba nguồn đếm), journal ở bộ nhớ trong (STAGING/STAGED/SWAPPING/COMMITTED, fsync), hoán đổi bằng rename (live cũ đỗ ở .reader_install_rollback), khôi phục nội dung custom theo đúng luật preserve cũ (font, thư mục custom dưới data/sound|mods|gfx không có trong APK, user-default-mods.json), chỉ ghi pref 'installed' SAU commit; chết giữa chừng khi SWAPPING được installOrRun phát hiện và task khôi phục rollback trước khi làm tiếp. Lỗi phân loại no_space/copy/verify/swap, màn lỗi bootstrap có thử lại/cài đặt/thoát + clip cứu hộ. Chưa build/test."
+      "ghi_chu": "Đóng ở commit R06 (xem R06-VOICE-BOOT.vi.md mục 4). InstallProgramTask viết lại: đo tổng byte thật bằng cách stream assets, kiểm tra dung lượng trống (usable >= tổng đo + 32MB dự phòng) trước khi đụng vào dữ liệu; copy vào cây staging (.reader_install_staging), kiểm chứng trên đĩa (số tệp + tổng byte khớp cả ba nguồn đếm), journal ở bộ nhớ trong (STAGING/STAGED/SWAPPING/COMMITTED, fsync), hoán đổi bằng rename (live cũ đỗ ở .reader_install_rollback), khôi phục nội dung custom theo đúng luật preserve cũ (font, thư mục custom dưới data/sound|mods|gfx không có trong APK, user-default-mods.json), chỉ ghi pref 'installed' SAU commit; chết giữa chừng khi SWAPPING được installOrRun phát hiện và task khôi phục rollback trước khi làm tiếp. Lỗi phân loại no_space/copy/verify/swap, màn lỗi bootstrap có thử lại/cài đặt/thoát. Chưa build/test."
     },
     {
       "id": "R07.1",
@@ -2189,7 +2151,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Da viet: ReaderBackupArchive (staging + manifest kiem chung so tep/byte + journal swap/rollback nhu R06, chan cay ngoai backup) + UI ReaderSetupActivity voi huong dan noi truoc picker SAF hai buoc, restore xac nhan rieng khong mac dinh de. CDDADocumentsProvider giu nguyen. Gioi han: khong JNI dong bang ghi engine - diem mo giai doan 2."
+      "ghi_chu": "Da viet: ReaderBackupArchive (staging + manifest kiem chung so tep/byte + journal swap/rollback nhu R06, chan cay ngoai backup) + UI BackupRestoreActivity voi huong dan noi truoc picker SAF hai buoc, restore xac nhan rieng khong mac dinh de. CDDADocumentsProvider giu nguyen. Gioi han: khong JNI dong bang ghi engine - diem mo giai doan 2."
     },
     {
       "id": "R20.3",
@@ -2299,7 +2261,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Da viet (R21): kenh cue C++ a11y::android::cue (danh sach trang 4 ten) -> CataclysmDDA.onAccessibilityCue -> GameReaderController.onGameCue -> ReaderCuePlayer (SoundPool + Vibrator, cooldown tung cue, audio focus tam thoi MAY_DUCK chi quanh cue; TTS focus van thuoc tien trinh engine TTS nhu R20 da neu). Diem kich: outcome blocked/safe_mode_blocked, announce khan cap (danger), activity ACT_PICKUP xong + activity dai >= 1000 moves (player_activity do_turn), bien nhan tu choi (Java). Mac dinh TAT ca hai kenh, bat rieng trong ReaderSetupActivity kem phat mau; loi phat -> noi bang loi mot lan/phien (a11yCueUnavailable) + dem chan doan. Moi cue trung khop mot tin hieu da noi bang loi tai cung diem engine nen khong lo them thong tin."
+      "ghi_chu": "Da viet (R21): kenh cue C++ a11y::android::cue (danh sach trang 4 ten) -> CataclysmDDA.onAccessibilityCue -> GameReaderController.onGameCue -> ReaderCuePlayer (SoundPool + Vibrator, cooldown tung cue, audio focus tam thoi MAY_DUCK chi quanh cue; TTS focus van thuoc tien trinh engine TTS nhu R20 da neu). Diem kich: outcome blocked/safe_mode_blocked, announce khan cap (danger), activity ACT_PICKUP xong + activity dai >= 1000 moves (player_activity do_turn), bien nhan tu choi (Java). Mac dinh TAT ca hai kenh; hien khong con UI bat/tat cue (cong tac tung nam o man thiet lap cu, da go 14/11/2026); loi phat -> noi bang loi mot lan/phien (a11yCueUnavailable) + dem chan doan. Moi cue trung khop mot tin hieu da noi bang loi tai cung diem engine nen khong lo them thong tin."
     },
     {
       "id": "R21.3",
@@ -2329,7 +2291,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Da viet (R21): 487 msgid bo sung vao lang/po/accessibility/vi.po (485 chuoi R07-R20 thieu ca hai catalog + 2 chuoi lich su thong bao moi cua R21.4); overlay gio co 928 msgid khong ke header. Thong nhat thuat ngu (xe, phep; bang thuat ngu trong tai lieu R21 muc 3); ten mau ghi chu da co san dich trong catalog chinh, 4 chuoi khung R13 da vao overlay; fallback: ten chua dich van noi nguyen van + dieu khien doc 'Danh van muc hien tai' (ReaderDocumentReader.spellText, grapheme tieng Viet). Dong goi: lang/Makefile + compile_mo.py msgcat --use-first (overlay thang); caveat tien quyet CMake ghi trong tai lieu R21."
+      "ghi_chu": "Da viet (R21): 487 msgid bo sung vao lang/po/accessibility/vi.po (485 chuoi R07-R20 thieu ca hai catalog + 2 chuoi lich su thong bao moi cua R21.4); overlay gio co 928 msgid khong ke header. Thong nhat thuat ngu (xe, phep; bang thuat ngu trong tai lieu R21 muc 3); ten mau ghi chu da co san dich trong catalog chinh, 4 chuoi khung R13 da vao overlay; fallback: ten chua dich van noi nguyen van. Dong goi: lang/Makefile + compile_mo.py msgcat --use-first (overlay thang); caveat tien quyet CMake ghi trong tai lieu R21."
     },
     {
       "id": "R21.4",
@@ -2359,7 +2321,7 @@
       ],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Da viet (R21): ReaderDiagnostics (singleton theo tien trinh, vong 200 su kien ma noi bo + bo dem, bao cao doc toi da 30 su kien; KHONG chua noi dung cau doc/ten save) + thong ke hang loi va do tre enqueue->start do tai su kien STARTED (chi do, khong tuyen bo nguong); bao cao doc duoc tu ReaderSetupActivity. Lich su thong bao day du: messages.cpp reader_update — moi thong bao mot doan, gioi han cong bo 500 moi nhat kem so dem trong tom tat, loc giu nguyen cua dialog; tim kiem qua tim-kiem tai lieu. Chuan bi do hieu nang/che do it hinh: danh sach tuy chon do hoa chi-hien-thi trong tai lieu R21 muc 4 — khong doi mac dinh nao."
+      "ghi_chu": "Da viet (R21): ReaderDiagnostics (singleton theo tien trinh, vong 200 su kien ma noi bo + bo dem, bao cao doc toi da 30 su kien; KHONG chua noi dung cau doc/ten save) + thong ke hang loi va do tre enqueue->start do tai su kien STARTED (chi do, khong tuyen bo nguong); bao cao doc duoc. Lich su thong bao day du: messages.cpp reader_update — moi thong bao mot doan, gioi han cong bo 500 moi nhat kem so dem trong tom tat, loc giu nguyen cua dialog; tim kiem qua tim-kiem tai lieu. Chuan bi do hieu nang/che do it hinh: danh sach tuy chon do hoa chi-hien-thi trong tai lieu R21 muc 4 — khong doi mac dinh nao."
     },
     {
       "id": "R22.1",
@@ -2380,7 +2342,6 @@
         "T04",
         "T05",
         "T06",
-        "T07",
         "T08",
         "T09",
         "T10",
@@ -2464,7 +2425,6 @@
         "T04",
         "T05",
         "T06",
-        "T07",
         "T08",
         "T09",
         "T10",
@@ -2533,7 +2493,7 @@
       "id": "R22.3",
       "muc": "R22",
       "tieu_de_muc": "Chuẩn bị fixture, bài kiểm thử và tài liệu bàn giao",
-      "noi_dung": "mở rộng T01–T64 bằng bài riêng cho form/bảng/cây, engine/voice/cứu hộ, smart controller/Study Zone/quy tắc, máy tính, từng minigame và trại; gán fixture và loại máy/cấu hình cho từng bài.",
+      "noi_dung": "mở rộng T01–T64 bằng bài riêng cho form/bảng/cây, engine/voice, smart controller/Study Zone/quy tắc, máy tính, từng minigame và trại; gán fixture và loại máy/cấu hình cho từng bài.",
       "phu_thuoc": [
         "R21"
       ],
@@ -2548,7 +2508,6 @@
         "T04",
         "T05",
         "T06",
-        "T07",
         "T08",
         "T09",
         "T10",
@@ -2632,7 +2591,6 @@
         "T04",
         "T05",
         "T06",
-        "T07",
         "T08",
         "T09",
         "T10",
@@ -2847,7 +2805,7 @@
       "test_ids": [],
       "test_bo_sung": [],
       "trang_thai": "da-viet-cho-kiem-thu",
-      "ghi_chu": "Đã viết PHASE1-CLOSING-REPORT.vi.md: trạng thái theo 30 nhóm bề mặt, 6 hành trình chưa viết kèm lý do, toàn bộ ràng buộc còn tồn tại (cast_spell đứt ở cây nền, bản local thứ ba chưa có trong máy nên R00.1 còn điều kiện mở, Snake theo lượt chờ nghiệm thu, âm cứu hộ giọng eSpeak chờ thay giọng tự nhiên, khóa ký/dải máy/danh sách mod phát hành chưa ghim, danh sách MSVC, caveat .mo đường CMake, trần snapshot, các điểm mở theo bề mặt), đối chiếu điều kiện không-qua của kế hoạch và thứ tự bắt đầu giai đoạn 2 theo mục 6."
+      "ghi_chu": "Đã viết PHASE1-CLOSING-REPORT.vi.md: trạng thái theo 30 nhóm bề mặt, 6 hành trình chưa viết kèm lý do, toàn bộ ràng buộc còn tồn tại (cast_spell đứt ở cây nền, bản local thứ ba chưa có trong máy nên R00.1 còn điều kiện mở, Snake theo lượt chờ nghiệm thu, khóa ký/dải máy/danh sách mod phát hành chưa ghim, danh sách MSVC, caveat .mo đường CMake, trần snapshot, các điểm mở theo bề mặt), đối chiếu điều kiện không-qua của kế hoạch và thứ tự bắt đầu giai đoạn 2 theo mục 6."
     }
   ]
 }

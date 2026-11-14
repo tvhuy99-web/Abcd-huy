@@ -50,7 +50,7 @@ giai đoạn 2/3 và hiện **chưa ghim**.
 | Ngôn ngữ game chào cho người chơi | English và Tiếng Việt. Luôn có `en`; `vi` xuất hiện khi biên dịch có `LOCALIZE` và có tệp dịch `vi`. Mặc định `USE_LANG = "vi"` | `src/options.cpp`: `options_manager::get_lang_options()`, `add("USE_LANG", …, "vi")` |
 | Dữ liệu dịch | Catalog game duy nhất `lang/po/vi.po.gz` + overlay trợ năng `lang/po/accessibility/vi.po`; `.mo` sinh lúc build (`localize=true`, task `makeLocalization` chạy `make localization LANGUAGES=vi`) | `android/gradle.properties`, `android/app/build.gradle`, CI kiểm tra `assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo` |
 | Giao diện Android (Java) | Hai bộ resource: `values/` (English, mặc định) và `values-vi/`, mỗi bộ có `strings.xml`, `a11y_reader.xml`, `a11y_editor.xml` theo cùng khóa; không có `values-*` nào khác | `android/app/src/main/res/` |
-| Giọng đọc của bộ đọc | Khóa cứng `vi_VN` ở mọi điểm khởi tạo TTS (`ReaderSpeechQueue`, `ReaderSetupActivity`, `SplashScreen`), kể cả khi ngôn ngữ game là `en`. `AndroidSpeech` tự nó trung lập ngôn ngữ nhưng kiểm tra giọng thật khớp locale yêu cầu và **không fallback thầm** sang ngôn ngữ khác. Đây là phạm vi hiện tại đã ghim trong mã, không phải lỗi sót | các tệp Java trên; `AndroidSpeech.java` |
+| Giọng đọc của bộ đọc | Khóa cứng `vi_VN` ở mọi điểm khởi tạo TTS (`ReaderSpeechQueue`, `SplashScreen`), kể cả khi ngôn ngữ game là `en`. `AndroidSpeech` tự nó trung lập ngôn ngữ nhưng kiểm tra giọng thật khớp locale yêu cầu và **không fallback thầm** sang ngôn ngữ khác. Đây là phạm vi hiện tại đã ghim trong mã, không phải lỗi sót | các tệp Java trên; `AndroidSpeech.java` |
 | Không thuộc phạm vi ngôn ngữ | Map locale trong `update_global_locale()` (ar/cs/de/fr/ja/ko/ru/zh_CN…) là mã ánh xạ locale của engine, **không** phải ngôn ngữ được chào trong bản này vì không có dữ liệu dịch tương ứng trong `lang/po/` | `src/options.cpp`, `lang/po/` |
 
 Có bản dịch không đồng nghĩa đã chứng minh chất lượng/độ phủ/phát âm;
@@ -155,9 +155,9 @@ Hai đường đọc **song song, không phải chọn một**, đã ghim trong 
 
 1. **Bộ đọc nội bộ (đường chính khi tắt touch exploration):**
    `GameReaderController` → `ReaderSpeechQueue` → `AndroidSpeech`
-   (TTS của Android, giọng `vi_VN`). Bộ đọc mặc định **tắt**: chỉ bật
-   khi `enabled && heard_confirmation` cùng đúng — người dùng phải nghe
-   hết câu thử tiếng Việt và xác nhận trong `ReaderSetupActivity`;
+   (TTS của Android, giọng `vi_VN`). Bộ đọc mặc định **bật** trên flavor
+   trợ năng (cờ `enabled`, xem `AUTO-START-2026-11-07.vi.md`): không còn
+   yêu cầu nghe mẫu/xác nhận lúc mở game lần đầu;
    phía C++ `a11y::enabled()` đọc cờ `reader_enabled` —
    `ReaderPreferences.java`, `src/a11y_runtime.cpp`, `src/a11y_android.cpp`.
 2. **TalkBack / touch exploration (đường phối hợp và cứu hộ):** khi
@@ -195,8 +195,7 @@ sản phẩm này ở mọi mục sau (quy tắc ở mục 3 của kế hoạch)
 | 2 | Dải máy/Android đã chứng nhận | Chỉ có cấu hình build API 24–35 và bằng chứng CI/emulator; chốt ở giai đoạn 2/3 bằng máy thật (R22/R23) |
 | 3 | Phiên bản phát hành và khóa ký phát hành | versionName sinh lúc build; khóa `accessibility-test` là khóa thử công khai, cấm dùng làm khóa phát hành (R22) |
 | 4 | Flavor phát hành chính thức cho bản trợ năng | Hiện chỉ có flavor thử `accessibility` được mô tả trong `TESTING.vi.md` |
-| 5 | Asset âm cứu hộ thật (nguồn, transcript, quyền dùng) | Việc của R06; manifest này không coi tệp âm nào hiện có là đã đủ |
-| 6 | `user:default` của người dùng | Nằm ngoài repo lúc chạy; mọi kết luận về thứ tự nạp phải nêu đang nói về `dev:default` hay `user:default` |
+| 5 | `user:default` của người dùng | Nằm ngoài repo lúc chạy; mọi kết luận về thứ tự nạp phải nêu đang nói về `dev:default` hay `user:default` |
 
 ## 9. Quy tắc mở lại manifest
 

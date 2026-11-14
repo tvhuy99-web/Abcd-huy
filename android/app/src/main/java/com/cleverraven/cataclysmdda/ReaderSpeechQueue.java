@@ -30,7 +30,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
          * The confirmed voice selection no longer exists on this device
          * and the queue fell back to the system default voice (R06.2).
          * The stale selection has already been cleared from preferences;
-         * the user can pick a new voice in reader setup.
+         * the user can pick a new voice in the TTS settings screen.
          */
         default void onVoiceRecovered() { }
     }
@@ -83,7 +83,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     private String activeChunk;
     private long sequence;
     private int chunkIndex;
-    // Chunk of the last utterance where speech stopped (STT 175). Updated
+    // Chunk of the last utterance where speech stopped. Updated
     // whenever an utterance is cut off, so resume() can continue a long
     // document from the interrupted chunk instead of restarting it.
     private int lastChunkIndex;
@@ -130,7 +130,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         statInterrupted++;
         if (key != null && key.equals(lastKey)) {
             // chunkIndex is the chunk being spoken when the cut happened;
-            // resume() replays that chunk (STT 175).
+            // resume() replays that chunk.
             lastChunkIndex = chunkIndex;
         }
         if (completionListener != null && key != null) {
@@ -146,7 +146,7 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         final long created;
         final long expires;
         final List<String> chunks;
-        // Chunk to start speaking from (STT 175). Normally 0; resume()
+        // Chunk to start speaking from. Normally 0; resume()
         // sets it to the interrupted chunk so a long document continues
         // instead of restarting.
         final int startChunk;
@@ -225,8 +225,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
                 }
                 // A confirmed voice that was uninstalled (or whose engine
                 // was replaced) falls back once to the system default
-                // voice; the stale selection is cleared so setup offers a
-                // fresh choice instead of failing on every launch.
+                // voice; the stale selection is cleared so the TTS settings
+                // screen offers a fresh choice instead of failing on every launch.
                 if (state == AndroidSpeech.State.MISSING_VOICE && initVoiceName != null
                         && !voiceRecoveryUsed && initPreferences != null) {
                     voiceRecoveryUsed = true;
@@ -565,14 +565,14 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         String key = lastKey;
         stop();
         // Repeat means "from the start": forget the interruption point so
-        // a later resume() does not jump back mid-document (STT 175).
+        // a later resume() does not jump back mid-document.
         lastChunkIndex = 0;
         say("repeat:" + key, text, FOCUS);
     }
 
     /**
-     * Continue the last utterance from the chunk where it was cut off
-     * (STT 175): a long document (MOTD/Credits) interrupted by a focus
+     * Continue the last utterance from the chunk where it was cut off:
+     * a long document (MOTD/Credits) interrupted by a focus
      * move, Stop or an engine error resumes mid-text instead of
      * restarting from chunk 0. Falls back to {@link #repeat()} when
      * nothing was interrupted mid-utterance. Stops whatever is speaking
@@ -595,66 +595,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         say("resume:" + key, text, FOCUS, 2000, start);
     }
 
-    /** Whether the active utterance has another chunk in this direction. */
-    public boolean canSkipChunk(int delta) {
-        return active != null && active.chunks.size() > 1
-                && chunkIndex + delta >= 0 && chunkIndex + delta < active.chunks.size();
-    }
-
-    /**
-     * Jump the active utterance forward (+1) or back (-1) by one chunk
-     * (STT 175). Returns false when there is no chunk in that direction.
-     * The current chunk is cancelled and the target chunk speaks at once;
-     * the stale utterance callback is ignored because activeChunk is
-     * cleared before cancelling. Wiring a gesture to this is the
-     * controller's job (GameReaderController).
-     */
-    public boolean skipChunk(int delta) {
-        if (!canSkipChunk(delta)) {
-            return false;
-        }
-        chunkIndex += delta;
-        removeCompletionTimeout();
-        activeChunk = null;
-        speech.cancel();
-        speakChunk();
-        return true;
-    }
-
-    public boolean skipToNextChunk() {
-        return skipChunk(1);
-    }
-
-    public boolean skipToPreviousChunk() {
-        return skipChunk(-1);
-    }
-
-    /** 0-based index of the chunk being spoken, or -1 when idle. */
-    public int getChunkIndex() {
-        return active == null ? -1 : chunkIndex;
-    }
-
-    /** Number of chunks in the active utterance, or 0 when idle. */
-    public int getChunkCount() {
-        return active == null ? 0 : active.chunks.size();
-    }
-
     public void stop() {
         clearRequests();
         speech.cancel();
-    }
-
-    /**
-     * Interrupt audible and queued game speech immediately when the player
-     * touches the screen. Return whether an utterance was in progress or
-     * queued so a solitary touch can silence without opening a world tile.
-     * All access is on the Android UI thread, as with every queue operation.
-     */
-    public boolean stopForTouch() {
-        boolean interrupted = active != null || !pending.isEmpty()
-                || !orderedGameEvents.isEmpty() || !urgentGameEvents.isEmpty();
-        stop();
-        return interrupted;
     }
 
     /**

@@ -101,7 +101,7 @@ và phải mở lại khi danh sách mod phát hành được ghim.
 `input_category` của uilist (wish, overmap notes, editmap, npctalk, popup); 24
 `register_action` động chỉ biết ở runtime; toàn bộ vòng lặp sự kiện SDL, gamepad và thanh
 shortcut cảm ứng; hàng trăm call site `query_yn/query_int/popup` hội tụ về `popup.cpp`/
-`NativeUI`; các bề mặt Java ngoài dialog (`ReaderSetupActivity`, `BootstrapSelfVoiceSurface`,
+`NativeUI`; các bề mặt Java ngoài dialog (`AccessibilitySettingsActivity`, `BootstrapSelfVoiceSurface`,
 lớp nhập của bộ đọc, `ReaderTextEditor`, `CDDADocumentsProvider`); factory động (iuse
 actors, activity actors, 188 loader của `DynamicDataLoader`, talk topic JSON); widget ImGui
 ngoài mẫu dò và tầng khung `cata_imgui` chưa có a11y. Công cụ cũng đếm nhầm định nghĩa hàm
@@ -129,8 +129,6 @@ R01. **Số điểm chưa phân loại về thực chất vẫn bằng 0** trong
 | Cai/nang du lieu lan dau va tien do khoi dong (`cai-dat-du-lieu-lan-dau`) | đã viết, chờ kiểm thử | rieng (Java) | T01, T05 | — |
 | Cai/nang du lieu co staging, journal va rollback (`cai-dat-staging-rollback`) | đã viết, chờ kiểm thử | rieng (Java) | T05, T53 | F-15 |
 | Thieu giong Viet: huong dan chon/cai giong va quay lai (`chon-va-cai-giong-doc`) | đã viết, chờ kiểm thử | rieng (Java) | T03 | — |
-| Am cuu ho tieng Viet dong goi khi TTS loi/thieu giong (`am-cuu-ho-khong-phu-thuoc-tts`) | đã viết, chờ kiểm thử | rieng (Java) | T03, T04 | — |
-| Thu giong, chinh toc do 0,5-3,0 va xac nhan bat bo doc (`thu-giong-va-bat-bo-doc`) | đã viết, chờ kiểm thử | rieng (Java) | T01, T02, T04 | — |
 | Chon engine/voice/ngon ngu doc, thu theo nhap roi luu (`chon-engine-va-voice`) | đã viết, chờ kiểm thử | rieng (Java) | T03, T04, T56 | — |
 | Bat/tat bo doc noi bo va phoi hop TalkBack/touch exploration (`bat-tat-bo-doc-va-phoi-hop-talkback`) | đã viết, chờ kiểm thử | rieng (Java) | T06, T62 | — |
 
@@ -175,7 +173,7 @@ R01. **Số điểm chưa phân loại về thực chất vẫn bằng 0** trong
 | Menu chon nhieu/checkbox/radio qua uilist (`menu-chon-nhieu-va-checkbox`) | đã viết, chờ kiểm thử | rieng (adapter dung chung) | T31 | F-03 |
 | Danh sach lenh da dang ky cua man hien tai (fallback ngu canh) (`danh-sach-lenh-theo-ngu-canh`) | đã viết, chờ kiểm thử | rieng (adapter dung chung) | T59, T62 | — |
 | Trung tam lenh day du: nhom, mo ta tac dong/chi phi, dieu kien/ly do vo hieu, tham so, tro giup (`trung-tam-lenh-day-du`) | đã viết, chờ kiểm thử | rieng (adapter dung chung) | T59 | — |
-| Luyen tap cu chi: duyet/chon/doc/huy va tam huong trong ngu canh doc lap (`luyen-tap-cu-chi`) | đã viết, chờ kiểm thử | rieng (Java) | T07, T09, T10, T11, T12, T19, T50, T64 | F-06 |
+| Luyen tap cu chi: duyet/chon/doc/huy va tam huong trong ngu canh doc lap (`luyen-tap-cu-chi`) | đã viết, chờ kiểm thử | rieng (Java) | T09, T10, T11, T12, T19, T50, T64 | F-06 |
 
 ### Popup/nhap
 
