@@ -1487,7 +1487,7 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
         tile.vehicle += ". ";
         tile.vehicle += has_controls ? _( "There are vehicle controls here." ) :
                         _( "No vehicle controls found." );
-        const bool usable_engine = !vehicle->vehicle().get_avail_parts( "ENGINE" ).empty();
+        const bool usable_engine = !empty( vehicle->vehicle().get_avail_parts( "ENGINE" ) );
         if( !has_controls ) {
             tile.vehicle += " " + std::string( _( "Cannot drive: working controls are missing." ) );
         } else if( !usable_engine ) {
@@ -1529,15 +1529,19 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here 
     for( const point_abs_ms &point : projected ) {
         const point_bub_ms tile_xy = here.get_bub( point );
         const tripoint_bub_ms tile( tile_xy, z );
-        const optional_vpart_position other = here.inbounds( tile ) ? here.veh_at( tile ) :
-                                              optional_vpart_position();
+        if( !here.inbounds( tile ) ) {
+            const int distance = std::max( 1, static_cast<int>( rl_dist( origin, tile_xy ) ) );
+            if( !nearest || distance < nearest->distance ) {
+                nearest = vehicle_obstacle{ distance, _( "Unloaded map boundary" ) };
+            }
+            continue;
+        }
+        const optional_vpart_position other = here.veh_at( tile );
         if( other && &other->vehicle() == &veh ) {
             continue; // Ignore the current vehicle's own body.
         }
         std::string label;
-        if( !here.inbounds( tile ) ) {
-            label = _( "Unloaded map boundary" );
-        } else if( other ) {
+        if( other ) {
             label = other->vehicle().name;
         } else if( here.impassable_ter_furn( tile ) ) {
             label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
