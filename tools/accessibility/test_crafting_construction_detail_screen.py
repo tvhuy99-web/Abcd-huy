@@ -105,7 +105,7 @@ class ConstructionDetailScreenTest(unittest.TestCase):
 
     def test_detail_screen_focus_order_and_fixed_quantity(self):
         detail = _region(CONSTRUCTION, "} else {\n                    // The detail screen replaces the list",
-                          '                    snapshot.focus = "construction:detail:name";')
+                         '                    snapshot.focus = "construction:detail:name";')
         order = ['"construction:detail:name"', '"construction:detail:intro"',
                  'append_reader_requirement_nodes( detail, "construction:detail"',
                  '"construction:detail:quantity"', '"construction:detail:cancel"',
@@ -121,7 +121,7 @@ class ConstructionDetailScreenTest(unittest.TestCase):
 
     def test_requirements_come_from_the_first_visible_stage(self):
         detail = _region(CONSTRUCTION, "} else {\n                    // The detail screen replaces the list",
-                          '                    snapshot.focus = "construction:detail:name";')
+                         '                    snapshot.focus = "construction:detail:name";')
         self.assertIn("( filter_mode == 1 && !( resources && !location ) )", detail)
         self.assertIn("( filter_mode == 2 && !( resources && location ) )", detail)
         self.assertIn("stage_requirements = &*con->requirements;", detail)
