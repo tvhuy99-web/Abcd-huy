@@ -83,6 +83,7 @@
 #include "magic.h"
 #include "magic_enchantment.h"
 #include "magic_type.h"
+#include "main_menu.h"
 #include "map.h"
 #include "map_selector.h"
 #include "map_iterator.h"
