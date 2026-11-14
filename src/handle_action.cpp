@@ -507,6 +507,10 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Select previous weapon" ) );
     ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
                           to_translation( "Reload current weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_BRAKE",
+                          to_translation( "Emergency vehicle handbrake" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HORN",
+                          to_translation( "Sound the vehicle horn" ) );
 
     // In spoken-only mode the reader refresh below owns the cache
     // rebuild and visibility update. Avoid doing the same visibility
@@ -590,6 +594,27 @@ input_context game::get_player_input( std::string &action )
             if( intent.node == "reader:combat:reload" ) {
                 return "A11Y_INTERNAL_COMBAT_RELOAD";
             }
+            return std::nullopt;
+        }
+        // Drive-only actions are resolved against the current physical seat.
+        // Never accept a cached Android focus from a passenger or remote car.
+        if( intent.action == "activate" &&
+            ( intent.node == "reader:vehicle:brake" ||
+              intent.node == "reader:vehicle:horn" ) ) {
+            const optional_vpart_position seated = get_map().veh_at( u.pos_bub( get_map() ) );
+            if( !seated || !u.controlling_vehicle ||
+                !seated->vehicle().player_in_control( get_map(), u ) ||
+                ( g && g->remoteveh() == &seated->vehicle() ) ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            if( intent.node == "reader:vehicle:brake" ) {
+                return "A11Y_INTERNAL_VEHICLE_BRAKE";
+            }
+            if( seated->vehicle().has_part( "HORN" ) ) {
+                return "A11Y_INTERNAL_VEHICLE_HORN";
+            }
+            a11y::android::status( "blocked", &intent );
             return std::nullopt;
         }
         // Multi-finger reads are verified against the live world snapshot.
@@ -4211,6 +4236,23 @@ bool game::handle_action()
                     act = step_actions[dir];
                 }
             }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_BRAKE" ) {
+            // Smash is already the native driving handbrake. Use that same
+            // action rather than implementing another vehicle physics path.
+            if( veh_ctrl && player_character.controlling_vehicle ) {
+                act = ACTION_SMASH;
+            }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
+            map &vehicle_map = get_map();
+            const optional_vpart_position seated = vehicle_map.veh_at(
+                        player_character.pos_bub( vehicle_map ) );
+            if( veh_ctrl && seated && player_character.controlling_vehicle &&
+                seated->vehicle().player_in_control( vehicle_map, player_character ) &&
+                ( !g || g->remoteveh() != &seated->vehicle() ) &&
+                seated->vehicle().has_part( "HORN" ) ) {
+                seated->vehicle().honk_horn( vehicle_map );
+            }
+            return false;
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_NEXT" ) {
             combat_cycle_direction = 1;
             act = ACTION_WIELD;
