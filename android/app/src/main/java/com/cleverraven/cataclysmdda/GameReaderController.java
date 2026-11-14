@@ -833,7 +833,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
                     // The engine may open a new tree branch directly, or
                     // select a new child after a modal changes state.
-                    // Flat inventory browsing is the exception: swiping
+                    // Inventory pocket browsing is the exception: swiping
                     // onto a pocket-content row must not trap the reader
                     // inside that pocket's own child layer.
                     if (!isFlattenedPocketEntry(currentFocus)) {
@@ -1279,13 +1279,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             spokenPosition = 0;
             spokenTotal = 0;
         }
-        // Flat inventory browsing mixes top-level items with their
-        // pocket contents in one swipe list, so the C++ sibling-set
-        // numbers (roots only, or within one pocket) would not match
-        // what swiping reaches. Recompute from the swipe list, as for
-        // minigames.
-        boolean flattenedInventoryPositions = flattenedInventoryBrowse();
-        if ((spokenPosition <= 0 || spokenTotal <= 0 || flattenedInventoryPositions)
+        // Speak positions within the correct axis: main items horizontally,
+        // pocket entries vertically inside the selected top-level item.
+        boolean inventoryPositions = flattenedInventoryBrowse();
+        if (inventoryPositions && isFlattenedPocketEntry(node)) {
+            ReaderSnapshot.Node root = inventoryRootItem(node);
+            if (root != null) {
+                List<ReaderSnapshot.Node> contents = flattenedPocketContents(root.id);
+                for (int i = 0; i < contents.size(); i++) {
+                    if (contents.get(i).id.equals(node.id)) {
+                        spokenPosition = i + 1;
+                        spokenTotal = contents.size();
+                        break;
+                    }
+                }
+            }
+        } else if ((spokenPosition <= 0 || spokenTotal <= 0 || inventoryPositions)
                 && snapshot != null
                 && !"DEFAULTMODE".equals(snapshot.category)) {
             List<ReaderSnapshot.Node> siblings = visibleNodes();
@@ -2031,7 +2040,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return result;
     }
 
-    /** True while the top-level inventory list is browsed flat: the
+    /** True while inventory items use distinct horizontal and vertical axes: the
      *  pocket picker is closed and no tree layer is entered. */
     private boolean flattenedInventoryBrowse() {
         return snapshot != null && "inventory".equals(snapshot.category)
@@ -2097,6 +2106,57 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return contents;
     }
 
+    /** Resolve a vertically focused pocket entry back to its root item. */
+    private ReaderSnapshot.Node inventoryRootItem(ReaderSnapshot.Node node) {
+        if (snapshot == null) { return null; }
+        for (int steps = 0; node != null && !node.parentId.isEmpty()
+                && steps < snapshot.nodes.size(); steps++) {
+            node = snapshot.find(node.parentId);
+        }
+        return node != null && node.parentId.isEmpty()
+                && node.id.startsWith("item:") ? node : null;
+    }
+
+    /** Horizontal swipes visit top-level inventory/pickup rows; vertical
+     *  swipes visit the focused container's contents, including nested
+     *  pockets. Double-tap continues to select or open the quantity editor. */
+    @Override
+    public boolean handleInventoryAxisSwipe(int horizontal, int vertical) {
+        if (!flattenedInventoryBrowse() || comprehensiveMenu || editor != null
+                || debugReport != null || documentReader.isOpen()
+                || !foreground || !windowFocused || lastSuspended
+                || (horizontal == 0 && vertical == 0)) {
+            return false;
+        }
+        ReaderSnapshot.Node root = inventoryRootItem(snapshot.find(focus));
+        if (horizontal != 0) {
+            List<ReaderSnapshot.Node> roots = visibleNodes();
+            if (roots.isEmpty()) { return false; }
+            String rootId = root == null ? focus : root.id;
+            int current = -1;
+            for (int i = 0; i < roots.size(); i++) {
+                if (roots.get(i).id.equals(rootId)) { current = i; break; }
+            }
+            focus = roots.get(current < 0 ? 0
+                    : Math.floorMod(current + horizontal, roots.size())).id;
+        } else {
+            if (root == null) { return false; }
+            List<ReaderSnapshot.Node> contents = flattenedPocketContents(root.id);
+            if (contents.isEmpty()) { readCurrent(); return true; }
+            int current = -1;
+            for (int i = 0; i < contents.size(); i++) {
+                if (contents.get(i).id.equals(focus)) { current = i; break; }
+            }
+            int next = current < 0 ? (vertical > 0 ? 0 : contents.size() - 1)
+                    : Math.floorMod(current + vertical, contents.size());
+            focus = contents.get(next).id;
+        }
+        render();
+        send("focus", "");
+        readCurrent();
+        return true;
+    }
+
     private List<ReaderSnapshot.Node> visibleNodes() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot == null) { return result; }
@@ -2105,19 +2165,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // Group 2 capability markers must not appear as world rows.
             if (node.id.startsWith("reader:nearby:available:")) { continue; }
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
-        }
-        if (flattenedInventoryBrowse()) {
-            // Inventory browsing is flat: swiping past a container steps
-            // through the items inside its pockets one by one, in
-            // snapshot order, then on to the next item. The pocket-status
-            // rows themselves stay out of the swipe list; only their
-            // contents are interleaved after their container.
-            ArrayList<ReaderSnapshot.Node> flattened = new ArrayList<>();
-            for (ReaderSnapshot.Node node : result) {
-                flattened.add(node);
-                flattened.addAll(flattenedPocketContents(node.id));
-            }
-            result = flattened;
         }
         if ("targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
