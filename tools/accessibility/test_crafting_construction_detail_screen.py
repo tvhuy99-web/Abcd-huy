@@ -41,15 +41,21 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertIn('snapshot.focus = "craft:detail:name";', detail)
 
-    def test_recipe_description_is_spoken_once_on_entry_without_two_finger_tap(self):
-        # The native detail pane immediately exposes the CURRENT recipe text,
-        # not the cached description of the previously selected recipe.
-        self.assertIn('intro.label = _( "Read details" );', CRAFT)
-        self.assertIn('intro.detail = accessible_recipe_description( rec, *crafter );',
-                      CRAFT)
-        self.assertIn('intro.actions = { "focus", "activate", "read_detail" };',
-                      CRAFT)
-        self.assertIn("static std::string accessible_recipe_description(", CRAFT)
+    def test_second_row_is_actual_detail_text_not_an_action_label(self):
+        detail = _region(CRAFT, 'intro.id = "craft:detail:intro";',
+                         "detail.push_back( std::move( intro ) );")
+        self.assertIn("intro.label = full_recipe_detail_text( rec, reader_detail_quantity );",
+                      detail)
+        self.assertIn("intro.label = accessible_recipe_description( rec, *crafter );",
+                      detail)
+        self.assertIn("intro.detail = intro.label;", detail)
+        self.assertIn('intro.actions = { "focus", "read_detail" };', detail)
+        self.assertNotIn('intro.label = _( "Description" );', detail)
+        self.assertNotIn('intro.label = _( "Read details" );', detail)
+        self.assertNotIn("activate", detail)
+        self.assertNotIn('msgid "Read details"', VI)
+
+    def test_detail_content_is_spoken_on_entry_and_on_focus(self):
         java = (ROOT / "android/app/src/main/java/com/cleverraven/"
                 "cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
         self.assertIn('boolean enteredCraftRecipeDetail = "crafting".equals(next.category)',
@@ -58,19 +64,19 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertIn('previousSnapshot.find("craft:detail:qty:current") == null',
                       java)
         self.assertIn('} else if (enteredCraftRecipeDetail', java)
+        self.assertIn('String details = intro.detail.isEmpty() ? intro.label : intro.detail;',
+                      java)
         self.assertIn('speakInlineDetail(introduction.toString());', java)
-        self.assertIn('msgid "Read details"\nmsgstr "Đọc chi tiết"', VI)
+        self.assertIn('"craft:detail:intro".equals(node.id)', java)
+        self.assertIn('speakInlineDetail(node.detail.isEmpty() ? node.label : node.detail);',
+                      java)
 
-    def test_read_details_works_with_one_finger_and_two_fingers(self):
+    def test_two_finger_detail_still_reads_complete_recipe(self):
         intent = _region(CRAFT, "std::optional<std::string> crafting_ui_impl::reader_intent(",
                          "    // Apply spoken tab/subtab controls")
-        self.assertIn(
-            '( intent.action == "activate" && intent.node == "craft:detail:intro" )',
-            intent)
-        self.assertIn(
-            "full_recipe_detail_text( *current[line], reader_detail_quantity )",
-            intent)
         self.assertIn('if( intent.action == "read_detail" ||', intent)
+        self.assertIn('full_recipe_detail_text( *current[line], reader_detail_quantity )',
+                      intent)
 
     def test_requirement_focuses_announce_have_and_need(self):
         helper = _region(CRAFT, "static int reader_requirement_have(",

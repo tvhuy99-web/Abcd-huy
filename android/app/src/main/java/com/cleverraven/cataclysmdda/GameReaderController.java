@@ -1004,9 +1004,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ReaderSnapshot.Node intro = next.find("craft:detail:intro");
                     StringBuilder introduction = new StringBuilder(nodeText(title, false));
                     if (intro != null) {
-                        introduction.append(". ").append(intro.label);
-                        if (!intro.detail.trim().isEmpty()) {
-                            introduction.append(". ").append(intro.detail);
+                        String details = intro.detail.isEmpty() ? intro.label : intro.detail;
+                        if (!details.trim().isEmpty()) {
+                            introduction.append(". ").append(details);
                         }
                     }
                     speakInlineDetail(introduction.toString());
@@ -4523,6 +4523,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         ? activity.getString(R.string.a11yReaderWaiting)
                         : activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
             }
+            return;
+        }
+        // This row's visible text is the actual full recipe detail.
+        // Read it as long-form speech on ordinary focus, with no tap or
+        // special two-finger action required.
+        if (snapshot != null && "crafting".equals(snapshot.category)
+                && "craft:detail:intro".equals(node.id)) {
+            speakInlineDetail(node.detail.isEmpty() ? node.label : node.detail);
             return;
         }
         String spoken = nodeText(node, false);

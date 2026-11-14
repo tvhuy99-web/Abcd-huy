@@ -3090,13 +3090,22 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                 a11y::semantic_node intro;
                 intro.id = "craft:detail:intro";
                 intro.role = "document";
-                intro.label = _( "Read details" );
-                // This text is spoken automatically on first entry. Build
-                // it from the selected recipe, not a potentially stale cache.
-                intro.detail = accessible_recipe_description( rec, *crafter );
-                // One-finger double-tap also reads the complete recipe/item
-                // information; the two-finger request remains available.
-                intro.actions = { "focus", "activate", "read_detail" };
+                // This second row IS the complete original recipe detail,
+                // not a button named "Description" or "Read details".
+                // Its text is already available for ordinary swipe focus.
+                const std::string expected_detail_key = rec.ident().str() + ":" +
+                        std::to_string( reader_detail_quantity ) + ":" +
+                        std::to_string( detail::get_current_language_version() );
+                if( reader_detail_key == expected_detail_key && reader_detail_crafter == crafter ) {
+                    intro.label = full_recipe_detail_text( rec, reader_detail_quantity );
+                }
+                if( intro.label.empty() ) {
+                    // Never reuse documents cached for another recipe or
+                    // batch. Fall back to this recipe's live description.
+                    intro.label = accessible_recipe_description( rec, *crafter );
+                }
+                intro.detail = intro.label;
+                intro.actions = { "focus", "read_detail" };
                 detail.push_back( std::move( intro ) );
                 append_reader_requirement_nodes( detail, "craft:detail", rec.simple_requirements(),
                                                  *crafter, inventory, rec.get_component_filter(),
