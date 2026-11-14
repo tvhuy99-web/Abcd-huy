@@ -4402,10 +4402,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
-    /** A fixed shortcut only outside the active world map; TalkBack owns its gestures. */
+    /** A fixed shortcut only outside the world map; TalkBack owns its gestures. */
     public boolean canToggleReaderOutsideWorld() {
+        // Check screen identity rather than TTS readiness. A failed engine
+        // must not turn the map's character-details gesture into a toggle.
+        boolean worldMap = snapshot != null && snapshot.find("world:here") != null
+                && snapshot.find("reader:coordinates") != null
+                && !comprehensiveMenu && !commandPaletteOpen && editor == null
+                && debugReport == null;
         return !closed && foreground && windowFocused && !usesTouchExploration()
-                && (!preferences.isEnabled() || !directWorldGesturesEnabled());
+                && (!preferences.isEnabled() || !worldMap);
     }
 
     public void toggleReaderOutsideWorld() {
