@@ -170,124 +170,52 @@ static std::vector<std::string> game_settings_items()
 
 static void activate_game_settings_choice( const int choice, const bool in_game )
 {
-        if( choice < min_item_val ) {
-            choice = max_item_count - 1;
-        }
-    } else if( action == "DOWN" || action == "PAGE_DOWN" || action == "SCROLL_DOWN" ) {
-        choice++;
-        if( choice >= max_item_count ) {
-            choice = min_item_val;
-        }
-    }
-    on_move();
-                }
-            } else if( action == "CONFIRM" ) {
-    #if defined(__ANDROID__)
-                a11y::android::diagnostic_event( "MAIN_MENU", "confirm item=" +
-                                 std::to_string( sel1 ) + " subitem=" +
-                                 std::to_string( choice ) );
-    #endif
-                switch( static_cast<main_menu_opts>( sel1 ) ) {
-    case main_menu_opts::HELP: {
-        help_window hw;
-        hw.show();
-        break;
-    }
-    case main_menu_opts::QUIT:
-    #if defined(__ANDROID__)
-        a11y::android::normal_exit();
-    #endif
-        return false;
-    #if defined(__ANDROID__)
-    case main_menu_opts::DEBUG_LOG:
-        a11y::android::open_debug_log();
-        break;
-    #endif
-    case main_menu_opts::TUTORIAL:
-        if( MAP_SHARING::isSharing() ) {
-            on_error();
-            popup( _( "Tutorial doesn't work with shared maps." ) );
-        } else if( !confirm_realtime_progression_for_accessibility() ) {
-            break;
+    if( choice == 0 ) {        /// Options
+        get_options().show( in_game );
+    } else if( choice == 1 ) { /// Keybindings
+        input_context ctxt_default = get_default_mode_input_context();
+        ctxt_default.display_menu();
+    } else if( choice == 2 ) { /// Autopickup
+        get_auto_pickup().show();
+    } else if( choice == 3 ) { /// Safemode
+        get_safemode().show();
+    } else if( choice == 4 ) { /// Colors
+        all_colors.show_gui();
+    } else if( choice == 5 ) {
+        style_picker picker;
+        picker.show();
+    } else if( choice == 6 ) { /// ImGui demo
+        if( a11y::enabled() ) {
+            // This developer-only visual demonstration has
+            // no semantic controls. Do not strand readers on
+            // a silent ImGui canvas. The explanatory text
+            // below has no Vietnamese translation yet (STT
+            // 174: both catalogs lack these strings), so at
+            // least the only action reads in Vietnamese.
+            uilist accessible_demo( _( "ImGui demonstration" ), {} );
+            accessible_demo.text = _(
+                                       "This developer demonstration does not provide accessible game controls.  "
+                                       "Choose Back to return to Settings." );
+            accessible_demo.addentry( 0, true, 'q', _( "Back" ) );
+            accessible_demo.query();
         } else {
-            on_out_of_scope cleanup( [&player_character]() {
-                g->gamemode.reset();
-                player_character = avatar();
-                world_generator->set_active_world( nullptr );
-            } );
-            g->gamemode = get_special_game( special_game_type::TUTORIAL );
-            // check world
-            WORLD *world = world_generator->make_new_world( special_game_type::TUTORIAL );
-            if( world == nullptr ) {
-                break;
-            }
-            world->active_mod_order.clear();
-            world->active_mod_order.emplace_back( MOD_INFORMATION_dda );
-            world->active_mod_order.emplace_back( MOD_INFORMATION_dda_tutorial );
-            world_generator->set_active_world( world );
-            try {
-                g->setup();
-            } catch( const std::exception &err ) {
-                debugmsg( "Error: %s", err.what() );
-                break;
-            }
-            if( !g->gamemode->init() ) {
-                break;
-            }
-            cleanup.cancel();
-            start = true;
-            if( g->gametype() == special_game_type::TUTORIAL ) {
-                load_game = true;
-            }
+            imgui_demo_ui demo;
+            demo.run();
         }
-        break;
-    case main_menu_opts::SETTINGS:
-        if( choice == 0 ) {        /// Options
-            get_options().show( in_game );
-        } else if( choice == 1 ) { /// Keybindings
-            input_context ctxt_default = get_default_mode_input_context();
-            ctxt_default.display_menu();
-        } else if( choice == 2 ) { /// Autopickup
-            get_auto_pickup().show();
-        } else if( choice == 3 ) { /// Safemode
-            get_safemode().show();
-        } else if( choice == 4 ) { /// Colors
-            all_colors.show_gui();
-        } else if( choice == 5 ) {
-            style_picker picker;
-            picker.show();
-        } else if( choice == 6 ) { /// ImGui demo
-            if( a11y::enabled() ) {
-                // This developer-only visual demonstration has
-                // no semantic controls. Do not strand readers on
-                // a silent ImGui canvas. The explanatory text
-                // below has no Vietnamese translation yet (STT
-                // 174: both catalogs lack these strings), so at
-                // least the only action reads in Vietnamese.
-                uilist accessible_demo( _( "ImGui demonstration" ), {} );
-                accessible_demo.text = _(
-                                           "This developer demonstration does not provide accessible game controls.  "
-                                           "Choose Back to return to Settings." );
-                accessible_demo.addentry( 0, true, 'q', _( "Back" ) );
-                accessible_demo.query();
-            } else {
-                imgui_demo_ui demo;
-                demo.run();
-            }
-    #if defined(__ANDROID__)
-        } else if( choice == 7 ) { // Native Android TTS settings
-            a11y::android::open_tts_settings();
-        } else if( choice == 8 ) { // Native game sound settings
-            a11y::android::open_sound_settings(
-                get_option<int>( "MUSIC_VOLUME" ),
-                get_option<int>( "SOUND_EFFECT_VOLUME" ),
-                get_option<bool>( "SOUND_ENABLED" ) );
-        } else if( choice == 9 ) { // Native accessibility preferences
-            a11y::android::open_accessibility_settings();
-        } else if( choice == 10 ) { // Native backup and restore controls
-            a11y::android::open_backup_restore();
-    #endif
-        }
+#if defined(__ANDROID__)
+    } else if( choice == 7 ) { // Native Android TTS settings
+        a11y::android::open_tts_settings();
+    } else if( choice == 8 ) { // Native game sound settings
+        a11y::android::open_sound_settings(
+            get_option<int>( "MUSIC_VOLUME" ),
+            get_option<int>( "SOUND_EFFECT_VOLUME" ),
+            get_option<bool>( "SOUND_ENABLED" ) );
+    } else if( choice == 9 ) { // Native accessibility preferences
+        a11y::android::open_accessibility_settings();
+    } else if( choice == 10 ) { // Native backup and restore controls
+        a11y::android::open_backup_restore();
+#endif
+    }
 }
 
 void show_game_settings_menu()
@@ -1182,6 +1110,92 @@ bool main_menu::opening_screen()
                     break;
                 case main_menu_opts::NEWCHAR:
                     max_item_count = vNewGameSubItems.size();
+                    break;
+                case main_menu_opts::SETTINGS:
+                    max_item_count = vSettingsSubItems.size();
+                    break;
+                case main_menu_opts::TUTORIAL:
+                case main_menu_opts::HELP:
+                case main_menu_opts::QUIT:
+#if defined(__ANDROID__)
+                case main_menu_opts::DEBUG_LOG:
+#endif
+                default:
+                    break;
+            }
+            if( max_item_count > 0 ) {
+                if( action == "UP" || action == "PAGE_UP" || action == "SCROLL_UP" ) {
+                    sel2--;
+                    if( sel2 < min_item_val ) {
+                        sel2 = max_item_count - 1;
+                    }
+                } else if( action == "DOWN" || action == "PAGE_DOWN" || action == "SCROLL_DOWN" ) {
+                    sel2++;
+                    if( sel2 >= max_item_count ) {
+                        sel2 = min_item_val;
+                    }
+                }
+                on_move();
+            }
+        } else if( action == "CONFIRM" ) {
+#if defined(__ANDROID__)
+            a11y::android::diagnostic_event( "MAIN_MENU", "confirm item=" +
+                                             std::to_string( sel1 ) + " subitem=" +
+                                             std::to_string( sel2 ) );
+#endif
+            switch( static_cast<main_menu_opts>( sel1 ) ) {
+                case main_menu_opts::HELP: {
+                    help_window hw;
+                    hw.show();
+                    break;
+                }
+                case main_menu_opts::QUIT:
+#if defined(__ANDROID__)
+                    a11y::android::normal_exit();
+#endif
+                    return false;
+#if defined(__ANDROID__)
+                case main_menu_opts::DEBUG_LOG:
+                    a11y::android::open_debug_log();
+                    break;
+#endif
+                case main_menu_opts::TUTORIAL:
+                    if( MAP_SHARING::isSharing() ) {
+                        on_error();
+                        popup( _( "Tutorial doesn't work with shared maps." ) );
+                    } else if( !confirm_realtime_progression_for_accessibility() ) {
+                        break;
+                    } else {
+                        on_out_of_scope cleanup( [&player_character]() {
+                            g->gamemode.reset();
+                            player_character = avatar();
+                            world_generator->set_active_world( nullptr );
+                        } );
+                        g->gamemode = get_special_game( special_game_type::TUTORIAL );
+                        // check world
+                        WORLD *world = world_generator->make_new_world( special_game_type::TUTORIAL );
+                        if( world == nullptr ) {
+                            break;
+                        }
+                        world->active_mod_order.clear();
+                        world->active_mod_order.emplace_back( MOD_INFORMATION_dda );
+                        world->active_mod_order.emplace_back( MOD_INFORMATION_dda_tutorial );
+                        world_generator->set_active_world( world );
+                        try {
+                            g->setup();
+                        } catch( const std::exception &err ) {
+                            debugmsg( "Error: %s", err.what() );
+                            break;
+                        }
+                        if( !g->gamemode->init() ) {
+                            break;
+                        }
+                        cleanup.cancel();
+                        start = true;
+                        if( g->gametype() == special_game_type::TUTORIAL ) {
+                            load_game = true;
+                        }
+                    }
                     break;
                 case main_menu_opts::SETTINGS:
                     activate_game_settings_choice( sel2, false );
