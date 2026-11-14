@@ -1329,6 +1329,32 @@ static bool eat( item &food, Character &you, bool force )
         }
     }
 
+    // The reader speaks every game message and keeps it in the message
+    // log for the two-finger double-tap recap, so state the outcome of
+    // this meal right after the act ("You eat your %s." never says
+    // whether you are full now or still hungry, and the sidebar words
+    // are not spoken unless they cross a threshold). The stomach
+    // already holds this meal (consume_effects ran above), so ask it
+    // directly: the hunger effect itself is only recomputed later by
+    // update_needs, and get_hunger() does not move when eating.
+    // A merely satisfying snack states nothing: no decisive status.
+    if( chew ) {
+        if( you.stomach.would_be_engorged_with( you, 0_ml, you.has_calorie_deficit() ) ||
+            you.stomach.would_be_full_with( you, 0_ml, you.has_calorie_deficit() ) ) {
+            you.add_msg_if_player( m_good, _( "You feel full." ) );
+        } else if( you.has_calorie_deficit() &&
+                   you.stomach.contains() <= you.stomach.capacity( you ) / 2 ) {
+            you.add_msg_if_player( m_info, _( "You are still hungry." ) );
+        }
+    } else if( drinkable ) {
+        // Instant thirst already counts the water just swallowed.
+        if( you.get_instant_thirst() < 0 ) {
+            you.add_msg_if_player( m_good, _( "You are no longer thirsty." ) );
+        } else if( you.get_instant_thirst() > 40 ) {
+            you.add_msg_if_player( m_info, _( "You are still thirsty." ) );
+        }
+    }
+
     if( item::find_type( food.get_comestible()->tool )->tool ) {
         // Tools like lighters get used
         you.use_charges( food.get_comestible()->tool, 1 );

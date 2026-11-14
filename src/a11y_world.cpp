@@ -608,6 +608,13 @@ void announce_status_changes()
             message += change;
         }
         announce_game_message( message, urgent );
+        // The same warning, written to the game message log so the
+        // two-finger double-tap recap can re-read it anywhere. Silent
+        // on purpose: the warning was just spoken live above, so a plain
+        // add_msg here would speak it a second time, and announce_message()
+        // would let combat mute swallow urgent warnings. The direct live
+        // path above is unchanged and is never combat-muted.
+        Messages::add_msg_silent( urgent ? m_warning : m_info, message );
     }
 }
 

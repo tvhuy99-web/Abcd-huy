@@ -503,6 +503,9 @@ class crafting_ui_impl : public cataimgui::window
         a11y::semantic_snapshot reader_snapshot( const input_context &ctxt );
         std::optional<std::string> reader_intent( const a11y::semantic_intent &intent,
                 input_context &ctxt );
+        // Full recipe detail text from the cached reader documents plus the
+        // result item info, for an explicit two-finger detail request.
+        std::string full_recipe_detail_text( const recipe &rec, int batch );
         void set_input_context( const input_context *ctxt ) {
             ctxt_ptr = ctxt;
         }
@@ -595,6 +598,15 @@ class crafting_ui_impl : public cataimgui::window
         const recipe *displayed_description_recipe = nullptr;
         std::string displayed_description;
         std::optional<a11y::semantic_intent> reader_quantity_receipt;
+
+        // --- Reader detail screen ---
+        // Tapping a recipe opens a detail screen instead of crafting at
+        // once. The list snapshot and the detail snapshot never mix: the
+        // detail screen publishes only its own nodes plus the command tail.
+        bool reader_detail_open = false;
+        std::string reader_detail_recipe;
+        int reader_detail_quantity = 1;
+        bool reader_detail_quantity_picker_open = false;
 
         // --- Keybinding footer ---
         std::string keybinding_tips;
@@ -2642,6 +2654,173 @@ void crafting_ui_impl::invalidate_info_panels()
     }
 }
 
+// One reader focus per requirement alternative, in group order. The label
+// is the engine's own requirement text -- components add the have-count
+// ("3 wood (have 5)") -- plus the Available/Missing verdict, so every
+// focus announces the requirement and its counts. Nodes keep position 0:
+// Java recomputes "X of Y" from the swipe list then, and the focus fallback
+// on entering the detail screen lands on the name node instead of a
+// mid-list requirement (see GameReaderController.resolveFocusFallback).
+// Twin of the same helper in construction.cpp; keep both in sync. A shared
+// home in a11y_requirements.cpp needs a sparse-checkout change.
+static int reader_requirement_have( const itype_id &type, const temp_crafting_inventory &inventory,
+                                    const std::function<bool( const item & )> &filter )
+{
+    if( item::count_by_charges( type ) ) {
+        return inventory.charges_of( type, INT_MAX, filter );
+    }
+    return inventory.amount_of( type, false, INT_MAX, filter );
+}
+
+static std::string reader_requirement_label( const quality_requirement &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    return alternative.to_string() + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static std::string reader_requirement_label( const tool_comp &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    return alternative.to_string( batch ) + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static std::string reader_requirement_label( const item_comp &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    const int have = reader_requirement_have( alternative.type, inventory, filter );
+    return alternative.to_string( batch, have ) + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &nodes,
+        const std::string &prefix, const requirement_data &requirements, const Character &actor,
+        const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    const auto add_node = [&]( const std::string &id, const std::string &label ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "button";
+        node.label = label;
+        node.actions = { "focus", "read_detail" };
+        nodes.push_back( std::move( node ) );
+    };
+    std::size_t group_index = 0;
+    for( const auto &group : requirements.get_qualities() ) {
+        std::size_t alt_index = 0;
+        for( const quality_requirement &alternative : group ) {
+            add_node( prefix + ":req:quality:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+    group_index = 0;
+    for( const auto &group : requirements.get_tools() ) {
+        std::size_t alt_index = 0;
+        for( const tool_comp &alternative : group ) {
+            add_node( prefix + ":req:tool:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+    group_index = 0;
+    for( const auto &group : requirements.get_components() ) {
+        std::size_t alt_index = 0;
+        for( const item_comp &alternative : group ) {
+            add_node( prefix + ":req:component:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+}
+
+// Resolve a "…:req:<kind>:<group>:<alt>" node id back to the label the
+// detail screen shows for it and, for tool/component requirements, the
+// required item type whose full info a two-finger tap reads. Quality
+// requirements have no item to describe, so type stays null. Returns
+// false for stale or unknown ids.
+static bool reader_requirement_detail( const requirement_data &requirements,
+                                       const Character &actor, const temp_crafting_inventory &inventory,
+                                       const std::function<bool( const item & )> &filter, int batch,
+                                       const std::string &kind, std::size_t group_want,
+                                       std::size_t alt_want, std::string &label, itype_id &type )
+{
+    const auto pick = [&]( const auto &groups, const auto &type_of ) {
+        std::size_t group_index = 0;
+        for( const auto &group : groups ) {
+            if( group_index == group_want ) {
+                std::size_t alt_index = 0;
+                for( const auto &alternative : group ) {
+                    if( alt_index == alt_want ) {
+                        label = reader_requirement_label( alternative, actor, inventory, filter, batch );
+                        type = type_of( alternative );
+                        return true;
+                    }
+                    ++alt_index;
+                }
+                return false;
+            }
+            ++group_index;
+        }
+        return false;
+    };
+    if( kind == "quality" ) {
+        return pick( requirements.get_qualities(), []( const quality_requirement & ) {
+            return itype_id::NULL_ID();
+        } );
+    }
+    if( kind == "tool" ) {
+        return pick( requirements.get_tools(), []( const tool_comp &alternative ) {
+            return alternative.type;
+        } );
+    }
+    if( kind == "component" ) {
+        return pick( requirements.get_components(), []( const item_comp &alternative ) {
+            return alternative.type;
+        } );
+    }
+    return false;
+}
+
+std::string crafting_ui_impl::full_recipe_detail_text( const recipe &rec, int batch )
+{
+    std::string complete;
+    for( const a11y::semantic_node &document : reader_documents ) {
+        if( document.role != "document" ||
+            document.id.rfind( "craft:", 0 ) != 0 || document.detail.empty() ) {
+            continue;
+        }
+        if( !complete.empty() ) {
+            complete += "\n\n";
+        }
+        complete += document.label + "\n" + document.detail;
+    }
+    if( !rec.is_nested() && !rec.is_practice() ) {
+        int scroll_position = 0;
+        item_info_data item_data = result_info->get_result_data(
+                                       &rec, batch, scroll_position, 80, true );
+        const std::string result_text = remove_color_tags(
+                                            format_item_info( item_data.get_item_display(),
+                                                    item_data.get_item_compare() ) );
+        if( !result_text.empty() ) {
+            complete += "\n\n" + std::string( _( "Item info" ) ) +
+                        "\n" + result_text;
+        }
+    }
+    return complete;
+}
+
 a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &ctxt )
 {
     // The first reader snapshot can precede ImGui draw_controls() in headless
@@ -2688,6 +2867,8 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
                                                  filterstring.empty() ? 0 : 1 ) );
     }
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Crafting" ) );
+    // The detail screen reuses the same command tail as the list.
+    const std::vector<a11y::semantic_node> command_nodes = snapshot.nodes;
     snapshot.summary = string_format( _( "Crafter: %s\n" ), crafter->name_and_maybe_activity() );
     if( crafting_cats.empty() ) {
         snapshot.summary += _( "No recipes available." );
@@ -2748,7 +2929,7 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
             const int expected_turns = crafter->expected_time_to_craft( rec, manual_batch ) /
                                        to_moves<int>( 1_turns );
             node.value += ". " + string_format( _( "Estimated time: %s" ),
-                                               approx_craft_time( expected_turns ) );
+                                                approx_craft_time( expected_turns ) );
         }
         if( node.selected ) {
             snapshot.focus = node.id;
@@ -2802,6 +2983,120 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
         return snapshot;
     }
     const recipe &rec = *current[line];
+    if( reader_detail_open ) {
+        // The detail screen only makes sense for the recipe it was opened
+        // for. Any reselection, recalculation or category change closes it
+        // instead of showing another recipe's detail.
+        if( rec.is_nested() || rec.ident().str() != reader_detail_recipe ) {
+            reader_detail_open = false;
+            reader_detail_quantity_picker_open = false;
+        } else {
+            const availability &avail = available[line];
+            const temp_crafting_inventory &inventory = avail.inv_override ?
+                    *avail.inv_override : crafter->crafting_inventory();
+            snapshot.summary = remove_color_tags( accessible_crafting_recipe_name( rec ) );
+            std::vector<a11y::semantic_node> detail;
+            if( reader_detail_quantity_picker_open ) {
+                a11y::semantic_node current;
+                current.id = "craft:detail:qty:current";
+                current.role = "button";
+                current.label = string_format( _( "Batch size: %d" ), reader_detail_quantity );
+                current.actions = { "focus" };
+                detail.push_back( std::move( current ) );
+                for( int choice = 1; choice <= 10; ++choice ) {
+                    a11y::semantic_node node;
+                    node.id = "craft:detail:qty:" + std::to_string( choice );
+                    node.role = "button";
+                    node.label = std::to_string( choice );
+                    node.actions = { "focus", "activate" };
+                    node.selected = choice == reader_detail_quantity;
+                    detail.push_back( std::move( node ) );
+                }
+                a11y::semantic_node manual;
+                manual.id = "craft:detail:qty:manual";
+                manual.role = "number";
+                manual.label = _( "Enter a quantity manually" );
+                manual.value = std::to_string( reader_detail_quantity );
+                manual.detail = _( "Choose 1 to 50. Applying a quantity does not start crafting." );
+                manual.actions = { "focus", "set_text" };
+                detail.push_back( std::move( manual ) );
+                a11y::semantic_node back;
+                back.id = "craft:detail:qty:back";
+                back.role = "button";
+                back.label = _( "Back" );
+                back.actions = { "focus", "activate" };
+                detail.push_back( std::move( back ) );
+                snapshot.focus = reader_detail_quantity >= 1 && reader_detail_quantity <= 10 ?
+                                 "craft:detail:qty:" + std::to_string( reader_detail_quantity ) :
+                                 "craft:detail:qty:manual";
+            } else {
+                a11y::semantic_node name;
+                name.id = "craft:detail:name";
+                name.role = "button";
+                name.label = remove_color_tags( accessible_crafting_recipe_name( rec ) );
+                // Disambiguate same-named recipes the way the list does.
+                std::size_t occurrence = 0;
+                for( std::size_t i = page_start; i <= static_cast<std::size_t>( line ); ++i ) {
+                    if( remove_color_tags( accessible_crafting_recipe_name( *current[i] ) ) ==
+                        name.label ) {
+                        ++occurrence;
+                    }
+                }
+                if( name_totals[name.label] > 1 ) {
+                    name.label += " " + string_format( _( "(recipe %1$d of %2$d)" ),
+                                                       occurrence, name_totals[name.label] );
+                }
+                if( !rec.is_nested() ) {
+                    name.value += avail.can_craft_recipe ? _( "Can craft" ) : _( "Cannot craft" );
+                    const int expected_turns = crafter->expected_time_to_craft(
+                                                   rec, reader_detail_quantity ) / to_moves<int>( 1_turns );
+                    name.value += ". " + string_format( _( "Estimated time: %s" ),
+                                                         approx_craft_time( expected_turns ) );
+                }
+                name.actions = { "focus", "read_detail" };
+                detail.push_back( std::move( name ) );
+                a11y::semantic_node intro;
+                intro.id = "craft:detail:intro";
+                intro.role = "document";
+                intro.label = _( "Description" );
+                for( const a11y::semantic_node &document : reader_documents ) {
+                    if( document.id == "craft:description" ) {
+                        intro.detail = document.detail;
+                        break;
+                    }
+                }
+                intro.actions = { "focus", "read_detail" };
+                detail.push_back( std::move( intro ) );
+                append_reader_requirement_nodes( detail, "craft:detail", rec.simple_requirements(),
+                                                 *crafter, inventory, rec.get_component_filter(),
+                                                 reader_detail_quantity );
+                a11y::semantic_node quantity;
+                quantity.id = "craft:detail:quantity";
+                quantity.role = "number";
+                quantity.label = _( "Batch size" );
+                quantity.value = std::to_string( reader_detail_quantity );
+                quantity.detail = _( "Choose 1 to 50. Applying a quantity does not start crafting." );
+                quantity.actions = { "focus", "activate" };
+                detail.push_back( std::move( quantity ) );
+                a11y::semantic_node cancel;
+                cancel.id = "craft:detail:cancel";
+                cancel.role = "button";
+                cancel.label = _( "Cancel" );
+                cancel.actions = { "focus", "activate" };
+                detail.push_back( std::move( cancel ) );
+                a11y::semantic_node confirm;
+                confirm.id = "craft:detail:confirm";
+                confirm.role = "button";
+                confirm.label = pgettext( "crafting gui", "Craft" );
+                confirm.actions = { "focus", "activate" };
+                detail.push_back( std::move( confirm ) );
+                snapshot.focus = "craft:detail:name";
+            }
+            snapshot.nodes = std::move( detail );
+            snapshot.nodes.insert( snapshot.nodes.end(), command_nodes.begin(), command_nodes.end() );
+            return snapshot;
+        }
+    }
     if( !rec.is_nested() ) {
         a11y::semantic_node batch_field;
         batch_field.id = "craft:batch";
@@ -2955,6 +3250,142 @@ a11y::semantic_snapshot crafting_ui_impl::reader_snapshot( const input_context &
 std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic_intent &intent,
         input_context &ctxt )
 {
+    if( reader_detail_open ) {
+        // Back closes the detail screen, never the whole crafting menu.
+        // The command-tail Back button sends activate on QUIT; the
+        // two-finger back gesture sends the cancel action.
+        if( intent.action == "cancel" ||
+            ( intent.action == "activate" && intent.node == "QUIT" ) ) {
+            reader_detail_open = false;
+            reader_detail_quantity_picker_open = false;
+            return "TIMEOUT";
+        }
+        if( intent.action == "activate" && intent.node == "craft:detail:cancel" ) {
+            reader_detail_open = false;
+            reader_detail_quantity_picker_open = false;
+            return "TIMEOUT";
+        }
+        if( intent.action == "activate" && intent.node == "craft:detail:confirm" ) {
+            // The native CONFIRM path below applies can_start_craft and
+            // the container checks; the detail screen only supplies the
+            // quantity. Close first so a failed confirm returns to the list.
+            manual_batch = reader_detail_quantity;
+            reader_detail_open = false;
+            reader_detail_quantity_picker_open = false;
+            return "CONFIRM";
+        }
+        if( intent.action == "activate" && intent.node == "craft:detail:quantity" ) {
+            reader_detail_quantity_picker_open = true;
+            return "TIMEOUT";
+        }
+        if( reader_detail_quantity_picker_open ) {
+            if( intent.action == "activate" && intent.node == "craft:detail:qty:back" ) {
+                reader_detail_quantity_picker_open = false;
+                return "TIMEOUT";
+            }
+            if( intent.action == "set_text" && intent.node == "craft:detail:qty:manual" ) {
+                // Manual entry hands over to TalkBack: Java opens the
+                // native EditText for this set_text node and submits the
+                // typed number back here. Same 1-50 validation as the
+                // list-mode batch field, and the same receipt so Java
+                // closes the editor once the value is applied.
+                int quantity = 0;
+                const std::from_chars_result parsed = std::from_chars( intent.value.data(),
+                        intent.value.data() + intent.value.size(), quantity );
+                if( parsed.ec != std::errc() || parsed.ptr != intent.value.data() + intent.value.size() ||
+                    quantity < 1 || quantity > 50 ) {
+                    a11y::android::status( "invalid_value", &intent );
+                    return std::nullopt;
+                }
+                reader_detail_quantity = quantity;
+                reader_detail_quantity_picker_open = false;
+                reader_quantity_receipt = intent;
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" &&
+                intent.node.rfind( "craft:detail:qty:", 0 ) == 0 ) {
+                int quantity = 0;
+                const std::string suffix = intent.node.substr(
+                                               std::string( "craft:detail:qty:" ).size() );
+                const std::from_chars_result parsed = std::from_chars( suffix.data(),
+                        suffix.data() + suffix.size(), quantity );
+                if( parsed.ec == std::errc() && parsed.ptr == suffix.data() + suffix.size() &&
+                    quantity >= 1 && quantity <= 10 ) {
+                    reader_detail_quantity = quantity;
+                    reader_detail_quantity_picker_open = false;
+                }
+                return "TIMEOUT";
+            }
+        }
+        if( intent.action == "read_detail" ) {
+            // The detail screen's own two-finger readout. Name and intro
+            // read the full recipe detail; a requirement focus describes
+            // the required item itself.
+            if( intent.node == "craft:detail:name" || intent.node == "craft:detail:intro" ) {
+                if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
+                    current[line]->ident().str() != reader_detail_recipe ) {
+                    return "TIMEOUT";
+                }
+                a11y::announce_full_detail_text(
+                    full_recipe_detail_text( *current[line], reader_detail_quantity ) );
+                return "TIMEOUT";
+            }
+            if( intent.node.rfind( "craft:detail:req:", 0 ) == 0 ) {
+                if( line < 0 || static_cast<std::size_t>( line ) >= current.size() ||
+                    current[line]->ident().str() != reader_detail_recipe ) {
+                    return "TIMEOUT";
+                }
+                const std::string rest = intent.node.substr(
+                                             std::string( "craft:detail:req:" ).size() );
+                const std::size_t first = rest.find( ':' );
+                const std::size_t second = first == std::string::npos ? std::string::npos :
+                                           rest.find( ':', first + 1 );
+                if( first == std::string::npos || second == std::string::npos ) {
+                    return "TIMEOUT";
+                }
+                const std::string kind = rest.substr( 0, first );
+                std::size_t group = 0;
+                std::size_t alt = 0;
+                const std::from_chars_result parsed_group = std::from_chars(
+                        rest.data() + first + 1, rest.data() + second, group );
+                const std::from_chars_result parsed_alt = std::from_chars(
+                        rest.data() + second + 1, rest.data() + rest.size(), alt );
+                if( parsed_group.ec != std::errc() || parsed_alt.ec != std::errc() ) {
+                    return "TIMEOUT";
+                }
+                const recipe &rec = *current[line];
+                const availability &avail = available[line];
+                const temp_crafting_inventory &inventory = avail.inv_override ?
+                        *avail.inv_override : crafter->crafting_inventory();
+                std::string label;
+                itype_id type = itype_id::NULL_ID();
+                if( !reader_requirement_detail( rec.simple_requirements(), *crafter, inventory,
+                                                rec.get_component_filter(), reader_detail_quantity,
+                                                kind, group, alt, label, type ) ) {
+                    return "TIMEOUT";
+                }
+                if( type.is_null() ) {
+                    a11y::announce_full_detail_text( label );
+                } else {
+                    const item example( type );
+                    a11y::announce_full_item_info( example, label );
+                }
+                return "TIMEOUT";
+            }
+            return "TIMEOUT";
+        }
+        // Focus moves on detail nodes and anything stale while the detail
+        // screen is open never reach the list handlers. Command-tail
+        // activations other than QUIT fall through below so tab and filter
+        // commands keep working; the snapshot guard closes the detail
+        // screen if the selection changes under it.
+        if( intent.action == "focus" ) {
+            return "TIMEOUT";
+        }
+        if( intent.node.rfind( "craft:detail:", 0 ) == 0 ) {
+            return "TIMEOUT";
+        }
+    }
     // Apply spoken tab/subtab controls on the native game thread before
     // returning. Simply returning a keybinding ID from the semantic handler
     // left category intents accepted in JNI but with no observable transition
@@ -3032,18 +3463,11 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
             // Read all the current original recipe documents, plus the
             // complete item-info pane for the result when that pane exists.
             // This is generated only for an explicit two-finger request.
-            const a11y::semantic_snapshot details = reader_snapshot( ctxt );
-            std::string complete;
-            for( const a11y::semantic_node &document : details.nodes ) {
-                if( document.role != "document" ||
-                    document.id.rfind( "craft:", 0 ) != 0 || document.detail.empty() ) {
-                    continue;
-                }
-                if( !complete.empty() ) {
-                    complete += "\n\n";
-                }
-                complete += document.label + "\n" + document.detail;
-            }
+            // Rebuild the visible list first: recalculation may invalidate
+            // the selected recipe, checked below. The documents the detail
+            // text is assembled from live in the reader_documents cache
+            // that rebuild maintains.
+            reader_snapshot( ctxt );
             // Recalculation may invalidate the selected recipe while
             // reader_snapshot rebuilds the visible list. Do not examine
             // a different or out-of-range result after that update.
@@ -3052,26 +3476,23 @@ std::optional<std::string> crafting_ui_impl::reader_intent( const a11y::semantic
                 id.substr( std::string( "recipe:" ).size() ) ) {
                 return "TIMEOUT";
             }
-            const recipe &rec = *current[line];
-            if( !rec.is_nested() && !rec.is_practice() ) {
-                int scroll_position = 0;
-                item_info_data item_data = result_info->get_result_data(
-                                               &rec, get_batch_size(), scroll_position, 80, true );
-                const std::string result_text = remove_color_tags(
-                                                    format_item_info( item_data.get_item_display(),
-                                                            item_data.get_item_compare() ) );
-                if( !result_text.empty() ) {
-                    complete += "\n\n" + std::string( _( "Item info" ) ) +
-                                "\n" + result_text;
-                }
-            }
-            a11y::announce_full_detail_text( complete );
+            a11y::announce_full_detail_text(
+                full_recipe_detail_text( *current[line], get_batch_size() ) );
             return "TIMEOUT";
         }
         info_nav_active = false;
         rebuild_keybinding_tips();
         // Focusing the same row twice must never confirm it. Mouse double-click
         // handling uses a different path; semantic focus does not synthesize it.
+        if( intent.action == "activate" && !current[line]->is_nested() ) {
+            // Tapping a recipe opens its detail screen; nothing is crafted
+            // until the detail screen's confirm button is pressed.
+            reader_detail_open = true;
+            reader_detail_recipe = current[line]->ident().str();
+            reader_detail_quantity = manual_batch;
+            reader_detail_quantity_picker_open = false;
+            return "TIMEOUT";
+        }
         return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
     }
     return a11y::registered_intent( ctxt, intent );
