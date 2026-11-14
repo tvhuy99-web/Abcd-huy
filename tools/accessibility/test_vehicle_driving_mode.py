@@ -120,7 +120,6 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("reverse ? 180_degrees : 0_degrees", WORLD)
         self.assertIn("requested_distance", VEH)
 
-
     def test_double_tap_pauses_only_in_live_drive(self):
         self.assertIn("if (vehicleMode && directWorldGesturesEnabled()) {", CTRL)
         self.assertIn('requestVehicleAction("reader:vehicle:pause");', CTRL)
