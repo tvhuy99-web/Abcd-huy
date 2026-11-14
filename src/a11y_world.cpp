@@ -751,8 +751,16 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             if( veh.skidding ) {
                 vehicle_detail += " " + std::string( _( "Warning: vehicle is skidding." ) );
             }
+            const std::optional<vehicle_obstacle> hazard = vehicle_obstacle_ahead( veh, get_map() );
+            const std::string road = hazard ?
+                                     string_format( _( "%1$s ahead, about %2$d tiles." ),
+                                                    hazard->label, hazard->distance ) :
+                                     _( "No blocking obstacle detected along the checked forward path." );
+            vehicle_detail += " " + road;
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
+            result.nodes.push_back( document( "reader:vehicle:road",
+                                              _( "Road ahead" ), road ) );
             if( local_driver ) {
                 result.nodes.push_back( button( "reader:vehicle:brake",
                                                 _( "Emergency handbrake" ),
@@ -1486,6 +1494,46 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
                               string_format( _( "%1$s [%2$d]" ), entry.first, entry.second ) );
     }
     return tile;
+}
+
+// Project the actual vehicle footprint forward with the game's existing
+// native predictor. Examine current map entities directly; neither visual
+// range nor the avatar's line of sight is used for collision assistance.
+std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here )
+{
+    const std::set<point_abs_ms> projected = veh.immediate_path( &here );
+    std::optional<vehicle_obstacle> nearest;
+    const point_bub_ms origin = veh.pos_bub( here ).xy();
+    const int z = veh.pos_bub( here ).z();
+    for( const point_abs_ms &point : projected ) {
+        const point_bub_ms tile_xy = here.get_bub( point );
+        const tripoint_bub_ms tile( tile_xy, z );
+        const optional_vpart_position other = here.inbounds( tile ) ? here.veh_at( tile ) :
+                                              optional_vpart_position();
+        if( other && &other->vehicle() == &veh ) {
+            continue; // Ignore the current vehicle's own body.
+        }
+        std::string label;
+        if( !here.inbounds( tile ) ) {
+            label = _( "Unloaded map boundary" );
+        } else if( other ) {
+            label = other->vehicle().name;
+        } else if( here.impassable_ter_furn( tile ) ) {
+            label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
+        } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
+            if( creature != &get_avatar() ) {
+                label = creature->disp_name();
+            }
+        }
+        if( label.empty() ) {
+            continue;
+        }
+        const int distance = std::max( 1, static_cast<int>( rl_dist( origin, tile_xy ) ) );
+        if( !nearest || distance < nearest->distance ) {
+            nearest = vehicle_obstacle{ distance, remove_color_tags( label ) };
+        }
+    }
+    return nearest;
 }
 
 void announce_linear_scan( const point &delta )
