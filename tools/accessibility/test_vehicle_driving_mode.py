@@ -56,7 +56,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
             self.assertIn('reader:vehicle:' + node + '"', WORLD)
         self.assertIn("a11y_vehicle_throttle::reverse", ENGINE)
         self.assertIn("a11y_vehicle_throttle::faster", ENGINE)
-        self.assertIn("car.cruise_thrust( here, step );", ENGINE)
+        self.assertIn("pldrive( point_rel_ms( 0, -1 ) );", ENGINE)
+        self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
+        self.assertNotIn("car.cruise_thrust( here,", ENGINE)
+        self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
 
     def test_two_fingers_are_mode_scoped_before_map_scans(self):
         self.assertIn("handleVehicleTwoFingerSwipe(", SURF)

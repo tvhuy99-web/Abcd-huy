@@ -3272,7 +3272,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     requestVehicleAction("reader:vehicle:heading:right");
                     return true;
                 default:
-                    break;
+                    // Do not fall through to saved map or combat bindings
+                    // while the avatar is driving. An unrecognized swipe
+                    // must never activate another gameplay action.
+                    return true;
             }
         }
         if (combatMode && directWorldGesturesEnabled()) {

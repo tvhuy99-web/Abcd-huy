@@ -3046,14 +3046,15 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 seat->vehicle().player_in_control( here, player_character ) &&
                 ( !g || g->remoteveh() != &seat->vehicle() ) ) {
                 vehicle &car = seat->vehicle();
-                constexpr int step = 400; // Same native cruise increment as ordinary driving.
+                // All acceleration now follows pldrive's original safe-mode,
+                // steering/engine validations and game-time semantics.
                 switch( throttle ) {
                     case a11y_vehicle_throttle::forward:
                         if( car.cruise_velocity < 0 || car.velocity < 0 ) {
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before driving forward." ) );
                         } else if( car.cruise_velocity == 0 ) {
-                            car.cruise_thrust( here, step );
+                            pldrive( point_rel_ms( 0, -1 ) );
                             add_msg( m_info, _( "Forward selected." ) );
                         }
                         break;
@@ -3062,16 +3063,16 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before reversing." ) );
                         } else if( car.cruise_velocity == 0 ) {
-                            car.cruise_thrust( here, -step );
+                            pldrive( point_rel_ms( 0, 1 ) );
                             add_msg( m_info, _( "Reverse selected." ) );
                         }
                         break;
                     case a11y_vehicle_throttle::faster:
-                        car.cruise_thrust( here, car.cruise_velocity < 0 ? -step : step );
+                        pldrive( point_rel_ms( 0, car.cruise_velocity < 0 ? 1 : -1 ) );
                         break;
                     case a11y_vehicle_throttle::slower:
                         if( car.cruise_velocity != 0 ) {
-                            car.cruise_thrust( here, car.cruise_velocity > 0 ? -step : step );
+                            pldrive( point_rel_ms( 0, car.cruise_velocity > 0 ? 1 : -1 ) );
                         }
                         break;
                     case a11y_vehicle_throttle::none:
