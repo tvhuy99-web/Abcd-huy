@@ -28,7 +28,11 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         self.assertIn('node.id = "recipe:"', body)
 
     def test_no_visual_panel_required_for_recipe_description(self):
-        self.assertIn("description = rec.get_description( *crafter );", self.crafting)
+        # Descriptions are now resolved from the selected recipe through
+        # one shared helper, independent of whether ImGui rendered a panel.
+        self.assertIn("static std::string accessible_recipe_description(", self.crafting)
+        self.assertIn("return rec.get_description( crafter );", self.crafting)
+        self.assertIn("accessible_recipe_description( rec, *crafter )", self.crafting)
         self.assertIn("description = result.variant_description();", self.crafting)
         self.assertIn('a11y::append_document( documents, "craft:description"', self.crafting)
 
