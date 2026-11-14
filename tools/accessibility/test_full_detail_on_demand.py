@@ -98,11 +98,12 @@ class FullDetailOnDemandTests(unittest.TestCase):
     def test_recipe_detail_includes_complete_output_item_pane(self):
         self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.crafting)
         self.assertIn('if( intent.action == "read_detail" ) {', self.crafting)
-        self.assertIn("const a11y::semantic_snapshot details = reader_snapshot( ctxt );",
+        self.assertIn("full_recipe_detail_text( *current[line], reader_detail_quantity )",
                       self.crafting)
         self.assertIn("result_info->get_result_data(", self.crafting)
         self.assertIn("format_item_info( item_data.get_item_display()", self.crafting)
-        self.assertIn("a11y::announce_full_detail_text( complete );", self.crafting)
+        self.assertIn("a11y::announce_full_item_info( example, label );",
+                      self.crafting)
 
     def test_help_and_diary_original_text_on_two_finger_request(self):
         self.assertIn('node.actions = { "focus", "activate", "read_detail" };', self.help)
