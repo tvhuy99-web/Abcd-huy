@@ -1,0 +1,159 @@
+name: Android Accessibility Release trial (test-signed)
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/android-accessibility-release-trial.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: a11y-release-trial-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  release-arm64:
+    name: Accessibility ARM64 Release with test key
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
+          log-accepted-android-sdk-licenses: false
+      - name: Install Android build tools
+        run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
+      - name: Compile shader assets
+        run: |
+          python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
+          test -s data/shaders/grayscale.frag.spv
+      - name: Initialize release build evidence
+        run: |
+          mkdir -p build-evidence
+          git rev-parse HEAD > build-evidence/commit.txt
+          git status --short > build-evidence/worktree.txt
+          echo "configuration=accessibilityRelease" > build-evidence/configuration.txt
+          echo "signing=public-accessibility-TEST-key" >> build-evidence/configuration.txt
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ccache
+          key: a11y-arm64-release-trial-ndk28-${{ github.sha }}
+          restore-keys: |
+            a11y-arm64-release-trial-ndk28-
+      - name: Download Gradle with retries
+        working-directory: android
+        run: |
+          for attempt in 1 2 3; do
+            if bash ./gradlew --version; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then
+              echo "Gradle bootstrap failed" >&2
+              exit 1
+            fi
+            sleep $((attempt * 20))
+          done
+      - name: Assemble Accessibility Release ARM64 with public test key
+        working-directory: android
+        env:
+          CCACHE_DIR: /home/runner/.cache/ccache
+          CCACHE_MAXSIZE: 3G
+          CCACHE_BASEDIR: ${{ github.workspace }}
+        run: |
+          set -o pipefail
+          ccache --set-config=max_size=3G
+          ccache --zero-stats
+          revision="$(git rev-parse --short=8 HEAD)"
+          # Higher than old debug trial APK codes so this can install over
+          # them. Subsequent debug APKs with lower codes cannot downgrade it.
+          version_code=$((1100000 + ${{ github.run_number }}))
+          printf 'versionCode=%s\nversionName=release-test-%s\n' "$version_code" "$revision" > ../build-evidence/version.txt
+          bash ./gradlew --no-daemon --console=plain \
+            -Pj=3 -Pabi_arm_32=false -Pabi_arm_64=true \
+            -Paccessibility_release_test_signing=true \
+            "-Poverride_versionCode=$version_code" \
+            "-Paccessibility_apk_version=release-test-$revision" \
+            assembleAccessibilityRelease 2>&1 | tee ../build-evidence/gradle.log
+          ccache --show-stats --verbose > ../build-evidence/ccache.txt
+      - name: Validate installable signed ARM64 APK
+        run: |
+          python3 - <<'PY'
+          import hashlib
+          import os
+          from pathlib import Path
+          import re
+          import subprocess
+          import zipfile
+
+          apks = sorted(Path('android/app/build/outputs/apk/accessibility/release').glob('*.apk'))
+          if len(apks) != 1:
+              raise SystemExit(f'Expected one Accessibility Release APK, found {len(apks)}: {apks}')
+          apk = apks[0]
+          with zipfile.ZipFile(apk) as archive:
+              contents = set(archive.namelist())
+              for name in ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                           'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so'):
+                  path = 'lib/arm64-v8a/' + name
+                  if path not in contents or not archive.read(path).startswith(b'\x7fELF\x02'):
+                      raise SystemExit(f'ARM64 library is missing or invalid: {path}')
+              for path in ('assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo',
+                           'assets/data/shaders/grayscale.frag.spv'):
+                  if path not in contents:
+                      raise SystemExit(f'Required game asset is missing: {path}')
+
+          tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+          signature = subprocess.check_output([
+              str(tools / 'apksigner'), 'verify', '--verbose', '--print-certs', str(apk)
+          ], text=True)
+          Path('build-evidence/signer.txt').write_text(signature)
+          found = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)', signature)
+          expected = Path('android/app/accessibility-test-cert.sha256').read_text().strip()
+          if not found or found.group(1).lower() != expected:
+              raise SystemExit('Release trial APK was not signed with the expected accessibility TEST certificate')
+          badging = subprocess.check_output([str(tools / 'aapt'), 'dump', 'badging', str(apk)], text=True)
+          pkg = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", badging, re.M)
+          expected_code = int(Path('build-evidence/version.txt').read_text().splitlines()[0].split('=')[1])
+          if not pkg or pkg.group(1) != 'com.cleverraven.cataclysmdda.accessibility':
+              raise SystemExit('Unexpected application package: cannot update existing reader installation')
+          if int(pkg.group(2)) != expected_code:
+              raise SystemExit('Unexpected APK versionCode')
+          digest = hashlib.sha256(apk.read_bytes()).hexdigest()
+          Path('build-evidence/SHA256SUMS').write_text(f'{digest}  {apk}\n')
+          Path('build-evidence/package.txt').write_text(
+              f'package={pkg.group(1)}\nversionCode={pkg.group(2)}\n'
+              f'certificate_sha256={expected}\nsize_bytes={apk.stat().st_size}\n'
+          )
+          print(Path('build-evidence/package.txt').read_text())
+          print(Path('build-evidence/SHA256SUMS').read_text())
+          PY
+      - name: Publish APK verification summary
+        if: success()
+        run: |
+          {
+            echo '### Accessibility Release trial (TEST signed, not production)'
+            cat build-evidence/commit.txt
+            cat build-evidence/configuration.txt
+            cat build-evidence/version.txt
+            cat build-evidence/package.txt
+            cat build-evidence/SHA256SUMS
+            echo 'Artifact: `android-arm64-accessibility-release-test`'
+          } >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: android-arm64-accessibility-release-test
+          retention-days: 14
+          path: |
+            build-evidence/
+            android/app/build/outputs/apk/accessibility/release/*.apk

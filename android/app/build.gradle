@@ -496,7 +496,12 @@ android {
         release {
             minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-            if (signingConfigs.hasProperty("release")) {
+            // Opt-in, TEST-ONLY signing for optimized Accessibility release
+            // trials. Never use this public test certificate for production.
+            // With the property absent, preserve the normal private release key.
+            if (project.findProperty('accessibility_release_test_signing') == 'true') {
+                signingConfig signingConfigs.accessibilityTest
+            } else if (signingConfigs.hasProperty("release")) {
                 signingConfig signingConfigs.release
             }
             externalNativeBuild {
