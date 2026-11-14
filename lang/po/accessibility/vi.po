@@ -5857,3 +5857,6 @@ msgstr "Đang phanh tự động: phía trước có %1$s, cách khoảng %2$d �
 #, c-format
 msgid "Automatic braking: %1$s behind, about %2$d tiles."
 msgstr "Đang phanh tự động: phía sau có %1$s, cách khoảng %2$d ô."
+
+msgid "Warning: vehicle is skidding; steering may not respond."
+msgstr "Cảnh báo: xe đang trượt, thao tác đánh lái có thể không có tác dụng."

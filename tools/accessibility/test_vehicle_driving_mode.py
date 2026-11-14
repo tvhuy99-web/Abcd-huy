@@ -110,6 +110,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("handbrake( here );", VEH)
         self.assertIn("velocity != 0 )", VEH)
         self.assertIn("a11y_brake_alerted", VEH)
+        self.assertIn("a11y_skid_alerted", VEH)
+        self.assertIn("Warning: vehicle is skidding; steering may not respond.", VEH)
         self.assertIn("std::abs( velocity ) / 500", VEH)
         self.assertIn("reverse ? 180_degrees : 0_degrees", WORLD)
         self.assertIn("requested_distance", VEH)

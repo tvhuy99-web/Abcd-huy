@@ -6732,6 +6732,12 @@ void vehicle::gain_moves( map &here )
         velocity != 0 ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
+            // Announce a fresh loss of control once, never each physics tick.
+            if( skidding && !a11y_skid_alerted ) {
+                add_msg( m_warning,
+                         _( "Warning: vehicle is skidding; steering may not respond." ) );
+            }
+            a11y_skid_alerted = skidding;
             const bool reverse = velocity < 0;
             const std::optional<a11y::vehicle_obstacle> hazard =
                 a11y::vehicle_obstacle_ahead( *this, here, reverse );
@@ -6754,9 +6760,11 @@ void vehicle::gain_moves( map &here )
             }
         } else {
             a11y_brake_alerted = false;
+            a11y_skid_alerted = false;
         }
     } else {
         a11y_brake_alerted = false;
+        a11y_skid_alerted = false;
     }
     if( is_moving() || is_falling ) {
         if( !loose_parts.empty() ) {
