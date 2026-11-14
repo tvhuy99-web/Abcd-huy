@@ -26,14 +26,14 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
             end = self.menu.index("vSettingsHotkeys.clear();", start)
             block = self.menu[start:end]
             names = re.findall(
-                r'vSettingsSubItems.emplace_back\\( pgettext\\( "Main Menu\\|Settings", "([^"]+)"',
+                r'vSettingsSubItems.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
                 block)
         else:
             start = self.menu.index("static std::vector<std::string> game_settings_items()")
             end = self.menu.index("return items;", start)
             block = self.menu[start:end]
             names = re.findall(
-                r'items.emplace_back\\( pgettext\\( "Main Menu\\|Settings", "([^"]+)"',
+                r'items.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
                 block)
             self.assertIn("vSettingsSubItems = game_settings_items();", self.menu)
         self.assertEqual(names, [
