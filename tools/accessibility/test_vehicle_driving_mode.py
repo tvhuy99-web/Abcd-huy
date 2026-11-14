@@ -44,6 +44,19 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('requestVehicleAction("reader:vehicle:heading:right")',
                       CTRL)
         self.assertIn("a11y_steering_nudge = 3;", ENGINE)
+        for gesture, node in (
+            ("swipe_up", "forward"), ("swipe_down", "reverse"),
+            ("swipe_up_down", "faster"), ("swipe_down_up", "slower")
+        ):
+            drive = CTRL.split('case "' + gesture + '":', 1)[1].split(
+                "return true;", 1
+            )[0]
+            self.assertIn('requestVehicleAction("reader:vehicle:' + node + '")',
+                          drive)
+            self.assertIn('reader:vehicle:' + node + '"', WORLD)
+        self.assertIn("a11y_vehicle_throttle::reverse", ENGINE)
+        self.assertIn("a11y_vehicle_throttle::faster", ENGINE)
+        self.assertIn("car.cruise_thrust( here, step );", ENGINE)
 
     def test_two_fingers_are_mode_scoped_before_map_scans(self):
         self.assertIn("handleVehicleTwoFingerSwipe(", SURF)
