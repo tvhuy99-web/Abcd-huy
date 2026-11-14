@@ -144,6 +144,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
     private boolean vehicleMode;
+    private boolean pendingVehicleRoadReport;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -715,6 +716,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if ("DEFAULTMODE".equals(next.category)
                         && next.find("reader:vehicle:seat") == null) {
                     vehicleMode = false;
+                    pendingVehicleRoadReport = false;
+                }
+                if (pendingVehicleRoadReport && "DEFAULTMODE".equals(next.category)) {
+                    pendingVehicleRoadReport = false;
+                    ReaderSnapshot.Node road = next.find("reader:vehicle:road");
+                    if (road != null && !road.detail.isEmpty()) {
+                        final String report = road.detail;
+                        handler.post(() -> {
+                            if (vehicleMode && directWorldGesturesEnabled()) {
+                                feedback(report);
+                            }
+                        });
+                    }
                 }
                 // Only world snapshots publish world:messages. Remember the
                 // last non-empty copy so two-finger double-tap can re-read
@@ -3171,6 +3185,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yDriveActionUnavailable));
             return;
         }
+        if ("LEFT".equals(id) || "RIGHT".equals(id)
+                || id.startsWith("reader:vehicle:heading:")) {
+            pendingVehicleRoadReport = true;
+        }
         requestLiveWorldCommand(id);
     }
 
@@ -3465,7 +3483,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             clearPendingWorldDirection();
             root.cancelGesture();
             SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
-            feedback(activity.getString(nextMode == 0 ? R.string.a11yCombatOff
+            feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
                     : nextMode == 1 ? R.string.a11yCombatOn
                     : R.string.a11yDrivingMode));
             return;
@@ -4801,6 +4819,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (closed) { return; }
         combatMode = false;
         vehicleMode = false;
+        pendingVehicleRoadReport = false;
         closed = true;
         foreground = false;
         presentationEpoch++;
