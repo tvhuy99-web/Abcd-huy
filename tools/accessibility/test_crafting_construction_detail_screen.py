@@ -217,14 +217,22 @@ class ConstructionDetailScreenTest(unittest.TestCase):
 
 
 class DetailScreenSharedTest(unittest.TestCase):
-    def test_requirement_helpers_stay_in_sync(self):
-        # The helper twin lives in both files because the shared home
-        # (a11y_requirements.cpp) is outside the sparse checkout.
+    def test_requirement_labels_stay_in_sync_but_crafting_groups_are_local(self):
+        # Keep shared inventory counts and Available/Missing wording in sync.
+        # Crafting intentionally adds numbered requirement headings; the
+        # construction screen retains its existing ungrouped presentation.
         craft = _region(CRAFT, "static int reader_requirement_have(",
-                        "std::string crafting_ui_impl::full_recipe_detail_text")
+                        "static void append_reader_requirement_nodes(")
         construction = _region(CONSTRUCTION, "static int reader_requirement_have(",
-                               "construction_id construction_menu")
+                               "static void append_reader_requirement_nodes(")
         self.assertEqual(craft, construction)
+        craft_groups = _region(CRAFT, "static void append_reader_requirement_nodes(",
+                               '// Resolve a "…:req:<kind>:<group>:<alt>"')
+        self.assertIn("add_requirement_header( group.size() );", craft_groups)
+        construction_groups = _region(CONSTRUCTION,
+                                     "static void append_reader_requirement_nodes(",
+                                     "construction_id construction_menu")
+        self.assertNotIn("add_requirement_header(", construction_groups)
 
     def test_new_strings_are_translated(self):
         self.assertIn('msgid "Enter a quantity manually"\nmsgstr "Nhập số lượng thủ công"', VI)
