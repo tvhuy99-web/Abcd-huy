@@ -8,6 +8,8 @@
 #include "coordinates.h"
 #include "point.h"
 class input_context;
+class map;
+class vehicle;
 namespace a11y
 {
 enum class world_scan_filter { all, known, noteworthy, heard };
@@ -25,6 +27,16 @@ struct unrestricted_tile {
     std::vector<std::string> items;
 };
 unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position );
+// Unrestricted native vehicle-aid perception. Never uses the avatar's line
+// of sight and never treats ground items alone as obstacles. The returned
+// distance is an approximate tile range from the vehicle's reference point;
+// the native driving system still decides whether braking can stop in time.
+struct vehicle_obstacle {
+    int distance = 0;
+    std::string label;
+};
+std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here );
+
 // explore_cursor, when set, is the explore-mode cursor position relative to
 // the avatar. The scan is then centered on the cursor instead of the avatar
 // and the snapshot publishes the explore controls; the cursor is purely a
