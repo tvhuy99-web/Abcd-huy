@@ -19,7 +19,10 @@ class Group16SettingsCleanup(unittest.TestCase):
     def test_group_16_keeps_requested_commands_only(self):
         group = self.hub.split('{ "save", "quicksave", "quickload"', 1)[1]
         group = group.split("}", 1)[0]
-        for command in ("open_options", "open_world_mods",
+        self.assertTrue(any('"' + command + '"' in group for command in (
+            "open_options", "open_game_settings"
+        )))
+        for command in ("open_world_mods",
                         "open_distraction_manager", "help", "debug"):
             self.assertIn('"' + command + '"', group)
         for removed in ("main_menu", "open_autopickup", "open_autonotes",
@@ -53,7 +56,12 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn("nativeConfigureReaderPerformance(", self.accessibility)
         self.assertIn("setSwipeDistanceLevel(level)", self.accessibility)
         self.assertIn("setSwipeDurationLevel(level)", self.accessibility)
-        self.assertEqual(self.accessibility.count("new CheckBox(this)"), 2)
+        toggles = self.accessibility.count("new CheckBox(this)")
+        self.assertIn(toggles, (2, 4))
+        # Current master exposes the already implemented sound/haptic cues.
+        if toggles == 4:
+            self.assertIn("setSoundCuesEnabled(checked)", self.accessibility)
+            self.assertIn("setHapticCuesEnabled(checked)", self.accessibility)
         self.assertIn("setDirectionalSonarEnabled(checked)", self.accessibility)
         self.assertIn("nativeConfigureDirectionalSonar(checked)", self.accessibility)
         self.assertEqual(self.accessibility.count("new SeekBar(this)"), 2)

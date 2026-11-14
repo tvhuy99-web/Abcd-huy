@@ -19,8 +19,8 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         cls.translations = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
     def test_existing_nine_settings_are_preserved_and_two_appended(self):
-        start = self.menu.index("    vSettingsSubItems.clear();")
-        end = self.menu.index("    vSettingsHotkeys.clear();", start)
+        start = self.menu.index("vSettingsSubItems.clear();")
+        end = self.menu.index("vSettingsHotkeys.clear();", start)
         entries = re.findall(r'vSettingsSubItems.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
                              self.menu[start:end])
         self.assertEqual(entries, [
@@ -52,7 +52,10 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         self.assertNotIn("GameSettingsActivity", (
             ROOT / "android/app/src/main/AndroidManifest.xml").read_text("utf-8"))
         self.assertFalse((JAVA / "GameSettingsActivity.java").exists())
-        self.assertIn('"open_options"', self.hub)
+        # The native Settings command was renamed on newer master commits.
+        self.assertTrue(any('"' + command + '"' in self.hub for command in (
+            "open_options", "open_game_settings"
+        )))
         self.assertIn('"hub:settings".equals(target)', self.reader)
 
     def test_vietnamese_names_have_context_translation(self):

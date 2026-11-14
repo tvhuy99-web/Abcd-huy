@@ -96,17 +96,21 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("Cannot reverse: %1$s", ENGINE)
 
     def test_obstacle_sensing_ignores_player_visibility(self):
-        self.assertIn("veh.immediate_path( &here )", WORLD)
+        self.assertIn("veh.immediate_path( &here, desired_delta,", WORLD)
+        self.assertIn("horizon, reverse )", WORLD)
+        self.assertIn("veh.bub_part_pos( here, i ).xy()", WORLD)
+        self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
         self.assertIn("here.impassable_ter_furn( tile )", WORLD)
         self.assertIn("&other->vehicle() == &veh", WORLD)
-        self.assertIn("vehicle_obstacle_ahead( *this, here )", VEH)
+        self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
 
     def test_automatic_brake_is_restricted_to_local_player(self):
         self.assertIn("driver.in_vehicle &&", VEH)
         self.assertIn("driver.controlling_vehicle", VEH)
-        self.assertIn("velocity > 0 && cruise_velocity > 0", VEH)
-        self.assertIn("std::clamp( 8 + velocity / 800, 8, 24 )", VEH)
+        self.assertIn("velocity != 0 )", VEH)
+        self.assertIn("const bool reverse = velocity < 0;", VEH)
+        self.assertIn("std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 )", VEH)
         self.assertIn("handbrake( here );", VEH)
         self.assertIn("velocity != 0 )", VEH)
         self.assertIn("a11y_brake_alerted", VEH)
@@ -115,6 +119,42 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("std::abs( velocity ) / 500", VEH)
         self.assertIn("reverse ? 180_degrees : 0_degrees", WORLD)
         self.assertIn("requested_distance", VEH)
+
+
+    def test_double_tap_pauses_only_in_live_drive(self):
+        self.assertIn("if (vehicleMode && directWorldGesturesEnabled()) {", CTRL)
+        self.assertIn('requestVehicleAction("reader:vehicle:pause");', CTRL)
+        self.assertIn("listener.activate();", SURF)
+        self.assertIn('button( "reader:vehicle:pause"', WORLD)
+        self.assertIn('intent.node == "reader:vehicle:pause"', ENGINE)
+        self.assertIn('action == "A11Y_INTERNAL_VEHICLE_PAUSE"', ENGINE)
+        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
+        self.assertIn("car.a11y_drive_paused = false;", ENGINE)
+        self.assertIn("car.a11y_resume_cruise_velocity", ENGINE)
+        self.assertIn("car.velocity != 0", ENGINE)
+        self.assertIn("car.cruise_velocity = std::clamp(", ENGINE)
+        self.assertIn("hazard->distance <= distance", ENGINE)
+        self.assertIn("act = ACTION_SMASH;", ENGINE)
+
+    def test_drive_long_press_opens_real_vehicle_menu(self):
+        self.assertIn("public void onLongPress(MotionEvent event)", SURF)
+        self.assertIn("listener.openContextActions();", SURF)
+        part = CTRL.split("public void openContextActions()", 1)[1]
+        part = part.split("private void closeContextActions()", 1)[0]
+        self.assertIn("if (vehicleMode && directWorldGesturesEnabled())", part)
+        self.assertIn('snapshot.find("control_vehicle")', part)
+        self.assertIn('requestLiveWorldCommand("control_vehicle");', part)
+        self.assertNotIn("showComprehensiveMenu();", part.split(
+            "if (vehicleMode && directWorldGesturesEnabled())", 1)[1].split(
+                "if (combatMode && directWorldGesturesEnabled())", 1)[0])
+
+    def test_reversing_starts_at_rear_and_clearance_uses_body(self):
+        self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
+        self.assertIn("point_rel_ms( mount_min.x(), mount_max.y() )", VEH)
+        self.assertIn("horizon, reverse )", WORLD)
+        self.assertIn("veh.bub_part_pos( here, i ).xy()", WORLD)
+        self.assertIn("const int distance = clearance( tile_xy );", WORLD)
+        self.assertNotIn("rl_dist( origin, tile_xy )", WORLD)
 
     def test_vietnamese_vehicle_announcement_and_damage_terms(self):
         translations = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
