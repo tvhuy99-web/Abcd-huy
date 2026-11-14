@@ -104,6 +104,14 @@ public final class ReaderPreferences {
         return values.getBoolean("haptic_cues", false);
     }
 
+    public void setSoundCuesEnabled(boolean enabled) {
+        values.edit().putBoolean("sound_cues", enabled).apply();
+    }
+
+    public void setHapticCuesEnabled(boolean enabled) {
+        values.edit().putBoolean("haptic_cues", enabled).apply();
+    }
+
     /** Independent directional sonar is opt-in, unlike regular spoken output. */
     public boolean isDirectionalSonarEnabled() {
         return values.getBoolean("directional_sonar", false);

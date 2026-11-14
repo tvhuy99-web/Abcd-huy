@@ -39,9 +39,6 @@ public final class AccessibilitySettingsActivity extends Activity {
             }
         });
         controls.addView(showGraphics);
-        TextView graphicsHelp = new TextView(this);
-        graphicsHelp.setText(R.string.a11yWorldGraphicsExplanation);
-        controls.addView(graphicsHelp);
 
         CheckBox directionalSonar = new CheckBox(this);
         directionalSonar.setText(R.string.a11yDirectionalSonar);
@@ -55,9 +52,19 @@ public final class AccessibilitySettingsActivity extends Activity {
             }
         });
         controls.addView(directionalSonar);
-        TextView sonarHelp = new TextView(this);
-        sonarHelp.setText(R.string.a11yDirectionalSonarExplanation);
-        controls.addView(sonarHelp);
+        CheckBox soundCues = new CheckBox(this);
+        soundCues.setText(R.string.a11ySoundCues);
+        soundCues.setChecked(prefs.areSoundCuesEnabled());
+        soundCues.setOnCheckedChangeListener((button, checked) ->
+                prefs.setSoundCuesEnabled(checked));
+        controls.addView(soundCues);
+
+        CheckBox hapticCues = new CheckBox(this);
+        hapticCues.setText(R.string.a11yHapticCues);
+        hapticCues.setChecked(prefs.areHapticCuesEnabled());
+        hapticCues.setOnCheckedChangeListener((button, checked) ->
+                prefs.setHapticCuesEnabled(checked));
+        controls.addView(hapticCues);
 
         TextView distanceValue = new TextView(this);
         // Visible label only: the SeekBar below announces the same value

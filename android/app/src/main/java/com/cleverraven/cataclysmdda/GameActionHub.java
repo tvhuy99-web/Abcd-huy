@@ -20,7 +20,8 @@ final class GameActionHub {
     static final int OPEN_GROUP = 1;
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
-    // The second Android Settings hub has been removed.
+    // Android reader settings use the existing Activity, not another hub.
+    static final int OPEN_ACCESSIBILITY_SETTINGS = 11;
     static final int OPEN_DEBUG_LOG = 10;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
@@ -50,6 +51,7 @@ final class GameActionHub {
                 case OPEN_SEARCH: return "hub:search";
                 case OPEN_ALL: return "hub:all";
                 case OPEN_DEBUG_LOG: return "hub:debug_log";
+                case OPEN_ACCESSIBILITY_SETTINGS: return "hub:reader_setup";
                 case OPEN_DIRECTIONS: return "hub:directions";
                 case OPEN_FAVORITES: return "hub:favorites";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
@@ -226,8 +228,10 @@ final class GameActionHub {
                         || !options.actions.contains("activate")) { return null; }
                 return new Entry(spokenNodeLabel(context, options),
                         "open_options", EXECUTE, 0);
-            case "hub:tts":
             case "hub:reader_setup":
+                return new Entry(context.getString(R.string.a11yAccessibilitySettingsTitle),
+                        "", OPEN_ACCESSIBILITY_SETTINGS, 0);
+            case "hub:tts":
                 return null;
             case "hub:debug_log":
                 return new Entry(context.getString(R.string.a11yDebugLogTitle),
@@ -318,6 +322,8 @@ final class GameActionHub {
         }
         for (String id : ACTIONS[section]) { addNode(result, context, snapshot, id, seen); }
         if (section == 15) {
+            result.add(new Entry(context.getString(R.string.a11yAccessibilitySettingsTitle),
+                    "", OPEN_ACCESSIBILITY_SETTINGS, 0));
             result.add(new Entry(context.getString(R.string.a11yDebugLogTitle),
                     "", OPEN_DEBUG_LOG, 0));
         }

@@ -3925,6 +3925,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 render();
                 readCurrent();
                 return;
+            case GameActionHub.OPEN_ACCESSIBILITY_SETTINGS:
+                activity.onAccessibilityOpenAccessibilitySettings();
+                return;
             case GameActionHub.OPEN_DEBUG_LOG:
                 activity.onAccessibilityOpenDebugLog();
                 return;
