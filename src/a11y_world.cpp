@@ -692,6 +692,80 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // the fairly detailed health/effects summary twice per footstep.
     const std::string status_summary = player_status();
     result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
+
+    // The vehicle mode is owned by the native game state, never inferred
+    // from a translated status string on Android. A passenger may inspect
+    // the vehicle, but only its actual driver may steer or sound the horn.
+    const avatar &vehicle_reader = get_avatar();
+    if( vehicle_reader.in_vehicle ) {
+        const optional_vpart_position seated = get_map().veh_at(
+                    vehicle_reader.pos_bub( get_map() ) );
+        if( seated ) {
+            vehicle &veh = seated->vehicle();
+            const bool local_driver = vehicle_reader.controlling_vehicle
+                                      && g && g->remoteveh() != &veh
+                                      && veh.player_in_control( get_map(), vehicle_reader );
+            semantic_node seat;
+            seat.id = "reader:vehicle:seat";
+            seat.role = "status";
+            seat.label = _( "On board vehicle" );
+            seat.value = veh.name;
+            seat.detail = local_driver ? _( "Driving controls available." ) :
+                          _( "You are not currently driving this vehicle." );
+            seat.actions = { "focus" };
+            result.nodes.push_back( std::move( seat ) );
+
+            semantic_node controls;
+            controls.id = "reader:vehicle:driver";
+            controls.role = "status";
+            controls.label = _( "Vehicle driver controls" );
+            controls.value = local_driver ? _( "Available" ) : _( "Unavailable" );
+            controls.enabled = local_driver;
+            controls.actions = { "focus" };
+            result.nodes.push_back( std::move( controls ) );
+
+            std::string speed = display::vehicle_cruise_text_color( vehicle_reader ).first;
+            if( speed.empty() ) {
+                speed = _( "Speed is unavailable until you take control." );
+            }
+            result.nodes.push_back( document( "reader:vehicle:speed",
+                                              _( "Current and target speed" ), speed ) );
+            std::string vehicle_detail = string_format( _( "Vehicle: %s." ), veh.name );
+            vehicle_detail += " " + std::string( veh.engine_on ? _( "Engine running." ) :
+                                                _( "Engine stopped." ) );
+            vehicle_detail += " " + string_format( _( "Direction: %s." ),
+                                                 veh.face.to_string_azimuth_from_north() );
+            vehicle_detail += " " + speed;
+            if( local_driver ) {
+                const std::string fuel = display::vehicle_fuel_percent_text_color(
+                                             vehicle_reader ).first;
+                if( !fuel.empty() ) {
+                    vehicle_detail += " " + string_format( _( "Fuel: %s." ), fuel );
+                }
+                const std::string battery = display::vehicle_battery_percent_text_color(
+                                                vehicle_reader ).first;
+                if( !battery.empty() ) {
+                    vehicle_detail += " " + string_format( _( "Battery: %s." ), battery );
+                }
+            }
+            if( veh.skidding ) {
+                vehicle_detail += " " + std::string( _( "Warning: vehicle is skidding." ) );
+            }
+            result.nodes.push_back( document( "reader:vehicle:detail",
+                                              _( "Vehicle condition" ), vehicle_detail ) );
+            if( local_driver ) {
+                result.nodes.push_back( button( "reader:vehicle:brake",
+                                                _( "Emergency handbrake" ),
+                                                _( "Applies the native vehicle handbrake." ) ) );
+                if( veh.has_part( "HORN" ) ) {
+                    result.nodes.push_back( button( "reader:vehicle:horn",
+                                                    _( "Sound vehicle horn" ),
+                                                    _( "Sounds the installed horn if usable." ) ) );
+                }
+            }
+        }
+    }
+
     const avatar &character = get_avatar();
     std::string character_details = string_format(
                                         _( "Character information.  %s." ), character.get_name() );
