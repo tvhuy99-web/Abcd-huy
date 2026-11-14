@@ -2989,15 +2989,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         } else if ("hub:settings".equals(target)) {
-            // The retired duplicate Settings shortcut now invokes the existing
-            // native Options action instead of creating another Settings screen.
-            executeShortcutTarget("action:open_options");
+            executeShortcutTarget("action:open_game_settings");
             return;
         } else if ("hub:tts".equals(target)) {
             activity.onAccessibilityOpenTtsSettings();
             return;
         } else if ("hub:reader_setup".equals(target)) {
-            activity.onAccessibilityOpenAccessibilitySettings();
+            executeShortcutTarget("action:open_game_settings");
             return;
         } else if ("hub:debug_log".equals(target)) {
             activity.onAccessibilityOpenDebugLog();
@@ -3839,7 +3837,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("hub:tts".equals(target)) { return activity.getString(R.string.a11yHubTts); }
         if ("hub:reader_setup".equals(target)) {
-            return activity.getString(R.string.a11yAccessibilitySettingsTitle);
+            return activity.getString(R.string.a11yGameSettingsTitle);
         }
         if ("hub:debug_log".equals(target)) {
             return activity.getString(R.string.a11yDebugLogTitle);
@@ -3924,9 +3922,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 root.cancelGesture();
                 render();
                 readCurrent();
-                return;
-            case GameActionHub.OPEN_ACCESSIBILITY_SETTINGS:
-                activity.onAccessibilityOpenAccessibilitySettings();
                 return;
             case GameActionHub.OPEN_DEBUG_LOG:
                 activity.onAccessibilityOpenDebugLog();

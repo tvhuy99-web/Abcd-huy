@@ -123,5 +123,8 @@ class main_menu
         std::string halloween_graves();
 };
 
+// Open the main-menu Settings commands while a game is running.
+void show_game_settings_menu();
+
 #endif // CATA_SRC_MAIN_MENU_H
 

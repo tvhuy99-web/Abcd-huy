@@ -402,6 +402,8 @@ std::string action_ident( action_id act )
             return "HELP_KEYBINDINGS";
         case ACTION_OPTIONS:
             return "open_options";
+        case ACTION_GAME_SETTINGS_MENU:
+            return "open_game_settings";
         case ACTION_AUTOPICKUP:
             return "open_autopickup";
         case ACTION_AUTONOTES:
@@ -457,6 +459,7 @@ bool can_action_change_worldstate( const action_id act )
         case ACTION_MAIN_MENU:
         case ACTION_KEYBINDINGS:
         case ACTION_OPTIONS:
+        case ACTION_GAME_SETTINGS_MENU:
         case ACTION_AUTOPICKUP:
         case ACTION_AUTONOTES:
         case ACTION_SAFEMODE:
@@ -1247,6 +1250,7 @@ action_id handle_main_menu()
                           ctxt.get_action_name( action_ident( ACTION_KEYBINDINGS ) ) );
 
     REGISTER_ACTION( ACTION_OPTIONS );
+    REGISTER_ACTION( ACTION_GAME_SETTINGS_MENU );
     REGISTER_ACTION( ACTION_TOGGLE_PANEL_ADM );
     REGISTER_ACTION( ACTION_AUTOPICKUP );
     REGISTER_ACTION( ACTION_AUTONOTES );

@@ -358,6 +358,8 @@ enum action_id : int {
     ACTION_TOGGLE_HOUR_TIMER,
     /** Interact with the current or nearby tile */
     ACTION_INTERACT,
+    /** Open the original Settings choices while playing. */
+    ACTION_GAME_SETTINGS_MENU,
     /** Not an action, serves as count of enumerated actions */
     NUM_ACTIONS
     /**@}*/

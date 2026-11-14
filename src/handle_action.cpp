@@ -3909,6 +3909,10 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
             get_options().show( true );
             break;
 
+        case ACTION_GAME_SETTINGS_MENU:
+            show_game_settings_menu();
+            break;
+
         case ACTION_AUTOPICKUP:
             get_auto_pickup().show();
             break;

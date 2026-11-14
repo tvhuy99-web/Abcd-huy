@@ -20,8 +20,6 @@ final class GameActionHub {
     static final int OPEN_GROUP = 1;
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
-    // Android reader settings use the existing Activity, not another hub.
-    static final int OPEN_ACCESSIBILITY_SETTINGS = 11;
     static final int OPEN_DEBUG_LOG = 10;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
@@ -51,7 +49,6 @@ final class GameActionHub {
                 case OPEN_SEARCH: return "hub:search";
                 case OPEN_ALL: return "hub:all";
                 case OPEN_DEBUG_LOG: return "hub:debug_log";
-                case OPEN_ACCESSIBILITY_SETTINGS: return "hub:reader_setup";
                 case OPEN_DIRECTIONS: return "hub:directions";
                 case OPEN_FAVORITES: return "hub:favorites";
                 case EXECUTE: return node.isEmpty() ? null : "action:" + node;
@@ -132,7 +129,7 @@ final class GameActionHub {
                     "open_distraction_manager" },
             { "messages", "help", "HELP_KEYBINDINGS", "look", "map",
                     "player_data", "diary" },
-            { "save", "quicksave", "quickload", "open_options",
+            { "save", "quicksave", "quickload", "open_game_settings",
                     "open_world_mods", "open_distraction_manager", "help", "debug" }
     };
 
@@ -219,18 +216,15 @@ final class GameActionHub {
                 return new Entry(context.getString(TITLES[SEARCH]), "", OPEN_SEARCH, SEARCH);
             case "hub:all":
                 return new Entry(context.getString(R.string.a11yHubAllCommands), "", OPEN_ALL, 0);
-            // Convert only a favorite for the retired duplicate Settings hub
-            // into the already published Options action, when available.
+            // Old Settings favorites now use the complete native Settings list.
             case "hub:settings":
-                ReaderSnapshot.Node options = snapshot == null
-                        ? null : snapshot.find("open_options");
-                if (options == null || !options.enabled
-                        || !options.actions.contains("activate")) { return null; }
-                return new Entry(spokenNodeLabel(context, options),
-                        "open_options", EXECUTE, 0);
             case "hub:reader_setup":
-                return new Entry(context.getString(R.string.a11yAccessibilitySettingsTitle),
-                        "", OPEN_ACCESSIBILITY_SETTINGS, 0);
+                ReaderSnapshot.Node settings = snapshot == null
+                        ? null : snapshot.find("open_game_settings");
+                if (settings == null || !settings.enabled
+                        || !settings.actions.contains("activate")) { return null; }
+                return new Entry(spokenNodeLabel(context, settings),
+                        "open_game_settings", EXECUTE, 0);
             case "hub:tts":
                 return null;
             case "hub:debug_log":
@@ -322,8 +316,6 @@ final class GameActionHub {
         }
         for (String id : ACTIONS[section]) { addNode(result, context, snapshot, id, seen); }
         if (section == 15) {
-            result.add(new Entry(context.getString(R.string.a11yAccessibilitySettingsTitle),
-                    "", OPEN_ACCESSIBILITY_SETTINGS, 0));
             result.add(new Entry(context.getString(R.string.a11yDebugLogTitle),
                     "", OPEN_DEBUG_LOG, 0));
         }
