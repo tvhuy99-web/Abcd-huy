@@ -78,6 +78,38 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertIn('full_recipe_detail_text( *current[line], reader_detail_quantity )',
                       intent)
 
+    def test_two_fingers_up_confirms_crafting_detail_with_selected_quantity(self):
+        java = (ROOT / "android/app/src/main/java/com/cleverraven/"
+                "cataclysmdda/GameReaderController.java").read_text(encoding="utf-8")
+        confirm = _region(java, "public void confirm() {",
+                          "public boolean movementPracticeEnabled()")
+        self.assertIn('if ("crafting".equals(snapshot.category)) {', confirm)
+        self.assertIn('snapshot.find("craft:detail:qty:current") != null', confirm)
+        self.assertIn('snapshot.find("craft:detail:confirm")', confirm)
+        self.assertIn('focus = craft.id;', confirm)
+        self.assertIn('send("activate", "");', confirm)
+        self.assertLess(confirm.index('snapshot.find("craft:detail:confirm")'),
+                        confirm.index('for (String id : new String[] { "CONFIRM"'))
+        native = _region(CRAFT, 'if( reader_detail_open ) {\n        // Back closes',
+                         '// Apply spoken tab/subtab controls')
+        self.assertIn('intent.node == "craft:detail:confirm"', native)
+        self.assertIn('manual_batch = reader_detail_quantity;', native)
+        self.assertIn('return "CONFIRM";', native)
+
+    def test_each_material_alternative_group_has_its_own_numbered_heading(self):
+        helper = _region(CRAFT, "static void append_reader_requirement_nodes(",
+                         '// Resolve a "…:req:<kind>:<group>:<alt>"')
+        self.assertIn('heading.label = string_format( _( "Requirement %d" ),', helper)
+        self.assertIn('heading.value = _( "Choose one of the following." );',
+                      helper)
+        self.assertIn('heading.actions = { "focus" };', helper)
+        self.assertIn('heading.id = prefix + ":requirement:"', helper)
+        self.assertEqual(helper.count("add_requirement_header( group.size() );"), 3)
+        self.assertIn('if( alternatives > 1 ) {', helper)
+        self.assertIn('++requirement_number', helper)
+        self.assertIn('std::to_string( group_index ) + ":" +', helper)
+        self.assertIn('msgid "Requirement %d"\nmsgstr "Yêu cầu %d"', VI)
+
     def test_requirement_focuses_announce_have_and_need(self):
         helper = _region(CRAFT, "static int reader_requirement_have(",
                          "std::string crafting_ui_impl::full_recipe_detail_text")

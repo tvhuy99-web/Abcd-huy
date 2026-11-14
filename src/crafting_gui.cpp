@@ -2742,8 +2742,23 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
         node.actions = { "focus", "read_detail" };
         nodes.push_back( std::move( node ) );
     };
+    int requirement_number = 0;
+    const auto add_requirement_header = [&]( const std::size_t alternatives ) {
+        a11y::semantic_node heading;
+        heading.id = prefix + ":requirement:" + std::to_string( ++requirement_number );
+        heading.role = "text";
+        heading.label = string_format( _( "Requirement %d" ), requirement_number );
+        // All entries inside one group are alternatives, never simultaneous
+        // demands. Even a one-option group still has its own numbered heading.
+        if( alternatives > 1 ) {
+            heading.value = _( "Choose one of the following." );
+        }
+        heading.actions = { "focus" };
+        nodes.push_back( std::move( heading ) );
+    };
     std::size_t group_index = 0;
     for( const auto &group : requirements.get_qualities() ) {
+        add_requirement_header( group.size() );
         std::size_t alt_index = 0;
         for( const quality_requirement &alternative : group ) {
             add_node( prefix + ":req:quality:" + std::to_string( group_index ) + ":" +
@@ -2755,6 +2770,7 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
     }
     group_index = 0;
     for( const auto &group : requirements.get_tools() ) {
+        add_requirement_header( group.size() );
         std::size_t alt_index = 0;
         for( const tool_comp &alternative : group ) {
             add_node( prefix + ":req:tool:" + std::to_string( group_index ) + ":" +
@@ -2766,6 +2782,7 @@ static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &n
     }
     group_index = 0;
     for( const auto &group : requirements.get_components() ) {
+        add_requirement_header( group.size() );
         std::size_t alt_index = 0;
         for( const item_comp &alternative : group ) {
             add_node( prefix + ":req:component:" + std::to_string( group_index ) + ":" +

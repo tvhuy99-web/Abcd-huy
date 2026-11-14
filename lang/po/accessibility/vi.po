@@ -5895,3 +5895,9 @@ msgstr "Tạm dừng hoặc tiếp tục lái xe"
 msgid "You board the driver's seat."
 msgstr "Bạn đã ngồi vào ghế lái."
 
+
+msgid "Requirement %d"
+msgstr "Yêu cầu %d"
+
+msgid "Choose one of the following."
+msgstr "Chỉ cần một trong các lựa chọn sau."

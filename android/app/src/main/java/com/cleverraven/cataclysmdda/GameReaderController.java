@@ -3126,6 +3126,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 return;
             }
         }
+        // The crafting detail pane owns its own explicit Craft action.
+        // Confirm must commit its selected quantity through that action,
+        // never the generic CRAFTING/CONFIRM command from the command tail.
+        if ("crafting".equals(snapshot.category)) {
+            // Number-choice screen is not a craft confirmation screen.
+            if (snapshot.find("craft:detail:qty:current") != null) {
+                feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+                return;
+            }
+            ReaderSnapshot.Node craft = snapshot.find("craft:detail:confirm");
+            if (craft != null) {
+                if (!craft.enabled || !craft.actions.contains("activate")) {
+                    feedback(activity.getString(R.string.a11yContextConfirmUnavailable));
+                    return;
+                }
+                String previous = focus;
+                focus = craft.id;
+                send("activate", "");
+                focus = previous;
+                return;
+            }
+        }
         ReaderSnapshot.Node chosen = snapshot.find(focus);
         if (chosen == null) { return; }
         // Native explicit approval takes priority over the focused "No" option.
