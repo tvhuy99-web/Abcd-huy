@@ -3229,10 +3229,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // steering physics. Map/Combat bindings cannot override these.
             switch (gestureId) {
                 case "swipe_up":
-                    requestVehicleAction("UP");
+                    requestVehicleAction("reader:vehicle:forward");
                     return true;
                 case "swipe_down":
-                    requestVehicleAction("DOWN");
+                    requestVehicleAction("reader:vehicle:reverse");
                     return true;
                 case "swipe_left":
                     requestVehicleAction("LEFT");
@@ -3241,10 +3241,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     requestVehicleAction("RIGHT");
                     return true;
                 case "swipe_up_down":
-                    requestVehicleAction("UP");
+                    requestVehicleAction("reader:vehicle:faster");
                     return true;
                 case "swipe_down_up":
-                    requestVehicleAction("DOWN");
+                    requestVehicleAction("reader:vehicle:slower");
                     return true;
                 case "swipe_left_right":
                     requestVehicleAction("reader:vehicle:heading:left");
