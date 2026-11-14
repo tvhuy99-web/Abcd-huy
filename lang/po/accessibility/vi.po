@@ -5860,3 +5860,31 @@ msgstr "Đang phanh tự động: phía sau có %1$s, cách khoảng %2$d ô."
 
 msgid "Warning: vehicle is skidding; steering may not respond."
 msgstr "Cảnh báo: xe đang trượt, thao tác đánh lái có thể không có tác dụng."
+
+msgid "Pause driving"
+msgstr "Tạm dừng lái xe"
+
+msgid "Resume driving"
+msgstr "Tiếp tục lái xe"
+
+msgid "Driving paused."
+msgstr "Đang tạm dừng lái xe."
+
+msgid "Driving paused. Braking to a stop."
+msgstr "Đã tạm dừng lái xe. Đang phanh để dừng."
+
+msgid "Driving resumed."
+msgstr "Đã tiếp tục lái xe."
+
+msgid "Driving is paused. Double-tap to resume."
+msgstr "Lái xe đang tạm dừng. Chạm đôi một ngón để tiếp tục."
+
+msgid "Vehicle still moving. Braking again before resuming."
+msgstr "Xe vẫn đang di chuyển. Đang phanh thêm trước khi tiếp tục."
+
+#, c-format
+msgid "Cannot resume: %1$s blocks the path about %2$d tiles away."
+msgstr "Không thể tiếp tục: %1$s chắn đường cách khoảng %2$d ô."
+
+msgid "Cannot resume: vehicle cannot safely move."
+msgstr "Không thể tiếp tục: phương tiện chưa thể di chuyển an toàn."

@@ -16,9 +16,7 @@
 #include <utility>
 
 #include "active_item_cache.h"
-#if defined(__ANDROID__)
 #include "a11y_android.h"
-#endif
 #include "ammo.h"
 #include "ammo_effect.h"
 #include "avatar.h"

@@ -523,6 +523,8 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Decrease vehicle speed" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_BRAKE",
                           to_translation( "Emergency vehicle handbrake" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_PAUSE",
+                          to_translation( "Pause or resume driving" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HORN",
                           to_translation( "Sound the vehicle horn" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_LEFT",
@@ -622,6 +624,7 @@ input_context game::get_player_input( std::string &action )
               intent.node == "reader:vehicle:faster" ||
               intent.node == "reader:vehicle:slower" ||
               intent.node == "reader:vehicle:brake" ||
+              intent.node == "reader:vehicle:pause" ||
               intent.node == "reader:vehicle:horn" ||
               intent.node == "reader:vehicle:heading:left" ||
               intent.node == "reader:vehicle:heading:right" ) ) {
@@ -652,6 +655,9 @@ input_context game::get_player_input( std::string &action )
             }
             if( intent.node == "reader:vehicle:brake" ) {
                 return "A11Y_INTERNAL_VEHICLE_BRAKE";
+            }
+            if( intent.node == "reader:vehicle:pause" ) {
+                return "A11Y_INTERNAL_VEHICLE_PAUSE";
             }
             if( seated->vehicle().has_part( "HORN" ) ) {
                 return "A11Y_INTERNAL_VEHICLE_HORN";
@@ -3046,9 +3052,12 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 seat->vehicle().player_in_control( here, player_character ) &&
                 ( !g || g->remoteveh() != &seat->vehicle() ) ) {
                 vehicle &car = seat->vehicle();
-                // All acceleration now follows pldrive's original safe-mode,
-                // steering/engine validations and game-time semantics.
-                switch( throttle ) {
+                // Never accelerate while the accessible driving mode is paused.
+                if( car.a11y_drive_paused ) {
+                    add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
+                } else {
+                    // Retain pldrive's original checks and timing.
+                    switch( throttle ) {
                     case a11y_vehicle_throttle::forward:
                         if( car.cruise_velocity < 0 || car.velocity < 0 ) {
                             car.cruise_velocity = 0;
@@ -3093,10 +3102,17 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         break;
                     case a11y_vehicle_throttle::none:
                         break;
+                    }
                 }
             }
         } else {
-            pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
+            const optional_vpart_position seated = here.veh_at(
+                        player_character.pos_bub( here ) );
+            if( seated && seated->vehicle().a11y_drive_paused ) {
+                add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
+            } else {
+                pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
+            }
         }
     } else {
         const int pre_walk_moves = player_character.get_moves();
@@ -4372,6 +4388,50 @@ bool game::handle_action()
             // action rather than implementing another vehicle physics path.
             if( veh_ctrl && player_character.controlling_vehicle ) {
                 act = ACTION_SMASH;
+            }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_PAUSE" ) {
+            // A pause is physical braking; resuming is guarded by the real
+            // speed and projected obstacle clearance, never a blind restart.
+            map &vehicle_map = get_map();
+            const optional_vpart_position seated = vehicle_map.veh_at(
+                        player_character.pos_bub( vehicle_map ) );
+            if( !veh_ctrl || !seated || !player_character.in_vehicle ||
+                !player_character.controlling_vehicle ||
+                !seated->vehicle().player_in_control( vehicle_map, player_character ) ||
+                ( g && g->remoteveh() == &seated->vehicle() ) ) {
+                return false;
+            }
+            vehicle &car = seated->vehicle();
+            if( !car.a11y_drive_paused ) {
+                car.a11y_resume_cruise_velocity = car.cruise_velocity;
+                car.a11y_drive_paused = true;
+                add_msg( m_info, _( "Driving paused. Braking to a stop." ) );
+                // Same handbrake used by every other native driver.
+                act = ACTION_SMASH;
+            } else if( car.velocity != 0 ) {
+                add_msg( m_warning, _( "Vehicle still moving. Braking again before resuming." ) );
+                act = ACTION_SMASH;
+            } else {
+                const int saved_speed = car.a11y_resume_cruise_velocity;
+                const std::optional<a11y::vehicle_obstacle> hazard =
+                    a11y::vehicle_obstacle_ahead( car, vehicle_map, saved_speed < 0 );
+                const int distance = std::clamp( 8 + std::abs( saved_speed ) / 500, 8, 32 );
+                if( saved_speed != 0 && hazard && hazard->distance <= distance ) {
+                    add_msg( m_warning,
+                             _( "Cannot resume: %1$s blocks the path about %2$d tiles away." ),
+                             hazard->label, hazard->distance );
+                    return false;
+                }
+                const int safe_speed = std::max( 0, car.safe_velocity( vehicle_map ) );
+                if( saved_speed != 0 && safe_speed == 0 ) {
+                    add_msg( m_warning, _( "Cannot resume: vehicle cannot safely move." ) );
+                    return false;
+                }
+                car.cruise_velocity = std::clamp( saved_speed, -safe_speed, safe_speed );
+                car.a11y_resume_cruise_velocity = 0;
+                car.a11y_drive_paused = false;
+                add_msg( m_info, _( "Driving resumed." ) );
+                return false;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
             map &vehicle_map = get_map();

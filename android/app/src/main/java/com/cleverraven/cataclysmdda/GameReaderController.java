@@ -2255,6 +2255,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             showHubActionChoices();
             return;
         }
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            // Drive-mode hold opens the real native vehicle interaction menu,
+            // not the global action hub or an extra simulated overlay.
+            if (!vehicleDriverReady()) {
+                feedback(activity.getString(R.string.a11yDriveNotReady));
+                return;
+            }
+            ReaderSnapshot.Node command = snapshot.find("control_vehicle");
+            if (command == null || !command.enabled
+                    || !command.actions.contains("activate")) {
+                feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+                return;
+            }
+            requestLiveWorldCommand("control_vehicle");
+            return;
+        }
         if (combatMode && directWorldGesturesEnabled()) {
             // Long press opens the existing combat menu with the aiming
             // mode switch as its first row, not an extra modal overlay.
@@ -3202,7 +3218,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             pendingVehicleRoadReport = true;
-        } else if ("reader:vehicle:forward".equals(id)
+        } else if ("reader:vehicle:pause".equals(id)
+                || "reader:vehicle:forward".equals(id)
                 || "reader:vehicle:reverse".equals(id)
                 || "reader:vehicle:faster".equals(id)
                 || "reader:vehicle:slower".equals(id)) {
@@ -3672,6 +3689,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void activate() {
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        // World double tap becomes Pause/Resume only when Drive is active.
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            requestVehicleAction("reader:vehicle:pause");
+            return;
+        }
         if (debugReport != null) {
             if (debugFocus == 0) { readCurrent(); }
             else { submitDebugResponse(debugFocus); }

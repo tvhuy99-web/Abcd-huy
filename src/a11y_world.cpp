@@ -729,6 +729,8 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
 
             const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
             const std::string speed = local_driver ?
+                                      ( veh.a11y_drive_paused ?
+                                        std::string( _( "Driving paused." ) ) + " " : "" ) +
                                       ( reversing ? std::string( _( "Reversing." ) ) + " " : "" ) +
                                       string_format(
                                           _( "Current speed: %1$d %3$s. Target speed: %2$d %3$s." ),
@@ -820,6 +822,9 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( document( "reader:vehicle:road",
                                               _( "Road ahead" ), road ) );
             if( local_driver ) {
+                result.nodes.push_back( button( "reader:vehicle:pause",
+                                                veh.a11y_drive_paused ?
+                                                _( "Resume driving" ) : _( "Pause driving" ), "" ) );
                 // Keep direction selection separate from requested speed.
                 // These buttons are validated again on the native game thread.
                 result.nodes.push_back( button( "reader:vehicle:forward",
@@ -1592,15 +1597,30 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
     const units::angle desired_delta = normalize( veh.turn_dir - veh.face.dir() +
                                       ( reverse ? 180_degrees : 0_degrees ) );
     const std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
-                                            horizon );
+                                            horizon, reverse );
     std::optional<vehicle_obstacle> nearest;
-    const point_bub_ms origin = veh.pos_bub( here ).xy();
+    // Measure the gap to the closest actual vehicle body tile. The vehicle
+    // origin may lie many tiles behind the front of a bus or a large truck.
+    std::vector<point_bub_ms> body_tiles;
+    for( int i = 0; i < veh.part_count(); ++i ) {
+        const vehicle_part &part = veh.part( i );
+        if( !part.removed && !part.is_fake ) {
+            body_tiles.push_back( veh.bub_part_pos( here, i ).xy() );
+        }
+    }
+    const auto clearance = [&body_tiles, horizon]( const point_bub_ms &target ) {
+        int closest = horizon;
+        for( const point_bub_ms &body : body_tiles ) {
+            closest = std::min( closest, static_cast<int>( rl_dist( body, target ) ) );
+        }
+        return std::max( 1, closest );
+    };
     const int z = veh.pos_bub( here ).z();
     for( const point_abs_ms &point : projected ) {
         const point_bub_ms tile_xy = here.get_bub( point );
         const tripoint_bub_ms tile( tile_xy, z );
         if( !here.inbounds( tile ) ) {
-            const int distance = std::max( 1, static_cast<int>( rl_dist( origin, tile_xy ) ) );
+            const int distance = clearance( tile_xy );
             if( !nearest || distance < nearest->distance ) {
                 nearest = vehicle_obstacle{ distance, _( "Unloaded map boundary" ) };
             }
@@ -1623,7 +1643,7 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         if( label.empty() ) {
             continue;
         }
-        const int distance = std::max( 1, static_cast<int>( rl_dist( origin, tile_xy ) ) );
+        const int distance = clearance( tile_xy );
         if( !nearest || distance < nearest->distance ) {
             nearest = vehicle_obstacle{ distance, remove_color_tags( label ) };
         }

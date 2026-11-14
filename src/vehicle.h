@@ -1103,12 +1103,15 @@ class vehicle
         bool handle_potential_theft( Character const &you, bool check_only = false, bool prompt = true );
         // project a tileray forward to predict obstacles
         std::set<point_abs_ms> immediate_path( map *here, const units::angle &rotate = 0_degrees,
-                                                int requested_distance = 0 );
+                                                int requested_distance = 0, bool reverse = false );
         std::set<point_abs_ms> collision_check_points; // NOLINT(cata-serialize)
         // A spoken warning is emitted once for a continuing braking event,
         // not on every physics update while a vehicle is still moving.
         bool a11y_brake_alerted = false; // NOLINT(cata-serialize)
         bool a11y_skid_alerted = false; // NOLINT(cata-serialize)
+        // Session-only pause state, never restored as a saved throttle.
+        bool a11y_drive_paused = false; // NOLINT(cata-serialize)
+        int a11y_resume_cruise_velocity = 0; // NOLINT(cata-serialize)
         void autopilot_patrol( map *here );
         units::angle get_angle_from_targ( const tripoint_abs_ms &targ ) const;
         void drive_to_local_target( map *here, const tripoint_abs_ms &target, bool follow_protocol );

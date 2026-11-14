@@ -729,7 +729,7 @@ void vehicle::autopilot_patrol( map *here )
 }
 
 std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &rotate,
-        const int requested_distance )
+        const int requested_distance, const bool reverse )
 {
     std::set<point_abs_ms> points_to_check;
     // Preserve native autopilot behavior unless the accessibility sensor
@@ -741,8 +741,12 @@ std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &r
     adjusted_angle = round_to_multiple_of( adjusted_angle, vehicles::steer_increment );
     tileray collision_vector;
     collision_vector.init( adjusted_angle );
-    point_bub_ms top_left_actual = pos_bub( *here ).xy() + coord_translate( front_left );
-    point_bub_ms top_right_actual = pos_bub( *here ).xy() + coord_translate( front_right );
+    // Scan from the rear physical edge when backing up, not the nose.
+    const point_rel_ms left = reverse ? mount_min : front_left;
+    const point_rel_ms right = reverse ?
+                               point_rel_ms( mount_min.x(), mount_max.y() ) : front_right;
+    point_bub_ms top_left_actual = pos_bub( *here ).xy() + coord_translate( left );
+    point_bub_ms top_right_actual = pos_bub( *here ).xy() + coord_translate( right );
     std::vector<point_abs_ms> front_row = line_to( here->get_abs( tripoint_bub_ms{top_left_actual.x(), top_left_actual.y(), here->get_abs_sub().z()} ).xy(),
                                           here->get_abs( tripoint_bub_ms{ top_right_actual.x(), top_right_actual.y(), here->get_abs_sub().z()} ).xy() );
     for( const point_abs_ms &elem : front_row ) {
@@ -6721,6 +6725,11 @@ void vehicle::gain_moves( map &here )
     fuel_used_last_turn.clear();
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
+    // A new driver cannot inherit an earlier session's paused target.
+    if( !pl_control ) {
+        a11y_drive_paused = false;
+        a11y_resume_cruise_velocity = 0;
+    }
     // Reader driving assistance runs on the GAME thread before native
     // thrust/movement, not when Android speaks a late status update. The
     // projected path spans the vehicle width and ignores player vision.
