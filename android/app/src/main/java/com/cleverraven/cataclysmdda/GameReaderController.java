@@ -143,6 +143,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean targetingOriginalControls;
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
+    private boolean vehicleMode;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -709,6 +710,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
+                // A vehicle may disappear or the character may dismount between
+                // snapshots. Never leave a stale driving mode armed on foot.
+                if ("DEFAULTMODE".equals(next.category)
+                        && next.find("reader:vehicle:seat") == null) {
+                    vehicleMode = false;
+                }
                 // Only world snapshots publish world:messages. Remember the
                 // last non-empty copy so two-finger double-tap can re-read
                 // notifications from any screen. An empty node never wipes
@@ -3145,8 +3152,92 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         focus = previous;
     }
 
+    private boolean vehicleDriverReady() {
+        ReaderSnapshot.Node state = snapshot == null
+                ? null : snapshot.find("reader:vehicle:driver");
+        return state != null && state.enabled;
+    }
+
+    /** Use only actions published by the current native world frame. A
+     * passenger cannot command the vehicle, even with stale Android focus. */
+    private void requestVehicleAction(String id) {
+        if (!vehicleMode || !directWorldGesturesEnabled()) { return; }
+        if (!vehicleDriverReady()) {
+            feedback(activity.getString(R.string.a11yDriveNotReady));
+            return;
+        }
+        ReaderSnapshot.Node node = snapshot.find(id);
+        if (node == null || !node.enabled || !node.actions.contains("activate")) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+            return;
+        }
+        requestLiveWorldCommand(id);
+    }
+
+    private void speakVehicleDocument(String id) {
+        ReaderSnapshot.Node doc = snapshot == null ? null : snapshot.find(id);
+        if (doc == null) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+            return;
+        }
+        String spoken = doc.detail.isEmpty() ? doc.value : doc.detail;
+        if (spoken == null || spoken.isEmpty()) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+        } else {
+            feedback(spoken);
+        }
+    }
+
+    /** Two-finger swipes are reserved in driving mode, before map scan. */
+    @Override
+    public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
+        if (!vehicleMode || !directWorldGesturesEnabled()) { return false; }
+        if (vertical < 0) {
+            speakVehicleDocument("reader:vehicle:speed");
+        } else if (vertical > 0) {
+            speakVehicleDocument("reader:vehicle:detail");
+        } else if (horizontal < 0) {
+            requestVehicleAction("reader:vehicle:brake");
+        } else if (horizontal > 0) {
+            requestVehicleAction("reader:vehicle:horn");
+        }
+        return true;
+    }
+
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            // The native game still handles acceleration, direction and
+            // steering physics. Map/Combat bindings cannot override these.
+            switch (gestureId) {
+                case "swipe_up":
+                    requestVehicleAction("UP");
+                    return true;
+                case "swipe_down":
+                    requestVehicleAction("DOWN");
+                    return true;
+                case "swipe_left":
+                    requestVehicleAction("LEFT");
+                    return true;
+                case "swipe_right":
+                    requestVehicleAction("RIGHT");
+                    return true;
+                case "swipe_up_down":
+                    requestVehicleAction("UP");
+                    return true;
+                case "swipe_down_up":
+                    requestVehicleAction("DOWN");
+                    return true;
+                case "swipe_left_right":
+                    requestVehicleAction("reader:vehicle:heading:left");
+                    return true;
+                case "swipe_right_left":
+                    requestVehicleAction("reader:vehicle:heading:right");
+                    return true;
+                default:
+                    break;
+            }
+        }
         if (combatMode && directWorldGesturesEnabled()) {
             // Old three-finger movement is disabled during combat.
             // On the normal map, saved three-finger shortcuts still work.
@@ -3363,8 +3454,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void toggleCombatMode() {
         if (!directWorldGesturesEnabled()) { return; }
-        // The native world-step gate also rejects vehicle, activity, death
-        // camera, travel, and explore. Do not enter combat in those modes.
+        if (snapshot.find("reader:vehicle:seat") != null) {
+            // On board: Map -> Combat -> Drive -> Map. A seat alone is
+            // sufficient to offer Drive for inspection; the native driver
+            // gate still refuses any control from a passenger.
+            int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;
+            combatMode = nextMode == 1;
+            vehicleMode = nextMode == 2;
+            CataclysmDDA.nativeCancelPendingWorldSteps();
+            clearPendingWorldDirection();
+            root.cancelGesture();
+            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
+            feedback(activity.getString(nextMode == 0 ? R.string.a11yCombatOff
+                    : nextMode == 1 ? R.string.a11yCombatOn
+                    : R.string.a11yDrivingMode));
+            return;
+        }
+        vehicleMode = false;
         if (!combatMode && !snapshot.swipeMovementAllowed) {
             feedback(activity.getString(R.string.a11yCombatUnavailable));
             return;
@@ -4694,6 +4800,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void close() {
         if (closed) { return; }
         combatMode = false;
+        vehicleMode = false;
         closed = true;
         foreground = false;
         presentationEpoch++;
