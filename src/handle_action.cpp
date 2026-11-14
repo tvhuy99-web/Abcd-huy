@@ -139,6 +139,8 @@
 // A heading gesture requests 45 degrees through the original steering physics.
 // Consumed by the next native vehicle move only; reset on each input turn.
 static int a11y_steering_nudge = 1;
+enum class a11y_vehicle_throttle { none, forward, reverse, faster, slower };
+static a11y_vehicle_throttle a11y_throttle = a11y_vehicle_throttle::none;
 
 static const bionic_id bio_remote( "bio_remote" );
 
@@ -511,6 +513,14 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Select previous weapon" ) );
     ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
                           to_translation( "Reload current weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_FORWARD",
+                          to_translation( "Drive forward" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_REVERSE",
+                          to_translation( "Drive in reverse" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_FASTER",
+                          to_translation( "Increase vehicle speed" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_SLOWER",
+                          to_translation( "Decrease vehicle speed" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_BRAKE",
                           to_translation( "Emergency vehicle handbrake" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HORN",
@@ -607,7 +617,11 @@ input_context game::get_player_input( std::string &action )
         // Drive-only actions are resolved against the current physical seat.
         // Never accept a cached Android focus from a passenger or remote car.
         if( intent.action == "activate" &&
-            ( intent.node == "reader:vehicle:brake" ||
+            ( intent.node == "reader:vehicle:forward" ||
+              intent.node == "reader:vehicle:reverse" ||
+              intent.node == "reader:vehicle:faster" ||
+              intent.node == "reader:vehicle:slower" ||
+              intent.node == "reader:vehicle:brake" ||
               intent.node == "reader:vehicle:horn" ||
               intent.node == "reader:vehicle:heading:left" ||
               intent.node == "reader:vehicle:heading:right" ) ) {
@@ -617,6 +631,18 @@ input_context game::get_player_input( std::string &action )
                 ( g && g->remoteveh() == &seated->vehicle() ) ) {
                 a11y::android::status( "blocked", &intent );
                 return std::nullopt;
+            }
+            if( intent.node == "reader:vehicle:forward" ) {
+                return "A11Y_INTERNAL_VEHICLE_FORWARD";
+            }
+            if( intent.node == "reader:vehicle:reverse" ) {
+                return "A11Y_INTERNAL_VEHICLE_REVERSE";
+            }
+            if( intent.node == "reader:vehicle:faster" ) {
+                return "A11Y_INTERNAL_VEHICLE_FASTER";
+            }
+            if( intent.node == "reader:vehicle:slower" ) {
+                return "A11Y_INTERNAL_VEHICLE_SLOWER";
             }
             if( intent.node == "reader:vehicle:heading:left" ) {
                 return "A11Y_INTERNAL_VEHICLE_HEADING_LEFT";
@@ -3012,7 +3038,49 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
         const point_rel_ms direction = get_delta_from_movement_action( act, iso_rotate::no );
         const int nudge = a11y_steering_nudge;
         a11y_steering_nudge = 1;
-        pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
+        const a11y_vehicle_throttle throttle = a11y_throttle;
+        a11y_throttle = a11y_vehicle_throttle::none;
+        if( throttle != a11y_vehicle_throttle::none ) {
+            const optional_vpart_position seat = here.veh_at( player_character.pos_bub( here ) );
+            if( seat && player_character.in_vehicle && player_character.controlling_vehicle &&
+                seat->vehicle().player_in_control( here, player_character ) &&
+                ( !g || g->remoteveh() != &seat->vehicle() ) ) {
+                vehicle &car = seat->vehicle();
+                constexpr int step = 400; // Same native cruise increment as ordinary driving.
+                switch( throttle ) {
+                    case a11y_vehicle_throttle::forward:
+                        if( car.cruise_velocity < 0 || car.velocity < 0 ) {
+                            car.cruise_velocity = 0;
+                            add_msg( m_info, _( "Slowing down before driving forward." ) );
+                        } else if( car.cruise_velocity == 0 ) {
+                            car.cruise_thrust( here, step );
+                            add_msg( m_info, _( "Forward selected." ) );
+                        }
+                        break;
+                    case a11y_vehicle_throttle::reverse:
+                        if( car.cruise_velocity > 0 || car.velocity > 0 ) {
+                            car.cruise_velocity = 0;
+                            add_msg( m_info, _( "Slowing down before reversing." ) );
+                        } else if( car.cruise_velocity == 0 ) {
+                            car.cruise_thrust( here, -step );
+                            add_msg( m_info, _( "Reverse selected." ) );
+                        }
+                        break;
+                    case a11y_vehicle_throttle::faster:
+                        car.cruise_thrust( here, car.cruise_velocity < 0 ? -step : step );
+                        break;
+                    case a11y_vehicle_throttle::slower:
+                        if( car.cruise_velocity != 0 ) {
+                            car.cruise_thrust( here, car.cruise_velocity > 0 ? -step : step );
+                        }
+                        break;
+                    case a11y_vehicle_throttle::none:
+                        break;
+                }
+            }
+        } else {
+            pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
+        }
     } else {
         const int pre_walk_moves = player_character.get_moves();
         point_rel_ms dest_delta = get_delta_from_movement_action( act, iso_rotate::yes );
@@ -4105,6 +4173,7 @@ bool game::handle_action()
     avatar &player_character = get_avatar();
 
     a11y_steering_nudge = 1;
+    a11y_throttle = a11y_vehicle_throttle::none;
     combat_attack_direction = -1;
     combat_cycle_direction = 0;
     combat_reload_to_full = false;
@@ -4255,6 +4324,23 @@ bool game::handle_action()
                     };
                     act = step_actions[dir];
                 }
+            }
+        } else if( a11y::enabled() &&
+                   ( action == "A11Y_INTERNAL_VEHICLE_FORWARD" ||
+                     action == "A11Y_INTERNAL_VEHICLE_REVERSE" ||
+                     action == "A11Y_INTERNAL_VEHICLE_FASTER" ||
+                     action == "A11Y_INTERNAL_VEHICLE_SLOWER" ) ) {
+            if( veh_ctrl && player_character.controlling_vehicle ) {
+                if( action == "A11Y_INTERNAL_VEHICLE_FORWARD" ) {
+                    a11y_throttle = a11y_vehicle_throttle::forward;
+                } else if( action == "A11Y_INTERNAL_VEHICLE_REVERSE" ) {
+                    a11y_throttle = a11y_vehicle_throttle::reverse;
+                } else if( action == "A11Y_INTERNAL_VEHICLE_FASTER" ) {
+                    a11y_throttle = a11y_vehicle_throttle::faster;
+                } else {
+                    a11y_throttle = a11y_vehicle_throttle::slower;
+                }
+                act = ACTION_MOVE_FORTH;
             }
         } else if( a11y::enabled() &&
                    ( action == "A11Y_INTERNAL_VEHICLE_HEADING_LEFT" ||
