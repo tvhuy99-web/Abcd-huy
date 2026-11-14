@@ -435,8 +435,11 @@ public final class ReaderGestureSurface extends LinearLayout {
         // All two-finger taps have built-in actions (one tap also works in
         // menus); the first two three-finger taps are reserved for location
         // and character status. Handle these BEFORE custom bindings.
+        // Two-finger double-tap re-reads recent notifications on every
+        // screen, not only in the live world. Only the triple tap (the
+        // action hub) stays live-world-only.
         if (fingers == 2) {
-            if (count == 1 || listener.directWorldGesturesEnabled()) {
+            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()) {
                 listener.twoFingerTap(count);
             }
             return;
