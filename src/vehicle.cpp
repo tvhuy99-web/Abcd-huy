@@ -19,6 +19,8 @@
 #include <unordered_set>
 #include <utility>
 
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -6715,6 +6717,31 @@ void vehicle::gain_moves( map &here )
     fuel_used_last_turn.clear();
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
+    // Reader driving assistance runs on the GAME thread before native
+    // thrust/movement, not when Android speaks a late status update. The
+    // projected path spans the vehicle width and ignores player vision.
+    // Only local, forward-driving ground vehicles are assisted: passengers,
+    // remotely driven vehicles, aircraft and ordinary players are unchanged.
+    const avatar &driver = get_avatar();
+    if( a11y::enabled() && pl_control && driver.in_vehicle &&
+        driver.controlling_vehicle && !is_rotorcraft( here ) &&
+        velocity > 0 && cruise_velocity > 0 ) {
+        const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
+        if( driver_seat && &driver_seat->vehicle() == this ) {
+            const std::optional<a11y::vehicle_obstacle> hazard =
+                a11y::vehicle_obstacle_ahead( *this, here );
+            // Keep the requested eight-tile warning at low speed and
+            // start braking earlier as speed rises. The native handbrake
+            // may still skid or fail to stop a very fast vehicle in time.
+            const int braking_range = std::clamp( 8 + velocity / 800, 8, 24 );
+            if( hazard && hazard->distance <= braking_range ) {
+                cruise_velocity = 0;
+                handbrake( here );
+                add_msg( m_warning, _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                         hazard->label, hazard->distance );
+            }
+        }
+    }
     if( is_moving() || is_falling ) {
         if( !loose_parts.empty() ) {
             shed_loose_parts();
