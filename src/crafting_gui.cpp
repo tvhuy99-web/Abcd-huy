@@ -2383,7 +2383,11 @@ void crafting_ui_impl::draw_status_header()
 
         ImGui::TableNextRow();
         ImGui::TableNextColumn();
-        if( cataimgui::BeginRightAlign( "##CRAFTER_NAME" ) ) {
+        // When crafting as the player, this constant status text repeats
+        // before every spoken category/recipe after navigation. Keep the
+        // visual header and still identify a non-player crafter.
+        if( ( !a11y::enabled() || !crafter->is_avatar() ) &&
+            cataimgui::BeginRightAlign( "##CRAFTER_NAME" ) ) {
             ImGui::Text( "%s: %s", _( "Crafter" ),
                          crafter->name_and_maybe_activity().c_str() );
             cataimgui::EndRightAlign();
