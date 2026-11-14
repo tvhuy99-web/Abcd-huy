@@ -103,4 +103,5 @@
     <string name="a11yDrivingMode">Driving mode. Vehicle gestures enabled.</string>
     <string name="a11yDriveNotReady">You are not controlling this vehicle. Take control from the driver seat first.</string>
     <string name="a11yDriveActionUnavailable">This vehicle action is currently unavailable.</string>
+    <string name="a11yMapMode">Map mode.</string>
 </resources>
