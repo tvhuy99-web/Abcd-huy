@@ -28,6 +28,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
         default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
+        /** Drive mode: two fingers up/down read status; left brakes; right honks. */
+        default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
         /** Crafting only: one finger horizontally explores recipes. */
@@ -702,10 +704,15 @@ public final class ReaderGestureSurface extends LinearLayout {
                     if (direction != null) {
                         clearMultiTap();
                         if (maxPointers == 2) {
-                            // Only live-world two-finger swipes scan. Modal taps
-                            // are still received, and modal up/down already
-                            // took their dedicated confirmation/back paths.
-                            if (listener.directWorldGesturesEnabled()) {
+                            // Driving takes precedence over the existing map
+                            // scans. Outside Drive, gestures remain unchanged.
+                            int horizontal = "right".equals(direction) ? 1
+                                    : "left".equals(direction) ? -1 : 0;
+                            int vertical = "down".equals(direction) ? 1
+                                    : "up".equals(direction) ? -1 : 0;
+                            if (listener.handleVehicleTwoFingerSwipe(horizontal, vertical)) {
+                                // Already handled by the dedicated driving mode.
+                            } else if (listener.directWorldGesturesEnabled()) {
                                 listener.scanDirection("right".equals(direction) ? 1
                                         : "left".equals(direction) ? -1 : 0,
                                         "down".equals(direction) ? 1
