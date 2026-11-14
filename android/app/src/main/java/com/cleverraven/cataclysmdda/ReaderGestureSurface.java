@@ -26,6 +26,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean adjustFocusedSetting(int delta);
         /** Optional date/hour navigation in the character creator calendar. */
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
+        /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
+        default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
         /** Crafting only: one finger horizontally explores recipes. */
@@ -802,6 +804,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleSurroundingsSwipe(horizontal, vertical)) {
+            return;
+        }
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleInventoryAxisSwipe(horizontal, vertical)) {
             return;
         }
         if (horizontal != 0 && listener.handleCraftingRecipeSwipe(horizontal)) {
