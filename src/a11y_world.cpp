@@ -18,6 +18,7 @@
 #include <initializer_list>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -63,6 +64,8 @@
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units.h"
+#include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vpart_position.h"
@@ -724,10 +727,13 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             controls.actions = { "focus" };
             result.nodes.push_back( std::move( controls ) );
 
-            std::string speed = display::vehicle_cruise_text_color( vehicle_reader ).first;
-            if( speed.empty() ) {
-                speed = _( "Speed is unavailable until you take control." );
-            }
+            const std::string speed = local_driver ?
+                                      string_format(
+                                          _( "Current speed: %1$d %3$s. Target speed: %2$d %3$s." ),
+                                          static_cast<int>( std::lround( convert_velocity( veh.velocity, VU_VEHICLE ) ) ),
+                                          static_cast<int>( std::lround( convert_velocity( veh.cruise_velocity, VU_VEHICLE ) ) ),
+                                          velocity_units( VU_VEHICLE ) ) :
+                                      _( "Speed is unavailable until you take control." );
             result.nodes.push_back( document( "reader:vehicle:speed",
                                               _( "Current and target speed" ), speed ) );
             std::string vehicle_detail = string_format( _( "Vehicle: %s." ), veh.name );
@@ -1481,6 +1487,21 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
         tile.vehicle += ". ";
         tile.vehicle += has_controls ? _( "There are vehicle controls here." ) :
                         _( "No vehicle controls found." );
+        const bool usable_engine = !vehicle->vehicle().get_avail_parts( "ENGINE" ).empty();
+        if( !has_controls ) {
+            tile.vehicle += " " + std::string( _( "Cannot drive: working controls are missing." ) );
+        } else if( !usable_engine ) {
+            tile.vehicle += " " + std::string( _( "Cannot start: no usable engine." ) );
+        } else {
+            // Usable controls and engine are necessary, not sufficient:
+            // damaged wheels, fuel, ownership and terrain can still block driving.
+            tile.vehicle += " " + std::string( _( "Controls and engine available; driving is not guaranteed." ) );
+        }
+        if( vehicle->vehicle().is_locked ) {
+            tile.vehicle += " " + std::string( _( "Vehicle locked." ) );
+        }
+        tile.vehicle += " " + std::string( vehicle->vehicle().engine_on ?
+                                          _( "Engine running." ) : _( "Engine stopped." ) );
     }
     std::map<std::string, int> counts;
     for( const item &obj : here.i_at( position ) ) {
