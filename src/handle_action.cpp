@@ -3109,7 +3109,13 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             const optional_vpart_position seated = here.veh_at(
                         player_character.pos_bub( here ) );
             if( seated && seated->vehicle().a11y_drive_paused ) {
-                add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
+                // Turning the wheel remains available while stopped so a
+                // driver can choose a clear heading before resuming thrust.
+                if( direction.x() != 0 && direction.y() == 0 ) {
+                    pldrive( point_rel_ms( direction.x() * nudge, 0 ) );
+                } else {
+                    add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
+                }
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
             }

@@ -1749,7 +1749,11 @@ void map::board_vehicle( const tripoint_bub_ms &pos, Character *p )
         // were in a vehicle indirectly (the hub showing control_vehicle).
         // Reader-only, so the sighted message log is unchanged.
         if( a11y::android::enabled() ) {
-            add_msg( m_info, _( "You board the vehicle." ) );
+            if( vp->vehicle().avail_part_with_feature( vp->mount_pos(), "CONTROLS" ) >= 0 ) {
+                add_msg( m_info, _( "You board the driver's seat." ) );
+            } else {
+                add_msg( m_info, _( "You board the vehicle." ) );
+            }
         }
     }
 }

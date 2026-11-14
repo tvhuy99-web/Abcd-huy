@@ -147,6 +147,12 @@ class AccessibleVehicleContracts(unittest.TestCase):
             "if (vehicleMode && directWorldGesturesEnabled())", 1)[1].split(
                 "if (combatMode && directWorldGesturesEnabled())", 1)[0])
 
+    def test_steering_remains_available_when_paused(self):
+        self.assertIn("if( seated && seated->vehicle().a11y_drive_paused )", ENGINE)
+        self.assertIn("if( direction.x() != 0 && direction.y() == 0 )", ENGINE)
+        self.assertIn("pldrive( point_rel_ms( direction.x() * nudge, 0 ) );",
+                      ENGINE)
+
     def test_reversing_starts_at_rear_and_clearance_uses_body(self):
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
         self.assertIn("point_rel_ms( mount_min.x(), mount_max.y() )", VEH)

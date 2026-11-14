@@ -5888,3 +5888,9 @@ msgstr "Không thể tiếp tục: %1$s chắn đường cách khoảng %2$d ô.
 
 msgid "Cannot resume: vehicle cannot safely move."
 msgstr "Không thể tiếp tục: phương tiện chưa thể di chuyển an toàn."
+
+msgid "Pause or resume driving"
+msgstr "Tạm dừng hoặc tiếp tục lái xe"
+
+msgid "You board the driver's seat."
+msgstr "Bạn đã ngồi vào ghế lái."
