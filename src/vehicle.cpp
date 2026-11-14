@@ -6729,7 +6729,7 @@ void vehicle::gain_moves( map &here )
     const avatar &driver = get_avatar();
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
-        velocity != 0 && cruise_velocity != 0 ) {
+        velocity != 0 ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
             const bool reverse = velocity < 0;
@@ -6742,10 +6742,21 @@ void vehicle::gain_moves( map &here )
             if( hazard && hazard->distance <= braking_range ) {
                 cruise_velocity = 0;
                 handbrake( here );
-                add_msg( m_warning, _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
-                         hazard->label, hazard->distance );
+                if( !a11y_brake_alerted ) {
+                    add_msg( m_warning,
+                             reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
+                             _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                             hazard->label, hazard->distance );
+                }
+                a11y_brake_alerted = true;
+            } else {
+                a11y_brake_alerted = false;
             }
+        } else {
+            a11y_brake_alerted = false;
         }
+    } else {
+        a11y_brake_alerted = false;
     }
     if( is_moving() || is_falling ) {
         if( !loose_parts.empty() ) {

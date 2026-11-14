@@ -1105,6 +1105,9 @@ class vehicle
         std::set<point_abs_ms> immediate_path( map *here, const units::angle &rotate = 0_degrees,
                                                 int requested_distance = 0 );
         std::set<point_abs_ms> collision_check_points; // NOLINT(cata-serialize)
+        // A spoken warning is emitted once for a continuing braking event,
+        // not on every physics update while a vehicle is still moving.
+        bool a11y_brake_alerted = false; // NOLINT(cata-serialize)
         void autopilot_patrol( map *here );
         units::angle get_angle_from_targ( const tripoint_abs_ms &targ ) const;
         void drive_to_local_target( map *here, const tripoint_abs_ms &target, bool follow_protocol );

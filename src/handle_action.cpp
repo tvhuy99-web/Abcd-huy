@@ -3054,8 +3054,16 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before driving forward." ) );
                         } else if( car.cruise_velocity == 0 ) {
-                            pldrive( point_rel_ms( 0, -1 ) );
-                            add_msg( m_info, _( "Forward selected." ) );
+                            const std::optional<a11y::vehicle_obstacle> obstruction =
+                                a11y::vehicle_obstacle_ahead( car, here );
+                            if( obstruction && obstruction->distance <= 8 ) {
+                                add_msg( m_warning,
+                                         _( "Cannot move forward: %1$s, about %2$d tiles." ),
+                                         obstruction->label, obstruction->distance );
+                            } else {
+                                pldrive( point_rel_ms( 0, -1 ) );
+                                add_msg( m_info, _( "Forward selected." ) );
+                            }
                         }
                         break;
                     case a11y_vehicle_throttle::reverse:
@@ -3063,8 +3071,16 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before reversing." ) );
                         } else if( car.cruise_velocity == 0 ) {
-                            pldrive( point_rel_ms( 0, 1 ) );
-                            add_msg( m_info, _( "Reverse selected." ) );
+                            const std::optional<a11y::vehicle_obstacle> obstruction =
+                                a11y::vehicle_obstacle_ahead( car, here, true );
+                            if( obstruction && obstruction->distance <= 8 ) {
+                                add_msg( m_warning,
+                                         _( "Cannot reverse: %1$s, about %2$d tiles." ),
+                                         obstruction->label, obstruction->distance );
+                            } else {
+                                pldrive( point_rel_ms( 0, 1 ) );
+                                add_msg( m_info, _( "Reverse selected." ) );
+                            }
                         }
                         break;
                     case a11y_vehicle_throttle::faster:
