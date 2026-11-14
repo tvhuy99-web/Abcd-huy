@@ -762,6 +762,45 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                     vehicle_detail += " " + string_format( _( "Battery: %s." ), battery );
                 }
             }
+            if( local_driver ) {
+                const int safe_speed = static_cast<int>( std::lround(
+                        convert_velocity( veh.safe_velocity( get_map() ), VU_VEHICLE ) ) );
+                vehicle_detail += " " + string_format(
+                                      _( "Calculated safe speed: %1$d %2$s." ),
+                                      safe_speed, velocity_units( VU_VEHICLE ) );
+                const float steering = veh.steering_effectiveness( get_map() );
+                vehicle_detail += " " + std::string(
+                                      steering < 0.0f ? _( "Steering system absent." ) :
+                                      steering == 0.0f ? _( "Steering system broken." ) :
+                                      steering < 0.5f ? _( "Steering system weakened." ) :
+                                      _( "Steering system operational." ) );
+                int total_wheels = 0;
+                int intact_wheels = 0;
+                for( int index = 0; index < veh.part_count(); ++index ) {
+                    const vehicle_part &part = veh.part( index );
+                    if( !part.removed && !part.is_fake && part.info().has_flag( VPFLAG_WHEEL ) ) {
+                        ++total_wheels;
+                        if( !part.is_broken() ) {
+                            ++intact_wheels;
+                        }
+                    }
+                }
+                if( total_wheels > 0 ) {
+                    vehicle_detail += " " + string_format( _( "Intact wheels: %1$d of %2$d." ),
+                                                         intact_wheels, total_wheels );
+                }
+                if( !veh.engines.empty() ) {
+                    int intact_engines = 0;
+                    for( const int engine_index : veh.engines ) {
+                        if( !veh.part( engine_index ).is_broken() ) {
+                            ++intact_engines;
+                        }
+                    }
+                    vehicle_detail += " " + string_format( _( "Intact engines: %1$d of %2$d." ),
+                                                         intact_engines,
+                                                         static_cast<int>( veh.engines.size() ) );
+                }
+            }
             if( veh.skidding ) {
                 vehicle_detail += " " + std::string( _( "Warning: vehicle is skidding." ) );
             }

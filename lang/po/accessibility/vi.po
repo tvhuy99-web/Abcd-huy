@@ -5653,3 +5653,207 @@ msgstr "Xây dựng làm từng cái một; số lượng cố định là 1."
 
 msgid "Construct"
 msgstr "Xây dựng"
+
+msgid "On board vehicle"
+msgstr "Đang ở trên phương tiện"
+
+msgid "Driving controls available."
+msgstr "Đã có quyền điều khiển phương tiện."
+
+msgid "You are not currently driving this vehicle."
+msgstr "Bạn hiện chưa điều khiển phương tiện này."
+
+msgid "Vehicle driver controls"
+msgstr "Quyền điều khiển phương tiện"
+
+msgid "Available"
+msgstr "Khả dụng"
+
+msgid "Unavailable"
+msgstr "Không khả dụng"
+
+msgid "Reversing."
+msgstr "Đang lùi."
+
+#, c-format
+msgid "Current speed: %1$d %3$s. Target speed: %2$d %3$s."
+msgstr "Tốc độ hiện tại: %1$d %3$s. Tốc độ mục tiêu: %2$d %3$s."
+
+msgid "Speed is unavailable until you take control."
+msgstr "Chưa thể đọc tốc độ khi bạn chưa nhận quyền điều khiển."
+
+msgid "Engine running."
+msgstr "Động cơ đang hoạt động."
+
+msgid "Engine stopped."
+msgstr "Động cơ đang tắt."
+
+#, c-format
+msgid "Direction: %s."
+msgstr "Hướng đầu xe: %s."
+
+#, c-format
+msgid "Requested heading: %s."
+msgstr "Hướng lái được yêu cầu: %s."
+
+#, c-format
+msgid "Fuel: %s."
+msgstr "Nhiên liệu: %s."
+
+#, c-format
+msgid "Battery: %s."
+msgstr "Ắc quy: %s."
+
+msgid "Warning: vehicle is skidding."
+msgstr "Cảnh báo: xe đang trượt."
+
+#, c-format
+msgid "Calculated safe speed: %1$d %2$s."
+msgstr "Tốc độ an toàn ước tính: %1$d %2$s."
+
+msgid "Steering system absent."
+msgstr "Không có hệ thống lái."
+
+msgid "Steering system broken."
+msgstr "Hệ thống lái bị hỏng hoàn toàn."
+
+msgid "Steering system weakened."
+msgstr "Hệ thống lái đang suy giảm hiệu quả."
+
+msgid "Steering system operational."
+msgstr "Hệ thống lái hoạt động."
+
+#, c-format
+msgid "Intact wheels: %1$d of %2$d."
+msgstr "Bánh xe còn nguyên: %1$d trên tổng số %2$d."
+
+#, c-format
+msgid "Intact engines: %1$d of %2$d."
+msgstr "Động cơ chưa bị hỏng: %1$d trên tổng số %2$d."
+
+#, c-format
+msgid "%1$s behind, about %2$d tiles."
+msgstr "Phía sau có %1$s, cách khoảng %2$d ô."
+
+#, c-format
+msgid "%1$s ahead, about %2$d tiles."
+msgstr "Phía trước có %1$s, cách khoảng %2$d ô."
+
+msgid "No obstacle found along the checked reverse path."
+msgstr "Không phát hiện vật cản trên phần đường lùi đã quét."
+
+msgid "No blocking obstacle detected along the checked forward path."
+msgstr "Không phát hiện vật cản trên phần đường tiến đã quét."
+
+msgid "Vehicle condition"
+msgstr "Tình trạng phương tiện"
+
+msgid "Road ahead"
+msgstr "Đường phía trước"
+
+msgid "Select forward driving"
+msgstr "Chọn chạy tiến"
+
+msgid "Select reverse driving"
+msgstr "Chọn chạy lùi"
+
+msgid "Increase target driving speed"
+msgstr "Tăng tốc độ mục tiêu"
+
+msgid "Decrease target driving speed"
+msgstr "Giảm tốc độ mục tiêu"
+
+msgid "Emergency handbrake"
+msgstr "Phanh tay khẩn cấp"
+
+msgid "Applies the native vehicle handbrake."
+msgstr "Sử dụng phanh tay thật của phương tiện."
+
+msgid "Turn vehicle heading left by 45 degrees"
+msgstr "Chuyển hướng đầu xe sang trái 45 độ"
+
+msgid "Turn vehicle heading right by 45 degrees"
+msgstr "Chuyển hướng đầu xe sang phải 45 độ"
+
+msgid "Requests three native 15-degree steering increments."
+msgstr "Yêu cầu ba nấc đánh lái, mỗi nấc 15 độ, theo cơ chế của game."
+
+msgid "Sound vehicle horn"
+msgstr "Bấm còi xe"
+
+msgid "Sounds the installed horn if usable."
+msgstr "Bấm còi đã lắp trên xe nếu có thể dùng."
+
+msgid "There are vehicle controls here."
+msgstr "Có bộ điều khiển phương tiện tại đây."
+
+msgid "No vehicle controls found."
+msgstr "Không tìm thấy bộ điều khiển phương tiện."
+
+msgid "Cannot drive: working controls are missing."
+msgstr "Không thể lái: thiếu bộ điều khiển còn hoạt động."
+
+msgid "Cannot start: no usable engine."
+msgstr "Không thể khởi động: không có động cơ sử dụng được."
+
+msgid "Controls and engine available; driving is not guaranteed."
+msgstr "Có bộ điều khiển và động cơ; chưa bảo đảm xe có thể vận hành."
+
+msgid "Vehicle locked."
+msgstr "Xe đang khóa."
+
+msgid "Unloaded map boundary"
+msgstr "Ranh giới bản đồ chưa tải"
+
+msgid "Find a vehicle and board the driver's seat"
+msgstr "Tìm xe rồi tự đi đến ghế lái và ngồi vào"
+
+msgid "Interact with nearby vehicle controls"
+msgstr "Tương tác với bộ điều khiển phương tiện gần đây"
+
+msgid "Choose vehicle controls"
+msgstr "Chọn bộ điều khiển phương tiện"
+
+#, c-format
+msgid "%1$s, %2$s, %3$d tiles away"
+msgstr "%1$s, hướng %2$s, cách %3$d ô"
+
+msgid "No boardable driver seats found within 16 tiles."
+msgstr "Không tìm thấy ghế lái có thể ngồi trong phạm vi 16 ô."
+
+msgid "The selected driver seat is no longer available."
+msgstr "Ghế lái đã chọn hiện không còn sử dụng được."
+
+msgid "No safe walking route to that driver's seat."
+msgstr "Không tìm thấy đường đi an toàn đến ghế lái đó."
+
+msgid "Walking to the driver's seat."
+msgstr "Đang tự di chuyển đến ghế lái."
+
+msgid "Slowing down before driving forward."
+msgstr "Đang giảm tốc để chuyển sang chạy tiến."
+
+msgid "Forward selected."
+msgstr "Đã chọn chạy tiến."
+
+msgid "Slowing down before reversing."
+msgstr "Đang giảm tốc để chuyển sang chạy lùi."
+
+msgid "Reverse selected."
+msgstr "Đã chọn chạy lùi."
+
+#, c-format
+msgid "Cannot move forward: %1$s, about %2$d tiles."
+msgstr "Không thể tiến: %1$s ở phía trước, cách khoảng %2$d ô."
+
+#, c-format
+msgid "Cannot reverse: %1$s, about %2$d tiles."
+msgstr "Không thể lùi: %1$s ở phía sau, cách khoảng %2$d ô."
+
+#, c-format
+msgid "Automatic braking: %1$s ahead, about %2$d tiles."
+msgstr "Đang phanh tự động: phía trước có %1$s, cách khoảng %2$d ô."
+
+#, c-format
+msgid "Automatic braking: %1$s behind, about %2$d tiles."
+msgstr "Đang phanh tự động: phía sau có %1$s, cách khoảng %2$d ô."

@@ -114,6 +114,20 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("reverse ? 180_degrees : 0_degrees", WORLD)
         self.assertIn("requested_distance", VEH)
 
+    def test_vietnamese_vehicle_announcement_and_damage_terms(self):
+        translations = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
+        for phrase in (
+            "Requested heading: %s.",
+            "Calculated safe speed: %1$d %2$s.",
+            "Intact wheels: %1$d of %2$d.",
+            "Intact engines: %1$d of %2$d.",
+            "Automatic braking: %1$s behind, about %2$d tiles.",
+            "No boardable driver seats found within 16 tiles.",
+        ):
+            self.assertIn('msgid "' + phrase + '"', translations)
+        self.assertIn("veh.steering_effectiveness( get_map() )", WORLD)
+        self.assertIn("part.info().has_flag( VPFLAG_WHEEL )", WORLD)
+
     def test_speech_is_deferred_to_next_vehicle_snapshot(self):
         self.assertIn("pendingVehicleRoadReport", CTRL)
         self.assertIn("pendingVehicleSpeedReport", CTRL)
