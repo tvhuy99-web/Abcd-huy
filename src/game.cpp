@@ -5331,6 +5331,76 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
 {
     map &here = get_map();
 
+    // Reader-only way to BOARD a driver's seat. The ordinary nearby
+    // vehicle-control action remains available as a separate choice.
+    // Unlike Explore or the 16-tile scan, selecting this action may move
+    // the avatar. Merely focusing a vehicle never moves the character.
+    if( a11y::enabled() && !p && !u.in_vehicle && !remoteveh() ) {
+        uilist vehicle_actions;
+        vehicle_actions.title = _( "Vehicle controls" );
+        vehicle_actions.addentry( 0, true, MENU_AUTOASSIGN,
+                                  _( "Find a vehicle and board the driver's seat" ) );
+        vehicle_actions.addentry( 1, true, MENU_AUTOASSIGN,
+                                  _( "Interact with nearby vehicle controls" ) );
+        vehicle_actions.query();
+        if( vehicle_actions.ret < 0 ) {
+            return;
+        }
+        if( vehicle_actions.ret == 0 ) {
+            std::vector<tripoint_bub_ms> seats;
+            uilist choices;
+            choices.title = _( "Choose vehicle controls" );
+            const tripoint_bub_ms origin = u.pos_bub( here );
+            // Read the loaded map rather than line-of-sight. A working
+            // controls part and a boardable part must share the same tile;
+            // otherwise reaching it would not place the avatar in a seat.
+            for( const tripoint_bub_ms &candidate : here.points_in_radius( origin, 16 ) ) {
+                const optional_vpart_position found = here.veh_at( candidate );
+                if( !found || !found->part_with_feature( "CONTROLS", true ) ||
+                    !found->part_with_feature( "BOARDABLE", true ) ) {
+                    continue;
+                }
+                seats.push_back( candidate );
+                choices.addentry( static_cast<int>( seats.size() - 1 ), true,
+                                  MENU_AUTOASSIGN,
+                                  string_format( _( "%1$s, %2$s, %3$d tiles away" ),
+                                                 found->vehicle().name,
+                                                 direction_name( direction_from( origin, candidate ) ),
+                                                 rl_dist( origin, candidate ) ) );
+            }
+            if( seats.empty() ) {
+                add_msg( m_info, _( "No boardable driver seats found within 16 tiles." ) );
+                return;
+            }
+            choices.query();
+            if( choices.ret < 0 || choices.ret >= static_cast<int>( seats.size() ) ) {
+                return;
+            }
+            const tripoint_bub_ms selected = seats[choices.ret];
+            if( selected == origin ) {
+                if( const optional_vpart_position found = here.veh_at( selected ) ) {
+                    if( !found->vehicle().handle_potential_theft( u ) ) {
+                        return;
+                    }
+                    here.board_vehicle( selected, &u );
+                }
+                return;
+            }
+            const std::optional<std::vector<tripoint_bub_ms>> route = safe_route_to(
+                        u, selected, 0, []( const std::string &msg ) { add_msg( msg ); } );
+            if( !route || route->empty() ) {
+                add_msg( m_info, _( "No safe walking route to that driver's seat." ) );
+                return;
+            }
+            // Normal movement automatically boards a BOARDABLE vehicle tile.
+            // No teleport and no engine start; control_vehicle must be
+            // explicitly activated once seated to take control.
+            u.set_destination( *route );
+            add_msg( m_info, _( "Walking to the driver's seat." ) );
+            return;
+        }
+    }
+
     if( !p && !here.veh_at( u.pos_bub() ) ) {
         if( vehicle *remote_veh = remoteveh() ) { // remote controls have priority
             for( const vpart_reference &vpr : remote_veh->get_avail_parts( "REMOTE_CONTROLS" ) ) {
