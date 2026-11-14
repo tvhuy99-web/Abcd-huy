@@ -19,6 +19,8 @@
 #include <unordered_set>
 #include <utility>
 
+#include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "activity_handlers.h"
 #include "avatar.h"
 #include "bionics.h"
@@ -726,17 +728,25 @@ void vehicle::autopilot_patrol( map *here )
     drive_to_local_target( here, autodrive_local_target, false );
 }
 
-std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &rotate )
+std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &rotate,
+        const int requested_distance, const bool reverse )
 {
     std::set<point_abs_ms> points_to_check;
-    const int distance_to_check = 10 + ( velocity / 800 );
+    // Preserve native autopilot behavior unless the accessibility sensor
+    // explicitly requests a longer braking horizon.
+    const int distance_to_check = requested_distance > 0 ?
+                                  std::clamp( requested_distance, 1, 60 ) : 10 + ( velocity / 800 );
     units::angle adjusted_angle = normalize( face.dir() + rotate );
     // clamp to multiples of 15.
     adjusted_angle = round_to_multiple_of( adjusted_angle, vehicles::steer_increment );
     tileray collision_vector;
     collision_vector.init( adjusted_angle );
-    point_bub_ms top_left_actual = pos_bub( *here ).xy() + coord_translate( front_left );
-    point_bub_ms top_right_actual = pos_bub( *here ).xy() + coord_translate( front_right );
+    // Scan from the rear physical edge when backing up, not the nose.
+    const point_rel_ms left = reverse ? mount_min : front_left;
+    const point_rel_ms right = reverse ?
+                               point_rel_ms( mount_min.x(), mount_max.y() ) : front_right;
+    point_bub_ms top_left_actual = pos_bub( *here ).xy() + coord_translate( left );
+    point_bub_ms top_right_actual = pos_bub( *here ).xy() + coord_translate( right );
     std::vector<point_abs_ms> front_row = line_to( here->get_abs( tripoint_bub_ms{top_left_actual.x(), top_left_actual.y(), here->get_abs_sub().z()} ).xy(),
                                           here->get_abs( tripoint_bub_ms{ top_right_actual.x(), top_right_actual.y(), here->get_abs_sub().z()} ).xy() );
     for( const point_abs_ms &elem : front_row ) {
@@ -6715,6 +6725,56 @@ void vehicle::gain_moves( map &here )
     fuel_used_last_turn.clear();
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
+    // A new driver cannot inherit an earlier session's paused target.
+    if( !pl_control ) {
+        a11y_drive_paused = false;
+        a11y_resume_cruise_velocity = 0;
+    }
+    // Reader driving assistance runs on the GAME thread before native
+    // thrust/movement, not when Android speaks a late status update. The
+    // projected path spans the vehicle width and ignores player vision.
+    // Only local, forward-driving ground vehicles are assisted: passengers,
+    // remotely driven vehicles, aircraft and ordinary players are unchanged.
+    const avatar &driver = get_avatar();
+    if( a11y::enabled() && pl_control && driver.in_vehicle &&
+        driver.controlling_vehicle && !is_rotorcraft( here ) &&
+        velocity != 0 ) {
+        const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
+        if( driver_seat && &driver_seat->vehicle() == this ) {
+            // Announce a fresh loss of control once, never each physics tick.
+            if( skidding && !a11y_skid_alerted ) {
+                add_msg( m_warning,
+                         _( "Warning: vehicle is skidding; steering may not respond." ) );
+            }
+            a11y_skid_alerted = skidding;
+            const bool reverse = velocity < 0;
+            const std::optional<a11y::vehicle_obstacle> hazard =
+                a11y::vehicle_obstacle_ahead( *this, here, reverse );
+            // Warn from eight tiles at low speed; extend the horizon as
+            // the vehicle accelerates in either direction. This is an
+            // emergency aid, not a promise that handbraking stops instantly.
+            const int braking_range = std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 );
+            if( hazard && hazard->distance <= braking_range ) {
+                cruise_velocity = 0;
+                handbrake( here );
+                if( !a11y_brake_alerted ) {
+                    add_msg( m_warning,
+                             reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
+                             _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                             hazard->label, hazard->distance );
+                }
+                a11y_brake_alerted = true;
+            } else {
+                a11y_brake_alerted = false;
+            }
+        } else {
+            a11y_brake_alerted = false;
+            a11y_skid_alerted = false;
+        }
+    } else {
+        a11y_brake_alerted = false;
+        a11y_skid_alerted = false;
+    }
     if( is_moving() || is_falling ) {
         if( !loose_parts.empty() ) {
             shed_loose_parts();

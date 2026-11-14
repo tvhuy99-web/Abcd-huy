@@ -508,6 +508,16 @@ void Messages::add_msg( const game_message_params &params, std::string msg )
     announce_message( player_messages.add_msg_string( std::move( msg ), params ) );
 }
 
+void Messages::add_msg_silent( const game_message_params &params, std::string msg )
+{
+    // add_msg_string appends to the log and returns the message for the
+    // normal channel to speak; discarding the return keeps the entry in
+    // Messages::recent_messages() without speaking it. Coalescing and
+    // cooldown-hiding still apply to the log entry itself, exactly as
+    // they do for a spoken message.
+    static_cast<void>( player_messages.add_msg_string( std::move( msg ), params ) );
+}
+
 void Messages::clear_messages()
 {
     player_messages.messages.clear();

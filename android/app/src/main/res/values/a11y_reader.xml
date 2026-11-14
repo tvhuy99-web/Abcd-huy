@@ -101,4 +101,8 @@
     <string name="a11ySoundpackFailed">Otopack could not be installed: %1$s. You may retry or start the game without it. Your saved games were not changed.</string>
     <string name="a11ySoundpackRetry">Try downloading again</string>
     <string name="a11yGestureUnassigned">Not assigned.</string>
+    <string name="a11yDrivingMode">Driving mode. Vehicle gestures enabled.</string>
+    <string name="a11yDriveNotReady">You are not controlling this vehicle. Take control from the driver seat first.</string>
+    <string name="a11yDriveActionUnavailable">This vehicle action is currently unavailable.</string>
+    <string name="a11yMapMode">Map mode.</string>
 </resources>

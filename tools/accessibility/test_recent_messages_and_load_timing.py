@@ -22,6 +22,30 @@ class MessageRecencyAndLoadTiming(unittest.TestCase):
         # the spoken presentation rather than changing other game clients.
         self.assertIn("begin( messages ) + offset, end( messages )", messages)
 
+    def test_two_finger_double_tap_reads_recent_messages_on_any_screen(self):
+        controller = (JAVA / "GameReaderController.java").read_text("utf-8")
+        surface = (JAVA / "ReaderGestureSurface.java").read_text("utf-8")
+        # The surface forwards the double-tap outside the live world too;
+        # only the triple tap (action hub) stays world-gated.
+        self.assertIn(
+            "if (count == 1 || count == 2 || listener.directWorldGesturesEnabled())",
+            surface)
+        # The controller re-reads recent messages without the world gate
+        # and falls back to the last world snapshot that published them,
+        # because menu/activity snapshots do not carry a world:messages
+        # node (only world_snapshot() in src/a11y_world.cpp does).
+        self.assertIn("private String lastRecentMessages", controller)
+        self.assertIn("lastRecentMessages = recentMessages.detail;", controller)
+        body = controller.split("public void twoFingerTap(", 1)[1]
+        body = body.split("public void threeFingerTap()", 1)[0]
+        self.assertIn("if (count == 2) {", body)
+        self.assertIn("spoken = lastRecentMessages;", body)
+        # The world gate still stands between the double-tap branch and
+        # the triple-tap action hub, and a single tap still reads detail.
+        self.assertIn("if (count == 1) { detail(); return; }", body)
+        self.assertIn("if (!directWorldGesturesEnabled()) { return; }", body)
+        self.assertIn("if (count == 3) { openActionMenu(); return; }", body)
+
     def test_android_load_metrics_identify_check_vs_load_cost(self):
         game = (SRC / "game.cpp").read_text("utf-8")
         self.assertIn("check_mods_list( world_generator->active_world )", game)

@@ -42,6 +42,11 @@ std::vector<std::pair<std::string, std::string>> recent_messages( size_t count )
 bool has_debug_filter( debugmode::debug_filter type );
 void add_msg( std::string msg );
 void add_msg( const game_message_params &params, std::string msg );
+// Log-only: append to the message log without speaking. For warnings
+// already spoken live through a11y::announce_game_message (status
+// monitor), so the player can re-read them from message history without
+// hearing them twice and without combat mute swallowing them.
+void add_msg_silent( const game_message_params &params, std::string msg );
 void clear_messages();
 void deactivate();
 size_t size();

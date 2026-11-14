@@ -18,6 +18,7 @@
 #include <initializer_list>
 #include <map>
 #include <optional>
+#include <set>
 #include <string>
 #include <string_view>
 #include <utility>
@@ -63,6 +64,8 @@
 #include "trap.h"
 #include "translations.h"
 #include "type_id.h"
+#include "units.h"
+#include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
 #include "vpart_position.h"
@@ -608,6 +611,13 @@ void announce_status_changes()
             message += change;
         }
         announce_game_message( message, urgent );
+        // The same warning, written to the game message log so the
+        // two-finger double-tap recap can re-read it anywhere. Silent
+        // on purpose: the warning was just spoken live above, so a plain
+        // add_msg here would speak it a second time, and announce_message()
+        // would let combat mute swallow urgent warnings. The direct live
+        // path above is unchanged and is never combat-muted.
+        Messages::add_msg_silent( urgent ? m_warning : m_info, message );
     }
 }
 
@@ -685,6 +695,164 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     // the fairly detailed health/effects summary twice per footstep.
     const std::string status_summary = player_status();
     result.nodes.push_back( document( "world:status", _( "Character status" ), status_summary ) );
+
+    // The vehicle mode is owned by the native game state, never inferred
+    // from a translated status string on Android. A passenger may inspect
+    // the vehicle, but only its actual driver may steer or sound the horn.
+    const avatar &vehicle_reader = get_avatar();
+    if( vehicle_reader.in_vehicle ) {
+        const optional_vpart_position seated = get_map().veh_at(
+                    vehicle_reader.pos_bub( get_map() ) );
+        if( seated ) {
+            vehicle &veh = seated->vehicle();
+            const bool local_driver = vehicle_reader.controlling_vehicle
+                                      && g && g->remoteveh() != &veh
+                                      && veh.player_in_control( get_map(), vehicle_reader );
+            semantic_node seat;
+            seat.id = "reader:vehicle:seat";
+            seat.role = "status";
+            seat.label = _( "On board vehicle" );
+            seat.value = veh.name;
+            seat.detail = local_driver ? _( "Driving controls available." ) :
+                          _( "You are not currently driving this vehicle." );
+            seat.actions = { "focus" };
+            result.nodes.push_back( std::move( seat ) );
+
+            semantic_node controls;
+            controls.id = "reader:vehicle:driver";
+            controls.role = "status";
+            controls.label = _( "Vehicle driver controls" );
+            controls.value = local_driver ? _( "Available" ) : _( "Unavailable" );
+            controls.enabled = local_driver;
+            controls.actions = { "focus" };
+            result.nodes.push_back( std::move( controls ) );
+
+            const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
+            const std::string speed = local_driver ?
+                                      ( veh.a11y_drive_paused ?
+                                        std::string( _( "Driving paused." ) ) + " " : "" ) +
+                                      ( reversing ? std::string( _( "Reversing." ) ) + " " : "" ) +
+                                      string_format(
+                                          _( "Current speed: %1$d %3$s. Target speed: %2$d %3$s." ),
+                                          static_cast<int>( std::lround( convert_velocity( std::abs( veh.velocity ), VU_VEHICLE ) ) ),
+                                          static_cast<int>( std::lround( convert_velocity( std::abs( veh.cruise_velocity ), VU_VEHICLE ) ) ),
+                                          velocity_units( VU_VEHICLE ) ) :
+                                      _( "Speed is unavailable until you take control." );
+            result.nodes.push_back( document( "reader:vehicle:speed",
+                                              _( "Current and target speed" ), speed ) );
+            std::string vehicle_detail = string_format( _( "Vehicle: %s." ), veh.name );
+            vehicle_detail += " " + std::string( veh.engine_on ? _( "Engine running." ) :
+                                                _( "Engine stopped." ) );
+            vehicle_detail += " " + string_format( _( "Direction: %s." ),
+                                                 veh.face.to_string_azimuth_from_north() );
+            // Report the requested steering angle separately. Turning the
+            // wheel does not rotate the vehicle body until it moves.
+            tileray desired_heading;
+            desired_heading.init( veh.turn_dir );
+            vehicle_detail += " " + string_format( _( "Requested heading: %s." ),
+                                                 desired_heading.to_string_azimuth_from_north() );
+            vehicle_detail += " " + speed;
+            if( local_driver ) {
+                const std::string fuel = display::vehicle_fuel_percent_text_color(
+                                             vehicle_reader ).first;
+                if( !fuel.empty() ) {
+                    vehicle_detail += " " + string_format( _( "Fuel: %s." ), fuel );
+                }
+                const std::string battery = display::vehicle_battery_percent_text_color(
+                                                vehicle_reader ).first;
+                if( !battery.empty() ) {
+                    vehicle_detail += " " + string_format( _( "Battery: %s." ), battery );
+                }
+            }
+            if( local_driver ) {
+                const int safe_speed = static_cast<int>( std::lround(
+                        convert_velocity( veh.safe_velocity( get_map() ), VU_VEHICLE ) ) );
+                vehicle_detail += " " + string_format(
+                                      _( "Calculated safe speed: %1$d %2$s." ),
+                                      safe_speed, velocity_units( VU_VEHICLE ) );
+                const float steering = veh.steering_effectiveness( get_map() );
+                vehicle_detail += " " + std::string(
+                                      steering < 0.0f ? _( "Steering system absent." ) :
+                                      steering == 0.0f ? _( "Steering system broken." ) :
+                                      steering < 0.5f ? _( "Steering system weakened." ) :
+                                      _( "Steering system operational." ) );
+                int total_wheels = 0;
+                int intact_wheels = 0;
+                for( int index = 0; index < veh.part_count(); ++index ) {
+                    const vehicle_part &part = veh.part( index );
+                    if( !part.removed && !part.is_fake && part.info().has_flag( VPFLAG_WHEEL ) ) {
+                        ++total_wheels;
+                        if( !part.is_broken() ) {
+                            ++intact_wheels;
+                        }
+                    }
+                }
+                if( total_wheels > 0 ) {
+                    vehicle_detail += " " + string_format( _( "Intact wheels: %1$d of %2$d." ),
+                                                         intact_wheels, total_wheels );
+                }
+                if( !veh.engines.empty() ) {
+                    int intact_engines = 0;
+                    for( const int engine_index : veh.engines ) {
+                        if( !veh.part( engine_index ).is_broken() ) {
+                            ++intact_engines;
+                        }
+                    }
+                    vehicle_detail += " " + string_format( _( "Intact engines: %1$d of %2$d." ),
+                                                         intact_engines,
+                                                         static_cast<int>( veh.engines.size() ) );
+                }
+            }
+            if( veh.skidding ) {
+                vehicle_detail += " " + std::string( _( "Warning: vehicle is skidding." ) );
+            }
+            const std::optional<vehicle_obstacle> hazard =
+                vehicle_obstacle_ahead( veh, get_map(), reversing );
+            const std::string road = hazard ?
+                                     string_format( reversing ?
+                                                    _( "%1$s behind, about %2$d tiles." ) :
+                                                    _( "%1$s ahead, about %2$d tiles." ),
+                                                    hazard->label, hazard->distance ) :
+                                     std::string( reversing ?
+                                                  _( "No obstacle found along the checked reverse path." ) :
+                                                  _( "No blocking obstacle detected along the checked forward path." ) );
+            vehicle_detail += " " + road;
+            result.nodes.push_back( document( "reader:vehicle:detail",
+                                              _( "Vehicle condition" ), vehicle_detail ) );
+            result.nodes.push_back( document( "reader:vehicle:road",
+                                              _( "Road ahead" ), road ) );
+            if( local_driver ) {
+                result.nodes.push_back( button( "reader:vehicle:pause",
+                                                veh.a11y_drive_paused ?
+                                                _( "Resume driving" ) : _( "Pause driving" ), "" ) );
+                // Keep direction selection separate from requested speed.
+                // These buttons are validated again on the native game thread.
+                result.nodes.push_back( button( "reader:vehicle:forward",
+                                                _( "Select forward driving" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:reverse",
+                                                _( "Select reverse driving" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:faster",
+                                                _( "Increase target driving speed" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:slower",
+                                                _( "Decrease target driving speed" ), "" ) );
+                result.nodes.push_back( button( "reader:vehicle:brake",
+                                                _( "Emergency handbrake" ),
+                                                _( "Applies the native vehicle handbrake." ) ) );
+                result.nodes.push_back( button( "reader:vehicle:heading:left",
+                                                _( "Turn vehicle heading left by 45 degrees" ),
+                                                _( "Requests three native 15-degree steering increments." ) ) );
+                result.nodes.push_back( button( "reader:vehicle:heading:right",
+                                                _( "Turn vehicle heading right by 45 degrees" ),
+                                                _( "Requests three native 15-degree steering increments." ) ) );
+                if( veh.has_part( "HORN" ) ) {
+                    result.nodes.push_back( button( "reader:vehicle:horn",
+                                                    _( "Sound vehicle horn" ),
+                                                    _( "Sounds the installed horn if usable." ) ) );
+                }
+            }
+        }
+    }
+
     const avatar &character = get_avatar();
     std::string character_details = string_format(
                                         _( "Character information.  %s." ), character.get_name() );
@@ -1386,6 +1554,21 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
         tile.vehicle += ". ";
         tile.vehicle += has_controls ? _( "There are vehicle controls here." ) :
                         _( "No vehicle controls found." );
+        const bool usable_engine = !empty( vehicle->vehicle().get_avail_parts( "ENGINE" ) );
+        if( !has_controls ) {
+            tile.vehicle += " " + std::string( _( "Cannot drive: working controls are missing." ) );
+        } else if( !usable_engine ) {
+            tile.vehicle += " " + std::string( _( "Cannot start: no usable engine." ) );
+        } else {
+            // Usable controls and engine are necessary, not sufficient:
+            // damaged wheels, fuel, ownership and terrain can still block driving.
+            tile.vehicle += " " + std::string( _( "Controls and engine available; driving is not guaranteed." ) );
+        }
+        if( vehicle->vehicle().is_locked ) {
+            tile.vehicle += " " + std::string( _( "Vehicle locked." ) );
+        }
+        tile.vehicle += " " + std::string( vehicle->vehicle().engine_on ?
+                                          _( "Engine running." ) : _( "Engine stopped." ) );
     }
     std::map<std::string, int> counts;
     for( const item &obj : here.i_at( position ) ) {
@@ -1399,6 +1582,73 @@ unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position )
                               string_format( _( "%1$s [%2$d]" ), entry.first, entry.second ) );
     }
     return tile;
+}
+
+// Project the actual vehicle footprint forward with the game's existing
+// native predictor. Examine current map entities directly; neither visual
+// range nor the avatar's line of sight is used for collision assistance.
+std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
+        const bool reverse )
+{
+    // Look through the true map, including positions behind walls or beyond
+    // visual range. Extend the path beyond the braking threshold and past
+    // the car's own body, including when backing up.
+    const int horizon = std::clamp( 20 + std::abs( veh.velocity ) / 400, 20, 60 );
+    const units::angle desired_delta = normalize( veh.turn_dir - veh.face.dir() +
+                                      ( reverse ? 180_degrees : 0_degrees ) );
+    const std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
+                                            horizon, reverse );
+    std::optional<vehicle_obstacle> nearest;
+    // Measure the gap to the closest actual vehicle body tile. The vehicle
+    // origin may lie many tiles behind the front of a bus or a large truck.
+    std::vector<point_bub_ms> body_tiles;
+    for( int i = 0; i < veh.part_count(); ++i ) {
+        const vehicle_part &part = veh.part( i );
+        if( !part.removed && !part.is_fake ) {
+            body_tiles.push_back( veh.bub_part_pos( here, i ).xy() );
+        }
+    }
+    const auto clearance = [&body_tiles, horizon]( const point_bub_ms &target ) {
+        int closest = horizon;
+        for( const point_bub_ms &body : body_tiles ) {
+            closest = std::min( closest, static_cast<int>( rl_dist( body, target ) ) );
+        }
+        return std::max( 1, closest );
+    };
+    const int z = veh.pos_bub( here ).z();
+    for( const point_abs_ms &point : projected ) {
+        const point_bub_ms tile_xy = here.get_bub( point );
+        const tripoint_bub_ms tile( tile_xy, z );
+        if( !here.inbounds( tile ) ) {
+            const int distance = clearance( tile_xy );
+            if( !nearest || distance < nearest->distance ) {
+                nearest = vehicle_obstacle{ distance, _( "Unloaded map boundary" ) };
+            }
+            continue;
+        }
+        const optional_vpart_position other = here.veh_at( tile );
+        if( other && &other->vehicle() == &veh ) {
+            continue; // Ignore the current vehicle's own body.
+        }
+        std::string label;
+        if( other ) {
+            label = other->vehicle().name;
+        } else if( here.impassable_ter_furn( tile ) ) {
+            label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
+        } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
+            if( creature != &get_avatar() ) {
+                label = creature->disp_name();
+            }
+        }
+        if( label.empty() ) {
+            continue;
+        }
+        const int distance = clearance( tile_xy );
+        if( !nearest || distance < nearest->distance ) {
+            nearest = vehicle_obstacle{ distance, remove_color_tags( label ) };
+        }
+    }
+    return nearest;
 }
 
 void announce_linear_scan( const point &delta )

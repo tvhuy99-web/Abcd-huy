@@ -101,4 +101,8 @@
     <string name="a11ySoundpackFailed">Chưa cài được Otopack: %1$s. Bạn có thể thử tải lại hoặc chơi mà không có bộ âm thanh. Dữ liệu lưu game không thay đổi.</string>
     <string name="a11ySoundpackRetry">Thử tải lại</string>
     <string name="a11yGestureUnassigned">Chưa gán.</string>
+    <string name="a11yDrivingMode">Chế độ lái xe. Đã bật các cử chỉ điều khiển.</string>
+    <string name="a11yDriveNotReady">Bạn chưa nắm quyền điều khiển phương tiện. Hãy ngồi ở ghế lái và nhận quyền điều khiển trước.</string>
+    <string name="a11yDriveActionUnavailable">Thao tác này hiện không khả dụng với phương tiện.</string>
+    <string name="a11yMapMode">Chế độ bản đồ.</string>
 </resources>

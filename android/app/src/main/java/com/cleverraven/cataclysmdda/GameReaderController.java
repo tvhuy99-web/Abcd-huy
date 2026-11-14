@@ -109,6 +109,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Loading screens do not publish semantic snapshots. Keep their last
     // visible status available to repeat, even after the main menu clears.
     private String lastLoadingStatus = "";
+    // Only world snapshots carry the recent-messages node. Remember the
+    // last one so two-finger double-tap can re-read notifications on any
+    // screen; the game message log itself is never changed here.
+    private String lastRecentMessages = "";
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
     private String editorContext = "";
@@ -147,6 +151,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean targetingOriginalControls;
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
+    private boolean vehicleMode;
+    private boolean pendingVehicleRoadReport;
+    private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -370,6 +377,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         documentReader.clear();
         snapshot = null;
         lastLoadingStatus = "";
+        lastRecentMessages = "";
         readerLayerParent = "";
         pendingReaderLayer = "";
         pendingLinkedDetail = "";
@@ -521,6 +529,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     choosingHubAction = false;
                     hubActionItem = null;
                     snapshot = null;
+                    lastRecentMessages = "";
                     commandPaletteOpen = false;
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
@@ -723,6 +732,46 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
+                // A vehicle may disappear or the character may dismount between
+                // snapshots. Never leave a stale driving mode armed on foot.
+                if ("DEFAULTMODE".equals(next.category)
+                        && next.find("reader:vehicle:seat") == null) {
+                    vehicleMode = false;
+                    pendingVehicleRoadReport = false;
+                    pendingVehicleSpeedReport = false;
+                }
+                if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
+                    pendingVehicleSpeedReport = false;
+                    ReaderSnapshot.Node speed = next.find("reader:vehicle:speed");
+                    if (speed != null && !speed.detail.isEmpty()) {
+                        final String report = speed.detail;
+                        handler.post(() -> {
+                            if (vehicleMode && directWorldGesturesEnabled()) {
+                                feedback(report);
+                            }
+                        });
+                    }
+                }
+                if (pendingVehicleRoadReport && "DEFAULTMODE".equals(next.category)) {
+                    pendingVehicleRoadReport = false;
+                    ReaderSnapshot.Node road = next.find("reader:vehicle:road");
+                    if (road != null && !road.detail.isEmpty()) {
+                        final String report = road.detail;
+                        handler.post(() -> {
+                            if (vehicleMode && directWorldGesturesEnabled()) {
+                                feedback(report);
+                            }
+                        });
+                    }
+                }
+                // Only world snapshots publish world:messages. Remember the
+                // last non-empty copy so two-finger double-tap can re-read
+                // notifications from any screen. An empty node never wipes
+                // the cache; a lifecycle boundary clears it instead.
+                ReaderSnapshot.Node recentMessages = next.find("world:messages");
+                if (recentMessages != null && !recentMessages.detail.isEmpty()) {
+                    lastRecentMessages = recentMessages.detail;
+                }
                 if (!"crafting".equals(next.category)) {
                     craftingNavigationPending = false;
                 }
@@ -839,7 +888,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
                     // The engine may open a new tree branch directly, or
                     // select a new child after a modal changes state.
-                    readerLayerParent = currentFocus.parentId;
+                    // Inventory pocket browsing is the exception: swiping
+                    // onto a pocket-content row must not trap the reader
+                    // inside that pocket's own child layer.
+                    if (!isFlattenedPocketEntry(currentFocus)) {
+                        readerLayerParent = currentFocus.parentId;
+                    }
                 }
                 if (changedContext) {
                     // The game context now determines the gesture focus.
@@ -1280,7 +1334,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             spokenPosition = 0;
             spokenTotal = 0;
         }
-        if ((spokenPosition <= 0 || spokenTotal <= 0) && snapshot != null
+        // Speak positions within the correct axis: main items horizontally,
+        // pocket entries vertically inside the selected top-level item.
+        boolean inventoryPositions = flattenedInventoryBrowse();
+        if (inventoryPositions && isFlattenedPocketEntry(node)) {
+            ReaderSnapshot.Node root = inventoryRootItem(node);
+            if (root != null) {
+                List<ReaderSnapshot.Node> contents = flattenedPocketContents(root.id);
+                for (int i = 0; i < contents.size(); i++) {
+                    if (contents.get(i).id.equals(node.id)) {
+                        spokenPosition = i + 1;
+                        spokenTotal = contents.size();
+                        break;
+                    }
+                }
+            }
+        } else if ((spokenPosition <= 0 || spokenTotal <= 0 || inventoryPositions)
+                && snapshot != null
                 && !"DEFAULTMODE".equals(snapshot.category)) {
             List<ReaderSnapshot.Node> siblings = visibleNodes();
             for (int i = 0; i < siblings.size(); i++) {
@@ -1783,6 +1853,101 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    /**
+     * Double-tap on a flat-browsed pickup pocket row. A single unit
+     * toggles at once; a stack opens the quantity editor. Both commit
+     * immediately to the parent "pocket:" row, exactly like a top-level
+     * pickup row commits to its own row, and unlike the staged picker,
+     * which holds drafts until Confirm. The refreshed snapshot re-reads
+     * this row with its new amount (the int field's appliedValue
+     * changed), so no extra announcement is needed here.
+     */
+    private void activateFlatPickupPocketEntry(ReaderSnapshot.Node item) {
+        ReaderSnapshot.Node pocket = pickupPocketParent(item);
+        if (pocket == null) {
+            feedback(activity.getString(R.string.a11yPocketSelectionError));
+            return;
+        }
+        if (item.fieldMax > 1) {
+            openFlatPickupQuantityEditor(item);
+        } else {
+            commitFlatPickupAmount(item, pocket, pocketAmount(item) == 0 ? 1 : 0);
+        }
+    }
+
+    /** Commit one flat pickup pocket row through its parent pocket.
+     *  The native inbox validates the entry against the live pocket
+     *  before applying it; entries not mentioned keep their amounts,
+     *  so a single-row payload never disturbs other selections. */
+    private void commitFlatPickupAmount(ReaderSnapshot.Node item, ReaderSnapshot.Node pocket,
+            int amount) {
+        if (snapshot == null || amount < 0 || amount > item.fieldMax) {
+            feedback(activity.getString(R.string.a11yPocketSelectionError));
+            return;
+        }
+        String previous = focus;
+        focus = pocket.id;
+        long request = send("set_value", item.id + "=" + amount);
+        focus = previous;
+        if (request == 0) {
+            feedback(activity.getString(R.string.a11yPocketSelectionError));
+        }
+    }
+
+    /** Quantity editor for a flat-browsed pickup pocket row. It mirrors
+     *  the staged picker's editor (immediate commit, TalkBack number
+     *  entry by design) but submits to the parent "pocket:" row, the
+     *  only node the native side accepts a pocket set_value on. The
+     *  parent is re-resolved from the fresh snapshot on submit, never
+     *  kept from when the editor opened. */
+    private void openFlatPickupQuantityEditor(ReaderSnapshot.Node item) {
+        final String itemId = item.id;
+        formContext = snapshot.contextKey();
+        formRequest = 0;
+        editor = new ReaderTextEditor(activity, Integer.toString(pocketAmount(item)),
+                true, true, 0.0, item.fieldMax, 1.0, true, new ReaderTextEditor.Listener() {
+            @Override
+            public void speak(String text) { feedback(text); }
+            @Override
+            public void submit(String text) {
+                if (editor == null || formRequest != 0 || snapshot == null
+                        || !itemId.equals(focus)) { return; }
+                int amount;
+                try { amount = Integer.parseInt(text); }
+                catch (NumberFormatException invalid) {
+                    feedback(activity.getString(R.string.a11yEditorInvalid));
+                    return;
+                }
+                ReaderSnapshot.Node current = snapshot.find(itemId);
+                ReaderSnapshot.Node parent = current == null ? null
+                        : pickupPocketParent(current);
+                if (parent == null || amount < 0 || amount > current.fieldMax) {
+                    feedback(activity.getString(R.string.a11yPocketSelectionError));
+                    return;
+                }
+                String previous = focus;
+                focus = parent.id;
+                formRequest = send("set_value", itemId + "=" + amount);
+                focus = previous;
+                if (formRequest != 0) {
+                    editor = null;
+                    root.cancelGesture();
+                    render();
+                }
+            }
+            @Override
+            public void cancel() {
+                editor = null;
+                root.cancelGesture();
+                render();
+                readCurrent();
+            }
+        });
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yQuantityInstructions));
+    }
+
     private void navigatePocketPicker(int delta) {
         if (pocketStage == 1) {
             pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 2);
@@ -1930,6 +2095,123 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return result;
     }
 
+    /** True while inventory items use distinct horizontal and vertical axes: the
+     *  pocket picker is closed and no tree layer is entered. */
+    private boolean flattenedInventoryBrowse() {
+        return snapshot != null && "inventory".equals(snapshot.category)
+                && pocketStage == 0 && readerLayerParent.isEmpty() && !commandPaletteOpen;
+    }
+
+    /** A pocket-content row reached by flat inventory browsing: its
+     *  parent is a "pocket:" status row, never a list of its own. */
+    private boolean isFlattenedPocketEntry(ReaderSnapshot.Node node) {
+        return node != null && node.id.startsWith("pocket-entry:")
+                && (!"checkbox".equals(node.role) || pickupPocketParent(node) != null)
+                && flattenedInventoryBrowse();
+    }
+
+    /** The "pocket:" parent of a pickup pocket-entry row, or null.
+     *  Only pickup publishes checkbox pocket rows, and only there does
+     *  the parent accept the atomic set_value commit that selects
+     *  pocket contents. Ordinary-inventory pocket rows are buttons
+     *  whose parent has no set_value action, so they never match. */
+    private ReaderSnapshot.Node pickupPocketParent(ReaderSnapshot.Node node) {
+        if (snapshot == null || node == null || !node.id.startsWith("pocket-entry:")) {
+            return null;
+        }
+        ReaderSnapshot.Node parent = snapshot.find(node.parentId);
+        return parent != null && parent.id.startsWith("pocket:")
+                && parent.actions.contains("set_value") ? parent : null;
+    }
+
+    /** A pickup pocket-content row in the flat swipe list: a checkbox
+     *  "pocket-entry:" row whose parent "pocket:" row accepts the
+     *  atomic set_value commit. Unlike the staged picker's drafts,
+     *  which are committed together on Confirm, a flat row commits
+     *  immediately on double-tap, exactly like a top-level pickup row. */
+    private boolean isFlatPickupPocketEntry(ReaderSnapshot.Node node) {
+        return node != null && "checkbox".equals(node.role)
+                && pickupPocketParent(node) != null && flattenedInventoryBrowse();
+    }
+
+    /** Pocket contents of one inventory item, flattened in snapshot
+     *  order: every "pocket-entry:" descendant of the item, across all
+     *  of its pockets and nested containers, skipping the "pocket:"
+     *  status rows themselves. A pickup checkbox row joins the list
+     *  only when its parent "pocket:" row accepts the atomic set_value
+     *  commit, so double-tap can select it; any other checkbox row
+     *  stays out, and the staged picker itself is untouched. */
+    private List<ReaderSnapshot.Node> flattenedPocketContents(String itemId) {
+        ArrayList<ReaderSnapshot.Node> contents = new ArrayList<>();
+        if (snapshot == null) { return contents; }
+        for (ReaderSnapshot.Node node : snapshot.nodes) {
+            if (!node.id.startsWith("pocket-entry:")) {
+                continue;
+            }
+            if ("checkbox".equals(node.role) && pickupPocketParent(node) == null) {
+                continue;
+            }
+            ReaderSnapshot.Node cursor = node;
+            while (!cursor.parentId.isEmpty()) {
+                if (cursor.parentId.equals(itemId)) { contents.add(node); break; }
+                cursor = snapshot.find(cursor.parentId);
+                if (cursor == null) { break; }
+            }
+        }
+        return contents;
+    }
+
+    /** Resolve a vertically focused pocket entry back to its root item. */
+    private ReaderSnapshot.Node inventoryRootItem(ReaderSnapshot.Node node) {
+        if (snapshot == null) { return null; }
+        for (int steps = 0; node != null && !node.parentId.isEmpty()
+                && steps < snapshot.nodes.size(); steps++) {
+            node = snapshot.find(node.parentId);
+        }
+        return node != null && node.parentId.isEmpty()
+                && node.id.startsWith("item:") ? node : null;
+    }
+
+    /** Horizontal swipes visit top-level inventory/pickup rows; vertical
+     *  swipes visit the focused container's contents, including nested
+     *  pockets. Double-tap continues to select or open the quantity editor. */
+    @Override
+    public boolean handleInventoryAxisSwipe(int horizontal, int vertical) {
+        if (!flattenedInventoryBrowse() || comprehensiveMenu || editor != null
+                || debugReport != null || documentReader.isOpen()
+                || !foreground || !windowFocused || lastSuspended
+                || (horizontal == 0 && vertical == 0)) {
+            return false;
+        }
+        ReaderSnapshot.Node root = inventoryRootItem(snapshot.find(focus));
+        if (horizontal != 0) {
+            List<ReaderSnapshot.Node> roots = visibleNodes();
+            if (roots.isEmpty()) { return false; }
+            String rootId = root == null ? focus : root.id;
+            int current = -1;
+            for (int i = 0; i < roots.size(); i++) {
+                if (roots.get(i).id.equals(rootId)) { current = i; break; }
+            }
+            focus = roots.get(current < 0 ? 0
+                    : Math.floorMod(current + horizontal, roots.size())).id;
+        } else {
+            if (root == null) { return false; }
+            List<ReaderSnapshot.Node> contents = flattenedPocketContents(root.id);
+            if (contents.isEmpty()) { readCurrent(); return true; }
+            int current = -1;
+            for (int i = 0; i < contents.size(); i++) {
+                if (contents.get(i).id.equals(focus)) { current = i; break; }
+            }
+            int next = current < 0 ? (vertical > 0 ? 0 : contents.size() - 1)
+                    : Math.floorMod(current + vertical, contents.size());
+            focus = contents.get(next).id;
+        }
+        render();
+        send("focus", "");
+        readCurrent();
+        return true;
+    }
+
     private List<ReaderSnapshot.Node> visibleNodes() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot == null) { return result; }
@@ -1991,6 +2273,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
             showHubActionChoices();
+            return;
+        }
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            // Drive-mode hold opens the real native vehicle interaction menu,
+            // not the global action hub or an extra simulated overlay.
+            if (!vehicleDriverReady()) {
+                feedback(activity.getString(R.string.a11yDriveNotReady));
+                return;
+            }
+            ReaderSnapshot.Node command = snapshot.find("control_vehicle");
+            if (command == null || !command.enabled
+                    || !command.actions.contains("activate")) {
+                feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+                return;
+            }
+            requestLiveWorldCommand("control_vehicle");
             return;
         }
         if (combatMode && directWorldGesturesEnabled()) {
@@ -2514,6 +2812,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
+    // A stacked item row in inventory/pickup is an immediate quantity
+    // picker, not a setting: a one-finger vertical swipe browses to the
+    // next/previous item, like every other row, instead of changing the
+    // chosen amount. The amount is chosen by double-tapping the row,
+    // which opens the quantity editor (openFormEditor's quickQuantity
+    // path). The same node shape elsewhere keeps swipe-to-adjust: real
+    // sliders use role "slider" (world generation) or carry an "apply"
+    // action (options, safemode, smart controller, auto-pickup), and the
+    // standalone number-input popup lives in the NUMBER_INPUT category.
+    // Published shape (inventory_ui.cpp quantity form, handle_action.cpp
+    // pickup-here): role "checkbox", int field, range 0..available,
+    // step 1, set_value without apply, only when available > 1.
+    private boolean isItemQuantityRow(ReaderSnapshot.Node node) {
+        return "checkbox".equals(node.role)
+                && "int".equals(node.fieldType) && node.hasFieldRange
+                && node.fieldMin == 0.0 && node.fieldMax > 1.0 && node.fieldStep == 1.0
+                && node.actions.contains("set_value") && !node.actions.contains("apply")
+                && ("inventory".equals(snapshot.category)
+                        || "pickup-here".equals(snapshot.category));
+    }
+
     @Override
     public boolean adjustFocusedSetting(int delta) {
         if (debugReport != null || comprehensiveMenu || pocketStage != 0) { return false; }
@@ -2521,6 +2840,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || !foreground || !windowFocused || lastSuspended) { return false; }
         ReaderSnapshot.Node node = snapshot.find(focus);
         if (node == null || !node.enabled) { return false; }
+
+        // Stacked item rows are browsed, not adjusted: the vertical
+        // swipe falls through to navigation in ReaderGestureSurface.
+        if (isItemQuantityRow(node)) { return false; }
 
         // These are the same semantic choices used by game settings pages.
         if ("choice".equals(node.fieldType) && node.actions.contains("select_choice")
@@ -2893,8 +3216,105 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         focus = previous;
     }
 
+    private boolean vehicleDriverReady() {
+        ReaderSnapshot.Node state = snapshot == null
+                ? null : snapshot.find("reader:vehicle:driver");
+        return state != null && state.enabled;
+    }
+
+    /** Use only actions published by the current native world frame. A
+     * passenger cannot command the vehicle, even with stale Android focus. */
+    private void requestVehicleAction(String id) {
+        if (!vehicleMode || !directWorldGesturesEnabled()) { return; }
+        if (!vehicleDriverReady()) {
+            feedback(activity.getString(R.string.a11yDriveNotReady));
+            return;
+        }
+        ReaderSnapshot.Node node = snapshot.find(id);
+        if (node == null || !node.enabled || !node.actions.contains("activate")) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+            return;
+        }
+        if ("LEFT".equals(id) || "RIGHT".equals(id)
+                || id.startsWith("reader:vehicle:heading:")) {
+            pendingVehicleRoadReport = true;
+        } else if ("reader:vehicle:pause".equals(id)
+                || "reader:vehicle:forward".equals(id)
+                || "reader:vehicle:reverse".equals(id)
+                || "reader:vehicle:faster".equals(id)
+                || "reader:vehicle:slower".equals(id)) {
+            pendingVehicleSpeedReport = true;
+        }
+        requestLiveWorldCommand(id);
+    }
+
+    private void speakVehicleDocument(String id) {
+        ReaderSnapshot.Node doc = snapshot == null ? null : snapshot.find(id);
+        if (doc == null) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+            return;
+        }
+        String spoken = doc.detail.isEmpty() ? doc.value : doc.detail;
+        if (spoken == null || spoken.isEmpty()) {
+            feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+        } else {
+            feedback(spoken);
+        }
+    }
+
+    /** Two-finger swipes are reserved in driving mode, before map scan. */
+    @Override
+    public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
+        if (!vehicleMode || !directWorldGesturesEnabled()) { return false; }
+        if (vertical < 0) {
+            speakVehicleDocument("reader:vehicle:speed");
+        } else if (vertical > 0) {
+            speakVehicleDocument("reader:vehicle:detail");
+        } else if (horizontal < 0) {
+            requestVehicleAction("reader:vehicle:brake");
+        } else if (horizontal > 0) {
+            requestVehicleAction("reader:vehicle:horn");
+        }
+        return true;
+    }
+
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            // The native game still handles acceleration, direction and
+            // steering physics. Map/Combat bindings cannot override these.
+            switch (gestureId) {
+                case "swipe_up":
+                    requestVehicleAction("reader:vehicle:forward");
+                    return true;
+                case "swipe_down":
+                    requestVehicleAction("reader:vehicle:reverse");
+                    return true;
+                case "swipe_left":
+                    requestVehicleAction("LEFT");
+                    return true;
+                case "swipe_right":
+                    requestVehicleAction("RIGHT");
+                    return true;
+                case "swipe_up_down":
+                    requestVehicleAction("reader:vehicle:faster");
+                    return true;
+                case "swipe_down_up":
+                    requestVehicleAction("reader:vehicle:slower");
+                    return true;
+                case "swipe_left_right":
+                    requestVehicleAction("reader:vehicle:heading:left");
+                    return true;
+                case "swipe_right_left":
+                    requestVehicleAction("reader:vehicle:heading:right");
+                    return true;
+                default:
+                    // Do not fall through to saved map or combat bindings
+                    // while the avatar is driving. An unrecognized swipe
+                    // must never activate another gameplay action.
+                    return true;
+            }
+        }
         if (combatMode && directWorldGesturesEnabled()) {
             // Old three-finger movement is disabled during combat.
             // On the normal map, saved three-finger shortcuts still work.
@@ -3063,6 +3483,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (count == 1) { detail(); return; }
+        if (count == 2) {
+            // Game-wide notification recap. The current snapshot carries
+            // recent messages only in the live world, so fall back to the
+            // last world snapshot that published them. No new announcement
+            // is created; this only re-reads the game's message history,
+            // newest first, exactly as the world screen already did.
+            ReaderSnapshot.Node recent = snapshot == null
+                    ? null : snapshot.find("world:messages");
+            String spoken = recent == null ? "" : recent.detail;
+            if (spoken.isEmpty()) {
+                spoken = lastRecentMessages;
+            }
+            if (spoken.isEmpty()) {
+                spoken = activity.getString(R.string.a11yHubNoMessages);
+            }
+            if (usesTouchExploration()) {
+                feedback(spoken);
+            } else {
+                speech.say("world-two-tap:" + count, spoken, ReaderSpeechQueue.LONG_TEXT);
+            }
+            return;
+        }
         if (!directWorldGesturesEnabled()) { return; }
         if (count == 3) { openActionMenu(); return; }
         ReaderSnapshot.Node document = snapshot.find(count == 1
@@ -3087,8 +3529,23 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void toggleCombatMode() {
         if (!directWorldGesturesEnabled()) { return; }
-        // The native world-step gate also rejects vehicle, activity, death
-        // camera, travel, and explore. Do not enter combat in those modes.
+        if (snapshot.find("reader:vehicle:seat") != null) {
+            // On board: Map -> Combat -> Drive -> Map. A seat alone is
+            // sufficient to offer Drive for inspection; the native driver
+            // gate still refuses any control from a passenger.
+            int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;
+            combatMode = nextMode == 1;
+            vehicleMode = nextMode == 2;
+            CataclysmDDA.nativeCancelPendingWorldSteps();
+            clearPendingWorldDirection();
+            root.cancelGesture();
+            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
+            feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
+                    : nextMode == 1 ? R.string.a11yCombatOn
+                    : R.string.a11yDrivingMode));
+            return;
+        }
+        vehicleMode = false;
         if (!combatMode && !snapshot.swipeMovementAllowed) {
             feedback(activity.getString(R.string.a11yCombatUnavailable));
             return;
@@ -3250,6 +3707,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void activate() {
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        // World double tap becomes Pause/Resume only when Drive is active.
+        if (vehicleMode && directWorldGesturesEnabled()) {
+            requestVehicleAction("reader:vehicle:pause");
+            return;
+        }
         if (debugReport != null) {
             if (debugFocus == 0) { readCurrent(); }
             else { submitDebugResponse(debugFocus); }
@@ -3300,6 +3762,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("tab".equals(node.role) && node.actions.contains("activate")) {
             pendingReaderLayer = node.id;
             pendingReaderLayerRevisions = 0;
+        }
+        // A pickup pocket-content row reached by flat browsing is a real
+        // selectable row, not a staged-picker draft: double-tap marks it
+        // for pickup through the same atomic parent-pocket commit the
+        // staged picker uses. A single unit toggles at once; a stack
+        // opens the quantity editor, which commits to the parent pocket
+        // on submit. The staged picker itself is untouched.
+        if (isFlatPickupPocketEntry(node)) {
+            activateFlatPickupPocketEntry(node);
+            return;
         }
         // Form fields (R02.3): choosing or toggling only writes a draft on
         // the engine side; the separate Apply control commits it.
@@ -4469,6 +4941,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         handler.removeCallbacks(finishReaderOffGesture);
         readerOffAfterAnnouncement = false;
         combatMode = false;
+        vehicleMode = false;
+        pendingVehicleRoadReport = false;
+        pendingVehicleSpeedReport = false;
         closed = true;
         foreground = false;
         presentationEpoch++;

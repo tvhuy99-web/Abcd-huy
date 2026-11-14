@@ -26,6 +26,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         boolean adjustFocusedSetting(int delta);
         /** Optional date/hour navigation in the character creator calendar. */
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
+        /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
+        default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
+        /** Drive mode: two fingers up/down read status; left brakes; right honks. */
+        default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
         /** Crafting only: one finger horizontally explores recipes. */
@@ -435,8 +439,11 @@ public final class ReaderGestureSurface extends LinearLayout {
         // All two-finger taps have built-in actions (one tap also works in
         // menus); the first two three-finger taps are reserved for location
         // and character status. Handle these BEFORE custom bindings.
+        // Two-finger double-tap re-reads recent notifications on every
+        // screen, not only in the live world. Only the triple tap (the
+        // action hub) stays live-world-only.
         if (fingers == 2) {
-            if (count == 1 || listener.directWorldGesturesEnabled()) {
+            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()) {
                 listener.twoFingerTap(count);
             }
             return;
@@ -697,10 +704,15 @@ public final class ReaderGestureSurface extends LinearLayout {
                     if (direction != null) {
                         clearMultiTap();
                         if (maxPointers == 2) {
-                            // Only live-world two-finger swipes scan. Modal taps
-                            // are still received, and modal up/down already
-                            // took their dedicated confirmation/back paths.
-                            if (listener.directWorldGesturesEnabled()) {
+                            // Driving takes precedence over the existing map
+                            // scans. Outside Drive, gestures remain unchanged.
+                            int horizontal = "right".equals(direction) ? 1
+                                    : "left".equals(direction) ? -1 : 0;
+                            int vertical = "down".equals(direction) ? 1
+                                    : "up".equals(direction) ? -1 : 0;
+                            if (listener.handleVehicleTwoFingerSwipe(horizontal, vertical)) {
+                                // Already handled by the dedicated driving mode.
+                            } else if (listener.directWorldGesturesEnabled()) {
                                 listener.scanDirection("right".equals(direction) ? 1
                                         : "left".equals(direction) ? -1 : 0,
                                         "down".equals(direction) ? 1
@@ -799,6 +811,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleSurroundingsSwipe(horizontal, vertical)) {
+            return;
+        }
+        if ((horizontal != 0 || vertical != 0)
+                && listener.handleInventoryAxisSwipe(horizontal, vertical)) {
             return;
         }
         if (horizontal != 0 && listener.handleCraftingRecipeSwipe(horizontal)) {

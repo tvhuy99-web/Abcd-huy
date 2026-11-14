@@ -3839,11 +3839,20 @@ int heal_actor::finish_using( Character &healer, Character &patient, item &it,
     const bool player_healing_player = healer.is_avatar() && patient.is_avatar();
     // Need a helper here - messages are from healer's point of view
     // but it would be cool if NPCs could use this function too
+    // The three blocks below report a bleed, bite or infection outcome.
+    // A plain bandage or disinfectant on an otherwise clean wound applies
+    // its effect just as silently further down, so remember whether any
+    // outcome was reported: the fallback after the blocks names the
+    // treatment that was applied instead of leaving only "You finish
+    // using the %s." Both go through add_msg, so the reader speaks them
+    // and the message log keeps them for the double-tap recap.
+    bool treatment_reported = false;
     const auto heal_msg = [&]( game_message_type msg_type,
     const char *player_player_msg, const char *other_msg ) {
         if( !u_see ) {
             return;
         }
+        treatment_reported = true;
 
         if( player_healing_player ) {
             add_msg( msg_type, player_player_msg );
@@ -3898,6 +3907,15 @@ int heal_actor::finish_using( Character &healer, Character &patient, item &it,
         }
 
         practice_amount += infect * 10.0f;
+    }
+
+    if( !treatment_reported ) {
+        if( bandages_power > 0 ) {
+            heal_msg( m_good, _( "You bandage the wound." ), _( "The wound is bandaged." ) );
+        }
+        if( disinfectant_power > 0 ) {
+            heal_msg( m_good, _( "You disinfect the wound." ), _( "The wound is disinfected." ) );
+        }
     }
 
     healer.add_msg_if_player( _( "You finish using the %s." ), it.tname() );

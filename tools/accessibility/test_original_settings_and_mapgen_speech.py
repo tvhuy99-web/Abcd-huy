@@ -19,11 +19,24 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         cls.translations = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
 
     def test_existing_nine_settings_are_preserved_and_two_appended(self):
-        start = self.menu.index("    vSettingsSubItems.clear();")
-        end = self.menu.index("    vSettingsHotkeys.clear();", start)
-        entries = re.findall(r'vSettingsSubItems.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
-                             self.menu[start:end])
-        self.assertEqual(entries, [
+        # New master moved these entries into game_settings_items() so the
+        # Settings menu can also open in-game. Their order must stay stable.
+        if "vSettingsSubItems.clear();" in self.menu:
+            start = self.menu.index("vSettingsSubItems.clear();")
+            end = self.menu.index("vSettingsHotkeys.clear();", start)
+            block = self.menu[start:end]
+            names = re.findall(
+                r'vSettingsSubItems.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
+                block)
+        else:
+            start = self.menu.index("static std::vector<std::string> game_settings_items()")
+            end = self.menu.index("return items;", start)
+            block = self.menu[start:end]
+            names = re.findall(
+                r'items.emplace_back\( pgettext\( "Main Menu\|Settings", "([^"]+)"',
+                block)
+            self.assertIn("vSettingsSubItems = game_settings_items();", self.menu)
+        self.assertEqual(names, [
             "<O|o>ptions", "Ke<y|Y>bindings", "A<u|U>topickup",
             "Sa<f|F>emode", "Colo<r|R>s", "ImGui <S|s>tyles",
             "<I|i>mGui Demo Screen", "TTS Settings", "Sound Settings",
@@ -33,7 +46,8 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
                                 (8, "open_sound_settings"),
                                 (9, "open_accessibility_settings"),
                                 (10, "open_backup_restore")):
-            self.assertIn(f"sel2 == {index}", self.menu)
+            self.assertTrue(f"sel2 == {index}" in self.menu
+                            or f"choice == {index}" in self.menu)
             self.assertIn("a11y::android::" + expected, self.menu)
 
     def test_android_bridge_launches_only_original_settings_children(self):
@@ -52,7 +66,10 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
         self.assertNotIn("GameSettingsActivity", (
             ROOT / "android/app/src/main/AndroidManifest.xml").read_text("utf-8"))
         self.assertFalse((JAVA / "GameSettingsActivity.java").exists())
-        self.assertIn('"open_options"', self.hub)
+        # The native Settings command was renamed on newer master commits.
+        self.assertTrue(any('"' + command + '"' in self.hub for command in (
+            "open_options", "open_game_settings"
+        )))
         self.assertIn('"hub:settings".equals(target)', self.reader)
 
     def test_vietnamese_names_have_context_translation(self):

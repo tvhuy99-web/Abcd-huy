@@ -5,7 +5,10 @@
 
 #include <algorithm>
 #include <array>
+#include <charconv>
+#include <climits>
 #include <cstddef>
+#include <functional>
 #include <iterator>
 #include <memory>
 #include <numeric>
@@ -18,6 +21,7 @@
 #include "action.h"
 #include "activity_actor_definitions.h"
 #include "a11y_input.h"
+#include "a11y_item_text.h"
 #include "a11y_requirements.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
@@ -525,6 +529,145 @@ static shared_ptr_fast<game::draw_callback_t> construction_preview_callback(
 
 static std::string has_pre_flags_colorize( const construction &con );
 
+// One reader focus per requirement alternative, in group order. The label
+// is the engine's own requirement text -- components add the have-count
+// ("3 wood (have 5)") -- plus the Available/Missing verdict, so every
+// focus announces the requirement and its counts. Nodes keep position 0:
+// Java recomputes "X of Y" from the swipe list then, and the focus fallback
+// on entering the detail screen lands on the name node instead of a
+// mid-list requirement (see GameReaderController.resolveFocusFallback).
+// Twin of the same helper in crafting_gui.cpp; keep both in sync. A shared
+// home in a11y_requirements.cpp needs a sparse-checkout change.
+static int reader_requirement_have( const itype_id &type, const temp_crafting_inventory &inventory,
+                                    const std::function<bool( const item & )> &filter )
+{
+    if( item::count_by_charges( type ) ) {
+        return inventory.charges_of( type, INT_MAX, filter );
+    }
+    return inventory.amount_of( type, false, INT_MAX, filter );
+}
+
+static std::string reader_requirement_label( const quality_requirement &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    return alternative.to_string() + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static std::string reader_requirement_label( const tool_comp &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    return alternative.to_string( batch ) + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static std::string reader_requirement_label( const item_comp &alternative,
+        const Character &actor, const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    const int have = reader_requirement_have( alternative.type, inventory, filter );
+    return alternative.to_string( batch, have ) + ". " +
+           ( alternative.has( &actor, inventory, filter, batch ) ? _( "Available." ) : _( "Missing." ) );
+}
+
+static void append_reader_requirement_nodes( std::vector<a11y::semantic_node> &nodes,
+        const std::string &prefix, const requirement_data &requirements, const Character &actor,
+        const temp_crafting_inventory &inventory,
+        const std::function<bool( const item & )> &filter, int batch )
+{
+    const auto add_node = [&]( const std::string &id, const std::string &label ) {
+        a11y::semantic_node node;
+        node.id = id;
+        node.role = "button";
+        node.label = label;
+        node.actions = { "focus", "read_detail" };
+        nodes.push_back( std::move( node ) );
+    };
+    std::size_t group_index = 0;
+    for( const auto &group : requirements.get_qualities() ) {
+        std::size_t alt_index = 0;
+        for( const quality_requirement &alternative : group ) {
+            add_node( prefix + ":req:quality:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+    group_index = 0;
+    for( const auto &group : requirements.get_tools() ) {
+        std::size_t alt_index = 0;
+        for( const tool_comp &alternative : group ) {
+            add_node( prefix + ":req:tool:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+    group_index = 0;
+    for( const auto &group : requirements.get_components() ) {
+        std::size_t alt_index = 0;
+        for( const item_comp &alternative : group ) {
+            add_node( prefix + ":req:component:" + std::to_string( group_index ) + ":" +
+                      std::to_string( alt_index ),
+                      reader_requirement_label( alternative, actor, inventory, filter, batch ) );
+            ++alt_index;
+        }
+        ++group_index;
+    }
+}
+
+// Resolve a "…:req:<kind>:<group>:<alt>" node id back to the label the
+// detail screen shows for it and, for tool/component requirements, the
+// required item type whose full info a two-finger tap reads. Quality
+// requirements have no item to describe, so type stays null. Returns
+// false for stale or unknown ids.
+static bool reader_requirement_detail( const requirement_data &requirements,
+                                       const Character &actor, const temp_crafting_inventory &inventory,
+                                       const std::function<bool( const item & )> &filter, int batch,
+                                       const std::string &kind, std::size_t group_want,
+                                       std::size_t alt_want, std::string &label, itype_id &type )
+{
+    const auto pick = [&]( const auto &groups, const auto &type_of ) {
+        std::size_t group_index = 0;
+        for( const auto &group : groups ) {
+            if( group_index == group_want ) {
+                std::size_t alt_index = 0;
+                for( const auto &alternative : group ) {
+                    if( alt_index == alt_want ) {
+                        label = reader_requirement_label( alternative, actor, inventory, filter, batch );
+                        type = type_of( alternative );
+                        return true;
+                    }
+                    ++alt_index;
+                }
+                return false;
+            }
+            ++group_index;
+        }
+        return false;
+    };
+    if( kind == "quality" ) {
+        return pick( requirements.get_qualities(), []( const quality_requirement & ) {
+            return itype_id::NULL_ID();
+        } );
+    }
+    if( kind == "tool" ) {
+        return pick( requirements.get_tools(), []( const tool_comp &alternative ) {
+            return alternative.type;
+        } );
+    }
+    if( kind == "component" ) {
+        return pick( requirements.get_components(), []( const item_comp &alternative ) {
+            return alternative.type;
+        } );
+    }
+    return false;
+}
+
 construction_id construction_menu( const bool blueprint )
 {
     // place_construction runs after the scope is reset, so query caches hold
@@ -980,8 +1123,138 @@ construction_id construction_menu( const bool blueprint )
                 con_preview, mouse_pos, blink );
     g->add_draw_callback( draw_preview );
 
+    // --- Reader detail screen ---
+    // Tapping a construction opens a detail screen instead of building at
+    // once. The list snapshot and the detail snapshot never mix: the detail
+    // screen publishes only its own nodes plus the command tail.
+    // reader_detail_intro/placement cache the description and placement
+    // text of the detail screen's construction for two-finger readouts.
+    bool reader_detail_open = false;
+    std::string reader_detail_group;
+    std::string reader_detail_intro;
+    std::string reader_detail_placement;
+    std::vector<a11y::semantic_node> reader_documents;
+
     a11y::screen_scope reader( &ctxt, "construction",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
+        if( reader_detail_open ) {
+            // Back closes the detail screen, never the whole menu.
+            // The command-tail Back button sends activate on QUIT; the
+            // two-finger back gesture sends the cancel action.
+            if( intent.action == "cancel" ||
+                ( intent.action == "activate" && intent.node == "QUIT" ) ) {
+                reader_detail_open = false;
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" && intent.node == "construction:detail:cancel" ) {
+                reader_detail_open = false;
+                return "TIMEOUT";
+            }
+            if( intent.action == "activate" && intent.node == "construction:detail:confirm" ) {
+                // The native CONFIRM path below runs the buildability,
+                // darkness and faction checks and then places the
+                // construction; the detail screen only gates it behind
+                // an explicit confirm. Close first so a failed confirm
+                // returns to the list.
+                reader_detail_open = false;
+                return "CONFIRM";
+            }
+            if( intent.action == "read_detail" ) {
+                // The detail screen's own two-finger readout. Name and
+                // intro read the full construction detail; a requirement
+                // focus describes the required item itself.
+                if( select < 0 || static_cast<std::size_t>( select ) >= constructs.size() ||
+                    constructs[select].str() != reader_detail_group ) {
+                    return "TIMEOUT";
+                }
+                if( intent.node == "construction:detail:name" ||
+                    intent.node == "construction:detail:intro" ) {
+                    std::string complete = reader_detail_intro;
+                    if( !reader_detail_placement.empty() ) {
+                        if( !complete.empty() ) {
+                            complete += "\n\n";
+                        }
+                        complete += reader_detail_placement;
+                    }
+                    for( const a11y::semantic_node &document : reader_documents ) {
+                        if( document.role != "document" ||
+                            document.id.rfind( "construction:", 0 ) != 0 ||
+                            document.detail.empty() ) {
+                            continue;
+                        }
+                        if( !complete.empty() ) {
+                            complete += "\n\n";
+                        }
+                        complete += document.label + "\n" + document.detail;
+                    }
+                    a11y::announce_full_detail_text( complete );
+                    return "TIMEOUT";
+                }
+                if( intent.node.rfind( "construction:detail:req:", 0 ) == 0 ) {
+                    const std::string rest = intent.node.substr(
+                                                 std::string( "construction:detail:req:" ).size() );
+                    const std::size_t first = rest.find( ':' );
+                    const std::size_t second = first == std::string::npos ? std::string::npos :
+                                               rest.find( ':', first + 1 );
+                    if( first == std::string::npos || second == std::string::npos ) {
+                        return "TIMEOUT";
+                    }
+                    const std::string kind = rest.substr( 0, first );
+                    std::size_t group = 0;
+                    std::size_t alt = 0;
+                    const std::from_chars_result parsed_group = std::from_chars(
+                            rest.data() + first + 1, rest.data() + second, group );
+                    const std::from_chars_result parsed_alt = std::from_chars(
+                            rest.data() + second + 1, rest.data() + rest.size(), alt );
+                    if( parsed_group.ec != std::errc() || parsed_alt.ec != std::errc() ) {
+                        return "TIMEOUT";
+                    }
+                    // Requirements come from the first stage the current
+                    // filter mode shows, the same stage the detail screen
+                    // lists its requirement focuses for.
+                    const requirement_data *requirements = nullptr;
+                    for( const construction *con : constructions_by_group( constructs[select] ) ) {
+                        const bool resources = player_can_build( player_character, total_inv, *con, true );
+                        const bool location = can_construct( *con );
+                        if( ( filter_mode == 1 && !( resources && !location ) ) ||
+                            ( filter_mode == 2 && !( resources && location ) ) ) {
+                            continue;
+                        }
+                        requirements = &*con->requirements;
+                        break;
+                    }
+                    if( requirements == nullptr ) {
+                        return "TIMEOUT";
+                    }
+                    std::string label;
+                    itype_id type = itype_id::NULL_ID();
+                    if( !reader_requirement_detail( *requirements, player_character, total_inv,
+                                                    is_crafting_component, 1, kind, group, alt,
+                                                    label, type ) ) {
+                        return "TIMEOUT";
+                    }
+                    if( type.is_null() ) {
+                        a11y::announce_full_detail_text( label );
+                    } else {
+                        const item example( type );
+                        a11y::announce_full_item_info( example, label );
+                    }
+                    return "TIMEOUT";
+                }
+                return "TIMEOUT";
+            }
+            // Focus moves on detail nodes and anything stale while the
+            // detail screen is open never reach the list handlers.
+            // Command-tail activations other than QUIT fall through below
+            // so tab and filter commands keep working; the snapshot guard
+            // closes the detail screen if the selection changes under it.
+            if( intent.action == "focus" ) {
+                return "TIMEOUT";
+            }
+            if( intent.node.rfind( "construction:detail:", 0 ) == 0 ) {
+                return "TIMEOUT";
+            }
+        }
         if( intent.action == "activate" && !constructs.empty() &&
             ( intent.node == "construction:page:next" || intent.node == "construction:page:previous" ) ) {
             // Same 80-row paging as the crafting menu:
@@ -1010,13 +1283,20 @@ construction_id construction_menu( const bool blueprint )
                     select = i;
                     update_info = true;
                 }
-                return intent.action == "activate" ? "CONFIRM" : "TIMEOUT";
+                if( intent.action == "activate" ) {
+                    // Tapping a construction opens its detail screen;
+                    // nothing is built until the detail screen's confirm
+                    // button is pressed.
+                    reader_detail_open = true;
+                    reader_detail_group = constructs[i].str();
+                    return "TIMEOUT";
+                }
+                return "TIMEOUT";
             }
         }
         return a11y::registered_intent( ctxt, intent );
     } );
     std::string reader_detail_key;
-    std::vector<a11y::semantic_node> reader_documents;
 
     do {
         if( update_cat ) {
@@ -1112,6 +1392,8 @@ construction_id construction_menu( const bool blueprint )
 
         if( a11y::enabled() ) {
             a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Construction" ) );
+            // The detail screen reuses the same command tail as the list.
+            const std::vector<a11y::semantic_node> command_nodes = snapshot.nodes;
             snapshot.summary = construct_cat[tabindex].name();
             snapshot.summary += ". " + std::string( filter_mode == 0 ? _( "All" ) :
                                   filter_mode == 1 ? _( "Ready (missing location)" ) : _( "Buildable here" ) );
@@ -1183,7 +1465,15 @@ construction_id construction_menu( const bool blueprint )
                 for( const std::string &line : full_construct_buffer ) {
                     description += line + "\n";
                 }
-                a11y::append_document( snapshot, "construction:details", _( "Construction details" ), description );
+                // The detail screen only makes sense for the construction
+                // it was opened for. Any reselection closes it instead of
+                // showing another construction's detail.
+                if( reader_detail_open && constructs[select].str() != reader_detail_group ) {
+                    reader_detail_open = false;
+                }
+                if( !reader_detail_open ) {
+                    a11y::append_document( snapshot, "construction:details", _( "Construction details" ), description );
+                }
                 // Valid placement directions (R12.4): con_preview is the
                 // engine's own preview for the selected group -- a point is
                 // present only when can_construct and player_can_build both
@@ -1204,7 +1494,9 @@ construction_id construction_menu( const bool blueprint )
                                                     entry.second->group->name() );
                     }
                 }
-                a11y::append_document( snapshot, "construction:placement", _( "Placement" ), placement );
+                if( !reader_detail_open ) {
+                    a11y::append_document( snapshot, "construction:placement", _( "Placement" ), placement );
+                }
                 const std::string key = constructs[select].str() + ":" + std::to_string( filter_mode ) +
                                         ":" + std::to_string( detail::get_current_language_version() );
                 if( key != reader_detail_key ) {
@@ -1245,7 +1537,88 @@ construction_id construction_menu( const bool blueprint )
                     }
                     reader_documents = std::move( documents.nodes );
                 }
-                snapshot.nodes.insert( snapshot.nodes.end(), reader_documents.begin(), reader_documents.end() );
+                if( !reader_detail_open ) {
+                    snapshot.nodes.insert( snapshot.nodes.end(), reader_documents.begin(), reader_documents.end() );
+                } else {
+                    // The detail screen replaces the list and its
+                    // documents with its own nodes, in swipe order: name,
+                    // introduction, one focus per requirement, quantity,
+                    // cancel, confirm last.
+                    reader_detail_intro = description;
+                    reader_detail_placement = placement;
+                    snapshot.summary = constructs[select]->name();
+                    std::vector<a11y::semantic_node> detail;
+                    a11y::semantic_node name;
+                    name.id = "construction:detail:name";
+                    name.role = "button";
+                    name.label = constructs[select]->name();
+                    if( blueprint ) {
+                        name.value = _( "Blueprint" );
+                    } else if( !player_can_build( player_character, total_inv, constructs[select] ) ) {
+                        name.value = _( "Requirements or location are missing." );
+                    } else if( constructs[select] != construction_group_deconstruct_simple_furniture &&
+                               !player_can_see_to_build( player_character, constructs[select] ) ) {
+                        name.value = std::string( _( "Buildable here" ) ) + ". " +
+                                     _( "It is too dark to construct right now." );
+                    } else {
+                        name.value = _( "Buildable here" );
+                    }
+                    name.actions = { "focus", "read_detail" };
+                    detail.push_back( std::move( name ) );
+                    a11y::semantic_node intro;
+                    intro.id = "construction:detail:intro";
+                    intro.role = "document";
+                    intro.label = _( "Construction details" );
+                    intro.detail = description;
+                    intro.actions = { "focus", "read_detail" };
+                    detail.push_back( std::move( intro ) );
+                    // Requirements come from the first stage the current
+                    // filter mode shows, the same stage the list documents
+                    // describe. A construction has no batch: every stage
+                    // builds one at a time.
+                    const requirement_data *stage_requirements = nullptr;
+                    for( const construction *con : constructions_by_group( constructs[select] ) ) {
+                        const bool resources = player_can_build( player_character, total_inv, *con, true );
+                        const bool location = can_construct( *con );
+                        if( ( filter_mode == 1 && !( resources && !location ) ) ||
+                            ( filter_mode == 2 && !( resources && location ) ) ) {
+                            continue;
+                        }
+                        stage_requirements = &*con->requirements;
+                        break;
+                    }
+                    if( stage_requirements != nullptr ) {
+                        append_reader_requirement_nodes( detail, "construction:detail",
+                                                         *stage_requirements, player_character, total_inv,
+                                                         is_crafting_component, 1 );
+                    }
+                    a11y::semantic_node quantity;
+                    quantity.id = "construction:detail:quantity";
+                    quantity.role = "number";
+                    quantity.label = _( "Quantity" );
+                    quantity.value = "1";
+                    quantity.enabled = false;
+                    quantity.disabled_reason =
+                        _( "Construction builds one at a time; quantity is fixed at 1." );
+                    quantity.actions = { "focus" };
+                    detail.push_back( std::move( quantity ) );
+                    a11y::semantic_node cancel;
+                    cancel.id = "construction:detail:cancel";
+                    cancel.role = "button";
+                    cancel.label = _( "Cancel" );
+                    cancel.actions = { "focus", "activate" };
+                    detail.push_back( std::move( cancel ) );
+                    a11y::semantic_node confirm;
+                    confirm.id = "construction:detail:confirm";
+                    confirm.role = "button";
+                    confirm.label = _( "Construct" );
+                    confirm.actions = { "focus", "activate" };
+                    detail.push_back( std::move( confirm ) );
+                    snapshot.nodes = std::move( detail );
+                    snapshot.nodes.insert( snapshot.nodes.end(), command_nodes.begin(),
+                                           command_nodes.end() );
+                    snapshot.focus = "construction:detail:name";
+                }
             }
             reader.update( std::move( snapshot ) );
         }
