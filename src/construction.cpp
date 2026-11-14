@@ -1133,6 +1133,7 @@ construction_id construction_menu( const bool blueprint )
     std::string reader_detail_group;
     std::string reader_detail_intro;
     std::string reader_detail_placement;
+    std::vector<a11y::semantic_node> reader_documents;
 
     a11y::screen_scope reader( &ctxt, "construction",
     [&]( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
@@ -1296,7 +1297,6 @@ construction_id construction_menu( const bool blueprint )
         return a11y::registered_intent( ctxt, intent );
     } );
     std::string reader_detail_key;
-    std::vector<a11y::semantic_node> reader_documents;
 
     do {
         if( update_cat ) {
