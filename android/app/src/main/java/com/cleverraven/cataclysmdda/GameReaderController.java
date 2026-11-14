@@ -145,6 +145,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean combatMode;
     private boolean vehicleMode;
     private boolean pendingVehicleRoadReport;
+    private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -717,6 +718,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && next.find("reader:vehicle:seat") == null) {
                     vehicleMode = false;
                     pendingVehicleRoadReport = false;
+                    pendingVehicleSpeedReport = false;
+                }
+                if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
+                    pendingVehicleSpeedReport = false;
+                    ReaderSnapshot.Node speed = next.find("reader:vehicle:speed");
+                    if (speed != null && !speed.detail.isEmpty()) {
+                        final String report = speed.detail;
+                        handler.post(() -> {
+                            if (vehicleMode && directWorldGesturesEnabled()) {
+                                feedback(report);
+                            }
+                        });
+                    }
                 }
                 if (pendingVehicleRoadReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleRoadReport = false;
@@ -3188,6 +3202,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             pendingVehicleRoadReport = true;
+        } else if ("reader:vehicle:forward".equals(id)
+                || "reader:vehicle:reverse".equals(id)
+                || "reader:vehicle:faster".equals(id)
+                || "reader:vehicle:slower".equals(id)) {
+            pendingVehicleSpeedReport = true;
         }
         requestLiveWorldCommand(id);
     }
@@ -4820,6 +4839,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         combatMode = false;
         vehicleMode = false;
         pendingVehicleRoadReport = false;
+        pendingVehicleSpeedReport = false;
         closed = true;
         foreground = false;
         presentationEpoch++;
