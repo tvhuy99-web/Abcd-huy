@@ -829,10 +829,28 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             // Short heading response for steering gestures. Read the actual
             // body direction and the selected steering target separately:
             // selecting a new heading does not rotate a stationary car.
+            const auto spoken_heading = []( const units::angle &direction ) {
+                const int degrees = ( static_cast<int>( std::lround(
+                                          to_degrees( direction + 90_degrees ) ) ) % 360 + 360 ) % 360;
+                std::string compass;
+                switch( ( ( degrees + 22 ) / 45 ) % 8 ) {
+                    case 0: compass = _( "north" ); break;
+                    case 1: compass = _( "northeast" ); break;
+                    case 2: compass = _( "east" ); break;
+                    case 3: compass = _( "southeast" ); break;
+                    case 4: compass = _( "south" ); break;
+                    case 5: compass = _( "southwest" ); break;
+                    case 6: compass = _( "west" ); break;
+                    case 7: compass = _( "northwest" ); break;
+                }
+                // Include precise degrees when the steering target is an
+                // intermediate 15-degree angle between compass directions.
+                return compass + " (" + std::to_string( degrees ) + "°)";
+            };
             const std::string heading_report =
-                string_format( _( "Direction: %s." ), veh.face.to_string_azimuth_from_north() ) +
+                string_format( _( "Direction: %s." ), spoken_heading( veh.face.dir() ) ) +
                 " " + string_format( _( "Requested heading: %s." ),
-                                     desired_heading.to_string_azimuth_from_north() );
+                                     spoken_heading( veh.turn_dir ) );
             result.nodes.push_back( document( "reader:vehicle:heading",
                                               _( "Direction" ), heading_report ) );
             result.nodes.push_back( document( "reader:vehicle:detail",

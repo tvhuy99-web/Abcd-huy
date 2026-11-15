@@ -3138,7 +3138,11 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.a11y_brake_alerted = true;
                         }
                     }
-                    player_character.mod_moves( -100 );
+                    // One reader swipe means one physical simulation step,
+                    // even if this avatar currently has >100 moves banked.
+                    // Setting moves to at most zero is the same native
+                    // turn boundary used for vehicle rotorcraft thrust.
+                    player_character.set_moves( std::min( player_character.get_moves(), 0 ) );
                 }
             }
         } else {

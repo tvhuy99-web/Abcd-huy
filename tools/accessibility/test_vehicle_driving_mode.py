@@ -97,7 +97,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
         drive = ENGINE.split("void game::move_or_drive(", 1)[1].split(
             "    } else {\n        const int pre_walk_moves", 1
         )[0]
-        self.assertIn("player_character.mod_moves( -100 );", drive)
+        self.assertIn("player_character.set_moves(", drive)
+        self.assertIn("std::min( player_character.get_moves(), 0 )", drive)
         self.assertIn("throttle == a11y_vehicle_throttle::forward", drive)
         self.assertIn("throttle == a11y_vehicle_throttle::reverse", drive)
         self.assertIn("throttle == a11y_vehicle_throttle::faster", drive)
@@ -119,6 +120,11 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('document( "reader:vehicle:heading"', WORLD)
         self.assertIn('_( "Direction: %s." )', WORLD)
         self.assertIn('_( "Requested heading: %s." )', WORLD)
+        for compass in ("north", "northeast", "east", "southeast",
+                        "south", "southwest", "west", "northwest"):
+            self.assertIn('_( "' + compass + '" )', WORLD)
+        self.assertIn("spoken_heading( veh.face.dir() )", WORLD)
+        self.assertIn("spoken_heading( veh.turn_dir )", WORLD)
         self.assertIn('next.find("reader:vehicle:heading")', CTRL)
         self.assertNotIn("pendingVehicleRoadReport", CTRL)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
