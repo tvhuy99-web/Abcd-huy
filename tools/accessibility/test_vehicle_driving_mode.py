@@ -98,6 +98,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('_( "Open Vehicle controls to drive." )', source)
         self.assertIn("if( a11y::enabled() )", source)
         self.assertIn("if( !a11y::enabled() )", VEH_USE)
+        self.assertIn('#include "a11y_runtime.h"', VEH_USE)
 
     def test_engine_toggle_has_mode_scoped_gesture_and_real_start_activity(self):
         self.assertIn('case "swipe_up_right":', CTRL)
@@ -135,6 +136,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertGreater(menu.index("a11y_manual_drive = !a11y_manual_drive;"),
                            menu.index("FOLD_VEHICLE"))
         self.assertIn("a11y_continuous_drive = false;", menu)
+        self.assertIn("a11y_drive_paused = false;", menu)
         self.assertIn("a11y_obstacle_override = false;", menu)
 
     def test_manual_mode_spends_one_turn_without_autopilot(self):
@@ -182,7 +184,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("stopped_hazard->label == car.a11y_stopped_obstacle_name", ENGINE)
         self.assertIn("a11y_stopped_obstacle_name = hazard->label;", VEH)
         self.assertIn("a11y_stopped_heading = turn_dir;", VEH)
-        self.assertIn("if( !car.a11y_obstacle_override &&", ENGINE)
+        self.assertIn("if( !car.a11y_manual_drive && !car.a11y_obstacle_override &&", ENGINE)
         self.assertIn("if( !a11y_obstacle_override && hazard &&", VEH)
         self.assertIn("hazard->label != a11y_override_obstacle_name", VEH)
         self.assertIn("a11y_obstacle_stop = true;", VEH)

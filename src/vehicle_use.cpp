@@ -3030,6 +3030,8 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
         .on_submit( [this] {
             a11y_manual_drive = !a11y_manual_drive;
             a11y_continuous_drive = false;
+            a11y_drive_paused = false;
+            a11y_resume_cruise_velocity = 0;
             a11y_obstacle_stop = false;
             a11y_obstacle_override = false;
             a11y_override_obstacle_name.clear();
