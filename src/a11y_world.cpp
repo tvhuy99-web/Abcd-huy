@@ -826,6 +826,15 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                                   _( "No obstacle found along the checked reverse path." ) :
                                                   _( "No blocking obstacle detected along the checked forward path." ) );
             vehicle_detail += " " + road;
+            // Short heading response for steering gestures. Read the actual
+            // body direction and the selected steering target separately:
+            // selecting a new heading does not rotate a stationary car.
+            const std::string heading_report =
+                string_format( _( "Direction: %s." ), veh.face.to_string_azimuth_from_north() ) +
+                " " + string_format( _( "Requested heading: %s." ),
+                                     desired_heading.to_string_azimuth_from_north() );
+            result.nodes.push_back( document( "reader:vehicle:heading",
+                                              _( "Direction" ), heading_report ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
             result.nodes.push_back( document( "reader:vehicle:road",
@@ -1590,8 +1599,25 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
     const int horizon = std::clamp( 20 + std::abs( veh.velocity ) / 400, 20, 60 );
     const units::angle desired_delta = normalize( veh.turn_dir - veh.face.dir() +
                                       ( reverse ? 180_degrees : 0_degrees ) );
-    const std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
-                                            horizon, reverse );
+    std::set<point_abs_ms> projected = veh.immediate_path( &here, desired_delta,
+                                        horizon, reverse );
+    // The native straight-ahead predictor begins at the present bumper.
+    // During a steering turn, the far corners can swing into a nearby
+    // obstacle that lies outside that ray. Include the rotated footprint
+    // at the requested heading, even when the vehicle has barely moved.
+    if( veh.turn_dir != veh.face.dir() ) {
+        const point_rel_ms pivot = veh.pivot_point( here );
+        for( int i = 0; i < veh.part_count(); ++i ) {
+            const vehicle_part &part = veh.part( i );
+            if( part.removed || part.is_fake ) {
+                continue;
+            }
+            tripoint_rel_ms projected_mount;
+            veh.coord_translate( veh.turn_dir, pivot, part.mount, projected_mount );
+            const tripoint_bub_ms projected_tile = veh.pos_bub( here ) + projected_mount;
+            projected.insert( here.get_abs( projected_tile ).xy() );
+        }
+    }
     std::optional<vehicle_obstacle> nearest;
     // Measure the gap to the closest actual vehicle body tile. The vehicle
     // origin may lie many tiles behind the front of a bus or a large truck.

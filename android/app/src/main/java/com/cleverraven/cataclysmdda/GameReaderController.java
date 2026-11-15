@@ -152,7 +152,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
     private boolean vehicleMode;
-    private boolean pendingVehicleRoadReport;
+    private boolean pendingVehicleHeadingReport;
     private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
@@ -737,7 +737,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if ("DEFAULTMODE".equals(next.category)
                         && next.find("reader:vehicle:seat") == null) {
                     vehicleMode = false;
-                    pendingVehicleRoadReport = false;
+                    pendingVehicleHeadingReport = false;
                     pendingVehicleSpeedReport = false;
                 }
                 if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
@@ -752,11 +752,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         });
                     }
                 }
-                if (pendingVehicleRoadReport && "DEFAULTMODE".equals(next.category)) {
-                    pendingVehicleRoadReport = false;
-                    ReaderSnapshot.Node road = next.find("reader:vehicle:road");
-                    if (road != null && !road.detail.isEmpty()) {
-                        final String report = road.detail;
+                if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
+                    pendingVehicleHeadingReport = false;
+                    ReaderSnapshot.Node heading = next.find("reader:vehicle:heading");
+                    if (heading != null && !heading.detail.isEmpty()) {
+                        final String report = heading.detail;
                         handler.post(() -> {
                             if (vehicleMode && directWorldGesturesEnabled()) {
                                 feedback(report);
@@ -3283,7 +3283,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
-            pendingVehicleRoadReport = true;
+            pendingVehicleHeadingReport = true;
         } else if ("reader:vehicle:pause".equals(id)
                 || "reader:vehicle:forward".equals(id)
                 || "reader:vehicle:reverse".equals(id)
@@ -4996,7 +4996,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readerOffAfterAnnouncement = false;
         combatMode = false;
         vehicleMode = false;
-        pendingVehicleRoadReport = false;
+        pendingVehicleHeadingReport = false;
         pendingVehicleSpeedReport = false;
         closed = true;
         foreground = false;

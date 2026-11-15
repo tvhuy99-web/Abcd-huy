@@ -91,6 +91,38 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
         self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
 
+    def test_throttle_swipes_advance_native_physics(self):
+        # Native pldrive() does not spend moves for straight cruise changes.
+        # A forward swipe must still advance a turn after selecting a target.
+        drive = ENGINE.split("void game::move_or_drive(", 1)[1].split(
+            "    } else {\n        const int pre_walk_moves", 1
+        )[0]
+        self.assertIn("player_character.mod_moves( -100 );", drive)
+        self.assertIn("throttle == a11y_vehicle_throttle::forward", drive)
+        self.assertIn("throttle == a11y_vehicle_throttle::reverse", drive)
+        self.assertIn("throttle == a11y_vehicle_throttle::faster", drive)
+        self.assertIn("car.cruise_velocity != 0", drive)
+        self.assertIn("pldrive( point_rel_ms( 0, -1 ) );", drive)
+
+    def test_steering_obstacle_brake_is_checked_before_world_tick(self):
+        drive = ENGINE.split("void game::move_or_drive(", 1)[1].split(
+            "    } else {\n        const int pre_walk_moves", 1
+        )[0]
+        self.assertIn("Steering changes turn_dir before the world's next physics", drive)
+        self.assertIn("a11y::vehicle_obstacle_ahead( car, here, reverse );", drive)
+        self.assertIn("car.handbrake( here );", drive)
+        self.assertIn("car.a11y_brake_alerted = true;", drive)
+        self.assertIn("car.velocity != 0 && !car.is_rotorcraft( here )", drive)
+        self.assertIn("veh.coord_translate( veh.turn_dir, pivot, part.mount,", WORLD)
+
+    def test_heading_swipe_announces_actual_and_requested_directions(self):
+        self.assertIn('document( "reader:vehicle:heading"', WORLD)
+        self.assertIn('_( "Direction: %s." )', WORLD)
+        self.assertIn('_( "Requested heading: %s." )', WORLD)
+        self.assertIn('next.find("reader:vehicle:heading")', CTRL)
+        self.assertNotIn("pendingVehicleRoadReport", CTRL)
+        self.assertIn('document( "reader:vehicle:road"', WORLD)
+
     def test_two_fingers_are_mode_scoped_before_map_scans(self):
         self.assertIn("handleVehicleTwoFingerSwipe(", SURF)
         self.assertLess(
@@ -220,10 +252,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("part.info().has_flag( VPFLAG_WHEEL )", WORLD)
 
     def test_speech_is_deferred_to_next_vehicle_snapshot(self):
-        self.assertIn("pendingVehicleRoadReport", CTRL)
+        self.assertIn("pendingVehicleHeadingReport", CTRL)
         self.assertIn("pendingVehicleSpeedReport", CTRL)
         self.assertIn('next.find("reader:vehicle:speed")', CTRL)
-        self.assertIn('next.find("reader:vehicle:road")', CTRL)
+        self.assertIn('next.find("reader:vehicle:heading")', CTRL)
         self.assertIn("if (vehicleMode && directWorldGesturesEnabled())", CTRL)
 
 

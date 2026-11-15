@@ -3064,6 +3064,9 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before driving forward." ) );
                         } else if( car.cruise_velocity == 0 ) {
+                            // Select a forward cruise target on the first swipe.
+                            // Further forward swipes advance the vehicle turn
+                            // without repeatedly increasing that target.
                             const std::optional<a11y::vehicle_obstacle> obstruction =
                                 a11y::vehicle_obstacle_ahead( car, here );
                             if( obstruction && obstruction->distance <= 8 ) {
@@ -3104,6 +3107,38 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     case a11y_vehicle_throttle::none:
                         break;
                     }
+                    // Native pldrive's straight-ahead cruise commands only
+                    // update the target speed. Unlike steering, they do not
+                    // spend moves. Advance a real game turn for each reader
+                    // throttle swipe, including repeated forward/reverse
+                    // swipes after a target has already been selected.
+                    // Never teleport the vehicle or bypass native physics.
+                    if( ( throttle == a11y_vehicle_throttle::forward ||
+                          throttle == a11y_vehicle_throttle::reverse ||
+                          throttle == a11y_vehicle_throttle::faster ) &&
+                        car.cruise_velocity != 0 ) {
+                        const bool reverse = car.cruise_velocity < 0;
+                        const std::optional<a11y::vehicle_obstacle> hazard =
+                            a11y::vehicle_obstacle_ahead( car, here, reverse );
+                        const int braking_range = std::clamp(
+                                                      8 + std::abs( car.velocity ) / 500, 8, 32 );
+                        // A speed-up swipe must not bypass the same obstacle
+                        // guard used by the forward and reverse buttons.
+                        if( hazard && hazard->distance <= braking_range ) {
+                            car.cruise_velocity = 0;
+                            if( car.velocity != 0 ) {
+                                car.handbrake( here );
+                            }
+                            if( !car.a11y_brake_alerted ) {
+                                add_msg( m_warning,
+                                         reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
+                                         _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                                         hazard->label, hazard->distance );
+                            }
+                            car.a11y_brake_alerted = true;
+                        }
+                    }
+                    player_character.mod_moves( -100 );
                 }
             }
         } else {
@@ -3119,6 +3154,33 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 }
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
+            }
+            // Steering changes turn_dir before the world's next physics
+            // step. Check the newly requested trajectory immediately so
+            // a near-side pillar is not first detected after a collision.
+            if( a11y::enabled() && direction.x() != 0 && seated &&
+                player_character.in_vehicle && player_character.controlling_vehicle &&
+                seated->vehicle().player_in_control( here, player_character ) &&
+                ( !g || g->remoteveh() != &seated->vehicle() ) ) {
+                vehicle &car = seated->vehicle();
+                if( car.velocity != 0 && !car.is_rotorcraft( here ) ) {
+                    const bool reverse = car.velocity < 0;
+                    const std::optional<a11y::vehicle_obstacle> hazard =
+                        a11y::vehicle_obstacle_ahead( car, here, reverse );
+                    const int braking_range = std::clamp(
+                                                  8 + std::abs( car.velocity ) / 500, 8, 32 );
+                    if( hazard && hazard->distance <= braking_range ) {
+                        car.cruise_velocity = 0;
+                        car.handbrake( here );
+                        if( !car.a11y_brake_alerted ) {
+                            add_msg( m_warning,
+                                     reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
+                                     _( "Automatic braking: %1$s ahead, about %2$d tiles." ),
+                                     hazard->label, hazard->distance );
+                        }
+                        car.a11y_brake_alerted = true;
+                    }
+                }
             }
         }
     } else {
