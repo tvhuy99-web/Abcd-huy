@@ -122,14 +122,52 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("R.string.a11yDriveBraking", CTRL)
         self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
+    def test_manual_mode_toggle_is_last_vehicle_menu_action(self):
+        self.assertIn("bool a11y_manual_drive = false;", VEH_HEADER)
+        menu = VEH_USE.split("void vehicle::build_interact_menu(", 1)[1].split(
+            "void vehicle::interact_with(", 1
+        )[0]
+        self.assertIn('_( "Driving: Manual. Switch to automatic" )', menu)
+        self.assertIn('_( "Driving: Automatic. Switch to manual" )', menu)
+        self.assertIn("a11y_manual_drive = !a11y_manual_drive;", menu)
+        self.assertIn(".keep_menu_open()", menu)
+        # The accessibility toggle is after the ordinary vehicle controls.
+        self.assertGreater(menu.index("a11y_manual_drive = !a11y_manual_drive;"),
+                           menu.index("FOLD_VEHICLE"))
+        self.assertIn("a11y_continuous_drive = false;", menu)
+        self.assertIn("a11y_obstacle_override = false;", menu)
+
+    def test_manual_mode_spends_one_turn_without_autopilot(self):
+        self.assertIn("!seat->vehicle().a11y_manual_drive", ENGINE)
+        self.assertIn("car.a11y_continuous_drive = false;", ENGINE)
+        self.assertIn("!car.a11y_manual_drive && obstruction &&", ENGINE)
+        self.assertIn("!car.a11y_manual_drive && !car.a11y_obstacle_override", ENGINE)
+        self.assertIn("!seated->vehicle().a11y_manual_drive", ENGINE)
+        self.assertIn("player_character.set_moves(", ENGINE)
+        self.assertIn("!car.a11y_manual_drive && saved_speed != 0", ENGINE)
+
+    def test_manual_mode_warns_without_applying_sensor_brakes(self):
+        self.assertIn("if( a11y_manual_drive ) {", VEH)
+        sensor = VEH.split("// Manual mode reports hazards", 1)[1].split(
+            "} else {\n                // Automatic mode alone", 1
+        )[0]
+        self.assertIn('_( "Obstacle ahead: %1$s, %2$d tiles." )', sensor)
+        self.assertIn('_( "Obstacle behind: %1$s, %2$d tiles." )', sensor)
+        self.assertNotIn("handbrake(", sensor)
+        self.assertNotIn("cruise_velocity = 0", sensor)
+        self.assertIn("!a11y_brake_alerted", sensor)
+        self.assertIn("a11y_stopped_heading != turn_dir", sensor)
+        self.assertIn('_( "Driving mode: Manual." )', WORLD)
+        self.assertIn('_( "Driving mode: Automatic." )', WORLD)
+
     def test_continuous_driving_ticks_without_repeated_swipes(self):
         self.assertIn("bool a11y_continuous_drive = false;", VEH_HEADER)
         self.assertIn("a11y_continuous_vehicle_ready( avatar &driver, map &here )", ENGINE)
         self.assertIn("continuous_drive_tick_due()", ENGINE)
         self.assertIn("std::chrono::milliseconds( 350 )", ENGINE)
         self.assertIn("current_turn.has_timeout_elapsed() || continuous_drive_tick_due()", ENGINE)
-        self.assertIn("a11y_continuous_drive = car.cruise_velocity > 0;", ENGINE)
-        self.assertIn("a11y_continuous_drive = car.cruise_velocity < 0;", ENGINE)
+        self.assertIn("car.cruise_velocity > 0;", ENGINE)
+        self.assertIn("car.cruise_velocity < 0;", ENGINE)
         self.assertIn("a11y_continuous_drive = false;", VEH)
         self.assertIn("a11y_drive_stall_ticks >= 6", VEH)
         self.assertIn("seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0", ENGINE)
@@ -261,7 +299,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("driver.in_vehicle &&", VEH)
         self.assertIn("driver.controlling_vehicle", VEH)
         self.assertIn("velocity != 0 )", VEH)
-        self.assertIn("const bool reverse = velocity < 0;", VEH)
+        self.assertIn("const bool reverse = velocity < 0 ||", VEH)
         self.assertIn("std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 )", VEH)
         self.assertIn("handbrake( here );", VEH)
         self.assertIn("velocity != 0 )", VEH)

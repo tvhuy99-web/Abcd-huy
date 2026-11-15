@@ -1110,6 +1110,9 @@ class vehicle
         bool a11y_brake_alerted = false; // NOLINT(cata-serialize)
         // Session-only spoken driving state; never serialized into a save.
         bool a11y_continuous_drive = false; // NOLINT(cata-serialize)
+        // Reader-only per-vehicle control choice. Manual mode advances one
+        // native game turn per gesture and never applies sensor braking.
+        bool a11y_manual_drive = false; // NOLINT(cata-serialize)
         bool a11y_obstacle_stop = false; // NOLINT(cata-serialize)
         // Remember which obstacle and heading produced the audible stop.
         // A second Forward swipe must not bypass an unseen NEW obstacle.

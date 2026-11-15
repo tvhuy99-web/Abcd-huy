@@ -757,6 +757,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( document( "reader:vehicle:speed",
                                               _( "Current and target speed" ), speed ) );
             std::string vehicle_detail = string_format( _( "Vehicle: %s." ), veh.name );
+            if( local_driver ) {
+                vehicle_detail += " " + std::string( veh.a11y_manual_drive ?
+                                                   _( "Driving mode: Manual." ) :
+                                                   _( "Driving mode: Automatic." ) );
+            }
             vehicle_detail += " " + std::string( veh.engine_on ? _( "Engine running." ) :
                                                 _( "Engine stopped." ) );
             vehicle_detail += " " + string_format( _( "Direction: %s." ),

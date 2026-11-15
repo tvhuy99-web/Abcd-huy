@@ -6726,6 +6726,10 @@ void vehicle::gain_moves( map &here )
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
     // A new driver cannot inherit an earlier session's paused target.
+    if( a11y_manual_drive ) {
+        // A manual driver can never inherit an automatic input timer.
+        a11y_continuous_drive = false;
+    }
     if( !pl_control ) {
         a11y_drive_paused = false;
         a11y_resume_cruise_velocity = 0;
@@ -6745,7 +6749,8 @@ void vehicle::gain_moves( map &here )
     const avatar &driver = get_avatar();
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
-        ( velocity != 0 || ( a11y_continuous_drive && cruise_velocity != 0 ) ) ) {
+        ( velocity != 0 || ( a11y_continuous_drive && cruise_velocity != 0 ) ||
+          ( a11y_manual_drive && cruise_velocity != 0 ) ) ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
             // Announce a fresh loss of control once, never each physics tick.
@@ -6754,13 +6759,38 @@ void vehicle::gain_moves( map &here )
                          _( "Warning: vehicle is skidding; steering may not respond." ) );
             }
             a11y_skid_alerted = skidding;
-            const bool reverse = velocity < 0;
+            const bool reverse = velocity < 0 ||
+                                 ( velocity == 0 && cruise_velocity < 0 );
             const std::optional<a11y::vehicle_obstacle> hazard =
                 a11y::vehicle_obstacle_ahead( *this, here, reverse );
             // Warn from eight tiles at low speed; extend the horizon as
             // the vehicle accelerates in either direction. This is an
             // emergency aid, not a promise that handbraking stops instantly.
             const int braking_range = std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 );
+            // Manual mode reports hazards, but NEVER modifies throttle,
+            // braking or driver control. Suppress repeats of the same hazard
+            // until the road clears, the steering target changes, or a
+            // different obstacle appears.
+            if( a11y_manual_drive ) {
+                if( hazard && hazard->distance <= braking_range ) {
+                    if( !a11y_brake_alerted ||
+                        a11y_stopped_obstacle_name != hazard->label ||
+                        a11y_stopped_heading != turn_dir ) {
+                        add_msg( m_warning,
+                                 reverse ? _( "Obstacle behind: %1$s, %2$d tiles." ) :
+                                 _( "Obstacle ahead: %1$s, %2$d tiles." ),
+                                 hazard->label, hazard->distance );
+                    }
+                    a11y_brake_alerted = true;
+                    a11y_stopped_obstacle_name = hazard->label;
+                    a11y_stopped_heading = turn_dir;
+                } else {
+                    a11y_brake_alerted = false;
+                }
+            } else {
+                // Automatic mode alone can brake and refuse a hazardous path.
+                // An explicit extra Forward gesture may bypass the last
+                // warned obstacle, but normal collision physics still apply.
             // A repeated Forward swipe after a sensor stop overrides only
             // that obstacle. Re-arm the guard once it clears or a different
             // obstacle comes into range. Native crashes remain possible.
@@ -6790,6 +6820,7 @@ void vehicle::gain_moves( map &here )
                 a11y_brake_alerted = true;
             } else if( !a11y_obstacle_override ) {
                 a11y_brake_alerted = false;
+            }
             }
         } else {
             a11y_brake_alerted = false;

@@ -5948,3 +5948,30 @@ msgstr "Xe không chạy. Kiểm tra máy, nhiên liệu hoặc bánh xe."
  
 msgid "Open Vehicle controls to drive."
 msgstr "Mở Điều khiển phương tiện để cầm lái."
+
+# Accessibility vehicle driving styles.
+msgid "Driving: Manual. Switch to automatic"
+msgstr "Lái thủ công. Chạm đôi để chuyển sang tự động."
+
+msgid "Driving: Automatic. Switch to manual"
+msgstr "Lái tự động. Chạm đôi để chuyển sang thủ công."
+
+msgid "Manual driving selected."
+msgstr "Đã chọn lái thủ công."
+
+msgid "Automatic driving selected. Swipe forward to start."
+msgstr "Đã chọn lái tự động. Vuốt lên để chạy."
+
+msgid "Driving mode: Manual."
+msgstr "Chế độ lái thủ công."
+
+msgid "Driving mode: Automatic."
+msgstr "Chế độ lái tự động."
+
+#, c-format
+msgid "Obstacle ahead: %1$s, %2$d tiles."
+msgstr "Phía trước: %1$s, %2$d ô."
+
+#, c-format
+msgid "Obstacle behind: %1$s, %2$d tiles."
+msgstr "Phía sau: %1$s, %2$d ô."

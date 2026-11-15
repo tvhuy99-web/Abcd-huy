@@ -11,6 +11,7 @@
 #include <tuple>
 
 #include "action.h"
+#include "a11y_runtime.h"
 #include "a11y_semantics.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
@@ -3014,6 +3015,30 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 iexamine::locked_object( get_player_character(), p );
             } );
         }
+    }
+
+    // This accessibility-only choice MUST be the final vehicle action.
+    // Switching modes never accelerates, brakes, starts the engine or
+    // advances game time on its own.
+    if( a11y::enabled() && player_inside && player_is_driving && !remote &&
+        player_in_control( *here, get_player_character() ) ) {
+        menu.add( a11y_manual_drive ? _( "Driving: Manual. Switch to automatic" ) :
+                  _( "Driving: Automatic. Switch to manual" ) )
+        .skip_theft_check()
+        .skip_locked_check()
+        .keep_menu_open()
+        .on_submit( [this] {
+            a11y_manual_drive = !a11y_manual_drive;
+            a11y_continuous_drive = false;
+            a11y_obstacle_stop = false;
+            a11y_obstacle_override = false;
+            a11y_override_obstacle_name.clear();
+            a11y_stopped_obstacle_name.clear();
+            a11y_brake_alerted = false;
+            a11y_drive_stall_ticks = 0;
+            add_msg( m_info, a11y_manual_drive ? _( "Manual driving selected." ) :
+                     _( "Automatic driving selected. Swipe forward to start." ) );
+        } );
     }
 }
 

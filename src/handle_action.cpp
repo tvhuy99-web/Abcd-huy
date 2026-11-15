@@ -229,6 +229,7 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
     const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
     // Keep simulating residual momentum during a pause or handbrake.
     return seat && seat->vehicle().a11y_continuous_drive &&
+           !seat->vehicle().a11y_manual_drive &&
            ( !seat->vehicle().a11y_drive_paused ||
              ( seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0 ) ) &&
            !seat->vehicle().is_rotorcraft( here ) &&
@@ -3104,7 +3105,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     const std::optional<a11y::vehicle_obstacle> stopped_hazard =
                         throttle == a11y_vehicle_throttle::forward && car.a11y_obstacle_stop ?
                         a11y::vehicle_obstacle_ahead( car, here ) : std::nullopt;
-                    const bool force_forward = car.a11y_obstacle_stop &&
+                    const bool force_forward = !car.a11y_manual_drive &&
+                                               car.a11y_obstacle_stop &&
                                                car.a11y_stopped_heading == car.turn_dir &&
                                                stopped_hazard &&
                                                stopped_hazard->label == car.a11y_stopped_obstacle_name;
@@ -3134,7 +3136,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.cruise_velocity = std::min( safe_speed,
                                                           std::max( car.cruise_velocity,
                                                                   car.a11y_obstacle_resume_speed ) );
-                            car.a11y_continuous_drive = car.cruise_velocity > 0;
+                            car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                       car.cruise_velocity > 0;
                         } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before driving forward." ) );
@@ -3144,7 +3147,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             // without repeatedly increasing that target.
                             const std::optional<a11y::vehicle_obstacle> obstruction =
                                 a11y::vehicle_obstacle_ahead( car, here );
-                            if( obstruction && obstruction->distance <= 8 ) {
+                            if( !car.a11y_manual_drive && obstruction &&
+                                obstruction->distance <= 8 ) {
                                 car.a11y_obstacle_stop = true;
                                 car.a11y_stopped_obstacle_name = obstruction->label;
                                 car.a11y_stopped_heading = car.turn_dir;
@@ -3156,11 +3160,14 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             } else {
                                 pldrive( point_rel_ms( 0, -1 ) );
                                 car.a11y_obstacle_stop = false;
-                                car.a11y_continuous_drive = car.cruise_velocity > 0;
-                                add_msg( m_info, _( "Forward selected." ) );
+                                car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                           car.cruise_velocity > 0;
+                                if( !car.a11y_manual_drive ) {
+                                    add_msg( m_info, _( "Forward selected." ) );
+                                }
                             }
                         } else if( car.cruise_velocity > 0 ) {
-                            car.a11y_continuous_drive = true;
+                            car.a11y_continuous_drive = !car.a11y_manual_drive;
                         }
                         break;
                     case a11y_vehicle_throttle::reverse:
@@ -3172,7 +3179,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         } else if( car.cruise_velocity == 0 ) {
                             const std::optional<a11y::vehicle_obstacle> obstruction =
                                 a11y::vehicle_obstacle_ahead( car, here, true );
-                            if( obstruction && obstruction->distance <= 8 ) {
+                            if( !car.a11y_manual_drive && obstruction &&
+                                obstruction->distance <= 8 ) {
                                 car.a11y_obstacle_stop = true;
                                 car.a11y_stopped_obstacle_name = obstruction->label;
                                 car.a11y_stopped_heading = car.turn_dir;
@@ -3183,11 +3191,14 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                                          obstruction->label, obstruction->distance );
                             } else {
                                 pldrive( point_rel_ms( 0, 1 ) );
-                                car.a11y_continuous_drive = car.cruise_velocity < 0;
-                                add_msg( m_info, _( "Reverse selected." ) );
+                                car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                                           car.cruise_velocity < 0;
+                                if( !car.a11y_manual_drive ) {
+                                    add_msg( m_info, _( "Reverse selected." ) );
+                                }
                             }
                         } else if( car.cruise_velocity < 0 ) {
-                            car.a11y_continuous_drive = true;
+                            car.a11y_continuous_drive = !car.a11y_manual_drive;
                         }
                         break;
                     case a11y_vehicle_throttle::faster:
@@ -3207,7 +3218,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     // throttle swipe, including repeated forward/reverse
                     // swipes after a target has already been selected.
                     // Never teleport the vehicle or bypass native physics.
-                    if( !car.a11y_obstacle_override &&
+                    if( !car.a11y_manual_drive && !car.a11y_obstacle_override &&
                         ( throttle == a11y_vehicle_throttle::forward ||
                           throttle == a11y_vehicle_throttle::reverse ||
                           throttle == a11y_vehicle_throttle::faster ) &&
@@ -3238,8 +3249,13 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.a11y_brake_alerted = true;
                         }
                     }
-                    // One reader swipe means one physical simulation step,
-                    // even if this avatar currently has >100 moves banked.
+                    if( car.a11y_manual_drive ) {
+                        // Manual gestures each advance one native turn but
+                        // cannot schedule further unattended ticks.
+                        car.a11y_continuous_drive = false;
+                    }
+                    // Every accepted reader throttle swipe advances one
+                    // native game turn, regardless of the speed target.
                     // Setting moves to at most zero is the same native
                     // turn boundary used for vehicle rotorcraft thrust.
                     player_character.set_moves( std::min( player_character.get_moves(), 0 ) );
@@ -3268,6 +3284,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             // step. Check the newly requested trajectory immediately so
             // a near-side pillar is not first detected after a collision.
             if( a11y::enabled() && direction.x() != 0 && seated &&
+                !seated->vehicle().a11y_manual_drive &&
                 player_character.in_vehicle && player_character.controlling_vehicle &&
                 seated->vehicle().player_in_control( here, player_character ) &&
                 ( !g || g->remoteveh() != &seated->vehicle() ) ) {
@@ -4635,7 +4652,8 @@ bool game::handle_action()
                 const std::optional<a11y::vehicle_obstacle> hazard =
                     a11y::vehicle_obstacle_ahead( car, vehicle_map, saved_speed < 0 );
                 const int distance = std::clamp( 8 + std::abs( saved_speed ) / 500, 8, 32 );
-                if( saved_speed != 0 && hazard && hazard->distance <= distance ) {
+                if( !car.a11y_manual_drive && saved_speed != 0 &&
+                    hazard && hazard->distance <= distance ) {
                     add_msg( m_warning,
                              _( "Cannot resume: %1$s blocks the path about %2$d tiles away." ),
                              hazard->label, hazard->distance );
@@ -4649,7 +4667,8 @@ bool game::handle_action()
                 car.cruise_velocity = std::clamp( saved_speed, -safe_speed, safe_speed );
                 car.a11y_resume_cruise_velocity = 0;
                 car.a11y_drive_paused = false;
-                car.a11y_continuous_drive = car.cruise_velocity != 0;
+                car.a11y_continuous_drive = !car.a11y_manual_drive &&
+                                            car.cruise_velocity != 0;
                 add_msg( m_info, _( "Driving resumed." ) );
                 return false;
             }
