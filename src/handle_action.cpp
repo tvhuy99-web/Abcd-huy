@@ -227,8 +227,10 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
         return false;
     }
     const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
+    // Keep simulating residual momentum during a pause or handbrake.
     return seat && seat->vehicle().a11y_continuous_drive &&
-           !seat->vehicle().a11y_drive_paused &&
+           ( !seat->vehicle().a11y_drive_paused ||
+             ( seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0 ) ) &&
            !seat->vehicle().is_rotorcraft( here ) &&
            seat->vehicle().player_in_control( here, driver ) &&
            ( !g || g->remoteveh() != &seat->vehicle() );
@@ -4502,10 +4504,16 @@ bool game::handle_action()
         const optional_vpart_position seat = here.veh_at(
                     player_character.pos_bub( here ) );
         if( seat && seat->vehicle().a11y_continuous_drive ) {
-            seat->vehicle().a11y_continuous_drive = false;
-            seat->vehicle().cruise_velocity = 0;
-            if( seat->vehicle().velocity != 0 ) {
-                seat->vehicle().handbrake( here );
+            vehicle &car = seat->vehicle();
+            car.cruise_velocity = 0;
+            if( car.velocity != 0 ) {
+                car.handbrake( here );
+                // Ordinary safe mode must still allow the physics of
+                // the remaining braking momentum to finish.
+                car.a11y_continuous_drive = car.velocity != 0;
+                player_character.set_moves( std::min( player_character.get_moves(), 0 ) );
+            } else {
+                car.a11y_continuous_drive = false;
             }
             return false;
         }
@@ -4584,7 +4592,7 @@ bool game::handle_action()
                 const optional_vpart_position seat =
                     here.veh_at( player_character.pos_bub( here ) );
                 if( seat ) {
-                    seat->vehicle().a11y_continuous_drive = false;
+                    seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;
                     seat->vehicle().a11y_obstacle_stop = false;
                     seat->vehicle().a11y_obstacle_override = false;
                 }
@@ -4604,7 +4612,7 @@ bool game::handle_action()
             }
             vehicle &car = seated->vehicle();
             if( !car.a11y_drive_paused ) {
-                car.a11y_continuous_drive = false;
+                car.a11y_continuous_drive = car.velocity != 0;
                 car.a11y_obstacle_stop = false;
                 car.a11y_obstacle_override = false;
                 car.a11y_resume_cruise_velocity = car.cruise_velocity;

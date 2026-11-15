@@ -102,6 +102,8 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("a11y_continuous_drive = car.cruise_velocity < 0;", ENGINE)
         self.assertIn("a11y_continuous_drive = false;", VEH)
         self.assertIn("a11y_drive_stall_ticks >= 6", VEH)
+        self.assertIn("seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0", ENGINE)
+        self.assertIn("car.a11y_continuous_drive = car.velocity != 0;", ENGINE)
 
     def test_swipe_forward_again_overrides_only_current_obstacle(self):
         self.assertIn("const bool force_forward =", ENGINE)
@@ -123,9 +125,9 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_braking_or_leaving_drive_mode_stops_continuous_turns(self):
         self.assertIn('action == "A11Y_INTERNAL_VEHICLE_BRAKE"', ENGINE)
-        self.assertIn("seat->vehicle().a11y_continuous_drive = false;", ENGINE)
+        self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
         self.assertIn("car.a11y_drive_paused = true;", ENGINE)
-        self.assertIn("seat->vehicle().a11y_continuous_drive = false;", ENGINE)
+        self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
         self.assertIn('requestVehicleAction("reader:vehicle:brake");', CTRL)
         self.assertIn("if (vehicleMode && nextMode != 2 && vehicleDriverReady())", CTRL)
 
