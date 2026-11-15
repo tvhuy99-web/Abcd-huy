@@ -1,0 +1,160 @@
+name: Android Accessibility Production Signed APK
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - master
+    paths:
+      - '.github/workflows/android-accessibility-production.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: accessibility-production-apk-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  production-arm64:
+    name: Production-signed Accessibility ARM64 APK
+    runs-on: ubuntu-24.04
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - uses: android-actions/setup-android@9fc6c4e9069bf8d3d10b2204b1fb8f6ef7065407 # v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0 ndk;28.1.13356709 cmake;3.22.1'
+          log-accepted-android-sdk-licenses: false
+      - name: Install build dependencies
+        run: bash tools/accessibility/install_ci_packages.sh gettext ccache glslang-tools
+      - name: Compile shaders
+        run: |
+          python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
+          test -s data/shaders/grayscale.frag.spv
+      - name: Check accessibility controls before release
+        run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_*.py' -v
+      - name: Unlock private release signing material
+        env:
+          SIGNED_KEYSTORE: ${{ secrets.KEYSTORE }}
+          SIGNED_PROPERTIES: ${{ secrets.KEYSTORE_PROPERTIES }}
+          RELEASE_KEY_PASSWORD: ${{ secrets.KEYSTORE_PASSWORD }}
+        run: |
+          set -euo pipefail
+          if [ -z "$SIGNED_KEYSTORE" ] || [ -z "$SIGNED_PROPERTIES" ] || [ -z "$RELEASE_KEY_PASSWORD" ]; then
+            echo "::error::Production signing secrets KEYSTORE, KEYSTORE_PROPERTIES and KEYSTORE_PASSWORD must be configured. Never substitute the public test key."
+            exit 1
+          fi
+          printf '%s' "$SIGNED_KEYSTORE" > android/release.keystore.asc
+          printf '%s' "$SIGNED_PROPERTIES" > android/keystore.properties.asc
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$RELEASE_KEY_PASSWORD" --decrypt --output android/app/release.keystore android/release.keystore.asc
+          gpg --batch --yes --pinentry-mode loopback --passphrase "$RELEASE_KEY_PASSWORD" --decrypt --output android/keystore.properties android/keystore.properties.asc
+          rm -f android/release.keystore.asc android/keystore.properties.asc
+          test -s android/app/release.keystore
+          test -s android/keystore.properties
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: ~/.cache/ccache
+          key: a11y-production-arm64-${{ github.sha }}
+          restore-keys: |
+            a11y-production-arm64-
+            a11y-arm64-release-trial-ndk28-
+      - name: Bootstrap Gradle
+        working-directory: android
+        run: |
+          for attempt in 1 2 3; do
+            if bash ./gradlew --version; then
+              exit 0
+            fi
+            if [ "$attempt" -eq 3 ]; then exit 1; fi
+            sleep $((attempt * 20))
+          done
+      - name: Assemble production signed Accessibility Release APK
+        working-directory: android
+        env:
+          CCACHE_DIR: /home/runner/.cache/ccache
+          CCACHE_MAXSIZE: 3G
+          CCACHE_BASEDIR: ${{ github.workspace }}
+        run: |
+          set -euo pipefail
+          mkdir -p ../build-evidence
+          git rev-parse HEAD > ../build-evidence/commit.txt
+          ccache --set-config=max_size=3G
+          revision="$(git rev-parse --short=8 HEAD)"
+          version_code=$((2200000 + ${{ github.run_number }}))
+          printf 'versionCode=%s\nversionName=release-%s\n' "$version_code" "$revision" > ../build-evidence/version.txt
+          bash ./gradlew --no-daemon --console=plain \
+            -Pj=3 -Pabi_arm_32=false -Pabi_arm_64=true \
+            "-Poverride_versionCode=$version_code" \
+            "-Paccessibility_apk_version=release-$revision" \
+            assembleAccessibilityRelease 2>&1 | tee ../build-evidence/gradle.log
+      - name: Verify production signature, package and native libraries
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          import os
+          import re
+          import subprocess
+          import zipfile
+
+          apks = sorted(Path('android/app/build/outputs/apk/accessibility/release').glob('*.apk'))
+          if len(apks) != 1:
+              raise SystemExit(f'Expected one production APK: {apks}')
+          apk = apks[0]
+          with zipfile.ZipFile(apk) as archive:
+              for name in ('libmain.so', 'libSDL3.so', 'libSDL3_image.so',
+                           'libSDL3_ttf.so', 'libSDL3_mixer.so', 'libc++_shared.so'):
+                  path = f'lib/arm64-v8a/{name}'
+                  if path not in archive.namelist() or not archive.read(path).startswith(b'\x7fELF\x02'):
+                      raise SystemExit(f'Missing ARM64 library: {path}')
+              if 'assets/lang/mo/vi/LC_MESSAGES/cataclysm-dda.mo' not in archive.namelist():
+                  raise SystemExit('Vietnamese localization missing')
+          tools = Path(os.environ['ANDROID_HOME']) / 'build-tools/35.0.0'
+          signature = subprocess.check_output([str(tools / 'apksigner'),
+                                               'verify', '--verbose', '--print-certs', str(apk)],
+                                              text=True)
+          found = re.search(r'Signer #1 certificate SHA-256 digest: ([0-9a-fA-F]+)', signature)
+          test_cert = Path('android/app/accessibility-test-cert.sha256').read_text().strip()
+          if not found or found.group(1).lower() == test_cert:
+              raise SystemExit('APK not production-signed; refusing publication')
+          badging = subprocess.check_output([str(tools / 'aapt'), 'dump', 'badging', str(apk)],
+                                            text=True)
+          package = re.search(r"^package: name='([^']+)' versionCode='(\d+)'", badging, re.M)
+          if not package or package.group(1) != 'com.cleverraven.cataclysmdda.accessibility':
+              raise SystemExit('Wrong package name')
+          sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+          Path('build-evidence/package.txt').write_text(
+              f'package={package.group(1)}\nversionCode={package.group(2)}\n'
+              f'signer_sha256={found.group(1)}\nsha256={sha}\n')
+          print(Path('build-evidence/package.txt').read_text())
+          PY
+      - name: Publish signed production APK
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk="$(find android/app/build/outputs/apk/accessibility/release -maxdepth 1 -name '*.apk' -type f -print -quit)"
+          test -n "$apk"
+          shortsha="$(git rev-parse --short=8 HEAD)"
+          tag="accessibility-android-arm64-${{ github.run_number }}-$shortsha"
+          gh release create "$tag" "$apk" \
+            --target "${{ github.sha }}" \
+            --title "Accessibility Android ARM64 Release $shortsha" \
+            --notes "Production-signed Android Accessibility Release APK. Commit: ${{ github.sha }}. Back up saved games before upgrading. Verify on device before relying on continuous vehicle driving." \
+            --latest=false
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: always()
+        with:
+          name: android-arm64-accessibility-production-release
+          retention-days: 30
+          path: |
+            android/app/build/outputs/apk/accessibility/release/*.apk
+            build-evidence/*.txt
