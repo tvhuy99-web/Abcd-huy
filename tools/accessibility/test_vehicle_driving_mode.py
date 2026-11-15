@@ -119,8 +119,13 @@ class AccessibleVehicleContracts(unittest.TestCase):
         )[0]
         self.assertIn("Control Vehicle always searches", control)
         self.assertIn("if( a11y::enabled() && !p && !remoteveh() )", control)
-        self.assertIn("u.in_vehicle ? here.veh_at( origin )", control)
-        self.assertIn("aboard && &found->vehicle() != &aboard->vehicle()", control)
+        self.assertIn("const optional_vpart_position aboard = here.veh_at( origin );",
+                      control)
+        self.assertIn("u.in_vehicle && aboard &&", control)
+        self.assertIn("&found->vehicle() != &aboard->vehicle()", control)
+        self.assertNotIn("std::nullopt;", control.split(
+            "const optional_vpart_position aboard", 1
+        )[1].split("std::vector<tripoint_bub_ms> seats;", 1)[0])
         self.assertIn("std::stable_sort( seats.begin(), seats.end()", control)
         self.assertIn("get_passenger( boardable->part_index() )", control)
         self.assertIn("occupant && occupant != &u", control)

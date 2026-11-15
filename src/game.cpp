@@ -5337,15 +5337,16 @@ void game::control_vehicle( const std::optional<tripoint_bub_ms> &p )
     // moving between seats inside the same vehicle. Never teleport.
     if( a11y::enabled() && !p && !remoteveh() ) {
         const tripoint_bub_ms origin = u.pos_bub( here );
-        const optional_vpart_position aboard = u.in_vehicle ? here.veh_at( origin ) :
-                                                std::nullopt;
+        // optional_vpart_position is a native optional-like wrapper, not
+        // std::optional, so do not mix it with std::nullopt in ?:.
+        const optional_vpart_position aboard = here.veh_at( origin );
         std::vector<tripoint_bub_ms> seats;
         for( const tripoint_bub_ms &candidate : here.points_in_radius( origin, 16 ) ) {
             const optional_vpart_position found = here.veh_at( candidate );
             if( !found || !found->part_with_feature( "CONTROLS", true ) ) {
                 continue;
             }
-            if( aboard && &found->vehicle() != &aboard->vehicle() ) {
+            if( u.in_vehicle && aboard && &found->vehicle() != &aboard->vehicle() ) {
                 continue;
             }
             const std::optional<vpart_reference> boardable =
