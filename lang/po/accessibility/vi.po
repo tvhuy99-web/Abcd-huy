@@ -5901,3 +5901,9 @@ msgstr "Yêu cầu %d"
 
 msgid "Choose one of the following."
 msgstr "Chỉ cần một trong các lựa chọn sau."
+
+msgid "At the driver's controls. Not yet driving."
+msgstr "Đang ở vị trí lái, chưa nắm quyền điều khiển."
+
+msgid "Not at the driver's controls."
+msgstr "Đang ở trên xe, chưa ở vị trí lái."

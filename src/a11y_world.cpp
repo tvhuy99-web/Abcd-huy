@@ -467,7 +467,13 @@ std::string player_status()
     for( const bodypart_id &part : viewer.get_all_body_parts( get_body_part_flags::only_main ) ) {
         result += ". " + body_part_name( part ) + ": " + limb_health_description( viewer, part );
     }
-    if( vehicle *veh = display::vehicle_driven( viewer ) ) {
+    vehicle *driven_vehicle = display::vehicle_driven( viewer );
+    const bool remote_driver = driven_vehicle && g && g->remoteveh() == driven_vehicle;
+    const bool local_driver = driven_vehicle && viewer.controlling_vehicle
+                              && !remote_driver
+                              && driven_vehicle->player_in_control( get_map(), viewer );
+    if( driven_vehicle && ( remote_driver || local_driver ) ) {
+        vehicle *veh = driven_vehicle;
         // R15.4: one published source for the driving state, extending
         // the azimuth/cruise text the sidebar itself prints. The mode
         // distinguishes sitting at the controls from remote control
@@ -478,8 +484,8 @@ std::string player_status()
         // same bands display.cpp uses (none up to 0, then low, moderate
         // and high at 0.2 / 0.4).
         result += ". " + string_format( _( "Vehicle: %s" ), veh->name );
-        result += ". " + std::string( g && g->remoteveh() == veh
-                                      ? _( "Remote control" ) : _( "Driving" ) );
+        result += ". " + std::string( remote_driver ? _( "Remote control" ) :
+                                      _( "Driving" ) );
         result += ". " + display::vehicle_azimuth_text( viewer );
         result += ". " + display::vehicle_cruise_text_color( viewer ).first;
         const std::string fuel_text = display::vehicle_fuel_percent_text_color( viewer ).first;
@@ -497,16 +503,16 @@ std::string player_status()
                                         strain <= 0.2f ? _( "low" ) :
                                         strain <= 0.4f ? _( "moderate" ) : _( "high" ) );
     } else if( viewer.in_vehicle ) {
-        // A passenger has no driven vehicle, so the block above stays
-        // silent and the spoken report never says the avatar is in a
-        // vehicle at all. Name the vehicle the avatar is sitting in;
-        // driving details (azimuth, cruise, fuel, strain) belong to the
-        // driver and are not repeated here. No new string: the
-        // "Vehicle: %s" label is already translated.
         map &here = get_map();
         const optional_vpart_position vp = here.veh_at( viewer.pos_bub( here ) );
         if( vp ) {
             result += ". " + string_format( _( "Vehicle: %s" ), vp->vehicle().name );
+            result += ". " + std::string( _( "On board vehicle" ) ) + ".";
+            const bool at_controls = static_cast<bool>(
+                                         vp->part_with_feature( "CONTROLS", true ) );
+            result += " " + std::string( at_controls ?
+                                        _( "At the driver's controls. Not yet driving." ) :
+                                        _( "Not at the driver's controls." ) );
         }
     }
     return remove_color_tags( result );
@@ -713,8 +719,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             seat.role = "status";
             seat.label = _( "On board vehicle" );
             seat.value = veh.name;
+            const bool at_controls = static_cast<bool>(
+                                         seated->part_with_feature( "CONTROLS", true ) );
             seat.detail = local_driver ? _( "Driving controls available." ) :
-                          _( "You are not currently driving this vehicle." );
+                          at_controls ? _( "At the driver's controls. Not yet driving." ) :
+                          _( "Not at the driver's controls." );
             seat.actions = { "focus" };
             result.nodes.push_back( std::move( seat ) );
 
@@ -1136,27 +1145,12 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( std::move( jump.node ) );
         }
     }
-    // Fast-movement swipes send ordinary walking actions to the engine, so
-    // they are only permitted while the avatar is actually on foot (R00.2).
-    // In a vehicle the same directional actions steer or operate the vehicle,
-    // in remote control they drive another vehicle, in the death camera they
-    // move the camera, and during an activity or automatic travel a walking
-    // action would be queued against the wrong mode. An active explore
-    // cursor also disables swipes: the scan is centered away from the
-    // avatar, so a walking gesture would act on tiles the reader is not
-    // describing as the avatar's surroundings. Remote control has two
-    // engine forms, both reached by those same movement actions:
-    // "remote_controlling" drives a radio-controlled car (handle_action
-    // rcdrive) and "remote_controlling_vehicle" backs game::remoteveh() for
-    // a full vehicle; either one disables walking gestures. Any doubt stays
-    // false; the Java side additionally requires the user's fast-movement
-    // preference and its own editor/modal/practice checks.
+    // Let map swipes use the native direction keys even while on board.
+    // Passengers can walk to the driver's controls, like walking indoors;
+    // the game itself determines how a direction behaves when in control.
     result.swipe_movement_allowed = !explore_active
                                     && !camera_offset.has_value()
                                     && !viewer.is_dead_state()
-                                    && !viewer.in_vehicle
-                                    && !viewer.controlling_vehicle
-                                    && !viewer.is_driving()
                                     && viewer.maybe_get_value( "remote_controlling" ) == nullptr
                                     && viewer.maybe_get_value( "remote_controlling_vehicle" ) == nullptr
                                     && !viewer.activity
