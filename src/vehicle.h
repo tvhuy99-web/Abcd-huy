@@ -2250,7 +2250,7 @@ class vehicle
         void open_all_at( map &here, int p );
 
         // Honk the vehicle's horn, if there are any
-        void honk_horn( map &here ) const;
+        void honk_horn( map &here, bool quiet_success = false ) const;
         void reload_seeds( map *here, const tripoint_bub_ms &pos );
         void beeper_sound( map &here ) const;
         void play_music( map &here ) const;

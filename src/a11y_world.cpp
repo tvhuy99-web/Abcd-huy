@@ -737,15 +737,22 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( std::move( controls ) );
 
             const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
+            // Respect the selected vehicle-speed units, but spell out the
+            // abbreviation for Vietnamese speech output.
+            const std::string game_speed_units = velocity_units( VU_VEHICLE );
+            const std::string spoken_speed_units =
+                game_speed_units == "mph" ? _( "miles per hour" ) :
+                game_speed_units == "km/h" ? _( "kilometers per hour" ) :
+                game_speed_units;
             const std::string speed = local_driver ?
                                       ( veh.a11y_drive_paused ?
                                         std::string( _( "Driving paused." ) ) + " " : "" ) +
                                       ( reversing ? std::string( _( "Reversing." ) ) + " " : "" ) +
                                       string_format(
-                                          _( "Current speed: %1$d %3$s. Target speed: %2$d %3$s." ),
+                                          _( "Speed: %1$d %3$s. Target: %2$d %3$s." ),
                                           static_cast<int>( std::lround( convert_velocity( std::abs( veh.velocity ), VU_VEHICLE ) ) ),
                                           static_cast<int>( std::lround( convert_velocity( std::abs( veh.cruise_velocity ), VU_VEHICLE ) ) ),
-                                          velocity_units( VU_VEHICLE ) ) :
+                                          spoken_speed_units ) :
                                       _( "Speed is unavailable until you take control." );
             result.nodes.push_back( document( "reader:vehicle:speed",
                                               _( "Current and target speed" ), speed ) );
@@ -858,6 +865,11 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             result.nodes.push_back( document( "reader:vehicle:road",
                                               _( "Road ahead" ), road ) );
             if( local_driver ) {
+                if( veh.has_part( "ENGINE" ) ) {
+                    result.nodes.push_back( button( "reader:vehicle:engine",
+                                                    veh.engine_on ? _( "Stop engine" ) :
+                                                    _( "Start engine" ), "" ) );
+                }
                 result.nodes.push_back( button( "reader:vehicle:pause",
                                                 veh.a11y_drive_paused ?
                                                 _( "Resume driving" ) : _( "Pause driving" ), "" ) );

@@ -16,6 +16,7 @@ WORLD = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
 ENGINE = (ROOT / "src/handle_action.cpp").read_text(encoding="utf-8")
 VEH = (ROOT / "src/vehicle.cpp").read_text(encoding="utf-8")
 VEH_HEADER = (ROOT / "src/vehicle.h").read_text(encoding="utf-8")
+VEH_USE = (ROOT / "src/vehicle_use.cpp").read_text(encoding="utf-8")
 GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
@@ -91,6 +92,29 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
         self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
+
+    def test_engine_toggle_has_mode_scoped_gesture_and_real_start_activity(self):
+        self.assertIn('case "swipe_up_right":', CTRL)
+        self.assertIn('requestVehicleAction("reader:vehicle:engine");', CTRL)
+        self.assertIn('button( "reader:vehicle:engine"', WORLD)
+        self.assertIn("A11Y_INTERNAL_VEHICLE_ENGINE", ENGINE)
+        self.assertIn("car.start_engines( vehicle_map, &player_character );", ENGINE)
+        self.assertIn("car.stop_engines( vehicle_map );", ENGINE)
+        self.assertIn('_( "Starting engine." )', ENGINE)
+
+    def test_horn_only_announces_failure(self):
+        self.assertIn("honk_horn( vehicle_map, true );", ENGINE)
+        self.assertIn("bool quiet_success = false", VEH_HEADER)
+        self.assertIn("if( !quiet_success )", VEH_USE)
+        self.assertIn('_( "Horn unavailable." )', VEH_USE)
+
+    def test_brief_vehicle_feedback_and_correct_unit_preference(self):
+        self.assertIn('game_speed_units == "mph"', WORLD)
+        self.assertIn('game_speed_units == "km/h"', WORLD)
+        self.assertIn('_( "Speed: %1$d %3$s. Target: %2$d %3$s." )', WORLD)
+        self.assertIn("R.string.a11yDriveNeedsControl", CTRL)
+        self.assertIn("R.string.a11yDriveBraking", CTRL)
+        self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
     def test_continuous_driving_ticks_without_repeated_swipes(self):
         self.assertIn("bool a11y_continuous_drive = false;", VEH_HEADER)

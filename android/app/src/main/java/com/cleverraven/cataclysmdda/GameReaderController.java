@@ -3292,6 +3292,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             pendingVehicleSpeedReport = true;
         }
         requestLiveWorldCommand(id);
+        if ("reader:vehicle:brake".equals(id)) {
+            feedback(activity.getString(R.string.a11yDriveBraking));
+        }
     }
 
     private void speakVehicleDocument(String id) {
@@ -3344,6 +3347,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 case "swipe_up_down":
                     requestVehicleAction("reader:vehicle:faster");
+                    return true;
+                case "swipe_up_right":
+                    requestVehicleAction("reader:vehicle:engine");
                     return true;
                 case "swipe_down_up":
                     requestVehicleAction("reader:vehicle:slower");
@@ -3592,9 +3598,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             combatMode = nextMode == 1;
             vehicleMode = nextMode == 2;
             SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
-            feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
-                    : nextMode == 1 ? R.string.a11yCombatOn
-                    : R.string.a11yDrivingMode));
+            if (nextMode == 2 && !vehicleDriverReady()) {
+                // An occupied seat is not proof of driver control.
+                feedback(activity.getString(R.string.a11yDriveNeedsControl));
+            } else {
+                feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
+                        : nextMode == 1 ? R.string.a11yCombatOn
+                        : R.string.a11yDrivingMode));
+            }
             return;
         }
         vehicleMode = false;

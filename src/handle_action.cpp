@@ -549,6 +549,8 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Pause or resume driving" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HORN",
                           to_translation( "Sound the vehicle horn" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_ENGINE",
+                          to_translation( "Toggle vehicle engine" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_LEFT",
                           to_translation( "Vehicle heading left by 45 degrees" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_HEADING_RIGHT",
@@ -648,6 +650,7 @@ input_context game::get_player_input( std::string &action )
               intent.node == "reader:vehicle:brake" ||
               intent.node == "reader:vehicle:pause" ||
               intent.node == "reader:vehicle:horn" ||
+              intent.node == "reader:vehicle:engine" ||
               intent.node == "reader:vehicle:heading:left" ||
               intent.node == "reader:vehicle:heading:right" ) ) {
             const optional_vpart_position seated = get_map().veh_at( u.pos_bub( get_map() ) );
@@ -677,6 +680,10 @@ input_context game::get_player_input( std::string &action )
             }
             if( intent.node == "reader:vehicle:brake" ) {
                 return "A11Y_INTERNAL_VEHICLE_BRAKE";
+            }
+            if( intent.node == "reader:vehicle:engine" &&
+                seated->vehicle().has_part( "ENGINE" ) ) {
+                return "A11Y_INTERNAL_VEHICLE_ENGINE";
             }
             if( intent.node == "reader:vehicle:pause" ) {
                 return "A11Y_INTERNAL_VEHICLE_PAUSE";
@@ -4646,6 +4653,32 @@ bool game::handle_action()
                 add_msg( m_info, _( "Driving resumed." ) );
                 return false;
             }
+        } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_ENGINE" ) {
+            // Use the ordinary timed ignition activity. A request to start
+            // an engine does not claim that the engine has started yet.
+            map &vehicle_map = get_map();
+            const optional_vpart_position seated = vehicle_map.veh_at(
+                        player_character.pos_bub( vehicle_map ) );
+            if( veh_ctrl && seated && player_character.in_vehicle &&
+                player_character.controlling_vehicle &&
+                seated->vehicle().player_in_control( vehicle_map, player_character ) &&
+                ( !g || g->remoteveh() != &seated->vehicle() ) &&
+                seated->vehicle().has_part( "ENGINE" ) ) {
+                vehicle &car = seated->vehicle();
+                if( car.engine_on ) {
+                    car.cruise_velocity = 0;
+                    car.a11y_continuous_drive = car.velocity != 0;
+                    car.a11y_obstacle_override = false;
+                    car.stop_engines( vehicle_map );
+                    add_msg( m_info, _( "Engine off." ) );
+                } else {
+                    car.start_engines( vehicle_map, &player_character );
+                    add_msg( m_info, _( "Starting engine." ) );
+                }
+            } else {
+                add_msg( m_warning, _( "Engine controls unavailable." ) );
+            }
+            return false;
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
             map &vehicle_map = get_map();
             const optional_vpart_position seated = vehicle_map.veh_at(
@@ -4654,7 +4687,8 @@ bool game::handle_action()
                 seated->vehicle().player_in_control( vehicle_map, player_character ) &&
                 ( !g || g->remoteveh() != &seated->vehicle() ) &&
                 seated->vehicle().has_part( "HORN" ) ) {
-                seated->vehicle().honk_horn( vehicle_map );
+                // The native horn sound is enough; speak only on failure.
+                seated->vehicle().honk_horn( vehicle_map, true );
             }
             return false;
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_COMBAT_WEAPON_NEXT" ) {

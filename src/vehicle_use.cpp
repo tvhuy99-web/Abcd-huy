@@ -874,7 +874,7 @@ void vehicle::enable_patrol( map &here )
     }
 }
 
-void vehicle::honk_horn( map &here ) const
+void vehicle::honk_horn( map &here, const bool quiet_success ) const
 {
     const bool no_power = !fuel_left( here, fuel_type_battery );
     bool honked = false;
@@ -886,7 +886,9 @@ void vehicle::honk_horn( map &here ) const
             continue;
         }
         if( !honked ) {
-            add_msg( _( "You honk the horn!" ) );
+            if( !quiet_success ) {
+                add_msg( _( "You honk the horn!" ) );
+            }
             honked = true;
         }
         //Get global position of horn
@@ -908,7 +910,8 @@ void vehicle::honk_horn( map &here ) const
     }
 
     if( !honked ) {
-        add_msg( _( "You honk the horn, but nothing happens." ) );
+        add_msg( quiet_success ? _( "Horn unavailable." ) :
+                 _( "You honk the horn, but nothing happens." ) );
     }
 }
 

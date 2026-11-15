@@ -6865,6 +6865,12 @@ void vehicle::gain_moves( map &here )
                 a11y_continuous_drive = false;
                 cruise_velocity = 0;
                 a11y_drive_stall_ticks = 0;
+                if( a11y::enabled() ) {
+                    add_msg( m_warning,
+                             !engine_on && has_part( "ENGINE" ) ?
+                             _( "Engine off. Swipe up then right to start." ) :
+                             _( "Vehicle not moving. Check engine, fuel or wheels." ) );
+                }
             }
         } else {
             a11y_drive_stall_ticks = 0;
