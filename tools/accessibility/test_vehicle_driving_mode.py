@@ -107,7 +107,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_swipe_forward_again_overrides_only_current_obstacle(self):
         self.assertIn("const bool force_forward =", ENGINE)
-        self.assertIn("car.a11y_obstacle_stop;", ENGINE)
+        self.assertIn("car.a11y_obstacle_stop &&", ENGINE)
         self.assertIn("car.a11y_obstacle_override = true;", ENGINE)
         self.assertIn("car.a11y_override_obstacle_name = stopped_hazard->label", ENGINE)
         self.assertIn("car.a11y_stopped_heading == car.turn_dir", ENGINE)
