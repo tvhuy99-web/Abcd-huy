@@ -9177,7 +9177,11 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
           vp1.part_with_feature( "CONTROLS", true ) ) && u.in_vehicle && !u.is_mounted() ) {
         add_msg( _( "There are vehicle controls here." ) );
         if( !u.has_trait( trait_WAYFARER ) ) {
-            add_msg( m_info, _( "%s to drive." ), press_x( ACTION_CONTROL_VEHICLE ) );
+            if( a11y::enabled() ) {
+                add_msg( m_info, _( "Open Vehicle controls to drive." ) );
+            } else {
+                add_msg( m_info, _( "%s to drive." ), press_x( ACTION_CONTROL_VEHICLE ) );
+            }
         }
     } else if( vp1.part_with_feature( "CONTROLS", true ) && u.in_vehicle &&
                u.is_mounted() ) {

@@ -11,6 +11,7 @@
 #include <tuple>
 
 #include "action.h"
+#include "a11y_semantics.h"
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "avatar.h"
@@ -133,7 +134,11 @@ void handbrake( map &here )
         return;
     }
     vehicle *const veh = &vp->vehicle();
-    add_msg( _( "You pull a handbrake." ) );
+    // The reader already announces a short braking cue or obstacle alert.
+    // Avoid stacking the generic handbrake message over that speech.
+    if( !a11y::enabled() ) {
+        add_msg( _( "You pull a handbrake." ) );
+    }
     veh->cruise_velocity = 0;
     if( veh->last_turn != 0_degrees && rng( 15, 60 ) * 100 < std::abs( veh->velocity ) ) {
         veh->skidding = true;

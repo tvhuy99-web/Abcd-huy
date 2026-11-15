@@ -93,6 +93,12 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
         self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
 
+    def test_vehicle_onboarding_uses_touch_instructions(self):
+        source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
+        self.assertIn('_( "Open Vehicle controls to drive." )', source)
+        self.assertIn("if( a11y::enabled() )", source)
+        self.assertIn("if( !a11y::enabled() )", VEH_USE)
+
     def test_engine_toggle_has_mode_scoped_gesture_and_real_start_activity(self):
         self.assertIn('case "swipe_up_right":', CTRL)
         self.assertIn('requestVehicleAction("reader:vehicle:engine");', CTRL)

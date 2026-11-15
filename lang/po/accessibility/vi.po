@@ -5945,3 +5945,6 @@ msgstr "Máy chưa nổ. Vuốt lên rồi phải."
 
 msgid "Vehicle not moving. Check engine, fuel or wheels."
 msgstr "Xe không chạy. Kiểm tra máy, nhiên liệu hoặc bánh xe."
+ 
+msgid "Open Vehicle controls to drive."
+msgstr "Mở Điều khiển phương tiện để cầm lái."
