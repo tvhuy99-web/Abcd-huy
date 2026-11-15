@@ -54,7 +54,10 @@ class VehicleJourneyHubTest(unittest.TestCase):
         self.assertIn('node.id == "grab"', self.world)
         self.assertIn('_( "Release %s" )', self.world)
         self.assertIn("swipe_movement_allowed =", self.world)
-        self.assertIn("&& !viewer.controlling_vehicle", self.world)
+        gate = self.world.split("result.swipe_movement_allowed =", 1)[1]
+        gate = gate.split("// Eight-direction combat gestures", 1)[0]
+        self.assertNotIn("!viewer.in_vehicle", gate)
+        self.assertNotIn("!viewer.controlling_vehicle", gate)
 
     def test_auto_travel_toggled_with_one_reader_message(self):
         action = self.action.split(

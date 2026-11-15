@@ -19,6 +19,36 @@ GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
 class AccessibleVehicleContracts(unittest.TestCase):
+    def test_onboard_map_swipes_are_not_blocked(self):
+        gate = WORLD.split("result.swipe_movement_allowed =", 1)[1].split(
+            "// Eight-direction combat gestures", 1
+        )[0]
+        for forbidden in ("!viewer.in_vehicle", "!viewer.controlling_vehicle",
+                          "!viewer.is_driving()"):
+            self.assertNotIn(forbidden, gate)
+        self.assertIn("&& !viewer.activity", gate)
+        self.assertIn("return !combatMode && worldStepAllowed();", CTRL)
+
+    def test_status_uses_native_control_ownership(self):
+        report = WORLD.split("std::string player_status()", 1)[1].split(
+            "void reset_status_monitor()", 1
+        )[0]
+        self.assertIn("driven_vehicle->player_in_control( get_map(), viewer )",
+                      report)
+        self.assertIn('_( "On board vehicle" )', report)
+        self.assertIn("At the driver's controls. Not yet driving.", report)
+        self.assertIn("Not at the driver's controls.", report)
+        seat = WORLD.split('seat.id = "reader:vehicle:seat"', 1)[1].split(
+            'controls.id = "reader:vehicle:driver"', 1
+        )[0]
+        self.assertIn("at_controls ?", seat)
+        self.assertIn("Driving controls available.", seat)
+        self.assertIn("At the driver's controls. Not yet driving.", seat)
+        self.assertIn("Not at the driver's controls.", seat)
+        vi = (ROOT / "lang/po/accessibility/vi.po").read_text("utf-8")
+        self.assertIn("Đang ở vị trí lái, chưa nắm quyền điều khiển.", vi)
+        self.assertIn("Đang ở trên xe, chưa ở vị trí lái.", vi)
+
     def test_three_modes_only_appear_when_on_board(self):
         self.assertIn('snapshot.find("reader:vehicle:seat") != null', CTRL)
         self.assertIn("int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;", CTRL)
@@ -84,14 +114,23 @@ class AccessibleVehicleContracts(unittest.TestCase):
             "driving is not guaranteed.", "Driving is not guaranteed."))
 
     def test_approach_and_boarding_are_distinct(self):
-        self.assertIn("Find a vehicle and board the driver's seat", GAME)
-        self.assertIn("Interact with nearby vehicle controls", GAME)
-        self.assertIn("choices.query();", GAME)
-        self.assertIn("safe_route_to(", GAME)
-        self.assertIn("u.set_destination( *route );", GAME)
-        self.assertIn("here.board_vehicle( selected, &u );", GAME)
-        self.assertIn("get_passenger( boardable->part_index() )", GAME)
-        self.assertIn("The selected driver seat is no longer available.", GAME)
+        control = GAME.split("void game::control_vehicle(", 1)[1].split(
+            "bool game::npc_menu(", 1
+        )[0]
+        self.assertIn("Control Vehicle always searches", control)
+        self.assertIn("if( a11y::enabled() && !p && !remoteveh() )", control)
+        self.assertIn("u.in_vehicle ? here.veh_at( origin )", control)
+        self.assertIn("aboard && &found->vehicle() != &aboard->vehicle()", control)
+        self.assertIn("std::stable_sort( seats.begin(), seats.end()", control)
+        self.assertIn("get_passenger( boardable->part_index() )", control)
+        self.assertIn("occupant && occupant != &u", control)
+        self.assertIn("safe_route_to(", control)
+        self.assertIn("u.set_destination( *route );", control)
+        self.assertIn("here.board_vehicle( selected, &u );", control)
+        self.assertIn("if( !u.in_vehicle )", control)
+        self.assertNotIn("choices.query();", control.split(
+            "if( !p && !here.veh_at( u.pos_bub() ) )", 1
+        )[0])
         self.assertIn("Cannot move forward: %1$s", ENGINE)
         self.assertIn("Cannot reverse: %1$s", ENGINE)
 

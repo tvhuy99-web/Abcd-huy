@@ -7,9 +7,14 @@ on:
       - master
     paths:
       - '.github/workflows/android-accessibility-release-trial.yml'
+      - 'src/a11y_world.cpp'
+      - 'src/game.cpp'
+      - 'lang/po/accessibility/vi.po'
+      - 'tools/accessibility/test_vehicle_driving_mode.py'
+      - 'tools/accessibility/test_hub_vehicles.py'
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: a11y-release-trial-${{ github.ref }}
@@ -38,6 +43,11 @@ jobs:
         run: |
           python3 tools/build_shaders.py --shader-dir data/shaders --formats spv
           test -s data/shaders/grayscale.frag.spv
+      - name: Verify onboard movement and vehicle control contracts
+        run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_vehicle_driving_mode.py' -v
+          python3 -m unittest discover -s tools/accessibility -p 'test_hub_vehicles.py' -v
+          python3 -m unittest discover -s tools/accessibility -p 'test_world_gestures.py' -v
       - name: Initialize release build evidence
         run: |
           mkdir -p build-evidence
@@ -149,6 +159,20 @@ jobs:
             cat build-evidence/SHA256SUMS
             echo 'Artifact: `android-arm64-accessibility-release-test`'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Publish Android Accessibility Release APK on GitHub
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          apk="$(find android/app/build/outputs/apk/accessibility/release -maxdepth 1 -name '*.apk' -type f -print -quit)"
+          test -n "$apk"
+          tag="accessibility-android-release-test-${{ github.run_number }}"
+          gh release create "$tag" "$apk" \
+            --target "${{ github.sha }}" \
+            --title "Android Accessibility Release (test-signed) $tag" \
+            --notes "Optimized ARM64 Accessibility Release APK. Signed using the existing public accessibility TEST key, not a production key. The package ID remains com.cleverraven.cataclysmdda.accessibility. Back up game worlds before upgrading. Commit: ${{ github.sha }}." \
+            --prerelease
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
