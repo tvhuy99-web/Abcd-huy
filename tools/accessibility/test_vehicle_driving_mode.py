@@ -175,7 +175,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         )[0]
         self.assertIn("Steering changes turn_dir before the world's next physics", drive)
         self.assertIn("a11y::vehicle_obstacle_ahead( car, here, reverse );", drive)
-        self.assertIn("car.handbrake( here );", drive)
+        self.assertIn("handbrake( here );", drive)
         self.assertIn("car.a11y_brake_alerted = true;", drive)
         self.assertIn("car.velocity != 0 && !car.is_rotorcraft( here )", drive)
         self.assertIn("veh.coord_translate( veh.turn_dir, pivot, part.mount,", WORLD)
@@ -205,7 +205,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_engine_horn_brake_keep_original_game_validation(self):
         self.assertIn("act = ACTION_SMASH;", ENGINE)
-        self.assertIn("seated->vehicle().honk_horn( vehicle_map );", ENGINE)
+        self.assertIn("seated->vehicle().honk_horn( vehicle_map, true );", ENGINE)
         self.assertIn("player_character.controlling_vehicle", ENGINE)
 
     def test_remote_discovery_reports_diagnostic_limits(self):

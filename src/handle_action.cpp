@@ -3226,7 +3226,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             car.a11y_stopped_heading = car.turn_dir;
                             car.cruise_velocity = 0;
                             if( car.velocity != 0 ) {
-                                car.handbrake( here );
+                                handbrake( here );
                             }
                             car.a11y_continuous_drive = car.velocity != 0;
                             if( !car.a11y_brake_alerted ) {
@@ -3284,7 +3284,7 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         car.a11y_stopped_obstacle_name = hazard->label;
                         car.a11y_stopped_heading = car.turn_dir;
                         car.cruise_velocity = 0;
-                        car.handbrake( here );
+                        handbrake( here );
                         car.a11y_continuous_drive = car.velocity != 0;
                         if( !car.a11y_brake_alerted ) {
                             add_msg( m_warning,
@@ -4514,7 +4514,7 @@ bool game::handle_action()
             vehicle &car = seat->vehicle();
             car.cruise_velocity = 0;
             if( car.velocity != 0 ) {
-                car.handbrake( here );
+                handbrake( here );
                 // Ordinary safe mode must still allow the physics of
                 // the remaining braking momentum to finish.
                 car.a11y_continuous_drive = car.velocity != 0;
