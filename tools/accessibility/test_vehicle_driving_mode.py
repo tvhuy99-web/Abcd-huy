@@ -115,7 +115,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("a11y_obstacle_resume_speed", VEH)
         self.assertIn("a11y_brake_alerted = true;", VEH)
         self.assertIn("a11y_continuous_drive = car.velocity != 0;", ENGINE)
-        self.assertIn("a11y_override_obstacle = false;", VEH)
+        self.assertIn("a11y_obstacle_override = false;", VEH)
 
     def test_braking_or_leaving_drive_mode_stops_continuous_turns(self):
         self.assertIn('action == "A11Y_INTERNAL_VEHICLE_BRAKE"', ENGINE)
