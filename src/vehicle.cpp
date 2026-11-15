@@ -6731,6 +6731,7 @@ void vehicle::gain_moves( map &here )
         a11y_resume_cruise_velocity = 0;
         a11y_continuous_drive = false;
         a11y_obstacle_stop = false;
+        a11y_stopped_obstacle_name.clear();
         a11y_obstacle_override = false;
         a11y_override_obstacle_name.clear();
         a11y_obstacle_resume_speed = 0;
@@ -6773,6 +6774,8 @@ void vehicle::gain_moves( map &here )
                 a11y_obstacle_resume_speed = cruise_velocity != 0 ?
                                              cruise_velocity : a11y_obstacle_resume_speed;
                 a11y_obstacle_stop = true;
+                a11y_stopped_obstacle_name = hazard->label;
+                a11y_stopped_heading = turn_dir;
                 cruise_velocity = 0;
                 if( velocity != 0 ) {
                     handbrake( here );

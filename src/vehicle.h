@@ -1111,6 +1111,10 @@ class vehicle
         // Session-only spoken driving state; never serialized into a save.
         bool a11y_continuous_drive = false; // NOLINT(cata-serialize)
         bool a11y_obstacle_stop = false; // NOLINT(cata-serialize)
+        // Remember which obstacle and heading produced the audible stop.
+        // A second Forward swipe must not bypass an unseen NEW obstacle.
+        std::string a11y_stopped_obstacle_name; // NOLINT(cata-serialize)
+        units::angle a11y_stopped_heading = 0_degrees; // NOLINT(cata-serialize)
         bool a11y_obstacle_override = false; // NOLINT(cata-serialize)
         std::string a11y_override_obstacle_name; // NOLINT(cata-serialize)
         int a11y_obstacle_resume_speed = 0; // NOLINT(cata-serialize)

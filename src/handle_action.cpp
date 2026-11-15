@@ -3092,15 +3092,24 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     // accepts the collision risk. Only the accessibility
                     // obstacle guard is bypassed; native collision and vehicle
                     // physics still run normally.
-                    const bool force_forward = throttle == a11y_vehicle_throttle::forward &&
-                                               car.a11y_obstacle_stop;
+                    const std::optional<a11y::vehicle_obstacle> stopped_hazard =
+                        throttle == a11y_vehicle_throttle::forward && car.a11y_obstacle_stop ?
+                        a11y::vehicle_obstacle_ahead( car, here ) : std::nullopt;
+                    const bool force_forward = car.a11y_obstacle_stop &&
+                                               car.a11y_stopped_heading == car.turn_dir &&
+                                               stopped_hazard &&
+                                               stopped_hazard->label == car.a11y_stopped_obstacle_name;
                     if( force_forward ) {
-                        const std::optional<a11y::vehicle_obstacle> hazard =
-                            a11y::vehicle_obstacle_ahead( car, here );
                         car.a11y_obstacle_override = true;
-                        car.a11y_override_obstacle_name = hazard ? hazard->label : "";
+                        car.a11y_override_obstacle_name = stopped_hazard->label;
                         car.a11y_obstacle_stop = false;
                         car.a11y_brake_alerted = false;
+                    } else if( throttle == a11y_vehicle_throttle::forward &&
+                               car.a11y_obstacle_stop ) {
+                        // A turn or cleared path invalidates the original
+                        // warning; re-check this direction normally.
+                        car.a11y_obstacle_stop = false;
+                        car.a11y_obstacle_resume_speed = 0;
                     }
                     // Retain pldrive's original checks and timing.
                     switch( throttle ) {
@@ -3128,6 +3137,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                                 a11y::vehicle_obstacle_ahead( car, here );
                             if( obstruction && obstruction->distance <= 8 ) {
                                 car.a11y_obstacle_stop = true;
+                                car.a11y_stopped_obstacle_name = obstruction->label;
+                                car.a11y_stopped_heading = car.turn_dir;
                                 car.a11y_obstacle_resume_speed = 400;
                                 car.a11y_continuous_drive = false;
                                 add_msg( m_warning,
@@ -3154,6 +3165,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                                 a11y::vehicle_obstacle_ahead( car, here, true );
                             if( obstruction && obstruction->distance <= 8 ) {
                                 car.a11y_obstacle_stop = true;
+                                car.a11y_stopped_obstacle_name = obstruction->label;
+                                car.a11y_stopped_heading = car.turn_dir;
                                 car.a11y_obstacle_resume_speed = -400;
                                 car.a11y_continuous_drive = false;
                                 add_msg( m_warning,
@@ -3200,6 +3213,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         if( hazard && hazard->distance <= braking_range ) {
                             car.a11y_obstacle_resume_speed = car.cruise_velocity;
                             car.a11y_obstacle_stop = true;
+                            car.a11y_stopped_obstacle_name = hazard->label;
+                            car.a11y_stopped_heading = car.turn_dir;
                             car.cruise_velocity = 0;
                             if( car.velocity != 0 ) {
                                 car.handbrake( here );
@@ -3257,6 +3272,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     if( hazard && hazard->distance <= braking_range ) {
                         car.a11y_obstacle_resume_speed = car.cruise_velocity;
                         car.a11y_obstacle_stop = true;
+                        car.a11y_stopped_obstacle_name = hazard->label;
+                        car.a11y_stopped_heading = car.turn_dir;
                         car.cruise_velocity = 0;
                         car.handbrake( here );
                         car.a11y_continuous_drive = car.velocity != 0;
