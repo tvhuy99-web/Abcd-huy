@@ -15,6 +15,7 @@ SURF = (JAVA / "ReaderGestureSurface.java").read_text(encoding="utf-8")
 WORLD = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
 ENGINE = (ROOT / "src/handle_action.cpp").read_text(encoding="utf-8")
 VEH = (ROOT / "src/vehicle.cpp").read_text(encoding="utf-8")
+VEH_HEADER = (ROOT / "src/vehicle.h").read_text(encoding="utf-8")
 GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
@@ -90,6 +91,39 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("pldrive( point_rel_ms( 0, 1 ) );", ENGINE)
         self.assertNotIn("car.cruise_thrust( here,", ENGINE)
         self.assertIn("// Do not fall through to saved map or combat bindings", CTRL)
+
+    def test_continuous_driving_ticks_without_repeated_swipes(self):
+        self.assertIn("bool a11y_continuous_drive = false;", VEH_HEADER)
+        self.assertIn("a11y_continuous_vehicle_ready( avatar &driver, map &here )", ENGINE)
+        self.assertIn("continuous_drive_tick_due()", ENGINE)
+        self.assertIn("std::chrono::milliseconds( 350 )", ENGINE)
+        self.assertIn("current_turn.has_timeout_elapsed() || continuous_drive_tick_due()", ENGINE)
+        self.assertIn("a11y_continuous_drive = car.cruise_velocity > 0;", ENGINE)
+        self.assertIn("a11y_continuous_drive = car.cruise_velocity < 0;", ENGINE)
+        self.assertIn("a11y_continuous_drive = false;", VEH)
+        self.assertIn("a11y_drive_stall_ticks >= 6", VEH)
+
+    def test_swipe_forward_again_overrides_only_current_obstacle(self):
+        self.assertIn("const bool force_forward =", ENGINE)
+        self.assertIn("car.a11y_obstacle_stop;", ENGINE)
+        self.assertIn("car.a11y_obstacle_override = true;", ENGINE)
+        self.assertIn("car.a11y_override_obstacle_name = hazard ? hazard->label", ENGINE)
+        self.assertIn("if( !car.a11y_obstacle_override &&", ENGINE)
+        self.assertIn("if( !a11y_obstacle_override && hazard &&", VEH)
+        self.assertIn("hazard->label != a11y_override_obstacle_name", VEH)
+        self.assertIn("a11y_obstacle_stop = true;", VEH)
+        self.assertIn("a11y_obstacle_resume_speed", VEH)
+        self.assertIn("a11y_brake_alerted = true;", VEH)
+        self.assertIn("a11y_continuous_drive = car.velocity != 0;", ENGINE)
+        self.assertIn("a11y_override_obstacle = false;", VEH)
+
+    def test_braking_or_leaving_drive_mode_stops_continuous_turns(self):
+        self.assertIn('action == "A11Y_INTERNAL_VEHICLE_BRAKE"', ENGINE)
+        self.assertIn("seat->vehicle().a11y_continuous_drive = false;", ENGINE)
+        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
+        self.assertIn("seat->vehicle().a11y_continuous_drive = false;", ENGINE)
+        self.assertIn('requestVehicleAction("reader:vehicle:brake");', CTRL)
+        self.assertIn("if (vehicleMode && nextMode != 2 && vehicleDriverReady())", CTRL)
 
     def test_throttle_swipes_advance_native_physics(self):
         # Native pldrive() does not spend moves for straight cruise changes.

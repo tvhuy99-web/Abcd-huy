@@ -6729,6 +6729,12 @@ void vehicle::gain_moves( map &here )
     if( !pl_control ) {
         a11y_drive_paused = false;
         a11y_resume_cruise_velocity = 0;
+        a11y_continuous_drive = false;
+        a11y_obstacle_stop = false;
+        a11y_obstacle_override = false;
+        a11y_override_obstacle_name.clear();
+        a11y_obstacle_resume_speed = 0;
+        a11y_drive_stall_ticks = 0;
     }
     // Reader driving assistance runs on the GAME thread before native
     // thrust/movement, not when Android speaks a late status update. The
@@ -6738,7 +6744,7 @@ void vehicle::gain_moves( map &here )
     const avatar &driver = get_avatar();
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
-        velocity != 0 ) {
+        ( velocity != 0 || ( a11y_continuous_drive && cruise_velocity != 0 ) ) ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
             // Announce a fresh loss of control once, never each physics tick.
@@ -6754,9 +6760,24 @@ void vehicle::gain_moves( map &here )
             // the vehicle accelerates in either direction. This is an
             // emergency aid, not a promise that handbraking stops instantly.
             const int braking_range = std::clamp( 8 + std::abs( velocity ) / 500, 8, 32 );
-            if( hazard && hazard->distance <= braking_range ) {
+            // A repeated Forward swipe after a sensor stop overrides only
+            // that obstacle. Re-arm the guard once it clears or a different
+            // obstacle comes into range. Native crashes remain possible.
+            if( a11y_obstacle_override &&
+                ( !hazard || hazard->label != a11y_override_obstacle_name ||
+                  hazard->distance > braking_range ) ) {
+                a11y_obstacle_override = false;
+                a11y_override_obstacle_name.clear();
+            }
+            if( !a11y_obstacle_override && hazard && hazard->distance <= braking_range ) {
+                a11y_obstacle_resume_speed = cruise_velocity != 0 ?
+                                             cruise_velocity : a11y_obstacle_resume_speed;
+                a11y_obstacle_stop = true;
                 cruise_velocity = 0;
-                handbrake( here );
+                if( velocity != 0 ) {
+                    handbrake( here );
+                }
+                a11y_continuous_drive = velocity != 0;
                 if( !a11y_brake_alerted ) {
                     add_msg( m_warning,
                              reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
@@ -6764,7 +6785,7 @@ void vehicle::gain_moves( map &here )
                              hazard->label, hazard->distance );
                 }
                 a11y_brake_alerted = true;
-            } else {
+            } else if( !a11y_obstacle_override ) {
                 a11y_brake_alerted = false;
             }
         } else {
@@ -6827,6 +6848,24 @@ void vehicle::gain_moves( map &here )
 
     if( velocity < 0 ) {
         beeper_sound( here );
+    }
+    // Stop the turn scheduler when braking finishes, or when a blocked /
+    // broken vehicle cannot move despite several consecutive engine turns.
+    // This also prevents an accepted obstacle override from repeatedly
+    // ramming an immovable wall forever without further player input.
+    if( a11y_continuous_drive ) {
+        if( ( a11y_obstacle_stop || cruise_velocity == 0 ) && velocity == 0 ) {
+            a11y_continuous_drive = false;
+            a11y_drive_stall_ticks = 0;
+        } else if( cruise_velocity != 0 && velocity == 0 ) {
+            if( ++a11y_drive_stall_ticks >= 6 ) {
+                a11y_continuous_drive = false;
+                cruise_velocity = 0;
+                a11y_drive_stall_ticks = 0;
+            }
+        } else {
+            a11y_drive_stall_ticks = 0;
+        }
     }
 }
 

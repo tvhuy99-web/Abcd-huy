@@ -1108,6 +1108,13 @@ class vehicle
         // A spoken warning is emitted once for a continuing braking event,
         // not on every physics update while a vehicle is still moving.
         bool a11y_brake_alerted = false; // NOLINT(cata-serialize)
+        // Session-only spoken driving state; never serialized into a save.
+        bool a11y_continuous_drive = false; // NOLINT(cata-serialize)
+        bool a11y_obstacle_stop = false; // NOLINT(cata-serialize)
+        bool a11y_obstacle_override = false; // NOLINT(cata-serialize)
+        std::string a11y_override_obstacle_name; // NOLINT(cata-serialize)
+        int a11y_obstacle_resume_speed = 0; // NOLINT(cata-serialize)
+        int a11y_drive_stall_ticks = 0; // NOLINT(cata-serialize)
         bool a11y_skid_alerted = false; // NOLINT(cata-serialize)
         // Session-only pause state, never restored as a saved throttle.
         bool a11y_drive_paused = false; // NOLINT(cata-serialize)

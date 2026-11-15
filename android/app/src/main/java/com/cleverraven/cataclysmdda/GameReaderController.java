@@ -3580,6 +3580,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // sufficient to offer Drive for inspection; the native driver
             // gate still refuses any control from a passenger.
             int nextMode = combatMode ? 2 : vehicleMode ? 0 : 1;
+            if (vehicleMode && nextMode != 2 && vehicleDriverReady()) {
+                requestVehicleAction("reader:vehicle:brake");
+            }
             combatMode = nextMode == 1;
             vehicleMode = nextMode == 2;
             CataclysmDDA.nativeCancelPendingWorldSteps();

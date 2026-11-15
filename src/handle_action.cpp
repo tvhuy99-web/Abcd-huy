@@ -215,6 +215,25 @@ extern bool add_key_to_quick_shortcuts( int key, const std::string &category, bo
 
 static bool has_vehicle_control( avatar &player_character );
 
+// Auto-drive is a series of ordinary native turns, NOT teleportation or a
+// background thread. The normal DEFAULTMODE input context is polled between
+// turns so emergency brake, steering, horns and menus remain responsive.
+static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
+{
+    if( !a11y::enabled() || !a11y::android::enabled() ||
+        a11y::android::suspended() || !driver.in_vehicle ||
+        !driver.controlling_vehicle || driver.has_destination() ||
+        driver.has_destination_activity() || driver.activity ) {
+        return false;
+    }
+    const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
+    return seat && seat->vehicle().a11y_continuous_drive &&
+           !seat->vehicle().a11y_drive_paused &&
+           !seat->vehicle().is_rotorcraft( here ) &&
+           seat->vehicle().player_in_control( here, driver ) &&
+           ( !g || g->remoteveh() != &seat->vehicle() );
+}
+
 namespace
 {
 // These flags are set from a registered accessibility-only world action and
@@ -893,6 +912,16 @@ input_context game::get_player_input( std::string &action )
 #endif
 
     user_turn current_turn;
+    // In normal turn-based play, TURN_DURATION can be zero and a native
+    // TIMEOUT never advances time. While reader auto-drive is active, poll
+    // controls for a short wall-clock interval, then let the normal
+    // ACTION_TIMEOUT consume a game turn and run native vehicle physics.
+    const auto drive_input_started = std::chrono::steady_clock::now();
+    const auto continuous_drive_tick_due = [&]() {
+        return a11y_continuous_vehicle_ready( u, here ) &&
+               std::chrono::steady_clock::now() - drive_input_started >=
+               std::chrono::milliseconds( 350 );
+    };
 
     // Nothing in this animation loop is required for speech or gameplay.
     // Avoid weather, minimap and tile-animation redraws while waiting for
@@ -1074,7 +1103,8 @@ input_context game::get_player_input( std::string &action )
 
             ui_manager::redraw_invalidated();
         } while( handle_mouseview( ctxt, action ) && uquit != QUIT_WATCH
-                 && ( action != "TIMEOUT" || !current_turn.has_timeout_elapsed() ) );
+                 && ( action != "TIMEOUT" ||
+                      ( !current_turn.has_timeout_elapsed() && !continuous_drive_tick_due() ) ) );
         ctxt.reset_timeout();
     } else {
         ctxt.set_timeout( 125 );
@@ -1083,7 +1113,8 @@ input_context game::get_player_input( std::string &action )
             if( !handle_mouseview( ctxt, action ) ) {
                 break;
             }
-            if( action == "TIMEOUT" && current_turn.has_timeout_elapsed() ) {
+            if( action == "TIMEOUT" &&
+                ( current_turn.has_timeout_elapsed() || continuous_drive_tick_due() ) ) {
                 break;
             }
         }
@@ -3057,10 +3088,36 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                 if( car.a11y_drive_paused ) {
                     add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
                 } else {
+                    // A second forward swipe after a sensor stop explicitly
+                    // accepts the collision risk. Only the accessibility
+                    // obstacle guard is bypassed; native collision and vehicle
+                    // physics still run normally.
+                    const bool force_forward = throttle == a11y_vehicle_throttle::forward &&
+                                               car.a11y_obstacle_stop;
+                    if( force_forward ) {
+                        const std::optional<a11y::vehicle_obstacle> hazard =
+                            a11y::vehicle_obstacle_ahead( car, here );
+                        car.a11y_obstacle_override = true;
+                        car.a11y_override_obstacle_name = hazard ? hazard->label : "";
+                        car.a11y_obstacle_stop = false;
+                        car.a11y_brake_alerted = false;
+                    }
                     // Retain pldrive's original checks and timing.
                     switch( throttle ) {
                     case a11y_vehicle_throttle::forward:
-                        if( car.cruise_velocity < 0 || car.velocity < 0 ) {
+                        if( force_forward && car.velocity >= 0 ) {
+                            // Resume a previously selected speed (or the
+                            // native first cruise increment after a blocked
+                            // start) without re-announcing the obstacle.
+                            if( car.cruise_velocity == 0 ) {
+                                pldrive( point_rel_ms( 0, -1 ) );
+                            }
+                            const int safe_speed = std::max( 0, car.safe_velocity( here ) );
+                            car.cruise_velocity = std::min( safe_speed,
+                                                          std::max( car.cruise_velocity,
+                                                                  car.a11y_obstacle_resume_speed ) );
+                            car.a11y_continuous_drive = car.cruise_velocity > 0;
+                        } else if( car.cruise_velocity < 0 || car.velocity < 0 ) {
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before driving forward." ) );
                         } else if( car.cruise_velocity == 0 ) {
@@ -3070,16 +3127,25 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             const std::optional<a11y::vehicle_obstacle> obstruction =
                                 a11y::vehicle_obstacle_ahead( car, here );
                             if( obstruction && obstruction->distance <= 8 ) {
+                                car.a11y_obstacle_stop = true;
+                                car.a11y_obstacle_resume_speed = 400;
+                                car.a11y_continuous_drive = false;
                                 add_msg( m_warning,
                                          _( "Cannot move forward: %1$s, about %2$d tiles." ),
                                          obstruction->label, obstruction->distance );
                             } else {
                                 pldrive( point_rel_ms( 0, -1 ) );
+                                car.a11y_obstacle_stop = false;
+                                car.a11y_continuous_drive = car.cruise_velocity > 0;
                                 add_msg( m_info, _( "Forward selected." ) );
                             }
+                        } else if( car.cruise_velocity > 0 ) {
+                            car.a11y_continuous_drive = true;
                         }
                         break;
                     case a11y_vehicle_throttle::reverse:
+                        car.a11y_obstacle_stop = false;
+                        car.a11y_obstacle_override = false;
                         if( car.cruise_velocity > 0 || car.velocity > 0 ) {
                             car.cruise_velocity = 0;
                             add_msg( m_info, _( "Slowing down before reversing." ) );
@@ -3087,13 +3153,19 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                             const std::optional<a11y::vehicle_obstacle> obstruction =
                                 a11y::vehicle_obstacle_ahead( car, here, true );
                             if( obstruction && obstruction->distance <= 8 ) {
+                                car.a11y_obstacle_stop = true;
+                                car.a11y_obstacle_resume_speed = -400;
+                                car.a11y_continuous_drive = false;
                                 add_msg( m_warning,
                                          _( "Cannot reverse: %1$s, about %2$d tiles." ),
                                          obstruction->label, obstruction->distance );
                             } else {
                                 pldrive( point_rel_ms( 0, 1 ) );
+                                car.a11y_continuous_drive = car.cruise_velocity < 0;
                                 add_msg( m_info, _( "Reverse selected." ) );
                             }
+                        } else if( car.cruise_velocity < 0 ) {
+                            car.a11y_continuous_drive = true;
                         }
                         break;
                     case a11y_vehicle_throttle::faster:
@@ -3113,7 +3185,8 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     // throttle swipe, including repeated forward/reverse
                     // swipes after a target has already been selected.
                     // Never teleport the vehicle or bypass native physics.
-                    if( ( throttle == a11y_vehicle_throttle::forward ||
+                    if( !car.a11y_obstacle_override &&
+                        ( throttle == a11y_vehicle_throttle::forward ||
                           throttle == a11y_vehicle_throttle::reverse ||
                           throttle == a11y_vehicle_throttle::faster ) &&
                         car.cruise_velocity != 0 ) {
@@ -3125,10 +3198,13 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                         // A speed-up swipe must not bypass the same obstacle
                         // guard used by the forward and reverse buttons.
                         if( hazard && hazard->distance <= braking_range ) {
+                            car.a11y_obstacle_resume_speed = car.cruise_velocity;
+                            car.a11y_obstacle_stop = true;
                             car.cruise_velocity = 0;
                             if( car.velocity != 0 ) {
                                 car.handbrake( here );
                             }
+                            car.a11y_continuous_drive = car.velocity != 0;
                             if( !car.a11y_brake_alerted ) {
                                 add_msg( m_warning,
                                          reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
@@ -3159,6 +3235,11 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
             }
+            // A new steering direction re-arms the sensor for its new path.
+            // An intentional bypass applies only to the previous trajectory.
+            if( direction.x() != 0 && seated ) {
+                seated->vehicle().a11y_obstacle_override = false;
+            }
             // Steering changes turn_dir before the world's next physics
             // step. Check the newly requested trajectory immediately so
             // a near-side pillar is not first detected after a collision.
@@ -3174,8 +3255,11 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
                     const int braking_range = std::clamp(
                                                   8 + std::abs( car.velocity ) / 500, 8, 32 );
                     if( hazard && hazard->distance <= braking_range ) {
+                        car.a11y_obstacle_resume_speed = car.cruise_velocity;
+                        car.a11y_obstacle_stop = true;
                         car.cruise_velocity = 0;
                         car.handbrake( here );
+                        car.a11y_continuous_drive = car.velocity != 0;
                         if( !car.a11y_brake_alerted ) {
                             add_msg( m_warning,
                                      reverse ? _( "Automatic braking: %1$s behind, about %2$d tiles." ) :
@@ -4394,6 +4478,22 @@ bool game::handle_action()
 
     bool veh_ctrl = has_vehicle_control( player_character );
 
+    // Never advance a driving turn when ordinary safe mode is stopping play.
+    // Unlike manual obstacle override, this preserves the native player
+    // safety-mode gate.
+    if( action == "TIMEOUT" && safe_mode == SAFE_MODE_STOP ) {
+        const optional_vpart_position seat = here.veh_at(
+                    player_character.pos_bub( here ) );
+        if( seat && seat->vehicle().a11y_continuous_drive ) {
+            seat->vehicle().a11y_continuous_drive = false;
+            seat->vehicle().cruise_velocity = 0;
+            if( seat->vehicle().velocity != 0 ) {
+                seat->vehicle().handbrake( here );
+            }
+            return false;
+        }
+    }
+
     // If performing an action with right mouse button, co-ordinates
     // of location clicked.
     std::optional<tripoint_bub_ms> mouse_target;
@@ -4464,6 +4564,13 @@ bool game::handle_action()
             // Smash is already the native driving handbrake. Use that same
             // action rather than implementing another vehicle physics path.
             if( veh_ctrl && player_character.controlling_vehicle ) {
+                const optional_vpart_position seat =
+                    here.veh_at( player_character.pos_bub( here ) );
+                if( seat ) {
+                    seat->vehicle().a11y_continuous_drive = false;
+                    seat->vehicle().a11y_obstacle_stop = false;
+                    seat->vehicle().a11y_obstacle_override = false;
+                }
                 act = ACTION_SMASH;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_PAUSE" ) {
@@ -4480,6 +4587,9 @@ bool game::handle_action()
             }
             vehicle &car = seated->vehicle();
             if( !car.a11y_drive_paused ) {
+                car.a11y_continuous_drive = false;
+                car.a11y_obstacle_stop = false;
+                car.a11y_obstacle_override = false;
                 car.a11y_resume_cruise_velocity = car.cruise_velocity;
                 car.a11y_drive_paused = true;
                 add_msg( m_info, _( "Driving paused. Braking to a stop." ) );
@@ -4507,6 +4617,7 @@ bool game::handle_action()
                 car.cruise_velocity = std::clamp( saved_speed, -safe_speed, safe_speed );
                 car.a11y_resume_cruise_velocity = 0;
                 car.a11y_drive_paused = false;
+                car.a11y_continuous_drive = car.cruise_velocity != 0;
                 add_msg( m_info, _( "Driving resumed." ) );
                 return false;
             }
