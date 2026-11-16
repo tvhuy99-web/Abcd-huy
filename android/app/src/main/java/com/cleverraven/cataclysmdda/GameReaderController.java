@@ -4262,6 +4262,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!combatMode) {
             result.removeIf(entry -> "reader:combat:aim-toggle".equals(entry.node));
         }
+        // Append the guide after all original actions in every hub section,
+        // including Combat, without changing any existing action index.
+        result.add(new GameActionHub.Entry(
+                activity.getString(R.string.a11yGestureGuideTitle), "",
+                GameActionHub.OPEN_GESTURE_GUIDE, 0));
         return result;
     }
 
@@ -4616,6 +4621,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
         GameActionHub.Entry item = entries.get(hubIndex);
         switch (item.kind) {
+            case GameActionHub.OPEN_GESTURE_GUIDE:
+                openGestureGuide();
+                return;
             case GameActionHub.OPEN_SEARCH:
                 if (hubSection == GameActionHub.ROOT) {
                     hubRootIndex = GameActionHub.TITLES.length;
