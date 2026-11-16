@@ -1183,6 +1183,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
+            // A moving car must be as quiet as walking on an empty floor,
+            // regardless of whether Manual or Automatic is selected. Only
+            // real urgent game warnings are spoken without being requested;
+            // gesture-initiated scans and details still work on demand.
+            if (vehicleMode && snapshot != null
+                    && "DEFAULTMODE".equals(snapshot.category)
+                    && priority < ReaderSpeechQueue.URGENT
+                    && !extendedScan && !requestedDetail
+                    && !detailBegin && !detailPart && !detailEnd && !combatAlert) {
+                return;
+            }
             if (detailBegin || detailPart || detailEnd) {
                 if (!expectingItemDetail()) {
                     pendingItemDetailParts = null;
