@@ -64,8 +64,8 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("for( int radius = 1; radius <= 2; ++radius )", PLACES)
         self.assertIn("overmap_buffer.seen( candidate ) <= om_vision_level::outlines", PLACES)
         self.assertIn("nearby_goal = true;", PLACES)
-        self.assertIn("Driving to the nearest reachable road beside the selected place.", PLACES)
-        self.assertIn("No safe vehicle route to this place or its nearby roads.", PLACES)
+        self.assertIn("Driving to a reachable area near the selected place.", PLACES)
+        self.assertIn("No safe vehicle route to this place or a nearby area.", PLACES)
 
     def test_autonomous_drive_mode_locks_only_four_straight_one_finger_swipes(self):
         guide = read(JAVA / "ReaderGestureGuide.java")
