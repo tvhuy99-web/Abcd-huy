@@ -753,9 +753,12 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
 
     const tripoint_abs_ms pt_abs = here.get_abs( pt );
     const tripoint_abs_omt pt_omt = project_to<coords::omt>( pt_abs );
-    // only check visibility for the current OMT, we'll check other OMTs when
-    // we reach them
-    if( pt_omt == data.current_omt ) {
+    const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
+                                driven_veh.is_autodriving;
+    // The accessibility car uses the engine's actual terrain and obstacles
+    // rather than refusing every unknown-memory tile. These sensors do NOT
+    // make terrain, creatures, furniture or other vehicles passable.
+    if( pt_omt == data.current_omt && !reader_sensors ) {
         // driver must see the tile or have seen it before in order to plan a route over it
         if( !driver.sees( here, pt ) ) {
             if( !driver.is_avatar() ) {
@@ -779,7 +782,7 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
     // check for creatures
     // TODO: padding around monsters
     Creature *critter = get_creature_tracker().creature_at( pt, true );
-    if( critter && driver.sees( here, *critter ) ) {
+    if( critter && ( reader_sensors || driver.sees( here, *critter ) ) ) {
         return false;
     }
 
@@ -984,6 +987,12 @@ void vehicle::autodrive_controller::precompute_data( map &here )
                                         MAX_GREEDY_SPEED_TPS,
                                         driven_veh.safe_velocity( here ) / VMIPH_PER_TPS
                                     );
+        if( a11y::enabled() && driver.is_avatar() && driven_veh.is_autodriving ) {
+            // Expanded sensory reach is an accessibility aid, not a reason
+            // to race into unseen hazards. Keep the automatic route slow.
+            data.max_greedy_speed_tps =
+                std::min( data.max_greedy_speed_tps, MAX_CAUTIOUS_SPEED_TPS );
+        }
         data.acceleration.resize( data.max_cautious_speed_tps );
         for( int speed_tps = 0; speed_tps < data.max_cautious_speed_tps; speed_tps++ ) {
             data.acceleration[speed_tps] = driven_veh.acceleration( here, true, speed_tps * VMIPH_PER_TPS );
@@ -1219,7 +1228,9 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
         // Checks further down below in this method will make sure that we instead slow down.
         changed_zlevel |= ( next.z() != veh_pos.z() );
     }
-    if( blind && !changed_zlevel ) {
+    const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
+                                driven_veh.is_autodriving;
+    if( blind && !changed_zlevel && !reader_sensors ) {
         return collision_check_result::no_visibility;
     }
 
@@ -1256,7 +1267,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
     }
     for( const point_rel_ms &p : collision_zone ) {
         const tripoint_bub_ms next = data.adjust_z( here, veh_pos + p );
-        if( !data.is_flying && !driver.sees( here, next ) ) {
+        if( !reader_sensors && !data.is_flying && !driver.sees( here, next ) ) {
             return collision_check_result::slow_down;
         }
         if( !check_drivable( here, next ) ) {
