@@ -70,6 +70,16 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 
 Có 36 mã trong danh mục cử chỉ: 11 được giữ cố định và 25 cho phép gán tùy chỉnh. Các cử chỉ cố định không thể bị thay thế bởi cấu hình cũ. Hướng dẫn thử ánh xạ vuốt ngang/dọc trong 45 giây là **thiết kế lịch sử**, không còn là luồng cài đặt điều hướng hiện hành.
 
+## Khám phá địa điểm: lái xe tự động hoàn toàn
+
+Trong **Menu tổng hợp → Khám phá địa điểm**, chọn một địa điểm đã biết, rồi chọn **Đi xe** khi đang ngồi ở vị trí điều khiển xe. Trò chơi dùng bộ tìm đường và hoạt động gốc `ACT_AUTODRIVE` để tự chọn tuyến, đánh lái và điều chỉnh tốc độ. Chế độ này độc lập với việc bạn từng chọn **Lái thủ công** trong menu xe: nếu đã chọn Đi xe tại Khám phá địa điểm, bộ tự lái tự chịu trách nhiệm tránh vật cản.
+
+Khi hành trình bắt đầu, trình đọc hiện bảng **Tạm dừng hành trình / Hủy chuyến đi**. Tạm dừng đặt tốc độ mục tiêu về 0, phanh xe bằng cơ chế vật lý gốc, **không xóa tuyến đường**; bấm **Tiếp tục hành trình** để chạy tiếp. Hủy sẽ phanh xe và kết thúc hoạt động điều hướng. Khi tới điểm đến, xe yêu cầu phanh và kết thúc hành trình, không giữ ga ở tốc độ cũ. Phanh vật lý có thể cần thời gian mới dừng hẳn.
+
+Nếu đường bị chặn hoặc phía trước không còn đủ tầm quan sát, xe ngừng tăng ga và phanh, đồng thời chuyển sang trạng thái **Xe dừng vì vật cản** mà vẫn giữ điểm đến. Tại đây chỉ có **Tiếp tục** (thử lại khi đường đã thông thoáng) và **Hủy**, **không có nút bỏ qua vật cản**. Cảnh báo kẻ địch từ chế độ an toàn có bảng riêng, và chỉ cảnh báo kẻ địch mới cho phép yêu cầu bỏ qua theo quy tắc gốc.
+
+Khi đứng yên và bộ tìm đường thực sự yêu cầu đổi hướng, xe có thể xoay thân xe tại chỗ từng bước 15–45 độ. Mỗi bước phải qua kiểm tra khoảng trống quanh thân xe; nếu không an toàn, xe phanh và chờ người chơi quyết định, không cố đâm xuyên vật cản. Hoạt động lái xe tự động hoàn toàn **im lặng khi đường đi bình thường**; chỉ đọc cảnh báo khẩn cấp và các thông tin bạn chủ động yêu cầu.
+
 ## Cập nhật lái xe: yên lặng, quay tại chỗ và phanh trước vật cản
 
 **Cả lái tự động và lái thủ công đều im lặng khi di chuyển bình thường.** Trình đọc không tự thông báo lại xe bạn đang ngồi, địa hình, tốc độ hoặc khu vực vừa đi qua. Các cảnh báo khẩn cấp như chướng ngại, va chạm, lỗi động cơ hay tình trạng nguy hiểm của nhân vật vẫn được đọc. Cử chỉ chủ động yêu cầu quét 30 ô, đọc tốc độ, xem tình trạng xe hoặc hỏi hướng đầu xe vẫn đọc đúng nội dung tương ứng.
