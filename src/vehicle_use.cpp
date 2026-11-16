@@ -3060,7 +3060,6 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 // Autonomous pathfinding owns all four straight one-finger
                 // swipes. Never instruct a blind driver to use them here.
                 guide.addentry( index++, true, 0, _( "Autonomous driving: four straight one-finger swipes are disabled." ) );
-                guide.addentry( index++, true, 0, _( "Triple tap three fingers: Cancel the trip and switch to Map." ) );
             } else {
                 for( const std::string &line : std::initializer_list<std::string> {
                     _( "Swipe one finger up: Drive forward." ),
