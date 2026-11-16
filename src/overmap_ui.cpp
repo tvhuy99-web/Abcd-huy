@@ -3600,8 +3600,9 @@ void ui::omap::display_accessible_places()
             intent.node != "places:mode:run" && !driving ) {
             return std::nullopt;
         }
-        if( driving && !( you.in_vehicle && you.controlling_vehicle ) ) {
-            add_msg( m_info, _( "You are not controlling a vehicle." ) );
+        if( driving && !( you.in_vehicle && you.controlling_vehicle ) &&
+            !accessible_driver_seat_nearby( you, get_map() ) ) {
+            add_msg( m_info, _( "No accessible driver's seat nearby." ) );
             return std::string( "TIMEOUT" );
         }
         tripoint_abs_omt destination = places[*selected].target;
@@ -3647,15 +3648,44 @@ void ui::omap::display_accessible_places()
             add_msg( m_info, _( "You are already in the selected map area." ) );
             return std::string( "TIMEOUT" );
         }
-        std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, driving );
-        if( route.empty() ) {
-            add_msg( m_info, _( "No travel route to the selected place." ) );
-            return std::string( "TIMEOUT" );
-        }
-        you.omt_path = std::move( route );
         if( driving ) {
+            map &here = get_map();
+            const optional_vpart_position seated = here.veh_at( you.pos_bub( here ) );
+            const bool ready = you.in_vehicle && you.controlling_vehicle && seated
+                               && seated->part_with_feature( "CONTROLS", true )
+                               && seated->vehicle().player_in_control( here, you )
+                               && seated->vehicle().engine_on;
+            if( !ready ) {
+                // This is the same native accessible control_vehicle() used
+                // elsewhere: it walks to the driver seat, boards normally,
+                // checks ownership and starts the engine with actual time.
+                // A game-thread continuation starts the route only AFTER
+                // those actions have really completed.
+                pending_accessible_drive = accessible_drive_request{ destination };
+                if( !you.in_vehicle || !you.controlling_vehicle ) {
+                    g->control_vehicle( std::nullopt );
+                }
+                return std::string( "QUIT" );
+            }
+            bool nearby_goal = false;
+            std::vector<tripoint_abs_omt> route =
+                accessible_vehicle_route( destination, nearby_goal );
+            if( route.empty() ) {
+                add_msg( m_info, _( "No safe vehicle route to this place or its nearby roads." ) );
+                return std::string( "TIMEOUT" );
+            }
+            if( nearby_goal ) {
+                add_msg( m_info, _( "Driving to the nearest reachable road beside the selected place." ) );
+            }
+            you.omt_path = std::move( route );
             you.assign_activity( autodrive_activity_actor() );
         } else {
+            std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, false );
+            if( route.empty() ) {
+                add_msg( m_info, _( "No travel route to the selected place." ) );
+                return std::string( "TIMEOUT" );
+            }
+            you.omt_path = std::move( route );
             you.reset_move_mode();
             you.set_desired_movement_mode( move_mode_id(
                                             intent.node == "places:mode:run" ? "run" : "walk" ) );
@@ -3687,7 +3717,8 @@ void ui::omap::display_accessible_places()
                 mode.label = label;
                 snapshot.nodes.push_back( std::move( mode ) );
             }
-            if( you.in_vehicle && you.controlling_vehicle ) {
+            if( ( you.in_vehicle && you.controlling_vehicle ) ||
+                accessible_driver_seat_nearby( you, get_map() ) ) {
                 a11y::semantic_node drive;
                 drive.id = "places:mode:drive";
                 drive.label = _( "Drive" );
