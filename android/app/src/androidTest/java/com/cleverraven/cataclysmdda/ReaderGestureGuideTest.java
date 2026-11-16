@@ -76,6 +76,82 @@ public final class ReaderGestureGuideTest {
     }
 
     @Test
+    public void allSixCreatorStepsExposeTheRealTwoFingerConfirmation() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        for (int step = 1; step <= 6; step++) {
+            List<String> rows = ReaderGestureGuide.entries(c,
+                    screen("character-creator-step-" + step), false, false,
+                    false, false, false, false, null);
+            assertTrue("Creator step " + step + " missing two-finger UP",
+                    mentions(rows, c.getString(R.string.a11yGuideTwoUp)));
+            assertTrue(mentions(rows, c.getString(step < 3
+                    ? R.string.a11yGuideCreatorSelect : R.string.a11yGuideCreatorNextStep)));
+            assertTrue(mentions(rows, c.getString(R.string.a11yGuideTwoDown)));
+            assertTrue(mentions(rows, c.getString(R.string.a11yGuideRecentMessages)));
+            assertFalse(mentions(rows, c.getString(R.string.a11yGuideScanNorth)));
+        }
+    }
+
+    @Test
+    public void creatorSummaryCalendarAndYesNoExplainTheirActualConfirm() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String[][] screens = {
+                { "CHARACTER_CREATION", c.getString(R.string.a11yGuideCreatorFinish) },
+                { "character-creator-calendar", c.getString(R.string.a11yGuideCalendarConfirm) },
+                { "YESNO", c.getString(R.string.a11yGuideAcceptYes) },
+                { "YESNOQUIT", c.getString(R.string.a11yGuideAcceptYes) }
+        };
+        for (String[] pair : screens) {
+            List<String> rows = ReaderGestureGuide.entries(c,
+                    screen(pair[0]), false, false, false, false, false, false, null);
+            assertTrue(pair[0] + " missing two-finger UP",
+                    mentions(rows, c.getString(R.string.a11yGuideTwoUp)));
+            assertTrue(pair[0] + " missing correct meaning", mentions(rows, pair[1]));
+            assertTrue(mentions(rows, c.getString(R.string.a11yGuideGoBack)));
+        }
+    }
+
+    @Test
+    public void universalActionsArePresentOnceAndDoNotOverwriteWorldScans() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        String[] categories = { "MAIN_MENU", "inventory", "pickup-here",
+                "crafting", "construction", "targeting", "surroundings",
+                "overmap", "dialogue", "zones", "future_screen" };
+        for (String category : categories) {
+            List<String> rows = ReaderGestureGuide.entries(c, screen(category),
+                    false, false, false, false, false, false, null);
+            assertTrue(category, mentions(rows, c.getString(R.string.a11yGuideTwoUp)));
+            assertTrue(category, mentions(rows, c.getString(R.string.a11yGuideGoBack)));
+            assertTrue(category, mentions(rows, c.getString(R.string.a11yGuideRecentMessages)));
+            assertTrue(category, mentions(rows, c.getString(R.string.a11yGuideStopSpeech)));
+            java.util.HashSet<String> gestures = new java.util.HashSet<>();
+            for (String row : rows) {
+                String name = row.split(": ", 2)[0];
+                assertTrue("Repeated gesture " + category + ": " + name, gestures.add(name));
+            }
+        }
+        List<String> world = ReaderGestureGuide.entries(c,
+                screen("DEFAULTMODE"), false, false, false, false, false, false, null);
+        assertTrue(mentions(world, c.getString(R.string.a11yGuideScanNorth)));
+        assertTrue(mentions(world, c.getString(R.string.a11yGuideOpenHub)));
+        assertFalse(mentions(world, c.getString(R.string.a11yGuideConfirmSelection)));
+        assertFalse(mentions(world, c.getString(R.string.a11yGuideGoBack)));
+    }
+
+    @Test
+    public void editorAndDebugPromptsRetainDistinctControls() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        List<String> editor = ReaderGestureGuide.entries(c, null, false, false,
+                false, false, true, false, null);
+        List<String> debug = ReaderGestureGuide.entries(c, null, false, false,
+                false, false, false, true, null);
+        assertTrue(mentions(editor, c.getString(R.string.a11yGuideConfirmInput)));
+        assertTrue(mentions(editor, c.getString(R.string.a11yGuideCancelInput)));
+        assertFalse(mentions(debug, c.getString(R.string.a11yGuideConfirmSelection)));
+        assertTrue(mentions(debug, c.getString(R.string.a11yGuideDebugContinue)));
+    }
+
+    @Test
     public void nativeHelpCommandIsLocalOnly() {
         ReaderSnapshot.Node node = ReaderSnapshot.Node.gestureGuide("Gesture guide");
         assertEquals("reader:gesture:guide", node.id);
