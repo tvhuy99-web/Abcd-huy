@@ -18,6 +18,39 @@ final class ReaderGestureGuide {
         rows.add(c.getString(gesture) + ": " + c.getString(meaning));
     }
 
+    /** Shared controls are appended once, even when a screen has a more
+     * precise instruction for the same gesture. */
+    private static void addOnce(List<String> rows, Context c, int gesture, int meaning) {
+        String prefix = c.getString(gesture) + ": ";
+        for (String row : rows) {
+            if (row.startsWith(prefix)) { return; }
+        }
+        add(rows, c, gesture, meaning);
+    }
+
+    /** Field options/number ranges override the ordinary menu's vertical
+     * navigation instruction only when the native node exposes an edit API. */
+    private static void describeFocusedField(List<String> rows, Context c,
+                                             ReaderSnapshot snapshot) {
+        if (snapshot == null) { return; }
+        ReaderSnapshot.Node node = snapshot.find(snapshot.focus);
+        if (node == null || !node.enabled) { return; }
+        boolean choice = "choice".equals(node.fieldType)
+                && node.actions.contains("select_choice") && !node.choices.isEmpty();
+        boolean number = ("int".equals(node.fieldType) || "float".equals(node.fieldType))
+                && node.actions.contains("set_value") && node.hasFieldRange
+                && node.fieldStep > 0;
+        boolean itemQuantity = "checkbox".equals(node.role) && number
+                && node.fieldMin == 0.0 && node.fieldMax > 1.0
+                && node.fieldStep == 1.0 && !node.actions.contains("apply")
+                && ("inventory".equals(snapshot.category)
+                    || "pickup-here".equals(snapshot.category));
+        if ((!choice && !number) || itemQuantity) { return; }
+        String prefix = c.getString(R.string.a11yGuideOneVertical) + ": ";
+        rows.removeIf(row -> row.startsWith(prefix));
+        add(rows, c, R.string.a11yGuideOneVertical, R.string.a11yGuideAdjustField);
+    }
+
     private static void addSwipe(List<String> rows, Context c, String id, int meaning) {
         int index = ReaderGestureBindings.indexOf(id);
         if (index >= 0) {
@@ -157,7 +190,8 @@ final class ReaderGestureGuide {
                 }
             }
         } else if ("inventory".equals(category) || "pickup".equals(category)
-                || "advinv".equals(category) || "item_action_menu".equals(category)
+                || "pickup-here".equals(category) || "advinv".equals(category)
+                || "item_action_menu".equals(category)
                 || "drop".equals(category) || "wear".equals(category)) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideBrowsePockets);
@@ -193,6 +227,28 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+        } else if (category.startsWith("character-creator-step-")) {
+            // Native creator publishes a separate category for EVERY tab.
+            // The first two steps activate a selection; steps 3-6 use
+            // NEXT_TAB to validate multiselect attributes/skills/traits.
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideOneVertical,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    R.string.a11yGuideActivate);
+            if ("character-creator-step-3".equals(category)
+                    || "character-creator-step-4".equals(category)
+                    || "character-creator-step-5".equals(category)
+                    || "character-creator-step-6".equals(category)) {
+                add(rows, context, R.string.a11yGuideTwoUp,
+                        R.string.a11yGuideCreatorNextStep);
+            } else {
+                add(rows, context, R.string.a11yGuideTwoUp,
+                        R.string.a11yGuideCreatorSelect);
+            }
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideScreenMenu);
         } else if ("character-creator-calendar".equals(category)) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideAdjustCalendar);
             add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeCalendarField);
@@ -204,11 +260,26 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuidePlayMinigame);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
         } else if ("CHARACTER_CREATION".equals(category)) {
-            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
-            add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeCategory);
-            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
-            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
-            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+            // Final summary is a separate native category. Two-finger UP
+            // requests NEXT_TAB (Finish), not the focused summary row.
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideOneVertical,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yGuideTwoUp,
+                    R.string.a11yGuideCreatorFinish);
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideScreenMenu);
+        } else if ("YESNO".equals(category) || "YESNOQUIT".equals(category)) {
+            // Confirm selects Yes regardless of which answer has focus.
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yGuideTwoUp,
+                    R.string.a11yGuideAcceptYes);
         } else {
             // Generic read-only guidance for dialog, diary, missions,
             // inventories, configuration screens and future native scopes.
@@ -230,8 +301,63 @@ final class ReaderGestureGuide {
                 }
             }
         }
-        if (!"DEFAULTMODE".equals(category) || inHub) {
-            add(rows, context, R.string.a11yGuideTwoDown, R.string.a11yGuideGoBack);
+        // The following mappings come from ReaderGestureSurface and
+        // GameReaderController, and apply independently of native screen
+        // labels. Do not copy them into dozens of screen-specific blocks.
+        // Two-finger tap twice reads cached game messages in EVERY screen.
+        addOnce(rows, context, R.string.a11yBindTap22,
+                R.string.a11yGuideRecentMessages);
+        // A single tap stops speech in both the world and native menus.
+        addOnce(rows, context, R.string.a11yGuideSingleTap,
+                R.string.a11yGuideStopSpeech);
+        boolean liveWorld = "DEFAULTMODE".equals(category)
+                && !inHub && !traveling && !editing && !debugging;
+        if (liveWorld) {
+            // The two hub gestures work in Map, Combat and Drive.
+            addOnce(rows, context, R.string.a11yBindTap23,
+                    R.string.a11yGuideOpenHub);
+            addOnce(rows, context, R.string.a11yGuideTripleTap,
+                    R.string.a11yGuideOpenHub);
+            addOnce(rows, context, R.string.a11yBindTap21,
+                    combat ? R.string.a11yGuideCombatEnemy
+                           : R.string.a11yGuideReadDetails);
+        } else {
+            if (!debugging) {
+                addOnce(rows, context, R.string.a11yBindTap21,
+                        R.string.a11yGuideReadDetails);
+            }
+            // All modal screens share the same 2-finger UP confirm and
+            // 2-finger DOWN Back dispatchers. A screen-specific definition
+            // above takes precedence (creator, crafting, calendar, editor).
+            if (!debugging && !("crafting".equals(category) && snapshot != null
+                    && snapshot.find("craft:detail:qty:current") != null)) {
+                int confirmation = "crafting".equals(category) && snapshot != null
+                        && snapshot.find("craft:detail:confirm") != null
+                        ? R.string.a11yGuideCraftConfirm
+                        : R.string.a11yGuideConfirmSelection;
+                addOnce(rows, context, R.string.a11yGuideTwoUp, confirmation);
+            }
+            addOnce(rows, context, R.string.a11yGuideTwoDown,
+                    R.string.a11yGuideGoBack);
+            if (!editing && !debugging) {
+                addOnce(rows, context, R.string.a11yGuideDoubleTap,
+                        R.string.a11yGuideActivate);
+                addOnce(rows, context, R.string.a11yBindHold1,
+                        R.string.a11yGuideScreenMenu);
+            }
+        }
+        if (!liveWorld && !editing && !debugging
+                && !"character-creator-calendar".equals(category)
+                && !"surroundings".equals(category) && !"crafting".equals(category)) {
+            // All other ordinary menus receive configured focus navigation.
+            addOnce(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseItems);
+            addOnce(rows, context, R.string.a11yGuideOneVertical,
+                    R.string.a11yGuideBrowseItems);
+        }
+        if (!liveWorld && !inHub && !traveling && !editing && !debugging
+                && !"character-creator-calendar".equals(category)) {
+            describeFocusedField(rows, context, snapshot);
         }
         return rows;
     }
