@@ -2811,6 +2811,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public boolean gestureGuideActive() {
+        return gestureGuideOpen;
+    }
+
+    @Override
     public String gestureContext() {
         if (gestureGuideOpen) {
             return presentationEpoch + ":gesture-guide:"
