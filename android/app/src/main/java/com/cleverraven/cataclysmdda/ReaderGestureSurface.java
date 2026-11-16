@@ -28,7 +28,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
         default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
-        /** Drive mode: two fingers up/down read status; left brakes; right honks. */
+        /** Drive mode: two fingers scan 16 tiles relative to the vehicle heading. */
         default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
@@ -704,8 +704,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     if (direction != null) {
                         clearMultiTap();
                         if (maxPointers == 2) {
-                            // Driving takes precedence over the existing map
-                            // scans. Outside Drive, gestures remain unchanged.
+                            // Drive scans are vehicle-relative; Map scans use
+                            // the same gestures with absolute map directions.
                             int horizontal = "right".equals(direction) ? 1
                                     : "left".equals(direction) ? -1 : 0;
                             int vertical = "down".equals(direction) ? 1
