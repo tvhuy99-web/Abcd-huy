@@ -2878,6 +2878,45 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public boolean autonomousDriveTravelActive() {
+        return autonomousDriveTrip && !autonomousDriveCancelRequested
+                && !gestureGuideOpen && !commandPaletteOpen && !comprehensiveMenu
+                && editor == null && !closed && foreground && windowFocused
+                && snapshot != null && "activity".equals(snapshot.category)
+                && snapshot.find("activity:autodrive") != null;
+    }
+
+    private void requestAutonomousRead(String id) {
+        if (!autonomousDriveTravelActive() || snapshot.find(id) == null) { return; }
+        String previous = focus;
+        focus = id;
+        send("activate", "");
+        focus = previous;
+    }
+
+    private void pauseOrResumeAutonomousDrive() {
+        if (!autonomousDriveTravelActive()) { return; }
+        int state = travelState();
+        // Enemy safe mode is not bypassed by a double-tap. Blocked roads
+        // may only retry through native collision checks, never Ignore.
+        if (state == 3) {
+            feedback(travelStatus(state));
+            return;
+        }
+        int command = state == 1 ? 1 : (state == 2 || state == 4 ? 2 : 0);
+        if (command == 0) { return; }
+        try {
+            if (CataclysmDDA.nativeTravelControl(command)) {
+                feedback(activity.getString(R.string.a11yTravelRequestAccepted));
+            } else {
+                feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
+            }
+        } catch (UnsatisfiedLinkError unavailable) {
+            feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+        }
+    }
+
+    @Override
     public String gestureContext() {
         if (gestureGuideOpen) {
             return presentationEpoch + ":gesture-guide:"
