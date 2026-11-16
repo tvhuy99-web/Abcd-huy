@@ -129,7 +129,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('speakVehicleDocument("reader:vehicle:summary")', CTRL)
         self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
-    def test_manual_mode_toggle_is_last_vehicle_menu_action(self):
+    def test_manual_mode_toggle_precedes_final_read_only_guide(self):
         self.assertIn("bool a11y_manual_drive = false;", VEH_HEADER)
         menu = VEH_USE.split("void vehicle::build_interact_menu(", 1)[1].split(
             "void vehicle::interact_with(", 1
@@ -144,6 +144,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("a11y_continuous_drive = false;", menu)
         self.assertIn("a11y_drive_paused = false;", menu)
         self.assertIn("a11y_obstacle_override = false;", menu)
+        self.assertIn('menu.add( _( "Gesture guide" ) )', menu)
+        self.assertGreater(menu.index('menu.add( _( "Gesture guide" ) )'),
+                           menu.index("a11y_manual_drive = !a11y_manual_drive;"))
+        self.assertIn("guide.addentry( index++, true, 0, line );", menu)
 
     def test_manual_mode_spends_one_turn_without_autopilot(self):
         self.assertIn("!seat->vehicle().a11y_manual_drive", ENGINE)
