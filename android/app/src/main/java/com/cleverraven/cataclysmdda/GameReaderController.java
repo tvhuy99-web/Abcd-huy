@@ -2733,6 +2733,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (CataclysmDDA.nativeTravelControl(command)) {
                 SessionDebugLog.event("TRAVEL_CONTROL",
                         "command=" + command + " from_state=" + state);
+                if (command == 3 && autonomousDriveTravelActive()) {
+                    // Cancel in the trip panel has the same meaning as
+                    // switching Drive -> Map. Native releases controls only
+                    // after the actual car has finished braking.
+                    autonomousDriveCancelRequested = true;
+                    vehicleMode = false;
+                    combatMode = false;
+                    clearPendingWorldDirection();
+                    root.cancelGesture();
+                }
                 feedback(activity.getString(R.string.a11yTravelRequestAccepted));
             } else {
                 feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
