@@ -7,8 +7,8 @@ permissions:
   contents: write
 
 concurrency:
-  group: accessibility-production-apk-${{ github.ref }}
-  # Keep only the latest deliberately requested production release.
+  # Shares its single build slot with the automatically built test Release.
+  group: android-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -87,7 +87,7 @@ jobs:
           version_code=$((2200000 + ${{ github.run_number }}))
           printf 'versionCode=%s\nversionName=release-%s\n' "$version_code" "$revision" > ../build-evidence/version.txt
           bash ./gradlew --no-daemon --console=plain \
-            -Pj=3 -Pabi_arm_32=false -Pabi_arm_64=true \
+            --max-workers=4 -Pj=4 -Pabi_arm_32=false -Pabi_arm_64=true \
             "-Poverride_versionCode=$version_code" \
             "-Paccessibility_apk_version=release-$revision" \
             assembleAccessibilityRelease 2>&1 | tee ../build-evidence/gradle.log

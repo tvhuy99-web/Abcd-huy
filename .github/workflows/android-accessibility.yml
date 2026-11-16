@@ -1,12 +1,13 @@
 name: Android accessibility baseline and candidate
 
 on:
-  # Automatically build master, integration branches and PRs targeting master
-  # into reproducibly signed ARM64 APKs. Future pushes use the same
+  # Check PRs and integration branches. The single latest master APK is
+  # built by android-accessibility-release-trial.yml to avoid duplicate
+  # Debug and Release compilations competing for the same runner.
+  # Future builds use the same
   # package name and the same checked-in accessibility testing certificate.
   push:
     branches:
-      - master
       - integration/reader-vietnamese-20261107
       - perf/character-blueprint-cache-20261108
       - perf/reader-swipe-latency-20261109
@@ -41,7 +42,9 @@ permissions:
   contents: read
 
 concurrency:
-  group: android-accessibility-${{ github.ref }}
+  # Shared across Debug, test Release and production APK workflows.
+  # When newer work is queued for this ref, discard the in-flight build.
+  group: android-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -67,6 +70,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 90
     strategy:
+      # Optional baseline and candidate never compile in parallel.
+      max-parallel: 1
       fail-fast: false
       matrix:
         include: ${{ fromJSON(github.event_name == 'workflow_dispatch' && inputs.compare_baseline && '[{"name":"baseline","ref":"8ef359c74cc25e256919558bf7b3340f9b56a80d"},{"name":"candidate","ref":""}]' || '[{"name":"candidate","ref":""}]') }}
@@ -206,7 +211,7 @@ jobs:
             task_signing_args=(-Paccessibility_test_signing=true
                                "-Poverride_versionCode=${version_code}")
           fi
-          bash ./gradlew --no-daemon --console=plain -Pj=3 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
+          bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false "${native_args[@]}" "${task_signing_args[@]}" "$task_build_command" 2>&1 | tee ../build-evidence/gradle.log
           ccache --show-stats --verbose | tee ../build-evidence/ccache.txt
       - name: Verify APK contents and checksums
         env:

@@ -1,13 +1,28 @@
 name: Android Accessibility Release trial (test-signed)
 
 on:
+  # The only automatic Android APK built from master; newest commit wins.
+  push:
+    branches: [master]
+    paths:
+      - 'src/**'
+      - 'android/**'
+      - 'lang/**'
+      - 'data/**'
+      - 'tools/accessibility/**'
+      - 'tools/build_shaders.py'
+      - 'CMakeLists.txt'
+      - '.github/workflows/android-accessibility-release-trial.yml'
   workflow_dispatch:
 
 permissions:
   contents: write
+  actions: write
 
 concurrency:
-  group: a11y-release-trial-${{ github.ref }}
+  # Same group as the Debug and production APK workflows on this branch.
+  # At most one running and one replaceable pending build; cancel old run.
+  group: android-apk-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -19,6 +34,50 @@ jobs:
       - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
         with:
           persist-credentials: false
+      - name: Reject obsolete master source before costly compilation
+        if: github.ref == 'refs/heads/master'
+        run: |
+          latest="$(git ls-remote origin refs/heads/master | cut -f1)"
+          test -n "$latest"
+          if [[ "$latest" != "$GITHUB_SHA" ]]; then
+            echo "::error::This run is superseded by a newer master commit: $latest"
+            exit 1
+          fi
+          echo "Native compile jobs: 4; Gradle max workers: 4" >> "$GITHUB_STEP_SUMMARY"
+      - name: Stop pre-migration Android builds from older master commits
+        if: github.ref == 'refs/heads/master'
+        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
+        with:
+          github-token: ${{ github.token }}
+          script: |
+            const {owner, repo} = context.repo;
+            const currentRun = Number(context.runId);
+            const androidWorkflows = new Set([
+              'Android accessibility baseline and candidate',
+              'Android Accessibility Release trial (test-signed)',
+              'Android Accessibility Production Signed APK'
+            ]);
+            const alreadyChecked = new Set();
+            for (const status of ['queued', 'in_progress', 'waiting', 'pending']) {
+              const response = await github.rest.actions.listWorkflowRunsForRepo({
+                owner, repo, branch: 'master', status, per_page: 100
+              });
+              for (const old of response.data.workflow_runs || []) {
+                if (old.id >= currentRun || alreadyChecked.has(old.id)
+                    || !androidWorkflows.has(old.name)) continue;
+                alreadyChecked.add(old.id);
+                try {
+                  await github.rest.actions.cancelWorkflowRun({
+                    owner, repo, run_id: old.id
+                  });
+                  core.info('Cancelled obsolete Android build #' + old.id);
+                } catch (error) {
+                  if (error.status !== 404 && error.status !== 409)
+                    core.warning('Could not cancel build #' + old.id +
+                                 ': ' + error.message);
+                }
+              }
+            }
       - uses: actions/setup-java@c1e323688fd81a25caa38c78aa6df2d33d3e20d9 # v4
         with:
           distribution: temurin
@@ -35,6 +94,7 @@ jobs:
           test -s data/shaders/grayscale.frag.spv
       - name: Verify onboard movement and vehicle control contracts
         run: |
+          python3 -m unittest discover -s tools/accessibility -p 'test_android_build_concurrency.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_vehicle_driving_mode.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_hub_vehicles.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_world_gestures.py' -v
@@ -80,7 +140,7 @@ jobs:
           version_code=$((1100000 + ${{ github.run_number }}))
           printf 'versionCode=%s\nversionName=release-test-%s\n' "$version_code" "$revision" > ../build-evidence/version.txt
           bash ./gradlew --no-daemon --console=plain \
-            -Pj=3 -Pabi_arm_32=false -Pabi_arm_64=true \
+            --max-workers=4 -Pj=4 -Pabi_arm_32=false -Pabi_arm_64=true \
             -Paccessibility_release_test_signing=true \
             "-Poverride_versionCode=$version_code" \
             "-Paccessibility_apk_version=release-test-$revision" \
@@ -149,6 +209,14 @@ jobs:
             cat build-evidence/SHA256SUMS
             echo 'Artifact: `android-arm64-accessibility-release-test`'
           } >> "$GITHUB_STEP_SUMMARY"
+      - name: Recheck master is still latest before publishing APK
+        if: github.ref == 'refs/heads/master'
+        run: |
+          latest="$(git ls-remote origin refs/heads/master | cut -f1)"
+          test -n "$latest" && test "$latest" = "$GITHUB_SHA" || {
+            echo "::error::Discarding obsolete APK. Master is now $latest"
+            exit 1
+          }
       - name: Publish Android Accessibility Release APK on GitHub
         if: success()
         env:
@@ -166,8 +234,14 @@ jobs:
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         if: always()
         with:
+          name: android-arm64-release-test-build-diagnostics
+          retention-days: 14
+          path: build-evidence/
+      # Publish an actual installable APK only if THIS latest SHA compiled,
+      # passed signing/content verification and was not superseded.
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        if: success()
+        with:
           name: android-arm64-accessibility-release-test
           retention-days: 14
-          path: |
-            build-evidence/
-            android/app/build/outputs/apk/accessibility/release/*.apk
+          path: android/app/build/outputs/apk/accessibility/release/*.apk
