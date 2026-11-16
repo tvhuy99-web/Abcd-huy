@@ -5975,3 +5975,59 @@ msgstr "Phía trước: %1$s, %2$d ô."
 #, c-format
 msgid "Obstacle behind: %1$s, %2$d tiles."
 msgstr "Phía sau: %1$s, %2$d ô."
+
+# Reader driving mode transitions and concise vehicle feedback.
+msgid "Take local vehicle controls"
+msgstr "Nhận quyền lái xe."
+
+msgid "Stop and release local vehicle controls"
+msgstr "Dừng xe rồi buông quyền lái."
+
+msgid "Take vehicle controls"
+msgstr "Nhận quyền điều khiển xe"
+
+msgid "Stop and release controls"
+msgstr "Dừng xe và buông vô-lăng"
+
+msgid "Scan 16 tiles ahead of the vehicle"
+msgstr "Quét 16 ô phía trước xe"
+
+msgid "Scan 16 tiles behind the vehicle"
+msgstr "Quét 16 ô phía sau xe"
+
+msgid "Scan 16 tiles to the vehicle's left"
+msgstr "Quét 16 ô bên trái xe"
+
+msgid "Scan 16 tiles to the vehicle's right"
+msgstr "Quét 16 ô bên phải xe"
+
+msgid "Sit at the driver's controls before driving."
+msgstr "Hãy ngồi vào vị trí điều khiển xe trước khi lái."
+
+msgid "Vehicle controls unavailable."
+msgstr "Không thể điều khiển xe từ vị trí này."
+
+msgid "Braking to a stop before leaving driving mode."
+msgstr "Đang phanh xe trước khi rời chế độ lái."
+
+msgid "Vehicle is stationary. Its heading will change when it moves."
+msgstr "Xe đang đứng yên. Hướng đầu xe sẽ thay đổi khi xe di chuyển."
+
+msgid "Vehicle condition summary"
+msgstr "Tình trạng xe, tóm tắt"
+
+msgid "You let go of the controls."
+msgstr "Đã buông vô-lăng."
+
+msgid "You can't turn the vehicle while on a ramp."
+msgstr "Không thể quay xe khi đang ở trên dốc chuyển tầng."
+
+msgid "The steering is completely broken!"
+msgstr "Hệ thống lái đã hỏng hoàn toàn."
+
+msgid "You cannot steer an animal-drawn vehicle with no animal harnessed."
+msgstr "Không thể điều khiển xe kéo khi chưa buộc con vật kéo vào xe."
+
+msgid "This vehicle has no steering system installed, you can't turn it."
+msgstr "Xe không có hệ thống lái nên không thể quay đầu."
+
