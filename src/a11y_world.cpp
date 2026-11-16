@@ -1785,54 +1785,76 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
 
 void announce_linear_scan( const point &delta )
 {
-    // A vehicle-facing scan may run along a diagonal, too. Every scan
-    // still reads exactly sixteen native map tiles without moving.
+    // Map and Drive share this read-only scan. Drive supplies a direction
+    // relative to the physical vehicle heading; Map supplies a cardinal one.
+    // A diagonal ray also visits exactly one tile at each distance.
     if( ( delta.x == 0 && delta.y == 0 ) ||
         std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1 ) {
         return;
     }
+    constexpr int scan_range = 30;
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
+    // Do not repeat the vehicle the character is sitting in for every
+    // occupied tile of its own body. Other vehicles still count.
+    const optional_vpart_position seated = get_avatar().in_vehicle ?
+                                            here.veh_at( origin ) : optional_vpart_position();
     std::string spoken;
-    for( int distance = 1; distance <= 16; ++distance ) {
+    for( int distance = 1; distance <= scan_range; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
-        std::string detail;
         if( !here.inbounds( pos ) ) {
-            detail = _( "Outside loaded map" );
-        } else {
-            const unrestricted_tile tile = scan_unrestricted_tile( pos );
-            detail = tile.terrain;
-            if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
-                detail += ". " + tile.furniture;
+            // The loaded map is finite: never invent contents beyond it.
+            break;
+        }
+        const unrestricted_tile tile = scan_unrestricted_tile( pos );
+        std::vector<std::string> details;
+        // Hazards and blocked passages are useful. Ordinary terrain such
+        // as road, dirt and floor is deliberately never spoken by itself.
+        for( const std::string &trap : tile.traps ) {
+            details.push_back( string_format( _( "Trap: %s" ), trap ) );
+        }
+        for( const std::string &field : tile.fields ) {
+            details.push_back( field );
+        }
+        for( const std::string &creature : tile.creatures ) {
+            details.push_back( creature );
+        }
+        if( !tile.furniture.empty() ) {
+            details.push_back( tile.furniture );
+        } else if( tile.impassable ||
+                   here.has_flag( ter_furn_flag::TFLAG_GOES_UP, pos ) ||
+                   here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, pos ) ||
+                   here.has_flag( ter_furn_flag::TFLAG_DOOR, pos ) ) {
+            // Read the actual obstacle, stair or door name, not "floor".
+            details.push_back( tile.terrain );
+        }
+        const optional_vpart_position found_vehicle = here.veh_at( pos );
+        if( found_vehicle &&
+            ( !seated || &found_vehicle->vehicle() != &seated->vehicle() ) ) {
+            // The verbose drivability diagnosis remains available in the
+            // detailed tile view; a scan only needs the vehicle name.
+            details.push_back( remove_color_tags( found_vehicle->vehicle().name ) );
+        }
+        for( const std::string &name : tile.items ) {
+            details.push_back( name );
+        }
+        if( details.empty() ) {
+            continue;
+        }
+        std::string detail;
+        for( const std::string &name : details ) {
+            if( !detail.empty() ) {
+                detail += ", ";
             }
-            if( tile.impassable ) {
-                detail += ". " + std::string( _( "Impassable" ) );
-            }
-            for( const std::string &field : tile.fields ) {
-                detail += ". " + field;
-            }
-            for( const std::string &hazard : tile.traps ) {
-                detail += ". " + string_format( _( "Trap: %s" ), hazard );
-            }
-            for( const std::string &creature : tile.creatures ) {
-                detail += ". " + creature;
-            }
-            if( !tile.vehicle.empty() ) {
-                detail += ". " + string_format( _( "Vehicle: %s" ), tile.vehicle );
-            }
-            if( !tile.items.empty() ) {
-                // Distinguish the furniture from items on the same tile.
-                // Never assert that items are inside an actual container.
-                detail += ". " + std::string( _( "Items:" ) );
-                for( const std::string &name : tile.items ) {
-                    detail += " " + name + ".";
-                }
-            }
+            detail += name;
         }
         if( !spoken.empty() ) {
             spoken += " ";
         }
         spoken += string_format( _( "Tile %1$d: %2$s." ), distance, detail );
+    }
+    if( spoken.empty() ) {
+        spoken = _( "No noteworthy information within 30 tiles." );
     }
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
 }
