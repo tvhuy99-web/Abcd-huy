@@ -500,6 +500,13 @@ input_context game::get_player_input( std::string &action )
     // ignition before opening the next reader/world input frame.
     if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
         ui::omap::update_accessible_drive_to_place();
+        // Taking controls of an already-running car is instantaneous.
+        // Finish that second stage now, before waiting for user input,
+        // rather than strand the trip until another unrelated action.
+        if( ui::omap::accessible_drive_to_place_pending() &&
+            !u.activity && !u.has_destination() ) {
+            ui::omap::update_accessible_drive_to_place();
+        }
     }
 
     // Complete a pending mode exit only after the car has actually stopped.
