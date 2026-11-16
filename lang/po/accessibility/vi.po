@@ -6037,3 +6037,69 @@ msgstr "Chuyển sang chế độ lái xe để điều khiển."
 # Concise 30-tile directional scan, shared by Map and Drive.
 msgid "No noteworthy information within 30 tiles."
 msgstr "Không phát hiện gì đáng chú ý trong phạm vi 30 ô."
+
+msgid "Gesture guide"
+msgstr "Hướng dẫn cử chỉ"
+
+msgid "Gesture guide: driving"
+msgstr "Hướng dẫn cử chỉ lái xe"
+
+msgid "Swipe one finger up: Drive forward."
+msgstr "Vuốt một ngón lên: Chạy tiến."
+
+msgid "Swipe one finger down: Drive reverse."
+msgstr "Vuốt một ngón xuống: Chạy lùi."
+
+msgid "Swipe one finger left: Steer left."
+msgstr "Vuốt một ngón sang trái: Đánh lái trái."
+
+msgid "Swipe one finger right: Steer right."
+msgstr "Vuốt một ngón sang phải: Đánh lái phải."
+
+msgid "Swipe one finger up then down: Increase target speed."
+msgstr "Vuốt một ngón lên rồi xuống: Tăng tốc độ mục tiêu."
+
+msgid "Swipe one finger down then up: Decrease target speed."
+msgstr "Vuốt một ngón xuống rồi lên: Giảm tốc độ mục tiêu."
+
+msgid "Swipe one finger left then right: Adjust heading left."
+msgstr "Vuốt một ngón trái rồi phải: Chỉnh hướng lái trái."
+
+msgid "Swipe one finger right then left: Adjust heading right."
+msgstr "Vuốt một ngón phải rồi trái: Chỉnh hướng lái phải."
+
+msgid "Swipe one finger up then right: Start or stop engine."
+msgstr "Vuốt một ngón lên rồi phải: Khởi động hoặc tắt động cơ."
+
+msgid "Swipe one finger down then left: Read vehicle speed."
+msgstr "Vuốt một ngón xuống rồi trái: Đọc tốc độ xe."
+
+msgid "Swipe one finger down then right: Read vehicle condition."
+msgstr "Vuốt một ngón xuống rồi phải: Đọc tình trạng xe."
+
+msgid "Swipe one finger up then left: Brake."
+msgstr "Vuốt một ngón lên rồi trái: Phanh xe."
+
+msgid "Swipe one finger right then down: Honk horn."
+msgstr "Vuốt một ngón phải rồi xuống: Bóp còi."
+
+msgid "Swipe two fingers up: Scan 30 tiles ahead of the vehicle."
+msgstr "Vuốt hai ngón lên: Quét 30 ô phía trước xe."
+
+msgid "Swipe two fingers down: Scan 30 tiles behind the vehicle."
+msgstr "Vuốt hai ngón xuống: Quét 30 ô phía sau xe."
+
+msgid "Swipe two fingers left: Scan 30 tiles to the vehicle's left."
+msgstr "Vuốt hai ngón trái: Quét 30 ô bên trái xe."
+
+msgid "Swipe two fingers right: Scan 30 tiles to the vehicle's right."
+msgstr "Vuốt hai ngón phải: Quét 30 ô bên phải xe."
+
+msgid "Triple tap three fingers: Change Map, Combat and Drive mode."
+msgstr "Chạm ba lần ba ngón: Chuyển chế độ bản đồ, chiến đấu và lái xe."
+
+msgid "Long press one finger: Open vehicle controls."
+msgstr "Nhấn giữ một ngón: Mở menu điều khiển xe."
+
+msgid "Double tap two fingers: Read recent messages."
+msgstr "Chạm hai lần hai ngón: Đọc thông báo gần đây."
