@@ -229,7 +229,8 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
     const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
     // Keep simulating residual momentum during a pause or handbrake.
     return seat && seat->vehicle().a11y_continuous_drive &&
-           !seat->vehicle().a11y_manual_drive &&
+           ( !seat->vehicle().a11y_manual_drive ||
+             seat->vehicle().a11y_release_controls_pending ) &&
            ( !seat->vehicle().a11y_drive_paused ||
              ( seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0 ) ) &&
            !seat->vehicle().is_rotorcraft( here ) &&
@@ -494,6 +495,26 @@ input_context game::get_player_input( std::string &action )
     close_blocking_activity_reader();
     map &here = get_map();
 
+    // Complete a pending mode exit only after the car has actually stopped.
+    // This runs on the native input thread before publishing the next frame.
+    if( u.in_vehicle ) {
+        const optional_vpart_position seat = here.veh_at( u.pos_bub( here ) );
+        if( seat && seat->vehicle().a11y_release_controls_pending ) {
+            vehicle &car = seat->vehicle();
+            if( car.velocity == 0 || !u.controlling_vehicle ||
+                !car.player_in_control( here, u ) ) {
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                car.a11y_continuous_drive = false;
+                car.a11y_resume_cruise_velocity = 0;
+                if( u.controlling_vehicle && car.player_in_control( here, u ) ) {
+                    u.controlling_vehicle = false;
+                    add_msg( m_info, _( "You let go of the controls." ) );
+                }
+            }
+        }
+    }
+
     const tripoint_bub_ms pos = u.pos_bub( here );
 
     input_context ctxt;
@@ -536,6 +557,10 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Select previous weapon" ) );
     ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
                           to_translation( "Reload current weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_BEGIN",
+                          to_translation( "Take local vehicle controls" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_RELEASE",
+                          to_translation( "Stop and release local vehicle controls" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_FORWARD",
                           to_translation( "Drive forward" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_REVERSE",
