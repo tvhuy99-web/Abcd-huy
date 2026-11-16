@@ -1125,6 +1125,9 @@ class vehicle
         bool a11y_skid_alerted = false; // NOLINT(cata-serialize)
         // Session-only pause state, never restored as a saved throttle.
         bool a11y_drive_paused = false; // NOLINT(cata-serialize)
+        // Leaving Drive mode brakes to zero before releasing native controls.
+        // Never save this transient UI transition across game sessions.
+        bool a11y_release_controls_pending = false; // NOLINT(cata-serialize)
         int a11y_resume_cruise_velocity = 0; // NOLINT(cata-serialize)
         void autopilot_patrol( map *here );
         units::angle get_angle_from_targ( const tripoint_abs_ms &targ ) const;
