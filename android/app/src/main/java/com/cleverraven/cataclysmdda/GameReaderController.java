@@ -2451,7 +2451,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
                 vehicleMode, combatMode, comprehensiveMenu,
                 travelContextDrawerState != 0 || travelState() != 0,
-                gestureBindings);
+                editor != null, debugReport != null, gestureBindings);
         if (gestureGuideRows.isEmpty()) { return; }
         gestureGuideIndex = 0;
         gestureGuideOpen = true;
