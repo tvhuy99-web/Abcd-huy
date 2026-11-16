@@ -49,7 +49,7 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 - Chạm hai lần bằng một ngón: kích hoạt/xác nhận lựa chọn, khi có hàng hay nút phù hợp.
 - Chạm ba lần bằng một ngón: mở Menu tổng hợp.
 - Nhấn giữ một ngón: mở hành động theo ngữ cảnh.
-- Vuốt hai ngón lên/xuống/trái/phải: đọc từng ô trên đường thẳng 16 ô theo hướng đó. Đây là **quét riêng cho trợ năng, có thể đọc qua tường**.
+- Vuốt hai ngón lên/xuống/trái/phải: quét **tối đa 30 ô** theo hướng Bắc/Nam/Tây/Đông. Chỉ đọc ô có vật phẩm, sinh vật, phương tiện, bẫy, chướng ngại vật, trường nguy hiểm, đồ nội thất hoặc lối đi đặc biệt; bỏ qua sàn nhà, đường và đất trống. Đây là **quét riêng cho trợ năng, có thể đọc qua tường**.
 - Chạm một lần bằng hai ngón: đọc chi tiết lựa chọn hiện tại. Nếu đang ở chế độ chiến đấu, thay vào đó đọc thông tin kẻ địch phù hợp.
 - Chạm hai lần bằng hai ngón: đọc thông báo gần đây ở thế giới.
 - Chạm ba lần bằng hai ngón: mở Menu tổng hợp ở thế giới.
@@ -60,7 +60,7 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 **Khi lái xe (ngồi tại vị trí điều khiển):**
 
 - Chuyển sang **Lái xe** tự nhận quyền lái và sử dụng cơ chế khởi động động cơ gốc nếu động cơ chưa chạy. Ghế hành khách không được tự nhận quyền lái.
-- Vuốt **hai ngón lên, xuống, trái, phải**: quét 16 ô phía **trước, sau, trái, phải theo hướng thân xe hiện tại**, kể cả khi xe đang hướng chéo. Trong chế độ bản đồ, quét hai ngón vẫn giữ Bắc, Nam, Tây, Đông cố định.
+- Vuốt **hai ngón lên, xuống, trái, phải**: quét **tối đa 30 ô** phía **trước, sau, trái, phải theo hướng thân xe hiện tại**, kể cả khi xe đang hướng chéo. Chỉ đọc ô đáng chú ý và khoảng cách, không đọc ô trống. Trong chế độ bản đồ, quét hai ngón vẫn giữ Bắc, Nam, Tây, Đông cố định.
 - Vuốt **một ngón** lên / xuống để chọn tiến / lùi, trái / phải để đánh lái, lên-rồi-xuống / xuống-rồi-lên để tăng / giảm tốc độ mục tiêu.
 - Vuốt **một ngón** trái-rồi-phải / phải-rồi-trái để chỉnh hướng lái trái / phải. Chương trình chỉ đọc hướng thực tế của đầu xe (tám hướng la bàn); nếu phát hiện lỗi lái, sẽ đọc nguyên nhân. Xe đứng yên có thể đã đổi góc đánh lái nhưng thân xe chưa xoay.
 - Vuốt **một ngón** xuống-rồi-trái: đọc tốc độ. Xuống-rồi-phải: đọc nhanh tình trạng động cơ, nhiên liệu và hư hỏng đáng chú ý. Lên-rồi-trái: phanh khẩn cấp. Phải-rồi-xuống: bóp còi. Lên-rồi-phải: bật/tắt động cơ.
@@ -105,7 +105,7 @@ Có hai cơ chế khác nhau, dễ nhầm:
 
 **Quan sát thông thường:** đọc thứ nhân vật nhìn thấy, đã ghi nhớ, nghe hoặc cảm nhận; ô chưa biết thì báo chưa biết. Việc quan sát tầng khác dùng dữ liệu trí nhớ, không tự phơi bày bản đồ sống.
 
-**Quét trợ năng không giới hạn:** vuốt hai ngón một hướng đọc lần lượt các ô 1 đến 16. Danh sách xung quanh quét khu vực 20 ô về mỗi phía trên cả trục ngang và dọc, tức tối đa **41 × 41 vị trí** trong bản đồ đang nạp. Các lệnh này hiện cố ý có thể đọc địa hình, vật phẩm, sinh vật và bẫy **sau tường**. Đây là hành vi mã nguồn hiện tại, không phải chứng nhận cân bằng gameplay.
+**Quét trợ năng không giới hạn tầm nhìn:** vuốt hai ngón một hướng kiểm tra lần lượt **tối đa 30 ô** trong bản đồ đang nạp nhưng **chỉ đọc những ô đáng chú ý**, kèm vị trí chính xác (ví dụ: “Ô 2, cốc nước”). Ô chỉ có sàn nhà, đường nhựa hoặc đất trống bị bỏ qua. Nếu không có thông tin đáng chú ý, hệ thống thông báo: **“Không phát hiện gì đáng chú ý trong phạm vi 30 ô.”** Danh sách xung quanh là cơ chế khác, quét khu vực 20 ô về mỗi phía trên cả trục ngang và dọc, tức tối đa **41 × 41 vị trí**. Các lệnh quét trợ năng này hiện cố ý có thể đọc vật phẩm, sinh vật và bẫy **sau tường**. Chỉ những ô thuộc bản đồ đã nạp mới được kiểm tra; đây không phải chứng nhận cân bằng gameplay.
 
 Mở **Menu tổng hợp → Quan sát và bản đồ → Danh sách xung quanh**. Danh sách đọc tên đối tượng, hướng và khoảng cách; các hàng được sắp gần trước, xa sau. Danh sách không phát mọi ô đất/cỏ/sàn trống, và có trang tiếp theo nếu quá 80 hàng.
 
