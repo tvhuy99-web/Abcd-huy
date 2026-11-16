@@ -46,6 +46,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         default void openContextActions() { }
         /** Read-only gesture help always uses simple focus navigation. */
         default boolean gestureGuideActive() { return false; }
+        /** Drive mode continues during the native Explore Places activity. */
+        default boolean autonomousDriveTravelActive() { return false; }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -445,12 +447,14 @@ public final class ReaderGestureSurface extends LinearLayout {
         // screen, not only in the live world. Only the triple tap (the
         // action hub) stays live-world-only.
         if (fingers == 2) {
-            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()) {
+            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()
+                    || listener.autonomousDriveTravelActive()) {
                 listener.twoFingerTap(count);
             }
             return;
         }
-        if (!listener.directWorldGesturesEnabled()) { return; }
+        if (!listener.directWorldGesturesEnabled()
+                && !listener.autonomousDriveTravelActive()) { return; }
         if (fingers == 3 && count == 1) {
             listener.threeFingerTap();
             return;
@@ -619,6 +623,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())) {
                 boolean left = TwoFingerBackGesture.matchesLeft(event, backPointerIds,
@@ -645,6 +650,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())
                     && TwoFingerBackGesture.matchesUp(event, backPointerIds,
@@ -665,6 +671,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())
                     && TwoFingerBackGesture.matches(event, backPointerIds,
@@ -756,7 +763,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             recordOneFinger(event.getX(), event.getY());
             if (event.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
                 cancelGesture();
-            } else if (listener.directWorldGesturesEnabled()) {
+            } else if (listener.directWorldGesturesEnabled()
+                    || listener.autonomousDriveTravelActive()) {
                 String gesture = identifyOneFingerSwipe(oneFingerPath, listener.swipeDistancePx());
                 if (gesture != null) {
                     SessionDebugLog.event("GESTURE", "one_finger=" + gesture
