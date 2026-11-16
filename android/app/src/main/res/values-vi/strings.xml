@@ -267,4 +267,12 @@
     <string name="a11yGuideCoordinates">Đọc tọa độ</string>
     <string name="a11yGuideCombatEnemy">Đọc thông tin kẻ địch</string>
     <string name="a11yGuideDrivePause">Tạm dừng hoặc tiếp tục lái</string>
+    <string name="a11yGuideHubItemOptions">Mở tùy chọn của mục đang chọn</string>
+    <string name="a11yGuidePreviousCraftTab">Đổi sang nhóm chế tạo trước</string>
+    <string name="a11yGuideNextCraftTab">Đổi sang nhóm chế tạo tiếp</string>
+    <string name="a11yGuideAdjustCalendar">Thay đổi ngày hoặc giờ đang chọn</string>
+    <string name="a11yGuideChangeCalendarField">Chuyển giữa ngày và giờ</string>
+    <string name="a11yGuideCalendarConfirm">Xác nhận ngày và giờ</string>
+    <string name="a11yGuidePlayMinigame">Thực hiện nước đi đang chọn</string>
+    <string name="a11yGuideAdjustField">Tăng hoặc giảm giá trị đang chọn</string>
 </resources>
