@@ -262,4 +262,9 @@
     <string name="a11yGuidePlayerInfo">Read player information</string>
     <string name="a11yGuideHelpReadOnly">Double tap only repeats the instruction; it never performs an action</string>
     <string name="a11yGuideTravelStatus">Read travel status</string>
+    <string name="a11yGuideTripleTap">Triple tap one finger</string>
+    <string name="a11yGuideOpenHub">Open comprehensive game menu</string>
+    <string name="a11yGuideCoordinates">Read map coordinates</string>
+    <string name="a11yGuideCombatEnemy">Read visible enemies</string>
+    <string name="a11yGuideDrivePause">Pause or resume driving</string>
 </resources>
