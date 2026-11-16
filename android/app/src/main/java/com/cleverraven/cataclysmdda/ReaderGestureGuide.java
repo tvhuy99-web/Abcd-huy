@@ -51,6 +51,49 @@ final class ReaderGestureGuide {
         add(rows, c, R.string.a11yGuideOneVertical, R.string.a11yGuideAdjustField);
     }
 
+    /** Read the live shortcut map, not an obsolete table of default keys.
+     * Combat disables old three-finger movement, but its other saved
+     * shortcuts still reach executeShortcutTarget in the controller. */
+    private static void appendLiveShortcuts(List<String> rows, Context context,
+                                           ReaderSnapshot snapshot,
+                                           ReaderGestureBindings bindings,
+                                           boolean combat) {
+        if (snapshot == null || bindings == null) { return; }
+        for (String id : ReaderGestureBindings.CUSTOM_IDS) {
+            if (combat && id.startsWith("swipe_3_")) { continue; }
+            final String target = bindings.targetFor(id);
+            if (target == null) { continue; }
+            String action = "";
+            if (target.startsWith("action:")) {
+                ReaderSnapshot.Node node = snapshot.find(target.substring(7));
+                if (node == null || !node.enabled) { continue; }
+                action = node.label;
+            } else if (target.startsWith("hub:group:")) {
+                try {
+                    int group = Integer.parseInt(target.substring(10));
+                    if (group > 0 && group < GameActionHub.TITLES.length) {
+                        action = context.getString(GameActionHub.TITLES[group]);
+                    }
+                } catch (NumberFormatException ignored) { continue; }
+            } else if ("hub:favorites".equals(target)) {
+                action = context.getString(R.string.a11yHubFavorites);
+            } else if ("hub:search".equals(target)) {
+                action = context.getString(R.string.a11yHubSearch);
+            } else if ("hub:all".equals(target)) {
+                action = context.getString(R.string.a11yHubAllCommands);
+            } else if ("hub:directions".equals(target)) {
+                action = context.getString(R.string.a11yHubChooseDirection);
+            }
+            if (!action.isEmpty()) {
+                int index = ReaderGestureBindings.indexOf(id);
+                if (index >= 0) {
+                    rows.add(context.getString(ReaderGestureBindings.LABELS[index])
+                            + ": " + action);
+                }
+            }
+        }
+    }
+
     private static void addSwipe(List<String> rows, Context c, String id, int meaning) {
         int index = ReaderGestureBindings.indexOf(id);
         if (index >= 0) {
@@ -154,41 +197,6 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yBindTap32, R.string.a11yGuidePlayerInfo);
             add(rows, context, R.string.a11yBindTap33, R.string.a11yGuideChangeMode);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
-            // Only default world gestures use user-assignable shortcuts.
-            if (snapshot != null && bindings != null) {
-                for (String id : ReaderGestureBindings.CUSTOM_IDS) {
-                    final String target = bindings.targetFor(id);
-                    if (target == null) { continue; }
-                    String action = "";
-                    if (target.startsWith("action:")) {
-                        ReaderSnapshot.Node node = snapshot.find(target.substring(7));
-                        if (node == null || !node.enabled) { continue; }
-                        action = node.label;
-                    } else if (target.startsWith("hub:group:")) {
-                        try {
-                            int group = Integer.parseInt(target.substring(10));
-                            if (group > 0 && group < GameActionHub.TITLES.length) {
-                                action = context.getString(GameActionHub.TITLES[group]);
-                            }
-                        } catch (NumberFormatException ignored) { continue; }
-                    } else if ("hub:favorites".equals(target)) {
-                        action = context.getString(R.string.a11yHubFavorites);
-                    } else if ("hub:search".equals(target)) {
-                        action = context.getString(R.string.a11yHubSearch);
-                    } else if ("hub:all".equals(target)) {
-                        action = context.getString(R.string.a11yHubAllCommands);
-                    } else if ("hub:directions".equals(target)) {
-                        action = context.getString(R.string.a11yHubChooseDirection);
-                    }
-                    if (!action.isEmpty()) {
-                        int index = ReaderGestureBindings.indexOf(id);
-                        if (index >= 0) {
-                            rows.add(context.getString(ReaderGestureBindings.LABELS[index])
-                                    + ": " + action);
-                        }
-                    }
-                }
-            }
         } else if ("inventory".equals(category) || "pickup".equals(category)
                 || "pickup-here".equals(category) || "advinv".equals(category)
                 || "item_action_menu".equals(category)
@@ -358,6 +366,11 @@ final class ReaderGestureGuide {
         if (!liveWorld && !inHub && !traveling && !editing && !debugging
                 && !"character-creator-calendar".equals(category)) {
             describeFocusedField(rows, context, snapshot);
+        }
+        if (liveWorld && !driving) {
+            // Vehicle mode consumes all unknown swipes for safety, while
+            // Map and Combat may execute live saved actions.
+            appendLiveShortcuts(rows, context, snapshot, bindings, combat);
         }
         return rows;
     }
