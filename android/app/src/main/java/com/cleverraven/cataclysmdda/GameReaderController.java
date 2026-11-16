@@ -160,6 +160,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
     private boolean vehicleMode;
+    // ACT_AUTODRIVE uses the existing Drive interface. Native pathfinding
+    // owns movement while the four straight one-finger swipes are disabled.
+    private boolean autonomousDriveTrip;
+    private boolean autonomousDriveCancelRequested;
     // Map gestures stay locked until the native driver has actually let go.
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
@@ -542,6 +546,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     lastRecentMessages = "";
                     commandPaletteOpen = false;
                     gestureGuideOpen = false;
+                    autonomousDriveTrip = false;
+                    autonomousDriveCancelRequested = false;
                     travelContextDrawerState = 0;
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
@@ -744,6 +750,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
+                final boolean nativeAutodrive = "activity".equals(next.category)
+                        && next.find("activity:autodrive") != null;
+                if (nativeAutodrive && !autonomousDriveCancelRequested) {
+                    autonomousDriveTrip = true;
+                    vehicleMode = true;
+                    combatMode = false;
+                    vehicleReleasePending = false;
+                } else if (!nativeAutodrive && autonomousDriveTrip
+                        && !"activity".equals(next.category)) {
+                    autonomousDriveTrip = false;
+                    autonomousDriveCancelRequested = false;
+                }
                 // A vehicle may disappear or the character may dismount between
                 // snapshots. Never leave a stale driving mode armed on foot.
                 if ("DEFAULTMODE".equals(next.category)
