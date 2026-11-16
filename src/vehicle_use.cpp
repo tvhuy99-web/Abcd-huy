@@ -3017,7 +3017,8 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
         }
     }
 
-    // This accessibility-only choice MUST be the final vehicle action.
+    // The manual-driving switch remains after all gameplay actions;
+    // the read-only gesture guide follows as the final menu entry.
     // Switching modes never accelerates, brakes, starts the engine or
     // advances game time on its own.
     if( a11y::enabled() && player_inside && player_is_driving && !remote &&
