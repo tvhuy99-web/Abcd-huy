@@ -1798,6 +1798,8 @@ void announce_linear_scan( const point &delta )
     // Do not repeat the vehicle the character is sitting in for every
     // occupied tile of its own body. Other vehicles still count.
     const optional_vpart_position seated = here.veh_at( origin );
+    // A large car occupies several map tiles, but is one noteworthy object.
+    std::set<const vehicle *> announced_vehicles;
     std::string spoken;
     for( int distance = 1; distance <= scan_range; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
@@ -1830,7 +1832,8 @@ void announce_linear_scan( const point &delta )
         const optional_vpart_position found_vehicle = here.veh_at( pos );
         if( found_vehicle &&
             ( !get_avatar().in_vehicle || !seated ||
-              &found_vehicle->vehicle() != &seated->vehicle() ) ) {
+              &found_vehicle->vehicle() != &seated->vehicle() ) &&
+            announced_vehicles.insert( &found_vehicle->vehicle() ).second ) {
             // The verbose drivability diagnosis remains available in the
             // detailed tile view; a scan only needs the vehicle name.
             details.push_back( remove_color_tags( found_vehicle->vehicle().name ) );
