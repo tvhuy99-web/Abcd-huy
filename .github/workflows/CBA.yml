@@ -7,7 +7,9 @@ on:
   workflow_dispatch:
 
 # Mixing in event_name so that a master push and a workflow dispatch can run at the same time.
-concurrency: clang_build_analyzer-${{ github.event_name }}
+concurrency:
+  group: ci-clang-build-analyzer-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   build:
@@ -26,7 +28,7 @@ jobs:
         mkdir build
         cd build
         cmake -DCMAKE_BUILD_TYPE=RELEASE ..
-        cmake --build . -- -j3
+        cmake --build . -- -j4
         echo "${PWD}" >> $GITHUB_PATH
     - uses: ammaraskar/gcc-problem-matcher@0f9c86f9e693db67dacf53986e1674de5f2e5f28 # master
     - name: make

@@ -1,105 +1,78 @@
-name: Reset queued Actions and launch one Android test Release
+name: Clean obsolete CI runs (manual, preserve latest per workflow)
 
+# Used only to clear already-queued legacy runs. Ordinary CI automatically
+# cancels superseded runs via workflow-specific concurrency groups.
 on:
-  push:
-    branches: [master]
-    paths:
-      - '.github/workflows/actions-queue-reset.yml'
   workflow_dispatch:
 
-# Cancelling workflow runs is not supported by the chat GitHub connector.
-# This repository-owned workflow uses its short-lived GITHUB_TOKEN instead.
 permissions:
   actions: write
   contents: read
 
 concurrency:
-  group: reset-actions-and-build-one-apk
+  group: housekeeping-obsolete-ci
   cancel-in-progress: false
 
 jobs:
-  drain-and-dispatch:
-    name: Cancel obsolete runs; dispatch one latest ARM64 APK
+  cleanup:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     steps:
-      - name: Cancel repository queue and request exactly one release trial
+      - name: Keep only the latest active CI run per workflow and branch
         uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7
         with:
           github-token: ${{ github.token }}
           script: |
             const {owner, repo} = context.repo;
-            const selfRunId = Number(context.runId);
-            const states = ['queued', 'in_progress', 'waiting', 'requested', 'pending'];
-            const sleep = ms => new Promise(resolve => setTimeout(resolve, ms));
-            const attempted = new Set();
-            let requestedCancellations = 0;
-            let failures = 0;
-            async function activeRuns() {
-              const unique = new Map();
-              for (const status of states) {
-                for (let page = 1; page <= 15; page++) {
-                  const response = await github.rest.actions.listWorkflowRunsForRepo({
-                    owner, repo, status, per_page: 100, page
-                  });
-                  const runs = response.data.workflow_runs || [];
-                  for (const run of runs) {
-                    if (run.id !== selfRunId) {
-                      unique.set(run.id, run);
-                    }
+            const self = Number(context.runId);
+            const statusNames = ['queued', 'in_progress', 'waiting', 'pending'];
+            const active = new Map();
+            const sleep = ms => new Promise(done => setTimeout(done, ms));
+            for (const status of statusNames) {
+              // Read legacy runs in pages, not just the newest 100. Respect
+              // the budget to avoid GitHub secondary API rate-limit errors.
+              for (let page = 1; page <= 20; page++) {
+                const {data} = await github.rest.actions.listWorkflowRunsForRepo({
+                  owner, repo, status, page, per_page: 100
+                });
+                for (const run of data.workflow_runs) {
+                  if (run.id === self || !['push', 'pull_request'].includes(run.event)) {
+                    continue;
                   }
-                  if (runs.length < 100) break;
+                  const pr = run.pull_requests?.[0]?.number;
+                  const scope = pr ? 'pr-' + pr : 'branch-' +
+                    (run.head_repository?.id || 'repo') + '-' + run.head_branch;
+                  active.set(run.id, {run, key: run.workflow_id + ':' + scope});
+                }
+                if (data.workflow_runs.length < 100) break;
+              }
+            }
+            const latest = new Map();
+            for (const item of active.values()) {
+              const old = latest.get(item.key);
+              if (!old || item.run.id > old.id) latest.set(item.key, item.run);
+            }
+            let cancelled = 0;
+            let errors = 0;
+            for (const item of active.values()) {
+              if (latest.get(item.key)?.id === item.run.id) continue;
+              try {
+                await github.rest.actions.cancelWorkflowRun({
+                  owner, repo, run_id: item.run.id
+                });
+                cancelled++;
+              } catch (e) {
+                if (e.status !== 404 && e.status !== 409) {
+                  errors++;
+                  core.warning('Run ' + item.run.id + ': ' + e.message);
                 }
               }
-              return [...unique.values()];
+              await sleep(160);
             }
-            for (let pass = 1; pass <= 12; pass++) {
-              const active = await activeRuns();
-              const next = active.filter(run => !attempted.has(run.id));
-              core.info("Pass " + pass + ": " + active.length +
-                        " other active runs, " + next.length + " not yet cancelled");
-              if (active.length === 0) break;
-              for (const run of next) {
-                attempted.add(run.id);
-                try {
-                  await github.rest.actions.cancelWorkflowRun({
-                    owner, repo, run_id: run.id
-                  });
-                  requestedCancellations++;
-                } catch (error) {
-                  if (error.status !== 409 && error.status !== 404) {
-                    failures++;
-                    core.warning("Could not cancel " + run.id + ": " +
-                                 (error.message || String(error)));
-                    if (error.status === 401 || error.status === 403) {
-                      throw new Error("actions:write permission required to cancel runs");
-                    }
-                  }
-                }
-                // Avoid GitHub secondary API rate limits.
-                await sleep(250);
-              }
-              await sleep(4000);
-            }
-            const remaining = await activeRuns();
-            if (remaining.length > 0) {
-              core.warning(remaining.length +
-                           " runs have not yet reached a terminal state");
-            }
-            core.info("Cancellation requests accepted: " + requestedCancellations +
-                      "; errors: " + failures + "; remaining: " + remaining.length);
-            // The release-trial workflow is manual-only on master. Dispatch it
-            // AFTER the cleanup, using the current master source revision.
-            await github.rest.actions.createWorkflowDispatch({
-              owner, repo,
-              workflow_id: 'android-accessibility-release-trial.yml',
-              ref: 'master'
-            });
-            core.info("Dispatched one test-signed Accessibility ARM64 Release on master");
-            await core.summary
-              .addHeading('Actions queue reset')
-              .addRaw('Requested cancellation of ' + requestedCancellations +
-                      ' old runs. Remaining active at check: ' + remaining.length)
-              .addBreak()
-              .addRaw('Started one manual Android Accessibility Release trial on master.')
+            core.info('Old CI cancellation requests: ' + cancelled +
+              '. Errors: ' + errors + '. Latest CI runs retained: ' + latest.size);
+            await core.summary.addHeading('Legacy CI queue cleanup')
+              .addRaw('Requested cancellation of ' + cancelled +
+                      ' older CI runs. Preserved ' + latest.size +
+                      ' latest active runs, plus manual releases and maintenance tasks.')
               .write();

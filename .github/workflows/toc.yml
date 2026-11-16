@@ -8,6 +8,11 @@ name: TOC Generator
 permissions:
   contents: read
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-toc-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   generateTOC:
     if: github.repository == 'CleverRaven/Cataclysm-DDA'

@@ -10,10 +10,10 @@ on:
     types: [opened, reopened, synchronize, ready_for_review]
 
 # We only care about the latest revision of a PR, so cancel all previous instances.
-# Allow running master builds to complete to help with ccache refreshes.
+# The newest master commit replaces previous unfinished builds as well.
 concurrency:
   group: general-build-${{ github.event.pull_request.number || github.ref_name }}
-  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+  cancel-in-progress: true
 
 # Overall strategy for what sorts of builds to include:
 # We want a build for the newest and oldest supported version of each compiler.
@@ -88,7 +88,7 @@ jobs:
         run: |
           echo "fail_fast=$([ "$GITHUB_REF_NAME" = "master" -o "$GITHUB_REPOSITORY_OWNER" != "CleverRaven" ] && echo false || echo true)" >> $GITHUB_OUTPUT
           echo "skip_tests=$([ "$GITHUB_REF_NAME" = "master" ] && echo true || echo false)" >> $GITHUB_OUTPUT
-          echo "max_parallel=$([ "$GITHUB_REF_NAME" = "master" -o "$GITHUB_REPOSITORY_OWNER" != "CleverRaven" ] && echo 20 || echo 1)" >> $GITHUB_OUTPUT
+          echo "max_parallel=$([ "$GITHUB_REF_NAME" = "master" -o "$GITHUB_REPOSITORY_OWNER" != "CleverRaven" ] && echo 4 || echo 1)" >> $GITHUB_OUTPUT
   compile-shaders:
     name: Compile shaders
     needs: [ skip-duplicates-code, skip-duplicates-data ]

@@ -114,6 +114,8 @@ jobs:
       - build-translations
       - compile-shaders
     strategy:
+      # No more than four OS/architecture package builds at a time.
+      max-parallel: 4
       fail-fast: false
       matrix:
         include:

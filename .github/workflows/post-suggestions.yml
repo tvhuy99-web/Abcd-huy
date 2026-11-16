@@ -1,8 +1,10 @@
 name: Post suggestions
 
 concurrency:
-  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
-  cancel-in-progress: true
+  # Post-process each upstream run independently. Cancelling a newer
+  # result must not erase the labels/comments from another upstream check.
+  group: post-post-suggestions-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
 
 on:
   workflow_run:

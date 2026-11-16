@@ -9,6 +9,11 @@ on:
     paths:
       - '.github/workflows/weekly-changelog.yml'
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-weekly-changelog-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   weekly-changelog:
     if: github.repository == 'CleverRaven/Cataclysm-DDA'

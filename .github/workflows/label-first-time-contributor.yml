@@ -8,6 +8,11 @@ on:
     types:
       - opened
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-label-first-time-contributor-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   triage:
     runs-on: ubuntu-latest

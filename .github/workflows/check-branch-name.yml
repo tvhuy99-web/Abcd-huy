@@ -9,6 +9,11 @@ on:
     types:
       - opened
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-check-branch-name-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   check_branch_name:
     runs-on: ubuntu-latest

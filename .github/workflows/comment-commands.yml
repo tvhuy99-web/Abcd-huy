@@ -9,6 +9,11 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   ISSUE_NUMBER: ${{ github.event.issue.number }}
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-comment-commands-${{ github.event.comment.id }}
+  cancel-in-progress: false
+
 jobs:
   issue-comment-job:
     if: ${{ !github.event.issue.pull_request }}

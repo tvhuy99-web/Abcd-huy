@@ -9,6 +9,10 @@ env:
 permissions:
   write-all
 
+concurrency:
+  group: ci-release-android-bundle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: false
+
 jobs:
   release:
     name: Build and release Android bundle
@@ -45,7 +49,7 @@ jobs:
           gpg -d --passphrase "${{ secrets.KEYSTORE_PASSWORD }}" --batch keystore.properties.asc > keystore.properties
           export UPSTREAM_BUILD_NUMBER="$((11581 + ${{ github.run_number }}))"
           chmod +x gradlew
-          ./gradlew -Pj=$((`nproc`+0)) bundleExperimentalRelease
+          ./gradlew --max-workers=4 -Pj=4 bundleExperimentalRelease
           mv ./app/build/outputs/bundle/experimentalRelease/*.aab ../cdda-android-bundle-${STEPS_VARS_OUTPUTS_TIMESTAMP}-${{ github.sha }}.aab
         env:
           STEPS_VARS_OUTPUTS_TIMESTAMP: ${{ steps.vars.outputs.timestamp }}

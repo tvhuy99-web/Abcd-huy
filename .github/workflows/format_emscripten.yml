@@ -11,6 +11,10 @@ on:
 env:
   TX_TOKEN: ${{ secrets.TX_TOKEN }}
 
+concurrency:
+  group: ci-format_emscripten-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build

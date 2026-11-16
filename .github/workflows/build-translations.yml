@@ -9,6 +9,11 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-build-translations-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   build-translations:
     runs-on: ubuntu-22.04

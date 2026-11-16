@@ -8,6 +8,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ci-reader-audit-build-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   changes:
     runs-on: ubuntu-24.04
@@ -75,7 +79,7 @@ jobs:
         working-directory: android
         run: |
           set -o pipefail
-          bash ./gradlew --no-daemon --console=plain -Pj=2 -Pabi_arm_32=false -Paccessibility_test_signing=true assembleAccessibilityDebug 2>&1 | tee ../build-evidence/android-full.log
+          bash ./gradlew --no-daemon --console=plain --max-workers=4 -Pj=4 -Pabi_arm_32=false -Paccessibility_test_signing=true assembleAccessibilityDebug 2>&1 | tee ../build-evidence/android-full.log
       - name: Verify native engine, assets, Vietnamese catalog and signing
         run: |
           python3 - <<'PY'

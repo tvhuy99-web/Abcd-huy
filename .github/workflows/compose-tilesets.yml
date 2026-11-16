@@ -3,6 +3,11 @@ on:
   workflow_dispatch:
   workflow_call:
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-compose-tilesets-${{ github.ref }}
+  cancel-in-progress: false
+
 jobs:
   formatter:
     name: Build json formatter
@@ -32,6 +37,7 @@ jobs:
   builds:
     needs: formatter
     strategy:
+      max-parallel: 4
       fail-fast: false
       matrix:
         include:

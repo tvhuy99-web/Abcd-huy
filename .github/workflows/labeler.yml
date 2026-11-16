@@ -8,6 +8,11 @@ permissions:
   contents: read # the config file
   pull-requests: write # for labeling pull requests (on: pull_request_target or on: pull_request)
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-labeler-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   triage:
     permissions:

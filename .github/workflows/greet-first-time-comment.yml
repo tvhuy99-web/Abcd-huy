@@ -9,6 +9,11 @@ env:
   GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   PR_NUMBER: ${{ github.event.issue.number }}
 
+concurrency:
+  # Duplicate runs share a slot; distinct user actions are not dropped.
+  group: ci-greet-first-time-comment-${{ github.event.comment.id }}
+  cancel-in-progress: false
+
 jobs:
   triage:
     permissions:
