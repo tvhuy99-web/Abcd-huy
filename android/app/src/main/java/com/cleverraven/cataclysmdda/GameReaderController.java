@@ -1187,8 +1187,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // regardless of whether Manual or Automatic is selected. Only
             // real urgent game warnings are spoken without being requested;
             // gesture-initiated scans and details still work on demand.
-            if (vehicleMode && snapshot != null
-                    && "DEFAULTMODE".equals(snapshot.category)
+            if (snapshot != null &&
+                    ((vehicleMode && "DEFAULTMODE".equals(snapshot.category))
+                     || (travelState() != 0 && "activity".equals(snapshot.category)))
                     && priority < ReaderSpeechQueue.URGENT
                     && !extendedScan && !requestedDetail
                     && !detailBegin && !detailPart && !detailEnd && !combatAlert) {
@@ -2672,12 +2673,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     : index == 1 ? R.string.a11yTravelResume
                     : R.string.a11yTravelCancel;
         }
-        return index == 0 ? (state == 2 ? R.string.a11yTravelResume
-                : R.string.a11yTravelPause) : R.string.a11yTravelCancel;
+        // Obstacle-blocked auto driving does not expose Ignore. Only a
+        // deliberate retry when the path has cleared, or Cancel, is safe.
+        return index == 0 ? (state == 2 || state == 4
+                ? R.string.a11yTravelResume : R.string.a11yTravelPause)
+                : R.string.a11yTravelCancel;
     }
 
     private String travelStatus(int state) {
         return activity.getString(state == 3 ? R.string.a11yTravelSafetyStopped
+                : state == 4 ? R.string.a11yTravelObstacleStopped
                 : state == 2 ? R.string.a11yTravelPaused
                 : R.string.a11yTravelMoving);
     }
@@ -2695,7 +2700,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (state == 0) { return; }
         int command = state == 3 ? (travelChoice == 0 ? 4
                 : travelChoice == 1 ? 2 : 3)
-                : travelChoice == 0 ? (state == 2 ? 2 : 1) : 3;
+                : travelChoice == 0 ? (state == 2 || state == 4 ? 2 : 1) : 3;
         try {
             if (CataclysmDDA.nativeTravelControl(command)) {
                 SessionDebugLog.event("TRAVEL_CONTROL",
