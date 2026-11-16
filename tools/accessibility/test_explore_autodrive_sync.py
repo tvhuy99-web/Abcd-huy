@@ -88,7 +88,8 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("handbrake( here );", method)
         self.assertIn("a11y_obstacle_stop = true;", method)
         self.assertIn("a11y_obstacle_override = false;", method)
-        self.assertIn("if( a11y::enabled() )", method)
+        self.assertIn("const bool reader_autodrive = a11y::enabled() && driver.is_avatar();", method)
+        self.assertIn("if( reader_autodrive )", method)
         self.assertIn("return safety_stop();", method)
         self.assertIn("case collision_check_result::close_obstacle:", method)
         self.assertIn("case collision_check_result::no_visibility:", method)
@@ -110,6 +111,14 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("active_autodrive_controller.reset();", method)
         self.assertIn("cruise_velocity = 0;", method)
         self.assertIn("driver.set_moves( 0 );", method)
+
+    def test_npc_autodrive_and_stale_controls_are_isolated(self):
+        self.assertIn("who.is_avatar() && a11y::enabled() && a11y::android::enabled()",
+                      ACTOR)
+        self.assertIn("a11y::android::reset_travel_control();", ACTOR)
+        self.assertIn("if( who.is_avatar() && a11y::enabled() )", ACTOR)
+        self.assertIn("player_vehicle->stop_autodriving( false );", ACTOR)
+        self.assertIn("driver.is_avatar()", DRIVER)
 
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
