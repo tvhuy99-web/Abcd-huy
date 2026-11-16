@@ -275,4 +275,11 @@
     <string name="a11yGuideCalendarConfirm">Confirm date and hour</string>
     <string name="a11yGuidePlayMinigame">Execute the selected minigame move</string>
     <string name="a11yGuideAdjustField">Increase or decrease the focused value</string>
+    <string name="a11yGuideTapTextField">Select text field</string>
+    <string name="a11yGuideAndroidKeyboard">Type with Android keyboard</string>
+    <string name="a11yGuideConfirmInput">Confirm and save text</string>
+    <string name="a11yGuideCancelInput">Cancel text entry</string>
+    <string name="a11yGuideDebugChoice">Browse prompt responses</string>
+    <string name="a11yGuideDebugConfirm">Choose the focused response</string>
+    <string name="a11yGuideDebugContinue">Continue past this prompt</string>
 </resources>
