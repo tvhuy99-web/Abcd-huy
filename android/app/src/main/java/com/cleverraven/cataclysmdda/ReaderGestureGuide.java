@@ -125,6 +125,8 @@ final class ReaderGestureGuide {
                     R.string.a11yGuideConfirmInput);
             add(rows, context, R.string.a11yGuideTwoDown,
                     R.string.a11yGuideCancelInput);
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideOpenHelp);
         } else if (debugging) {
             add(rows, context, R.string.a11yGuideOneHorizontal,
                     R.string.a11yGuideDebugChoice);
@@ -132,6 +134,8 @@ final class ReaderGestureGuide {
                     R.string.a11yGuideDebugConfirm);
             add(rows, context, R.string.a11yGuideTwoDown,
                     R.string.a11yGuideDebugContinue);
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideOpenHelp);
         } else if (readingDocument) {
             // DocumentReader intercepts swipes to move the reading cursor
             // through paragraphs, independent of the underlying category.
@@ -157,7 +161,7 @@ final class ReaderGestureGuide {
                         R.string.a11yGuideConfirmPocket);
             }
             add(rows, context, R.string.a11yBindHold1,
-                    R.string.a11yGuideScreenMenu);
+                    R.string.a11yGuideOpenHelp);
         } else if (traveling) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
