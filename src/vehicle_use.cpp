@@ -3075,7 +3075,15 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 _( "Swipe two fingers right: Scan 30 tiles to the vehicle's right." ),
                 _( "Triple tap three fingers: Change Map, Combat and Drive mode." ),
                 _( "Long press one finger: Open vehicle controls." ),
-                _( "Double tap two fingers: Read recent messages." )
+                _( "Tap one finger: Stop speech." ),
+                _( "Double tap one finger: Pause or resume driving." ),
+                _( "Tap two fingers: Read focused details." ),
+                _( "Double tap two fingers: Read recent messages." ),
+                _( "Triple tap two fingers: Open the action menu." ),
+                _( "Tap three fingers: Read coordinates." ),
+                _( "Double tap three fingers: Read player information." ),
+                _( "Swipe two fingers up in a menu: Confirm the selected action." ),
+                _( "Swipe two fingers down in a menu: Go back." )
             } ) {
                 guide.addentry( index++, true, 0, line );
             }
