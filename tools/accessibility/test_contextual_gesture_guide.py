@@ -113,6 +113,14 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("&& !commandPaletteOpen && !gestureGuideOpen", CTRL)
         self.assertIn("gestureGuideOpen = false;", CTRL)
 
+    def test_help_swipes_navigate_even_when_underlying_screen_disabled_swipes(self):
+        self.assertIn("default boolean gestureGuideActive()", GESTURES)
+        self.assertIn("if (listener.gestureGuideActive())", GESTURES)
+        self.assertIn("listener.navigate(horizontal);", GESTURES)
+        self.assertIn("listener.navigate(vertical);", GESTURES)
+        self.assertIn("public boolean gestureGuideActive()", CTRL)
+        self.assertIn("return gestureGuideOpen;", CTRL)
+
     def test_modes_and_dynamic_user_bindings_are_scoped(self):
         self.assertIn('driving && "DEFAULTMODE".equals(category)', GUIDE)
         self.assertIn('combat && "DEFAULTMODE".equals(category)', GUIDE)
