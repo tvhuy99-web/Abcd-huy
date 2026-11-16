@@ -206,7 +206,13 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_autonomous_drive_keeps_existing_gestures_without_modal(self):
         self.assertIn("else if (walkingTravelPanelActive()", CONTROLLER)
         self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip && !vehicleMode)", CONTROLLER)
-        self.assertIn("if (autonomousDriveTrip) {", CONTROLLER)
+        # A paused or transitioning destination must keep the ordinary
+        # vehicle gestures and must not re-open the walking travel panel.
+        # The poll now deliberately covers both autonomous and vehicle mode.
+        self.assertIn("if (autonomousDriveTrip || vehicleMode) {", CONTROLLER)
+        self.assertIn("private boolean walkingTravelPanelActive()", CONTROLLER)
+        self.assertIn("return !autonomousDriveTrip && !vehicleMode && travelState() != 0;",
+                      CONTROLLER)
         self.assertIn("public void openActionMenu()", CONTROLLER)
         self.assertIn("showComprehensiveMenu();", CONTROLLER)
         self.assertIn("if (autonomousDriveTrip && rawNativeTravelState() != 0)",
