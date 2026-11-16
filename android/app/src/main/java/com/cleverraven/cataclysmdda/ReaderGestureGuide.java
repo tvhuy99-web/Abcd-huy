@@ -53,6 +53,10 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideTwoDown, R.string.a11yGuideScanBack);
             add(rows, context, R.string.a11yGuideTwoLeft, R.string.a11yGuideScanLeft);
             add(rows, context, R.string.a11yGuideTwoRight, R.string.a11yGuideScanRight);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideDrivePause);
+            add(rows, context, R.string.a11yBindTap22, R.string.a11yGuideRecentMessages);
+            add(rows, context, R.string.a11yBindTap31, R.string.a11yGuideCoordinates);
+            add(rows, context, R.string.a11yBindTap32, R.string.a11yGuidePlayerInfo);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideVehicleMenu);
             add(rows, context, R.string.a11yBindTap33, R.string.a11yGuideChangeMode);
         } else if (combat && "DEFAULTMODE".equals(category)) {
@@ -72,6 +76,10 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideTwoDown, R.string.a11yGuideWalkSouth);
             add(rows, context, R.string.a11yGuideTwoLeft, R.string.a11yGuideWalkWest);
             add(rows, context, R.string.a11yGuideTwoRight, R.string.a11yGuideWalkEast);
+            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideCombatEnemy);
+            add(rows, context, R.string.a11yBindTap22, R.string.a11yGuideRecentMessages);
+            add(rows, context, R.string.a11yBindTap31, R.string.a11yGuideCoordinates);
+            add(rows, context, R.string.a11yBindTap32, R.string.a11yGuidePlayerInfo);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideCombatMenu);
             add(rows, context, R.string.a11yBindTap33, R.string.a11yGuideChangeMode);
         } else if ("DEFAULTMODE".equals(category) && !inHub) {
@@ -84,7 +92,11 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideTwoLeft, R.string.a11yGuideScanWest);
             add(rows, context, R.string.a11yGuideTwoRight, R.string.a11yGuideScanEast);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindTap22, R.string.a11yGuideRecentMessages);
+            add(rows, context, R.string.a11yBindTap23, R.string.a11yGuideOpenHub);
+            add(rows, context, R.string.a11yBindTap31, R.string.a11yGuideCoordinates);
+            add(rows, context, R.string.a11yGuideTripleTap, R.string.a11yGuideOpenHub);
             add(rows, context, R.string.a11yBindTap32, R.string.a11yGuidePlayerInfo);
             add(rows, context, R.string.a11yBindTap33, R.string.a11yGuideChangeMode);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
