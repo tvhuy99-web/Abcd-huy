@@ -296,4 +296,5 @@
     <string name="a11yGuidePickPocket">Mở túi chứa đang chọn</string>
     <string name="a11yGuideChoosePocketItem">Chọn vật phẩm hoặc số lượng</string>
     <string name="a11yGuideConfirmPocket">Xác nhận các vật phẩm đã chọn trong túi</string>
+    <string name="a11yGuideOpenHelp">Mở hướng dẫn cử chỉ</string>
 </resources>
