@@ -21,15 +21,19 @@ GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
 class AccessibleVehicleContracts(unittest.TestCase):
-    def test_onboard_map_swipes_are_not_blocked(self):
+    def test_onboard_map_swipes_only_walk_after_release(self):
         gate = WORLD.split("result.swipe_movement_allowed =", 1)[1].split(
             "// Eight-direction combat gestures", 1
         )[0]
+        # Passengers may still walk to controls; native control is the
+        # authoritative guard preventing walking gestures from steering.
         for forbidden in ("!viewer.in_vehicle", "!viewer.controlling_vehicle",
                           "!viewer.is_driving()"):
             self.assertNotIn(forbidden, gate)
         self.assertIn("&& !viewer.activity", gate)
-        self.assertIn("return !combatMode && worldStepAllowed();", CTRL)
+        self.assertIn("&& !vehicleReleasePending && !vehicleDriverReady()", CTRL)
+        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:release")', CTRL)
 
     def test_status_uses_native_control_ownership(self):
         report = WORLD.split("std::string player_status()", 1)[1].split(
@@ -119,8 +123,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('game_speed_units == "mph"', WORLD)
         self.assertIn('game_speed_units == "km/h"', WORLD)
         self.assertIn('_( "Speed: %1$d %3$s. Target: %2$d %3$s." )', WORLD)
-        self.assertIn("R.string.a11yDriveNeedsControl", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:begin")', CTRL)
         self.assertIn("R.string.a11yDriveBraking", CTRL)
+        self.assertIn('document( "reader:vehicle:summary"', WORLD)
+        self.assertIn('speakVehicleDocument("reader:vehicle:summary")', CTRL)
         self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
     def test_manual_mode_toggle_is_last_vehicle_menu_action(self):
@@ -196,10 +202,16 @@ class AccessibleVehicleContracts(unittest.TestCase):
     def test_braking_or_leaving_drive_mode_stops_continuous_turns(self):
         self.assertIn('action == "A11Y_INTERNAL_VEHICLE_BRAKE"', ENGINE)
         self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
-        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
-        self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
         self.assertIn('requestVehicleAction("reader:vehicle:brake");', CTRL)
-        self.assertIn("if (vehicleMode && nextMode != 2 && vehicleDriverReady())", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:release")', CTRL)
+        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
+        self.assertIn("car.a11y_release_controls_pending = true;", ENGINE)
+        self.assertIn("car.cruise_velocity = 0;", ENGINE)
+        self.assertIn("car.velocity == 0 || !u.controlling_vehicle", ENGINE)
+        self.assertIn("u.controlling_vehicle = false;", ENGINE)
+        self.assertIn("a11y_manual_drive && !a11y_release_controls_pending", VEH)
+        self.assertIn("bool a11y_release_controls_pending = false;", VEH_HEADER)
+        self.assertIn("!vehicleReleasePending && !vehicleDriverReady()", CTRL)
 
     def test_throttle_swipes_advance_native_physics(self):
         # Native pldrive() does not spend moves for straight cruise changes.
