@@ -78,6 +78,12 @@ Chạm đôi vào **Hướng dẫn cử chỉ** để xem các cử chỉ phù h
 
 Giao diện ngắm bắn giữ lệnh **Đổi kiểu điều khiển** trong danh sách nhấn giữ, rồi bổ sung mục hướng dẫn ở cuối. Giao diện hành trình giữ **Đọc trạng thái hành trình** trước mục hướng dẫn. Các màn hình chưa có danh sách lệnh ngữ cảnh cũng có đường truy cập đến hướng dẫn; đối với ô nhập liệu hoặc thông báo hệ thống, hướng dẫn được mở trực tiếp để tránh thay đổi thao tác nhập/xác nhận đang diễn ra.
 
+**Cử chỉ chung trên menu và hộp thoại:** chạm một lần một ngón để dừng lời đọc; chạm hai lần hai ngón để đọc lại thông báo gần đây; chạm một lần hai ngón để đọc chi tiết tiêu điểm (nếu có); **vuốt hai ngón lên để xác nhận** và **vuốt hai ngón xuống để quay lại**. Một lệnh chỉ có tác dụng nếu giao diện hiện tại thực sự cho phép. Trong bản đồ và lái xe, hai ngón vuốt lên/xuống vẫn dùng cho quét 30 ô thay vì xác nhận/quay lại.
+
+**Tạo nhân vật mới:** các bước tạo nhân vật từ 1 đến 6, màn hình tổng kết và lịch chọn ngày/giờ là các ngữ cảnh độc lập. **Vuốt hai ngón lên** ở bước 1-2 xác nhận lựa chọn; ở các bước chọn nhiều thuộc tính (3-6) xác nhận rồi chuyển bước; tại phần tổng kết là hoàn tất tạo nhân vật; trong lịch là xác nhận ngày/giờ. **Vuốt hai ngón xuống** quay lại. Hướng dẫn cho các bước này nay được công bố riêng, không dùng nội dung menu mặc định.
+
+**Túi chứa, đọc tài liệu và trường số liệu:** trình đọc tự nhận biết khi đang duyệt túi chứa, chọn vật phẩm trong túi hoặc đọc tài liệu theo đoạn. Hướng dẫn thay đổi theo thao tác thực sự trong màn hình con. Với trường số hoặc danh sách lựa chọn có khả năng chỉnh giá trị, phần hướng dẫn vuốt dọc được lấy từ khả năng chỉnh sửa của tiêu điểm hiện hành. Cử chỉ người chơi đã gán được đọc theo thiết lập đang dùng ở chế độ bản đồ hoặc khi khả dụng trong chế độ chiến đấu. Hướng dẫn không kích hoạt các thao tác này.
+
 ## Mục 4. Menu tổng hợp
 
 Mở từ màn hình chơi bằng chạm ba lần một ngón hoặc chạm ba lần hai ngón. Đây là menu **chỉ xuất hiện khi yêu cầu**, không phải bảng điều khiển luôn phủ lên màn hình.
