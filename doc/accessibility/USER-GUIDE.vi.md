@@ -55,7 +55,16 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 - Chạm ba lần bằng hai ngón: mở Menu tổng hợp ở thế giới.
 - Chạm một lần bằng ba ngón: đọc tọa độ.
 - Chạm hai lần bằng ba ngón: đọc đầy đủ thông tin nhân vật hiện tại.
-- Chạm ba lần bằng ba ngón: **bật/tắt chế độ chiến đấu**. Không phải cử chỉ trống để gán lệnh khác.
+- Chạm ba lần bằng ba ngón: **đổi chế độ điều khiển**. Khi đang ngồi trên xe: Bản đồ → Chiến đấu → Lái xe → Bản đồ. Ngoài xe: Bản đồ ↔ Chiến đấu.
+
+**Khi lái xe (ngồi tại vị trí điều khiển):**
+
+- Chuyển sang **Lái xe** tự nhận quyền lái và sử dụng cơ chế khởi động động cơ gốc nếu động cơ chưa chạy. Ghế hành khách không được tự nhận quyền lái.
+- Vuốt **hai ngón lên, xuống, trái, phải**: quét 16 ô phía **trước, sau, trái, phải theo hướng thân xe hiện tại**, kể cả khi xe đang hướng chéo. Trong chế độ bản đồ, quét hai ngón vẫn giữ Bắc, Nam, Tây, Đông cố định.
+- Vuốt **một ngón** lên / xuống để chọn tiến / lùi, trái / phải để đánh lái, lên-rồi-xuống / xuống-rồi-lên để tăng / giảm tốc độ mục tiêu.
+- Vuốt **một ngón** trái-rồi-phải / phải-rồi-trái để chỉnh hướng lái trái / phải. Chương trình chỉ đọc hướng thực tế của đầu xe (tám hướng la bàn); nếu phát hiện lỗi lái, sẽ đọc nguyên nhân. Xe đứng yên có thể đã đổi góc đánh lái nhưng thân xe chưa xoay.
+- Vuốt **một ngón** xuống-rồi-trái: đọc tốc độ. Xuống-rồi-phải: đọc nhanh tình trạng động cơ, nhiên liệu và hư hỏng đáng chú ý. Lên-rồi-trái: phanh khẩn cấp. Phải-rồi-xuống: bóp còi. Lên-rồi-phải: bật/tắt động cơ.
+- Chuyển về **Bản đồ** tự phanh và chờ tốc độ bằng không trước khi buông quyền lái. Trong khi chờ, thao tác di chuyển bản đồ bị khóa để không đánh lái nhầm; động cơ không tự tắt.
 
 **Trong menu:** vuốt dùng để chuyển mục hoặc đổi nhóm tùy màn; chạm đôi mới kích hoạt. Vuốt hai ngón có thể mang nghĩa xác nhận hoặc quay lại theo ngữ cảnh. Luôn nghe tên, giá trị và trạng thái hàng trước khi chạm đôi; không suy rằng cử chỉ thế giới có nghĩa tương tự trong cửa sổ.
 
