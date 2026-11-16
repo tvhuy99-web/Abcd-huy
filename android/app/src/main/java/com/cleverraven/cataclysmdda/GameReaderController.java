@@ -3531,6 +3531,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             moveInCombat(dx, dy);
             return;
         }
+        if (vehicleMode) {
+            if (!vehicleDriverReady()) {
+                feedback(activity.getString(R.string.a11yDriveNotReady));
+                return;
+            }
+            // Native maps the four relative directions to the vehicle's
+            // real heading, including diagonal orientations.
+            String relative = dy < 0 ? "front" : dy > 0 ? "back"
+                    : dx < 0 ? "left" : "right";
+            requestLiveWorldCommand("reader:scan:vehicle:" + relative);
+            return;
+        }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
                 : dx < 0 ? "reader:scan:west" : "reader:scan:east";
         requestLiveWorldCommand(id);
