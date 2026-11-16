@@ -837,8 +837,14 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             state = 1;
         }
         if( control == 3 ) {
-            // Cancel is explicit. Do not resume throttle after removing the
-            // activity; clear only this destination, not any unrelated route.
+            // Cancel means Drive -> Map for the reader. Braking must finish
+            // before native driving controls are released; otherwise the
+            // map appears while the avatar still holds a moving steering
+            // wheel. This uses the existing deferred vehicle-release gate.
+            player_vehicle->a11y_release_controls_pending = true;
+            player_vehicle->a11y_drive_paused = true;
+            player_vehicle->a11y_resume_cruise_velocity = 0;
+            player_vehicle->a11y_continuous_drive = player_vehicle->velocity != 0;
             a11y_brake_autodrive( *player_vehicle, here );
             who.omt_path.clear();
             a11y::android::set_travel_state( 0 );
