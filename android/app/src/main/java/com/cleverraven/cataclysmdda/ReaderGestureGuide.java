@@ -106,6 +106,16 @@ final class ReaderGestureGuide {
                                 boolean inHub, boolean traveling,
                                 boolean editing, boolean debugging,
                                 ReaderGestureBindings bindings) {
+        return entries(context, snapshot, driving, combat, inHub, traveling,
+                editing, debugging, bindings, false, 0);
+    }
+
+    static List<String> entries(Context context, ReaderSnapshot snapshot,
+                                boolean driving, boolean combat,
+                                boolean inHub, boolean traveling,
+                                boolean editing, boolean debugging,
+                                ReaderGestureBindings bindings,
+                                boolean readingDocument, int pocketStage) {
         ArrayList<String> rows = new ArrayList<>();
         final String category = snapshot == null ? "" : snapshot.category;
         if (editing) {
@@ -122,6 +132,32 @@ final class ReaderGestureGuide {
                     R.string.a11yGuideDebugConfirm);
             add(rows, context, R.string.a11yGuideTwoDown,
                     R.string.a11yGuideDebugContinue);
+        } else if (readingDocument) {
+            // DocumentReader intercepts swipes to move the reading cursor
+            // through paragraphs, independent of the underlying category.
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseParagraph);
+            add(rows, context, R.string.a11yGuideOneVertical,
+                    R.string.a11yGuideBrowseParagraph);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    R.string.a11yGuideReadDocument);
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideScreenMenu);
+        } else if (pocketStage != 0) {
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideOneVertical,
+                    R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    pocketStage == 1 ? R.string.a11yGuideChoosePocketAction
+                    : pocketStage == 2 ? R.string.a11yGuidePickPocket
+                    : R.string.a11yGuideChoosePocketItem);
+            if (pocketStage == 3) {
+                add(rows, context, R.string.a11yGuideTwoUp,
+                        R.string.a11yGuideConfirmPocket);
+            }
+            add(rows, context, R.string.a11yBindHold1,
+                    R.string.a11yGuideScreenMenu);
         } else if (traveling) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
@@ -319,7 +355,8 @@ final class ReaderGestureGuide {
         addOnce(rows, context, R.string.a11yGuideSingleTap,
                 R.string.a11yGuideStopSpeech);
         boolean liveWorld = "DEFAULTMODE".equals(category)
-                && !inHub && !traveling && !editing && !debugging;
+                && !inHub && !traveling && !editing && !debugging
+                && !readingDocument && pocketStage == 0;
         if (liveWorld) {
             // The two hub gestures work in Map, Combat and Drive.
             addOnce(rows, context, R.string.a11yBindTap23,
@@ -354,8 +391,8 @@ final class ReaderGestureGuide {
                         R.string.a11yGuideScreenMenu);
             }
         }
-        if (!liveWorld && !editing && !debugging
-                && !"character-creator-calendar".equals(category)
+        if (!liveWorld && !editing && !debugging && !readingDocument
+                && pocketStage == 0 && !"character-creator-calendar".equals(category)
                 && !"surroundings".equals(category) && !"crafting".equals(category)) {
             // All other ordinary menus receive configured focus navigation.
             addOnce(rows, context, R.string.a11yGuideOneHorizontal,
@@ -364,6 +401,7 @@ final class ReaderGestureGuide {
                     R.string.a11yGuideBrowseItems);
         }
         if (!liveWorld && !inHub && !traveling && !editing && !debugging
+                && !readingDocument && pocketStage == 0
                 && !"character-creator-calendar".equals(category)) {
             describeFocusedField(rows, context, snapshot);
         }
