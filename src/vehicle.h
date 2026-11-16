@@ -1958,6 +1958,11 @@ class vehicle
         // turn vehicle left (negative) or right (positive), degrees
         void turn( units::angle deg );
 
+        // Accessibility-only stationary pivot. Rotates the actual vehicle and
+        // its occupied map tiles, including passengers, after checking the
+        // swept vehicle footprint. Never applies throttle or damage.
+        bool a11y_rotate_in_place( map &here, int steering_steps );
+
         // Returns if any collision occurred
         bool collision( map &here, std::vector<veh_collision> &colls,
                         const tripoint_rel_ms &dp,
