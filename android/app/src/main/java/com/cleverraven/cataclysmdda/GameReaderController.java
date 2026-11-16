@@ -2331,7 +2331,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void openContextActions() {
-        if (debugReport != null || closed) { return; }
+        if (closed) { return; }
+        if (gestureGuideOpen) { closeGestureGuide(); return; }
+        if (debugReport != null || editor != null || snapshot == null) {
+            // Safe fallback for debug prompts, text fields and loading
+            // screens that do not own a native contextual action list.
+            openGestureGuide();
+            return;
+        }
         if (pocketStage != 0) {
             resetPocketPicker(true);
             return;
@@ -2374,7 +2381,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(travelDetailSpeech(travelState()));
             return;
         }
-        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        // Map holds now open the same contextual drawer as native menus;
+        // the guide is its final item and never triggers a movement step.
         // Long-press on an inventory item opens a local action list with
         // "Open pocket", leaving double-tap reserved for selecting the item.
         ReaderSnapshot.Node focused = snapshot.find(focus);
