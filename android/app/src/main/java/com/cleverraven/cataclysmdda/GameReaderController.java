@@ -3371,7 +3371,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     speakVehicleDocument("reader:vehicle:speed");
                     return true;
                 case "swipe_down_right":
-                    speakVehicleDocument("reader:vehicle:detail");
+                    speakVehicleDocument("reader:vehicle:summary");
                     return true;
                 case "swipe_up_left":
                     requestVehicleAction("reader:vehicle:brake");
