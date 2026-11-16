@@ -162,6 +162,31 @@ final class ReaderGestureGuide {
             }
             add(rows, context, R.string.a11yBindHold1,
                     R.string.a11yGuideOpenHelp);
+        } else if (driving && "activity".equals(category) && snapshot != null
+                && snapshot.find("activity:autodrive") != null) {
+            // Fully autonomous Explore Places reuses Drive. The four
+            // straight one-finger controls are deliberately absent.
+            addSwipe(rows, context, "swipe_up_down", R.string.a11yGuideSpeed);
+            addSwipe(rows, context, "swipe_down_up", R.string.a11yGuideSpeed);
+            addSwipe(rows, context, "swipe_left_right", R.string.a11yGuideAutoReadHeading);
+            addSwipe(rows, context, "swipe_right_left", R.string.a11yGuideAutoReadHeading);
+            addSwipe(rows, context, "swipe_up_right", R.string.a11yGuideCondition);
+            addSwipe(rows, context, "swipe_down_left", R.string.a11yGuideSpeed);
+            addSwipe(rows, context, "swipe_down_right", R.string.a11yGuideCondition);
+            addSwipe(rows, context, "swipe_up_left", R.string.a11yGuideAutoPause);
+            addSwipe(rows, context, "swipe_right_down", R.string.a11yGuideHorn);
+            add(rows, context, R.string.a11yGuideTwoUp, R.string.a11yGuideScanFront);
+            add(rows, context, R.string.a11yGuideTwoDown, R.string.a11yGuideScanBack);
+            add(rows, context, R.string.a11yGuideTwoLeft, R.string.a11yGuideScanLeft);
+            add(rows, context, R.string.a11yGuideTwoRight, R.string.a11yGuideScanRight);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideDrivePause);
+            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideTravelStatus);
+            add(rows, context, R.string.a11yBindTap22, R.string.a11yGuideRecentMessages);
+            add(rows, context, R.string.a11yBindTap23, R.string.a11yGuideOpenHub);
+            add(rows, context, R.string.a11yBindTap31, R.string.a11yGuideCoordinates);
+            add(rows, context, R.string.a11yBindTap32, R.string.a11yGuidePlayerInfo);
+            add(rows, context, R.string.a11yBindTap33, R.string.a11yGuideAutoMapCancel);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideVehicleMenu);
         } else if (traveling) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
@@ -358,6 +383,8 @@ final class ReaderGestureGuide {
         // A single tap stops speech in both the world and native menus.
         addOnce(rows, context, R.string.a11yGuideSingleTap,
                 R.string.a11yGuideStopSpeech);
+        boolean autonomousTrip = driving && "activity".equals(category)
+                && snapshot != null && snapshot.find("activity:autodrive") != null;
         boolean liveWorld = "DEFAULTMODE".equals(category)
                 && !inHub && !traveling && !editing && !debugging
                 && !readingDocument && pocketStage == 0;
@@ -396,7 +423,7 @@ final class ReaderGestureGuide {
                         R.string.a11yGuideScreenMenu);
             }
         }
-        if (!liveWorld && !editing && !debugging && !readingDocument
+        if (!liveWorld && !autonomousTrip && !editing && !debugging && !readingDocument
                 && pocketStage == 0 && !"character-creator-calendar".equals(category)
                 && !"surroundings".equals(category) && !"crafting".equals(category)) {
             // All other ordinary menus receive configured focus navigation.
@@ -405,7 +432,7 @@ final class ReaderGestureGuide {
             addOnce(rows, context, R.string.a11yGuideOneVertical,
                     R.string.a11yGuideBrowseItems);
         }
-        if (!liveWorld && !inHub && !traveling && !editing && !debugging
+        if (!liveWorld && !autonomousTrip && !inHub && !traveling && !editing && !debugging
                 && !readingDocument && pocketStage == 0
                 && !"character-creator-calendar".equals(category)) {
             describeFocusedField(rows, context, snapshot);
