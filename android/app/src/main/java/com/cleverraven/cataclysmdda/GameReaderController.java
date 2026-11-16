@@ -80,6 +80,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
+    private static final String QUERY_PREFIX = "A11Y_QUERY:";
+    private static final String DRIVE_FEEDBACK_PREFIX = "A11Y_DRIVE_FEEDBACK:";
+    private static final String AREA_PREFIX = "A11Y_AREA:";
+
+    /** Manual and autonomous driving share this speech policy.
+     *  User queries, explicit control results and genuine hazard/area
+     *  changes pass. Ordinary turn-by-turn movement remains silent.
+     */
+    static boolean allowedDuringDriving(String message, int priority) {
+        if (message == null) { return false; }
+        return priority >= ReaderSpeechQueue.URGENT
+                || message.startsWith(QUERY_PREFIX)
+                || message.startsWith(DRIVE_FEEDBACK_PREFIX)
+                || message.startsWith(AREA_PREFIX)
+                || message.startsWith("A11Y_SCAN:")
+                || message.startsWith("A11Y_DETAIL:")
+                || message.startsWith("A11Y_DETAIL_BEGIN:")
+                || message.startsWith("A11Y_DETAIL_PART:")
+                || message.startsWith("A11Y_DETAIL_END:")
+                || message.startsWith(COMBAT_ALERT_PREFIX);
+    }
 
     // Do not repeat a menu title already contained in its first item.
     // Preserve position, current value and disabled reason as originally read.
@@ -170,7 +191,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Map gestures stay locked until the native driver has actually let go.
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
-    private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -809,7 +829,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && next.find("reader:vehicle:seat") == null) {
                     vehicleMode = false;
                     pendingVehicleHeadingReport = false;
-                    pendingVehicleSpeedReport = false;
                 }
                 if ("DEFAULTMODE".equals(next.category) &&
                         (next.find("reader:vehicle:seat") == null ||
@@ -826,16 +845,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         });
                     }
                 }
-                if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
-                    pendingVehicleSpeedReport = false;
-                    ReaderSnapshot.Node speed = next.find("reader:vehicle:speed");
-                    if (speed != null && !speed.detail.isEmpty()) {
-                        final String report = speed.detail;
-                        handler.post(() -> {
-                            if (vehicleMode && directWorldGesturesEnabled()) {
-                                feedback(report);
-                            }
-                        });
+                // The engine state comes from native vehicle physics, not
+                // from the button label. Announce only actual ON/OFF changes
+                // (including an engine stopping by itself), never a failed
+                // or still-pending ignition request as a success.
+                if (previousSnapshot != null && !changedContext
+                        && (vehicleMode || autonomousDriveTravelActive())
+                        && ("DEFAULTMODE".equals(next.category)
+                            || "activity".equals(next.category))) {
+                    ReaderSnapshot.Node beforeEngine =
+                            previousSnapshot.find("reader:vehicle:engine-state");
+                    ReaderSnapshot.Node afterEngine =
+                            next.find("reader:vehicle:engine-state");
+                    if (beforeEngine != null && afterEngine != null
+                            && !beforeEngine.value.equals(afterEngine.value)
+                            && !afterEngine.detail.trim().isEmpty()) {
+                        announceGameMessage(DRIVE_FEEDBACK_PREFIX + afterEngine.detail, 1, true);
                     }
                 }
                 if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
@@ -1250,10 +1275,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final boolean detailPart = message.startsWith("A11Y_DETAIL_PART:");
         final boolean detailEnd = message.startsWith("A11Y_DETAIL_END:");
         final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
+        final boolean userQuery = message.startsWith(QUERY_PREFIX);
+        final boolean drivingFeedback = message.startsWith(DRIVE_FEEDBACK_PREFIX);
+        final boolean areaChange = message.startsWith(AREA_PREFIX);
         final String spokenMessage = ReaderSpokenText.clean(
                 loading ? message.substring("A11Y_LOADING:".length())
                 : extendedScan ? message.substring("A11Y_SCAN:".length())
                 : requestedDetail ? message.substring("A11Y_DETAIL:".length())
+                : userQuery ? message.substring(QUERY_PREFIX.length())
+                : drivingFeedback ? message.substring(DRIVE_FEEDBACK_PREFIX.length())
+                : areaChange ? message.substring(AREA_PREFIX.length())
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
         // During movement, generating a new map area can emit this repeatedly.
         // Keep the actual map generation and all other gameplay messages;
@@ -1276,9 +1307,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (snapshot != null &&
                     ((vehicleMode && "DEFAULTMODE".equals(snapshot.category))
                      || (travelState() != 0 && "activity".equals(snapshot.category)))
-                    && priority < ReaderSpeechQueue.URGENT
-                    && !extendedScan && !requestedDetail
-                    && !detailBegin && !detailPart && !detailEnd && !combatAlert) {
+                    && !allowedDuringDriving(message, priority)) {
+                SessionDebugLog.event("DRIVE_SPEECH_SUPPRESSED", "ordinary_game_chatter");
                 return;
             }
             if (detailBegin || detailPart || detailEnd) {
@@ -1339,6 +1369,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (usesTouchExploration()) {
                 status.setText(spokenMessage);
                 announceAccessibility(spokenMessage);
+            } else if (userQuery) {
+                // The user explicitly requested current location: speak now
+                // and replace an older query instead of queuing stale places.
+                speech.focus("user-requested-location", spokenMessage);
+            } else if (areaChange) {
+                // Low-priority, short-lived and coalesced by a stable key.
+                // Never queue a backlog of map areas after fast driving.
+                speech.say("driving-named-area", spokenMessage,
+                        ReaderSpeechQueue.INFORMATION, 6000L);
             } else if (requestedDetail) {
                 // Two fingers request speech, not a new navigation mode.
                 // ReaderSpeechQueue chunks this ONE request internally,
@@ -3671,12 +3710,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             pendingVehicleHeadingReport = true;
-        } else if ("reader:vehicle:pause".equals(id)) {
-            // Pausing is an explicitly requested state change. Ordinary
-            // throttle commands must not narrate the speed every game turn;
-            // the bent speed-read gesture remains available on demand.
-            pendingVehicleSpeedReport = true;
         }
+        // Native pause/resume now announces the actual result. A queued
+        // speed-only report would hide whether driving is paused.
         requestLiveWorldCommand(id);
         if ("reader:vehicle:brake".equals(id)) {
             feedback(activity.getString(R.string.a11yDriveBraking));
@@ -3726,7 +3762,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 case "swipe_down_right":
                 case "swipe_up_right":
-                    speakVehicleDocument("reader:vehicle:summary");
+                    speakVehicleDocument("reader:vehicle:detail");
                     return true;
                 case "swipe_left_right":
                 case "swipe_right_left":
@@ -3804,7 +3840,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     speakVehicleDocument("reader:vehicle:speed");
                     return true;
                 case "swipe_down_right":
-                    speakVehicleDocument("reader:vehicle:summary");
+                    speakVehicleDocument("reader:vehicle:detail");
                     return true;
                 case "swipe_up_left":
                     requestVehicleAction("reader:vehicle:brake");
@@ -5620,7 +5656,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         gestureGuideRows.clear();
         travelContextDrawerState = 0;
         pendingVehicleHeadingReport = false;
-        pendingVehicleSpeedReport = false;
         closed = true;
         foreground = false;
         presentationEpoch++;

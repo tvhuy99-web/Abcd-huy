@@ -944,6 +944,18 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                               _( "Vehicle condition summary" ), brief_condition ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
+            // A typed native engine state allows the reader to announce
+            // actual ON/OFF changes, not merely attempted ignition.
+            if( veh.has_part( "ENGINE" ) ) {
+                semantic_node engine_state;
+                engine_state.id = "reader:vehicle:engine-state";
+                engine_state.role = "status";
+                engine_state.label = _( "Engine" );
+                engine_state.value = veh.engine_on ? "running" : "stopped";
+                engine_state.detail = veh.engine_on ? _( "Engine running." ) : _( "Engine off." );
+                engine_state.actions = { "focus" };
+                result.nodes.push_back( std::move( engine_state ) );
+            }
             result.nodes.push_back( document( "reader:vehicle:road",
                                               _( "Road ahead" ), road ) );
             if( local_driver ) {
@@ -1770,7 +1782,11 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
                    // Follow the native autodrive collision classification,
                    // not the avatar's ordinary passability check.
                    ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
-                   ( here.ter( tile ).obj().is_smashable() &&
+                   // Road pavement is smashable but its normal movement
+                   // cost of 2 means it is NOT a collision obstacle.
+                   // Match vehicle_autodrive's terrain classification.
+                   ( here.ter( tile ).obj().movecost != 2 &&
+                     here.ter( tile ).obj().is_smashable() &&
                      !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
             label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
         } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
@@ -1932,13 +1948,17 @@ void announce_area_transition()
     if( area.empty() ) {
         return;
     }
-    // Keep both manual and automatic driving silent on normal route changes.
-    // Preserve tracking so a parked driver does not hear a backlog of areas.
-    // Vehicle collision, obstacle and health warnings have separate channels.
+    // Only a *named overmap area change* is reported, never each tile,
+    // submap boundary or repeated overmap cell of the same name. Driving
+    // uses a distinct low-priority channel so normal chatter stays silent.
     const avatar &traveler = get_avatar();
-    if( previous_tile && !previous_area.empty() && area != previous_area &&
-        !( traveler.in_vehicle && traveler.controlling_vehicle ) ) {
-        a11y::android::announce( string_format( _( "Entering area: %s." ), area ), 1 );
+    if( previous_tile && !previous_area.empty() && area != previous_area ) {
+        const std::string spoken = string_format( _( "Entering area: %s." ), area );
+        if( traveler.in_vehicle && traveler.controlling_vehicle ) {
+            a11y::android::announce( "A11Y_AREA:" + spoken, 1 );
+        } else {
+            a11y::android::announce( spoken, 1 );
+        }
 #if defined(__ANDROID__)
         a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
                 "from=" + previous_area + " to=" + area );
@@ -2001,7 +2021,8 @@ void announce_player_coordinates()
     const std::string game_time = display::time_string( viewer );
     spoken += " " + string_format( _( "Time: %s" ),
                                    game_time == _( "???" ) ? _( "Unknown" ) : game_time ) + ".";
-    a11y::android::announce( spoken, 1 );
+    // Three-finger location is a deliberate query, even during driving.
+    a11y::android::announce( "A11Y_QUERY:" + spoken, 1 );
 }
 
 semantic_snapshot activity_snapshot( const input_context &context )
@@ -2086,7 +2107,7 @@ semantic_snapshot activity_snapshot( const input_context &context )
         const std::vector<std::string> allowed = {
             "reader:vehicle:seat", "reader:vehicle:driver",
             "reader:vehicle:speed", "reader:vehicle:summary",
-            "reader:vehicle:heading", "reader:vehicle:road",
+            "reader:vehicle:engine-state", "reader:vehicle:heading", "reader:vehicle:road",
             "reader:vehicle:detail", "reader:vehicle:horn",
             "control_vehicle", "world:character_detail",
             "reader:scan:vehicle:front", "reader:scan:vehicle:back",

@@ -4785,10 +4785,14 @@ bool game::handle_action()
                 car.a11y_resume_cruise_velocity = car.cruise_velocity;
                 car.a11y_drive_paused = true;
                 add_msg( m_info, _( "Driving paused. Braking to a stop." ) );
+                a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                         std::string( _( "Driving paused. Braking to a stop." ) ), 1 );
                 // Same handbrake used by every other native driver.
                 act = ACTION_SMASH;
             } else if( car.velocity != 0 ) {
                 add_msg( m_warning, _( "Vehicle still moving. Braking again before resuming." ) );
+                a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                         std::string( _( "Vehicle still moving. Braking again before resuming." ) ), 1 );
                 act = ACTION_SMASH;
             } else {
                 const int saved_speed = car.a11y_resume_cruise_velocity;
@@ -4800,11 +4804,16 @@ bool game::handle_action()
                     add_msg( m_warning,
                              _( "Cannot resume: %1$s blocks the path about %2$d tiles away." ),
                              hazard->label, hazard->distance );
+                    a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                             string_format( _( "Cannot resume: %1$s blocks the path about %2$d tiles away." ),
+                                                            hazard->label, hazard->distance ), 1 );
                     return false;
                 }
                 const int safe_speed = std::max( 0, car.safe_velocity( vehicle_map ) );
                 if( saved_speed != 0 && safe_speed == 0 ) {
                     add_msg( m_warning, _( "Cannot resume: vehicle cannot safely move." ) );
+                    a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                             std::string( _( "Cannot resume: vehicle cannot safely move." ) ), 1 );
                     return false;
                 }
                 car.cruise_velocity = std::clamp( saved_speed, -safe_speed, safe_speed );
@@ -4813,6 +4822,8 @@ bool game::handle_action()
                 car.a11y_continuous_drive = !car.a11y_manual_drive &&
                                             car.cruise_velocity != 0;
                 add_msg( m_info, _( "Driving resumed." ) );
+                a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                         std::string( _( "Driving resumed." ) ), 1 );
                 return false;
             }
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_ENGINE" ) {
@@ -4836,9 +4847,15 @@ bool game::handle_action()
                 } else {
                     car.start_engines( vehicle_map, &player_character );
                     add_msg( m_info, _( "Starting engine." ) );
+                    // Ignition request is not proof that the engine started.
+                    // The typed world state announces confirmed running.
+                    a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                             std::string( _( "Starting engine." ) ), 1 );
                 }
             } else {
                 add_msg( m_warning, _( "Engine controls unavailable." ) );
+                a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" +
+                                         std::string( _( "Engine controls unavailable." ) ), 1 );
             }
             return false;
         } else if( a11y::enabled() && action == "A11Y_INTERNAL_VEHICLE_HORN" ) {
