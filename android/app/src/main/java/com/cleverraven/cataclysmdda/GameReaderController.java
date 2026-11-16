@@ -31,6 +31,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
     private static final int HUB_PAGE_SIZE = 30;
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
+    private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
     private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
     private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
@@ -850,7 +851,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
                 if (commandPaletteOpen && !changedContext &&
-                        (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus))) {
+                        (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus)
+                         || TARGET_TOGGLE_NODE.equals(focus))) {
                     // A screen update must not steal focus from an open command drawer.
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
@@ -875,7 +877,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             ? remembered : next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (next.find(focus) == null && !gestureGuideOpen
-                        && !(commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus))
+                        && !(commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                                || TARGET_TOGGLE_NODE.equals(focus)))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
                     // Changing a surroundings page always focuses its native
@@ -2141,6 +2144,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     result.add(node);
                 }
             }
+            if ("targeting".equals(snapshot.category) &&
+                    snapshot.find("target:fire-direction:0") != null) {
+                // Preserve the former long-press toggle, now first accessible
+                // as an action alongside the final gesture-help item.
+                result.add(ReaderSnapshot.Node.localCommand(TARGET_TOGGLE_NODE,
+                        activity.getString(targetingOriginalControls
+                                ? R.string.a11yTargetDirections
+                                : R.string.a11yTargetOriginalControls)));
+            }
             // Always the final action. No native node or saved binding
             // can replace this local-only, read-only help entry.
             result.add(ReaderSnapshot.Node.gestureGuide(
@@ -2353,15 +2365,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (snapshot != null && "targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
-            targetingOriginalControls = !targetingOriginalControls;
-            focus = targetingOriginalControls ? "target:cursor" : "target:fire-direction:0";
-            readerLayerParent = "";
-            root.cancelGesture();
-            render();
-            ReaderSnapshot.Node selected = snapshot.find(focus);
-            feedback(activity.getString(targetingOriginalControls
-                    ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections)
-                    + (selected == null ? "" : ". " + nodeText(selected, false)));
+            // Former hold-to-toggle is retained as the first local action;
+            // gesture help is added after the original actions.
+            openGlobalContextActions();
             return;
         }
         if (travelState() != 0) {
@@ -2559,6 +2565,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             option.setOnClickListener(view -> {
                 if (!commandPaletteOpen || snapshot == null ||
                         (!GESTURE_GUIDE_NODE.equals(command.id)
+                         && !TARGET_TOGGLE_NODE.equals(command.id)
                          && snapshot.find(command.id) == null)) {
                     return;
                 }
@@ -2961,7 +2968,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         // Command focus changes are local: native command scopes do not
         // handle focus intents and would report unsupported for every swipe.
-        if (!GESTURE_GUIDE_NODE.equals(focus) &&
+        if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus) &&
                 !isAuxiliaryCommand(filtered.get(selected))) {
             send("focus", "");
         }
@@ -3950,6 +3957,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openGestureGuide();
             return;
         }
+        if (commandPaletteOpen && TARGET_TOGGLE_NODE.equals(focus)) {
+            commandPaletteOpen = false;
+            targetingOriginalControls = !targetingOriginalControls;
+            focus = targetingOriginalControls ? "target:cursor" : "target:fire-direction:0";
+            readerLayerParent = "";
+            root.cancelGesture();
+            render();
+            feedback(activity.getString(targetingOriginalControls
+                    ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections));
+            return;
+        }
         // World double tap becomes Pause/Resume only when Drive is active.
         if (vehicleMode && directWorldGesturesEnabled()) {
             requestVehicleAction("reader:vehicle:pause");
@@ -4695,8 +4713,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(gestureGuideSpeech());
             return;
         }
-        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
-            feedback(activity.getString(R.string.a11yGestureGuideTitle));
+        if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                || TARGET_TOGGLE_NODE.equals(focus))) {
+            feedback(GESTURE_GUIDE_NODE.equals(focus)
+                    ? activity.getString(R.string.a11yGestureGuideTitle)
+                    : activity.getString(targetingOriginalControls
+                            ? R.string.a11yTargetDirections : R.string.a11yTargetOriginalControls));
             return;
         }
         if (snapshot != null && "surroundings".equals(snapshot.category)
@@ -4845,7 +4867,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     @Override
     public void detail() {
         if (gestureGuideOpen) { readCurrent(); return; }
-        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
+        if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                || TARGET_TOGGLE_NODE.equals(focus))) {
             readCurrent();
             return;
         }
