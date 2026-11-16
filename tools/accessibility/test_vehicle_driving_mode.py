@@ -81,11 +81,17 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('requestVehicleAction("reader:vehicle:heading:right")',
                       CTRL)
         self.assertIn("a11y_steering_nudge = 3;", ENGINE)
+        # The autonomous-travel guard above has its own swipe cases that
+        # only disable input, so scope the gesture lookups to the manual
+        # vehicle-mode switch.
+        vehicle = CTRL.split(
+            "// The native game still handles acceleration, direction and", 1
+        )[1]
         for gesture, node in (
             ("swipe_up", "forward"), ("swipe_down", "reverse"),
             ("swipe_up_down", "faster"), ("swipe_down_up", "slower")
         ):
-            drive = CTRL.split('case "' + gesture + '":', 1)[1].split(
+            drive = vehicle.split('case "' + gesture + '":', 1)[1].split(
                 "return true;", 1
             )[0]
             self.assertIn('requestVehicleAction("reader:vehicle:' + node + '")',
@@ -160,7 +166,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("!car.a11y_manual_drive && saved_speed != 0", ENGINE)
 
     def test_manual_mode_warns_without_applying_sensor_brakes(self):
-        self.assertIn("if( a11y_manual_drive ) {", VEH)
+        self.assertIn("if( a11y_manual_drive && !is_autodriving ) {", VEH)
         sensor = VEH.split("// Manual mode reports hazards", 1)[1].split(
             "} else {\n                // Automatic mode alone", 1
         )[0]
@@ -268,18 +274,27 @@ class AccessibleVehicleContracts(unittest.TestCase):
             SURF.index("listener.scanDirection("))
         self.assertIn("scanDirection(horizontal, vertical);", CTRL)
         self.assertIn('"reader:scan:vehicle:" + relative', CTRL)
-        self.assertIn("octants[( facing + offset ) % 8]", ENGINE)
+        # The octant math moved into announce_vehicle_relative_scan in the
+        # world file; the handler dispatches every side through one generic
+        # branch (prefix check + announce_vehicle_relative_scan).
+        self.assertIn("octants[( facing + offset ) % 8]", WORLD)
+        self.assertIn("a11y::announce_vehicle_relative_scan(", ENGINE)
+        self.assertIn('intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0', ENGINE)
         self.assertIn("std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1", WORLD)
         for side in ("front", "back", "left", "right"):
-            self.assertIn('reader:scan:vehicle:' + side, ENGINE)
             self.assertIn('reader:scan:vehicle:' + side, WORLD)
+        # Same autonomous-guard shadowing as the swipe test above: scope
+        # the gesture lookups to the manual vehicle-mode switch.
+        vehicle = CTRL.split(
+            "// The native game still handles acceleration, direction and", 1
+        )[1]
         for gesture, action in (
             ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),
             ("swipe_down_right", 'speakVehicleDocument("reader:vehicle:summary")'),
             ("swipe_up_left", 'requestVehicleAction("reader:vehicle:brake")'),
             ("swipe_right_down", 'requestVehicleAction("reader:vehicle:horn")'),
         ):
-            segment = CTRL.split('case "' + gesture + '":', 1)[1].split(
+            segment = vehicle.split('case "' + gesture + '":', 1)[1].split(
                 "return true;", 1
             )[0]
             self.assertIn(action, segment)

@@ -75,11 +75,15 @@ class WorldGestureContracts(unittest.TestCase):
             self.assertIn('"reader:scan:' + direction + '"', controller)
             self.assertIn('"Scan 30 tiles ' + direction + '"', world)
             self.assertIn('intent.node == "reader:scan:' + direction + '"', handler)
+        # The handler dispatches every side through one generic branch, so
+        # the side literals live in the world snapshot; the octant math
+        # lives in announce_vehicle_relative_scan in the world file.
+        self.assertIn('intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0', handler)
+        self.assertIn("a11y::announce_vehicle_relative_scan(", handler)
         for direction in ("front", "back", "left", "right"):
             self.assertIn('"reader:scan:vehicle:' + direction + '"', world)
-            self.assertIn('reader:scan:vehicle:' + direction, handler)
         self.assertIn("scanDirection(horizontal, vertical);", controller)
-        self.assertIn("octants[( facing + offset ) % 8]", handler)
+        self.assertIn("octants[( facing + offset ) % 8]", world)
 
     def test_sparse_scan_has_vietnamese_empty_message(self):
         vi = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
