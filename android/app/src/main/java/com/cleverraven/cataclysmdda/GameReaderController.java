@@ -2120,6 +2120,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         cancel.setSelected(POCKET_CANCEL_NODE.equals(focus));
         cancel.setOnClickListener(v -> cancelPocketPicker());
         rows.addView(cancel);
+        if (pocketStage != 1) {
+            renderGuideButton();
+        }
     }
 
     private void openGlobalContextActions() {
@@ -2474,6 +2477,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
+    private void renderGuideButton() {
+        // Native text fields and other widgets may consume the long hold.
+        // An explicit final action makes help available with TalkBack too.
+        Button guide = new Button(activity);
+        guide.setText(R.string.a11yGestureGuideTitle);
+        guide.setOnClickListener(view -> openGestureGuide());
+        rows.addView(guide);
+    }
+
     private void renderGestureGuide() {
         TextView heading = new TextView(activity);
         heading.setText(R.string.a11yGestureGuideTitle);
@@ -2735,6 +2747,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             });
             rows.addView(button);
         }
+        renderGuideButton();
     }
 
     private void render() {
@@ -2766,12 +2779,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 button.setOnClickListener(v -> submitDebugResponse(action));
                 rows.addView(button);
             }
+            renderGuideButton();
             return;
         }
         // Native text entry is still needed for character names and game fields.
         if (editor != null) {
             root.setBackgroundColor(0xff161616);
             rows.addView(editor.getView());
+            renderGuideButton();
         } else if (comprehensiveMenu) {
             root.setBackgroundColor(0xff161616);
             renderHub();
