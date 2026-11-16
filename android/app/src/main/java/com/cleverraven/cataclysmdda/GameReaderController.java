@@ -3618,20 +3618,27 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             CataclysmDDA.nativeCancelPendingWorldSteps();
             clearPendingWorldDirection();
             root.cancelGesture();
-            if (vehicleMode && nextMode != 2 && vehicleDriverReady()) {
-                requestVehicleAction("reader:vehicle:brake");
+            if (vehicleMode && nextMode != 2) {
+                // Do not only brake on Android: native must release the
+                // driver's controls AFTER momentum has fallen to zero.
+                vehicleReleasePending = vehicleDriverReady();
+                if (vehicleReleasePending) {
+                    requestLiveWorldCommand("reader:vehicle:release");
+                }
+            } else if (nextMode == 2) {
+                // Native entry performs the normal control/ignition checks.
+                // It also cancels any pending native release if Drive is
+                // reselected before the car finishes stopping.
+                vehicleReleasePending = false;
+                requestLiveWorldCommand("reader:vehicle:begin");
             }
             combatMode = nextMode == 1;
             vehicleMode = nextMode == 2;
-            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
-            if (nextMode == 2 && !vehicleDriverReady()) {
-                // An occupied seat is not proof of driver control.
-                feedback(activity.getString(R.string.a11yDriveNeedsControl));
-            } else {
-                feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
-                        : nextMode == 1 ? R.string.a11yCombatOn
-                        : R.string.a11yDrivingMode));
-            }
+            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode
+                    + " releasing=" + vehicleReleasePending);
+            feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
+                    : nextMode == 1 ? R.string.a11yCombatOn
+                    : R.string.a11yDrivingMode));
             return;
         }
         vehicleMode = false;
