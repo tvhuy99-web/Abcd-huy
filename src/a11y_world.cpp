@@ -1765,7 +1765,13 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         std::string label;
         if( other ) {
             label = other->vehicle().name;
-        } else if( here.impassable_ter_furn( tile ) ) {
+        } else if( here.impassable_ter_furn( tile ) ||
+                   // A low shrub may be walkable but the car still hits it.
+                   // Follow the native autodrive collision classification,
+                   // not the avatar's ordinary passability check.
+                   ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
+                   ( here.ter( tile ).obj().is_smashable() &&
+                     !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
             label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
         } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
             if( creature != &get_avatar() ) {
