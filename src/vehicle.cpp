@@ -750,8 +750,14 @@ std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &r
     std::vector<point_abs_ms> front_row = line_to( here->get_abs( tripoint_bub_ms{top_left_actual.x(), top_left_actual.y(), here->get_abs_sub().z()} ).xy(),
                                           here->get_abs( tripoint_bub_ms{ top_right_actual.x(), top_right_actual.y(), here->get_abs_sub().z()} ).xy() );
     for( const point_abs_ms &elem : front_row ) {
+        // tileray::advance() is cumulative. Advancing by i each time
+        // sampled triangular offsets (0, 1, 3, 6, ...) and missed
+        // obstacles between them, including brush close to a moving car.
+        collision_vector.clear_advance();
         for( int i = 0; i < distance_to_check; ++i ) {
-            collision_vector.advance( i );
+            if( i != 0 ) {
+                collision_vector.advance( 1 );
+            }
             point_abs_ms point_to_add = elem + point( collision_vector.dx(), collision_vector.dy() );
             points_to_check.emplace( point_to_add );
         }
