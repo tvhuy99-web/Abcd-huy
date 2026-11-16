@@ -735,6 +735,22 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             controls.enabled = local_driver;
             controls.actions = { "focus" };
             result.nodes.push_back( std::move( controls ) );
+            // Available before native driver control is taken. Android uses
+            // this when switching modes; normal passenger restrictions remain.
+            result.nodes.push_back( button( "reader:vehicle:begin",
+                                            _( "Take vehicle controls" ), "" ) );
+            if( local_driver ) {
+                result.nodes.push_back( button( "reader:vehicle:release",
+                                                _( "Stop and release controls" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:front",
+                                                _( "Scan 16 tiles ahead of the vehicle" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:back",
+                                                _( "Scan 16 tiles behind the vehicle" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:left",
+                                                _( "Scan 16 tiles to the vehicle's left" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:right",
+                                                _( "Scan 16 tiles to the vehicle's right" ), "" ) );
+            }
 
             const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
             // Respect the selected vehicle-speed units, but spell out the
@@ -1728,7 +1744,10 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
 
 void announce_linear_scan( const point &delta )
 {
-    if( std::abs( delta.x ) + std::abs( delta.y ) != 1 ) {
+    // A vehicle-facing scan may run along a diagonal, too. Every scan
+    // still reads exactly sixteen native map tiles without moving.
+    if( ( delta.x == 0 && delta.y == 0 ) ||
+        std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1 ) {
         return;
     }
     map &here = get_map();
