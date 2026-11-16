@@ -262,4 +262,9 @@
     <string name="a11yGuidePlayerInfo">Đọc thông tin nhân vật</string>
     <string name="a11yGuideHelpReadOnly">Chạm hai lần chỉ đọc lại hướng dẫn, không thực hiện lệnh</string>
     <string name="a11yGuideTravelStatus">Đọc trạng thái hành trình</string>
+    <string name="a11yGuideTripleTap">Chạm ba lần một ngón</string>
+    <string name="a11yGuideOpenHub">Mở Menu tổng hợp</string>
+    <string name="a11yGuideCoordinates">Đọc tọa độ</string>
+    <string name="a11yGuideCombatEnemy">Đọc thông tin kẻ địch</string>
+    <string name="a11yGuideDrivePause">Tạm dừng hoặc tiếp tục lái</string>
 </resources>
