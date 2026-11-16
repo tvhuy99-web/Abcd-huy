@@ -728,6 +728,109 @@ void vehicle::turn( units::angle deg )
     turn_dir = round_to_multiple_of( turn_dir, vehicles::steer_increment );
 }
 
+bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps )
+{
+    // A stationary accessibility pivot is an explicit alternative to native
+    // steering. Never pretend a stopped vehicle has rotated just because the
+    // target steering angle changed. Both Manual and Automatic use this path.
+    if( steering_steps == 0 ) {
+        return true;
+    }
+    if( velocity != 0 ) {
+        add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
+        return false;
+    }
+    if( skidding || is_on_ramp || is_rotorcraft( here ) || is_towed() || is_towing() ) {
+        add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
+        return false;
+    }
+    const float steering = steering_effectiveness( here );
+    if( steering == -2.0f ) {
+        add_msg( m_warning,
+                 _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
+        return false;
+    }
+    if( steering < 0.0f ) {
+        add_msg( m_warning,
+                 _( "This vehicle has no steering system installed, you can't turn it." ) );
+        return false;
+    }
+    if( steering == 0.0f || !valid_wheel_config( here ) ) {
+        add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
+        return false;
+    }
+
+    const point_rel_ms pivot = pivot_point( here );
+    const tripoint_bub_ms origin = pos_bub( here );
+    const int sign = steering_steps > 0 ? 1 : -1;
+    const int count = std::min( std::abs( steering_steps ), 12 );
+    // Check every intermediate 15-degree footprint, not just the final
+    // position. Large vehicles must not rotate through walls, bushes,
+    // other vehicles or independent creatures.
+    for( int step = 1; step <= count; ++step ) {
+        const units::angle heading =
+            normalize( face.dir() + vehicles::steer_increment * sign * step );
+        for( int index = 0; index < part_count(); ++index ) {
+            const vehicle_part &part = parts[index];
+            if( part.removed || part.is_fake ||
+                part.info().location != vpart_location_structure ) {
+                continue;
+            }
+            tripoint_rel_ms offset;
+            coord_translate( heading, pivot, part.mount, offset );
+            offset.z() = part.precalc[0].z();
+            const tripoint_bub_ms tile = origin + offset;
+            if( !here.inbounds( tile ) ) {
+                add_msg( m_warning, _( "Cannot turn in place: unloaded map boundary." ) );
+                return false;
+            }
+            const optional_vpart_position occupying = here.veh_at( tile );
+            if( occupying && &occupying->vehicle() == this ) {
+                continue; // Already occupied by our own body.
+            }
+            if( occupying ) {
+                add_msg( m_warning, _( "Cannot turn in place: another vehicle is in the way." ) );
+                return false;
+            }
+            if( here.impassable_ter_furn( tile ) ||
+                ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
+                ( here.ter( tile ).obj().is_smashable() &&
+                  !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
+                add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
+                         here.name( tile ) );
+                return false;
+            }
+            const Creature *creature = get_creature_tracker().creature_at( tile, true );
+            if( creature && creature != &get_avatar() ) {
+                add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
+                         creature->disp_name() );
+                return false;
+            }
+        }
+    }
+
+    const units::angle target = normalize(
+        face.dir() + vehicles::steer_increment * sign * count );
+    precalc_mounts( 1, target, pivot );
+    // map::displace_vehicle handles riders, vehicle caches and map geometry;
+    // unlike map::move_vehicle it also permits a zero-tile displacement.
+    // Collisions have already been checked on the complete swept footprint.
+    if( !here.displace_vehicle( *this, tripoint_rel_ms::zero ) ) {
+        precalc_mounts( 1, face.dir(), pivot );
+        add_msg( m_warning, _( "Cannot turn in place: vehicle position could not be updated." ) );
+        return false;
+    }
+    face.init( target );
+    move.init( target );
+    turn_dir = target;
+    last_turn = 0_degrees;
+    a11y_obstacle_override = false;
+    a11y_override_obstacle_name.clear();
+    a11y_obstacle_stop = false;
+    a11y_brake_alerted = false;
+    return true;
+}
+
 void vehicle::stop( map &here )
 {
     velocity = 0;
