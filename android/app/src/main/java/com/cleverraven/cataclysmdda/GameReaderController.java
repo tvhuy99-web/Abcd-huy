@@ -152,6 +152,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
     private boolean vehicleMode;
+    // Map gestures stay locked until the native driver has actually let go.
+    private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
     private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
@@ -739,6 +741,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     vehicleMode = false;
                     pendingVehicleHeadingReport = false;
                     pendingVehicleSpeedReport = false;
+                }
+                if ("DEFAULTMODE".equals(next.category) &&
+                        (next.find("reader:vehicle:seat") == null ||
+                         next.find("reader:vehicle:driver") == null ||
+                         !next.find("reader:vehicle:driver").enabled)) {
+                    vehicleReleasePending = false;
                 }
                 if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleSpeedReport = false;
@@ -3229,6 +3237,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Two-finger combat moves pass through the same native walking
         // gate, with the normal activity, vehicle and travel safety checks.
         return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
+                && !vehicleReleasePending && !vehicleDriverReady()
                 && hasCardinalDirections(snapshot);
     }
 
@@ -3236,7 +3245,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean worldMovementEnabled() {
         // One finger attacks during combat; two fingers move. Outside
         // combat, the original one-finger map movement is unchanged.
-        return !combatMode && worldStepAllowed();
+        return !combatMode && !vehicleMode && worldStepAllowed();
     }
 
     private static boolean hasCardinalDirections(ReaderSnapshot snapshot) {
