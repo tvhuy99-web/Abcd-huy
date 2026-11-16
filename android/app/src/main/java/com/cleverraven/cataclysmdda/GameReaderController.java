@@ -924,6 +924,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && !focus.startsWith("target:fire-direction:")) {
                     focus = "target:fire-direction:0";
                 }
+                // Start on the first real character fact rather than a tab
+                // that contains no information in the flattened reader list.
+                if ("player_display".equals(next.category) && !commandPaletteOpen) {
+                    List<ReaderSnapshot.Node> readable = visibleNodes();
+                    if (!readable.isEmpty()) {
+                        boolean focusVisible = false;
+                        for (ReaderSnapshot.Node candidate : readable) {
+                            if (candidate.id.equals(focus)) {
+                                focusVisible = true;
+                                break;
+                            }
+                        }
+                        if (!focusVisible) { focus = readable.get(0).id; }
+                    }
+                }
                 ReaderSnapshot.Node currentFocus = next.find(focus);
                 if (currentFocus != null && !currentFocus.parentId.equals(readerLayerParent)) {
                     // The engine may open a new tree branch directly, or
@@ -1067,6 +1082,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     // of entries once, not the first item's name. Horizontal
                     // browsing speaks entries with direction and distance.
                     feedback((enteredMenu ? next.title + ". " : "") + next.summary);
+                } else if (enteredMenu && "player_display".equals(next.category)
+                        && next.find(focus) != null) {
+                    // Speak the first real character fact in full on entry.
+                    readCurrent();
                 } else if (enteredMenu && next.find(focus) != null) {
                     // Yes/No questions carry their own text. Speak it once
                     // on entering the modal, then only the actual choice
@@ -1401,6 +1420,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Speak positions within the correct axis: main items horizontally,
         // pocket entries vertically inside the selected top-level item.
         boolean inventoryPositions = flattenedInventoryBrowse();
+        boolean characterDetailPositions = snapshot != null
+                && "player_display".equals(snapshot.category);
         if (inventoryPositions && isFlattenedPocketEntry(node)) {
             ReaderSnapshot.Node root = inventoryRootItem(node);
             if (root != null) {
@@ -1413,7 +1434,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                 }
             }
-        } else if ((spokenPosition <= 0 || spokenTotal <= 0 || inventoryPositions)
+        } else if ((spokenPosition <= 0 || spokenTotal <= 0
+                || inventoryPositions || characterDetailPositions)
                 && snapshot != null
                 && !"DEFAULTMODE".equals(snapshot.category)) {
             List<ReaderSnapshot.Node> siblings = visibleNodes();
@@ -2323,6 +2345,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // an empty/early snapshot. Native adapters publish an explicit
             // empty-state item; auxiliary commands stay behind long press.
             result.clear();
+        }
+        if ("player_display".equals(snapshot.category)) {
+            // All character facts exist as independent documents and rows.
+            // The tab selectors and skill-group headings provide no new
+            // facts or useful actions in this flattened reader list.
+            // Keep the original native tabs and context commands intact.
+            result.removeIf(node -> "tab".equals(node.role)
+                    || node.id.startsWith("pd:skill:category:")
+                    || ("status".equals(node.role)
+                        && node.value.trim().isEmpty()
+                        && node.detail.trim().isEmpty()
+                        && node.cells.isEmpty()
+                        && !node.actions.contains("activate")));
         }
         return result;
     }
@@ -4594,6 +4629,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 feedback(lastLoadingStatus.isEmpty()
                         ? activity.getString(R.string.a11yReaderWaiting)
                         : activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
+            }
+            return;
+        }
+        if (snapshot != null && "player_display".equals(snapshot.category)
+                && !commandPaletteOpen) {
+            // One swipe reads the entire character fact. Focus-priority
+            // speech chunks long text and cancels it on the next swipe.
+            String full = nodeText(node, true);
+            if (usesTouchExploration()) {
+                announceAccessibility(full);
+            } else {
+                speech.focus(node.id, full);
             }
             return;
         }

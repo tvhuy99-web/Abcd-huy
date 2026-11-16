@@ -1553,7 +1553,8 @@ a11y::semantic_snapshot player_display_reader_snapshot(
     const std::vector<std::pair<std::string, std::string>> &effect_name_and_text,
     const std::vector<speedlist_entry> &speedlist, const int move_cost,
     const std::vector<HeaderSkill> &skillslist,
-    const std::vector<trait_and_var> &traitslist )
+    const std::vector<trait_and_var> &traitslist,
+    const std::vector<bionic_grouping> &bionicslist )
 {
     a11y::semantic_snapshot snapshot = a11y::command_snapshot( ctxt, _( "Character status" ) );
     static const std::vector<std::pair<player_display_tab, translation>> tabs = {
@@ -1687,6 +1688,37 @@ a11y::semantic_snapshot player_display_reader_snapshot(
         node.detail = string_format( _( "Encumbrance %1$s. Temperature: %2$s" ), encumb, temp );
         node.position = i + 1;
         node.total = bps.size();
+        snapshot.nodes.push_back( std::move( node ) );
+    }
+    // The native Bionics tab already presents power and installed bionic
+    // descriptions, but the reader previously published only an empty tab.
+    // Keep these real character facts in the flat readable list.
+    int power_amount;
+    std::string power_unit;
+    if( you.get_power_level() < 1_J ) {
+        power_amount = units::to_millijoule( you.get_power_level() );
+        power_unit = pgettext( "energy unit: millijoule", "mJ" );
+    } else if( you.get_power_level() < 1_kJ ) {
+        power_amount = units::to_joule( you.get_power_level() );
+        power_unit = pgettext( "energy unit: joule", "J" );
+    } else {
+        power_amount = units::to_kilojoule( you.get_power_level() );
+        power_unit = pgettext( "energy unit: kilojoule", "kJ" );
+    }
+    a11y::append_document( snapshot, "pd:bionic:power", _( "Bionic power" ),
+                           string_format( _( "Power: %1$d %2$s / %3$d kJ" ),
+                                          power_amount, power_unit,
+                                          units::to_kilojoule( you.get_max_power_level() ) ) );
+    for( std::size_t i = 0; i < bionicslist.size(); ++i ) {
+        const bionic_grouping &bio = bionicslist[i];
+        a11y::semantic_node node;
+        node.id = "pd:bionic:" + std::to_string( i );
+        node.role = "listitem";
+        node.label = bio.name.translated( bio.installed_count );
+        if( bio.installed_count > 1 ) {
+            node.value = string_format( _( "Installed: %d" ), bio.installed_count );
+        }
+        node.detail = remove_color_tags( bio.description.translated() );
         snapshot.nodes.push_back( std::move( node ) );
     }
     // Skills (R19.1). draw_skills_tab prints, per skill row, the name,
@@ -2395,7 +2427,8 @@ void Character::disp_info( bool customize_character )
     do {
         if( a11y::enabled() ) {
             reader.update( player_display_reader_snapshot( ctxt, *this, curtab, line,
-                           effect_name_and_text, speedlist, move_cost, skillslist, traitslist ) );
+                           effect_name_and_text, speedlist, move_cost, skillslist, traitslist,
+                           bionicslist ) );
         }
         ui_manager::redraw_invalidated();
 
