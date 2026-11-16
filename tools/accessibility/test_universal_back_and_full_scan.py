@@ -54,7 +54,10 @@ class UniversalBackAndScanContracts(unittest.TestCase):
         self.assertIn("scan_unrestricted_tile( pos )", world)
         self.assertIn("a11y::scan_unrestricted_tile( position )", nearby)
         self.assertIn("spoken_item_name( obj )", world)
-        self.assertIn('_( "Items:" )', world)
+        scan = world.split("void announce_linear_scan(", 1)[1]
+        self.assertIn("for( const std::string &name : tile.items )", scan)
+        self.assertIn("if( details.empty() )", scan)
+        self.assertNotIn('_( "Items:" )', scan)
         self.assertIn("!tile.furniture.empty()", nearby)
         self.assertIn("noteworthy_nearby_feature( terrain, position )", nearby)
         self.assertNotIn("noteworthy_nearby_feature( furniture, position )",
