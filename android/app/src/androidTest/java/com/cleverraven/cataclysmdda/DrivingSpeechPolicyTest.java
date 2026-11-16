@@ -35,6 +35,14 @@ public final class DrivingSpeechPolicyTest {
         assertTrue(GameReaderController.allowedDuringDriving("A11Y_COMBAT_ALERT:danger", 1));
     }
 
+    @Test public void onlyConfirmedEngineChangesAreAnnounced() {
+        assertFalse(GameReaderController.confirmedEngineTransition("", "", "car", "running"));
+        assertFalse(GameReaderController.confirmedEngineTransition("car", "running", "car", "running"));
+        assertFalse(GameReaderController.confirmedEngineTransition("old car", "stopped", "new car", "running"));
+        assertTrue(GameReaderController.confirmedEngineTransition("car", "stopped", "car", "running"));
+        assertTrue(GameReaderController.confirmedEngineTransition("car", "running", "car", "stopped"));
+    }
+
     @Test public void invalidMessagesCannotBypassFilter() {
         assertFalse(GameReaderController.allowedDuringDriving(null, 1));
         assertFalse(GameReaderController.allowedDuringDriving("", 1));

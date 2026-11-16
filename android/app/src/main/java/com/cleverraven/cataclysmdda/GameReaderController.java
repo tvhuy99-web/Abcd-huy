@@ -102,6 +102,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 || message.startsWith(COMBAT_ALERT_PREFIX);
     }
 
+    static boolean confirmedEngineTransition(String oldVehicle, String oldState,
+            String vehicle, String state) {
+        return oldVehicle != null && vehicle != null
+                && !oldVehicle.isEmpty() && oldVehicle.equals(vehicle)
+                && oldState != null && state != null
+                && !oldState.isEmpty() && !state.isEmpty()
+                && !oldState.equals(state);
+    }
+
     // Do not repeat a menu title already contained in its first item.
     // Preserve position, current value and disabled reason as originally read.
     static String menuEntrySpeech(String introduction, String entry) {
@@ -191,6 +200,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Map gestures stay locked until the native driver has actually let go.
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
+    // Preserve the last real engine state across transient ignition/activity
+    // screens. Compare only snapshots belonging to the same vehicle.
+    private String observedEngineVehicle = "";
+    private String observedEngineState = "";
     private String commandPaletteReturnFocus = "";
     private String commandPaletteReturnParent = "";
     private String readerLayerParent = "";
@@ -845,23 +858,26 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         });
                     }
                 }
-                // The engine state comes from native vehicle physics, not
-                // from the button label. Announce only actual ON/OFF changes
-                // (including an engine stopping by itself), never a failed
-                // or still-pending ignition request as a success.
-                if (previousSnapshot != null && !changedContext
-                        && (vehicleMode || autonomousDriveTravelActive())
+                // Actual engine state survives transient ignition/activity
+                // screens. An ignition may take multiple turns, so comparing
+                // only adjacent world snapshots would miss its success.
+                if ((vehicleMode || autonomousDriveTravelActive())
                         && ("DEFAULTMODE".equals(next.category)
                             || "activity".equals(next.category))) {
-                    ReaderSnapshot.Node beforeEngine =
-                            previousSnapshot.find("reader:vehicle:engine-state");
-                    ReaderSnapshot.Node afterEngine =
-                            next.find("reader:vehicle:engine-state");
-                    if (beforeEngine != null && afterEngine != null
-                            && !beforeEngine.value.equals(afterEngine.value)
-                            && !afterEngine.detail.trim().isEmpty()) {
-                        announceGameMessage(DRIVE_FEEDBACK_PREFIX + afterEngine.detail, 1, true);
+                    ReaderSnapshot.Node vehicleSeat = next.find("reader:vehicle:seat");
+                    ReaderSnapshot.Node engineState = next.find("reader:vehicle:engine-state");
+                    if (vehicleSeat != null && engineState != null) {
+                        if (confirmedEngineTransition(observedEngineVehicle,
+                                observedEngineState, vehicleSeat.value, engineState.value)
+                                && !engineState.detail.trim().isEmpty()) {
+                            announceGameMessage(DRIVE_FEEDBACK_PREFIX + engineState.detail, 1, true);
+                        }
+                        observedEngineVehicle = vehicleSeat.value;
+                        observedEngineState = engineState.value;
                     }
+                } else if ("DEFAULTMODE".equals(next.category)) {
+                    observedEngineVehicle = "";
+                    observedEngineState = "";
                 }
                 if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleHeadingReport = false;
@@ -4134,6 +4150,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             combatMode = nextMode == 1;
             vehicleMode = nextMode == 2;
+            if (!vehicleMode) {
+                observedEngineVehicle = "";
+                observedEngineState = "";
+            }
             SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode
                     + " releasing=" + vehicleReleasePending);
             // Never announce that Map is ready while native brakes are
@@ -4146,6 +4166,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         vehicleMode = false;
+        observedEngineVehicle = "";
+        observedEngineState = "";
         if (!combatMode && !snapshot.swipeMovementAllowed) {
             feedback(activity.getString(R.string.a11yCombatUnavailable));
             return;
@@ -5649,6 +5671,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readerOffAfterAnnouncement = false;
         combatMode = false;
         vehicleMode = false;
+        observedEngineVehicle = "";
+        observedEngineState = "";
         vehicleReleasePending = false;
         autonomousDriveTrip = false;
         autonomousDriveCancelRequested = false;
