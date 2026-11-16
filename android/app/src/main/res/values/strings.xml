@@ -261,4 +261,5 @@
     <string name="a11yGuideRecentMessages">Read recent game messages</string>
     <string name="a11yGuidePlayerInfo">Read player information</string>
     <string name="a11yGuideHelpReadOnly">Double tap only repeats the instruction; it never performs an action</string>
+    <string name="a11yGuideTravelStatus">Read travel status</string>
 </resources>
