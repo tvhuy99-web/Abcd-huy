@@ -4486,6 +4486,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             });
             rows.addView(next);
         }
+        if (binding || choosingHubAction) {
+            // The gesture assignment/favorite picker itself is also a
+            // screen. Its existing choices stay unchanged, help goes last.
+            renderGuideButton();
+        }
     }
 
     /** Opening the menu starts at Favorites; Search is the last root entry. */
