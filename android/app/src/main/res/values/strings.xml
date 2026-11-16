@@ -297,4 +297,5 @@
     <string name="a11yGuideChoosePocketItem">Select an item or its quantity</string>
     <string name="a11yGuideConfirmPocket">Confirm selected pocket items</string>
     <string name="a11yGuideOpenHelp">Open the gesture guide</string>
+    <string name="a11yAutoDriveCancelToMap">Automatic drive canceled. Returning to Map.</string>
 </resources>
