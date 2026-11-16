@@ -290,4 +290,10 @@
     <string name="a11yGuideAcceptYes">Xác nhận Có</string>
     <string name="a11yGuideCraftConfirm">Xác nhận chế tạo khi khả dụng</string>
     <string name="a11yGuideConfirmSelection">Xác nhận mục hoặc lệnh đang chọn nếu khả dụng</string>
+    <string name="a11yGuideBrowseParagraph">Đọc đoạn văn trước hoặc tiếp theo</string>
+    <string name="a11yGuideReadDocument">Đọc lại tài liệu</string>
+    <string name="a11yGuideChoosePocketAction">Chọn thao tác với túi chứa</string>
+    <string name="a11yGuidePickPocket">Mở túi chứa đang chọn</string>
+    <string name="a11yGuideChoosePocketItem">Chọn vật phẩm hoặc số lượng</string>
+    <string name="a11yGuideConfirmPocket">Xác nhận các vật phẩm đã chọn trong túi</string>
 </resources>
