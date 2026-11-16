@@ -49,8 +49,6 @@ semantic_snapshot world_snapshot( const input_context &context, int scan_radius,
 semantic_snapshot activity_snapshot( const input_context &context );
 // Unrestricted, read-only noteworthy scan of up to 30 tiles. Never moves the avatar or advances time.
 void announce_linear_scan( const point &delta );
-// Scan by the vehicle's physical heading during either native input scope.
-void announce_vehicle_relative_scan( const std::string &relative );
 // Vehicle-heading-relative read-only scan shared by world and autonomous
 // activity. Never changes steering, speed, or consumes a game turn.
 void announce_vehicle_relative_scan( const std::string &relative );
