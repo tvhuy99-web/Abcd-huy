@@ -42,11 +42,11 @@ public final class ReaderGestureGuideTest {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         ReaderSnapshot world = screen("DEFAULTMODE");
         List<String> map = ReaderGestureGuide.entries(c, world, false, false,
-                false, false, null);
+                false, false, false, false, null);
         List<String> combat = ReaderGestureGuide.entries(c, world, false, true,
-                false, false, null);
+                false, false, false, false, null);
         List<String> drive = ReaderGestureGuide.entries(c, world, true, false,
-                false, false, null);
+                false, false, false, false, null);
         assertTrue(mentions(map, c.getString(R.string.a11yGuideScanNorth)));
         assertFalse(mentions(map, c.getString(R.string.a11yGuideScanFront)));
         assertTrue(mentions(drive, c.getString(R.string.a11yGuideScanFront)));
@@ -61,11 +61,11 @@ public final class ReaderGestureGuideTest {
     public void inventoryCraftingAndFallbackAreFocusableRows() throws Exception {
         Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
         List<String> inventory = ReaderGestureGuide.entries(c, screen("inventory"),
-                false, false, false, false, null);
+                false, false, false, false, false, false, null);
         List<String> crafting = ReaderGestureGuide.entries(c, screen("crafting"),
-                false, false, false, false, null);
+                false, false, false, false, false, false, null);
         List<String> unknown = ReaderGestureGuide.entries(c, screen("future_screen"),
-                false, false, false, false, null);
+                false, false, false, false, false, false, null);
         assertTrue(mentions(inventory, c.getString(R.string.a11yGuideBrowsePockets)));
         assertTrue(mentions(crafting, c.getString(R.string.a11yGuideBrowseRecipes)));
         assertTrue(mentions(unknown, c.getString(R.string.a11yGuideActivate)));
