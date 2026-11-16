@@ -5,6 +5,9 @@ on:
   push:
     branches:
       - master
+      # Build this user-requested release candidate with the existing private
+      # signing process. Remove this branch allowance before merging the PR.
+      - fix/concise-vehicle-heading-speech
     paths:
       - '.github/workflows/android-accessibility-production.yml'
 
