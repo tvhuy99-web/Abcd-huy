@@ -28,7 +28,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
         default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
-        /** Drive mode: two fingers scan 16 tiles relative to the vehicle heading. */
+        /** Drive mode: two fingers scan 30 tiles relative to the vehicle heading. */
         default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
@@ -44,6 +44,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         default void confirm() { }
         /** Open advanced commands without changing the focused gameplay item. */
         default void openContextActions() { }
+        /** Read-only gesture help always uses simple focus navigation. */
+        default boolean gestureGuideActive() { return false; }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -805,6 +807,13 @@ public final class ReaderGestureSurface extends LinearLayout {
         swipeHandled = true;
         int horizontal = Math.abs(dx) >= Math.abs(dy) * 1.35f ? (dx > 0 ? 1 : -1) : 0;
         int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
+        if (listener.gestureGuideActive()) {
+            // Help is always navigable even if the underlying screen
+            // disabled its own configurable swipe-to-navigate action.
+            if (horizontal != 0) { listener.navigate(horizontal); }
+            else if (vertical != 0) { listener.navigate(vertical); }
+            return;
+        }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleCreatorCalendarSwipe(horizontal, vertical)) {
             return;
