@@ -838,31 +838,51 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                                   _( "No obstacle found along the checked reverse path." ) :
                                                   _( "No blocking obstacle detected along the checked forward path." ) );
             vehicle_detail += " " + road;
-            // Short heading response for steering gestures. Read the actual
-            // body direction and the selected steering target separately:
-            // selecting a new heading does not rotate a stationary car.
+            // A steering gesture must speak where the car is ACTUALLY facing.
+            // The selected steering target can differ until the next physics
+            // movement, so never announce it as the body's current heading.
+            // Keep the short compass name free of degrees or extra prompts.
             const auto spoken_heading = []( const units::angle &direction ) {
                 const int degrees = ( static_cast<int>( std::lround(
                                           to_degrees( direction + 90_degrees ) ) ) % 360 + 360 ) % 360;
-                std::string compass;
                 switch( ( ( degrees + 22 ) / 45 ) % 8 ) {
-                    case 0: compass = _( "north" ); break;
-                    case 1: compass = _( "northeast" ); break;
-                    case 2: compass = _( "east" ); break;
-                    case 3: compass = _( "southeast" ); break;
-                    case 4: compass = _( "south" ); break;
-                    case 5: compass = _( "southwest" ); break;
-                    case 6: compass = _( "west" ); break;
-                    case 7: compass = _( "northwest" ); break;
+                    case 0: return std::string( _( "north" ) );
+                    case 1: return std::string( _( "northeast" ) );
+                    case 2: return std::string( _( "east" ) );
+                    case 3: return std::string( _( "southeast" ) );
+                    case 4: return std::string( _( "south" ) );
+                    case 5: return std::string( _( "southwest" ) );
+                    case 6: return std::string( _( "west" ) );
+                    default: return std::string( _( "northwest" ) );
                 }
-                // Include precise degrees when the steering target is an
-                // intermediate 15-degree angle between compass directions.
-                return compass + " (" + std::to_string( degrees ) + "°)";
             };
-            const std::string heading_report =
-                string_format( _( "Direction: %s." ), spoken_heading( veh.face.dir() ) ) +
-                " " + string_format( _( "Requested heading: %s." ),
-                                     spoken_heading( veh.turn_dir ) );
+            std::string heading_report = spoken_heading( veh.face.dir() );
+            if( local_driver ) {
+                // Only add an explanation when the native vehicle state
+                // identifies a specific reason steering cannot take effect.
+                // Do not mistake an ordinary pending turn for a failed turn.
+                const float steering = veh.steering_effectiveness( get_map() );
+                if( veh.is_on_ramp ) {
+                    heading_report += ". " + std::string(
+                                          _( "You can't turn the vehicle while on a ramp." ) );
+                } else if( steering == -2.0f ) {
+                    heading_report += ". " + std::string(
+                                          _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
+                } else if( steering < 0.0f ) {
+                    heading_report += ". " + std::string(
+                                          _( "This vehicle has no steering system installed, you can't turn it." ) );
+                } else if( steering == 0.0f ) {
+                    heading_report += ". " + std::string( _( "The steering is completely broken!" ) );
+                } else if( veh.skidding ) {
+                    heading_report += ". " + std::string(
+                                          _( "Warning: vehicle is skidding; steering may not respond." ) );
+                } else if( veh.velocity == 0 && veh.turn_dir != veh.face.dir() ) {
+                    // The wheel was turned, but a stationary vehicle's body
+                    // cannot rotate until native movement physics advances.
+                    heading_report += ". " + std::string(
+                                          _( "Vehicle is stationary. Its heading will change when it moves." ) );
+                }
+            }
             result.nodes.push_back( document( "reader:vehicle:heading",
                                               _( "Direction" ), heading_report ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
