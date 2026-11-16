@@ -173,6 +173,41 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("player_vehicle->stop_autodriving( false );", ACTOR)
         self.assertIn("driver.is_avatar()", DRIVER)
 
+    def test_stopped_car_can_process_cancel_without_player_moves(self):
+        # The deadlock occurred because Character::process_activity()
+        # refuses to call ACT_AUTODRIVE with zero moves, while the Android
+        # buttons only post a JNI request. The blocking-input pump MUST
+        # process the request on the game thread even when out of moves.
+        world = read(SRC / "do_turn.cpp")
+        character = read(SRC / "character.cpp")
+        header = read(SRC / "a11y_android.h")
+        self.assertIn("while( get_moves() > 0 && activity )", character)
+        self.assertIn("bool travel_control_pending();", header)
+        self.assertIn("bool travel_control_pending()", BRIDGE)
+        self.assertIn("pending_travel_control.load(", BRIDGE)
+        self.assertIn("u.get_moves() <= 0 && u.activity", world)
+        self.assertIn("u.activity.id() == ACT_AUTODRIVE", world)
+        self.assertIn("a11y::android::travel_control_pending()", world)
+        self.assertIn("u.activity.do_turn( u );", world)
+        self.assertIn("a11y::android::reset_travel_control();", world)
+        self.assertIn("who.cancel_activity();", ACTOR)
+
+    def test_blocked_route_has_independent_back_and_hub_escape(self):
+        self.assertIn("if (autonomousDriveTravelActive()) {", CONTROLLER)
+        self.assertIn("if (travelState() == 4)", CONTROLLER)
+        self.assertIn("if (travelState() == 4 || autonomousDriveTravelActive())",
+                      CONTROLLER)
+        self.assertIn("showComprehensiveMenu();", CONTROLLER)
+        self.assertIn("hub.setText(R.string.a11yHubTitle);", CONTROLLER)
+        self.assertIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
+                      CONTROLLER)
+        self.assertIn("(!directWorldGesturesEnabled() && !autonomousDriveTravelActive())",
+                      CONTROLLER)
+        self.assertIn("travelChoice = travelChoiceCount(travelState()) - 1;\n"
+                      "                activateTravel();", CONTROLLER)
+        self.assertIn("( suspended() && control != 3 )", BRIDGE)
+        self.assertIn("return pending_travel_control.exchange( 0", BRIDGE)
+
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
                       CONTROLLER)

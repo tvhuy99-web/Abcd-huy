@@ -284,6 +284,21 @@ void handle_key_blocking_activity()
         return;
     }
     avatar &u = get_avatar();
+    // ACT_AUTODRIVE's blocked/paused branch deliberately sets moves to 0.
+    // Character::process_activity() only calls its actor while moves > 0;
+    // without this explicit game-thread pump, Android Resume/Cancel can
+    // remain in the JNI mailbox forever while the activity input UI waits.
+    // Only service a pending explicit request and never add a movement turn.
+    if( a11y::enabled() && u.get_moves() <= 0 && u.activity &&
+        u.activity.id() == ACT_AUTODRIVE && a11y::android::travel_control_pending() ) {
+        u.activity.do_turn( u );
+    }
+    // If an interrupted activity vanished without the usual finish/cancel
+    // callback, do not leave a stale full-screen blocked-route panel.
+    if( !u.activity && !u.has_destination() &&
+        a11y::android::travel_state() != 0 ) {
+        a11y::android::reset_travel_control();
+    }
     const bool has_unfinished_activity = u.activity && (
             u.activity.id()->based_on() == based_on_type::NEITHER
             || u.activity.moves_left > 0 );

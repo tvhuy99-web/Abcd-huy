@@ -2477,6 +2477,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
+        if (travelState() == 4) {
+            // There is no native vehicle-controls menu while the
+            // blocking activity has no moves. Always expose the
+            // reader's full hub instead of another modal dead end.
+            showComprehensiveMenu();
+            return;
+        }
         if (autonomousDriveTravelActive()) {
             // The same native menu exists while ACT_AUTODRIVE owns gameplay.
             // It already ends with the context-sensitive gesture guide.
@@ -2880,6 +2887,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 activateTravel();
             });
             rows.addView(button);
+        }
+        // A blocked drive must never occupy the entire interface without
+        // an independent way to open the general command hub.
+        if (state == 4 || autonomousDriveTravelActive()) {
+            Button hub = new Button(activity);
+            hub.setText(R.string.a11yHubTitle);
+            hub.setOnClickListener(view -> showComprehensiveMenu());
+            rows.addView(hub);
         }
         renderGuideButton();
     }
@@ -4752,7 +4767,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     /** Opening the menu starts at Favorites; Search is the last root entry. */
     public void showComprehensiveMenu() {
-        if (comprehensiveMenu || debugReport != null || !directWorldGesturesEnabled()) {
+        if (comprehensiveMenu || debugReport != null
+                || (!directWorldGesturesEnabled() && !autonomousDriveTravelActive()
+                    && travelState() != 4)) {
             return;
         }
         root.cancelGesture();
@@ -5415,11 +5432,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (travelState() != 0) {
-            // Back must not silently abandon a route. Move focus to the
-            // explicit Cancel button; only a subsequent activation ends it.
-            travelChoice = travelChoiceCount(travelState()) - 1;
-            render();
-            readCurrent();
+            if (travelState() == 4 || autonomousDriveTravelActive()) {
+                // Android/system Back must provide a reliable escape from
+                // the autonomous blocked-route UI. The native actor
+                // cancels and brakes on the game thread, even at 0 moves.
+                travelChoice = travelChoiceCount(travelState()) - 1;
+                activateTravel();
+            } else {
+                // Walking travel still preserves its explicit cancel choice.
+                travelChoice = travelChoiceCount(travelState()) - 1;
+                render();
+                readCurrent();
+            }
             return;
         }
         if (documentReader.isOpen()) {

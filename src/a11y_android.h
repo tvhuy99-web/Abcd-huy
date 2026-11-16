@@ -46,14 +46,17 @@ bool world_step_can_accept();
 // Called by Android on entering its UI-only command hub; the native
 // modal/lifecycle boundaries already invalidate older context tokens.
 std::size_t cancel_pending_world_steps();
-// Automatic travel is controlled from an Android-only reader panel. JNI
-// queues bounded requests; the game thread alone changes the character's
-// route. States: 0=inactive, 1=moving, 2=paused, 3=safety-blocked.
-// Requests: 1=pause, 2=resume, 3=cancel, 4=ignore current warning. No direct game/Character access from JNI.
+// Android travel commands cross an atomic mailbox. The native game thread
+// owns all route, activity, speed and braking changes. States: 0=inactive,
+// 1=moving, 2=paused, 3=enemy warning, 4=blocked road or poor visibility.
+// Requests: 1=pause, 2=resume, 3=cancel, 4=ignore current enemy warning.
 int travel_state();
 void set_travel_state( int state );
 bool request_travel_control( int control );
 int take_travel_control();
+// A read-only probe so a zero-move blocked activity can service an explicit
+// user command without making a gameplay movement or polling continuously.
+bool travel_control_pending();
 // One short-lived request to close an observation cursor still active after
 // an interrupted trip was explicitly canceled. Never affects zone pickers.
 void request_travel_map_return();

@@ -319,7 +319,10 @@ void set_travel_state( const int state )
 bool request_travel_control( const int control )
 {
     const int current = travel_state();
-    if( !enabled() || suspended() ||
+    // Cancelling an active destination is always an escape action.
+    // A momentary Android reader suspension must not make Cancel inert;
+    // the native game thread still validates and brakes the real vehicle.
+    if( !enabled() || ( suspended() && control != 3 ) ||
         ( control == 1 && current != 1 ) ||
         ( control == 2 && current != 2 && current != 3 && current != 4 ) ||
         ( control == 3 && current == 0 ) ||
@@ -339,6 +342,11 @@ bool request_travel_control( const int control )
 int take_travel_control()
 {
     return pending_travel_control.exchange( 0, std::memory_order_acq_rel );
+}
+
+bool travel_control_pending()
+{
+    return pending_travel_control.load( std::memory_order_acquire ) != 0;
 }
 
 void request_travel_map_return()
