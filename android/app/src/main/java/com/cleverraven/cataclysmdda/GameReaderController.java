@@ -985,7 +985,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot.Node nextPosition = next.find("world:tile_position");
                 boolean steppedToAnotherTile = previousPosition != null && nextPosition != null
                         && !previousPosition.value.equals(nextPosition.value);
-                boolean newlyNoteworthy = worldView && previousTile != null
+                // Driving is silent in BOTH Automatic and Manual mode.
+                // The occupied vehicle and roadside terrain are refreshed
+                // every tick, but are not new speech events. Genuine hazard
+                // warnings still enter through the native message channel.
+                boolean newlyNoteworthy = worldView && !vehicleMode && previousTile != null
                         && "alert".equals(nextTile.role)
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
@@ -3481,11 +3485,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             pendingVehicleHeadingReport = true;
-        } else if ("reader:vehicle:pause".equals(id)
-                || "reader:vehicle:forward".equals(id)
-                || "reader:vehicle:reverse".equals(id)
-                || "reader:vehicle:faster".equals(id)
-                || "reader:vehicle:slower".equals(id)) {
+        } else if ("reader:vehicle:pause".equals(id)) {
+            // Pausing is an explicitly requested state change. Ordinary
+            // throttle commands must not narrate the speed every game turn;
+            // the bent speed-read gesture remains available on demand.
             pendingVehicleSpeedReport = true;
         }
         requestLiveWorldCommand(id);
