@@ -62,6 +62,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
+#include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player_activity.h"
@@ -747,6 +748,13 @@ bool game::do_turn()
 
     // process avatar activities (ignoring user input)
     u.process_activity();
+
+    // Continue the user's selected Explore Places → Drive journey after
+    // native walking to the driver's seat and engine ignition. Keep this
+    // entirely on the game thread, never in Android's snapshot callback.
+    if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
+        ui::omap::update_accessible_drive_to_place();
+    }
 
     // Process NPC sound events before they move or they hear themselves talking
     for( npc &guy : all_npcs() ) {
