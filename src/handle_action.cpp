@@ -3609,11 +3609,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_KEYBINDINGS:
             break;
 
-        case ACTION_TIMEOUT:
-            if( check_safe_mode_allowed( false ) ) {
+        case ACTION_TIMEOUT: {
+            // Finishing a requested brake is safer than leaving a moving
+            // car stuck in Drive control because safe mode blocks input.
+            const optional_vpart_position seat = here.veh_at(
+                        player_character.pos_bub( here ) );
+            const bool braking_to_release = seat && player_character.controlling_vehicle &&
+                                            seat->vehicle().a11y_release_controls_pending &&
+                                            seat->vehicle().velocity != 0;
+            if( braking_to_release || check_safe_mode_allowed( false ) ) {
                 player_character.pause();
             }
             break;
+        }
 
         case ACTION_PAUSE:
             if( check_safe_mode_allowed() ) {
