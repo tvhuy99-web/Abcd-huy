@@ -810,11 +810,12 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
         who.cancel_activity();
     } else {
         player_vehicle->is_autodriving = true;
-        // An earlier manual-drive setting must never disable fully
-        // autonomous obstacle avoidance for this destination activity.
-        player_vehicle->a11y_obstacle_override = false;
-        player_vehicle->a11y_obstacle_stop = false;
-        if( a11y::enabled() && a11y::android::enabled() ) {
+        // Do not change NPC vehicle or vanilla player behavior. Only the
+        // actively connected accessibility avatar owns the trip reader.
+        if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
+            player_vehicle->a11y_obstacle_override = false;
+            player_vehicle->a11y_obstacle_stop = false;
+            a11y::android::reset_travel_control();
             a11y::android::set_travel_state( 1 );
         }
     }
@@ -828,7 +829,7 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
         who.cancel_activity();
         return;
     }
-    if( a11y::enabled() && a11y::android::enabled() ) {
+    if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
         const int control = a11y::android::take_travel_control();
         int state = a11y::android::travel_state();
         if( state == 0 ) {
@@ -926,10 +927,16 @@ void autodrive_activity_actor::canceled( player_activity &act, Character &who )
     update_player_vehicle( who );
     who.add_msg_if_player( m_info, _( "Auto drive canceled." ) );
     if( player_vehicle ) {
-        a11y_brake_autodrive( *player_vehicle, get_map() );
-        player_vehicle->stop_autodriving( true );
+        if( who.is_avatar() && a11y::enabled() ) {
+            a11y_brake_autodrive( *player_vehicle, get_map() );
+            player_vehicle->stop_autodriving( true );
+        } else {
+            player_vehicle->stop_autodriving( false );
+        }
     }
-    a11y::android::set_travel_state( 0 );
+    if( who.is_avatar() ) {
+        a11y::android::reset_travel_control();
+    }
     ui::omap::force_quit();
     act.set_to_null();
 }
@@ -939,10 +946,16 @@ void autodrive_activity_actor::finish( player_activity &act, Character &who )
     who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
     update_player_vehicle( who );
     if( player_vehicle ) {
-        a11y_brake_autodrive( *player_vehicle, get_map() );
-        player_vehicle->stop_autodriving( true );
+        if( who.is_avatar() && a11y::enabled() ) {
+            a11y_brake_autodrive( *player_vehicle, get_map() );
+            player_vehicle->stop_autodriving( true );
+        } else {
+            player_vehicle->stop_autodriving( false );
+        }
     }
-    a11y::android::set_travel_state( 0 );
+    if( who.is_avatar() ) {
+        a11y::android::reset_travel_control();
+    }
     ui::omap::force_quit();
     act.set_to_null();
 }
