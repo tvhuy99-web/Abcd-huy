@@ -115,6 +115,17 @@ public final class ReaderSnapshot {
     }
 
     public static final class Node {
+        /** A local-only guide command. Never sent to the native action gate. */
+        static Node gestureGuide(String label) {
+            try {
+                return new Node(new JSONObject().put("id", "reader:gesture:guide")
+                        .put("label", label)
+                        .put("role", "button"));
+            } catch (JSONException impossible) {
+                throw new IllegalStateException("Cannot create gesture guide row", impossible);
+            }
+        }
+
         public final String id;
         public final String role;
         public final String label;
