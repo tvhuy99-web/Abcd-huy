@@ -3347,8 +3347,12 @@ void ui::omap::update_accessible_drive_to_place()
         // hotwire prompt just because the user previously chose a driving
         // destination. The only permitted intermediate activity is the
         // exact native engine-start action requested for this trip.
-        if( !pending_accessible_drive->ignition_requested ||
-            driver.activity.id() != activity_id( "ACT_START_ENGINES" ) ) {
+        if( driver.activity.id() == activity_id( "ACT_START_ENGINES" ) ) {
+            // control_vehicle() may have requested ignition immediately
+            // while the places chooser was still closing.
+            pending_accessible_drive->controls_requested = true;
+            pending_accessible_drive->ignition_requested = true;
+        } else {
             add_msg( m_warning, _( "Automatic drive canceled: boarding or ignition interrupted." ) );
             pending_accessible_drive.reset();
         }
