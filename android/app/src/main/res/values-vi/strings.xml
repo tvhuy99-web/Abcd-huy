@@ -261,4 +261,5 @@
     <string name="a11yGuideRecentMessages">Đọc thông báo gần đây</string>
     <string name="a11yGuidePlayerInfo">Đọc thông tin nhân vật</string>
     <string name="a11yGuideHelpReadOnly">Chạm hai lần chỉ đọc lại hướng dẫn, không thực hiện lệnh</string>
+    <string name="a11yGuideTravelStatus">Đọc trạng thái hành trình</string>
 </resources>
