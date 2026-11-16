@@ -6127,3 +6127,24 @@ msgstr "Vuốt hai ngón lên trong menu: Xác nhận mục đang chọn."
 
 msgid "Swipe two fingers down in a menu: Go back."
 msgstr "Vuốt hai ngón xuống trong menu: Quay lại."
+
+msgid "Cannot turn in place while moving. Brake to a stop first."
+msgstr "Không thể quay đầu xe khi vẫn đang di chuyển. Hãy phanh dừng hẳn trước."
+
+msgid "Cannot turn in place in the current vehicle state."
+msgstr "Không thể quay đầu xe ở trạng thái hiện tại."
+
+msgid "Cannot turn in place: steering or wheels are broken."
+msgstr "Không thể quay đầu xe: hệ thống lái hoặc bánh xe bị hỏng."
+
+msgid "Cannot turn in place: unloaded map boundary."
+msgstr "Không thể quay đầu xe: đã tới rìa khu vực bản đồ đang tải."
+
+msgid "Cannot turn in place: another vehicle is in the way."
+msgstr "Không thể quay đầu xe: có phương tiện khác chắn đường."
+
+msgid "Cannot turn in place: %s is in the way."
+msgstr "Không thể quay đầu xe: bị %s cản trở."
+
+msgid "Cannot turn in place: vehicle position could not be updated."
+msgstr "Không thể quay đầu xe: không cập nhật được vị trí xe."
