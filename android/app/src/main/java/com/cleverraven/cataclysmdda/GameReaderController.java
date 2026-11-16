@@ -29,6 +29,9 @@ import java.util.concurrent.atomic.AtomicLong;
 public final class GameReaderController implements AutoCloseable, ReaderGestureSurface.Listener {
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
+    // Distinguish notifications received before a deliberate gesture from
+    // the feedback caused by the new action, including posted UI callbacks.
+    private final AtomicLong speechActionEpoch = new AtomicLong();
     private static final int HUB_PAGE_SIZE = 30;
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
     private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
@@ -503,7 +506,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void updateNativeState(boolean force) {
         boolean enabled = !closed && preferences.isEnabled();
-        sonar.setEnabled(enabled && preferences.isDirectionalSonarEnabled());
+        sonar.setChannels(enabled && preferences.isCreatureSonarEnabled(),
+                enabled && preferences.isItemSonarEnabled());
         boolean suspended = !foreground || !windowFocused || (!usesTouchExploration() && !speech.isReady());
         if (!enabled || suspended) {
             sonar.setWorldActive(false);
@@ -1312,7 +1316,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         final int level = priority >= ReaderSpeechQueue.URGENT
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
+        // Native callbacks can be posted just before the next touch. The
+        // previous item's message must not reappear after the new gesture.
+        final long receivedActionEpoch = speechActionEpoch.get();
         Runnable deliver = () -> {
+            if (receivedActionEpoch != speechActionEpoch.get()) {
+                SessionDebugLog.event("GAME_MESSAGE_STALE", "superseded_by_user_action");
+                return;
+            }
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
                 return;
             }
@@ -3035,6 +3046,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 rows.addView(back);
             }
         }
+    }
+
+    /**
+     * A recognized gesture is a hard speech boundary. Passive game events
+     * keep their original FIFO while the user does nothing; a new action
+     * immediately interrupts the current utterance and discards the old
+     * action's pending messages. Its new feedback can speak right away.
+     */
+    @Override
+    public void onUserAction() {
+        if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
+            return;
+        }
+        long epoch = speechActionEpoch.incrementAndGet();
+        pendingGameMessages.clear();
+        pendingLinkedDetail = "";
+        pendingLinkedDetailContext = "";
+        pendingItemDetailNode = "";
+        pendingItemDetailContext = "";
+        pendingItemDetailParts = null;
+        speech.interruptForUserAction();
+        SessionDebugLog.event("TTS_USER_ACTION_INTERRUPT", "epoch=" + epoch);
     }
 
     @Override

@@ -40,18 +40,34 @@ public final class AccessibilitySettingsActivity extends Activity {
         });
         controls.addView(showGraphics);
 
-        CheckBox directionalSonar = new CheckBox(this);
-        directionalSonar.setText(R.string.a11yDirectionalSonar);
-        directionalSonar.setChecked(prefs.isDirectionalSonarEnabled());
-        directionalSonar.setOnCheckedChangeListener((button, checked) -> {
-            prefs.setDirectionalSonarEnabled(checked);
+        // Separate existing sonar samples into two independent switches.
+        // The native sensing channel runs whenever at least one is enabled;
+        // the game reader filters the sounds per category.
+        CheckBox creatureSonar = new CheckBox(this);
+        creatureSonar.setText(R.string.a11yDirectionalSonarCreatures);
+        creatureSonar.setChecked(prefs.isCreatureSonarEnabled());
+        creatureSonar.setOnCheckedChangeListener((button, checked) -> {
+            prefs.setCreatureSonarEnabled(checked);
             try {
-                CataclysmDDA.nativeConfigureDirectionalSonar(checked);
+                CataclysmDDA.nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled());
             } catch (UnsatisfiedLinkError unavailable) {
                 // Reapplied by the game reader when gameplay resumes.
             }
         });
-        controls.addView(directionalSonar);
+        controls.addView(creatureSonar);
+
+        CheckBox itemSonar = new CheckBox(this);
+        itemSonar.setText(R.string.a11yDirectionalSonarItems);
+        itemSonar.setChecked(prefs.isItemSonarEnabled());
+        itemSonar.setOnCheckedChangeListener((button, checked) -> {
+            prefs.setItemSonarEnabled(checked);
+            try {
+                CataclysmDDA.nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled());
+            } catch (UnsatisfiedLinkError unavailable) {
+                // Reapplied by the game reader when gameplay resumes.
+            }
+        });
+        controls.addView(itemSonar);
         CheckBox soundCues = new CheckBox(this);
         soundCues.setText(R.string.a11ySoundCues);
         soundCues.setChecked(prefs.areSoundCuesEnabled());

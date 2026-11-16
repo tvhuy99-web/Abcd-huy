@@ -27,6 +27,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
     private boolean itemLoaded;
     private boolean closed;
     private boolean enabled;
+    private boolean creaturesEnabled;
+    private boolean itemsEnabled;
     private boolean worldActive;
     private boolean scheduled;
     private int direction;
@@ -40,10 +42,10 @@ final class AlignmentSonarPlayer implements AutoCloseable {
             final int heading = direction;
             direction = (direction + 1) % DIRECTIONS;
             // Both categories play independently, including on one ray.
-            if (creatureLoaded && creatures[heading] > 0) {
+            if (creaturesEnabled && creatureLoaded && creatures[heading] > 0) {
                 play(creatureSound, creatures[heading], heading, 0);
             }
-            if (itemLoaded && items[heading] > 0) {
+            if (itemsEnabled && itemLoaded && items[heading] > 0) {
                 play(itemSound, items[heading], heading, 1);
             }
             scheduled = true;
@@ -69,11 +71,34 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         itemSound = pool.load(app, R.raw.a11y_item_beep, 1);
     }
 
-    void setEnabled(boolean on) {
-        if (closed || enabled == on) { return; }
-        enabled = on;
-        if (!on) { clearTargets(); }
+    /** Enable each existing sample independently. Disabled categories
+     * stop immediately, including any SoundPool stream still playing. */
+    void setChannels(boolean creaturesOn, boolean itemsOn) {
+        if (closed || (creaturesEnabled == creaturesOn && itemsEnabled == itemsOn)) {
+            return;
+        }
+        if (!creaturesOn) {
+            Arrays.fill(creatures, -1);
+            stopCategory(0);
+        }
+        if (!itemsOn) {
+            Arrays.fill(items, -1);
+            stopCategory(1);
+        }
+        creaturesEnabled = creaturesOn;
+        itemsEnabled = itemsOn;
+        enabled = creaturesOn || itemsOn;
         refresh();
+    }
+
+    private void stopCategory(int category) {
+        for (int heading = 0; heading < DIRECTIONS; ++heading) {
+            int index = heading * 2 + category;
+            if (streams[index] != 0) {
+                pool.stop(streams[index]);
+                streams[index] = 0;
+            }
+        }
     }
 
     /** Menus, paused/hidden Activities and disabled readers stop the sonar. */
@@ -91,8 +116,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
             return;
         }
         for (int i = 0; i < DIRECTIONS; ++i) {
-            creatures[i] = clamp(nearbyCreatures[i]);
-            items[i] = clamp(nearbyItems[i]);
+            creatures[i] = creaturesEnabled ? clamp(nearbyCreatures[i]) : -1;
+            items[i] = itemsEnabled ? clamp(nearbyItems[i]) : -1;
         }
         refresh();
     }
@@ -103,7 +128,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
 
     private boolean hasTargets() {
         for (int i = 0; i < DIRECTIONS; ++i) {
-            if (creatures[i] > 0 || items[i] > 0) { return true; }
+            if ((creaturesEnabled && creatures[i] > 0)
+                    || (itemsEnabled && items[i] > 0)) { return true; }
         }
         return false;
     }
@@ -157,6 +183,8 @@ final class AlignmentSonarPlayer implements AutoCloseable {
         if (closed) { return; }
         closed = true;
         enabled = false;
+        creaturesEnabled = false;
+        itemsEnabled = false;
         worldActive = false;
         clearTargets();
         handler.removeCallbacks(tick);

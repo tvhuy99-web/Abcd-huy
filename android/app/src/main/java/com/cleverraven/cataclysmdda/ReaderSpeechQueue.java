@@ -50,9 +50,9 @@ public final class ReaderSpeechQueue implements AutoCloseable {
 
     private static final int MAX_PENDING = 8;
     private static final String GAME_EVENT_CONTEXT = "__reader_game_event__";
-    // Game messages survive temporary screen changes and retain order
-    // *within* their own urgency level. Active speech is never cut off by a
-    // newer event, but warnings do not wait behind long ordinary chatter.
+    // Game messages survive automatic screen changes and retain order
+    // *within* their own urgency level. New passive events never cut off
+    // active speech. An explicit user gesture is a separate hard boundary.
     private final ArrayDeque<Request> orderedGameEvents = new ArrayDeque<>();
     private final ArrayDeque<Request> urgentGameEvents = new ArrayDeque<>();
 
@@ -598,6 +598,25 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     public void stop() {
         clearRequests();
         speech.cancel();
+    }
+
+    /**
+     * One recognized navigation/action gesture starts a new interaction.
+     * Cancel the actual Android TTS utterance immediately, discard BOTH
+     * game-message FIFO lanes and pending focus/document chunks, and forget
+     * the old item's repeat position. Do not call this on idle snapshots or
+     * passive game events: they must still finish and play in FIFO order.
+     *
+     * A single tap's explicit Stop/Resume uses stop() instead, so that
+     * gesture can still resume the interrupted document on the next tap.
+     */
+    public void interruptForUserAction() {
+        if (closed) { return; }
+        clearRequests();
+        speech.cancel();
+        lastText = "";
+        lastKey = "";
+        lastChunkIndex = 0;
     }
 
     /**

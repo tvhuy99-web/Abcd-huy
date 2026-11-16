@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="a11yDirectionalSonar">Directional sounds for nearby items and creatures</string>
+    <string name="a11yDirectionalSonarCreatures">Directional sound: monsters and NPCs</string>
+    <string name="a11yDirectionalSonarItems">Directional sound: items</string>
     <string name="a11yDirectionalSonarExplanation">When enabled, a beep signals visible items and the original sonar signals visible NPCs or monsters. Eight compass directions are checked for up to 16 tiles each. Stereo position and pitch distinguish directions. Both sounds play if both types are nearby. Off disables the scan.</string>
     <string name="a11yBackupRequiresRestart">Player data cannot be restored after the game engine has started. Close the app completely, reopen reader setup before entering the game, and restore there.</string>
     <string name="a11yBackupRestoreDeferred">Confirmed. The game engine is running, so nothing has been replaced yet. Close the app completely and reopen it; the restore will be applied before the game starts.</string>

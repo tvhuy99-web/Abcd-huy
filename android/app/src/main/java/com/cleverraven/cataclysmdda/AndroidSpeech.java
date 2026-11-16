@@ -16,6 +16,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicLong;
 
 /** Android output driver. Gameplay priorities and context ownership belong to
  *  the caller; this class never queues stale text while the engine initializes.
@@ -172,6 +173,9 @@ public final class AndroidSpeech implements AutoCloseable {
     private final Context context;
     private final Handler handler = new Handler(Looper.getMainLooper());
     private final SpeechSession session = new SpeechSession();
+    // Cancelling on the UI thread invalidates any older speak() Runnable
+    // that is still queued on the same handler, before it reaches TTS.
+    private final AtomicLong outputGeneration = new AtomicLong();
     private Listener listener;
     private TextToSpeech engine;
     private volatile State state = State.NEW;
@@ -216,6 +220,7 @@ public final class AndroidSpeech implements AutoCloseable {
 
     public void initialize(String engineName, Locale language, float rate, boolean offlineOnly,
                            String voiceName, float pitch, float volume) {
+        outputGeneration.incrementAndGet();
         handler.post(() -> initializeOnMain(engineName, language, rate, offlineOnly,
                                             voiceName, pitch, volume));
     }
@@ -327,7 +332,12 @@ public final class AndroidSpeech implements AutoCloseable {
      *  Invalid/not-ready requests are rejected, never held for a future screen.
      */
     public void speak(String clientId, String text) {
+        final long generation = outputGeneration.get();
         handler.post(() -> {
+            if (generation != outputGeneration.get()) {
+                SessionDebugLog.event("TTS_REQUEST_SUPERSEDED", "id=" + clientId);
+                return;
+            }
             SessionDebugLog.event("TTS_REQUEST", "id=" + clientId
                     + " length=" + (text == null ? -1 : text.length())
                     + " text=" + text);
@@ -368,13 +378,23 @@ public final class AndroidSpeech implements AutoCloseable {
     }
 
     public void cancel() {
-        handler.post(() -> {
-            if (state != State.CLOSED && !cancelOnMain()) {
-                session.newEngine();
-                shutdownEngine();
-                setState(State.FAILED);
-            }
-        });
+        outputGeneration.incrementAndGet();
+        // The reader's gestures are handled on the main looper. Stop the
+        // Android engine before returning to the gesture dispatcher, not
+        // after another UI message or native snapshot gets processed.
+        if (Looper.myLooper() == Looper.getMainLooper()) {
+            cancelNow();
+        } else {
+            handler.post(this::cancelNow);
+        }
+    }
+
+    private void cancelNow() {
+        if (state != State.CLOSED && !cancelOnMain()) {
+            session.newEngine();
+            shutdownEngine();
+            setState(State.FAILED);
+        }
     }
 
     private boolean cancelOnMain() {
@@ -507,6 +527,7 @@ public final class AndroidSpeech implements AutoCloseable {
 
     @Override
     public void close() {
+        outputGeneration.incrementAndGet();
         handler.post(() -> {
             if (state != State.CLOSED) {
                 cancelOnMain();

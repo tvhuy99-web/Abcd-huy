@@ -56,15 +56,30 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn("nativeConfigureReaderPerformance(", self.accessibility)
         self.assertIn("setSwipeDistanceLevel(level)", self.accessibility)
         self.assertIn("setSwipeDurationLevel(level)", self.accessibility)
-        toggles = self.accessibility.count("new CheckBox(this)")
-        self.assertIn(toggles, (2, 4))
-        # Current master exposes the already implemented sound/haptic cues.
-        if toggles == 4:
-            self.assertIn("setSoundCuesEnabled(checked)", self.accessibility)
-            self.assertIn("setHapticCuesEnabled(checked)", self.accessibility)
-        self.assertIn("setDirectionalSonarEnabled(checked)", self.accessibility)
-        self.assertIn("nativeConfigureDirectionalSonar(checked)", self.accessibility)
+        # Graphics, creature sonar, item sonar, sound cues and haptics are
+        # five independent, accessible checkboxes.
+        self.assertEqual(self.accessibility.count("new CheckBox(this)"), 5)
+        self.assertIn("setSoundCuesEnabled(checked)", self.accessibility)
+        self.assertIn("setHapticCuesEnabled(checked)", self.accessibility)
+        self.assertIn("setCreatureSonarEnabled(checked)", self.accessibility)
+        self.assertIn("setItemSonarEnabled(checked)", self.accessibility)
+        self.assertIn("nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled())",
+                      self.accessibility)
         self.assertEqual(self.accessibility.count("new SeekBar(this)"), 2)
+
+    def test_user_gesture_interrupts_old_speech_without_muting_idle_game_events(self):
+        surface = (JAVA / "ReaderGestureSurface.java").read_text("utf-8")
+        queue = (JAVA / "ReaderSpeechQueue.java").read_text("utf-8")
+        audio = (JAVA / "AndroidSpeech.java").read_text("utf-8")
+        self.assertIn("listener.onUserAction()", surface)
+        self.assertIn("speech.interruptForUserAction()", self.reader)
+        self.assertIn("orderedGameEvents.addLast(request)", queue)
+        self.assertIn("urgentGameEvents.addLast(request)", queue)
+        self.assertIn("public void interruptForUserAction()", queue)
+        self.assertIn("orderedGameEvents.clear()", queue)
+        self.assertIn("urgentGameEvents.clear()", queue)
+        self.assertIn("Looper.myLooper() == Looper.getMainLooper()", audio)
+        self.assertIn("TTS_REQUEST_SUPERSEDED", audio)
 
     def test_backup_remains_two_stage_and_blocks_active_game(self):
         self.assertIn("ReaderGameSession.canRestore()", self.backup)

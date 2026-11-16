@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="a11yDirectionalSonar">Âm thanh định hướng cho vật phẩm và sinh vật ở gần</string>
+    <string name="a11yDirectionalSonarCreatures">Âm thanh định hướng: quái vật và NPC</string>
+    <string name="a11yDirectionalSonarItems">Âm thanh định hướng: vật phẩm</string>
     <string name="a11yDirectionalSonarExplanation">Khi bật, vật phẩm nhìn thấy phát tiếng bíp; NPC và quái vật nhìn thấy phát tiếng sonar cũ. Quét tám hướng, tối đa 16 ô mỗi hướng. Kênh trái phải và cao độ giúp phân biệt hướng. Khi có cả hai loại, cả hai đều phát. Tắt để ngừng quét và phát.</string>
     <string name="a11yBackupRequiresRestart">Game đang mở nên không thể khôi phục. Hãy đóng hẳn ứng dụng, mở lại Thiết lập trình đọc trước khi vào game rồi chọn khôi phục.</string>
     <string name="a11yBackupRestoreDeferred">Đã xác nhận. Game đang mở nên chưa thay gì cả. Hãy đóng hẳn ứng dụng rồi mở lại; bản khôi phục sẽ được áp dụng trước khi game bắt đầu.</string>

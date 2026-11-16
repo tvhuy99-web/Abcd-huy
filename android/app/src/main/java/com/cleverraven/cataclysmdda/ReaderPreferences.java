@@ -117,13 +117,40 @@ public final class ReaderPreferences {
         values.edit().putBoolean("haptic_cues", enabled).apply();
     }
 
-    /** Independent directional sonar is opt-in, unlike regular spoken output. */
-    public boolean isDirectionalSonarEnabled() {
-        return values.getBoolean("directional_sonar", false);
+    // The two sounds already exist independently. Preserve the old single
+    // sonar setting as the default for both channels when upgrading an APK,
+    // until the user explicitly chooses each new switch.
+    private static final String SONAR_CREATURES = "sonar_creatures";
+    private static final String SONAR_ITEMS = "sonar_items";
+
+    public boolean isCreatureSonarEnabled() {
+        return values.getBoolean(SONAR_CREATURES,
+                values.getBoolean("directional_sonar", false));
     }
 
+    public boolean isItemSonarEnabled() {
+        return values.getBoolean(SONAR_ITEMS,
+                values.getBoolean("directional_sonar", false));
+    }
+
+    public void setCreatureSonarEnabled(boolean enabled) {
+        values.edit().putBoolean(SONAR_CREATURES, enabled).apply();
+    }
+
+    public void setItemSonarEnabled(boolean enabled) {
+        values.edit().putBoolean(SONAR_ITEMS, enabled).apply();
+    }
+
+    /** Native sensing is needed when either category is enabled. */
+    public boolean isDirectionalSonarEnabled() {
+        return isCreatureSonarEnabled() || isItemSonarEnabled();
+    }
+
+    /** Compatibility for older code and settings: change both channels. */
     public void setDirectionalSonarEnabled(boolean enabled) {
-        values.edit().putBoolean("directional_sonar", enabled).apply();
+        values.edit().putBoolean("directional_sonar", enabled)
+                .putBoolean(SONAR_CREATURES, enabled)
+                .putBoolean(SONAR_ITEMS, enabled).apply();
     }
 
     public void disable() {

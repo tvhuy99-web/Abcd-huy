@@ -69,6 +69,8 @@ public final class ReaderGestureSurface extends LinearLayout {
         void detail();
         void readCurrent();
         void stopSpeech();
+        /** Called once before dispatching a recognized user action. */
+        default void onUserAction() { }
     }
 
     private final Listener listener;
@@ -108,6 +110,7 @@ public final class ReaderGestureSurface extends LinearLayout {
     private boolean cancelled;
     private boolean activateOnUp;
     private boolean swipeHandled;
+    private boolean userActionSignaled;
     private boolean longPressHandled;
     private boolean ignoreUntilPointersReleased;
     private final int[] backPointerIds = new int[2];
@@ -156,6 +159,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger_long_press"
                             + " context=" + owner);
                     longPressHandled = true;
+                    signalUserAction();
                     // Holding one finger always opens context actions.
                     // It cannot be overwritten, even by a legacy binding.
                     listener.openContextActions();
@@ -198,6 +202,14 @@ public final class ReaderGestureSurface extends LinearLayout {
 
     private boolean valid() {
         return !cancelled && !multiple && owner != null && owner.equals(listener.gestureContext());
+    }
+
+    /** Do not stop TTS merely on DOWN or on cancelled touches. */
+    private void signalUserAction() {
+        if (!userActionSignaled) {
+            userActionSignaled = true;
+            listener.onUserAction();
+        }
     }
 
     private static float centroidX(MotionEvent event) {
@@ -331,6 +343,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             String gesture = ReaderGestureBindings.idForHold(fingers);
             SessionDebugLog.event("GESTURE", "long_press fingers=" + fingers
                     + " id=" + gesture);
+            signalUserAction();
             if (!listener.handleCustomGesture(gesture)) {
                 listener.unassignedMultiGesture(gesture);
             }
@@ -382,6 +395,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (expectedOwner != null && expectedOwner.equals(listener.gestureContext())
                     && listener.directWorldGesturesEnabled()) {
                 SessionDebugLog.event("GESTURE", "one_finger_triple_tap_action_hub");
+                signalUserAction();
                 listener.openActionMenu();
             }
         } else {
@@ -397,6 +411,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                         // blocks activation or the triple-tap action hub.
                         listener.stopSpeech();
                     } else if (count == 2) {
+                        signalUserAction();
                         listener.activate();
                     }
                 }
@@ -449,12 +464,14 @@ public final class ReaderGestureSurface extends LinearLayout {
         if (fingers == 2) {
             if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()
                     || listener.autonomousDriveTravelActive()) {
+                signalUserAction();
                 listener.twoFingerTap(count);
             }
             return;
         }
         if (!listener.directWorldGesturesEnabled()
                 && !listener.autonomousDriveTravelActive()) { return; }
+        signalUserAction();
         if (fingers == 3 && count == 1) {
             listener.threeFingerTap();
             return;
@@ -551,6 +568,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             lateMultiFingerJoin = false;
             backPointerCount = 0;
             cancelled = false;
+            userActionSignaled = false;
             activateOnUp = false;
             swipeHandled = false;
             longPressHandled = false;
@@ -632,6 +650,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                 boolean right = !left && TwoFingerBackGesture.matchesRight(event, backPointerIds,
                         backPointerStartX, backPointerStartY, backPointerCount,
                         listener.swipeDistancePx());
+                if (left || right) { signalUserAction(); }
                 if ((left || right) && listener.handleCraftingMainCategorySwipe(left ? -1 : 1)) {
                     SessionDebugLog.event("GESTURE", "crafting_main_category_two_fingers="
                             + (left ? "left" : "right"));
@@ -663,6 +682,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                 owner = null;
                 previousTapOwner = null;
                 clearMultiTap();
+                signalUserAction();
                 listener.confirm();
                 return true;
             }
@@ -684,6 +704,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                 owner = null;
                 previousTapOwner = null;
                 clearMultiTap();
+                signalUserAction();
                 listener.goBack();
                 return true;
             }
@@ -712,6 +733,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                     String direction = cardinal(dx, dy, threshold);
                     if (direction != null) {
                         clearMultiTap();
+                        signalUserAction();
                         if (maxPointers == 2) {
                             // Drive scans are vehicle-relative; Map scans use
                             // the same gestures with absolute map directions.
@@ -770,6 +792,7 @@ public final class ReaderGestureSurface extends LinearLayout {
                     SessionDebugLog.event("GESTURE", "one_finger=" + gesture
                             + " duration_ms=" + (event.getEventTime() - downTime));
                     clearMultiTap();
+                    signalUserAction();
                     boolean handled = listener.handleCustomGesture(gesture);
                     if (handled) {
                         // A bent or out-and-back swipe can end at the touch
@@ -787,6 +810,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         }
         if (action == MotionEvent.ACTION_UP && activateOnUp && valid()) {
             activatedByDoubleTap = true;
+            signalUserAction();
             listener.activate();
             activateOnUp = false;
         }
@@ -810,6 +834,7 @@ public final class ReaderGestureSurface extends LinearLayout {
     }
 
     private void handleSwipe(float dx, float dy) {
+        signalUserAction();
         SessionDebugLog.event("GESTURE", "swipe dx=" + dx + " dy=" + dy
                 + " world_move=" + listener.worldMovementEnabled());
         swipeHandled = true;
