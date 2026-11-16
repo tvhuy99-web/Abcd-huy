@@ -252,10 +252,9 @@ public class CataclysmDDA extends SDLActivity {
         });
     }
 
-    // The TTS screen used to be opened with plain startActivity,
-    // so its RESULT_OK was never read and a save ended in silence. Remember
-    // a successful save here; the announcement itself waits for window
-    // focus below, because the reader drops messages while unfocused.
+    // A successful save must reload the live speech engine, but only after
+    // the game regains window focus. Otherwise an immediate announcement
+    // could be dropped while the settings Activity is still in front.
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -317,17 +316,21 @@ public class CataclysmDDA extends SDLActivity {
             applySystemUiMode();
             if (pendingTtsSavedAnnouncement) {
                 pendingTtsSavedAnnouncement = false;
-                if (reader != null && reader.isEnabled()) {
-                    reader.announceGameMessage(
-                            getString(R.string.a11yReaderEnabledNotice),
-                            ReaderSpeechQueue.INFORMATION);
-                } else if (reader != null && reader.usesTouchExploration()
-                        && getWindow() != null && getWindow().getDecorView() != null) {
-                    // Reader saved off: the notice above does not apply, and
-                    // the reader speaks nothing while off. TalkBack users
-                    // still get the matching confirmation for this state.
-                    getWindow().getDecorView().announceForAccessibility(
-                            getString(R.string.a11yReaderDisabledNotice));
+                if (reader != null) {
+                    reader.applySavedTtsSettings();
+                    if (reader.usesTouchExploration()) {
+                        if (reader.isEnabled()) {
+                            // TalkBack can announce immediately; the internal
+                            // TTS reader waits for its new engine's READY state.
+                            reader.announceGameMessage(
+                                    getString(R.string.a11yReaderEnabledNotice),
+                                    ReaderSpeechQueue.INFORMATION);
+                        } else if (getWindow() != null
+                                && getWindow().getDecorView() != null) {
+                            getWindow().getDecorView().announceForAccessibility(
+                                    getString(R.string.a11yReaderDisabledNotice));
+                        }
+                    }
                 }
             }
         }

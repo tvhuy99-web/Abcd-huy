@@ -47,6 +47,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String GESTURE_READER_OFF_KEY = "gesture-reader-off";
     private boolean readerOffAfterAnnouncement;
     private boolean announceReaderEnabledAfterInit;
+    // A saved TTS configuration must be announced only after the replacement
+    // engine is READY, not through the previous voice or a dropped init request.
+    private boolean announceTtsSavedAfterInit;
     private final Runnable finishReaderOffGesture = () -> {
         if (!readerOffAfterAnnouncement) { return; }
         readerOffAfterAnnouncement = false;
@@ -333,7 +336,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         ReaderDiagnostics.get().event("speech_" + state.name().toLowerCase(Locale.ROOT));
         updateNativeState(false);
         if (state == AndroidSpeech.State.READY && !usesTouchExploration()) {
-            if (announceReaderEnabledAfterInit && preferences.isEnabled()) {
+            if (announceTtsSavedAfterInit && preferences.isEnabled()) {
+                announceTtsSavedAfterInit = false;
+                speech.say("tts-settings-saved",
+                        activity.getString(R.string.a11yReaderEnabledNotice),
+                        ReaderSpeechQueue.FOCUS);
+            } else if (announceReaderEnabledAfterInit && preferences.isEnabled()) {
                 announceReaderEnabledAfterInit = false;
                 speech.say("gesture-reader-on", activity.getString(R.string.a11yReaderGestureOn),
                         ReaderSpeechQueue.FOCUS);
@@ -362,8 +370,35 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         updateNativeState(true);
     }
 
+    /** Apply a confirmed TTS save immediately when returning from Settings.
+     *  onResume() alone only initializes a non-ready queue; the previous
+     *  engine normally stays READY through the settings Activity and would
+     *  otherwise keep its old voice, rate, pitch and volume.
+     */
+    public void applySavedTtsSettings() {
+        if (closed) { return; }
+        final boolean enabled = preferences.isEnabled();
+        announceReaderEnabledAfterInit = false;
+        announceTtsSavedAfterInit = enabled && !usesTouchExploration();
+        speech.clearForLifecycle();
+        pendingGameMessages.clear();
+        root.cancelGesture();
+        root.setVisibility(enabled ? View.VISIBLE : View.GONE);
+        if (enabled) {
+            // Force a new Android TextToSpeech engine even if the previous
+            // instance was already READY. initialize() re-reads every
+            // persisted option and resets the old speech queue.
+            speech.initialize(preferences);
+        } else {
+            sonar.setWorldActive(false);
+        }
+        render();
+        updateNativeState(true);
+    }
+
     public void onPause() {
         ReaderDiagnostics.get().event("lifecycle_pause");
+        announceTtsSavedAfterInit = false;
         foreground = false;
         sonar.setWorldActive(false);
         presentationEpoch++;
