@@ -298,4 +298,7 @@
     <string name="a11yGuideConfirmPocket">Confirm selected pocket items</string>
     <string name="a11yGuideOpenHelp">Open the gesture guide</string>
     <string name="a11yAutoDriveCancelToMap">Automatic drive canceled. Returning to Map.</string>
+    <string name="a11yGuideAutoReadHeading">Read the car heading; autopilot chooses steering</string>
+    <string name="a11yGuideAutoPause">Pause the trip and apply the brakes</string>
+    <string name="a11yGuideAutoMapCancel">Cancel the trip and switch to Map</string>
 </resources>
