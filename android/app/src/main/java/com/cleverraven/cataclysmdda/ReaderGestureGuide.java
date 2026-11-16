@@ -35,6 +35,12 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideTravelStatus);
+        } else if (inHub) {
+            // This overlay is itself a distinct screen even if the underlying
+            // native snapshot still says DEFAULTMODE.
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideHubItemOptions);
         } else if (driving && "DEFAULTMODE".equals(category)) {
             addSwipe(rows, context, "swipe_up", R.string.a11yGuideDriveForward);
             addSwipe(rows, context, "swipe_down", R.string.a11yGuideDriveReverse);
@@ -148,17 +154,40 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeFilter);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
-        } else if ("crafting".equals(category) || "construction".equals(category)) {
+        } else if ("crafting".equals(category)) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseRecipes);
             add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeCategory);
+            add(rows, context, R.string.a11yGuideTwoLeft, R.string.a11yGuidePreviousCraftTab);
+            add(rows, context, R.string.a11yGuideTwoRight, R.string.a11yGuideNextCraftTab);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideSelectItem);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
-        } else if ("targeting".equals(category) || "look-around".equals(category)) {
+        } else if ("construction".equals(category)) {
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideSelectItem);
+            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+        } else if ("targeting".equals(category)) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseTargets);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideSelectItem);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideTargetControls);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
+        } else if ("look-around".equals(category) || "overmap".equals(category)
+                || "overmap_search".equals(category) || "places".equals(category)) {
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+        } else if ("character-creator-calendar".equals(category)) {
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideAdjustCalendar);
+            add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeCalendarField);
+            add(rows, context, R.string.a11yGuideTwoUp, R.string.a11yGuideCalendarConfirm);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+        } else if ("robot-finds-kitten".equals(category) || "snake".equals(category)
+                || "sokoban".equals(category) || "lightson".equals(category)) {
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuidePlayMinigame);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
         } else if ("CHARACTER_CREATION".equals(category)) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideOneVertical, R.string.a11yGuideChangeCategory);
@@ -166,12 +195,25 @@ final class ReaderGestureGuide {
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
         } else {
-            // Safe generic fallback for native dialogs, settings, missions,
-            // journals, minigames, action screens and future screen types.
+            // Generic read-only guidance for dialog, diary, missions,
+            // inventories, configuration screens and future native scopes.
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindTap21, R.string.a11yGuideReadDetails);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideScreenMenu);
+            if (snapshot != null) {
+                ReaderSnapshot.Node current = snapshot.find(snapshot.focus);
+                if (current != null &&
+                        (("choice".equals(current.fieldType)
+                          && current.actions.contains("select_choice")) ||
+                         (("int".equals(current.fieldType)
+                           || "float".equals(current.fieldType))
+                          && current.actions.contains("set_value")
+                          && current.hasFieldRange && current.fieldStep > 0))) {
+                    add(rows, context, R.string.a11yGuideOneVertical,
+                            R.string.a11yGuideAdjustField);
+                }
+            }
         }
         if (!"DEFAULTMODE".equals(category) || inHub) {
             add(rows, context, R.string.a11yGuideTwoDown, R.string.a11yGuideGoBack);
