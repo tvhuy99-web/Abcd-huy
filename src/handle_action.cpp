@@ -4635,6 +4635,54 @@ bool game::handle_action()
                 }
             }
         } else if( a11y::enabled() &&
+                   action == "A11Y_INTERNAL_VEHICLE_BEGIN" ) {
+            const optional_vpart_position seat = here.veh_at( player_character.pos_bub( here ) );
+            if( !seat || !player_character.in_vehicle ||
+                ( g && g->remoteveh() == &seat->vehicle() ) ||
+                ( !seat->part_with_feature( "CONTROLS", true ) &&
+                  !seat->part_with_feature( "CONTROL_ANIMAL", true ) ) ) {
+                add_msg( m_warning, _( "Sit at the driver's controls before driving." ) );
+            } else {
+                vehicle &car = seat->vehicle();
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                car.a11y_resume_cruise_velocity = 0;
+                // Preserve native ownership, weapon and ignition checks.
+                if( !player_character.controlling_vehicle ||
+                    !car.player_in_control( here, player_character ) ) {
+                    control_vehicle( std::nullopt );
+                }
+            }
+            return false;
+        } else if( a11y::enabled() &&
+                   action == "A11Y_INTERNAL_VEHICLE_RELEASE" ) {
+            const optional_vpart_position seat = here.veh_at( player_character.pos_bub( here ) );
+            if( !seat || !player_character.in_vehicle ||
+                !player_character.controlling_vehicle ||
+                !seat->vehicle().player_in_control( here, player_character ) ||
+                ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                add_msg( m_warning, _( "Vehicle controls unavailable." ) );
+                return false;
+            }
+            vehicle &car = seat->vehicle();
+            car.a11y_release_controls_pending = true;
+            car.a11y_drive_paused = true;
+            car.a11y_resume_cruise_velocity = 0;
+            car.cruise_velocity = 0;
+            car.a11y_obstacle_stop = false;
+            car.a11y_obstacle_override = false;
+            // Native physics owns the stopping distance. Keep the engine on.
+            car.a11y_continuous_drive = car.velocity != 0;
+            if( car.velocity == 0 ) {
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                player_character.controlling_vehicle = false;
+                add_msg( m_info, _( "You let go of the controls." ) );
+                return false;
+            }
+            add_msg( m_info, _( "Braking to a stop before leaving driving mode." ) );
+            act = ACTION_SMASH;
+        } else if( a11y::enabled() &&
                    ( action == "A11Y_INTERNAL_VEHICLE_FORWARD" ||
                      action == "A11Y_INTERNAL_VEHICLE_REVERSE" ||
                      action == "A11Y_INTERNAL_VEHICLE_FASTER" ||
