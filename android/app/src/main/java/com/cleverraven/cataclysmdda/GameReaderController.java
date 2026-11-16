@@ -3257,7 +3257,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void confirm() {
-        if (closed || debugReport != null) { return; }
+        if (closed) { return; }
+        if (gestureGuideOpen) { readCurrent(); return; }
+        if (debugReport != null) { return; }
         if (editor != null) {
             editor.submitCurrent();
             return;
@@ -3717,6 +3719,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void twoFingerTap(int count) {
+        if (gestureGuideOpen) {
+            readCurrent();
+            return;
+        }
         if (count == 1 && combatMode && directWorldGesturesEnabled()) {
             ReaderSnapshot.Node node = snapshot.find("reader:combat:enemies");
             String report = node == null ? activity.getString(R.string.a11yCombatNoEnemies)
