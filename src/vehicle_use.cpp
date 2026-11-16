@@ -3072,20 +3072,27 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                 }
             }
             for( const std::string &line : std::initializer_list<std::string> {
+                is_autodriving ? _( "Swipe one finger up then down: Read vehicle speed." ) :
                 _( "Swipe one finger up then down: Increase target speed." ),
+                is_autodriving ? _( "Swipe one finger down then up: Read vehicle speed." ) :
                 _( "Swipe one finger down then up: Decrease target speed." ),
+                is_autodriving ? _( "Swipe one finger left then right: Read vehicle heading." ) :
                 _( "Swipe one finger left then right: Adjust heading left." ),
+                is_autodriving ? _( "Swipe one finger right then left: Read vehicle heading." ) :
                 _( "Swipe one finger right then left: Adjust heading right." ),
+                is_autodriving ? _( "Swipe one finger up then right: Read vehicle status." ) :
                 _( "Swipe one finger up then right: Start or stop engine." ),
                 _( "Swipe one finger down then left: Read vehicle speed." ),
                 _( "Swipe one finger down then right: Read vehicle condition." ),
+                is_autodriving ? _( "Swipe one finger up then left: Pause and brake." ) :
                 _( "Swipe one finger up then left: Brake." ),
                 _( "Swipe one finger right then down: Honk horn." ),
                 _( "Swipe two fingers up: Scan 30 tiles ahead of the vehicle." ),
                 _( "Swipe two fingers down: Scan 30 tiles behind the vehicle." ),
                 _( "Swipe two fingers left: Scan 30 tiles to the vehicle's left." ),
                 _( "Swipe two fingers right: Scan 30 tiles to the vehicle's right." ),
-                _( "Triple tap three fingers: Change Map, Combat and Drive mode." ),
+                !is_autodriving ? _( "Triple tap three fingers: Change Map, Combat and Drive mode." ) :
+                _( "Triple tap three fingers: Cancel the trip and switch to Map." ),
                 _( "Long press one finger: Open vehicle controls." ),
                 _( "Tap one finger: Stop speech." ),
                 _( "Double tap one finger: Pause or resume driving." ),
