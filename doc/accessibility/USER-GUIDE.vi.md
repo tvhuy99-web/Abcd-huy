@@ -70,6 +70,14 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 
 Có 36 mã trong danh mục cử chỉ: 11 được giữ cố định và 25 cho phép gán tùy chỉnh. Các cử chỉ cố định không thể bị thay thế bởi cấu hình cũ. Hướng dẫn thử ánh xạ vuốt ngang/dọc trong 45 giây là **thiết kế lịch sử**, không còn là luồng cài đặt điều hướng hiện hành.
 
+## Cập nhật lái xe: yên lặng, quay tại chỗ và phanh trước vật cản
+
+**Cả lái tự động và lái thủ công đều im lặng khi di chuyển bình thường.** Trình đọc không tự thông báo lại xe bạn đang ngồi, địa hình, tốc độ hoặc khu vực vừa đi qua. Các cảnh báo khẩn cấp như chướng ngại, va chạm, lỗi động cơ hay tình trạng nguy hiểm của nhân vật vẫn được đọc. Cử chỉ chủ động yêu cầu quét 30 ô, đọc tốc độ, xem tình trạng xe hoặc hỏi hướng đầu xe vẫn đọc đúng nội dung tương ứng.
+
+**Quay thân xe khi đứng yên:** vuốt trái/phải khi xe đã dừng hẳn, kể cả lúc tạm dừng, sẽ xoay thân xe theo từng góc 45 độ ngay tại chỗ thay vì chỉ đánh lái. Vuốt uốn trái rồi phải hoặc phải rồi trái cũng có thể điều chỉnh hướng khi xe dừng. Game kiểm tra tất cả ô mà thân xe quét qua trước khi xoay, và nêu nguyên nhân nếu bị chặn bởi công trình, bụi cây, phương tiện hoặc sinh vật. Xe vẫn đang trôi, trượt bánh, ở dốc, bị kéo hoặc có lái/bánh bị hỏng không được xoay tại chỗ. Xoay không tự tăng ga hay tiếp tục chạy.
+
+**Phanh tự động:** bộ cảm biến quét từng ô liên tiếp từ đầu xe trong phạm vi dự đoán, gồm cả bụi cây có thể va chạm và vật dụng cản trở. Chế độ tự động ngừng ga và phanh khi gặp chướng ngại trên đường dự kiến. Lái thủ công vẫn giữ quyền điều khiển của người chơi và chỉ cảnh báo, không tự phanh. Hệ thống phát hiện là trợ năng bổ sung, không thay thế vật lý va chạm gốc.
+
 ## Hướng dẫn cử chỉ theo từng màn hình
 
 **Nhấn giữ một ngón tay** để mở danh sách thao tác của màn hình đang dùng. Mục cuối cùng là **Hướng dẫn cử chỉ**. Trong chế độ lái, nhấn giữ vẫn mở **menu điều khiển xe gốc**; mục Hướng dẫn cử chỉ được đặt ở cuối menu xe. Trong chế độ chiến đấu, nhấn giữ vẫn mở menu chiến đấu, với mục hướng dẫn ở cuối. Túi đồ có túi chứa vẫn giữ **Mở túi chứa** và **Thao tác khác** trước mục hướng dẫn.
