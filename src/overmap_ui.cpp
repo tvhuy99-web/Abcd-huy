@@ -3361,6 +3361,13 @@ void ui::omap::update_accessible_drive_to_place()
         }
         return;
     }
+    // Engine startup can clear control ownership on failure. Report the
+    // actual cause before evaluating driver ownership to avoid retry loops.
+    if( pending_accessible_drive->ignition_requested && !car.engine_on ) {
+        add_msg( m_warning, _( "Automatic drive canceled: engine did not start." ) );
+        pending_accessible_drive.reset();
+        return;
+    }
     if( !driver.controlling_vehicle || !car.player_in_control( here, driver ) ) {
         if( pending_accessible_drive->controls_requested ) {
             add_msg( m_warning, _( "Automatic drive canceled: unable to take controls." ) );
