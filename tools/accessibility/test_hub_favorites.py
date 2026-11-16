@@ -27,7 +27,7 @@ class HubFavoritesTest(unittest.TestCase):
         self.assertIn("hubRootIndex = 0;", self.controller)
         self.assertIn('"hub:favorites"', self.hub)
 
-    def test_long_press_has_two_choices_and_keeps_gesture_binding(self):
+    def test_long_press_keeps_binding_and_favorite_then_appends_help(self):
         self.assertIn("option.setOnLongClickListener(", self.controller)
         self.assertIn("showHubActionChoices();", self.controller)
         self.assertIn("private void applyHubActionChoice()", self.controller)
@@ -35,7 +35,9 @@ class HubFavoritesTest(unittest.TestCase):
         self.assertIn("showGestureChoices();", self.controller)
         self.assertIn("favorites.add(target, label)", self.controller)
         self.assertIn("favorites.remove(target)", self.controller)
-        self.assertIn("int count = choosingHubAction ? 2", self.controller)
+        self.assertIn("int count = choosingHubAction ? 3", self.controller)
+        self.assertIn("if (choice == 2) {", self.controller)
+        self.assertIn("openGestureGuide();", self.controller)
         self.assertIn("gestureBindings.assign(", self.controller)
 
     def test_favorites_persist_by_identity_not_menu_index(self):
