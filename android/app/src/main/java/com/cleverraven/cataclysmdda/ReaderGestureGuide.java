@@ -28,10 +28,25 @@ final class ReaderGestureGuide {
     static List<String> entries(Context context, ReaderSnapshot snapshot,
                                 boolean driving, boolean combat,
                                 boolean inHub, boolean traveling,
+                                boolean editing, boolean debugging,
                                 ReaderGestureBindings bindings) {
         ArrayList<String> rows = new ArrayList<>();
         final String category = snapshot == null ? "" : snapshot.category;
-        if (traveling) {
+        if (editing) {
+            add(rows, context, R.string.a11yGuideTapTextField,
+                    R.string.a11yGuideAndroidKeyboard);
+            add(rows, context, R.string.a11yGuideTwoUp,
+                    R.string.a11yGuideConfirmInput);
+            add(rows, context, R.string.a11yGuideTwoDown,
+                    R.string.a11yGuideCancelInput);
+        } else if (debugging) {
+            add(rows, context, R.string.a11yGuideOneHorizontal,
+                    R.string.a11yGuideDebugChoice);
+            add(rows, context, R.string.a11yGuideDoubleTap,
+                    R.string.a11yGuideDebugConfirm);
+            add(rows, context, R.string.a11yGuideTwoDown,
+                    R.string.a11yGuideDebugContinue);
+        } else if (traveling) {
             add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
             add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
             add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideTravelStatus);
