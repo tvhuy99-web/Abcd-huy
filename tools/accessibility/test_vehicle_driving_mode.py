@@ -238,28 +238,46 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("car.velocity != 0 && !car.is_rotorcraft( here )", drive)
         self.assertIn("veh.coord_translate( veh.turn_dir, pivot, part.mount,", WORLD)
 
-    def test_heading_swipe_announces_actual_and_requested_directions(self):
+    def test_heading_swipe_announces_short_actual_heading_and_blockers(self):
         self.assertIn('document( "reader:vehicle:heading"', WORLD)
-        self.assertIn('_( "Direction: %s." )', WORLD)
-        self.assertIn('_( "Requested heading: %s." )', WORLD)
         for compass in ("north", "northeast", "east", "southeast",
                         "south", "southwest", "west", "northwest"):
             self.assertIn('_( "' + compass + '" )', WORLD)
-        self.assertIn("spoken_heading( veh.face.dir() )", WORLD)
-        self.assertIn("spoken_heading( veh.turn_dir )", WORLD)
+        heading = WORLD.split("// A steering gesture must speak", 1)[1].split(
+            'document( "reader:vehicle:heading"', 1
+        )[0]
+        self.assertIn("spoken_heading( veh.face.dir() )", heading)
+        self.assertNotIn("spoken_heading( veh.turn_dir )", heading)
+        self.assertNotIn('_( "Requested heading: %s." )', heading)
+        self.assertIn("veh.steering_effectiveness( get_map() )", heading)
+        self.assertIn("veh.skidding", heading)
+        self.assertIn("veh.velocity == 0 && veh.turn_dir != veh.face.dir()", heading)
         self.assertIn('next.find("reader:vehicle:heading")', CTRL)
         self.assertNotIn("pendingVehicleRoadReport", CTRL)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
 
-    def test_two_fingers_are_mode_scoped_before_map_scans(self):
+    def test_two_fingers_scan_vehicle_relative_and_bent_one_finger_reads_status(self):
         self.assertIn("handleVehicleTwoFingerSwipe(", SURF)
         self.assertLess(
             SURF.index("listener.handleVehicleTwoFingerSwipe("),
             SURF.index("listener.scanDirection("))
-        self.assertIn('requestVehicleAction("reader:vehicle:brake")', CTRL)
-        self.assertIn('requestVehicleAction("reader:vehicle:horn")', CTRL)
-        self.assertIn('speakVehicleDocument("reader:vehicle:speed")', CTRL)
-        self.assertIn('speakVehicleDocument("reader:vehicle:detail")', CTRL)
+        self.assertIn("scanDirection(horizontal, vertical);", CTRL)
+        self.assertIn('"reader:scan:vehicle:" + relative', CTRL)
+        self.assertIn("octants[( facing + offset ) % 8]", ENGINE)
+        self.assertIn("std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1", WORLD)
+        for side in ("front", "back", "left", "right"):
+            self.assertIn('reader:scan:vehicle:' + side, ENGINE)
+            self.assertIn('reader:scan:vehicle:' + side, WORLD)
+        for gesture, action in (
+            ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),
+            ("swipe_down_right", 'speakVehicleDocument("reader:vehicle:summary")'),
+            ("swipe_up_left", 'requestVehicleAction("reader:vehicle:brake")'),
+            ("swipe_right_down", 'requestVehicleAction("reader:vehicle:horn")'),
+        ):
+            segment = CTRL.split('case "' + gesture + '":', 1)[1].split(
+                "return true;", 1
+            )[0]
+            self.assertIn(action, segment)
 
     def test_engine_horn_brake_keep_original_game_validation(self):
         self.assertIn("act = ACTION_SMASH;", ENGINE)
