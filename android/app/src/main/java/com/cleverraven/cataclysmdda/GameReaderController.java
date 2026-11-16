@@ -1642,9 +1642,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pocketStage == 1) {
             String name = pocketMenuChoice == 0
                     ? activity.getString(R.string.a11yPocketOpen)
-                    : activity.getString(R.string.a11yPocketOtherActions);
+                    : pocketMenuChoice == 1
+                    ? activity.getString(R.string.a11yPocketOtherActions)
+                    : activity.getString(R.string.a11yGestureGuideTitle);
             return name + ". " + activity.getString(R.string.a11yControlButton) + ", "
-                    + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 2);
+                    + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 3);
         }
         if (pocketStage == 2) {
             List<ReaderSnapshot.Node> pockets = pocketNodes(pocketContainerId);
@@ -1864,9 +1866,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pocketStage == 1) {
             if (pocketMenuChoice == 0) {
                 openPocketChoices();
-            } else {
+            } else if (pocketMenuChoice == 1) {
                 resetPocketPicker(false);
                 openGlobalContextActions();
+            } else {
+                openGestureGuide();
             }
         } else if (pocketStage == 2) {
             ReaderSnapshot.Node pocket = snapshot == null ? null : snapshot.find(focus);
@@ -2000,7 +2004,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void navigatePocketPicker(int delta) {
         if (pocketStage == 1) {
-            pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 2);
+            pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 3);
         } else {
             List<ReaderSnapshot.Node> choices = pocketStage == 2
                     ? pocketNodes(pocketContainerId) : pocketItems();
@@ -2036,7 +2040,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         title.setTextSize(20);
         rows.addView(title);
         if (pocketStage == 1) {
-            int[] ids = { R.string.a11yPocketOpen, R.string.a11yPocketOtherActions };
+            int[] ids = { R.string.a11yPocketOpen, R.string.a11yPocketOtherActions,
+                          R.string.a11yGestureGuideTitle };
             for (int i = 0; i < ids.length; i++) {
                 final int choice = i;
                 Button option = new Button(activity);
