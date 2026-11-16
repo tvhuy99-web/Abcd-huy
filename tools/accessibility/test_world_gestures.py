@@ -58,6 +58,8 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertNotIn("detail = tile.terrain;", scan)
         self.assertIn("here.has_flag( ter_furn_flag::TFLAG_GOES_UP, pos )", scan)
         self.assertIn("tile.impassable", scan)
+        self.assertIn("std::set<const vehicle *> announced_vehicles;", scan)
+        self.assertIn("announced_vehicles.insert( &found_vehicle->vehicle() ).second", scan)
         self.assertIn("tile.traps", scan)
         self.assertNotIn("observe_tile(", scan)
         self.assertIn("A11Y_SCAN:", scan)
