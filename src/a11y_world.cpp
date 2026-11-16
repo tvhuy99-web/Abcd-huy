@@ -1893,7 +1893,12 @@ void announce_area_transition()
     if( area.empty() ) {
         return;
     }
-    if( previous_tile && !previous_area.empty() && area != previous_area ) {
+    // Keep both manual and automatic driving silent on normal route changes.
+    // Preserve tracking so a parked driver does not hear a backlog of areas.
+    // Vehicle collision, obstacle and health warnings have separate channels.
+    const avatar &traveler = get_avatar();
+    if( previous_tile && !previous_area.empty() && area != previous_area &&
+        !( traveler.in_vehicle && traveler.controlling_vehicle ) ) {
         a11y::android::announce( string_format( _( "Entering area: %s." ), area ), 1 );
 #if defined(__ANDROID__)
         a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
