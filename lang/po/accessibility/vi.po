@@ -6151,3 +6151,6 @@ msgstr "Không thể quay đầu xe: không cập nhật được vị trí xe."
 
 msgid "Cannot resume: an obstacle still blocks the vehicle."
 msgstr "Không thể tiếp tục: vật cản vẫn chắn đường xe."
+
+msgid "Wait for the vehicle to stop before resuming."
+msgstr "Hãy chờ xe dừng hẳn trước khi tiếp tục."
