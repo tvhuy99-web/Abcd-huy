@@ -6103,3 +6103,27 @@ msgstr "Nhấn giữ một ngón: Mở menu điều khiển xe."
 
 msgid "Double tap two fingers: Read recent messages."
 msgstr "Chạm hai lần hai ngón: Đọc thông báo gần đây."
+
+msgid "Tap one finger: Stop speech."
+msgstr "Chạm một ngón: Dừng lời đọc."
+
+msgid "Double tap one finger: Pause or resume driving."
+msgstr "Chạm hai lần một ngón: Tạm dừng hoặc tiếp tục lái."
+
+msgid "Tap two fingers: Read focused details."
+msgstr "Chạm một lần hai ngón: Đọc chi tiết tiêu điểm."
+
+msgid "Triple tap two fingers: Open the action menu."
+msgstr "Chạm ba lần hai ngón: Mở menu thao tác."
+
+msgid "Tap three fingers: Read coordinates."
+msgstr "Chạm một lần ba ngón: Đọc tọa độ."
+
+msgid "Double tap three fingers: Read player information."
+msgstr "Chạm hai lần ba ngón: Đọc thông tin nhân vật."
+
+msgid "Swipe two fingers up in a menu: Confirm the selected action."
+msgstr "Vuốt hai ngón lên trong menu: Xác nhận mục đang chọn."
+
+msgid "Swipe two fingers down in a menu: Go back."
+msgstr "Vuốt hai ngón xuống trong menu: Quay lại."
