@@ -6726,8 +6726,10 @@ void vehicle::gain_moves( map &here )
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
     // A new driver cannot inherit an earlier session's paused target.
-    if( a11y_manual_drive ) {
-        // A manual driver can never inherit an automatic input timer.
+    if( a11y_manual_drive && !a11y_release_controls_pending ) {
+        // Ordinary manual driving never inherits an automatic timer.
+        // Exception: keep the native physics running until a requested
+        // mode exit has safely brought the car to a complete stop.
         a11y_continuous_drive = false;
     }
     if( !pl_control ) {
