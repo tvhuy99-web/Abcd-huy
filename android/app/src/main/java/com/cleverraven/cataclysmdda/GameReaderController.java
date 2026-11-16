@@ -2402,6 +2402,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
+        if (autonomousDriveTravelActive()) {
+            // The same native menu exists while ACT_AUTODRIVE owns gameplay.
+            // It already ends with the context-sensitive gesture guide.
+            if (snapshot.find("control_vehicle") != null) {
+                requestAutonomousRead("control_vehicle");
+            } else {
+                openGlobalContextActions();
+            }
+            return;
+        }
         if (vehicleMode && directWorldGesturesEnabled()) {
             // Drive-mode hold opens the real native vehicle interaction menu,
             // not the global action hub or an extra simulated overlay.
@@ -3596,6 +3606,42 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        if (autonomousDriveTravelActive()) {
+            // Only these four straight one-finger inputs are disabled.
+            // All read-only inspection, horn, emergency brake and other
+            // non-directional gestures continue to have useful effects.
+            switch (gestureId) {
+                case "swipe_up":
+                case "swipe_down":
+                case "swipe_left":
+                case "swipe_right":
+                    return true;
+                case "swipe_down_left":
+                case "swipe_up_down":
+                case "swipe_down_up":
+                    speakVehicleDocument("reader:vehicle:speed");
+                    return true;
+                case "swipe_down_right":
+                case "swipe_up_right":
+                    speakVehicleDocument("reader:vehicle:summary");
+                    return true;
+                case "swipe_left_right":
+                case "swipe_right_left":
+                    speakVehicleDocument("reader:vehicle:heading");
+                    return true;
+                case "swipe_up_left":
+                    if (travelState() == 1) { pauseOrResumeAutonomousDrive(); }
+                    else { feedback(travelStatus(travelState())); }
+                    return true;
+                case "swipe_right_down":
+                    requestAutonomousRead("reader:vehicle:horn");
+                    return true;
+                default:
+                    // Never leak old map or combat movement shortcuts into
+                    // a vehicle whose steering is owned by the pathfinder.
+                    return true;
+            }
+        }
         // While physical brakes are settling, neither combat actions nor
         // saved map bindings may escape through a stale Android mode.
         if (vehicleReleasePending && directWorldGesturesEnabled()) {
