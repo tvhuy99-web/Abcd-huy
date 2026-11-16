@@ -3320,19 +3320,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Two-finger swipes are reserved in driving mode, before map scan. */
+    /** In Drive, all four two-finger directions scan 16 tiles relative
+     * to the car's physical heading. One-finger bent gestures own car status. */
     @Override
     public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
         if (!vehicleMode || !directWorldGesturesEnabled()) { return false; }
-        if (vertical < 0) {
-            speakVehicleDocument("reader:vehicle:speed");
-        } else if (vertical > 0) {
-            speakVehicleDocument("reader:vehicle:detail");
-        } else if (horizontal < 0) {
-            requestVehicleAction("reader:vehicle:brake");
-        } else if (horizontal > 0) {
-            requestVehicleAction("reader:vehicle:horn");
-        }
+        scanDirection(horizontal, vertical);
         return true;
     }
 
@@ -3368,6 +3361,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 case "swipe_right_left":
                     requestVehicleAction("reader:vehicle:heading:right");
+                    return true;
+                case "swipe_down_left":
+                    speakVehicleDocument("reader:vehicle:speed");
+                    return true;
+                case "swipe_down_right":
+                    speakVehicleDocument("reader:vehicle:detail");
+                    return true;
+                case "swipe_up_left":
+                    requestVehicleAction("reader:vehicle:brake");
+                    return true;
+                case "swipe_right_down":
+                    requestVehicleAction("reader:vehicle:horn");
                     return true;
                 default:
                     // Do not fall through to saved map or combat bindings
