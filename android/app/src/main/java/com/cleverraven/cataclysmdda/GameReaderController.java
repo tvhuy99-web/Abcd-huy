@@ -3588,7 +3588,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
      * to the car's physical heading. One-finger bent gestures own car status. */
     @Override
     public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
-        if (!vehicleMode || !directWorldGesturesEnabled()) { return false; }
+        if (!vehicleMode || (!directWorldGesturesEnabled()
+                && !autonomousDriveTravelActive())) { return false; }
         scanDirection(horizontal, vertical);
         return true;
     }
@@ -3809,7 +3810,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             // real heading, including diagonal orientations.
             String relative = dy < 0 ? "front" : dy > 0 ? "back"
                     : dx < 0 ? "left" : "right";
-            requestLiveWorldCommand("reader:scan:vehicle:" + relative);
+            if (autonomousDriveTravelActive()) {
+                requestAutonomousRead("reader:scan:vehicle:" + relative);
+            } else {
+                requestLiveWorldCommand("reader:scan:vehicle:" + relative);
+            }
             return;
         }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
@@ -3874,11 +3879,36 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void threeFingerTap() {
-        requestLiveWorldCommand("reader:coordinates");
+        if (autonomousDriveTravelActive()) {
+            requestAutonomousRead("reader:coordinates");
+        } else {
+            requestLiveWorldCommand("reader:coordinates");
+        }
     }
 
     @Override
     public void toggleCombatMode() {
+        if (autonomousDriveTravelActive()) {
+            // Drive -> Map is an explicit Cancel, not the regular mode
+            // cycle. Let the game-thread actor brake and discard its route;
+            // do not send the ordinary release-before-cancel input.
+            try {
+                if (!CataclysmDDA.nativeTravelControl(3)) {
+                    feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
+                    return;
+                }
+            } catch (UnsatisfiedLinkError unavailable) {
+                feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+                return;
+            }
+            autonomousDriveCancelRequested = true;
+            vehicleMode = false;
+            combatMode = false;
+            clearPendingWorldDirection();
+            root.cancelGesture();
+            feedback(activity.getString(R.string.a11yAutoDriveCancelToMap));
+            return;
+        }
         if (!directWorldGesturesEnabled()) { return; }
         if (snapshot.find("reader:vehicle:seat") != null) {
             // On board: Map -> Combat -> Drive -> Map. A seat alone is
@@ -3964,7 +3994,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void characterDetails() {
-        if (!directWorldGesturesEnabled()) { return; }
+        if (!directWorldGesturesEnabled() && !autonomousDriveTravelActive()) { return; }
         ReaderSnapshot.Node document = snapshot.find("world:character_detail");
         String spoken = document == null ? "" : document.detail;
         if (spoken.isEmpty()) {
@@ -4106,6 +4136,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             render();
             feedback(activity.getString(targetingOriginalControls
                     ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections));
+            return;
+        }
+        // The native destination actor, not a separate UI panel, owns
+        // fully autonomous Pause/Resume. Preserve this gesture in Drive.
+        if (autonomousDriveTravelActive()) {
+            pauseOrResumeAutonomousDrive();
             return;
         }
         // World double tap becomes Pause/Resume only when Drive is active.
@@ -5396,6 +5432,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         combatMode = false;
         vehicleMode = false;
         vehicleReleasePending = false;
+        autonomousDriveTrip = false;
+        autonomousDriveCancelRequested = false;
         gestureGuideOpen = false;
         gestureGuideRows.clear();
         travelContextDrawerState = 0;
