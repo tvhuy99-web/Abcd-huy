@@ -2,24 +2,14 @@ name: Android Accessibility Production Signed APK
 
 on:
   workflow_dispatch:
-  push:
-    branches:
-      - master
-      # Build this user-requested release candidate with the existing private
-      # signing process. Remove this branch allowance before merging the PR.
-      - fix/concise-vehicle-heading-speech
-    paths:
-      - '.github/workflows/android-accessibility-production.yml'
 
 permissions:
   contents: write
 
 concurrency:
   group: accessibility-production-apk-${{ github.ref }}
-  # On the draft branch, supersede older candidates so the signed artifact
-  # always contains the latest test, Android resource and gesture-guide fixes.
-  # Master production releases preserve the non-cancelling policy.
-  cancel-in-progress: ${{ github.ref == 'refs/heads/fix/concise-vehicle-heading-speech' }}
+  # Keep only the latest deliberately requested production release.
+  cancel-in-progress: true
 
 jobs:
   production-arm64:

@@ -1,5 +1,9 @@
 name: GCC 16 vehicle spawn regression
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 on:
   pull_request:
     branches:
