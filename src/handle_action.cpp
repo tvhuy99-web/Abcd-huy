@@ -756,28 +756,8 @@ input_context game::get_player_input( std::string &action )
                     a11y::android::status( "blocked", &intent );
                     return std::nullopt;
                 }
-                // Rotate scan direction by the car's actual heading.
-                // Octants include diagonals and do not alter game physics.
-                const int degrees = ( static_cast<int>( std::lround(
-                                          to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
-                                      % 360 + 360 ) % 360;
-                const int facing = ( ( degrees + 22 ) / 45 ) % 8;
-                int offset = 0;
-                if( intent.node == "reader:scan:vehicle:back" ) {
-                    offset = 4;
-                } else if( intent.node == "reader:scan:vehicle:left" ) {
-                    offset = 6;
-                } else if( intent.node == "reader:scan:vehicle:right" ) {
-                    offset = 2;
-                } else if( intent.node != "reader:scan:vehicle:front" ) {
-                    a11y::android::status( "blocked", &intent );
-                    return std::nullopt;
-                }
-                static const point octants[8] = {
-                    point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
-                    point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
-                };
-                a11y::announce_linear_scan( octants[( facing + offset ) % 8] );
+                a11y::announce_vehicle_relative_scan(
+                    intent.node.substr( std::string( "reader:scan:vehicle:" ).size() ) );
             } else if( intent.node == "reader:scan:north" ) {
                 a11y::announce_linear_scan( point::north );
             } else if( intent.node == "reader:scan:south" ) {
