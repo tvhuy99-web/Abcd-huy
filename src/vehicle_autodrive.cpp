@@ -1447,18 +1447,19 @@ std::vector<std::tuple<point_rel_ms, int, std::string>> vehicle::get_debug_overl
 
 autodrive_result vehicle::do_autodrive( map &here, Character &driver )
 {
+    const bool reader_autodrive = a11y::enabled() && driver.is_avatar();
     if( !is_autodriving ) {
         return autodrive_result::abort;
     }
     if( !player_in_control( here, driver ) || skidding ) {
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
-        if( a11y::enabled() ) {
+        if( reader_autodrive ) {
             cruise_velocity = 0;
             if( velocity != 0 ) {
                 handbrake( here );
             }
         }
-        stop_autodriving( a11y::enabled() );
+        stop_autodriving( reader_autodrive );
         return autodrive_result::abort;
     }
     // A route from Explore Places is a native autodrive activity. On a
@@ -1492,7 +1493,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         }
     }
     if( omt_path.empty() ) {
-        stop_autodriving( a11y::enabled() );
+        stop_autodriving( reader_autodrive );
         return autodrive_result::finished;
     }
     if( !active_autodrive_controller ) {
@@ -1509,7 +1510,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( !a11y_obstacle_stop ) {
             driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
         }
-        if( a11y::enabled() ) {
+        if( reader_autodrive ) {
             return safety_stop();
         }
         stop_autodriving( false );
@@ -1521,7 +1522,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         return autodrive_result::abort;
     }
     if( next_step->target_speed_tps == 0 && velocity == 0 ) {
-        stop_autodriving( a11y::enabled() );
+        stop_autodriving( reader_autodrive );
         return autodrive_result::finished;
     }
     cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
@@ -1534,7 +1535,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                 driver.add_msg_if_player( m_warning,
                                           _( "You can't see anything in front of your vehicle!" ) );
             }
-            if( a11y::enabled() ) {
+            if( reader_autodrive ) {
                 return safety_stop();
             }
             stop_autodriving( true );
@@ -1543,7 +1544,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             if( !a11y_obstacle_stop ) {
                 driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
             }
-            if( a11y::enabled() ) {
+            if( reader_autodrive ) {
                 return safety_stop();
             }
             stop_autodriving( false );
@@ -1559,7 +1560,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
 
     int turn_delta = orientation_diff( next_step->steering_dir, to_orientation( turn_dir ) );
-    if( a11y::enabled() && velocity == 0 && turn_delta != 0 && !is_rotorcraft( here ) ) {
+    if( reader_autodrive && velocity == 0 && turn_delta != 0 && !is_rotorcraft( here ) ) {
         // The accessibility stationary pivot rotates the ACTUAL car, not
         // just a requested steering direction. Limit to 45 degrees/turn,
         // check the entire swept footprint, and recompute the A* route
