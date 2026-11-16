@@ -17,6 +17,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_android.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
 #include "character.h"
@@ -1484,8 +1485,14 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     // The full autonomous reader route must try the native A* obstacle
     // planner first. Only after it cannot find a safe step may it pause;
     // never show an Android blocker-choice dialog.
-    const auto safety_stop = [&]() {
+    const auto safety_stop = [&]( const char *reason ) {
         if( !a11y_obstacle_stop ) {
+            // A single diagnostic record per blocked segment. This records
+            // why re-planning failed without flooding the spoken interface.
+            a11y::android::diagnostic_event( "AUTODRIVE_ROUTE",
+                    std::string( "paused reason=" ) + reason +
+                    " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
+                    " velocity=" + std::to_string( velocity ) );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
         }
@@ -1541,7 +1548,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     if( !next_step ) {
         if( reader_autodrive ) {
-            return safety_stop();
+            return safety_stop( "no_local_path" );
         }
         driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
         stop_autodriving( false );
@@ -1581,7 +1588,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     switch( clearance ) {
         case collision_check_result::no_visibility:
             if( reader_autodrive ) {
-                return safety_stop();
+                return safety_stop( "no_visibility" );
             }
             driver.add_msg_if_player( m_warning,
                                       _( "You can't see anything in front of your vehicle!" ) );
@@ -1589,7 +1596,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
             if( reader_autodrive ) {
-                return safety_stop();
+                return safety_stop( "close_obstacle" );
             }
             driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
             stop_autodriving( false );
@@ -1612,7 +1619,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         // after the physical heading has changed. No throttle in this turn.
         cruise_velocity = 0;
         if( !a11y_rotate_in_place( here, std::clamp( turn_delta, -3, 3 ) ) ) {
-            return safety_stop();
+            return safety_stop( "pivot_blocked" );
         }
         active_autodrive_controller.reset();
         driver.set_moves( 0 );

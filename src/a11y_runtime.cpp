@@ -308,6 +308,22 @@ std::optional<std::string> poll_input( const void *input_owner )
         // lifecycle and foreground transitions, and request IDs are strictly
         // monotonic. Recheck the native walking permission for every step.
         const bool world_walk = live_world_walk_command( screen.snapshot, *intent );
+        // ACT_AUTODRIVE republishes an activity snapshot as time advances,
+        // often between an Android two-finger scan and this game-thread
+        // poll. Treat ONLY explicitly whitelisted live vehicle queries as
+        // revision-tolerant. The context token and monotonic request ID
+        // remain mandatory; below we revalidate the node, permission and
+        // native driver seat against the CURRENT snapshot before dispatch.
+        const bool activity_autodrive = screen.category == "activity" &&
+                std::any_of( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
+        []( const semantic_node &n ) { return n.id == "activity:autodrive"; } );
+        const std::string &query = intent->node;
+        const bool live_vehicle_query = activity_autodrive &&
+                intent->revision > 0 && intent->revision <= screen.revision &&
+                intent->action == "activate" && intent->value.empty() &&
+                ( query.rfind( "reader:scan:vehicle:", 0 ) == 0 ||
+                  query == "reader:coordinates" ||
+                  query == "reader:vehicle:horn" || query == "control_vehicle" );
         // A focus move is read-only. Its node and "focus" permission are
         // re-resolved below against the *current* snapshot, so an unrelated
         // sidebar or list redraw must not make swiping sound like a failed
@@ -318,7 +334,7 @@ std::optional<std::string> poll_input( const void *input_owner )
                                           intent->revision <= screen.revision;
         const bool valid_token = contexts.accepts( intent->token );
         const bool valid_revision = intent->revision == screen.revision || world_walk ||
-                                    live_read_only_focus;
+                                    live_read_only_focus || live_vehicle_query;
         const bool valid_request = intent->request > screen.last_request;
         if( !valid_token || !valid_revision || !valid_request ) {
             android::status( "stale", &*intent );

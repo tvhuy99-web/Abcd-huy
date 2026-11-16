@@ -79,7 +79,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("requestAutonomousRead(", CONTROLLER)
         self.assertIn("autonomousDriveCancelRequested = true;", CONTROLLER)
         self.assertIn("nativeTravelControl(3)", CONTROLLER)
-        self.assertIn("if (command == 3 && autonomousDriveTravelActive())", CONTROLLER)
+        self.assertIn("if (command == 3 && autonomousDriveTrip)", CONTROLLER)
         self.assertIn('"activity:autodrive"', read(SRC / "a11y_world.cpp"))
         self.assertIn("R.string.a11yGuideAutoMapCancel", guide)
         self.assertIn("R.string.a11yGuideAutoPause", guide)
@@ -132,7 +132,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         method = DRIVER.split("autodrive_result vehicle::do_autodrive(", 1)[1].split(
             "void vehicle::stop_autodriving(", 1
         )[0]
-        self.assertIn("const auto safety_stop = [&]()", method)
+        self.assertIn("const auto safety_stop = [&]( const char *reason )", method)
         self.assertIn("cruise_velocity = 0;", method)
         self.assertIn("handbrake( here );", method)
         self.assertIn("a11y_obstacle_stop = true;", method)
@@ -142,7 +142,11 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
             method,
         )
         self.assertIn("if( reader_autodrive )", method)
-        self.assertIn("return safety_stop();", method)
+        self.assertIn('return safety_stop( "no_local_path" );', method)
+        self.assertIn('return safety_stop( "close_obstacle" );', method)
+        self.assertIn('return safety_stop( "no_visibility" );', method)
+        self.assertIn('return safety_stop( "pivot_blocked" );', method)
+        self.assertIn('diagnostic_event( "AUTODRIVE_ROUTE"', method)
         self.assertIn("case collision_check_result::close_obstacle:", method)
         self.assertIn("case collision_check_result::no_visibility:", method)
         self.assertIn("if( !next_step )", method)
@@ -200,19 +204,52 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("who.cancel_activity();", ACTOR)
 
     def test_autonomous_drive_keeps_existing_gestures_without_modal(self):
-        self.assertIn("else if (travelState() != 0 && !autonomousDriveTrip", CONTROLLER)
-        self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip)", CONTROLLER)
+        self.assertIn("else if (walkingTravelPanelActive()", CONTROLLER)
+        self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip && !vehicleMode)", CONTROLLER)
         self.assertIn("if (autonomousDriveTrip) {", CONTROLLER)
         self.assertIn("public void openActionMenu()", CONTROLLER)
         self.assertIn("showComprehensiveMenu();", CONTROLLER)
-        self.assertIn("if (travelState() == 4 || autonomousDriveTravelActive())",
+        self.assertIn("if (autonomousDriveTrip && rawNativeTravelState() != 0)",
                       CONTROLLER)
         self.assertNotIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
                          CONTROLLER)
-        self.assertIn("travelChoice = travelChoiceCount(travelState()) - 1;\n"
-                      "                activateTravel();", CONTROLLER)
+        self.assertIn("travelChoice = 1;\n"
+                      "            activateTravel();", CONTROLLER)
         self.assertIn("( suspended() && control != 3 )", BRIDGE)
         self.assertIn("return pending_travel_control.exchange( 0", BRIDGE)
+
+    def test_activity_reader_allows_only_live_autodrive_queries(self):
+        runtime = read(SRC / "a11y_runtime.cpp")
+        self.assertIn('screen.category == "activity"', runtime)
+        self.assertIn('n.id == "activity:autodrive"', runtime)
+        self.assertIn('query.rfind( "reader:scan:vehicle:", 0 ) == 0', runtime)
+        self.assertIn('query == "reader:coordinates"', runtime)
+        self.assertIn('query == "reader:vehicle:horn"', runtime)
+        self.assertIn('query == "control_vehicle"', runtime)
+        self.assertIn("intent->revision <= screen.revision", runtime)
+        self.assertIn("live_read_only_focus || live_vehicle_query", runtime)
+        self.assertIn("contexts.accepts( intent->token )", runtime)
+        self.assertIn("intent->request > screen.last_request", runtime)
+        self.assertIn('n.id == intent->node', runtime)
+        self.assertIn('intent->action', runtime)
+
+    def test_autodrive_never_intercepts_ordinary_reader_focus(self):
+        self.assertIn("private boolean walkingTravelPanelActive()", CONTROLLER)
+        self.assertIn("return !autonomousDriveTrip && !vehicleMode", CONTROLLER)
+        self.assertIn("rawNativeTravelState() == 0", CONTROLLER)
+        self.assertIn("walkingTravelPanelActive()", CONTROLLER)
+        self.assertIn("if (walkingTravelPanelActive()) { activateTravel(); return; }",
+                      CONTROLLER)
+        self.assertIn("if (walkingTravelPanelActive()) {", CONTROLLER)
+        self.assertIn("feedback(travelSpoken(travelState()));", CONTROLLER)
+        self.assertIn("feedback(travelDetailSpeech(travelState()));", CONTROLLER)
+        self.assertIn("public void openActionMenu()", CONTROLLER)
+        self.assertIn("showComprehensiveMenu();", CONTROLLER)
+        self.assertIn("&& rawNativeTravelState() != 0", CONTROLLER)
+        self.assertIn("!combatMode && !vehicleMode && !autonomousDriveTrip",
+                      CONTROLLER)
+        self.assertNotIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
+                         CONTROLLER)
 
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',

@@ -34,7 +34,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
             self.assertNotIn(forbidden, gate)
         self.assertIn("&& !viewer.activity", gate)
         self.assertIn("&& !vehicleReleasePending && !vehicleDriverReady()", CTRL)
-        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", CTRL)
+        self.assertIn("return !combatMode && !vehicleMode && !autonomousDriveTrip", CTRL)
         self.assertIn('requestLiveWorldCommand("reader:vehicle:release")', CTRL)
 
     def test_status_uses_native_control_ownership(self):

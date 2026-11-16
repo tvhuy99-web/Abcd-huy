@@ -263,11 +263,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 int state = travelState();
                 if (state != announcedTravelState) {
                     announcedTravelState = state;
-                    travelChoice = 0;
-                    clearPendingWorldDirection();
-                    root.cancelGesture();
-                    render();
-                    if (autonomousDriveTrip) {
+                    if (!autonomousDriveTrip && !vehicleMode) {
+                        travelChoice = 0;
+                        clearPendingWorldDirection();
+                        root.cancelGesture();
+                        render();
+                    }
+                    if (autonomousDriveTrip || vehicleMode) {
                         // The native autopilot reports a genuine no-route
                         // warning once. Never open or narrate a modal
                         // Resume/Cancel panel while in ordinary Drive.
@@ -836,14 +838,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     combatMode = false;
                     vehicleReleasePending = false;
                 } else if (!nativeAutodrive && autonomousDriveTrip
-                        && !"activity".equals(next.category)) {
+                        && !"activity".equals(next.category)
+                        && rawNativeTravelState() == 0) {
+                    // World/activity snapshots can alternate during an
+                    // active trip; retain Drive until native ends the route.
                     autonomousDriveTrip = false;
                     autonomousDriveCancelRequested = false;
                 }
                 // A vehicle may disappear or the character may dismount between
                 // snapshots. Never leave a stale driving mode armed on foot.
                 if ("DEFAULTMODE".equals(next.category)
-                        && next.find("reader:vehicle:seat") == null) {
+                        && next.find("reader:vehicle:seat") == null && !autonomousDriveTrip) {
                     vehicleMode = false;
                     pendingVehicleHeadingReport = false;
                 }
@@ -1118,7 +1123,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
                 int activeTravel = travelState();
-                if (activeTravel != 0 && !autonomousDriveTrip) {
+                if (activeTravel != 0 && !autonomousDriveTrip && !vehicleMode) {
                     boolean enteredTravel = announcedTravelState != activeTravel
                             || changedContext;
                     if (announcedTravelState != activeTravel) { travelChoice = 0; }
@@ -2552,10 +2557,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
-        if (travelState() == 4) {
-            // There is no native vehicle-controls menu while the
-            // blocking activity has no moves. Always expose the
-            // reader's full hub instead of another modal dead end.
+        if (walkingTravelPanelActive() && travelState() == 4) {
             showComprehensiveMenu();
             return;
         }
@@ -2600,7 +2602,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openGlobalContextActions();
             return;
         }
-        if (travelState() != 0) {
+        if (walkingTravelPanelActive()) {
             travelContextDrawerState = travelState();
             openGlobalContextActions();
             return;
@@ -2651,7 +2653,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // in this read-only guide is sent through the native action gateway.
         gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
                 vehicleMode, combatMode, comprehensiveMenu,
-                travelContextDrawerState != 0 || travelState() != 0,
+                travelContextDrawerState != 0 || walkingTravelPanelActive(),
                 editor != null, debugReport != null, gestureBindings,
                 documentReader.isOpen(), pocketStage);
         if (gestureGuideRows.isEmpty()) { return; }
@@ -2832,6 +2834,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
+    private int rawNativeTravelState() {
+        try {
+            return CataclysmDDA.nativeTravelState();
+        } catch (UnsatisfiedLinkError unavailable) {
+            return 0;
+        }
+    }
+
+    private boolean walkingTravelPanelActive() {
+        // The automatic car owns the Drive gestures, not the walking trip UI.
+        return !autonomousDriveTrip && !vehicleMode && travelState() != 0;
+    }
+
     private int travelState() {
         if (snapshot == null || debugReport != null || editor != null
                 || comprehensiveMenu || pocketStage != 0 || commandPaletteOpen
@@ -2841,11 +2856,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     && !"look-around".equals(snapshot.category))) {
             return 0;
         }
-        try {
-            return CataclysmDDA.nativeTravelState();
-        } catch (UnsatisfiedLinkError unavailable) {
-            return 0;
-        }
+        return rawNativeTravelState();
     }
 
     private int travelChoiceCount(int state) {
@@ -2890,7 +2901,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (CataclysmDDA.nativeTravelControl(command)) {
                 SessionDebugLog.event("TRAVEL_CONTROL",
                         "command=" + command + " from_state=" + state);
-                if (command == 3 && autonomousDriveTravelActive()) {
+                if (command == 3 && autonomousDriveTrip) {
                     // Cancel in the trip panel has the same meaning as
                     // switching Drive -> Map. Native releases controls only
                     // after the actual car has finished braking.
@@ -3012,7 +3023,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (commandPaletteOpen) {
             root.setBackgroundColor(0xff161616);
             renderContextCommands();
-        } else if (travelState() != 0 && !autonomousDriveTrip && !vehicleMode
+        } else if (walkingTravelPanelActive()
                    && snapshot != null && !"overmap".equals(snapshot.category)
                    && !"look-around".equals(snapshot.category)) {
             // Walking auto-travel retains its older controls. The Explore
@@ -3082,11 +3093,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean autonomousDriveTravelActive() {
-        return autonomousDriveTrip && !autonomousDriveCancelRequested
+        return autonomousDriveTrip && rawNativeTravelState() != 0
+                && !autonomousDriveCancelRequested
                 && !gestureGuideOpen && !commandPaletteOpen && !comprehensiveMenu
                 && editor == null && !closed && foreground && windowFocused
-                && snapshot != null && "activity".equals(snapshot.category)
-                && snapshot.find("activity:autodrive") != null;
+                && snapshot != null
+                && ( snapshot.find("activity:autodrive") != null ||
+                     "DEFAULTMODE".equals(snapshot.category) );
     }
 
     private void requestAutonomousRead(String id) {
@@ -3124,7 +3137,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     + (snapshot == null ? "" : snapshot.contextKey());
         }
         if (debugReport != null) { return presentationEpoch + ":debug"; }
-        if (travelState() != 0 && !autonomousDriveTrip) {
+        if (walkingTravelPanelActive()) {
             return presentationEpoch + ":travel:" + travelState();
         }
         if (comprehensiveMenu) {
@@ -3218,7 +3231,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             navigatePocketPicker(delta);
             return;
         }
-        if (travelState() != 0 && !autonomousDriveTrip) {
+        if (walkingTravelPanelActive()) {
             int state = travelState();
             travelChoice = Math.floorMod(travelChoice + delta, travelChoiceCount(state));
             render();
@@ -3578,7 +3591,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             }
             return;
         }
-        if (travelState() != 0) { activateTravel(); return; }
+        if (walkingTravelPanelActive()) { activateTravel(); return; }
         if (snapshot == null || directWorldGesturesEnabled()) { return; }
         // Two fingers up advances the multi-selection/attribute/trait/skill
         // tabs, instead of confirming whichever row happens to be focused.
@@ -3710,7 +3723,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean worldMovementEnabled() {
         // One finger attacks during combat; two fingers move. Outside
         // combat, the original one-finger map movement is unchanged.
-        return !combatMode && !vehicleMode && worldStepAllowed();
+        return !combatMode && !vehicleMode && !autonomousDriveTrip
+                && worldStepAllowed();
     }
 
     private static boolean hasCardinalDirections(ReaderSnapshot snapshot) {
@@ -4417,7 +4431,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             activatePocketPicker();
             return;
         }
-        if (travelState() != 0) { activateTravel(); return; }
+        if (walkingTravelPanelActive()) { activateTravel(); return; }
         ReaderSnapshot.Node node = snapshot == null ? null : snapshot.find(focus);
         if (node == null) { return; }
         if (!node.enabled) { feedback(nodeText(node, true)); return; }
@@ -5215,7 +5229,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(pocketChoiceSpeech());
             return;
         }
-        if (travelState() != 0) {
+        if (walkingTravelPanelActive()) {
             feedback(travelSpoken(travelState()));
             return;
         }
@@ -5371,7 +5385,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(activity.getString(R.string.a11yLoadingStatus, lastLoadingStatus));
             return;
         }
-        if (travelState() != 0) {
+        if (walkingTravelPanelActive()) {
             feedback(travelDetailSpeech(travelState()));
             return;
         }
@@ -5524,8 +5538,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (comprehensiveMenu) { readCurrent(); }
             return;
         }
-        if (travelState() != 0) {
-            if (travelState() == 4 || autonomousDriveTravelActive()) {
+        if (autonomousDriveTrip && rawNativeTravelState() != 0) {
+            // Android Back cancels the full destination on the native game
+            // thread; it must never activate a hidden Continue/Cancel row.
+            travelChoice = 1;
+            activateTravel();
+            return;
+        }
+        if (walkingTravelPanelActive()) {
+            if (travelState() == 4) {
                 // Android/system Back must provide a reliable escape from
                 // the autonomous blocked-route UI. The native actor
                 // cancels and brakes on the game thread, even at 0 moves.
