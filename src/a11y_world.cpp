@@ -2073,6 +2073,32 @@ semantic_snapshot activity_snapshot( const input_context &context )
         result.nodes.push_back( std::move( *progress_node ) );
     }
 
+    if( viewer.activity && viewer.activity.id() == activity_id( "ACT_AUTODRIVE" ) &&
+        viewer.in_vehicle && viewer.controlling_vehicle ) {
+        // Publish the same live vehicle documents during autonomous travel.
+        // This marker allows Android to show Drive (not a separate activity
+        // mode); no swipe control is sent to the pathfinder.
+        result.nodes.push_back( document( "activity:autodrive",
+                                _( "Autonomous destination driving" ),
+                                _( "The car drives itself. Double tap to pause or resume. "
+                                   "Switch to Map to cancel the trip." ) ) );
+        semantic_snapshot car = world_snapshot( context, 1, 1, world_scan_filter::all );
+        const std::vector<std::string> allowed = {
+            "reader:vehicle:seat", "reader:vehicle:driver",
+            "reader:vehicle:speed", "reader:vehicle:summary",
+            "reader:vehicle:heading", "reader:vehicle:road",
+            "reader:vehicle:detail", "reader:vehicle:horn",
+            "reader:scan:vehicle:front", "reader:scan:vehicle:back",
+            "reader:scan:vehicle:left", "reader:scan:vehicle:right",
+            "reader:coordinates", "world:status", "world:messages"
+        };
+        for( semantic_node &node : car.nodes ) {
+            if( std::find( allowed.begin(), allowed.end(), node.id ) != allowed.end() ) {
+                result.nodes.push_back( std::move( node ) );
+            }
+        }
+    }
+
     const std::vector<std::string> supported_actions = {
         "pause", "zoom_in", "zoom_out", "player_data", "messages", "help"
     };
