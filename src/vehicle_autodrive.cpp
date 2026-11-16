@@ -1473,11 +1473,14 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         stop_autodriving( reader_autodrive );
         return autodrive_result::abort;
     }
-    // A route from Explore Places is a native autodrive activity. On a
-    // collision/visibility blocker the reader must KEEP the destination,
-    // brake, and present Resume/Cancel, never silently hand control to a
-    // moving vehicle with the former target speed.
+    // The full autonomous reader route must try the native A* obstacle
+    // planner first. Only after it cannot find a safe step may it pause;
+    // never show an Android blocker-choice dialog.
     const auto safety_stop = [&]() {
+        if( !a11y_obstacle_stop ) {
+            driver.add_msg_if_player( m_warning,
+                                      _( "No safe route found. Vehicle paused." ) );
+        }
         cruise_velocity = 0;
         if( velocity != 0 ) {
             handbrake( here );
@@ -1517,13 +1520,22 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     active_autodrive_controller->check_safe_speed( here );
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step( here );
+    // Cached obstacle maps and paths can become stale when a bush, car or
+    // creature blocks the route. Rebuild the full A* map and try another
+    // path ONCE this turn before deciding the destination is unreachable.
+    const auto retry_local_route = [&]() -> std::optional<navigation_step> {
+        active_autodrive_controller = std::make_shared<autodrive_controller>( *this, driver );
+        active_autodrive_controller->check_safe_speed( here );
+        return active_autodrive_controller->compute_next_step( here );
+    };
+    if( !next_step && reader_autodrive ) {
+        next_step = retry_local_route();
+    }
     if( !next_step ) {
-        if( !a11y_obstacle_stop ) {
-            driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
-        }
         if( reader_autodrive ) {
             return safety_stop();
         }
+        driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
         stop_autodriving( false );
         return autodrive_result::abort;
     }
@@ -1538,26 +1550,40 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
 
-    // check for collisions before we steer, since steering may end our turn
-    // which would cause the vehicle to move and maybe crash
-    switch( active_autodrive_controller->check_collision_zone( here, next_step->steering_dir ) ) {
-        case collision_check_result::no_visibility:
-            if( !a11y_obstacle_stop ) {
-                driver.add_msg_if_player( m_warning,
-                                          _( "You can't see anything in front of your vehicle!" ) );
+    // Check collisions before any steering/throttle. If the selected cached
+    // path is newly obstructed, try A* again with fresh live obstacles.
+    // A successful alternative is followed normally without prompting.
+    collision_check_result clearance =
+        active_autodrive_controller->check_collision_zone( here, next_step->steering_dir );
+    if( reader_autodrive &&
+        ( clearance == collision_check_result::close_obstacle ||
+          clearance == collision_check_result::no_visibility ) ) {
+        std::optional<navigation_step> alternate = retry_local_route();
+        if( alternate && alternate->pos.xy() == veh_pos.xy() ) {
+            const collision_check_result alternate_clearance =
+                active_autodrive_controller->check_collision_zone( here, alternate->steering_dir );
+            if( alternate_clearance != collision_check_result::close_obstacle &&
+                alternate_clearance != collision_check_result::no_visibility ) {
+                next_step = alternate;
+                clearance = alternate_clearance;
+                cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
             }
+        }
+    }
+    switch( clearance ) {
+        case collision_check_result::no_visibility:
             if( reader_autodrive ) {
                 return safety_stop();
             }
+            driver.add_msg_if_player( m_warning,
+                                      _( "You can't see anything in front of your vehicle!" ) );
             stop_autodriving( true );
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
-            if( !a11y_obstacle_stop ) {
-                driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
-            }
             if( reader_autodrive ) {
                 return safety_stop();
             }
+            driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
             stop_autodriving( false );
             return autodrive_result::abort;
         case collision_check_result::slow_down:

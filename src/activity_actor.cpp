@@ -855,11 +855,11 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             state = 2;
             a11y::android::set_travel_state( state );
         }
-        // The native vehicle sensor and autodrive path checker both mark
-        // an obstruction; neither the player's old Manual preference nor
-        // an override gesture can bypass this fully autonomous journey.
+        // Native A* attempts a safe detour before setting this flag. When
+        // no viable route exists, remain in ordinary paused Drive mode.
+        // Never create a separate modal obstacle-selection UI.
         if( player_vehicle->a11y_obstacle_stop && state == 1 ) {
-            state = 4; // obstacle, NOT an ignorable enemy safe-mode warning
+            state = 2;
             a11y::android::set_travel_state( state );
         }
         if( g->safe_mode == SAFE_MODE_STOP && state == 1 ) {
@@ -884,20 +884,12 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
                 a11y::android::set_travel_state( state );
                 who.add_msg_if_player( m_warning,
                                        _( "Cannot resume: safe mode still blocks the route." ) );
-            } else if( state == 4 ) {
-                const std::optional<a11y::vehicle_obstacle> obstacle =
-                    a11y::vehicle_obstacle_ahead( *player_vehicle, here,
-                                                  player_vehicle->velocity < 0 );
-                if( obstacle ) {
-                    who.add_msg_if_player( m_warning,
-                                           _( "Cannot resume: an obstacle still blocks the vehicle." ) );
-                } else {
-                    player_vehicle->a11y_obstacle_stop = false;
-                    player_vehicle->a11y_brake_alerted = false;
-                    state = 1;
-                    a11y::android::set_travel_state( state );
-                }
             } else {
+                // Retry the actual A* route, not the former straight-ahead
+                // sensor ray. An obstacle in front may have a safe detour.
+                player_vehicle->a11y_obstacle_stop = false;
+                player_vehicle->a11y_brake_alerted = false;
+                player_vehicle->a11y_obstacle_override = false;
                 state = 1;
                 a11y::android::set_travel_state( state );
             }

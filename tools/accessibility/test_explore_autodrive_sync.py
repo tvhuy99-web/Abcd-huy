@@ -114,15 +114,14 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("player_vehicle->stop_autodriving( true );", ACTOR)
         self.assertIn("handbrake( here );", ACTOR)
 
-    def test_obstacle_block_has_no_ignore_button(self):
-        self.assertIn("state = 4; // obstacle", ACTOR)
-        self.assertIn("current != 4", BRIDGE)
-        self.assertIn("state <= 4 ? state : 0", BRIDGE)
-        self.assertIn("if( obstacle )", ACTOR)
-        self.assertIn("Cannot resume: an obstacle still blocks the vehicle.", ACTOR)
+    def test_unreachable_route_pauses_without_obstacle_dialog(self):
+        self.assertIn("if( player_vehicle->a11y_obstacle_stop && state == 1 )", ACTOR)
+        self.assertIn("state = 2;", ACTOR)
+        self.assertNotIn("state = 4; // obstacle", ACTOR)
+        self.assertNotIn('Cannot resume: an obstacle still blocks the vehicle.', ACTOR)
+        self.assertIn("player_vehicle->a11y_obstacle_stop = false;", ACTOR)
+        self.assertIn("if( state != 1 )", ACTOR)
         self.assertIn("state == 2 || state == 4", CONTROLLER)
-        self.assertIn("R.string.a11yTravelObstacleStopped", CONTROLLER)
-        self.assertIn("state == 3 ? 3 : 2", CONTROLLER)
         self.assertIn("control == 4 && current != 3", BRIDGE)
         self.assertIn("g->safe_mode == SAFE_MODE_STOP", ACTOR)
         for locale in ("values", "values-vi"):
@@ -148,13 +147,21 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("case collision_check_result::no_visibility:", method)
         self.assertIn("if( !next_step )", method)
 
-    def test_autonomous_sensor_brakes_even_if_manual_setting_remained(self):
+    def test_autonomous_planner_avoids_obstacles_before_emergency_braking(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving )", VEHICLE)
         self.assertIn("( a11y_manual_drive || is_autodriving )", VEHICLE)
-        self.assertIn("if( is_autodriving ) {", VEHICLE)
+        self.assertIn("} else if( is_autodriving ) {", VEHICLE)
         self.assertIn("a11y_obstacle_override = false;", VEHICLE)
         self.assertIn("a11y_obstacle_stop = true;", VEHICLE)
         self.assertIn("Automatic braking: %1$s ahead", VEHICLE)
+        driver = DRIVER.split("autodrive_result vehicle::do_autodrive(", 1)[1]
+        self.assertIn("retry_local_route", driver)
+        self.assertIn("std::make_shared<autodrive_controller>", driver)
+        self.assertIn("if( !next_step && reader_autodrive )", driver)
+        self.assertIn("alternate_clearance", driver)
+        self.assertIn("next_step = alternate;", driver)
+        self.assertIn("No safe route found. Vehicle paused.", driver)
+        self.assertIn("if( !a11y_obstacle_stop )", driver)
 
     def test_stationary_pivot_uses_footprint_and_replans(self):
         method = DRIVER.split("autodrive_result vehicle::do_autodrive(", 1)[1].split(
@@ -192,17 +199,16 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("a11y::android::reset_travel_control();", world)
         self.assertIn("who.cancel_activity();", ACTOR)
 
-    def test_blocked_route_has_independent_back_and_hub_escape(self):
-        self.assertIn("if (autonomousDriveTravelActive()) {", CONTROLLER)
-        self.assertIn("if (travelState() == 4)", CONTROLLER)
+    def test_autonomous_drive_keeps_existing_gestures_without_modal(self):
+        self.assertIn("else if (travelState() != 0 && !autonomousDriveTrip", CONTROLLER)
+        self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip)", CONTROLLER)
+        self.assertIn("if (autonomousDriveTrip) {", CONTROLLER)
+        self.assertIn("public void openActionMenu()", CONTROLLER)
+        self.assertIn("showComprehensiveMenu();", CONTROLLER)
         self.assertIn("if (travelState() == 4 || autonomousDriveTravelActive())",
                       CONTROLLER)
-        self.assertIn("showComprehensiveMenu();", CONTROLLER)
-        self.assertIn("hub.setText(R.string.a11yHubTitle);", CONTROLLER)
-        self.assertIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
-                      CONTROLLER)
-        self.assertIn("(!directWorldGesturesEnabled() && !autonomousDriveTravelActive())",
-                      CONTROLLER)
+        self.assertNotIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
+                         CONTROLLER)
         self.assertIn("travelChoice = travelChoiceCount(travelState()) - 1;\n"
                       "                activateTravel();", CONTROLLER)
         self.assertIn("( suspended() && control != 3 )", BRIDGE)

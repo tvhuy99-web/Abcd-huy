@@ -231,7 +231,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     clearPendingWorldDirection();
                     root.cancelGesture();
                     render();
-                    if (state != 0) {
+                    if (autonomousDriveTrip) {
+                        // The native autopilot reports a genuine no-route
+                        // warning once. Never open or narrate a modal
+                        // Resume/Cancel panel while in ordinary Drive.
+                        // User gestures, including the action hub, remain
+                        // active and can read the status on request.
+                    } else if (state != 0) {
                         feedback(travelStatus(state) + ". " + travelSpoken(state));
                     } else if (snapshot != null
                             && ("DEFAULTMODE".equals(snapshot.category)
@@ -1067,7 +1073,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
                 int activeTravel = travelState();
-                if (activeTravel != 0) {
+                if (activeTravel != 0 && !autonomousDriveTrip) {
                     boolean enteredTravel = announcedTravelState != activeTravel
                             || changedContext;
                     if (announcedTravelState != activeTravel) { travelChoice = 0; }
@@ -1079,7 +1085,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     }
                     return;
                 }
-                announcedTravelState = 0;
+                // Autonomous Explore Places stays in the normal, transparent
+                // Drive view. Travel status changes may be consulted through
+                // gestures but must not hijack focus or display a modal.
+                announcedTravelState = activeTravel;
                 render();
                 if (worldView) {
                     retryPendingWorldDirection();
@@ -2888,14 +2897,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             });
             rows.addView(button);
         }
-        // A blocked drive must never occupy the entire interface without
-        // an independent way to open the general command hub.
-        if (state == 4 || autonomousDriveTravelActive()) {
-            Button hub = new Button(activity);
-            hub.setText(R.string.a11yHubTitle);
-            hub.setOnClickListener(view -> showComprehensiveMenu());
-            rows.addView(hub);
-        }
         renderGuideButton();
     }
 
@@ -2945,7 +2946,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         } else if (commandPaletteOpen) {
             root.setBackgroundColor(0xff161616);
             renderContextCommands();
-        } else if (travelState() != 0) {
+        } else if (travelState() != 0 && !autonomousDriveTrip && !vehicleMode
+                   && snapshot != null && !"overmap".equals(snapshot.category)
+                   && !"look-around".equals(snapshot.category)) {
+            // Walking auto-travel retains its older controls. The Explore
+            // Places vehicle never renders this full-screen panel.
             root.setBackgroundColor(0xff161616);
             renderTravelPanel(travelState());
         } else {
@@ -3007,13 +3012,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void pauseOrResumeAutonomousDrive() {
         if (!autonomousDriveTravelActive()) { return; }
         int state = travelState();
-        // Enemy safe mode is not bypassed by a double-tap. Blocked roads
-        // may only retry through native collision checks, never Ignore.
-        if (state == 3) {
-            feedback(travelStatus(state));
-            return;
-        }
-        int command = state == 1 ? 1 : (state == 2 || state == 4 ? 2 : 0);
+        // A double-tap may request a retry for either a paused route or
+        // an enemy warning. Native safe mode still decides if it is safe;
+        // this gesture never issues the unsafe Ignore command.
+        int command = state == 1 ? 1
+                : (state == 2 || state == 3 || state == 4 ? 2 : 0);
         if (command == 0) { return; }
         try {
             if (CataclysmDDA.nativeTravelControl(command)) {
@@ -3033,7 +3036,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     + (snapshot == null ? "" : snapshot.contextKey());
         }
         if (debugReport != null) { return presentationEpoch + ":debug"; }
-        if (travelState() != 0) {
+        if (travelState() != 0 && !autonomousDriveTrip) {
             return presentationEpoch + ":travel:" + travelState();
         }
         if (comprehensiveMenu) {
@@ -3127,7 +3130,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             navigatePocketPicker(delta);
             return;
         }
-        if (travelState() != 0) {
+        if (travelState() != 0 && !autonomousDriveTrip) {
             int state = travelState();
             travelChoice = Math.floorMod(travelChoice + delta, travelChoiceCount(state));
             render();
@@ -3730,8 +3733,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     speakVehicleDocument("reader:vehicle:heading");
                     return true;
                 case "swipe_up_left":
-                    if (travelState() == 1) { pauseOrResumeAutonomousDrive(); }
-                    else { feedback(travelStatus(travelState())); }
+                    pauseOrResumeAutonomousDrive();
                     return true;
                 case "swipe_right_down":
                     requestAutonomousRead("reader:vehicle:horn");

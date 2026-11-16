@@ -6178,3 +6178,6 @@ msgstr "Đang lái đến một khu vực xe có thể tiếp cận gần địa
 
 msgid "Automatic drive canceled: boarding or ignition interrupted."
 msgstr "Đã hủy lái tự động: quá trình lên xe hoặc khởi động bị gián đoạn."
+
+msgid "No safe route found. Vehicle paused."
+msgstr "Không tìm được đường đi an toàn. Xe đã tạm dừng."

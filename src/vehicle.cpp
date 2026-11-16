@@ -6795,16 +6795,19 @@ void vehicle::gain_moves( map &here )
                 } else {
                     a11y_brake_alerted = false;
                 }
-            } else {
-                // Automatic mode alone can brake and refuse a hazardous path.
-                // An explicit extra Forward gesture may bypass the last
-                // warned obstacle, but normal collision physics still apply.
-            // A repeated Forward gesture can override an obstacle ONLY in
-            // ordinary gesture driving, never in fully autonomous travel.
-            if( is_autodriving ) {
+            } else if( is_autodriving ) {
+                // The full Explore Places A* autopilot already checks the
+                // ACTUAL planned steering footprint before moving. A raw
+                // forward ray can contain a bush while a safe detour exists,
+                // so it must NOT stop the whole trip before A* can steer.
+                // The native collision checker will brake and pause if no
+                // safe steering step remains.
                 a11y_obstacle_override = false;
                 a11y_override_obstacle_name.clear();
-            }
+                a11y_brake_alerted = false;
+            } else {
+                // Ordinary gesture-controlled Automatic Drive still uses
+                // the forward sensor and its explicit override gesture.
             if( a11y_obstacle_override &&
                 ( !hazard || hazard->label != a11y_override_obstacle_name ||
                   hazard->distance > braking_range ) ) {

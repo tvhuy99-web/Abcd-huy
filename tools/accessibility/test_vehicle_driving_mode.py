@@ -168,7 +168,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
     def test_manual_mode_warns_without_applying_sensor_brakes(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving ) {", VEH)
         sensor = VEH.split("// Manual mode reports hazards", 1)[1].split(
-            "} else {\n                // Automatic mode alone", 1
+            "} else if( is_autodriving ) {", 1
         )[0]
         self.assertIn('_( "Obstacle ahead: %1$s, %2$d tiles." )', sensor)
         self.assertIn('_( "Obstacle behind: %1$s, %2$d tiles." )', sensor)
