@@ -275,4 +275,11 @@
     <string name="a11yGuideCalendarConfirm">Xác nhận ngày và giờ</string>
     <string name="a11yGuidePlayMinigame">Thực hiện nước đi đang chọn</string>
     <string name="a11yGuideAdjustField">Tăng hoặc giảm giá trị đang chọn</string>
+    <string name="a11yGuideTapTextField">Chọn ô nhập văn bản</string>
+    <string name="a11yGuideAndroidKeyboard">Nhập bằng bàn phím Android</string>
+    <string name="a11yGuideConfirmInput">Xác nhận và lưu văn bản</string>
+    <string name="a11yGuideCancelInput">Hủy nhập văn bản</string>
+    <string name="a11yGuideDebugChoice">Chuyển giữa các phương án</string>
+    <string name="a11yGuideDebugConfirm">Chọn phương án đang đọc</string>
+    <string name="a11yGuideDebugContinue">Tiếp tục qua thông báo này</string>
 </resources>
