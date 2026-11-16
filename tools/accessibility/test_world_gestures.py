@@ -108,7 +108,9 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("terrain.is_valid()", reader)
         self.assertIn("terrain->get_name( vision )", reader)
         self.assertIn('_( "Area: %1$s. %2$s" )', reader)
-        self.assertIn("a11y::android::announce( spoken, 1 );", reader)
+        # d9c2b55 routes the explicit location query through the
+        # A11Y_QUERY channel so it preempts other speech while driving.
+        self.assertIn('a11y::android::announce( "A11Y_QUERY:" + spoken, 1 );', reader)
         po = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
         self.assertIn('msgid "Area: %1$s. %2$s"', po)
         self.assertIn('msgstr "Khu vực: %1$s. %2$s"', po)

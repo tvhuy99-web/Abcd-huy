@@ -217,8 +217,13 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
                       CONTROLLER)
-        self.assertIn("priority < ReaderSpeechQueue.URGENT", CONTROLLER)
-        self.assertIn("!extendedScan && !requestedDetail", CONTROLLER)
+        # d9c2b55 rewrote the driving speech policy in the positive form;
+        # urgent warnings still pass the gate.
+        self.assertIn("priority >= ReaderSpeechQueue.URGENT", CONTROLLER)
+        # d9c2b55 routes the scan/detail exceptions through the shared
+        # allowedDuringDriving policy instead of an inline condition.
+        self.assertIn('|| message.startsWith("A11Y_SCAN:")', CONTROLLER)
+        self.assertIn('|| message.startsWith("A11Y_DETAIL:")', CONTROLLER)
         self.assertIn("if (state != announcedTravelState)", CONTROLLER)
         self.assertIn("handler.postDelayed(travelStatePoll, 200);", CONTROLLER)
 

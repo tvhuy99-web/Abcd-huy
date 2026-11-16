@@ -64,8 +64,11 @@ class DirectionalSonarContracts(unittest.TestCase):
         self.assertIn("setMaxStreams(DIRECTIONS * 2)", player)
         self.assertIn("private boolean enabled;", player)
         self.assertIn('getBoolean("directional_sonar", false)', preferences)
-        self.assertIn("prefs.setDirectionalSonarEnabled(checked)", ui)
-        self.assertIn("nativeConfigureDirectionalSonar(checked)", ui)
+        # d9c2b55 split the single sonar toggle into two independent
+        # creature/item switches; both reconfigure the native sonar.
+        self.assertIn("prefs.setCreatureSonarEnabled(checked)", ui)
+        self.assertIn("prefs.setItemSonarEnabled(checked)", ui)
+        self.assertIn("nativeConfigureDirectionalSonar(prefs.isDirectionalSonarEnabled())", ui)
         self.assertTrue((RAW / "a11y_item_beep.wav").exists())
         self.assertTrue((RAW / "a11y_alignment_sonar.ogg").exists())
 

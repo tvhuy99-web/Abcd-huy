@@ -18,6 +18,7 @@ VEH = (ROOT / "src/vehicle.cpp").read_text(encoding="utf-8")
 VEH_MOVE = (ROOT / "src/vehicle_move.cpp").read_text(encoding="utf-8")
 VEH_HEADER = (ROOT / "src/vehicle.h").read_text(encoding="utf-8")
 VEH_USE = (ROOT / "src/vehicle_use.cpp").read_text(encoding="utf-8")
+AUTODRIVE = (ROOT / "src/vehicle_autodrive.cpp").read_text(encoding="utf-8")
 GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
@@ -342,8 +343,17 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("horizon, reverse )", WORLD)
         self.assertIn("veh.bub_part_pos( here, i ).xy()", WORLD)
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
-        self.assertIn("here.impassable_ter_furn( tile )", WORLD)
-        self.assertIn("&other->vehicle() == &veh", WORLD)
+        # c8fe150 unified obstacle classification into
+        # vehicle_autodrive::classify_tile; the reader scan still uses the
+        # same rules and keeps unrestricted_creatures, so it still ignores
+        # player visibility for live creatures.
+        self.assertIn(
+            "vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility )",
+            WORLD)
+        self.assertIn("veh.has_sufficient_rotorlift( here ), true", WORLD)
+        self.assertIn("mobility.unrestricted_creatures ||", AUTODRIVE)
+        # The other-vehicle check lives in the shared classifier now.
+        self.assertIn("&other->vehicle() == &driven_veh", AUTODRIVE)
         self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
 
@@ -414,10 +424,17 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("collision_vector.clear_advance();", path)
         self.assertIn("collision_vector.advance( 1 );", path)
         self.assertNotIn("collision_vector.advance( i );", path)
-        self.assertIn("here.ter( tile ).obj().is_smashable()", WORLD)
-        self.assertIn("here.furn( tile ).obj().movecost != 0", WORLD)
-        self.assertIn("!here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE )",
-                      WORLD)
+        # c8fe150 moved the smashable check into the shared classifier;
+        # smashable terrain is still reported as an obstacle (brush warns).
+        self.assertIn(
+            "vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility )",
+            WORLD)
+        self.assertIn("terrain_type.is_smashable()", AUTODRIVE)
+        # Furniture and NOCOLLIDE checks live in the shared classifier
+        # now, under the local furniture/terrain_type names.
+        self.assertIn("furniture.obj().movecost != 0", AUTODRIVE)
+        self.assertIn("terrain_type.has_flag( ter_furn_flag::TFLAG_NOCOLLIDE )",
+                      AUTODRIVE)
         self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
         self.assertIn("a11y_obstacle_stop = true;", VEH)
 
@@ -432,7 +449,12 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertNotIn('|| "reader:vehicle:forward".equals(id)', requests)
         self.assertNotIn('|| "reader:vehicle:reverse".equals(id)', requests)
         self.assertIn("requestLiveWorldCommand(id);", requests)
-        self.assertIn("!( traveler.in_vehicle && traveler.controlling_vehicle )", WORLD)
+        # 7fd8b04 rewrote the area-change branch in the positive form;
+        # driving still uses the low-priority A11Y_AREA channel.
+        self.assertIn("if( traveler.in_vehicle && traveler.controlling_vehicle ) {",
+                      WORLD)
+        self.assertIn('a11y::android::announce( "A11Y_AREA:" + spoken, 1 );',
+                      WORLD)
 
     def test_reversing_starts_at_rear_and_clearance_uses_body(self):
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
