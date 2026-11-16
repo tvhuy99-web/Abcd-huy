@@ -3042,6 +3042,45 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
                      _( "Automatic driving selected. Swipe forward to start." ) );
         } );
     }
+    // Native Drive hold opens this genuine vehicle menu. Keep every original
+    // action in place, and append one read-only help entry at the very end.
+    // The nested uilist gives every gesture its own accessible focus.
+    if( a11y::enabled() ) {
+        menu.add( _( "Gesture guide" ) )
+        .skip_theft_check()
+        .skip_locked_check()
+        .keep_menu_open()
+        .on_submit( [] {
+            uilist guide;
+            guide.title = _( "Gesture guide: driving" );
+            int index = 0;
+            for( const std::string &line : std::initializer_list<std::string> {
+                _( "Swipe one finger up: Drive forward." ),
+                _( "Swipe one finger down: Drive reverse." ),
+                _( "Swipe one finger left: Steer left." ),
+                _( "Swipe one finger right: Steer right." ),
+                _( "Swipe one finger up then down: Increase target speed." ),
+                _( "Swipe one finger down then up: Decrease target speed." ),
+                _( "Swipe one finger left then right: Adjust heading left." ),
+                _( "Swipe one finger right then left: Adjust heading right." ),
+                _( "Swipe one finger up then right: Start or stop engine." ),
+                _( "Swipe one finger down then left: Read vehicle speed." ),
+                _( "Swipe one finger down then right: Read vehicle condition." ),
+                _( "Swipe one finger up then left: Brake." ),
+                _( "Swipe one finger right then down: Honk horn." ),
+                _( "Swipe two fingers up: Scan 30 tiles ahead of the vehicle." ),
+                _( "Swipe two fingers down: Scan 30 tiles behind the vehicle." ),
+                _( "Swipe two fingers left: Scan 30 tiles to the vehicle's left." ),
+                _( "Swipe two fingers right: Scan 30 tiles to the vehicle's right." ),
+                _( "Triple tap three fingers: Change Map, Combat and Drive mode." ),
+                _( "Long press one finger: Open vehicle controls." ),
+                _( "Double tap two fingers: Read recent messages." )
+            } ) {
+                guide.addentry( index++, true, 0, line );
+            }
+            guide.query();
+        } );
+    }
 }
 
 void vehicle::interact_with( map *here, const tripoint_bub_ms &p, bool with_pickup )
