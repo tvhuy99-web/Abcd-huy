@@ -71,6 +71,7 @@
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
+#include "player_activity.h"
 #include "overmap.h"
 #include "overmap_debug.h"
 #include "overmap_types.h"
