@@ -3331,6 +3331,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        // While physical brakes are settling, neither combat actions nor
+        // saved map bindings may escape through a stale Android mode.
+        if (vehicleReleasePending && directWorldGesturesEnabled()) {
+            return true;
+        }
         if (vehicleMode && directWorldGesturesEnabled()) {
             // The native game still handles acceleration, direction and
             // steering physics. Map/Combat bindings cannot override these.
@@ -5046,6 +5051,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readerOffAfterAnnouncement = false;
         combatMode = false;
         vehicleMode = false;
+        vehicleReleasePending = false;
         pendingVehicleHeadingReport = false;
         pendingVehicleSpeedReport = false;
         closed = true;
