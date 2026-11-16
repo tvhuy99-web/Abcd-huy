@@ -3344,14 +3344,24 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
         } else {
             const optional_vpart_position seated = here.veh_at(
                         player_character.pos_bub( here ) );
-            if( seated && seated->vehicle().a11y_drive_paused ) {
-                // Turning the wheel remains available while stopped so a
-                // driver can choose a clear heading before resuming thrust.
-                if( direction.x() != 0 && direction.y() == 0 ) {
-                    pldrive( point_rel_ms( direction.x() * nudge, 0 ) );
-                } else {
-                    add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
-                }
+            if( a11y::enabled() && seated && player_character.in_vehicle &&
+                player_character.controlling_vehicle &&
+                seated->vehicle().player_in_control( here, player_character ) &&
+                ( !g || g->remoteveh() != &seated->vehicle() ) &&
+                direction.x() != 0 && direction.y() == 0 &&
+                ( seated->vehicle().a11y_drive_paused ||
+                  seated->vehicle().velocity == 0 ) ) {
+                // Explicit accessibility exception: rotate the ACTUAL car
+                // while stopped, including when driving is paused. The
+                // native map updates its occupied cells and passengers.
+                // A single horizontal swipe turns 45 degrees, so the
+                // compass changes immediately without forward throttle.
+                const int steps = direction.x() * std::max( 3, nudge );
+                seated->vehicle().a11y_rotate_in_place( here, steps );
+            } else if( seated && seated->vehicle().a11y_drive_paused ) {
+                // Keep paused throttle disabled. If the vehicle is still
+                // coasting, a turn request reports why it cannot yet pivot.
+                add_msg( m_warning, _( "Driving is paused. Double-tap to resume." ) );
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
             }
