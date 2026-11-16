@@ -748,7 +748,37 @@ input_context game::get_player_input( std::string &action )
         // Multi-finger reads are verified against the live world snapshot.
         // They never enqueue movement, consume moves, or change the turn.
         if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
-            if( intent.node == "reader:scan:north" ) {
+            if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
+                const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
+                if( !u.in_vehicle || !u.controlling_vehicle || !seat ||
+                    !seat->vehicle().player_in_control( get_map(), u ) ||
+                    ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                    a11y::android::status( "blocked", &intent );
+                    return std::nullopt;
+                }
+                // Rotate scan direction by the car's actual heading.
+                // Octants include diagonals and do not alter game physics.
+                const int degrees = ( static_cast<int>( std::lround(
+                                          to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
+                                      % 360 + 360 ) % 360;
+                const int facing = ( ( degrees + 22 ) / 45 ) % 8;
+                int offset = 0;
+                if( intent.node == "reader:scan:vehicle:back" ) {
+                    offset = 4;
+                } else if( intent.node == "reader:scan:vehicle:left" ) {
+                    offset = 6;
+                } else if( intent.node == "reader:scan:vehicle:right" ) {
+                    offset = 2;
+                } else if( intent.node != "reader:scan:vehicle:front" ) {
+                    a11y::android::status( "blocked", &intent );
+                    return std::nullopt;
+                }
+                static const point octants[8] = {
+                    point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
+                    point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
+                };
+                a11y::announce_linear_scan( octants[( facing + offset ) % 8] );
+            } else if( intent.node == "reader:scan:north" ) {
                 a11y::announce_linear_scan( point::north );
             } else if( intent.node == "reader:scan:south" ) {
                 a11y::announce_linear_scan( point::south );
