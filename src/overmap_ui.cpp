@@ -3665,6 +3665,10 @@ void ui::omap::display_accessible_places()
                 if( !you.in_vehicle || !you.controlling_vehicle ) {
                     g->control_vehicle( std::nullopt );
                 }
+                // A one-tile boarding can finish immediately, before the
+                // next world turn. Continue to native ignition now so no
+                // additional swipe/key press is needed to start the trip.
+                ui::omap::update_accessible_drive_to_place();
                 return std::string( "QUIT" );
             }
             bool nearby_goal = false;
