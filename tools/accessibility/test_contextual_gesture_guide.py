@@ -135,6 +135,66 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("R.string.a11yGuideCombatEnemy", GUIDE)
         self.assertIn("R.string.a11yGuideDrivePause", GUIDE)
 
+    def test_character_creator_steps_have_their_native_two_finger_up_action(self):
+        # The native creator uses six distinct step categories, plus
+        # an independent summary and a separate calendar dialog.
+        self.assertIn('category.startsWith("character-creator-step-")', GUIDE)
+        for step in range(3, 7):
+            self.assertIn('"character-creator-step-' + str(step) + '".equals(category)', GUIDE)
+        self.assertIn("R.string.a11yGuideCreatorSelect", GUIDE)
+        self.assertIn("R.string.a11yGuideCreatorNextStep", GUIDE)
+        self.assertIn("R.string.a11yGuideCreatorFinish", GUIDE)
+        self.assertIn("R.string.a11yGuideCalendarConfirm", GUIDE)
+        self.assertIn("R.string.a11yGuideAcceptYes", GUIDE)
+        self.assertIn('isCreatorMultiChoiceStep() && creatorStepAction("NEXT_TAB")', CTRL)
+        self.assertIn('creatorCalendarAction("CALENDAR_DONE")', CTRL)
+        self.assertIn('"CHARACTER_CREATION".equals(snapshot.category)', CTRL)
+        self.assertIn("TwoFingerBackGesture.matchesUp(", GESTURES)
+        self.assertIn("listener.confirm();", GESTURES)
+
+    def test_global_gesture_instructions_are_added_by_single_dispatch_path(self):
+        self.assertIn("private static void addOnce(", GUIDE)
+        for gesture in ("a11yBindTap21", "a11yBindTap22", "a11yGuideTwoUp",
+                        "a11yGuideTwoDown", "a11yGuideSingleTap"):
+            self.assertIn("R.string." + gesture, GUIDE)
+        self.assertIn("addOnce(rows, context, R.string.a11yBindTap22", GUIDE)
+        self.assertIn("addOnce(rows, context, R.string.a11yGuideTwoDown", GUIDE)
+        self.assertIn("addOnce(rows, context, R.string.a11yGuideTwoUp", GUIDE)
+        self.assertIn("listener.twoFingerTap(count);", GESTURES)
+        self.assertIn("listener.goBack();", GESTURES)
+        self.assertIn("listener.stopSpeech();", GESTURES)
+        self.assertIn("if (liveWorld)", GUIDE)
+        self.assertIn("R.string.a11yGuideScanNorth", GUIDE)
+        self.assertIn("R.string.a11yGuideScanFront", GUIDE)
+
+    def test_nested_document_and_pocket_gestures_use_live_state(self):
+        self.assertIn("documentReader.isOpen(), pocketStage);", CTRL)
+        self.assertIn("boolean readingDocument, int pocketStage", GUIDE)
+        self.assertIn("} else if (readingDocument) {", GUIDE)
+        self.assertIn("R.string.a11yGuideBrowseParagraph", GUIDE)
+        self.assertIn("R.string.a11yGuideReadDocument", GUIDE)
+        self.assertIn("} else if (pocketStage != 0) {", GUIDE)
+        self.assertIn("R.string.a11yGuideChoosePocketAction", GUIDE)
+        self.assertIn("R.string.a11yGuidePickPocket", GUIDE)
+        self.assertIn("R.string.a11yGuideConfirmPocket", GUIDE)
+        self.assertIn("!readingDocument && pocketStage == 0", GUIDE)
+
+    def test_user_defined_map_and_combat_shortcuts_follow_actual_dispatch(self):
+        self.assertIn("appendLiveShortcuts(", GUIDE)
+        self.assertIn("if (combat && id.startsWith(\"swipe_3_\"))", GUIDE)
+        self.assertIn("bindings.targetFor(id)", GUIDE)
+        self.assertIn("if (liveWorld && !driving)", GUIDE)
+        self.assertIn('case "swipe_3_up":', CTRL)
+        self.assertIn("executeShortcutTarget(target);", CTRL)
+
+    def test_actual_field_adjustment_changes_help_for_focused_input(self):
+        self.assertIn("describeFocusedField(rows, context, snapshot);", GUIDE)
+        self.assertIn('node.actions.contains("select_choice")', GUIDE)
+        self.assertIn('node.actions.contains("set_value")', GUIDE)
+        self.assertIn("R.string.a11yGuideAdjustField", GUIDE)
+        self.assertIn('|| "pickup-here".equals(snapshot.category)', GUIDE)
+        self.assertIn("rows.removeIf(row -> row.startsWith(prefix))", GUIDE)
+
     def test_all_help_strings_have_english_and_vietnamese_translations(self):
         names = set()
         import re
