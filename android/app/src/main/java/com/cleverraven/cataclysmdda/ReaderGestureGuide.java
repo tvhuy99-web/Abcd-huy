@@ -374,8 +374,9 @@ final class ReaderGestureGuide {
             // All modal screens share the same 2-finger UP confirm and
             // 2-finger DOWN Back dispatchers. A screen-specific definition
             // above takes precedence (creator, crafting, calendar, editor).
-            if (!debugging && !("crafting".equals(category) && snapshot != null
-                    && snapshot.find("craft:detail:qty:current") != null)) {
+            if (!debugging && !readingDocument
+                    && !("crafting".equals(category) && snapshot != null
+                         && snapshot.find("craft:detail:qty:current") != null)) {
                 int confirmation = "crafting".equals(category) && snapshot != null
                         && snapshot.find("craft:detail:confirm") != null
                         ? R.string.a11yGuideCraftConfirm
