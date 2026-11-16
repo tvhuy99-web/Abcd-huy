@@ -3637,8 +3637,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     requestAutonomousRead("reader:vehicle:horn");
                     return true;
                 default:
-                    // Never leak old map or combat movement shortcuts into
-                    // a vehicle whose steering is owned by the pathfinder.
+                    // Three-finger saved gestures remain available for
+                    // browsing the hub and reading information. Do not let
+                    // saved movement or control actions steal steering from
+                    // the autonomous pathfinder.
+                    if (gestureId.startsWith("swipe_3_")) {
+                        String target = gestureBindings.targetFor(gestureId);
+                        if (target != null && (target.startsWith("hub:group:")
+                                || "hub:directions".equals(target)
+                                || "hub:favorites".equals(target)
+                                || "hub:search".equals(target)
+                                || "hub:all".equals(target)
+                                || "hub:tts".equals(target)
+                                || "hub:debug_log".equals(target))) {
+                            executeShortcutTarget(target);
+                        } else if ("action:reader:coordinates".equals(target)) {
+                            requestAutonomousRead("reader:coordinates");
+                        } else if ("action:reader:vehicle:speed".equals(target)
+                                || "action:reader:vehicle:heading".equals(target)
+                                || "action:reader:vehicle:summary".equals(target)) {
+                            speakVehicleDocument(target.substring("action:".length()));
+                        }
+                    }
                     return true;
             }
         }
