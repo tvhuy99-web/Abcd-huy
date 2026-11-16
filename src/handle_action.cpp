@@ -4513,12 +4513,15 @@ bool game::handle_action()
     combat_cycle_direction = 0;
     combat_reload_to_full = false;
 
-    // The reader's travel buttons are UI-thread requests, never movement
-    // intents. Apply them only here on the game thread, before consuming the
-    // next waypoint. Pausing retains the authoritative route/activity intact,
-    // and does not spend a turn or bypass any safe-mode checks.
-    const int travel_control = a11y::android::take_travel_control();
-    if( !player_character.has_destination() ) {
+    // Walking auto-travel owns Character::has_destination(), while fully
+    // autonomous Explore Places driving owns ACT_AUTODRIVE and its own game-
+    // thread control pump. Never consume the car's pending JNI command or
+    // clear its active state just because it has no walking waypoints.
+    const bool driving_destination_activity = player_character.activity &&
+            player_character.activity.id() == activity_id( "ACT_AUTODRIVE" );
+    const int travel_control = driving_destination_activity ? 0 :
+                               a11y::android::take_travel_control();
+    if( !player_character.has_destination() && !driving_destination_activity ) {
         a11y::android::set_travel_state( 0 );
     } else if( !a11y::android::enabled() &&
                ( a11y::android::travel_state() == 2 ||
