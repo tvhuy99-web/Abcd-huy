@@ -666,6 +666,31 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
+        // Mode transitions cannot require driver access to enter, but
+        // they must validate the physical seat on the native game thread.
+        if( intent.action == "activate" &&
+            ( intent.node == "reader:vehicle:begin" ||
+              intent.node == "reader:vehicle:release" ) ) {
+            const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
+            if( !u.in_vehicle || !seat || ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            if( intent.node == "reader:vehicle:begin" ) {
+                if( !seat->part_with_feature( "CONTROLS", true ) &&
+                    !seat->part_with_feature( "CONTROL_ANIMAL", true ) ) {
+                    add_msg( m_info, _( "Sit at the driver's controls before driving." ) );
+                    return std::nullopt;
+                }
+                return "A11Y_INTERNAL_VEHICLE_BEGIN";
+            }
+            if( !u.controlling_vehicle ||
+                !seat->vehicle().player_in_control( get_map(), u ) ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            return "A11Y_INTERNAL_VEHICLE_RELEASE";
+        }
         // Drive-only actions are resolved against the current physical seat.
         // Never accept a cached Android focus from a passenger or remote car.
         if( intent.action == "activate" &&
