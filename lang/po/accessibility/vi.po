@@ -6154,3 +6154,24 @@ msgstr "Không thể tiếp tục: vật cản vẫn chắn đường xe."
 
 msgid "Wait for the vehicle to stop before resuming."
 msgstr "Hãy chờ xe dừng hẳn trước khi tiếp tục."
+
+msgid "No accessible driver's seat nearby."
+msgstr "Không có ghế lái có thể đến được ở gần."
+
+msgid "Automatic drive canceled: driver's seat not reached."
+msgstr "Đã hủy lái tự động: không đến được ghế lái."
+
+msgid "Automatic drive canceled: controls unavailable."
+msgstr "Đã hủy lái tự động: không thể sử dụng bộ điều khiển xe."
+
+msgid "Automatic drive canceled: unable to take controls."
+msgstr "Đã hủy lái tự động: không thể tiếp quản điều khiển xe."
+
+msgid "Automatic drive canceled: engine did not start."
+msgstr "Đã hủy lái tự động: động cơ không khởi động được."
+
+msgid "No safe vehicle route to this place or its nearby roads."
+msgstr "Không tìm được tuyến đường an toàn để đi xe đến địa điểm này hoặc các con đường gần đó."
+
+msgid "Driving to the nearest reachable road beside the selected place."
+msgstr "Đang lái đến con đường gần nhất có thể tiếp cận bên cạnh địa điểm đã chọn."
