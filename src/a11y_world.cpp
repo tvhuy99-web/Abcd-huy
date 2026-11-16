@@ -2088,6 +2088,7 @@ semantic_snapshot activity_snapshot( const input_context &context )
             "reader:vehicle:speed", "reader:vehicle:summary",
             "reader:vehicle:heading", "reader:vehicle:road",
             "reader:vehicle:detail", "reader:vehicle:horn",
+            "control_vehicle", "world:character_detail",
             "reader:scan:vehicle:front", "reader:scan:vehicle:back",
             "reader:scan:vehicle:left", "reader:scan:vehicle:right",
             "reader:coordinates", "world:status", "world:messages"
