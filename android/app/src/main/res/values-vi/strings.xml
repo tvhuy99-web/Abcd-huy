@@ -282,4 +282,12 @@
     <string name="a11yGuideDebugChoice">Chuyển giữa các phương án</string>
     <string name="a11yGuideDebugConfirm">Chọn phương án đang đọc</string>
     <string name="a11yGuideDebugContinue">Tiếp tục qua thông báo này</string>
+    <string name="a11yGuideSingleTap">Chạm một lần một ngón</string>
+    <string name="a11yGuideStopSpeech">Dừng lời đọc hiện tại</string>
+    <string name="a11yGuideCreatorSelect">Xác nhận lựa chọn tạo nhân vật</string>
+    <string name="a11yGuideCreatorNextStep">Xác nhận lựa chọn rồi chuyển bước tạo nhân vật</string>
+    <string name="a11yGuideCreatorFinish">Hoàn tất tạo nhân vật</string>
+    <string name="a11yGuideAcceptYes">Xác nhận Có</string>
+    <string name="a11yGuideCraftConfirm">Xác nhận chế tạo khi khả dụng</string>
+    <string name="a11yGuideConfirmSelection">Xác nhận mục hoặc lệnh đang chọn nếu khả dụng</string>
 </resources>
