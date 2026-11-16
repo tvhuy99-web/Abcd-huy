@@ -2438,7 +2438,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Reuse the same native screen and its existing focused row. Nothing
         // in this read-only guide is sent through the native action gateway.
         gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
-                vehicleMode, combatMode, comprehensiveMenu, gestureBindings);
+                vehicleMode, combatMode, comprehensiveMenu,
+                travelContextDrawerState != 0 || travelState() != 0,
+                gestureBindings);
         if (gestureGuideRows.isEmpty()) { return; }
         gestureGuideIndex = 0;
         gestureGuideOpen = true;
@@ -3980,6 +3982,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             openGestureGuide();
             return;
         }
+        if (commandPaletteOpen && TRAVEL_STATUS_NODE.equals(focus)) {
+            feedback(travelDetailSpeech(travelContextDrawerState));
+            return;
+        }
         if (commandPaletteOpen && TARGET_TOGGLE_NODE.equals(focus)) {
             commandPaletteOpen = false;
             targetingOriginalControls = !targetingOriginalControls;
@@ -4743,6 +4749,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             feedback(gestureGuideSpeech());
             return;
         }
+        if (commandPaletteOpen && TRAVEL_STATUS_NODE.equals(focus)) {
+            feedback(travelDetailSpeech(travelContextDrawerState));
+            return;
+        }
         if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
                 || TARGET_TOGGLE_NODE.equals(focus))) {
             feedback(GESTURE_GUIDE_NODE.equals(focus)
@@ -4898,7 +4908,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void detail() {
         if (gestureGuideOpen) { readCurrent(); return; }
         if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
-                || TARGET_TOGGLE_NODE.equals(focus))) {
+                || TARGET_TOGGLE_NODE.equals(focus)
+                || TRAVEL_STATUS_NODE.equals(focus))) {
             readCurrent();
             return;
         }
@@ -5271,6 +5282,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         vehicleReleasePending = false;
         gestureGuideOpen = false;
         gestureGuideRows.clear();
+        travelContextDrawerState = 0;
         pendingVehicleHeadingReport = false;
         pendingVehicleSpeedReport = false;
         closed = true;
