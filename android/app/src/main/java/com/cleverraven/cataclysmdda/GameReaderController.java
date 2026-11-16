@@ -3329,7 +3329,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** In Drive, all four two-finger directions scan 16 tiles relative
+    /** In Drive, all four two-finger directions scan 30 tiles relative
      * to the car's physical heading. One-finger bent gestures own car status. */
     @Override
     public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
