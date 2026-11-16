@@ -6170,11 +6170,11 @@ msgstr "Đã hủy lái tự động: không thể tiếp quản điều khiển
 msgid "Automatic drive canceled: engine did not start."
 msgstr "Đã hủy lái tự động: động cơ không khởi động được."
 
-msgid "No safe vehicle route to this place or its nearby roads."
-msgstr "Không tìm được tuyến đường an toàn để đi xe đến địa điểm này hoặc các con đường gần đó."
+msgid "No safe vehicle route to this place or a nearby area."
+msgstr "Không tìm được tuyến đường an toàn để đi xe đến địa điểm này hoặc khu vực lân cận."
 
-msgid "Driving to the nearest reachable road beside the selected place."
-msgstr "Đang lái đến con đường gần nhất có thể tiếp cận bên cạnh địa điểm đã chọn."
+msgid "Driving to a reachable area near the selected place."
+msgstr "Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn."
 
 msgid "Automatic drive canceled: boarding or ignition interrupted."
 msgstr "Đã hủy lái tự động: quá trình lên xe hoặc khởi động bị gián đoạn."
