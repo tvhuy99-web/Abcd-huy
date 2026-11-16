@@ -33,7 +33,7 @@ class ConciseSpeechTest(unittest.TestCase):
         )[0]
         self.assertIn("std::string spoken;", body)
         self.assertIn(
-            "for( int distance = 1; distance <= 16; ++distance )", body
+            "for( int distance = 1; distance <= scan_range; ++distance )", body
         )
         self.assertIn(
             'string_format( _( "Tile %1$d: %2$s." ), distance, detail )',
@@ -44,7 +44,9 @@ class ConciseSpeechTest(unittest.TestCase):
             body,
         )
         self.assertIn('"A11Y_SCAN:" + spoken', body)
-        self.assertIn('msgstr "Ô %1$d, %2$s."', self.po)
+        self.assertIn('msgstr "Ô %1$d: %2$s."', self.po)
+        self.assertIn('constexpr int scan_range = 30;', body)
+        self.assertIn('if( details.empty() )', body)
 
     def test_short_action_outcomes_and_coordinates(self):
         for translation in (
