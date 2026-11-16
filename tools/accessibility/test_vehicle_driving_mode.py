@@ -373,11 +373,49 @@ class AccessibleVehicleContracts(unittest.TestCase):
             "if (vehicleMode && directWorldGesturesEnabled())", 1)[1].split(
                 "if (combatMode && directWorldGesturesEnabled())", 1)[0])
 
-    def test_steering_remains_available_when_paused(self):
-        self.assertIn("if( seated && seated->vehicle().a11y_drive_paused )", ENGINE)
-        self.assertIn("if( direction.x() != 0 && direction.y() == 0 )", ENGINE)
-        self.assertIn("pldrive( point_rel_ms( direction.x() * nudge, 0 ) );",
-                      ENGINE)
+    def test_stopped_or_paused_car_rotates_its_actual_body(self):
+        self.assertIn("seated->vehicle().a11y_drive_paused ||", ENGINE)
+        self.assertIn("seated->vehicle().velocity == 0", ENGINE)
+        self.assertIn("direction.x() != 0 && direction.y() == 0", ENGINE)
+        self.assertIn("seated->vehicle().a11y_rotate_in_place( here, steps );", ENGINE)
+        self.assertIn("const int steps = direction.x() * std::max( 3, nudge );", ENGINE)
+        self.assertIn("bool vehicle::a11y_rotate_in_place(", VEH_MOVE)
+        self.assertIn("here.displace_vehicle( *this, tripoint_rel_ms::zero )", VEH_MOVE)
+        self.assertIn("face.init( target );", VEH_MOVE)
+        self.assertIn("move.init( target );", VEH_MOVE)
+        self.assertIn("turn_dir = target;", VEH_MOVE)
+        self.assertIn("creature && creature != &get_avatar()", VEH_MOVE)
+        self.assertIn("part.info().location != vpart_location_structure", VEH_MOVE)
+        self.assertIn("if( velocity != 0 )", VEH_MOVE)
+        self.assertIn("is_towed() || is_towing()", VEH_MOVE)
+        self.assertIn("steering_effectiveness( here )", VEH_MOVE)
+        self.assertIn("Cannot turn in place: %s is in the way.", VEH_MOVE)
+
+    def test_auto_sensor_samples_all_tiles_and_warns_about_brush(self):
+        path = VEH.split("std::set<point_abs_ms> vehicle::immediate_path(", 1)[1].split(
+            "static int get_turn_from_angle", 1
+        )[0]
+        self.assertIn("collision_vector.clear_advance();", path)
+        self.assertIn("collision_vector.advance( 1 );", path)
+        self.assertNotIn("collision_vector.advance( i );", path)
+        self.assertIn("here.ter( tile ).obj().is_smashable()", WORLD)
+        self.assertIn("here.furn( tile ).obj().movecost != 0", WORLD)
+        self.assertIn("!here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE )",
+                      WORLD)
+        self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
+        self.assertIn("a11y_obstacle_stop = true;", VEH)
+
+    def test_manual_and_automatic_drive_are_silent_except_warnings(self):
+        self.assertIn("worldView && !vehicleMode && previousTile != null", CTRL)
+        self.assertIn('pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)', CTRL)
+        requests = CTRL.split("private void requestVehicleAction(", 1)[1].split(
+            "private void speakVehicleDocument(", 1
+        )[0]
+        self.assertNotIn('|| "reader:vehicle:forward".equals(id)', requests)
+        self.assertNotIn('|| "reader:vehicle:reverse".equals(id)', requests)
+        self.assertIn('if ("reader:vehicle:pause".equals(id))', requests)
+        self.assertIn("!( traveler.in_vehicle && traveler.controlling_vehicle )", WORLD)
+
 
     def test_reversing_starts_at_rear_and_clearance_uses_body(self):
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
