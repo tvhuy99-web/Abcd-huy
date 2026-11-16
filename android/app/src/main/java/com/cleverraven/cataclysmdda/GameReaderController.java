@@ -32,6 +32,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final int HUB_PAGE_SIZE = 30;
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
     private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
+    private static final String TRAVEL_STATUS_NODE = "reader:travel:status-local";
     private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
     private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
@@ -153,6 +154,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean gestureGuideOpen;
     private int gestureGuideIndex;
     private List<String> gestureGuideRows = new ArrayList<>();
+    private int travelContextDrawerState;
     // A hold exposes every original aim/cursor command; the default is eight directions.
     private boolean targetingOriginalControls;
     // Local to the accessible world. Custom map bindings remain untouched.
@@ -540,6 +542,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     lastRecentMessages = "";
                     commandPaletteOpen = false;
                     gestureGuideOpen = false;
+                    travelContextDrawerState = 0;
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
                     pendingLinkedDetailContext = "";
@@ -812,6 +815,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     clearPendingWorldDirection();
                     gestureGuideOpen = false;
                     commandPaletteOpen = false;
+                    travelContextDrawerState = 0;
                     targetingOriginalControls = false;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
@@ -852,7 +856,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 }
                 if (commandPaletteOpen && !changedContext &&
                         (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus)
-                         || TARGET_TOGGLE_NODE.equals(focus))) {
+                         || TARGET_TOGGLE_NODE.equals(focus)
+                         || TRAVEL_STATUS_NODE.equals(focus))) {
                     // A screen update must not steal focus from an open command drawer.
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
@@ -878,7 +883,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
                 } else if (next.find(focus) == null && !gestureGuideOpen
                         && !(commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
-                                || TARGET_TOGGLE_NODE.equals(focus)))
+                                || TARGET_TOGGLE_NODE.equals(focus)
+                                || TRAVEL_STATUS_NODE.equals(focus)))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
                     // Changing a surroundings page always focuses its native
@@ -2139,9 +2145,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private List<ReaderSnapshot.Node> contextualCommands() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot != null) {
-            for (ReaderSnapshot.Node node : snapshot.nodes) {
-                if (node.parentId.isEmpty() && isAuxiliaryCommand(node)) {
-                    result.add(node);
+            if (travelContextDrawerState != 0) {
+                result.add(ReaderSnapshot.Node.localCommand(TRAVEL_STATUS_NODE,
+                        activity.getString(R.string.a11yGuideTravelStatus)));
+            } else {
+                for (ReaderSnapshot.Node node : snapshot.nodes) {
+                    if (node.parentId.isEmpty() && isAuxiliaryCommand(node)) {
+                        result.add(node);
+                    }
                 }
             }
             if ("targeting".equals(snapshot.category) &&
@@ -2378,7 +2389,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (travelState() != 0) {
-            feedback(travelDetailSpeech(travelState()));
+            travelContextDrawerState = travelState();
+            openGlobalContextActions();
             return;
         }
         // Map holds now open the same contextual drawer as native menus;
@@ -2408,6 +2420,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void closeContextActions() {
         if (!commandPaletteOpen) { return; }
         commandPaletteOpen = false;
+        travelContextDrawerState = 0;
         readerLayerParent = commandPaletteReturnParent;
         if (snapshot != null && snapshot.find(commandPaletteReturnFocus) != null) {
             focus = commandPaletteReturnFocus;
@@ -2574,6 +2587,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (!commandPaletteOpen || snapshot == null ||
                         (!GESTURE_GUIDE_NODE.equals(command.id)
                          && !TARGET_TOGGLE_NODE.equals(command.id)
+                         && !TRAVEL_STATUS_NODE.equals(command.id)
                          && snapshot.find(command.id) == null)) {
                     return;
                 }
@@ -2976,8 +2990,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         // Command focus changes are local: native command scopes do not
         // handle focus intents and would report unsupported for every swipe.
-        if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus) &&
-                !isAuxiliaryCommand(filtered.get(selected))) {
+        if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus)
+                && !TRAVEL_STATUS_NODE.equals(focus)
+                && !isAuxiliaryCommand(filtered.get(selected))) {
             send("focus", "");
         }
         readCurrent();
