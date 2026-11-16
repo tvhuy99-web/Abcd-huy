@@ -901,6 +901,47 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             }
             result.nodes.push_back( document( "reader:vehicle:heading",
                                               _( "Direction" ), heading_report ) );
+            // One-finger condition swipe is a short spoken health summary.
+            // The full detail remains available in the native vehicle menu.
+            std::string brief_condition = veh.engine_on ?
+                                          _( "Engine running." ) : _( "Engine stopped." );
+            if( local_driver ) {
+                const std::string fuel = display::vehicle_fuel_percent_text_color(
+                                             vehicle_reader ).first;
+                if( !fuel.empty() ) {
+                    brief_condition += " " + string_format( _( "Fuel: %s." ), fuel );
+                }
+                const float steer = veh.steering_effectiveness( get_map() );
+                if( steer < 0.0f ) {
+                    brief_condition += " " + std::string( _( "Steering system absent." ) );
+                } else if( steer == 0.0f ) {
+                    brief_condition += " " + std::string( _( "Steering system broken." ) );
+                } else if( steer < 0.5f ) {
+                    brief_condition += " " + std::string( _( "Steering system weakened." ) );
+                }
+                int wheel_total = 0;
+                int wheel_intact = 0;
+                for( int index = 0; index < veh.part_count(); ++index ) {
+                    const vehicle_part &part = veh.part( index );
+                    if( !part.removed && !part.is_fake &&
+                        part.info().has_flag( VPFLAG_WHEEL ) ) {
+                        ++wheel_total;
+                        if( !part.is_broken() ) {
+                            ++wheel_intact;
+                        }
+                    }
+                }
+                if( wheel_total > 0 && wheel_intact < wheel_total ) {
+                    brief_condition += " " + string_format(
+                                           _( "Intact wheels: %1$d of %2$d." ),
+                                           wheel_intact, wheel_total );
+                }
+            }
+            if( veh.skidding ) {
+                brief_condition += " " + std::string( _( "Warning: vehicle is skidding." ) );
+            }
+            result.nodes.push_back( document( "reader:vehicle:summary",
+                                              _( "Vehicle condition summary" ), brief_condition ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
             result.nodes.push_back( document( "reader:vehicle:road",
