@@ -282,4 +282,12 @@
     <string name="a11yGuideDebugChoice">Browse prompt responses</string>
     <string name="a11yGuideDebugConfirm">Choose the focused response</string>
     <string name="a11yGuideDebugContinue">Continue past this prompt</string>
+    <string name="a11yGuideSingleTap">Tap once with one finger</string>
+    <string name="a11yGuideStopSpeech">Stop current speech</string>
+    <string name="a11yGuideCreatorSelect">Confirm the selected character option</string>
+    <string name="a11yGuideCreatorNextStep">Validate choices and move to the next character step</string>
+    <string name="a11yGuideCreatorFinish">Finish character creation</string>
+    <string name="a11yGuideAcceptYes">Confirm Yes</string>
+    <string name="a11yGuideCraftConfirm">Confirm crafting when available</string>
+    <string name="a11yGuideConfirmSelection">Confirm the selected action when available</string>
 </resources>
