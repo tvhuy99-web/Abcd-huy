@@ -6148,3 +6148,6 @@ msgstr "Không thể quay đầu xe: bị %s cản trở."
 
 msgid "Cannot turn in place: vehicle position could not be updated."
 msgstr "Không thể quay đầu xe: không cập nhật được vị trí xe."
+
+msgid "Cannot resume: an obstacle still blocks the vehicle."
+msgstr "Không thể tiếp tục: vật cản vẫn chắn đường xe."
