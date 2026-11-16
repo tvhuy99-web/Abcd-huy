@@ -134,7 +134,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("handbrake( here );", method)
         self.assertIn("a11y_obstacle_stop = true;", method)
         self.assertIn("a11y_obstacle_override = false;", method)
-        self.assertIn("const bool reader_autodrive = a11y::enabled() && driver.is_avatar();", method)
+        self.assertIn(
+            "const bool reader_autodrive = a11y::enabled() && driver.is_avatar();",
+            method,
+        )
         self.assertIn("if( reader_autodrive )", method)
         self.assertIn("return safety_stop();", method)
         self.assertIn("case collision_check_result::close_obstacle:", method)
