@@ -13,6 +13,7 @@
 #include "a11y_context.h"
 #include "a11y_input.h"
 #include "a11y_outcome.h"
+#include "overmap_ui.h"
 #include "a11y_world.h"
 #include "a11y_world_input_gate.h"
 
@@ -64,6 +65,7 @@ bool suspended() { return !enabled() || android::suspended(); }
 
 void replace_game_session()
 {
+    ui::omap::cancel_accessible_drive_to_place();
     android::reset_travel_control();
     reset_status_monitor();
     // The previous character's last action outcome must not carry over.
