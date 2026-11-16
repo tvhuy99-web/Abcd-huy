@@ -21,6 +21,7 @@ final class GameActionHub {
     static final int EXECUTE = 2;
     static final int OPEN_ALL = 3;
     static final int OPEN_DEBUG_LOG = 10;
+    static final int OPEN_GESTURE_GUIDE = 11;
     static final int OPEN_SEARCH = 6;
     static final int OPEN_DIRECTIONS = 7;
     static final int OPEN_FAVORITES = 8;
