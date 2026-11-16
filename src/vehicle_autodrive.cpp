@@ -1452,11 +1452,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
     if( !player_in_control( here, driver ) || skidding ) {
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
-        cruise_velocity = 0;
-        if( velocity != 0 ) {
-            handbrake( here );
+        if( a11y::enabled() ) {
+            cruise_velocity = 0;
+            if( velocity != 0 ) {
+                handbrake( here );
+            }
         }
-        stop_autodriving( true );
+        stop_autodriving( a11y::enabled() );
         return autodrive_result::abort;
     }
     // A route from Explore Places is a native autodrive activity. On a
@@ -1490,7 +1492,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         }
     }
     if( omt_path.empty() ) {
-        stop_autodriving( true );
+        stop_autodriving( a11y::enabled() );
         return autodrive_result::finished;
     }
     if( !active_autodrive_controller ) {
@@ -1510,7 +1512,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( a11y::enabled() ) {
             return safety_stop();
         }
-        stop_autodriving( true );
+        stop_autodriving( false );
         return autodrive_result::abort;
     }
     if( next_step->pos.xy() != veh_pos.xy() ) {
@@ -1519,7 +1521,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         return autodrive_result::abort;
     }
     if( next_step->target_speed_tps == 0 && velocity == 0 ) {
-        stop_autodriving( true );
+        stop_autodriving( a11y::enabled() );
         return autodrive_result::finished;
     }
     cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
@@ -1544,7 +1546,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             if( a11y::enabled() ) {
                 return safety_stop();
             }
-            stop_autodriving( true );
+            stop_autodriving( false );
             return autodrive_result::abort;
         case collision_check_result::slow_down:
             active_autodrive_controller->reduce_speed();
