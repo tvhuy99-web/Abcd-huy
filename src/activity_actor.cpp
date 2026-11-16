@@ -870,7 +870,10 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             state = 1;
             a11y::android::set_travel_state( state );
         } else if( ( state == 2 || state == 3 || state == 4 ) && control == 2 ) {
-            if( g->safe_mode == SAFE_MODE_STOP ) {
+            if( player_vehicle->velocity != 0 ) {
+                who.add_msg_if_player( m_warning,
+                                       _( "Wait for the vehicle to stop before resuming." ) );
+            } else if( g->safe_mode == SAFE_MODE_STOP ) {
                 state = 3;
                 a11y::android::set_travel_state( state );
                 who.add_msg_if_player( m_warning,
