@@ -2870,7 +2870,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);
+                hubActionChoice = Math.floorMod(hubActionChoice + delta, 3);
             } else if (choosingGesture) {
                 gestureChoice = Math.floorMod(gestureChoice + delta,
                         ReaderGestureBindings.CUSTOM_IDS.length + 2);
@@ -4295,6 +4295,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private String hubActionLabel(int choice) {
         if (choice == 0) { return activity.getString(R.string.a11yHubGestureOption); }
+        if (choice == 2) { return activity.getString(R.string.a11yGestureGuideTitle); }
         String target = hubActionItem == null ? null : hubActionItem.shortcutTarget();
         return activity.getString(target != null && favorites.contains(target)
                 ? R.string.a11yHubRemoveFavorite : R.string.a11yHubAddFavorite);
@@ -4342,7 +4343,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         rows.addView(titleView);
 
         List<GameActionHub.Entry> entries = binding || choosingHubAction ? null : hubEntries();
-        int count = choosingHubAction ? 2
+        int count = choosingHubAction ? 3
                 : binding ? ReaderGestureBindings.CUSTOM_IDS.length + 2 : entries.size();
         int selected = choosingHubAction ? hubActionChoice : binding ? gestureChoice : hubIndex;
         if (count == 0) {
@@ -4502,7 +4503,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         feedback(activity.getString(R.string.a11yHubActionMenu, entry.label) + ". "
                 + hubActionLabel(0) + ", "
-                + activity.getString(R.string.a11yPosition, 1, 2));
+                + activity.getString(R.string.a11yPosition, 1, 3));
     }
 
     private void applyHubActionChoice() {
@@ -4510,6 +4511,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         GameActionHub.Entry entry = hubActionItem;
         String target = entry.shortcutTarget();
         int choice = hubActionChoice;
+        if (choice == 2) {
+            // Preserve the original two item actions and the selected hub
+            // row while viewing the final, read-only help entry.
+            openGestureGuide();
+            return;
+        }
         choosingHubAction = false;
         hubActionItem = null;
         if (choice == 0) {
@@ -4747,7 +4754,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (choosingHubAction) {
                 feedback(hubActionLabel(hubActionChoice) + ". "
                         + activity.getString(R.string.a11yControlButton) + ", "
-                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
+                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 3));
             } else if (choosingGesture) {
                 feedback(gestureChoiceLabel(gestureChoice) + ". "
                         + activity.getString(R.string.a11yControlButton) + ", "
