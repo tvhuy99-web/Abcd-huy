@@ -16,7 +16,9 @@ permissions:
 
 concurrency:
   group: accessibility-production-apk-${{ github.ref }}
-  cancel-in-progress: false
+  # On the user-requested draft branch, supersede older candidate builds.
+  # Master production releases preserve the existing non-cancelling policy.
+  cancel-in-progress: ${{ github.ref == 'refs/heads/fix/concise-vehicle-heading-speech' }}
 
 jobs:
   production-arm64:
