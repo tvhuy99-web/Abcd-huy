@@ -30,6 +30,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
     private static final int HUB_PAGE_SIZE = 30;
+    private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
     private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
     private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
@@ -147,6 +148,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Global contextual command drawer: native commands stay published and validated,
     // but never interrupt the primary list of items, answers or form fields.
     private boolean commandPaletteOpen;
+    // A read-only local overlay. Each entry is one focus, never a game action.
+    private boolean gestureGuideOpen;
+    private int gestureGuideIndex;
+    private List<String> gestureGuideRows = new ArrayList<>();
     // A hold exposes every original aim/cursor command; the default is eight directions.
     private boolean targetingOriginalControls;
     // Local to the accessible world. Custom map bindings remain untouched.
@@ -533,6 +538,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     snapshot = null;
                     lastRecentMessages = "";
                     commandPaletteOpen = false;
+                    gestureGuideOpen = false;
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
                     pendingLinkedDetailContext = "";
@@ -803,6 +809,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
                     clearPendingWorldDirection();
+                    gestureGuideOpen = false;
                     commandPaletteOpen = false;
                     targetingOriginalControls = false;
                     commandPaletteReturnFocus = "";
@@ -842,7 +849,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 : currentParent.parentId;
                     }
                 }
-                if (commandPaletteOpen && !changedContext && next.find(focus) != null) {
+                if (commandPaletteOpen && !changedContext &&
+                        (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus))) {
                     // A screen update must not steal focus from an open command drawer.
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
@@ -866,7 +874,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     focus = remembered != null && next.find(remembered) != null
                             ? remembered : next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
-                } else if (next.find(focus) == null
+                } else if (next.find(focus) == null && !gestureGuideOpen
+                        && !(commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
                     // Changing a surroundings page always focuses its native
@@ -3266,7 +3275,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean directWorldGesturesEnabled() {
-        return debugReport == null && !comprehensiveMenu && !closed && foreground
+        return debugReport == null && !comprehensiveMenu
+                && !commandPaletteOpen && !gestureGuideOpen && !closed && foreground
                 && windowFocused && !lastSuspended && editor == null
                 && snapshot != null && snapshot.find("world:here") != null
                 && snapshot.find("reader:coordinates") != null;
