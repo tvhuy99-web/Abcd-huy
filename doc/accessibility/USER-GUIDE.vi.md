@@ -70,6 +70,14 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 
 Có 36 mã trong danh mục cử chỉ: 11 được giữ cố định và 25 cho phép gán tùy chỉnh. Các cử chỉ cố định không thể bị thay thế bởi cấu hình cũ. Hướng dẫn thử ánh xạ vuốt ngang/dọc trong 45 giây là **thiết kế lịch sử**, không còn là luồng cài đặt điều hướng hiện hành.
 
+## Hướng dẫn cử chỉ theo từng màn hình
+
+**Nhấn giữ một ngón tay** để mở danh sách thao tác của màn hình đang dùng. Mục cuối cùng là **Hướng dẫn cử chỉ**. Trong chế độ lái, nhấn giữ vẫn mở **menu điều khiển xe gốc**; mục Hướng dẫn cử chỉ được đặt ở cuối menu xe. Trong chế độ chiến đấu, nhấn giữ vẫn mở menu chiến đấu, với mục hướng dẫn ở cuối. Túi đồ có túi chứa vẫn giữ **Mở túi chứa** và **Thao tác khác** trước mục hướng dẫn.
+
+Chạm đôi vào **Hướng dẫn cử chỉ** để xem các cử chỉ phù hợp với màn hình hoặc chế độ hiện tại. Mỗi cử chỉ là **một tiêu điểm độc lập**, được đọc ngắn gọn (ví dụ: “Vuốt hai ngón lên: Quét 30 ô phía trước xe”). Vuốt để đọc tiêu điểm tiếp theo; chạm đôi vào một dòng **chỉ đọc lại hướng dẫn, không thực hiện lệnh**. Quay lại để trở về đúng menu và vị trí đang chọn trước đó. Hướng dẫn cử chỉ bản đồ khác với lái xe, chiến đấu, túi đồ, chế tạo, ngắm bắn và các màn hình khác. Các phím tắt đã tự gán ở bản đồ được đọc từ cấu hình hiện hành khi lệnh đang khả dụng.
+
+Giao diện ngắm bắn giữ lệnh **Đổi kiểu điều khiển** trong danh sách nhấn giữ, rồi bổ sung mục hướng dẫn ở cuối. Giao diện hành trình giữ **Đọc trạng thái hành trình** trước mục hướng dẫn. Các màn hình chưa có danh sách lệnh ngữ cảnh cũng có đường truy cập đến hướng dẫn; đối với ô nhập liệu hoặc thông báo hệ thống, hướng dẫn được mở trực tiếp để tránh thay đổi thao tác nhập/xác nhận đang diễn ra.
+
 ## Mục 4. Menu tổng hợp
 
 Mở từ màn hình chơi bằng chạm ba lần một ngón hoặc chạm ba lần hai ngón. Đây là menu **chỉ xuất hiện khi yêu cầu**, không phải bảng điều khiển luôn phủ lên màn hình.
