@@ -495,6 +495,13 @@ input_context game::get_player_input( std::string &action )
     close_blocking_activity_reader();
     map &here = get_map();
 
+    // A destination chosen while on foot must continue even when the
+    // previous menu action used no game time. Finish native boarding and
+    // ignition before opening the next reader/world input frame.
+    if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
+        ui::omap::update_accessible_drive_to_place();
+    }
+
     // Complete a pending mode exit only after the car has actually stopped.
     // This runs on the native input thread before publishing the next frame.
     if( u.in_vehicle ) {
