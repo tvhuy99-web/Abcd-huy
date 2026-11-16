@@ -6175,3 +6175,6 @@ msgstr "Không tìm được tuyến đường an toàn để đi xe đến đ�
 
 msgid "Driving to the nearest reachable road beside the selected place."
 msgstr "Đang lái đến con đường gần nhất có thể tiếp cận bên cạnh địa điểm đã chọn."
+
+msgid "Automatic drive canceled: boarding or ignition interrupted."
+msgstr "Đã hủy lái tự động: quá trình lên xe hoặc khởi động bị gián đoạn."
