@@ -5,6 +5,8 @@ on:
   push:
     branches:
       - master
+      # Permit opt-in test-signed release builds directly from PR #16.
+      - fix/concise-vehicle-heading-speech
     paths:
       - '.github/workflows/android-accessibility-release-trial.yml'
       - 'src/a11y_world.cpp'
