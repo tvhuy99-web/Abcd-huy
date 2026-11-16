@@ -99,7 +99,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_vehicle_onboarding_uses_touch_instructions(self):
         source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
-        self.assertIn('_( "Open Vehicle controls to drive." )', source)
+        self.assertIn('_( "Switch to driving mode to take control." )', source)
         self.assertIn("if( a11y::enabled() )", source)
         self.assertIn("if( !a11y::enabled() )", VEH_USE)
         self.assertIn('#include "a11y_runtime.h"', VEH_USE)
