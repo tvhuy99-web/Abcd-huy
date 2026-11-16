@@ -290,4 +290,10 @@
     <string name="a11yGuideAcceptYes">Confirm Yes</string>
     <string name="a11yGuideCraftConfirm">Confirm crafting when available</string>
     <string name="a11yGuideConfirmSelection">Confirm the selected action when available</string>
+    <string name="a11yGuideBrowseParagraph">Read previous or next paragraph</string>
+    <string name="a11yGuideReadDocument">Read the document again</string>
+    <string name="a11yGuideChoosePocketAction">Choose a pocket action</string>
+    <string name="a11yGuidePickPocket">Open the selected pocket</string>
+    <string name="a11yGuideChoosePocketItem">Select an item or its quantity</string>
+    <string name="a11yGuideConfirmPocket">Confirm selected pocket items</string>
 </resources>
