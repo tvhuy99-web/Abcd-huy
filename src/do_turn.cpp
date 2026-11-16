@@ -304,6 +304,13 @@ void handle_key_blocking_activity()
                         }
                     } else if( intent.action == "activate" ) {
                         const avatar &driver = get_avatar();
+                        if( driver.activity && driver.activity.id() == ACT_AUTODRIVE &&
+                            intent.node == "control_vehicle" ) {
+                            // Holding a finger continues to open the native
+                            // vehicle menu, including its final Gesture Guide.
+                            g->control_vehicle( std::nullopt );
+                            return std::string( "TIMEOUT" );
+                        }
                         if( driver.activity &&
                             driver.activity.id() == ACT_AUTODRIVE &&
                             intent.node.rfind( "reader:", 0 ) == 0 ) {
