@@ -27,10 +27,15 @@ final class ReaderGestureGuide {
 
     static List<String> entries(Context context, ReaderSnapshot snapshot,
                                 boolean driving, boolean combat,
-                                boolean inHub, ReaderGestureBindings bindings) {
+                                boolean inHub, boolean traveling,
+                                ReaderGestureBindings bindings) {
         ArrayList<String> rows = new ArrayList<>();
         final String category = snapshot == null ? "" : snapshot.category;
-        if (driving && "DEFAULTMODE".equals(category)) {
+        if (traveling) {
+            add(rows, context, R.string.a11yGuideOneHorizontal, R.string.a11yGuideBrowseItems);
+            add(rows, context, R.string.a11yGuideDoubleTap, R.string.a11yGuideActivate);
+            add(rows, context, R.string.a11yBindHold1, R.string.a11yGuideTravelStatus);
+        } else if (driving && "DEFAULTMODE".equals(category)) {
             addSwipe(rows, context, "swipe_up", R.string.a11yGuideDriveForward);
             addSwipe(rows, context, "swipe_down", R.string.a11yGuideDriveReverse);
             addSwipe(rows, context, "swipe_left", R.string.a11yGuideSteerLeft);
