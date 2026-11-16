@@ -1868,6 +1868,39 @@ void announce_linear_scan( const point &delta )
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
 }
 
+void announce_vehicle_relative_scan( const std::string &relative )
+{
+    const avatar &driver = get_avatar();
+    map &here = get_map();
+    const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
+    if( !seat || !driver.in_vehicle || !driver.controlling_vehicle ||
+        ( g && g->remoteveh() == &seat->vehicle() ) ||
+        !seat->vehicle().player_in_control( here, driver ) ) {
+        return;
+    }
+    // Use the eight octants of the PHYSICAL car, including diagonals.
+    // Both normal Drive and Explore Places autodrive use this one mapper.
+    const int degrees = ( static_cast<int>( std::lround(
+                              to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
+                          % 360 + 360 ) % 360;
+    const int facing = ( ( degrees + 22 ) / 45 ) % 8;
+    int offset = 0;
+    if( relative == "back" ) {
+        offset = 4;
+    } else if( relative == "left" ) {
+        offset = 6;
+    } else if( relative == "right" ) {
+        offset = 2;
+    } else if( relative != "front" ) {
+        return;
+    }
+    static const point octants[8] = {
+        point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
+        point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
+    };
+    announce_linear_scan( octants[( facing + offset ) % 8] );
+}
+
 void announce_area_transition()
 {
     // Game thread only. The absolute overmap tile is independent of map
