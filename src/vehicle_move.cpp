@@ -10,6 +10,7 @@
 #include <set>
 #include <tuple>
 
+#include "avatar.h"
 #include "bodypart.h"
 #include "cata_assert.h"
 #include "cata_utility.h"
