@@ -152,6 +152,35 @@ public final class ReaderGestureGuideTest {
     }
 
     @Test
+    public void documentReaderOverridesUnderlyingInventoryGestures() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        List<String> document = ReaderGestureGuide.entries(c, screen("inventory"),
+                false, false, false, false, false, false, null, true, 0);
+        assertTrue(mentions(document, c.getString(R.string.a11yGuideBrowseParagraph)));
+        assertTrue(mentions(document, c.getString(R.string.a11yGuideReadDocument)));
+        assertTrue(mentions(document, c.getString(R.string.a11yGuideGoBack)));
+        assertFalse(mentions(document, c.getString(R.string.a11yGuideBrowsePockets)));
+        assertFalse(mentions(document, c.getString(R.string.a11yGuideConfirmSelection)));
+    }
+
+    @Test
+    public void nestedPocketMenusExplainEachSubscreen() throws Exception {
+        Context c = InstrumentationRegistry.getInstrumentation().getTargetContext();
+        int[] meaning = { R.string.a11yGuideChoosePocketAction,
+                R.string.a11yGuidePickPocket, R.string.a11yGuideChoosePocketItem };
+        for (int stage = 1; stage <= 3; stage++) {
+            List<String> rows = ReaderGestureGuide.entries(c, screen("inventory"),
+                    false, false, false, false, false, false, null, false, stage);
+            assertTrue(mentions(rows, c.getString(meaning[stage - 1])));
+            assertTrue(mentions(rows, c.getString(R.string.a11yGuideTwoDown)));
+            if (stage == 3) {
+                assertTrue(mentions(rows, c.getString(R.string.a11yGuideConfirmPocket)));
+            }
+            assertFalse(mentions(rows, c.getString(R.string.a11yGuideBrowsePockets)));
+        }
+    }
+
+    @Test
     public void nativeHelpCommandIsLocalOnly() {
         ReaderSnapshot.Node node = ReaderSnapshot.Node.gestureGuide("Gesture guide");
         assertEquals("reader:gesture:guide", node.id);
