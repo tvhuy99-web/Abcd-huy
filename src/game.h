@@ -975,8 +975,6 @@ class game
         bool grabbed_veh_move_stairs( const tripoint_rel_ms &dp );
         bool grabbed_veh_move( const tripoint_rel_ms &dp );
 
-        void control_vehicle( const std::optional<tripoint_bub_ms> &p =
-                                  std::nullopt ); // Use vehicle controls  '^'
         // Examine nearby terrain 'e', with or without picking up items
         void examine( const tripoint_bub_ms &p, bool with_pickup = false );
         void examine( bool with_pickup = true );
@@ -995,6 +993,11 @@ class game
 
         void reload( item_location &loc, bool prompt = false, bool empty = true );
     public:
+        // Moved here from private: the accessible driving flows in
+        // do_turn.cpp and overmap_ui.cpp (autonomous travel) call it
+        // through the global game pointer, so it must be public.
+        void control_vehicle( const std::optional<tripoint_bub_ms> &p =
+                                  std::nullopt ); // Use vehicle controls  '^'
         /* Returns true if there's nobody to anger, player is already allowed to do this, or player answered yes to warning query
         * This function also handles changing the faction opinion if player proceeds despite warning
         * Returns false only if player declined query
