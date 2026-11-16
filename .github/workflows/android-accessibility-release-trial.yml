@@ -97,6 +97,7 @@ jobs:
           python3 -m unittest discover -s tools/accessibility -p 'test_repo_actions_latest_only.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_android_build_concurrency.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_vehicle_driving_mode.py' -v
+          python3 -m unittest discover -s tools/accessibility -p 'test_explore_autodrive_sync.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_hub_vehicles.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_world_gestures.py' -v
       - name: Initialize release build evidence
