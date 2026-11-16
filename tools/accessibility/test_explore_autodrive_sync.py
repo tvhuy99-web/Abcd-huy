@@ -32,10 +32,56 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         method = method.split("void ui::omap::display()", 1)[0]
         self.assertIn('intent.node == "places:mode:drive"', method)
         self.assertIn("you.in_vehicle && you.controlling_vehicle", method)
-        self.assertIn("get_overmap_path_to( destination, driving )", method)
+        self.assertIn("accessible_vehicle_route( destination, nearby_goal )", method)
+        self.assertIn("accessible_driver_seat_nearby( you, get_map() )", method)
+        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination };", method)
         self.assertIn("you.omt_path = std::move( route );", method)
         self.assertIn("you.assign_activity( autodrive_activity_actor() );", method)
         self.assertNotIn("a11y_continuous_drive = true;", method)
+
+    def test_nearby_boarding_and_ignition_precede_autodrive(self):
+        world = read(SRC / "do_turn.cpp")
+        runtime = read(SRC / "a11y_runtime.cpp")
+        header = read(SRC / "overmap_ui.h")
+        self.assertIn("bool accessible_driver_seat_nearby(", PLACES)
+        self.assertIn("here.points_in_radius( origin, 16 )", PLACES)
+        self.assertIn('found->part_with_feature( "BOARDABLE", true )', PLACES)
+        self.assertIn('found->part_with_feature( "CONTROLS", true )', PLACES)
+        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination };", PLACES)
+        self.assertIn("void ui::omap::update_accessible_drive_to_place()", PLACES)
+        self.assertIn("if( driver.has_destination() )", PLACES)
+        self.assertIn("g->control_vehicle( std::nullopt );", PLACES)
+        self.assertIn("car.start_engines( here, &driver, true );", PLACES)
+        self.assertIn("if( driver.activity )", PLACES)
+        self.assertIn("driver.assign_activity( autodrive_activity_actor() );", PLACES)
+        self.assertIn("ui::omap::update_accessible_drive_to_place();", world)
+        self.assertIn("ui::omap::update_accessible_drive_to_place();", DISPATCH)
+        self.assertIn("ui::omap::cancel_accessible_drive_to_place();", runtime)
+        self.assertIn("bool accessible_drive_to_place_pending();", header)
+
+    def test_reach_nearby_drivable_area_when_destination_is_not_drivable(self):
+        self.assertIn("overmap_ui::get_overmap_path_to( destination, true, true )", PLACES)
+        self.assertIn("for( int radius = 1; radius <= 2; ++radius )", PLACES)
+        self.assertIn("overmap_buffer.seen( candidate ) <= om_vision_level::outlines", PLACES)
+        self.assertIn("nearby_goal = true;", PLACES)
+        self.assertIn("Driving to the nearest reachable road beside the selected place.", PLACES)
+        self.assertIn("No safe vehicle route to this place or its nearby roads.", PLACES)
+
+    def test_autonomous_drive_mode_locks_only_four_straight_one_finger_swipes(self):
+        guide = read(JAVA / "ReaderGestureGuide.java")
+        mode = CONTROLLER.split("if (autonomousDriveTravelActive()) {", 1)[1]
+        self.assertIn('case "swipe_up":', mode)
+        for gesture in ('swipe_down', 'swipe_left', 'swipe_right'):
+            self.assertIn('case "' + gesture + '":', CONTROLLER)
+        self.assertIn("autonomousDriveTrip = true;", CONTROLLER)
+        self.assertIn("vehicleMode = true;", CONTROLLER)
+        self.assertIn("private void pauseOrResumeAutonomousDrive()", CONTROLLER)
+        self.assertIn("requestAutonomousRead(", CONTROLLER)
+        self.assertIn("autonomousDriveCancelRequested = true;", CONTROLLER)
+        self.assertIn("nativeTravelControl(3)", CONTROLLER)
+        self.assertIn('"activity:autodrive"', read(SRC / "a11y_world.cpp"))
+        self.assertIn("R.string.a11yGuideAutoMapCancel", guide)
+        self.assertIn("R.string.a11yGuideAutoPause", guide)
 
     def test_native_actor_owns_controls_instead_of_walking_handler(self):
         self.assertIn("void autodrive_activity_actor::start(", ACTOR)
