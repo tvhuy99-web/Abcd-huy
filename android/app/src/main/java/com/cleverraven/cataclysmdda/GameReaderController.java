@@ -2696,6 +2696,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
+        if (gestureGuideOpen) {
+            root.setBackgroundColor(0xff161616);
+            renderGestureGuide();
+            return;
+        }
         if (debugReport != null) {
             root.setBackgroundColor(0xff161616);
             TextView report = new TextView(activity);
@@ -2771,6 +2776,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public String gestureContext() {
+        if (gestureGuideOpen) {
+            return presentationEpoch + ":gesture-guide:"
+                    + (snapshot == null ? "" : snapshot.contextKey());
+        }
         if (debugReport != null) { return presentationEpoch + ":debug"; }
         if (travelState() != 0) {
             return presentationEpoch + ":travel:" + travelState();
@@ -2827,6 +2836,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (delta == 0) { readCurrent(); return; }
+        if (gestureGuideOpen) {
+            gestureGuideIndex = Math.floorMod(gestureGuideIndex + delta,
+                    gestureGuideRows.size());
+            render();
+            readCurrent();
+            return;
+        }
         if (debugReport != null) {
             debugFocus = Math.floorMod(debugFocus + delta, 4);
             readCurrent();
@@ -3920,6 +3936,15 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void activate() {
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        if (gestureGuideOpen) {
+            // Read again without executing a potentially unsafe command.
+            readCurrent();
+            return;
+        }
+        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
+            openGestureGuide();
+            return;
+        }
         // World double tap becomes Pause/Resume only when Drive is active.
         if (vehicleMode && directWorldGesturesEnabled()) {
             requestVehicleAction("reader:vehicle:pause");
@@ -4653,6 +4678,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void readCurrent() {
+        if (gestureGuideOpen) {
+            feedback(gestureGuideSpeech());
+            return;
+        }
+        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
+            feedback(activity.getString(R.string.a11yGestureGuideTitle));
+            return;
+        }
         if (snapshot != null && "surroundings".equals(snapshot.category)
                 && !comprehensiveMenu && !commandPaletteOpen) {
             nearbyFirstItemPending = false;
@@ -4798,6 +4831,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void detail() {
+        if (gestureGuideOpen) { readCurrent(); return; }
+        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
+            readCurrent();
+            return;
+        }
         pendingLinkedDetail = "";
         pendingLinkedDetailContext = "";
         if (snapshot != null && "surroundings".equals(snapshot.category)
@@ -4962,6 +5000,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("ACTION", "back focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (closed) { return; }
+        if (gestureGuideOpen) { closeGestureGuide(); return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
         if (pocketStage != 0) {
@@ -5164,6 +5203,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         combatMode = false;
         vehicleMode = false;
         vehicleReleasePending = false;
+        gestureGuideOpen = false;
+        gestureGuideRows.clear();
         pendingVehicleHeadingReport = false;
         pendingVehicleSpeedReport = false;
         closed = true;
