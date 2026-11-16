@@ -798,7 +798,8 @@ static void a11y_brake_autodrive( vehicle &car, map &here )
 {
     car.cruise_velocity = 0;
     if( car.velocity != 0 ) {
-        car.handbrake( here );
+        // Native handbrake is a free function, not a vehicle method.
+        handbrake( here );
     }
 }
 
