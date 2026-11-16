@@ -117,6 +117,14 @@ final class ReaderGestureGuide {
                                 action = context.getString(GameActionHub.TITLES[group]);
                             }
                         } catch (NumberFormatException ignored) { continue; }
+                    } else if ("hub:favorites".equals(target)) {
+                        action = context.getString(R.string.a11yHubFavorites);
+                    } else if ("hub:search".equals(target)) {
+                        action = context.getString(R.string.a11yHubSearch);
+                    } else if ("hub:all".equals(target)) {
+                        action = context.getString(R.string.a11yHubAllCommands);
+                    } else if ("hub:directions".equals(target)) {
+                        action = context.getString(R.string.a11yHubChooseDirection);
                     }
                     if (!action.isEmpty()) {
                         int index = ReaderGestureBindings.indexOf(id);
