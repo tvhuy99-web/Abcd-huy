@@ -746,7 +746,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         (next.find("reader:vehicle:seat") == null ||
                          next.find("reader:vehicle:driver") == null ||
                          !next.find("reader:vehicle:driver").enabled)) {
+                    boolean finishedVehicleRelease = vehicleReleasePending;
                     vehicleReleasePending = false;
+                    if (finishedVehicleRelease && !vehicleMode && !combatMode) {
+                        handler.post(() -> {
+                            if (!vehicleReleasePending && !vehicleMode && !combatMode
+                                    && directWorldGesturesEnabled()) {
+                                feedback(activity.getString(R.string.a11yMapMode));
+                            }
+                        });
+                    }
                 }
                 if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleSpeedReport = false;
@@ -3641,7 +3650,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             vehicleMode = nextMode == 2;
             SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode
                     + " releasing=" + vehicleReleasePending);
-            feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
+            // Never announce that Map is ready while native brakes are
+            // still settling and the avatar still controls the vehicle.
+            feedback(activity.getString(vehicleReleasePending && nextMode == 0
+                    ? R.string.a11yDriveBraking
+                    : nextMode == 0 ? R.string.a11yMapMode
                     : nextMode == 1 ? R.string.a11yCombatOn
                     : R.string.a11yDrivingMode));
             return;
@@ -3673,6 +3686,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void requestCombatCommand(String id) {
         if (!combatMode || !directWorldGesturesEnabled()) { return; }
+        if (vehicleReleasePending || vehicleDriverReady()) {
+            feedback(activity.getString(R.string.a11yDriveNotReady));
+            return;
+        }
         if (!snapshot.swipeMovementAllowed) {
             feedback(activity.getString(R.string.a11yCombatUnavailable));
             return;
