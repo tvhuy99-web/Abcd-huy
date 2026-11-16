@@ -6758,7 +6758,7 @@ void vehicle::gain_moves( map &here )
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
         ( velocity != 0 || ( a11y_continuous_drive && cruise_velocity != 0 ) ||
-          ( a11y_manual_drive && cruise_velocity != 0 ) ) ) {
+          ( ( a11y_manual_drive || is_autodriving ) && cruise_velocity != 0 ) ) ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
             // Announce a fresh loss of control once, never each physics tick.
@@ -6779,7 +6779,7 @@ void vehicle::gain_moves( map &here )
             // braking or driver control. Suppress repeats of the same hazard
             // until the road clears, the steering target changes, or a
             // different obstacle appears.
-            if( a11y_manual_drive ) {
+            if( a11y_manual_drive && !is_autodriving ) {
                 if( hazard && hazard->distance <= braking_range ) {
                     if( !a11y_brake_alerted ||
                         a11y_stopped_obstacle_name != hazard->label ||
@@ -6799,9 +6799,12 @@ void vehicle::gain_moves( map &here )
                 // Automatic mode alone can brake and refuse a hazardous path.
                 // An explicit extra Forward gesture may bypass the last
                 // warned obstacle, but normal collision physics still apply.
-            // A repeated Forward swipe after a sensor stop overrides only
-            // that obstacle. Re-arm the guard once it clears or a different
-            // obstacle comes into range. Native crashes remain possible.
+            // A repeated Forward gesture can override an obstacle ONLY in
+            // ordinary gesture driving, never in fully autonomous travel.
+            if( is_autodriving ) {
+                a11y_obstacle_override = false;
+                a11y_override_obstacle_name.clear();
+            }
             if( a11y_obstacle_override &&
                 ( !hazard || hazard->label != a11y_override_obstacle_name ||
                   hazard->distance > braking_range ) ) {
