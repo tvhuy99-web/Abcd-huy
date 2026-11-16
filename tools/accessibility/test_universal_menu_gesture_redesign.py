@@ -101,7 +101,7 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
             "debugFocus = Math.floorMod(debugFocus + delta, 4);",
             ctrl)
         self.assertIn(
-            "hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);",
+            "hubActionChoice = Math.floorMod(hubActionChoice + delta, 3);",
             ctrl)
         self.assertIn(
             "gestureChoice = Math.floorMod(gestureChoice + delta,",
@@ -193,8 +193,10 @@ class UniversalMenuGestureRedesign(unittest.TestCase):
         self.assertIn('option.setOnLongClickListener(view -> {', ctrl)
         self.assertIn('showHubActionChoices();', ctrl)
         self.assertIn(
-            'if (comprehensiveMenu) {\n            showHubActionChoices();',
+            'if (comprehensiveMenu) {\n            if (choosingGesture || choosingHubAction) {',
             ctrl)
+        self.assertIn('showHubActionChoices();', ctrl)
+        self.assertIn('openGestureGuide();', ctrl)
         self.assertIn('hubActionChoice = 0;', ctrl)
         self.assertIn(
             'if (choice == 0) {\n            showGestureChoices();',
