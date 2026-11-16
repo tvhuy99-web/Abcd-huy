@@ -27,10 +27,11 @@ struct unrestricted_tile {
     std::vector<std::string> items;
 };
 unrestricted_tile scan_unrestricted_tile( const tripoint_bub_ms &position );
-// Unrestricted native vehicle-aid perception. Never uses the avatar's line
-// of sight and never treats ground items alone as obstacles. The returned
-// distance is an approximate tile range from the vehicle's reference point;
-// the native driving system still decides whether braking can stop in time.
+// Unrestricted native vehicle-aid perception. Uses the exact same physical
+// tile classifier as native autodrive, including traps and road items.
+// Unloaded map-bubble edges are not treated as physical obstacles.
+// The returned distance is measured to the vehicle body's closest tile;
+// native vehicle physics still decides the actual braking distance.
 struct vehicle_obstacle {
     int distance = 0;
     std::string label;

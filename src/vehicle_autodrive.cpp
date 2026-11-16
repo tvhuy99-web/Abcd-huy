@@ -1,4 +1,5 @@
 #include "vehicle.h" // IWYU pragma: associated
+#include "vehicle_autodrive_tiles.h"
 
 #include <algorithm>
 #include <array>
@@ -393,6 +394,73 @@ enum class collision_check_result : int {
 };
 } // namespace
 
+vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(
+    const vehicle &driven_veh, map &here, const tripoint_bub_ms &pt,
+    const Character &driver, const mobility_profile &mobility )
+{
+    // A map-bubble boundary is not a wall. The autonomous pathfinder will
+    // refuse to plan outside the loaded map; the reader only reports actual
+    // physical obstacles in its current live map.
+    if( !here.inbounds( pt ) ) {
+        return tile_blocker::map_boundary;
+    }
+
+    // Tiles under the current vehicle are necessarily drivable, even if
+    // there is furniture under its wheels. Other vehicles are obstacles.
+    const optional_vpart_position other = here.veh_at( pt );
+    if( other ) {
+        return &other->vehicle() == &driven_veh ?
+               tile_blocker::none : tile_blocker::other_vehicle;
+    }
+
+    // Do not diverge from native autodrive's classification of creatures,
+    // visible traps, loose objects or obstructing furniture.
+    const Creature *creature = get_creature_tracker().creature_at( pt, true );
+    if( creature && ( mobility.unrestricted_creatures ||
+                      driver.sees( here, *creature ) ) ) {
+        return tile_blocker::creature;
+    }
+    if( here.can_see_trap_at( pt, driver ) ) {
+        return tile_blocker::visible_trap;
+    }
+    if( here.has_items( pt ) ) {
+        return tile_blocker::loose_items;
+    }
+    const furn_id &furniture = here.furn( pt );
+    if( furniture != furn_str_id::NULL_ID() && furniture.obj().movecost != 0 ) {
+        return tile_blocker::furniture;
+    }
+
+    const ter_id &terrain = here.ter( pt );
+    if( terrain == ter_str_id::NULL_ID() ) {
+        return tile_blocker::terrain;
+    }
+    if( terrain == ter_t_open_air ) {
+        return mobility.air_ok ? tile_blocker::none : tile_blocker::terrain;
+    }
+    const ter_t &terrain_type = terrain.obj();
+    if( mobility.water_ok && terrain_type.has_flag( ter_furn_flag::TFLAG_SWIMMABLE ) ) {
+        return tile_blocker::none;
+    }
+    if( !mobility.land_ok ) {
+        return tile_blocker::terrain;
+    }
+    // Neutral pavement, sidewalks and other movement-cost 2 floors are not
+    // collisions even if they can be bashed. This matches native autodrive.
+    if( terrain_type.movecost <= 0 ) {
+        return tile_blocker::terrain;
+    }
+    if( terrain_type.movecost == 2 ||
+        terrain_type.has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) {
+        return tile_blocker::none;
+    }
+    if( terrain_type.is_smashable() ||
+        terrain_type.has_flag( ter_furn_flag::TFLAG_LIQUID ) ) {
+        return tile_blocker::terrain;
+    }
+    return tile_blocker::none;
+}
+
 class vehicle::autodrive_controller
 {
     public:
@@ -735,31 +803,27 @@ vehicle_profile vehicle::autodrive_controller::compute_profile( map &here,
     return ret;
 }
 
-// Return true if the map tile at the given position (in map coordinates)
-// can be driven on (not an obstacle).
-// The logic should match what is in vehicle::part_collision().
+// The pathfinder retains its own unknown-map/memory gate, but shares every
+// physical tile classification with the accessible driver collision guard.
 bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bub_ms &pt ) const
 {
-    // check if another vehicle is there; tiles occupied by the current
-    // vehicle are evidently drivable
-    const optional_vpart_position ovp = here.veh_at( pt );
-    if( ovp ) {
-        // Known corner case: some furniture can be driven over, but will collide with
-        // wheel parts; if the vehicle starts over such a furniture we'll mark that tile
-        // as safe and may collide with it by turning; however if we mark it unsafe
-        // we'll have no viable paths away from the starting point.
-        return &ovp->vehicle() == &driven_veh;
+    if( !here.inbounds( pt ) ) {
+        return false;
+    }
+    // An existing vehicle footprint always counts as valid, including when
+    // the character does not yet remember the terrain beneath the car.
+    const optional_vpart_position occupied = here.veh_at( pt );
+    if( occupied ) {
+        return &occupied->vehicle() == &driven_veh;
     }
 
     const tripoint_abs_ms pt_abs = here.get_abs( pt );
     const tripoint_abs_omt pt_omt = project_to<coords::omt>( pt_abs );
     const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
                                 driven_veh.is_autodriving;
-    // The accessibility car uses the engine's actual terrain and obstacles
-    // rather than refusing every unknown-memory tile. These sensors do NOT
-    // make terrain, creatures, furniture or other vehicles passable.
     if( pt_omt == data.current_omt && !reader_sensors ) {
-        // driver must see the tile or have seen it before in order to plan a route over it
+        // Ordinary autodrive is constrained by the driver's remembered
+        // map. Accessible reader sensors explicitly inspect the live map.
         if( !driver.sees( here, pt ) ) {
             if( !driver.is_avatar() ) {
                 return false;
@@ -769,74 +833,18 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
                 debugmsg( "autodrive querying uninitialized map memory at %s", pt_abs.to_string() );
                 return false;
             }
-            if( avatar.get_memorized_tile( pt_abs ) == mm_submap::default_tile ) {
-                // apparently open air doesn't get memorized, so pretend it is or else
-                // we can't fly helicopters due to the many unseen tiles behind the driver
-                if( !( data.air_ok && here.ter( pt ) == ter_t_open_air ) ) {
-                    return false;
-                }
+            if( avatar.get_memorized_tile( pt_abs ) == mm_submap::default_tile &&
+                !( data.air_ok && here.ter( pt ) == ter_t_open_air ) ) {
+                return false;
             }
         }
     }
 
-    // check for creatures
-    // TODO: padding around monsters
-    Creature *critter = get_creature_tracker().creature_at( pt, true );
-    if( critter && ( reader_sensors || driver.sees( here, *critter ) ) ) {
-        return false;
-    }
-
-    // don't drive over visible traps
-    if( here.can_see_trap_at( pt, driver ) ) {
-        return false;
-    }
-
-    // don't drive over junk which could damage our wheels, the player must always manually do that.
-    if( here.has_items( pt ) ) {
-        return false;
-    }
-
-    // check for furniture that hinders movement; furniture with 0 move cost
-    // can be driven on
-    const furn_id &furniture = here.furn( pt );
-    if( furniture != furn_str_id::NULL_ID() && furniture.obj().movecost != 0 ) {
-        return false;
-    }
-
-    const ter_id &terrain = here.ter( pt );
-    if( terrain == ter_str_id::NULL_ID() ) {
-        return false;
-    }
-    // open air is an obstacle to non-flying vehicles; it is drivable
-    // for flying vehicles
-    if( terrain == ter_t_open_air ) {
-        return data.air_ok;
-    }
-    const ter_t &terrain_type = terrain.obj();
-    // watercraft can drive on water
-    if( data.water_ok && terrain_type.has_flag( ter_furn_flag::TFLAG_SWIMMABLE ) ) {
-        return true;
-    }
-    // remaining checks are for land-based navigation
-    if( !data.land_ok ) {
-        return false;
-    }
-    // NOLINTNEXTLINE(bugprone-branch-clone)
-    if( terrain_type.movecost <= 0 ) {
-        // walls and other impassable terrain
-        return false;
-    } else if( terrain_type.movecost == 2 || terrain_type.has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) {
-        // terrain with neutral move cost or tagged with NOCOLLIDE will never cause
-        // collisions
-        return true;
-    } else if( terrain_type.is_smashable() ) {
-        // bashable terrain (but not bashable floors) will cause collisions
-        return false;
-    } else if( terrain_type.has_flag( ter_furn_flag::TFLAG_LIQUID ) ) {
-        // water and lava
-        return false;
-    }
-    return true;
+    const vehicle_autodrive::mobility_profile mobility{
+        data.land_ok, data.water_ok, data.air_ok, reader_sensors
+    };
+    return vehicle_autodrive::classify_tile( driven_veh, here, pt, driver, mobility ) ==
+           vehicle_autodrive::tile_blocker::none;
 }
 
 void vehicle::autodrive_controller::compute_obstacles( map &here )

@@ -68,6 +68,7 @@
 #include "units_utility.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_autodrive_tiles.h"
 #include "vpart_position.h"
 
 static const efftype_id effect_bite( "bite" );
@@ -1759,40 +1760,58 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         }
         return std::max( 1, closest );
     };
+    // Use exactly the same vehicle-specific collision rules as the native
+    // pathfinder, including wheels, floating capability, rotor lift,
+    // visible traps, loose objects, furniture and other vehicles.
+    const vehicle_autodrive::mobility_profile mobility{
+        veh.valid_wheel_config( here ), veh.can_float( here ),
+        veh.has_sufficient_rotorlift( here ), true
+    };
+    const Character &driver = get_avatar();
     const int z = veh.pos_bub( here ).z();
     for( const point_abs_ms &point : projected ) {
         const point_bub_ms tile_xy = here.get_bub( point );
         const tripoint_bub_ms tile( tile_xy, z );
-        if( !here.inbounds( tile ) ) {
-            const int distance = clearance( tile_xy );
-            if( !nearest || distance < nearest->distance ) {
-                nearest = vehicle_obstacle{ distance, _( "Unloaded map boundary" ) };
-            }
+        const vehicle_autodrive::tile_blocker blocker =
+            vehicle_autodrive::classify_tile( veh, here, tile, driver, mobility );
+        if( blocker == vehicle_autodrive::tile_blocker::none ||
+            blocker == vehicle_autodrive::tile_blocker::map_boundary ) {
+            // A map-bubble edge is a streaming boundary, not a physical
+            // wall. Native movement shifts/loads the bubble before entering
+            // new squares. Only real obstacles may trigger reader braking.
             continue;
         }
-        const optional_vpart_position other = here.veh_at( tile );
-        if( other && &other->vehicle() == &veh ) {
-            continue; // Ignore the current vehicle's own body.
-        }
         std::string label;
-        if( other ) {
-            label = other->vehicle().name;
-        } else if( here.impassable_ter_furn( tile ) ||
-                   // A low shrub may be walkable but the car still hits it.
-                   // Follow the native autodrive collision classification,
-                   // not the avatar's ordinary passability check.
-                   ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
-                   // Road pavement is smashable but its normal movement
-                   // cost of 2 means it is NOT a collision obstacle.
-                   // Match vehicle_autodrive's terrain classification.
-                   ( here.ter( tile ).obj().movecost != 2 &&
-                     here.ter( tile ).obj().is_smashable() &&
-                     !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
-            label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
-        } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
-            if( creature != &get_avatar() ) {
-                label = creature->disp_name();
+        switch( blocker ) {
+            case vehicle_autodrive::tile_blocker::other_vehicle: {
+                const optional_vpart_position other = here.veh_at( tile );
+                if( other ) {
+                    label = other->vehicle().name;
+                }
+                break;
             }
+            case vehicle_autodrive::tile_blocker::creature: {
+                const Creature *creature = get_creature_tracker().creature_at( tile, true );
+                if( creature ) {
+                    label = creature->disp_name();
+                }
+                break;
+            }
+            case vehicle_autodrive::tile_blocker::visible_trap:
+                label = here.tr_at( tile ).name();
+                break;
+            case vehicle_autodrive::tile_blocker::loose_items:
+                label = _( "Loose items on the route" );
+                break;
+            case vehicle_autodrive::tile_blocker::furniture:
+                label = here.furnname( tile );
+                break;
+            case vehicle_autodrive::tile_blocker::terrain:
+                label = here.tername( tile );
+                break;
+            case vehicle_autodrive::tile_blocker::none:
+            case vehicle_autodrive::tile_blocker::map_boundary:
+                break;
         }
         if( label.empty() ) {
             continue;
