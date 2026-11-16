@@ -3051,15 +3051,27 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
         .skip_theft_check()
         .skip_locked_check()
         .keep_menu_open()
-        .on_submit( [] {
+        .on_submit( [this] {
             uilist guide;
-            guide.title = _( "Gesture guide: driving" );
+            guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :
+                          _( "Gesture guide: driving" );
             int index = 0;
+            if( is_autodriving ) {
+                // Autonomous pathfinding owns all four straight one-finger
+                // swipes. Never instruct a blind driver to use them here.
+                guide.addentry( index++, true, 0, _( "Autonomous driving: four straight one-finger swipes are disabled." ) );
+                guide.addentry( index++, true, 0, _( "Triple tap three fingers: Cancel the trip and switch to Map." ) );
+            } else {
+                for( const std::string &line : std::initializer_list<std::string> {
+                    _( "Swipe one finger up: Drive forward." ),
+                    _( "Swipe one finger down: Drive reverse." ),
+                    _( "Swipe one finger left: Steer left." ),
+                    _( "Swipe one finger right: Steer right." )
+                } ) {
+                    guide.addentry( index++, true, 0, line );
+                }
+            }
             for( const std::string &line : std::initializer_list<std::string> {
-                _( "Swipe one finger up: Drive forward." ),
-                _( "Swipe one finger down: Drive reverse." ),
-                _( "Swipe one finger left: Steer left." ),
-                _( "Swipe one finger right: Steer right." ),
                 _( "Swipe one finger up then down: Increase target speed." ),
                 _( "Swipe one finger down then up: Decrease target speed." ),
                 _( "Swipe one finger left then right: Adjust heading left." ),
