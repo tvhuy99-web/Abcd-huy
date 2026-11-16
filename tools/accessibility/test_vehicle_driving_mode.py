@@ -133,7 +133,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('requestLiveWorldCommand("reader:vehicle:begin")', CTRL)
         self.assertIn("R.string.a11yDriveBraking", CTRL)
         self.assertIn('document( "reader:vehicle:summary"', WORLD)
-        self.assertIn('speakVehicleDocument("reader:vehicle:summary")', CTRL)
+        self.assertIn('speakVehicleDocument("reader:vehicle:detail")', CTRL)
         self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
     def test_manual_mode_toggle_precedes_final_read_only_guide(self):
@@ -290,7 +290,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         )[1]
         for gesture, action in (
             ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),
-            ("swipe_down_right", 'speakVehicleDocument("reader:vehicle:summary")'),
+            ("swipe_down_right", 'speakVehicleDocument("reader:vehicle:detail")'),
             ("swipe_up_left", 'requestVehicleAction("reader:vehicle:brake")'),
             ("swipe_right_down", 'requestVehicleAction("reader:vehicle:horn")'),
         ):
@@ -423,15 +423,16 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_manual_and_automatic_drive_are_silent_except_warnings(self):
         self.assertIn("worldView && !vehicleMode && previousTile != null", CTRL)
-        self.assertIn('pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)', CTRL)
+        self.assertIn("static boolean allowedDuringDriving(", CTRL)
+        self.assertIn("&& !allowedDuringDriving(message, priority)", CTRL)
+        self.assertIn("priority >= ReaderSpeechQueue.URGENT", CTRL)
         requests = CTRL.split("private void requestVehicleAction(", 1)[1].split(
             "private void speakVehicleDocument(", 1
         )[0]
         self.assertNotIn('|| "reader:vehicle:forward".equals(id)', requests)
         self.assertNotIn('|| "reader:vehicle:reverse".equals(id)', requests)
-        self.assertIn('if ("reader:vehicle:pause".equals(id))', requests)
+        self.assertIn("requestLiveWorldCommand(id);", requests)
         self.assertIn("!( traveler.in_vehicle && traveler.controlling_vehicle )", WORLD)
-
 
     def test_reversing_starts_at_rear_and_clearance_uses_body(self):
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)
@@ -455,11 +456,11 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("veh.steering_effectiveness( get_map() )", WORLD)
         self.assertIn("part.info().has_flag( VPFLAG_WHEEL )", WORLD)
 
-    def test_speech_is_deferred_to_next_vehicle_snapshot(self):
+    def test_heading_is_deferred_and_speed_read_explicitly(self):
         self.assertIn("pendingVehicleHeadingReport", CTRL)
-        self.assertIn("pendingVehicleSpeedReport", CTRL)
-        self.assertIn('next.find("reader:vehicle:speed")', CTRL)
         self.assertIn('next.find("reader:vehicle:heading")', CTRL)
+        self.assertIn('speakVehicleDocument("reader:vehicle:speed")', CTRL)
+        self.assertNotIn("pendingVehicleSpeedReport", CTRL)
         self.assertIn("if (vehicleMode && directWorldGesturesEnabled())", CTRL)
 
 
