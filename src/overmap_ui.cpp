@@ -3392,12 +3392,12 @@ void ui::omap::update_accessible_drive_to_place()
     std::vector<tripoint_abs_omt> route =
         accessible_vehicle_route( pending_accessible_drive->destination, nearby_goal );
     if( route.empty() ) {
-        add_msg( m_warning, _( "No safe vehicle route to this place or its nearby roads." ) );
+        add_msg( m_warning, _( "No safe vehicle route to this place or a nearby area." ) );
         pending_accessible_drive.reset();
         return;
     }
     if( nearby_goal ) {
-        add_msg( m_info, _( "Driving to the nearest reachable road beside the selected place." ) );
+        add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
     }
     driver.omt_path = std::move( route );
     pending_accessible_drive.reset();
@@ -3697,11 +3697,11 @@ void ui::omap::display_accessible_places()
             std::vector<tripoint_abs_omt> route =
                 accessible_vehicle_route( destination, nearby_goal );
             if( route.empty() ) {
-                add_msg( m_info, _( "No safe vehicle route to this place or its nearby roads." ) );
+                add_msg( m_info, _( "No safe vehicle route to this place or a nearby area." ) );
                 return std::string( "TIMEOUT" );
             }
             if( nearby_goal ) {
-                add_msg( m_info, _( "Driving to the nearest reachable road beside the selected place." ) );
+                add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
             }
             you.omt_path = std::move( route );
             you.assign_activity( autodrive_activity_actor() );
