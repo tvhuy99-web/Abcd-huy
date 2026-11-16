@@ -48,7 +48,10 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertGreater(menu.index('menu.add( _( "Gesture guide" ) )'),
                            menu.index("a11y_manual_drive = !a11y_manual_drive;"))
         self.assertIn(".keep_menu_open()", menu)
-        self.assertIn('guide.title = _( "Gesture guide: driving" );', menu)
+        # The guide title is adaptive now: autonomous driving gets its own
+        # title, manual driving keeps the original one.
+        self.assertIn('guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :', menu)
+        self.assertIn('_( "Gesture guide: driving" );', menu)
         self.assertIn("guide.addentry( index++, true, 0, line );", menu)
         self.assertIn("guide.query();", menu)
         self.assertIn("Scan 30 tiles ahead of the vehicle.", menu)

@@ -27,9 +27,12 @@ class MessageRecencyAndLoadTiming(unittest.TestCase):
         surface = (JAVA / "ReaderGestureSurface.java").read_text("utf-8")
         # The surface forwards the double-tap outside the live world too;
         # only the triple tap (action hub) stays world-gated.
+        # Autonomous travel also forwards two-finger taps now, so the
+        # condition gained a second line.
         self.assertIn(
-            "if (count == 1 || count == 2 || listener.directWorldGesturesEnabled())",
+            "if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()",
             surface)
+        self.assertIn("|| listener.autonomousDriveTravelActive()) {", surface)
         # The controller re-reads recent messages without the world gate
         # and falls back to the last world snapshot that published them,
         # because menu/activity snapshots do not carry a world:messages

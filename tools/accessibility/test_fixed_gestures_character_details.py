@@ -78,7 +78,10 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         c = self.controller
         # Three-finger movement is inactive during combat but its custom
         # map-mode bindings must remain available outside combat.
+        # The autonomous-travel guard added before the combat switch has
+        # its own targetFor call, so scope the segment to the combat switch.
         segment = c.split("public boolean handleCustomGesture(", 1)[1]
+        segment = segment.split("if (combatMode && directWorldGesturesEnabled()) {", 1)[1]
         segment = segment.split("gestureBindings.targetFor(gestureId)", 1)[0]
         for gesture in ("swipe_3_up", "swipe_3_down",
                         "swipe_3_left", "swipe_3_right"):
