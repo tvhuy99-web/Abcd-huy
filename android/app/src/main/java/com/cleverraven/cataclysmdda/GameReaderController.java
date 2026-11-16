@@ -2109,18 +2109,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void openGlobalContextActions() {
-        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        if (snapshot == null || gestureGuideOpen) { return; }
+        // Every native semantic screen gets at least the guide row, even
+        // if its adapter currently publishes no extra commands.
         List<ReaderSnapshot.Node> commands = contextualCommands();
-        boolean hasContent = false;
-        for (ReaderSnapshot.Node node : snapshot.nodes) {
-            if (node.parentId.equals(readerLayerParent) && !isAuxiliaryCommand(node)) {
-                hasContent = true;
-                break;
-            }
-        }
-        if (!hasContent || commands.isEmpty()) {
-            feedback(activity.getString(R.string.a11yNoContextCommands));
-            return;
+        if (directWorldGesturesEnabled()) {
+            CataclysmDDA.nativeCancelPendingWorldSteps();
+            clearPendingWorldDirection();
         }
         commandPaletteReturnFocus = focus;
         commandPaletteReturnParent = readerLayerParent;
@@ -2141,6 +2136,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     result.add(node);
                 }
             }
+            // Always the final action. No native node or saved binding
+            // can replace this local-only, read-only help entry.
+            result.add(ReaderSnapshot.Node.gestureGuide(
+                    activity.getString(R.string.a11yGestureGuideTitle)));
         }
         return result;
     }
@@ -2553,7 +2552,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             option.setSelected(i == selected);
             option.setEnabled(command.enabled);
             option.setOnClickListener(view -> {
-                if (!commandPaletteOpen || snapshot == null || snapshot.find(command.id) == null) {
+                if (!commandPaletteOpen || snapshot == null ||
+                        (!GESTURE_GUIDE_NODE.equals(command.id)
+                         && snapshot.find(command.id) == null)) {
                     return;
                 }
                 focus = command.id;
@@ -2939,7 +2940,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         // Command focus changes are local: native command scopes do not
         // handle focus intents and would report unsupported for every swipe.
-        if (!isAuxiliaryCommand(filtered.get(selected))) { send("focus", ""); }
+        if (!GESTURE_GUIDE_NODE.equals(focus) &&
+                !isAuxiliaryCommand(filtered.get(selected))) {
+            send("focus", "");
+        }
         readCurrent();
     }
 
