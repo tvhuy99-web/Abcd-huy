@@ -2351,25 +2351,33 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (pocketStage != 0) {
-            resetPocketPicker(true);
+            // Never discard a pending item/pocket draft just to read help.
+            openGestureGuide();
             return;
         }
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
-            showHubActionChoices();
+            if (choosingGesture || choosingHubAction) {
+                // An item-picker submenu does not have another action drawer.
+                openGestureGuide();
+            } else {
+                showHubActionChoices();
+            }
             return;
         }
         if (vehicleMode && directWorldGesturesEnabled()) {
             // Drive-mode hold opens the real native vehicle interaction menu,
             // not the global action hub or an extra simulated overlay.
             if (!vehicleDriverReady()) {
-                feedback(activity.getString(R.string.a11yDriveNotReady));
+                // A passenger still needs help even though driving controls
+                // are unavailable. Never bypass the native driver gate.
+                openGlobalContextActions();
                 return;
             }
             ReaderSnapshot.Node command = snapshot.find("control_vehicle");
             if (command == null || !command.enabled
                     || !command.actions.contains("activate")) {
-                feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+                openGlobalContextActions();
                 return;
             }
             requestLiveWorldCommand("control_vehicle");
