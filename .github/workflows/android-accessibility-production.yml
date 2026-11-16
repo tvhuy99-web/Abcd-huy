@@ -16,8 +16,9 @@ permissions:
 
 concurrency:
   group: accessibility-production-apk-${{ github.ref }}
-  # On the user-requested draft branch, supersede older candidate builds.
-  # Master production releases preserve the existing non-cancelling policy.
+  # On the draft branch, supersede older candidates so the signed artifact
+  # always contains the latest test, Android resource and gesture-guide fixes.
+  # Master production releases preserve the non-cancelling policy.
   cancel-in-progress: ${{ github.ref == 'refs/heads/fix/concise-vehicle-heading-speech' }}
 
 jobs:
