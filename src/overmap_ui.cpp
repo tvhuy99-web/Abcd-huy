@@ -3343,7 +3343,15 @@ void ui::omap::update_accessible_drive_to_place()
         return;
     }
     if( driver.activity ) {
-        // Do not replace native engine startup with autodrive prematurely.
+        // Never hijack an unrelated activity such as crafting, rest or a
+        // hotwire prompt just because the user previously chose a driving
+        // destination. The only permitted intermediate activity is the
+        // exact native engine-start action requested for this trip.
+        if( !pending_accessible_drive->ignition_requested ||
+            driver.activity.id() != activity_id( "ACT_START_ENGINES" ) ) {
+            add_msg( m_warning, _( "Automatic drive canceled: boarding or ignition interrupted." ) );
+            pending_accessible_drive.reset();
+        }
         return;
     }
     if( !driver.controlling_vehicle || !car.player_in_control( here, driver ) ) {
