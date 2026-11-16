@@ -3017,7 +3017,8 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
         }
     }
 
-    // This accessibility-only choice MUST be the final vehicle action.
+    // The manual-driving switch remains after all gameplay actions;
+    // the read-only gesture guide follows as the final menu entry.
     // Switching modes never accelerates, brakes, starts the engine or
     // advances game time on its own.
     if( a11y::enabled() && player_inside && player_is_driving && !remote &&
@@ -3040,6 +3041,71 @@ void vehicle::build_interact_menu( veh_menu &menu, map *here, const tripoint_bub
             a11y_drive_stall_ticks = 0;
             add_msg( m_info, a11y_manual_drive ? _( "Manual driving selected." ) :
                      _( "Automatic driving selected. Swipe forward to start." ) );
+        } );
+    }
+    // Native Drive hold opens this genuine vehicle menu. Keep every original
+    // action in place, and append one read-only help entry at the very end.
+    // The nested uilist gives every gesture its own accessible focus.
+    if( a11y::enabled() ) {
+        menu.add( _( "Gesture guide" ) )
+        .skip_theft_check()
+        .skip_locked_check()
+        .keep_menu_open()
+        .on_submit( [this] {
+            uilist guide;
+            guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :
+                          _( "Gesture guide: driving" );
+            int index = 0;
+            if( is_autodriving ) {
+                // Autonomous pathfinding owns all four straight one-finger
+                // swipes. Never instruct a blind driver to use them here.
+                guide.addentry( index++, true, 0, _( "Autonomous driving: four straight one-finger swipes are disabled." ) );
+            } else {
+                for( const std::string &line : std::initializer_list<std::string> {
+                    _( "Swipe one finger up: Drive forward." ),
+                    _( "Swipe one finger down: Drive reverse." ),
+                    _( "Swipe one finger left: Steer left." ),
+                    _( "Swipe one finger right: Steer right." )
+                } ) {
+                    guide.addentry( index++, true, 0, line );
+                }
+            }
+            for( const std::string &line : std::initializer_list<std::string> {
+                is_autodriving ? _( "Swipe one finger up then down: Read vehicle speed." ) :
+                _( "Swipe one finger up then down: Increase target speed." ),
+                is_autodriving ? _( "Swipe one finger down then up: Read vehicle speed." ) :
+                _( "Swipe one finger down then up: Decrease target speed." ),
+                is_autodriving ? _( "Swipe one finger left then right: Read vehicle heading." ) :
+                _( "Swipe one finger left then right: Adjust heading left." ),
+                is_autodriving ? _( "Swipe one finger right then left: Read vehicle heading." ) :
+                _( "Swipe one finger right then left: Adjust heading right." ),
+                is_autodriving ? _( "Swipe one finger up then right: Read vehicle status." ) :
+                _( "Swipe one finger up then right: Start or stop engine." ),
+                _( "Swipe one finger down then left: Read vehicle speed." ),
+                _( "Swipe one finger down then right: Read vehicle condition." ),
+                is_autodriving ? _( "Swipe one finger up then left: Pause and brake." ) :
+                _( "Swipe one finger up then left: Brake." ),
+                _( "Swipe one finger right then down: Honk horn." ),
+                _( "Swipe two fingers up: Scan 30 tiles ahead of the vehicle." ),
+                _( "Swipe two fingers down: Scan 30 tiles behind the vehicle." ),
+                _( "Swipe two fingers left: Scan 30 tiles to the vehicle's left." ),
+                _( "Swipe two fingers right: Scan 30 tiles to the vehicle's right." ),
+                !is_autodriving ? _( "Triple tap three fingers: Change Map, Combat and Drive mode." ) :
+                _( "Triple tap three fingers: Cancel the trip and switch to Map." ),
+                _( "Long press one finger: Open vehicle controls." ),
+                _( "Tap one finger: Stop speech." ),
+                _( "Double tap one finger: Pause or resume driving." ),
+                _( "Tap two fingers: Read focused details." ),
+                _( "Double tap two fingers: Read recent messages." ),
+                _( "Triple tap two fingers: Open the action menu." ),
+                _( "Tap three fingers: Read coordinates." ),
+                _( "Double tap three fingers: Read player information." ),
+                _( "Swipe two fingers up in a menu: Confirm the selected action." ),
+                _( "Swipe two fingers down in a menu: Go back." )
+            } ) {
+                guide.addentry( index++, true, 0, line );
+            }
+            guide.query();
         } );
     }
 }

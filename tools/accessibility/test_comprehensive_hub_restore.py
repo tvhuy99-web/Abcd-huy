@@ -42,7 +42,8 @@ class ComprehensiveHubRestore(unittest.TestCase):
         self.assertNotIn('requestLiveWorldCommand("action_menu");', self.ctrl)
 
     def test_hub_swipes_cannot_move_player(self):
-        self.assertIn("!comprehensiveMenu && !closed", self.ctrl)
+        self.assertIn("!comprehensiveMenu", self.ctrl)
+        self.assertIn("&& !commandPaletteOpen && !gestureGuideOpen && !closed", self.ctrl)
         self.assertIn("hubIndex + delta", self.ctrl)
         self.assertIn("else if (comprehensiveMenu)", self.ctrl)
         self.assertIn("root.setVisibility(View.GONE);", self.ctrl)

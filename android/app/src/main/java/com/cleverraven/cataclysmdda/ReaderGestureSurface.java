@@ -28,7 +28,7 @@ public final class ReaderGestureSurface extends LinearLayout {
         default boolean handleCreatorCalendarSwipe(int horizontal, int vertical) { return false; }
         /** Inventory/pickup: horizontal chooses a top-level item, vertical its contents. */
         default boolean handleInventoryAxisSwipe(int horizontal, int vertical) { return false; }
-        /** Drive mode: two fingers up/down read status; left brakes; right honks. */
+        /** Drive mode: two fingers scan 30 tiles relative to the vehicle heading. */
         default boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) { return false; }
         /** Nearby exploration: vertical changes category, horizontal changes target. */
         default boolean handleSurroundingsSwipe(int horizontal, int vertical) { return false; }
@@ -44,6 +44,10 @@ public final class ReaderGestureSurface extends LinearLayout {
         default void confirm() { }
         /** Open advanced commands without changing the focused gameplay item. */
         default void openContextActions() { }
+        /** Read-only gesture help always uses simple focus navigation. */
+        default boolean gestureGuideActive() { return false; }
+        /** Drive mode continues during the native Explore Places activity. */
+        default boolean autonomousDriveTravelActive() { return false; }
         boolean movementPracticeEnabled();
         void practiceMovementDirection(int dx, int dy);
         boolean worldMovementEnabled();
@@ -443,12 +447,14 @@ public final class ReaderGestureSurface extends LinearLayout {
         // screen, not only in the live world. Only the triple tap (the
         // action hub) stays live-world-only.
         if (fingers == 2) {
-            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()) {
+            if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()
+                    || listener.autonomousDriveTravelActive()) {
                 listener.twoFingerTap(count);
             }
             return;
         }
-        if (!listener.directWorldGesturesEnabled()) { return; }
+        if (!listener.directWorldGesturesEnabled()
+                && !listener.autonomousDriveTravelActive()) { return; }
         if (fingers == 3 && count == 1) {
             listener.threeFingerTap();
             return;
@@ -617,6 +623,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())) {
                 boolean left = TwoFingerBackGesture.matchesLeft(event, backPointerIds,
@@ -643,6 +650,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())
                     && TwoFingerBackGesture.matchesUp(event, backPointerIds,
@@ -663,6 +671,7 @@ public final class ReaderGestureSurface extends LinearLayout {
             if (action == MotionEvent.ACTION_POINTER_UP && backPointerCount == 2
                     && !cancelled && owner != null && owner.equals(listener.gestureContext())
                     && !listener.directWorldGesturesEnabled()
+                    && !listener.autonomousDriveTravelActive()
                     && event.getEventTime() - downTime
                             <= Math.max(1500L, listener.swipeDurationLimitMs())
                     && TwoFingerBackGesture.matches(event, backPointerIds,
@@ -704,8 +713,8 @@ public final class ReaderGestureSurface extends LinearLayout {
                     if (direction != null) {
                         clearMultiTap();
                         if (maxPointers == 2) {
-                            // Driving takes precedence over the existing map
-                            // scans. Outside Drive, gestures remain unchanged.
+                            // Drive scans are vehicle-relative; Map scans use
+                            // the same gestures with absolute map directions.
                             int horizontal = "right".equals(direction) ? 1
                                     : "left".equals(direction) ? -1 : 0;
                             int vertical = "down".equals(direction) ? 1
@@ -754,7 +763,8 @@ public final class ReaderGestureSurface extends LinearLayout {
             recordOneFinger(event.getX(), event.getY());
             if (event.getEventTime() - downTime > listener.swipeDurationLimitMs()) {
                 cancelGesture();
-            } else if (listener.directWorldGesturesEnabled()) {
+            } else if (listener.directWorldGesturesEnabled()
+                    || listener.autonomousDriveTravelActive()) {
                 String gesture = identifyOneFingerSwipe(oneFingerPath, listener.swipeDistancePx());
                 if (gesture != null) {
                     SessionDebugLog.event("GESTURE", "one_finger=" + gesture
@@ -805,6 +815,13 @@ public final class ReaderGestureSurface extends LinearLayout {
         swipeHandled = true;
         int horizontal = Math.abs(dx) >= Math.abs(dy) * 1.35f ? (dx > 0 ? 1 : -1) : 0;
         int vertical = Math.abs(dy) >= Math.abs(dx) * 1.35f ? (dy > 0 ? 1 : -1) : 0;
+        if (listener.gestureGuideActive()) {
+            // Help is always navigable even if the underlying screen
+            // disabled its own configurable swipe-to-navigate action.
+            if (horizontal != 0) { listener.navigate(horizontal); }
+            else if (vertical != 0) { listener.navigate(vertical); }
+            return;
+        }
         if ((horizontal != 0 || vertical != 0)
                 && listener.handleCreatorCalendarSwipe(horizontal, vertical)) {
             return;

@@ -735,6 +735,22 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
             controls.enabled = local_driver;
             controls.actions = { "focus" };
             result.nodes.push_back( std::move( controls ) );
+            // Available before native driver control is taken. Android uses
+            // this when switching modes; normal passenger restrictions remain.
+            result.nodes.push_back( button( "reader:vehicle:begin",
+                                            _( "Take vehicle controls" ), "" ) );
+            if( local_driver ) {
+                result.nodes.push_back( button( "reader:vehicle:release",
+                                                _( "Stop and release controls" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:front",
+                                                _( "Scan 30 tiles ahead of the vehicle" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:back",
+                                                _( "Scan 30 tiles behind the vehicle" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:left",
+                                                _( "Scan 30 tiles to the vehicle's left" ), "" ) );
+                result.nodes.push_back( button( "reader:scan:vehicle:right",
+                                                _( "Scan 30 tiles to the vehicle's right" ), "" ) );
+            }
 
             const bool reversing = veh.velocity < 0 || veh.cruise_velocity < 0;
             // Respect the selected vehicle-speed units, but spell out the
@@ -838,33 +854,94 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
                                                   _( "No obstacle found along the checked reverse path." ) :
                                                   _( "No blocking obstacle detected along the checked forward path." ) );
             vehicle_detail += " " + road;
-            // Short heading response for steering gestures. Read the actual
-            // body direction and the selected steering target separately:
-            // selecting a new heading does not rotate a stationary car.
+            // A steering gesture must speak where the car is ACTUALLY facing.
+            // The selected steering target can differ until the next physics
+            // movement, so never announce it as the body's current heading.
+            // Keep the short compass name free of degrees or extra prompts.
             const auto spoken_heading = []( const units::angle &direction ) {
                 const int degrees = ( static_cast<int>( std::lround(
                                           to_degrees( direction + 90_degrees ) ) ) % 360 + 360 ) % 360;
-                std::string compass;
                 switch( ( ( degrees + 22 ) / 45 ) % 8 ) {
-                    case 0: compass = _( "north" ); break;
-                    case 1: compass = _( "northeast" ); break;
-                    case 2: compass = _( "east" ); break;
-                    case 3: compass = _( "southeast" ); break;
-                    case 4: compass = _( "south" ); break;
-                    case 5: compass = _( "southwest" ); break;
-                    case 6: compass = _( "west" ); break;
-                    case 7: compass = _( "northwest" ); break;
+                    case 0: return std::string( _( "north" ) );
+                    case 1: return std::string( _( "northeast" ) );
+                    case 2: return std::string( _( "east" ) );
+                    case 3: return std::string( _( "southeast" ) );
+                    case 4: return std::string( _( "south" ) );
+                    case 5: return std::string( _( "southwest" ) );
+                    case 6: return std::string( _( "west" ) );
+                    default: return std::string( _( "northwest" ) );
                 }
-                // Include precise degrees when the steering target is an
-                // intermediate 15-degree angle between compass directions.
-                return compass + " (" + std::to_string( degrees ) + "°)";
             };
-            const std::string heading_report =
-                string_format( _( "Direction: %s." ), spoken_heading( veh.face.dir() ) ) +
-                " " + string_format( _( "Requested heading: %s." ),
-                                     spoken_heading( veh.turn_dir ) );
+            std::string heading_report = spoken_heading( veh.face.dir() );
+            if( local_driver ) {
+                // Only add an explanation when the native vehicle state
+                // identifies a specific reason steering cannot take effect.
+                // Do not mistake an ordinary pending turn for a failed turn.
+                const float steering = veh.steering_effectiveness( get_map() );
+                if( veh.is_on_ramp ) {
+                    heading_report += ". " + std::string(
+                                          _( "You can't turn the vehicle while on a ramp." ) );
+                } else if( steering == -2.0f ) {
+                    heading_report += ". " + std::string(
+                                          _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
+                } else if( steering < 0.0f ) {
+                    heading_report += ". " + std::string(
+                                          _( "This vehicle has no steering system installed, you can't turn it." ) );
+                } else if( steering == 0.0f ) {
+                    heading_report += ". " + std::string( _( "The steering is completely broken!" ) );
+                } else if( veh.skidding ) {
+                    heading_report += ". " + std::string(
+                                          _( "Warning: vehicle is skidding; steering may not respond." ) );
+                } else if( veh.velocity == 0 && veh.turn_dir != veh.face.dir() ) {
+                    // The wheel was turned, but a stationary vehicle's body
+                    // cannot rotate until native movement physics advances.
+                    heading_report += ". " + std::string(
+                                          _( "Vehicle is stationary. Its heading will change when it moves." ) );
+                }
+            }
             result.nodes.push_back( document( "reader:vehicle:heading",
                                               _( "Direction" ), heading_report ) );
+            // One-finger condition swipe is a short spoken health summary.
+            // The full detail remains available in the native vehicle menu.
+            std::string brief_condition = veh.engine_on ?
+                                          _( "Engine running." ) : _( "Engine stopped." );
+            if( local_driver ) {
+                const std::string fuel = display::vehicle_fuel_percent_text_color(
+                                             vehicle_reader ).first;
+                if( !fuel.empty() ) {
+                    brief_condition += " " + string_format( _( "Fuel: %s." ), fuel );
+                }
+                const float steer = veh.steering_effectiveness( get_map() );
+                if( steer < 0.0f ) {
+                    brief_condition += " " + std::string( _( "Steering system absent." ) );
+                } else if( steer == 0.0f ) {
+                    brief_condition += " " + std::string( _( "Steering system broken." ) );
+                } else if( steer < 0.5f ) {
+                    brief_condition += " " + std::string( _( "Steering system weakened." ) );
+                }
+                int wheel_total = 0;
+                int wheel_intact = 0;
+                for( int index = 0; index < veh.part_count(); ++index ) {
+                    const vehicle_part &part = veh.part( index );
+                    if( !part.removed && !part.is_fake &&
+                        part.info().has_flag( VPFLAG_WHEEL ) ) {
+                        ++wheel_total;
+                        if( !part.is_broken() ) {
+                            ++wheel_intact;
+                        }
+                    }
+                }
+                if( wheel_total > 0 && wheel_intact < wheel_total ) {
+                    brief_condition += " " + string_format(
+                                           _( "Intact wheels: %1$d of %2$d." ),
+                                           wheel_intact, wheel_total );
+                }
+            }
+            if( veh.skidding ) {
+                brief_condition += " " + std::string( _( "Warning: vehicle is skidding." ) );
+            }
+            result.nodes.push_back( document( "reader:vehicle:summary",
+                                              _( "Vehicle condition summary" ), brief_condition ) );
             result.nodes.push_back( document( "reader:vehicle:detail",
                                               _( "Vehicle condition" ), vehicle_detail ) );
             result.nodes.push_back( document( "reader:vehicle:road",
@@ -1063,10 +1140,10 @@ semantic_snapshot world_snapshot( const input_context &context, const int scan_r
     result.nodes.push_back( document( "world:messages", _( "Recent messages" ), recent ) );
     // A small explicit command surface lets Android multi-finger gestures
     // request live information without trusting coordinates from Java.
-    result.nodes.push_back( button( "reader:scan:north", _( "Scan 16 tiles north" ), "" ) );
-    result.nodes.push_back( button( "reader:scan:south", _( "Scan 16 tiles south" ), "" ) );
-    result.nodes.push_back( button( "reader:scan:west", _( "Scan 16 tiles west" ), "" ) );
-    result.nodes.push_back( button( "reader:scan:east", _( "Scan 16 tiles east" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:north", _( "Scan 30 tiles north" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:south", _( "Scan 30 tiles south" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:west", _( "Scan 30 tiles west" ), "" ) );
+    result.nodes.push_back( button( "reader:scan:east", _( "Scan 30 tiles east" ), "" ) );
     result.nodes.push_back( button( "reader:places", _( "Explore places" ), "" ) );
     result.nodes.push_back( button( "reader:pickup_here", _( "Pick up here" ), "" ) );
     result.nodes.push_back( button( "reader:coordinates", _( "Read current coordinates" ), "" ) );
@@ -1688,7 +1765,13 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         std::string label;
         if( other ) {
             label = other->vehicle().name;
-        } else if( here.impassable_ter_furn( tile ) ) {
+        } else if( here.impassable_ter_furn( tile ) ||
+                   // A low shrub may be walkable but the car still hits it.
+                   // Follow the native autodrive collision classification,
+                   // not the avatar's ordinary passability check.
+                   ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
+                   ( here.ter( tile ).obj().is_smashable() &&
+                     !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
             label = here.has_furn( tile ) ? here.furnname( tile ) : here.tername( tile );
         } else if( const Creature *creature = get_creature_tracker().creature_at( tile, true ) ) {
             if( creature != &get_avatar() ) {
@@ -1708,53 +1791,114 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
 
 void announce_linear_scan( const point &delta )
 {
-    if( std::abs( delta.x ) + std::abs( delta.y ) != 1 ) {
+    // Map and Drive share this read-only scan. Drive supplies a direction
+    // relative to the physical vehicle heading; Map supplies a cardinal one.
+    // A diagonal ray also visits exactly one tile at each distance.
+    if( ( delta.x == 0 && delta.y == 0 ) ||
+        std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1 ) {
         return;
     }
+    constexpr int scan_range = 30;
     map &here = get_map();
     const tripoint_bub_ms origin = get_avatar().pos_bub( here );
+    // Do not repeat the vehicle the character is sitting in for every
+    // occupied tile of its own body. Other vehicles still count.
+    const optional_vpart_position seated = here.veh_at( origin );
+    // A large car occupies several map tiles, but is one noteworthy object.
+    std::set<const vehicle *> announced_vehicles;
     std::string spoken;
-    for( int distance = 1; distance <= 16; ++distance ) {
+    for( int distance = 1; distance <= scan_range; ++distance ) {
         const tripoint_bub_ms pos = origin + tripoint_rel_ms( tripoint( distance * delta, 0 ) );
-        std::string detail;
         if( !here.inbounds( pos ) ) {
-            detail = _( "Outside loaded map" );
-        } else {
-            const unrestricted_tile tile = scan_unrestricted_tile( pos );
-            detail = tile.terrain;
-            if( !tile.furniture.empty() && tile.furniture != tile.terrain ) {
-                detail += ". " + tile.furniture;
+            // The loaded map is finite: never invent contents beyond it.
+            break;
+        }
+        const unrestricted_tile tile = scan_unrestricted_tile( pos );
+        std::vector<std::string> details;
+        // Hazards and blocked passages are useful. Ordinary terrain such
+        // as road, dirt and floor is deliberately never spoken by itself.
+        for( const std::string &trap : tile.traps ) {
+            details.push_back( string_format( _( "Trap: %s" ), trap ) );
+        }
+        for( const std::string &field : tile.fields ) {
+            details.push_back( field );
+        }
+        for( const std::string &creature : tile.creatures ) {
+            details.push_back( creature );
+        }
+        if( !tile.furniture.empty() ) {
+            details.push_back( tile.furniture );
+        } else if( tile.impassable ||
+                   here.has_flag( ter_furn_flag::TFLAG_GOES_UP, pos ) ||
+                   here.has_flag( ter_furn_flag::TFLAG_GOES_DOWN, pos ) ||
+                   here.has_flag( ter_furn_flag::TFLAG_DOOR, pos ) ) {
+            // Read the actual obstacle, stair or door name, not "floor".
+            details.push_back( tile.terrain );
+        }
+        const optional_vpart_position found_vehicle = here.veh_at( pos );
+        if( found_vehicle &&
+            ( !get_avatar().in_vehicle || !seated ||
+              &found_vehicle->vehicle() != &seated->vehicle() ) &&
+            announced_vehicles.insert( &found_vehicle->vehicle() ).second ) {
+            // The verbose drivability diagnosis remains available in the
+            // detailed tile view; a scan only needs the vehicle name.
+            details.push_back( remove_color_tags( found_vehicle->vehicle().name ) );
+        }
+        for( const std::string &name : tile.items ) {
+            details.push_back( name );
+        }
+        if( details.empty() ) {
+            continue;
+        }
+        std::string detail;
+        for( const std::string &name : details ) {
+            if( !detail.empty() ) {
+                detail += ", ";
             }
-            if( tile.impassable ) {
-                detail += ". " + std::string( _( "Impassable" ) );
-            }
-            for( const std::string &field : tile.fields ) {
-                detail += ". " + field;
-            }
-            for( const std::string &hazard : tile.traps ) {
-                detail += ". " + string_format( _( "Trap: %s" ), hazard );
-            }
-            for( const std::string &creature : tile.creatures ) {
-                detail += ". " + creature;
-            }
-            if( !tile.vehicle.empty() ) {
-                detail += ". " + string_format( _( "Vehicle: %s" ), tile.vehicle );
-            }
-            if( !tile.items.empty() ) {
-                // Distinguish the furniture from items on the same tile.
-                // Never assert that items are inside an actual container.
-                detail += ". " + std::string( _( "Items:" ) );
-                for( const std::string &name : tile.items ) {
-                    detail += " " + name + ".";
-                }
-            }
+            detail += name;
         }
         if( !spoken.empty() ) {
             spoken += " ";
         }
         spoken += string_format( _( "Tile %1$d: %2$s." ), distance, detail );
     }
+    if( spoken.empty() ) {
+        spoken = _( "No noteworthy information within 30 tiles." );
+    }
     a11y::android::announce( "A11Y_SCAN:" + spoken, 1 );
+}
+
+void announce_vehicle_relative_scan( const std::string &relative )
+{
+    const avatar &driver = get_avatar();
+    map &here = get_map();
+    const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
+    if( !seat || !driver.in_vehicle || !driver.controlling_vehicle ||
+        ( g && g->remoteveh() == &seat->vehicle() ) ||
+        !seat->vehicle().player_in_control( here, driver ) ) {
+        return;
+    }
+    // Use the eight octants of the PHYSICAL car, including diagonals.
+    // Both normal Drive and Explore Places autodrive use this one mapper.
+    const int degrees = ( static_cast<int>( std::lround(
+                              to_degrees( seat->vehicle().face.dir() + 90_degrees ) ) )
+                          % 360 + 360 ) % 360;
+    const int facing = ( ( degrees + 22 ) / 45 ) % 8;
+    int offset = 0;
+    if( relative == "back" ) {
+        offset = 4;
+    } else if( relative == "left" ) {
+        offset = 6;
+    } else if( relative == "right" ) {
+        offset = 2;
+    } else if( relative != "front" ) {
+        return;
+    }
+    static const point octants[8] = {
+        point( 0, -1 ), point( 1, -1 ), point( 1, 0 ), point( 1, 1 ),
+        point( 0, 1 ), point( -1, 1 ), point( -1, 0 ), point( -1, -1 )
+    };
+    announce_linear_scan( octants[( facing + offset ) % 8] );
 }
 
 void announce_area_transition()
@@ -1788,7 +1932,12 @@ void announce_area_transition()
     if( area.empty() ) {
         return;
     }
-    if( previous_tile && !previous_area.empty() && area != previous_area ) {
+    // Keep both manual and automatic driving silent on normal route changes.
+    // Preserve tracking so a parked driver does not hear a backlog of areas.
+    // Vehicle collision, obstacle and health warnings have separate channels.
+    const avatar &traveler = get_avatar();
+    if( previous_tile && !previous_area.empty() && area != previous_area &&
+        !( traveler.in_vehicle && traveler.controlling_vehicle ) ) {
         a11y::android::announce( string_format( _( "Entering area: %s." ), area ), 1 );
 #if defined(__ANDROID__)
         a11y::android::diagnostic_event( "WORLD_AREA_CHANGE",
@@ -1922,6 +2071,33 @@ semantic_snapshot activity_snapshot( const input_context &context )
     result.nodes.push_back( std::move( interruption ) );
     if( progress_node ) {
         result.nodes.push_back( std::move( *progress_node ) );
+    }
+
+    if( viewer.activity && viewer.activity.id() == activity_id( "ACT_AUTODRIVE" ) &&
+        viewer.in_vehicle && viewer.controlling_vehicle ) {
+        // Publish the same live vehicle documents during autonomous travel.
+        // This marker allows Android to show Drive (not a separate activity
+        // mode); no swipe control is sent to the pathfinder.
+        result.nodes.push_back( document( "activity:autodrive",
+                                _( "Autonomous destination driving" ),
+                                _( "The car drives itself. Double tap to pause or resume. "
+                                   "Switch to Map to cancel the trip." ) ) );
+        semantic_snapshot car = world_snapshot( context, 1, 1, world_scan_filter::all );
+        const std::vector<std::string> allowed = {
+            "reader:vehicle:seat", "reader:vehicle:driver",
+            "reader:vehicle:speed", "reader:vehicle:summary",
+            "reader:vehicle:heading", "reader:vehicle:road",
+            "reader:vehicle:detail", "reader:vehicle:horn",
+            "control_vehicle", "world:character_detail",
+            "reader:scan:vehicle:front", "reader:scan:vehicle:back",
+            "reader:scan:vehicle:left", "reader:scan:vehicle:right",
+            "reader:coordinates", "world:status", "world:messages"
+        };
+        for( semantic_node &node : car.nodes ) {
+            if( std::find( allowed.begin(), allowed.end(), node.id ) != allowed.end() ) {
+                result.nodes.push_back( std::move( node ) );
+            }
+        }
     }
 
     const std::vector<std::string> supported_actions = {

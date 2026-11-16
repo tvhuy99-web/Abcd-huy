@@ -9178,7 +9178,7 @@ point_rel_sm game::place_player( const tripoint_bub_ms &dest_loc, bool quick )
         add_msg( _( "There are vehicle controls here." ) );
         if( !u.has_trait( trait_WAYFARER ) ) {
             if( a11y::enabled() ) {
-                add_msg( m_info, _( "Open Vehicle controls to drive." ) );
+                add_msg( m_info, _( "Switch to driving mode to take control." ) );
             } else {
                 add_msg( m_info, _( "%s to drive." ), press_x( ACTION_CONTROL_VEHICLE ) );
             }

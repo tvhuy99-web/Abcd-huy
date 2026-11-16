@@ -750,8 +750,14 @@ std::set<point_abs_ms> vehicle::immediate_path( map *here, const units::angle &r
     std::vector<point_abs_ms> front_row = line_to( here->get_abs( tripoint_bub_ms{top_left_actual.x(), top_left_actual.y(), here->get_abs_sub().z()} ).xy(),
                                           here->get_abs( tripoint_bub_ms{ top_right_actual.x(), top_right_actual.y(), here->get_abs_sub().z()} ).xy() );
     for( const point_abs_ms &elem : front_row ) {
+        // tileray::advance() is cumulative. Advancing by i each time
+        // sampled triangular offsets (0, 1, 3, 6, ...) and missed
+        // obstacles between them, including brush close to a moving car.
+        collision_vector.clear_advance();
         for( int i = 0; i < distance_to_check; ++i ) {
-            collision_vector.advance( i );
+            if( i != 0 ) {
+                collision_vector.advance( 1 );
+            }
             point_abs_ms point_to_add = elem + point( collision_vector.dx(), collision_vector.dy() );
             points_to_check.emplace( point_to_add );
         }
@@ -6726,8 +6732,10 @@ void vehicle::gain_moves( map &here )
     check_falling_or_floating();
     const bool pl_control = player_is_driving_this_veh( &here );
     // A new driver cannot inherit an earlier session's paused target.
-    if( a11y_manual_drive ) {
-        // A manual driver can never inherit an automatic input timer.
+    if( a11y_manual_drive && !a11y_release_controls_pending ) {
+        // Ordinary manual driving never inherits an automatic timer.
+        // Exception: keep the native physics running until a requested
+        // mode exit has safely brought the car to a complete stop.
         a11y_continuous_drive = false;
     }
     if( !pl_control ) {
@@ -6750,7 +6758,7 @@ void vehicle::gain_moves( map &here )
     if( a11y::enabled() && pl_control && driver.in_vehicle &&
         driver.controlling_vehicle && !is_rotorcraft( here ) &&
         ( velocity != 0 || ( a11y_continuous_drive && cruise_velocity != 0 ) ||
-          ( a11y_manual_drive && cruise_velocity != 0 ) ) ) {
+          ( ( a11y_manual_drive || is_autodriving ) && cruise_velocity != 0 ) ) ) {
         const optional_vpart_position driver_seat = here.veh_at( driver.pos_bub( here ) );
         if( driver_seat && &driver_seat->vehicle() == this ) {
             // Announce a fresh loss of control once, never each physics tick.
@@ -6771,7 +6779,7 @@ void vehicle::gain_moves( map &here )
             // braking or driver control. Suppress repeats of the same hazard
             // until the road clears, the steering target changes, or a
             // different obstacle appears.
-            if( a11y_manual_drive ) {
+            if( a11y_manual_drive && !is_autodriving ) {
                 if( hazard && hazard->distance <= braking_range ) {
                     if( !a11y_brake_alerted ||
                         a11y_stopped_obstacle_name != hazard->label ||
@@ -6791,9 +6799,12 @@ void vehicle::gain_moves( map &here )
                 // Automatic mode alone can brake and refuse a hazardous path.
                 // An explicit extra Forward gesture may bypass the last
                 // warned obstacle, but normal collision physics still apply.
-            // A repeated Forward swipe after a sensor stop overrides only
-            // that obstacle. Re-arm the guard once it clears or a different
-            // obstacle comes into range. Native crashes remain possible.
+            // A repeated Forward gesture can override an obstacle ONLY in
+            // ordinary gesture driving, never in fully autonomous travel.
+            if( is_autodriving ) {
+                a11y_obstacle_override = false;
+                a11y_override_obstacle_name.clear();
+            }
             if( a11y_obstacle_override &&
                 ( !hazard || hazard->label != a11y_override_obstacle_name ||
                   hazard->distance > braking_range ) ) {

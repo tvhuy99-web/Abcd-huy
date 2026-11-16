@@ -22,7 +22,7 @@ class WorldGestureContracts(unittest.TestCase):
         )[0]
         self.assertIn("snapshot.swipeMovementAllowed", guard)
         self.assertIn("hasCardinalDirections(snapshot)", guard)
-        self.assertIn("return !combatMode && worldStepAllowed();", guard)
+        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", guard)
         self.assertNotIn("preferences.isFastMovementEnabled()", guard)
         self.assertNotIn("hasCompletedMovementPractice()", guard)
 
@@ -44,19 +44,49 @@ class WorldGestureContracts(unittest.TestCase):
         world = WORLD.read_text(encoding="utf-8")
         scan = world.split("void announce_linear_scan(", 1)[1]
         scan = scan.split("void announce_player_coordinates()", 1)[0]
-        self.assertIn("distance = 1; distance <= 16; ++distance", scan)
+        self.assertIn("distance = 1; distance <= scan_range; ++distance", scan)
+        self.assertIn("constexpr int scan_range = 30;", scan)
         self.assertIn("scan_unrestricted_tile( pos )", scan)
         helper = world.split("unrestricted_tile scan_unrestricted_tile(", 1)[1]
         self.assertIn("here.tername( position )", helper)
         self.assertIn("get_creature_tracker().creature_at( position, true )", helper)
         self.assertIn("here.i_at( position )", helper)
         self.assertIn("spoken_item_name( obj )", helper)
-        self.assertIn('_( "Items:" )', scan)
+        self.assertIn("for( const std::string &name : tile.items )", scan)
+        self.assertIn("if( details.empty() )", scan)
+        self.assertIn('_( "No noteworthy information within 30 tiles." )', scan)
+        self.assertNotIn("detail = tile.terrain;", scan)
+        self.assertIn("here.has_flag( ter_furn_flag::TFLAG_GOES_UP, pos )", scan)
+        self.assertIn("tile.impassable", scan)
+        self.assertIn("std::set<const vehicle *> announced_vehicles;", scan)
+        self.assertIn("announced_vehicles.insert( &found_vehicle->vehicle() ).second", scan)
+        self.assertIn("tile.traps", scan)
         self.assertNotIn("observe_tile(", scan)
         self.assertIn("A11Y_SCAN:", scan)
         handler = HANDLER.read_text(encoding="utf-8")
         self.assertIn("intent.node == \"reader:scan:north\"", handler)
         self.assertIn("a11y::announce_player_coordinates()", handler)
+
+    def test_map_and_vehicle_scans_keep_their_existing_gestures(self):
+        controller = CONTROLLER.read_text(encoding="utf-8")
+        world = WORLD.read_text(encoding="utf-8")
+        handler = HANDLER.read_text(encoding="utf-8")
+        for direction in ("north", "south", "west", "east"):
+            self.assertIn('"reader:scan:' + direction + '"', controller)
+            self.assertIn('"Scan 30 tiles ' + direction + '"', world)
+            self.assertIn('intent.node == "reader:scan:' + direction + '"', handler)
+        for direction in ("front", "back", "left", "right"):
+            self.assertIn('"reader:scan:vehicle:' + direction + '"', world)
+            self.assertIn('reader:scan:vehicle:' + direction, handler)
+        self.assertIn("scanDirection(horizontal, vertical);", controller)
+        self.assertIn("octants[( facing + offset ) % 8]", handler)
+
+    def test_sparse_scan_has_vietnamese_empty_message(self):
+        vi = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")
+        self.assertIn('msgid "No noteworthy information within 30 tiles."', vi)
+        self.assertIn(
+            'msgstr "Không phát hiện gì đáng chú ý trong phạm vi 30 ô."', vi)
+        self.assertIn('msgstr "Ô %1$d: %2$s."', vi)
 
     def test_coordinate_readout_uses_known_overmap_area_with_safe_fallback(self):
         world = WORLD.read_text(encoding="utf-8")

@@ -71,6 +71,7 @@
 #include "omdata.h"
 #include "options.h"
 #include "output.h"
+#include "player_activity.h"
 #include "overmap.h"
 #include "overmap_debug.h"
 #include "overmap_types.h"
@@ -3225,6 +3226,185 @@ std::pair<std::string, nc_color> oter_symbol_and_color( const tripoint_abs_omt &
     return ret;
 }
 
+namespace
+{
+// Keep the selected destination across the native walk-to-seat and timed
+// ignition activities. No teleporting, forced boarding or bypass of ownership.
+struct accessible_drive_request {
+    tripoint_abs_omt destination;
+    bool controls_requested = false;
+    bool ignition_requested = false;
+};
+std::optional<accessible_drive_request> pending_accessible_drive;
+
+#if defined(__ANDROID__)
+bool accessible_driver_seat_nearby( const avatar &driver, map &here )
+{
+    const tripoint_bub_ms origin = driver.pos_bub( here );
+    const optional_vpart_position current = here.veh_at( origin );
+    for( const tripoint_bub_ms &tile : here.points_in_radius( origin, 16 ) ) {
+        const optional_vpart_position found = here.veh_at( tile );
+        if( !found || !found->part_with_feature( "CONTROLS", true ) ||
+            !found->part_with_feature( "BOARDABLE", true ) ||
+            found->vehicle().is_locked || found->vehicle().is_moving() ) {
+            continue;
+        }
+        if( driver.in_vehicle && current && &found->vehicle() != &current->vehicle() ) {
+            continue;
+        }
+        const std::optional<vpart_reference> seat = found->part_with_feature( "BOARDABLE", true );
+        if( seat ) {
+            const Character *occupant = found->vehicle().get_passenger( seat->part_index() );
+            if( !occupant || occupant == &driver ) {
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+std::vector<tripoint_abs_omt> accessible_vehicle_route( const tripoint_abs_omt &destination,
+        bool &nearby_goal )
+{
+    nearby_goal = false;
+    std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, true );
+    if( route.empty() ) {
+        // Accessibility can relax strategic overmap travel costs; the local
+        // collision and swept-footprint checks remain fully enforced.
+        route = overmap_ui::get_overmap_path_to( destination, true, true );
+    }
+    if( !route.empty() ) {
+        return route;
+    }
+    // A lake/building interior may not be drivable. Reach a known adjacent
+    // area instead of refusing the entire destination; say so explicitly.
+    for( int radius = 1; radius <= 2; ++radius ) {
+        for( int dy = -radius; dy <= radius; ++dy ) {
+            for( int dx = -radius; dx <= radius; ++dx ) {
+                if( std::max( std::abs( dx ), std::abs( dy ) ) != radius ) {
+                    continue;
+                }
+                const tripoint_abs_omt candidate =
+                    destination + tripoint_rel_omt( dx, dy, 0 );
+                if( overmap_buffer.seen( candidate ) <= om_vision_level::outlines ) {
+                    continue;
+                }
+                route = overmap_ui::get_overmap_path_to( candidate, true );
+                if( route.empty() ) {
+                    route = overmap_ui::get_overmap_path_to( candidate, true, true );
+                }
+                if( !route.empty() ) {
+                    nearby_goal = true;
+                    return route;
+                }
+            }
+        }
+    }
+    return {};
+}
+#endif // __ANDROID__
+} // namespace
+
+bool ui::omap::accessible_drive_to_place_pending()
+{
+    return pending_accessible_drive.has_value();
+}
+
+void ui::omap::cancel_accessible_drive_to_place()
+{
+    pending_accessible_drive.reset();
+}
+
+void ui::omap::update_accessible_drive_to_place()
+{
+#if defined(__ANDROID__)
+    if( !pending_accessible_drive ) {
+        return;
+    }
+    avatar &driver = get_avatar();
+    map &here = get_map();
+    if( !a11y::enabled() || driver.is_dead_state() || driver.is_mounted() ) {
+        pending_accessible_drive.reset();
+        return;
+    }
+    if( driver.has_destination() ) {
+        // Native walk-to-seat is in progress.
+        return;
+    }
+    const optional_vpart_position at_seat = here.veh_at( driver.pos_bub( here ) );
+    if( !driver.in_vehicle || !at_seat ||
+        !at_seat->part_with_feature( "BOARDABLE", true ) ||
+        !at_seat->part_with_feature( "CONTROLS", true ) ) {
+        add_msg( m_warning, _( "Automatic drive canceled: driver's seat not reached." ) );
+        pending_accessible_drive.reset();
+        return;
+    }
+    vehicle &car = at_seat->vehicle();
+    if( car.is_locked || car.is_moving() || g->remoteveh() == &car ) {
+        add_msg( m_warning, _( "Automatic drive canceled: controls unavailable." ) );
+        pending_accessible_drive.reset();
+        return;
+    }
+    if( driver.activity ) {
+        // Never hijack an unrelated activity such as crafting, rest or a
+        // hotwire prompt just because the user previously chose a driving
+        // destination. The only permitted intermediate activity is the
+        // exact native engine-start action requested for this trip.
+        if( driver.activity.id() == activity_id( "ACT_START_ENGINES" ) ) {
+            // control_vehicle() may have requested ignition immediately
+            // while the places chooser was still closing.
+            pending_accessible_drive->controls_requested = true;
+            pending_accessible_drive->ignition_requested = true;
+        } else {
+            add_msg( m_warning, _( "Automatic drive canceled: boarding or ignition interrupted." ) );
+            pending_accessible_drive.reset();
+        }
+        return;
+    }
+    // Engine startup can clear control ownership on failure. Report the
+    // actual cause before evaluating driver ownership to avoid retry loops.
+    if( pending_accessible_drive->ignition_requested && !car.engine_on ) {
+        add_msg( m_warning, _( "Automatic drive canceled: engine did not start." ) );
+        pending_accessible_drive.reset();
+        return;
+    }
+    if( !driver.controlling_vehicle || !car.player_in_control( here, driver ) ) {
+        if( pending_accessible_drive->controls_requested ) {
+            add_msg( m_warning, _( "Automatic drive canceled: unable to take controls." ) );
+            pending_accessible_drive.reset();
+            return;
+        }
+        pending_accessible_drive->controls_requested = true;
+        g->control_vehicle( std::nullopt );
+        return;
+    }
+    if( !car.engine_on ) {
+        if( pending_accessible_drive->ignition_requested ) {
+            add_msg( m_warning, _( "Automatic drive canceled: engine did not start." ) );
+            pending_accessible_drive.reset();
+            return;
+        }
+        pending_accessible_drive->ignition_requested = true;
+        car.start_engines( here, &driver, true );
+        return;
+    }
+    bool nearby_goal = false;
+    std::vector<tripoint_abs_omt> route =
+        accessible_vehicle_route( pending_accessible_drive->destination, nearby_goal );
+    if( route.empty() ) {
+        add_msg( m_warning, _( "No safe vehicle route to this place or a nearby area." ) );
+        pending_accessible_drive.reset();
+        return;
+    }
+    if( nearby_goal ) {
+        add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
+    }
+    driver.omt_path = std::move( route );
+    pending_accessible_drive.reset();
+    driver.assign_activity( autodrive_activity_actor() );
+#endif
+}
+
 // A concise, map-scale destination catalogue for the Android screen reader.
 // Read only already known overmap tiles. Ordinary ground/roads are not
 // destinations; houses and shops remain independent even in the same city.
@@ -3442,8 +3622,9 @@ void ui::omap::display_accessible_places()
             intent.node != "places:mode:run" && !driving ) {
             return std::nullopt;
         }
-        if( driving && !( you.in_vehicle && you.controlling_vehicle ) ) {
-            add_msg( m_info, _( "You are not controlling a vehicle." ) );
+        if( driving && !( you.in_vehicle && you.controlling_vehicle ) &&
+            !accessible_driver_seat_nearby( you, get_map() ) ) {
+            add_msg( m_info, _( "No accessible driver's seat nearby." ) );
             return std::string( "TIMEOUT" );
         }
         tripoint_abs_omt destination = places[*selected].target;
@@ -3489,15 +3670,48 @@ void ui::omap::display_accessible_places()
             add_msg( m_info, _( "You are already in the selected map area." ) );
             return std::string( "TIMEOUT" );
         }
-        std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, driving );
-        if( route.empty() ) {
-            add_msg( m_info, _( "No travel route to the selected place." ) );
-            return std::string( "TIMEOUT" );
-        }
-        you.omt_path = std::move( route );
         if( driving ) {
+            map &here = get_map();
+            const optional_vpart_position seated = here.veh_at( you.pos_bub( here ) );
+            const bool ready = you.in_vehicle && you.controlling_vehicle && seated
+                               && seated->part_with_feature( "CONTROLS", true )
+                               && seated->vehicle().player_in_control( here, you )
+                               && seated->vehicle().engine_on;
+            if( !ready ) {
+                // This is the same native accessible control_vehicle() used
+                // elsewhere: it walks to the driver seat, boards normally,
+                // checks ownership and starts the engine with actual time.
+                // A game-thread continuation starts the route only AFTER
+                // those actions have really completed.
+                pending_accessible_drive = accessible_drive_request{ destination };
+                if( !you.in_vehicle || !you.controlling_vehicle ) {
+                    g->control_vehicle( std::nullopt );
+                }
+                // A one-tile boarding can finish immediately, before the
+                // next world turn. Continue to native ignition now so no
+                // additional swipe/key press is needed to start the trip.
+                ui::omap::update_accessible_drive_to_place();
+                return std::string( "QUIT" );
+            }
+            bool nearby_goal = false;
+            std::vector<tripoint_abs_omt> route =
+                accessible_vehicle_route( destination, nearby_goal );
+            if( route.empty() ) {
+                add_msg( m_info, _( "No safe vehicle route to this place or a nearby area." ) );
+                return std::string( "TIMEOUT" );
+            }
+            if( nearby_goal ) {
+                add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
+            }
+            you.omt_path = std::move( route );
             you.assign_activity( autodrive_activity_actor() );
         } else {
+            std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, false );
+            if( route.empty() ) {
+                add_msg( m_info, _( "No travel route to the selected place." ) );
+                return std::string( "TIMEOUT" );
+            }
+            you.omt_path = std::move( route );
             you.reset_move_mode();
             you.set_desired_movement_mode( move_mode_id(
                                             intent.node == "places:mode:run" ? "run" : "walk" ) );
@@ -3529,7 +3743,8 @@ void ui::omap::display_accessible_places()
                 mode.label = label;
                 snapshot.nodes.push_back( std::move( mode ) );
             }
-            if( you.in_vehicle && you.controlling_vehicle ) {
+            if( ( you.in_vehicle && you.controlling_vehicle ) ||
+                accessible_driver_seat_nearby( you, get_map() ) ) {
                 a11y::semantic_node drive;
                 drive.id = "places:mode:drive";
                 drive.label = _( "Drive" );

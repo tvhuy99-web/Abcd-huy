@@ -3663,17 +3663,17 @@ msgid "TTS Settings"
 msgstr "Cài đặt TTS"
 
 # Direct world gestures and unrestricted assistive scan, 2026-11-07.
-msgid "Scan 16 tiles north"
-msgstr "Quét 16 ô phía Bắc"
+msgid "Scan 30 tiles north"
+msgstr "Quét 30 ô phía Bắc"
 
-msgid "Scan 16 tiles south"
-msgstr "Quét 16 ô phía Nam"
+msgid "Scan 30 tiles south"
+msgstr "Quét 30 ô phía Nam"
 
-msgid "Scan 16 tiles west"
-msgstr "Quét 16 ô phía Tây"
+msgid "Scan 30 tiles west"
+msgstr "Quét 30 ô phía Tây"
 
-msgid "Scan 16 tiles east"
-msgstr "Quét 16 ô phía Đông"
+msgid "Scan 30 tiles east"
+msgstr "Quét 30 ô phía Đông"
 
 msgid "Read current coordinates"
 msgstr "Đọc tọa độ hiện tại"
@@ -3684,7 +3684,7 @@ msgstr "Quét phía %s, 16 ô, từ gần đến xa."
 
 #, c-format
 msgid "Tile %1$d: %2$s."
-msgstr "Ô %1$d, %2$s."
+msgstr "Ô %1$d: %2$s."
 
 #, c-format
 msgid "Coordinates.  X %1$d. Y %2$d. Z %3$d."
@@ -5975,3 +5975,206 @@ msgstr "Phía trước: %1$s, %2$d ô."
 #, c-format
 msgid "Obstacle behind: %1$s, %2$d tiles."
 msgstr "Phía sau: %1$s, %2$d ô."
+
+# Reader driving mode transitions and concise vehicle feedback.
+msgid "Take local vehicle controls"
+msgstr "Nhận quyền lái xe."
+
+msgid "Stop and release local vehicle controls"
+msgstr "Dừng xe rồi buông quyền lái."
+
+msgid "Take vehicle controls"
+msgstr "Nhận quyền điều khiển xe"
+
+msgid "Stop and release controls"
+msgstr "Dừng xe và buông vô-lăng"
+
+msgid "Scan 30 tiles ahead of the vehicle"
+msgstr "Quét 30 ô phía trước xe"
+
+msgid "Scan 30 tiles behind the vehicle"
+msgstr "Quét 30 ô phía sau xe"
+
+msgid "Scan 30 tiles to the vehicle's left"
+msgstr "Quét 30 ô bên trái xe"
+
+msgid "Scan 30 tiles to the vehicle's right"
+msgstr "Quét 30 ô bên phải xe"
+
+msgid "Sit at the driver's controls before driving."
+msgstr "Hãy ngồi vào vị trí điều khiển xe trước khi lái."
+
+msgid "Vehicle controls unavailable."
+msgstr "Không thể điều khiển xe từ vị trí này."
+
+msgid "Braking to a stop before leaving driving mode."
+msgstr "Đang phanh xe trước khi rời chế độ lái."
+
+msgid "Vehicle is stationary. Its heading will change when it moves."
+msgstr "Xe đang đứng yên. Hướng đầu xe sẽ thay đổi khi xe di chuyển."
+
+msgid "Vehicle condition summary"
+msgstr "Tình trạng xe, tóm tắt"
+
+msgid "You let go of the controls."
+msgstr "Đã buông vô-lăng."
+
+msgid "You can't turn the vehicle while on a ramp."
+msgstr "Không thể quay xe khi đang ở trên dốc chuyển tầng."
+
+msgid "The steering is completely broken!"
+msgstr "Hệ thống lái đã hỏng hoàn toàn."
+
+msgid "You cannot steer an animal-drawn vehicle with no animal harnessed."
+msgstr "Không thể điều khiển xe kéo khi chưa buộc con vật kéo vào xe."
+
+msgid "This vehicle has no steering system installed, you can't turn it."
+msgstr "Xe không có hệ thống lái nên không thể quay đầu."
+
+msgid "Switch to driving mode to take control."
+msgstr "Chuyển sang chế độ lái xe để điều khiển."
+
+# Concise 30-tile directional scan, shared by Map and Drive.
+msgid "No noteworthy information within 30 tiles."
+msgstr "Không phát hiện gì đáng chú ý trong phạm vi 30 ô."
+
+msgid "Gesture guide"
+msgstr "Hướng dẫn cử chỉ"
+
+msgid "Gesture guide: driving"
+msgstr "Hướng dẫn cử chỉ lái xe"
+
+msgid "Swipe one finger up: Drive forward."
+msgstr "Vuốt một ngón lên: Chạy tiến."
+
+msgid "Swipe one finger down: Drive reverse."
+msgstr "Vuốt một ngón xuống: Chạy lùi."
+
+msgid "Swipe one finger left: Steer left."
+msgstr "Vuốt một ngón sang trái: Đánh lái trái."
+
+msgid "Swipe one finger right: Steer right."
+msgstr "Vuốt một ngón sang phải: Đánh lái phải."
+
+msgid "Swipe one finger up then down: Increase target speed."
+msgstr "Vuốt một ngón lên rồi xuống: Tăng tốc độ mục tiêu."
+
+msgid "Swipe one finger down then up: Decrease target speed."
+msgstr "Vuốt một ngón xuống rồi lên: Giảm tốc độ mục tiêu."
+
+msgid "Swipe one finger left then right: Adjust heading left."
+msgstr "Vuốt một ngón trái rồi phải: Chỉnh hướng lái trái."
+
+msgid "Swipe one finger right then left: Adjust heading right."
+msgstr "Vuốt một ngón phải rồi trái: Chỉnh hướng lái phải."
+
+msgid "Swipe one finger up then right: Start or stop engine."
+msgstr "Vuốt một ngón lên rồi phải: Khởi động hoặc tắt động cơ."
+
+msgid "Swipe one finger down then left: Read vehicle speed."
+msgstr "Vuốt một ngón xuống rồi trái: Đọc tốc độ xe."
+
+msgid "Swipe one finger down then right: Read vehicle condition."
+msgstr "Vuốt một ngón xuống rồi phải: Đọc tình trạng xe."
+
+msgid "Swipe one finger up then left: Brake."
+msgstr "Vuốt một ngón lên rồi trái: Phanh xe."
+
+msgid "Swipe one finger right then down: Honk horn."
+msgstr "Vuốt một ngón phải rồi xuống: Bóp còi."
+
+msgid "Swipe two fingers up: Scan 30 tiles ahead of the vehicle."
+msgstr "Vuốt hai ngón lên: Quét 30 ô phía trước xe."
+
+msgid "Swipe two fingers down: Scan 30 tiles behind the vehicle."
+msgstr "Vuốt hai ngón xuống: Quét 30 ô phía sau xe."
+
+msgid "Swipe two fingers left: Scan 30 tiles to the vehicle's left."
+msgstr "Vuốt hai ngón trái: Quét 30 ô bên trái xe."
+
+msgid "Swipe two fingers right: Scan 30 tiles to the vehicle's right."
+msgstr "Vuốt hai ngón phải: Quét 30 ô bên phải xe."
+
+msgid "Triple tap three fingers: Change Map, Combat and Drive mode."
+msgstr "Chạm ba lần ba ngón: Chuyển chế độ bản đồ, chiến đấu và lái xe."
+
+msgid "Long press one finger: Open vehicle controls."
+msgstr "Nhấn giữ một ngón: Mở menu điều khiển xe."
+
+msgid "Double tap two fingers: Read recent messages."
+msgstr "Chạm hai lần hai ngón: Đọc thông báo gần đây."
+
+msgid "Tap one finger: Stop speech."
+msgstr "Chạm một ngón: Dừng lời đọc."
+
+msgid "Double tap one finger: Pause or resume driving."
+msgstr "Chạm hai lần một ngón: Tạm dừng hoặc tiếp tục lái."
+
+msgid "Tap two fingers: Read focused details."
+msgstr "Chạm một lần hai ngón: Đọc chi tiết tiêu điểm."
+
+msgid "Triple tap two fingers: Open the action menu."
+msgstr "Chạm ba lần hai ngón: Mở menu thao tác."
+
+msgid "Tap three fingers: Read coordinates."
+msgstr "Chạm một lần ba ngón: Đọc tọa độ."
+
+msgid "Double tap three fingers: Read player information."
+msgstr "Chạm hai lần ba ngón: Đọc thông tin nhân vật."
+
+msgid "Swipe two fingers up in a menu: Confirm the selected action."
+msgstr "Vuốt hai ngón lên trong menu: Xác nhận mục đang chọn."
+
+msgid "Swipe two fingers down in a menu: Go back."
+msgstr "Vuốt hai ngón xuống trong menu: Quay lại."
+
+msgid "Cannot turn in place while moving. Brake to a stop first."
+msgstr "Không thể quay đầu xe khi vẫn đang di chuyển. Hãy phanh dừng hẳn trước."
+
+msgid "Cannot turn in place in the current vehicle state."
+msgstr "Không thể quay đầu xe ở trạng thái hiện tại."
+
+msgid "Cannot turn in place: steering or wheels are broken."
+msgstr "Không thể quay đầu xe: hệ thống lái hoặc bánh xe bị hỏng."
+
+msgid "Cannot turn in place: unloaded map boundary."
+msgstr "Không thể quay đầu xe: đã tới rìa khu vực bản đồ đang tải."
+
+msgid "Cannot turn in place: another vehicle is in the way."
+msgstr "Không thể quay đầu xe: có phương tiện khác chắn đường."
+
+msgid "Cannot turn in place: %s is in the way."
+msgstr "Không thể quay đầu xe: bị %s cản trở."
+
+msgid "Cannot turn in place: vehicle position could not be updated."
+msgstr "Không thể quay đầu xe: không cập nhật được vị trí xe."
+
+msgid "Cannot resume: an obstacle still blocks the vehicle."
+msgstr "Không thể tiếp tục: vật cản vẫn chắn đường xe."
+
+msgid "Wait for the vehicle to stop before resuming."
+msgstr "Hãy chờ xe dừng hẳn trước khi tiếp tục."
+
+msgid "No accessible driver's seat nearby."
+msgstr "Không có ghế lái có thể đến được ở gần."
+
+msgid "Automatic drive canceled: driver's seat not reached."
+msgstr "Đã hủy lái tự động: không đến được ghế lái."
+
+msgid "Automatic drive canceled: controls unavailable."
+msgstr "Đã hủy lái tự động: không thể sử dụng bộ điều khiển xe."
+
+msgid "Automatic drive canceled: unable to take controls."
+msgstr "Đã hủy lái tự động: không thể tiếp quản điều khiển xe."
+
+msgid "Automatic drive canceled: engine did not start."
+msgstr "Đã hủy lái tự động: động cơ không khởi động được."
+
+msgid "No safe vehicle route to this place or a nearby area."
+msgstr "Không tìm được tuyến đường an toàn để đi xe đến địa điểm này hoặc khu vực lân cận."
+
+msgid "Driving to a reachable area near the selected place."
+msgstr "Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn."
+
+msgid "Automatic drive canceled: boarding or ignition interrupted."
+msgstr "Đã hủy lái tự động: quá trình lên xe hoặc khởi động bị gián đoạn."

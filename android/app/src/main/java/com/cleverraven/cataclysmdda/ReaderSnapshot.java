@@ -115,6 +115,21 @@ public final class ReaderSnapshot {
     }
 
     public static final class Node {
+        /** Local-only commands never pass through the native action gate. */
+        static Node localCommand(String id, String label) {
+            try {
+                return new Node(new JSONObject().put("id", id)
+                        .put("label", label)
+                        .put("role", "button"));
+            } catch (JSONException impossible) {
+                throw new IllegalStateException("Cannot create local command", impossible);
+            }
+        }
+
+        static Node gestureGuide(String label) {
+            return localCommand("reader:gesture:guide", label);
+        }
+
         public final String id;
         public final String role;
         public final String label;

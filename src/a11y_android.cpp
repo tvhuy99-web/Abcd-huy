@@ -312,7 +312,7 @@ int travel_state()
 
 void set_travel_state( const int state )
 {
-    active_travel_state.store( state >= 0 && state <= 3 ? state : 0,
+    active_travel_state.store( state >= 0 && state <= 4 ? state : 0,
                                std::memory_order_release );
 }
 
@@ -321,7 +321,7 @@ bool request_travel_control( const int control )
     const int current = travel_state();
     if( !enabled() || suspended() ||
         ( control == 1 && current != 1 ) ||
-        ( control == 2 && current != 2 && current != 3 ) ||
+        ( control == 2 && current != 2 && current != 3 && current != 4 ) ||
         ( control == 3 && current == 0 ) ||
         ( control == 4 && current != 3 ) ||
         control < 1 || control > 4 ) {

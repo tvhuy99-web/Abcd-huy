@@ -15,21 +15,26 @@ SURF = (JAVA / "ReaderGestureSurface.java").read_text(encoding="utf-8")
 WORLD = (ROOT / "src/a11y_world.cpp").read_text(encoding="utf-8")
 ENGINE = (ROOT / "src/handle_action.cpp").read_text(encoding="utf-8")
 VEH = (ROOT / "src/vehicle.cpp").read_text(encoding="utf-8")
+VEH_MOVE = (ROOT / "src/vehicle_move.cpp").read_text(encoding="utf-8")
 VEH_HEADER = (ROOT / "src/vehicle.h").read_text(encoding="utf-8")
 VEH_USE = (ROOT / "src/vehicle_use.cpp").read_text(encoding="utf-8")
 GAME = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
 
 
 class AccessibleVehicleContracts(unittest.TestCase):
-    def test_onboard_map_swipes_are_not_blocked(self):
+    def test_onboard_map_swipes_only_walk_after_release(self):
         gate = WORLD.split("result.swipe_movement_allowed =", 1)[1].split(
             "// Eight-direction combat gestures", 1
         )[0]
+        # Passengers may still walk to controls; native control is the
+        # authoritative guard preventing walking gestures from steering.
         for forbidden in ("!viewer.in_vehicle", "!viewer.controlling_vehicle",
                           "!viewer.is_driving()"):
             self.assertNotIn(forbidden, gate)
         self.assertIn("&& !viewer.activity", gate)
-        self.assertIn("return !combatMode && worldStepAllowed();", CTRL)
+        self.assertIn("&& !vehicleReleasePending && !vehicleDriverReady()", CTRL)
+        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:release")', CTRL)
 
     def test_status_uses_native_control_ownership(self):
         report = WORLD.split("std::string player_status()", 1)[1].split(
@@ -95,7 +100,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
 
     def test_vehicle_onboarding_uses_touch_instructions(self):
         source = (ROOT / "src/game.cpp").read_text(encoding="utf-8")
-        self.assertIn('_( "Open Vehicle controls to drive." )', source)
+        self.assertIn('_( "Switch to driving mode to take control." )', source)
         self.assertIn("if( a11y::enabled() )", source)
         self.assertIn("if( !a11y::enabled() )", VEH_USE)
         self.assertIn('#include "a11y_runtime.h"', VEH_USE)
@@ -119,11 +124,13 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('game_speed_units == "mph"', WORLD)
         self.assertIn('game_speed_units == "km/h"', WORLD)
         self.assertIn('_( "Speed: %1$d %3$s. Target: %2$d %3$s." )', WORLD)
-        self.assertIn("R.string.a11yDriveNeedsControl", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:begin")', CTRL)
         self.assertIn("R.string.a11yDriveBraking", CTRL)
+        self.assertIn('document( "reader:vehicle:summary"', WORLD)
+        self.assertIn('speakVehicleDocument("reader:vehicle:summary")', CTRL)
         self.assertIn('_( "Vehicle not moving. Check engine, fuel or wheels." )', VEH)
 
-    def test_manual_mode_toggle_is_last_vehicle_menu_action(self):
+    def test_manual_mode_toggle_precedes_final_read_only_guide(self):
         self.assertIn("bool a11y_manual_drive = false;", VEH_HEADER)
         menu = VEH_USE.split("void vehicle::build_interact_menu(", 1)[1].split(
             "void vehicle::interact_with(", 1
@@ -138,6 +145,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("a11y_continuous_drive = false;", menu)
         self.assertIn("a11y_drive_paused = false;", menu)
         self.assertIn("a11y_obstacle_override = false;", menu)
+        self.assertIn('menu.add( _( "Gesture guide" ) )', menu)
+        self.assertGreater(menu.index('menu.add( _( "Gesture guide" ) )'),
+                           menu.index("a11y_manual_drive = !a11y_manual_drive;"))
+        self.assertIn("guide.addentry( index++, true, 0, line );", menu)
 
     def test_manual_mode_spends_one_turn_without_autopilot(self):
         self.assertIn("!seat->vehicle().a11y_manual_drive", ENGINE)
@@ -196,10 +207,16 @@ class AccessibleVehicleContracts(unittest.TestCase):
     def test_braking_or_leaving_drive_mode_stops_continuous_turns(self):
         self.assertIn('action == "A11Y_INTERNAL_VEHICLE_BRAKE"', ENGINE)
         self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
-        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
-        self.assertIn("seat->vehicle().a11y_continuous_drive = seat->vehicle().velocity != 0;", ENGINE)
         self.assertIn('requestVehicleAction("reader:vehicle:brake");', CTRL)
-        self.assertIn("if (vehicleMode && nextMode != 2 && vehicleDriverReady())", CTRL)
+        self.assertIn('requestLiveWorldCommand("reader:vehicle:release")', CTRL)
+        self.assertIn("car.a11y_drive_paused = true;", ENGINE)
+        self.assertIn("car.a11y_release_controls_pending = true;", ENGINE)
+        self.assertIn("car.cruise_velocity = 0;", ENGINE)
+        self.assertIn("car.velocity == 0 || !u.controlling_vehicle", ENGINE)
+        self.assertIn("u.controlling_vehicle = false;", ENGINE)
+        self.assertIn("a11y_manual_drive && !a11y_release_controls_pending", VEH)
+        self.assertIn("bool a11y_release_controls_pending = false;", VEH_HEADER)
+        self.assertIn("!vehicleReleasePending && !vehicleDriverReady()", CTRL)
 
     def test_throttle_swipes_advance_native_physics(self):
         # Native pldrive() does not spend moves for straight cruise changes.
@@ -226,28 +243,46 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("car.velocity != 0 && !car.is_rotorcraft( here )", drive)
         self.assertIn("veh.coord_translate( veh.turn_dir, pivot, part.mount,", WORLD)
 
-    def test_heading_swipe_announces_actual_and_requested_directions(self):
+    def test_heading_swipe_announces_short_actual_heading_and_blockers(self):
         self.assertIn('document( "reader:vehicle:heading"', WORLD)
-        self.assertIn('_( "Direction: %s." )', WORLD)
-        self.assertIn('_( "Requested heading: %s." )', WORLD)
         for compass in ("north", "northeast", "east", "southeast",
                         "south", "southwest", "west", "northwest"):
             self.assertIn('_( "' + compass + '" )', WORLD)
-        self.assertIn("spoken_heading( veh.face.dir() )", WORLD)
-        self.assertIn("spoken_heading( veh.turn_dir )", WORLD)
+        heading = WORLD.split("// A steering gesture must speak", 1)[1].split(
+            'document( "reader:vehicle:heading"', 1
+        )[0]
+        self.assertIn("spoken_heading( veh.face.dir() )", heading)
+        self.assertNotIn("spoken_heading( veh.turn_dir )", heading)
+        self.assertNotIn('_( "Requested heading: %s." )', heading)
+        self.assertIn("veh.steering_effectiveness( get_map() )", heading)
+        self.assertIn("veh.skidding", heading)
+        self.assertIn("veh.velocity == 0 && veh.turn_dir != veh.face.dir()", heading)
         self.assertIn('next.find("reader:vehicle:heading")', CTRL)
         self.assertNotIn("pendingVehicleRoadReport", CTRL)
         self.assertIn('document( "reader:vehicle:road"', WORLD)
 
-    def test_two_fingers_are_mode_scoped_before_map_scans(self):
+    def test_two_fingers_scan_vehicle_relative_and_bent_one_finger_reads_status(self):
         self.assertIn("handleVehicleTwoFingerSwipe(", SURF)
         self.assertLess(
             SURF.index("listener.handleVehicleTwoFingerSwipe("),
             SURF.index("listener.scanDirection("))
-        self.assertIn('requestVehicleAction("reader:vehicle:brake")', CTRL)
-        self.assertIn('requestVehicleAction("reader:vehicle:horn")', CTRL)
-        self.assertIn('speakVehicleDocument("reader:vehicle:speed")', CTRL)
-        self.assertIn('speakVehicleDocument("reader:vehicle:detail")', CTRL)
+        self.assertIn("scanDirection(horizontal, vertical);", CTRL)
+        self.assertIn('"reader:scan:vehicle:" + relative', CTRL)
+        self.assertIn("octants[( facing + offset ) % 8]", ENGINE)
+        self.assertIn("std::max( std::abs( delta.x ), std::abs( delta.y ) ) != 1", WORLD)
+        for side in ("front", "back", "left", "right"):
+            self.assertIn('reader:scan:vehicle:' + side, ENGINE)
+            self.assertIn('reader:scan:vehicle:' + side, WORLD)
+        for gesture, action in (
+            ("swipe_down_left", 'speakVehicleDocument("reader:vehicle:speed")'),
+            ("swipe_down_right", 'speakVehicleDocument("reader:vehicle:summary")'),
+            ("swipe_up_left", 'requestVehicleAction("reader:vehicle:brake")'),
+            ("swipe_right_down", 'requestVehicleAction("reader:vehicle:horn")'),
+        ):
+            segment = CTRL.split('case "' + gesture + '":', 1)[1].split(
+                "return true;", 1
+            )[0]
+            self.assertIn(action, segment)
 
     def test_engine_horn_brake_keep_original_game_validation(self):
         self.assertIn("act = ACTION_SMASH;", ENGINE)
@@ -339,11 +374,49 @@ class AccessibleVehicleContracts(unittest.TestCase):
             "if (vehicleMode && directWorldGesturesEnabled())", 1)[1].split(
                 "if (combatMode && directWorldGesturesEnabled())", 1)[0])
 
-    def test_steering_remains_available_when_paused(self):
-        self.assertIn("if( seated && seated->vehicle().a11y_drive_paused )", ENGINE)
-        self.assertIn("if( direction.x() != 0 && direction.y() == 0 )", ENGINE)
-        self.assertIn("pldrive( point_rel_ms( direction.x() * nudge, 0 ) );",
-                      ENGINE)
+    def test_stopped_or_paused_car_rotates_its_actual_body(self):
+        self.assertIn("seated->vehicle().a11y_drive_paused ||", ENGINE)
+        self.assertIn("seated->vehicle().velocity == 0", ENGINE)
+        self.assertIn("direction.x() != 0 && direction.y() == 0", ENGINE)
+        self.assertIn("seated->vehicle().a11y_rotate_in_place( here, steps );", ENGINE)
+        self.assertIn("const int steps = direction.x() * std::max( 3, nudge );", ENGINE)
+        self.assertIn("bool vehicle::a11y_rotate_in_place(", VEH_MOVE)
+        self.assertIn("here.displace_vehicle( *this, tripoint_rel_ms::zero )", VEH_MOVE)
+        self.assertIn("face.init( target );", VEH_MOVE)
+        self.assertIn("move.init( target );", VEH_MOVE)
+        self.assertIn("turn_dir = target;", VEH_MOVE)
+        self.assertIn("creature && creature != &get_avatar()", VEH_MOVE)
+        self.assertIn("part.info().location != vpart_location_structure", VEH_MOVE)
+        self.assertIn("if( velocity != 0 )", VEH_MOVE)
+        self.assertIn("is_towed() || is_towing()", VEH_MOVE)
+        self.assertIn("steering_effectiveness( here )", VEH_MOVE)
+        self.assertIn("Cannot turn in place: %s is in the way.", VEH_MOVE)
+
+    def test_auto_sensor_samples_all_tiles_and_warns_about_brush(self):
+        path = VEH.split("std::set<point_abs_ms> vehicle::immediate_path(", 1)[1].split(
+            "static int get_turn_from_angle", 1
+        )[0]
+        self.assertIn("collision_vector.clear_advance();", path)
+        self.assertIn("collision_vector.advance( 1 );", path)
+        self.assertNotIn("collision_vector.advance( i );", path)
+        self.assertIn("here.ter( tile ).obj().is_smashable()", WORLD)
+        self.assertIn("here.furn( tile ).obj().movecost != 0", WORLD)
+        self.assertIn("!here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE )",
+                      WORLD)
+        self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, reverse )", VEH)
+        self.assertIn("a11y_obstacle_stop = true;", VEH)
+
+    def test_manual_and_automatic_drive_are_silent_except_warnings(self):
+        self.assertIn("worldView && !vehicleMode && previousTile != null", CTRL)
+        self.assertIn('pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)', CTRL)
+        requests = CTRL.split("private void requestVehicleAction(", 1)[1].split(
+            "private void speakVehicleDocument(", 1
+        )[0]
+        self.assertNotIn('|| "reader:vehicle:forward".equals(id)', requests)
+        self.assertNotIn('|| "reader:vehicle:reverse".equals(id)', requests)
+        self.assertIn('if ("reader:vehicle:pause".equals(id))', requests)
+        self.assertIn("!( traveler.in_vehicle && traveler.controlling_vehicle )", WORLD)
+
 
     def test_reversing_starts_at_rear_and_clearance_uses_body(self):
         self.assertIn("const point_rel_ms left = reverse ? mount_min : front_left;", VEH)

@@ -62,6 +62,7 @@
 #include "npc.h"
 #include "options.h"
 #include "output.h"
+#include "overmap_ui.h"
 #include "overmapbuffer.h"
 #include "pimpl.h"
 #include "player_activity.h"
@@ -302,6 +303,42 @@ void handle_key_blocking_activity()
                             return "pause";
                         }
                     } else if( intent.action == "activate" ) {
+                        const avatar &driver = get_avatar();
+                        if( driver.activity && driver.activity.id() == ACT_AUTODRIVE &&
+                            intent.node == "control_vehicle" ) {
+                            // Holding a finger continues to open the native
+                            // vehicle menu, including its final Gesture Guide.
+                            g->control_vehicle( std::nullopt );
+                            return std::string( "TIMEOUT" );
+                        }
+                        if( driver.activity &&
+                            driver.activity.id() == ACT_AUTODRIVE &&
+                            intent.node.rfind( "reader:", 0 ) == 0 ) {
+                            // The activity owns the game-thread vehicle.
+                            // Allow only read-only scans/coordinates and the
+                            // original horn. No steering, throttle or engine
+                            // actions can interfere with autonomous routing.
+                            if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
+                                a11y::announce_vehicle_relative_scan( intent.node.substr(
+                                            std::string( "reader:scan:vehicle:" ).size() ) );
+                                return std::string( "TIMEOUT" );
+                            }
+                            if( intent.node == "reader:coordinates" ) {
+                                a11y::announce_player_coordinates();
+                                return std::string( "TIMEOUT" );
+                            }
+                            if( intent.node == "reader:vehicle:horn" ) {
+                                map &here = get_map();
+                                const optional_vpart_position seat =
+                                    here.veh_at( driver.pos_bub( here ) );
+                                if( seat && seat->vehicle().player_in_control( here, driver ) &&
+                                    seat->vehicle().has_part( "HORN" ) ) {
+                                    seat->vehicle().honk_horn( here, true );
+                                }
+                                return std::string( "TIMEOUT" );
+                            }
+                            return std::nullopt;
+                        }
                         return intent.node;
                     }
                     return std::nullopt;
@@ -747,6 +784,13 @@ bool game::do_turn()
 
     // process avatar activities (ignoring user input)
     u.process_activity();
+
+    // Continue the user's selected Explore Places → Drive journey after
+    // native walking to the driver's seat and engine ignition. Keep this
+    // entirely on the game thread, never in Android's snapshot callback.
+    if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
+        ui::omap::update_accessible_drive_to_place();
+    }
 
     // Process NPC sound events before they move or they hear themselves talking
     for( npc &guy : all_npcs() ) {

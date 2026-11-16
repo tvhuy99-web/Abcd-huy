@@ -26,7 +26,9 @@
 #include "activity_actor_definitions.h"
 #include "activity_handlers.h"
 #include "activity_item_handling.h"
+#include "a11y_android.h"
 #include "a11y_runtime.h"
+#include "a11y_world.h"
 #include "advanced_inv.h"
 #include "avatar.h"
 #include "avatar_action.h"
@@ -788,6 +790,19 @@ void autodrive_activity_actor::update_player_vehicle( Character &who )
     }
 }
 
+// The fully autonomous Explore Places journey is an ACT_AUTODRIVE activity,
+// not Character::has_destination() (which is used for walking). Own its
+// reader travel state here, on the native game thread. The Android UI only
+// writes bounded atomic requests; it never touches the vehicle or path.
+static void a11y_brake_autodrive( vehicle &car, map &here )
+{
+    car.cruise_velocity = 0;
+    if( car.velocity != 0 ) {
+        // Native handbrake is a free function, not a vehicle method.
+        handbrake( here );
+    }
+}
+
 void autodrive_activity_actor::start( player_activity &, Character &who )
 {
     update_player_vehicle( who );
@@ -795,6 +810,14 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
         who.cancel_activity();
     } else {
         player_vehicle->is_autodriving = true;
+        // Do not change NPC vehicle or vanilla player behavior. Only the
+        // actively connected accessibility avatar owns the trip reader.
+        if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
+            player_vehicle->a11y_obstacle_override = false;
+            player_vehicle->a11y_obstacle_stop = false;
+            a11y::android::reset_travel_control();
+            a11y::android::set_travel_state( 1 );
+        }
     }
 }
 
@@ -802,41 +825,126 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
 {
     map &here = get_map();
 
-    if( who.in_vehicle && who.controlling_vehicle && player_vehicle ) {
-        if( who.get_moves() <= 0 ) {
-            // out of moves? the driver's not doing anything this turn
-            // (but the vehicle will continue moving)
+    if( !( who.in_vehicle && who.controlling_vehicle && player_vehicle ) ) {
+        who.cancel_activity();
+        return;
+    }
+    if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
+        const int control = a11y::android::take_travel_control();
+        int state = a11y::android::travel_state();
+        if( state == 0 ) {
+            a11y::android::set_travel_state( 1 );
+            state = 1;
+        }
+        if( control == 3 ) {
+            // Cancel means Drive -> Map for the reader. Braking must finish
+            // before native driving controls are released; otherwise the
+            // map appears while the avatar still holds a moving steering
+            // wheel. This uses the existing deferred vehicle-release gate.
+            player_vehicle->a11y_release_controls_pending = true;
+            player_vehicle->a11y_drive_paused = true;
+            player_vehicle->a11y_resume_cruise_velocity = 0;
+            player_vehicle->a11y_continuous_drive = player_vehicle->velocity != 0;
+            a11y_brake_autodrive( *player_vehicle, here );
+            who.omt_path.clear();
+            a11y::android::set_travel_state( 0 );
+            who.cancel_activity();
             return;
         }
-        switch( player_vehicle->do_autodrive( here, who ) ) {
-            case autodrive_result::ok:
-                if( who.get_moves() > 0 ) {
-                    // if do_autodrive() didn't eat up all our moves, end the turn
-                    // equivalent to player pressing the "pause" button
-                    who.set_moves( 0 );
-                }
-                sounds::reset_markers();
-                break;
-            case autodrive_result::abort:
-                who.cancel_activity();
-                break;
-            case autodrive_result::finished:
-                act.moves_left = 0;
-                break;
+        if( control == 1 && state == 1 ) {
+            state = 2;
+            a11y::android::set_travel_state( state );
         }
-    } else {
-        who.cancel_activity();
+        // The native vehicle sensor and autodrive path checker both mark
+        // an obstruction; neither the player's old Manual preference nor
+        // an override gesture can bypass this fully autonomous journey.
+        if( player_vehicle->a11y_obstacle_stop && state == 1 ) {
+            state = 4; // obstacle, NOT an ignorable enemy safe-mode warning
+            a11y::android::set_travel_state( state );
+        }
+        if( g->safe_mode == SAFE_MODE_STOP && state == 1 ) {
+            state = 3;
+            a11y::android::set_travel_state( state );
+        }
+        if( state == 3 && control == 4 && g->safe_mode == SAFE_MODE_STOP ) {
+            // Same one-threat semantics as the walking reader's Ignore.
+            for( auto &visible : get_avatar().get_mon_visible().new_seen_mon ) {
+                monster &critter = *visible;
+                critter.ignoring = rl_dist( who.pos_bub(), critter.pos_bub() );
+            }
+            g->set_safe_mode( SAFE_MODE_ON );
+            state = 1;
+            a11y::android::set_travel_state( state );
+        } else if( ( state == 2 || state == 3 || state == 4 ) && control == 2 ) {
+            if( player_vehicle->velocity != 0 ) {
+                who.add_msg_if_player( m_warning,
+                                       _( "Wait for the vehicle to stop before resuming." ) );
+            } else if( g->safe_mode == SAFE_MODE_STOP ) {
+                state = 3;
+                a11y::android::set_travel_state( state );
+                who.add_msg_if_player( m_warning,
+                                       _( "Cannot resume: safe mode still blocks the route." ) );
+            } else if( state == 4 ) {
+                const std::optional<a11y::vehicle_obstacle> obstacle =
+                    a11y::vehicle_obstacle_ahead( *player_vehicle, here,
+                                                  player_vehicle->velocity < 0 );
+                if( obstacle ) {
+                    who.add_msg_if_player( m_warning,
+                                           _( "Cannot resume: an obstacle still blocks the vehicle." ) );
+                } else {
+                    player_vehicle->a11y_obstacle_stop = false;
+                    player_vehicle->a11y_brake_alerted = false;
+                    state = 1;
+                    a11y::android::set_travel_state( state );
+                }
+            } else {
+                state = 1;
+                a11y::android::set_travel_state( state );
+            }
+        }
+        if( state != 1 ) {
+            // Braking is physical, not a teleport to zero speed. Keep the
+            // activity and its overmap path intact while waiting for a
+            // deliberate Resume/Cancel request. Do not consume route steps.
+            a11y_brake_autodrive( *player_vehicle, here );
+            who.set_moves( 0 );
+            return;
+        }
+    }
+
+    if( who.get_moves() <= 0 ) {
+        return;
+    }
+    switch( player_vehicle->do_autodrive( here, who ) ) {
+        case autodrive_result::ok:
+            if( who.get_moves() > 0 ) {
+                who.set_moves( 0 );
+            }
+            sounds::reset_markers();
+            break;
+        case autodrive_result::abort:
+            who.cancel_activity();
+            break;
+        case autodrive_result::finished:
+            act.moves_left = 0;
+            break;
     }
 }
 
 void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 {
-    // The activity might be canceled because the driver got unboarded, in which case we may not have a valid pointer anymore (e.g. summoned vehicle).
     update_player_vehicle( who );
-
     who.add_msg_if_player( m_info, _( "Auto drive canceled." ) );
     if( player_vehicle ) {
-        player_vehicle->stop_autodriving( false );
+        if( who.is_avatar() && a11y::enabled() ) {
+            a11y_brake_autodrive( *player_vehicle, get_map() );
+            player_vehicle->stop_autodriving( true );
+        } else {
+            player_vehicle->stop_autodriving( false );
+        }
+    }
+    if( who.is_avatar() ) {
+        a11y::android::reset_travel_control();
     }
     ui::omap::force_quit();
     act.set_to_null();
@@ -845,7 +953,18 @@ void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 void autodrive_activity_actor::finish( player_activity &act, Character &who )
 {
     who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
-    player_vehicle->stop_autodriving( false );
+    update_player_vehicle( who );
+    if( player_vehicle ) {
+        if( who.is_avatar() && a11y::enabled() ) {
+            a11y_brake_autodrive( *player_vehicle, get_map() );
+            player_vehicle->stop_autodriving( true );
+        } else {
+            player_vehicle->stop_autodriving( false );
+        }
+    }
+    if( who.is_avatar() ) {
+        a11y::android::reset_travel_control();
+    }
     ui::omap::force_quit();
     act.set_to_null();
 }

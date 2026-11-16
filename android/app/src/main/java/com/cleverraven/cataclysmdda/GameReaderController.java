@@ -30,6 +30,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final AtomicLong REQUEST_SEQUENCE = new AtomicLong();
     private static final AtomicLong ANNOUNCEMENT_SEQUENCE = new AtomicLong();
     private static final int HUB_PAGE_SIZE = 30;
+    private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
+    private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
+    private static final String TRAVEL_STATUS_NODE = "reader:travel:status-local";
     private static final String POCKET_CONFIRM_NODE = "reader-pocket:confirm";
     private static final String POCKET_CANCEL_NODE = "reader-pocket:cancel";
     private final CataclysmDDA activity;
@@ -150,11 +153,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Global contextual command drawer: native commands stay published and validated,
     // but never interrupt the primary list of items, answers or form fields.
     private boolean commandPaletteOpen;
+    // A read-only local overlay. Each entry is one focus, never a game action.
+    private boolean gestureGuideOpen;
+    private int gestureGuideIndex;
+    private List<String> gestureGuideRows = new ArrayList<>();
+    private int travelContextDrawerState;
     // A hold exposes every original aim/cursor command; the default is eight directions.
     private boolean targetingOriginalControls;
     // Local to the accessible world. Custom map bindings remain untouched.
     private boolean combatMode;
     private boolean vehicleMode;
+    // ACT_AUTODRIVE uses the existing Drive interface. Native pathfinding
+    // owns movement while the four straight one-finger swipes are disabled.
+    private boolean autonomousDriveTrip;
+    private boolean autonomousDriveCancelRequested;
+    // Map gestures stay locked until the native driver has actually let go.
+    private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
     private boolean pendingVehicleSpeedReport;
     private String commandPaletteReturnFocus = "";
@@ -566,6 +580,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     snapshot = null;
                     lastRecentMessages = "";
                     commandPaletteOpen = false;
+                    gestureGuideOpen = false;
+                    autonomousDriveTrip = false;
+                    autonomousDriveCancelRequested = false;
+                    travelContextDrawerState = 0;
                     targetingOriginalControls = false;
                     pendingLinkedDetail = "";
                     pendingLinkedDetailContext = "";
@@ -767,6 +785,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
+                final boolean nativeAutodrive = "activity".equals(next.category)
+                        && next.find("activity:autodrive") != null;
+                if (nativeAutodrive && !autonomousDriveCancelRequested) {
+                    autonomousDriveTrip = true;
+                    vehicleMode = true;
+                    combatMode = false;
+                    vehicleReleasePending = false;
+                } else if (!nativeAutodrive && autonomousDriveTrip
+                        && !"activity".equals(next.category)) {
+                    autonomousDriveTrip = false;
+                    autonomousDriveCancelRequested = false;
+                }
                 // A vehicle may disappear or the character may dismount between
                 // snapshots. Never leave a stale driving mode armed on foot.
                 if ("DEFAULTMODE".equals(next.category)
@@ -774,6 +804,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     vehicleMode = false;
                     pendingVehicleHeadingReport = false;
                     pendingVehicleSpeedReport = false;
+                }
+                if ("DEFAULTMODE".equals(next.category) &&
+                        (next.find("reader:vehicle:seat") == null ||
+                         next.find("reader:vehicle:driver") == null ||
+                         !next.find("reader:vehicle:driver").enabled)) {
+                    boolean finishedVehicleRelease = vehicleReleasePending;
+                    vehicleReleasePending = false;
+                    if (finishedVehicleRelease && !vehicleMode && !combatMode) {
+                        handler.post(() -> {
+                            if (!vehicleReleasePending && !vehicleMode && !combatMode
+                                    && directWorldGesturesEnabled()) {
+                                feedback(activity.getString(R.string.a11yMapMode));
+                            }
+                        });
+                    }
                 }
                 if (pendingVehicleSpeedReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleSpeedReport = false;
@@ -826,7 +871,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 boolean enteredTreeLayer = false;
                 if (changedContext) {
                     clearPendingWorldDirection();
+                    gestureGuideOpen = false;
                     commandPaletteOpen = false;
+                    travelContextDrawerState = 0;
                     targetingOriginalControls = false;
                     commandPaletteReturnFocus = "";
                     commandPaletteReturnParent = "";
@@ -865,7 +912,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                                 : currentParent.parentId;
                     }
                 }
-                if (commandPaletteOpen && !changedContext && next.find(focus) != null) {
+                if (commandPaletteOpen && !changedContext &&
+                        (next.find(focus) != null || GESTURE_GUIDE_NODE.equals(focus)
+                         || TARGET_TOGGLE_NODE.equals(focus)
+                         || TRAVEL_STATUS_NODE.equals(focus))) {
                     // A screen update must not steal focus from an open command drawer.
                     readerLayerParent = "";
                 } else if (nativeLayerChanged) {
@@ -889,7 +939,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     focus = remembered != null && next.find(remembered) != null
                             ? remembered : next.find(next.focus) != null ? next.focus
                             : next.nodes.isEmpty() ? "" : next.nodes.get(0).id;
-                } else if (next.find(focus) == null
+                } else if (next.find(focus) == null && !gestureGuideOpen
+                        && !(commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                                || TARGET_TOGGLE_NODE.equals(focus)
+                                || TRAVEL_STATUS_NODE.equals(focus)))
                         && !(pocketStage == 3 && (POCKET_CONFIRM_NODE.equals(focus)
                                 || POCKET_CANCEL_NODE.equals(focus)))) {
                     // Changing a surroundings page always focuses its native
@@ -1005,7 +1058,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ReaderSnapshot.Node nextPosition = next.find("world:tile_position");
                 boolean steppedToAnotherTile = previousPosition != null && nextPosition != null
                         && !previousPosition.value.equals(nextPosition.value);
-                boolean newlyNoteworthy = worldView && previousTile != null
+                // Driving is silent in BOTH Automatic and Manual mode.
+                // The occupied vehicle and roadside terrain are refreshed
+                // every tick, but are not new speech events. Genuine hazard
+                // warnings still enter through the native message channel.
+                boolean newlyNoteworthy = worldView && !vehicleMode && previousTile != null
                         && "alert".equals(nextTile.role)
                         && (steppedToAnotherTile || !"alert".equals(previousTile.role)
                             || !nextTile.value.equals(previousTile.value));
@@ -1201,6 +1258,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 ? ReaderSpeechQueue.URGENT : ReaderSpeechQueue.INFORMATION;
         Runnable deliver = () -> {
             if (closed || !foreground || !windowFocused || !preferences.isEnabled()) {
+                return;
+            }
+            // A moving car must be as quiet as walking on an empty floor,
+            // regardless of whether Manual or Automatic is selected. Only
+            // real urgent game warnings are spoken without being requested;
+            // gesture-initiated scans and details still work on demand.
+            if (snapshot != null &&
+                    ((vehicleMode && "DEFAULTMODE".equals(snapshot.category))
+                     || (travelState() != 0 && "activity".equals(snapshot.category)))
+                    && priority < ReaderSpeechQueue.URGENT
+                    && !extendedScan && !requestedDetail
+                    && !detailBegin && !detailPart && !detailEnd && !combatAlert) {
                 return;
             }
             if (detailBegin || detailPart || detailEnd) {
@@ -1678,9 +1747,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pocketStage == 1) {
             String name = pocketMenuChoice == 0
                     ? activity.getString(R.string.a11yPocketOpen)
-                    : activity.getString(R.string.a11yPocketOtherActions);
+                    : pocketMenuChoice == 1
+                    ? activity.getString(R.string.a11yPocketOtherActions)
+                    : activity.getString(R.string.a11yGestureGuideTitle);
             return name + ". " + activity.getString(R.string.a11yControlButton) + ", "
-                    + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 2);
+                    + activity.getString(R.string.a11yPosition, pocketMenuChoice + 1, 3);
         }
         if (pocketStage == 2) {
             List<ReaderSnapshot.Node> pockets = pocketNodes(pocketContainerId);
@@ -1900,9 +1971,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (pocketStage == 1) {
             if (pocketMenuChoice == 0) {
                 openPocketChoices();
-            } else {
+            } else if (pocketMenuChoice == 1) {
                 resetPocketPicker(false);
                 openGlobalContextActions();
+            } else {
+                openGestureGuide();
             }
         } else if (pocketStage == 2) {
             ReaderSnapshot.Node pocket = snapshot == null ? null : snapshot.find(focus);
@@ -2036,7 +2109,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void navigatePocketPicker(int delta) {
         if (pocketStage == 1) {
-            pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 2);
+            pocketMenuChoice = Math.floorMod(pocketMenuChoice + delta, 3);
         } else {
             List<ReaderSnapshot.Node> choices = pocketStage == 2
                     ? pocketNodes(pocketContainerId) : pocketItems();
@@ -2072,7 +2145,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         title.setTextSize(20);
         rows.addView(title);
         if (pocketStage == 1) {
-            int[] ids = { R.string.a11yPocketOpen, R.string.a11yPocketOtherActions };
+            int[] ids = { R.string.a11yPocketOpen, R.string.a11yPocketOtherActions,
+                          R.string.a11yGestureGuideTitle };
             for (int i = 0; i < ids.length; i++) {
                 final int choice = i;
                 Button option = new Button(activity);
@@ -2142,21 +2216,19 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         cancel.setSelected(POCKET_CANCEL_NODE.equals(focus));
         cancel.setOnClickListener(v -> cancelPocketPicker());
         rows.addView(cancel);
+        if (pocketStage != 1) {
+            renderGuideButton();
+        }
     }
 
     private void openGlobalContextActions() {
-        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        if (snapshot == null || gestureGuideOpen) { return; }
+        // Every native semantic screen gets at least the guide row, even
+        // if its adapter currently publishes no extra commands.
         List<ReaderSnapshot.Node> commands = contextualCommands();
-        boolean hasContent = false;
-        for (ReaderSnapshot.Node node : snapshot.nodes) {
-            if (node.parentId.equals(readerLayerParent) && !isAuxiliaryCommand(node)) {
-                hasContent = true;
-                break;
-            }
-        }
-        if (!hasContent || commands.isEmpty()) {
-            feedback(activity.getString(R.string.a11yNoContextCommands));
-            return;
+        if (directWorldGesturesEnabled()) {
+            CataclysmDDA.nativeCancelPendingWorldSteps();
+            clearPendingWorldDirection();
         }
         commandPaletteReturnFocus = focus;
         commandPaletteReturnParent = readerLayerParent;
@@ -2172,11 +2244,29 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private List<ReaderSnapshot.Node> contextualCommands() {
         ArrayList<ReaderSnapshot.Node> result = new ArrayList<>();
         if (snapshot != null) {
-            for (ReaderSnapshot.Node node : snapshot.nodes) {
-                if (node.parentId.isEmpty() && isAuxiliaryCommand(node)) {
-                    result.add(node);
+            if (travelContextDrawerState != 0) {
+                result.add(ReaderSnapshot.Node.localCommand(TRAVEL_STATUS_NODE,
+                        activity.getString(R.string.a11yGuideTravelStatus)));
+            } else {
+                for (ReaderSnapshot.Node node : snapshot.nodes) {
+                    if (node.parentId.isEmpty() && isAuxiliaryCommand(node)) {
+                        result.add(node);
+                    }
                 }
             }
+            if ("targeting".equals(snapshot.category) &&
+                    snapshot.find("target:fire-direction:0") != null) {
+                // Preserve the former long-press toggle, now first accessible
+                // as an action alongside the final gesture-help item.
+                result.add(ReaderSnapshot.Node.localCommand(TARGET_TOGGLE_NODE,
+                        activity.getString(targetingOriginalControls
+                                ? R.string.a11yTargetDirections
+                                : R.string.a11yTargetOriginalControls)));
+            }
+            // Always the final action. No native node or saved binding
+            // can replace this local-only, read-only help entry.
+            result.add(ReaderSnapshot.Node.gestureGuide(
+                    activity.getString(R.string.a11yGestureGuideTitle)));
         }
         return result;
     }
@@ -2364,27 +2454,52 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void openContextActions() {
-        if (debugReport != null || closed) { return; }
+        if (closed) { return; }
+        if (gestureGuideOpen) { closeGestureGuide(); return; }
+        if (debugReport != null || editor != null || snapshot == null) {
+            // Safe fallback for debug prompts, text fields and loading
+            // screens that do not own a native contextual action list.
+            openGestureGuide();
+            return;
+        }
         if (pocketStage != 0) {
-            resetPocketPicker(true);
+            // Never discard a pending item/pocket draft just to read help.
+            openGestureGuide();
             return;
         }
         if (commandPaletteOpen) { closeContextActions(); return; }
         if (comprehensiveMenu) {
-            showHubActionChoices();
+            if (choosingGesture || choosingHubAction) {
+                // An item-picker submenu does not have another action drawer.
+                openGestureGuide();
+            } else {
+                showHubActionChoices();
+            }
+            return;
+        }
+        if (autonomousDriveTravelActive()) {
+            // The same native menu exists while ACT_AUTODRIVE owns gameplay.
+            // It already ends with the context-sensitive gesture guide.
+            if (snapshot.find("control_vehicle") != null) {
+                requestAutonomousRead("control_vehicle");
+            } else {
+                openGlobalContextActions();
+            }
             return;
         }
         if (vehicleMode && directWorldGesturesEnabled()) {
             // Drive-mode hold opens the real native vehicle interaction menu,
             // not the global action hub or an extra simulated overlay.
             if (!vehicleDriverReady()) {
-                feedback(activity.getString(R.string.a11yDriveNotReady));
+                // A passenger still needs help even though driving controls
+                // are unavailable. Never bypass the native driver gate.
+                openGlobalContextActions();
                 return;
             }
             ReaderSnapshot.Node command = snapshot.find("control_vehicle");
             if (command == null || !command.enabled
                     || !command.actions.contains("activate")) {
-                feedback(activity.getString(R.string.a11yDriveActionUnavailable));
+                openGlobalContextActions();
                 return;
             }
             requestLiveWorldCommand("control_vehicle");
@@ -2398,22 +2513,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (snapshot != null && "targeting".equals(snapshot.category)
                 && snapshot.find("target:fire-direction:0") != null) {
-            targetingOriginalControls = !targetingOriginalControls;
-            focus = targetingOriginalControls ? "target:cursor" : "target:fire-direction:0";
-            readerLayerParent = "";
-            root.cancelGesture();
-            render();
-            ReaderSnapshot.Node selected = snapshot.find(focus);
-            feedback(activity.getString(targetingOriginalControls
-                    ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections)
-                    + (selected == null ? "" : ". " + nodeText(selected, false)));
+            // Former hold-to-toggle is retained as the first local action;
+            // gesture help is added after the original actions.
+            openGlobalContextActions();
             return;
         }
         if (travelState() != 0) {
-            feedback(travelDetailSpeech(travelState()));
+            travelContextDrawerState = travelState();
+            openGlobalContextActions();
             return;
         }
-        if (editor != null || snapshot == null || directWorldGesturesEnabled()) { return; }
+        // Map holds now open the same contextual drawer as native menus;
+        // the guide is its final item and never triggers a movement step.
         // Long-press on an inventory item opens a local action list with
         // "Open pocket", leaving double-tap reserved for selecting the item.
         ReaderSnapshot.Node focused = snapshot.find(focus);
@@ -2439,6 +2550,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private void closeContextActions() {
         if (!commandPaletteOpen) { return; }
         commandPaletteOpen = false;
+        travelContextDrawerState = 0;
         readerLayerParent = commandPaletteReturnParent;
         if (snapshot != null && snapshot.find(commandPaletteReturnFocus) != null) {
             focus = commandPaletteReturnFocus;
@@ -2450,6 +2562,99 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         root.cancelGesture();
         render();
         readCurrent();
+    }
+
+    private void openGestureGuide() {
+        // Reuse the same native screen and its existing focused row. Nothing
+        // in this read-only guide is sent through the native action gateway.
+        gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
+                vehicleMode, combatMode, comprehensiveMenu,
+                travelContextDrawerState != 0 || travelState() != 0,
+                editor != null, debugReport != null, gestureBindings,
+                documentReader.isOpen(), pocketStage);
+        if (gestureGuideRows.isEmpty()) { return; }
+        gestureGuideIndex = 0;
+        gestureGuideOpen = true;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yGestureGuideTitle) + ". "
+                + gestureGuideSpeech());
+    }
+
+    private String gestureGuideSpeech() {
+        if (gestureGuideRows.isEmpty()) { return ""; }
+        int index = Math.max(0, Math.min(gestureGuideIndex, gestureGuideRows.size() - 1));
+        return gestureGuideRows.get(index) + ". " + activity.getString(
+                R.string.a11yPosition, index + 1, gestureGuideRows.size());
+    }
+
+    private void closeGestureGuide() {
+        if (!gestureGuideOpen) { return; }
+        gestureGuideOpen = false;
+        gestureGuideRows.clear();
+        root.cancelGesture();
+        render();
+        readCurrent();
+    }
+
+    private void renderGuideButton() {
+        // Native text fields and other widgets may consume the long hold.
+        // An explicit final action makes help available with TalkBack too.
+        Button guide = new Button(activity);
+        guide.setText(R.string.a11yGestureGuideTitle);
+        guide.setOnClickListener(view -> openGestureGuide());
+        rows.addView(guide);
+    }
+
+    private void renderGestureGuide() {
+        TextView heading = new TextView(activity);
+        heading.setText(R.string.a11yGestureGuideTitle);
+        heading.setTextSize(20);
+        heading.setTextColor(0xffeeeeee);
+        heading.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        rows.addView(heading);
+        Button back = new Button(activity);
+        back.setText(R.string.a11yContextCommandsClose);
+        back.setOnClickListener(view -> closeGestureGuide());
+        rows.addView(back);
+        if (gestureGuideRows.isEmpty()) { return; }
+        final int count = gestureGuideRows.size();
+        final int start = (gestureGuideIndex / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+        final int end = Math.min(start + HUB_PAGE_SIZE, count);
+        if (start > 0) {
+            Button previous = new Button(activity);
+            previous.setText(R.string.a11yPreviousPage);
+            previous.setOnClickListener(view -> {
+                gestureGuideIndex = start - 1;
+                render();
+                readCurrent();
+            });
+            rows.addView(previous);
+        }
+        for (int i = start; i < end; i++) {
+            final int index = i;
+            Button row = new Button(activity);
+            row.setText(gestureGuideRows.get(i) + ". " +
+                    activity.getString(R.string.a11yPosition, i + 1, count));
+            row.setSelected(i == gestureGuideIndex);
+            row.setOnClickListener(view -> {
+                if (!gestureGuideOpen) { return; }
+                gestureGuideIndex = index;
+                // A double tap on help NEVER triggers the listed action.
+                readCurrent();
+            });
+            rows.addView(row);
+        }
+        if (end < count) {
+            Button next = new Button(activity);
+            next.setText(R.string.a11yNextPage);
+            next.setOnClickListener(view -> {
+                gestureGuideIndex = end;
+                render();
+                readCurrent();
+            });
+            rows.addView(next);
+        }
     }
 
     private boolean enterReaderLayer(ReaderSnapshot.Node parent) {
@@ -2521,7 +2726,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             option.setSelected(i == selected);
             option.setEnabled(command.enabled);
             option.setOnClickListener(view -> {
-                if (!commandPaletteOpen || snapshot == null || snapshot.find(command.id) == null) {
+                if (!commandPaletteOpen || snapshot == null ||
+                        (!GESTURE_GUIDE_NODE.equals(command.id)
+                         && !TARGET_TOGGLE_NODE.equals(command.id)
+                         && !TRAVEL_STATUS_NODE.equals(command.id)
+                         && snapshot.find(command.id) == null)) {
                     return;
                 }
                 focus = command.id;
@@ -2567,12 +2776,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     : index == 1 ? R.string.a11yTravelResume
                     : R.string.a11yTravelCancel;
         }
-        return index == 0 ? (state == 2 ? R.string.a11yTravelResume
-                : R.string.a11yTravelPause) : R.string.a11yTravelCancel;
+        // Obstacle-blocked auto driving does not expose Ignore. Only a
+        // deliberate retry when the path has cleared, or Cancel, is safe.
+        return index == 0 ? (state == 2 || state == 4
+                ? R.string.a11yTravelResume : R.string.a11yTravelPause)
+                : R.string.a11yTravelCancel;
     }
 
     private String travelStatus(int state) {
         return activity.getString(state == 3 ? R.string.a11yTravelSafetyStopped
+                : state == 4 ? R.string.a11yTravelObstacleStopped
                 : state == 2 ? R.string.a11yTravelPaused
                 : R.string.a11yTravelMoving);
     }
@@ -2590,11 +2803,21 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (state == 0) { return; }
         int command = state == 3 ? (travelChoice == 0 ? 4
                 : travelChoice == 1 ? 2 : 3)
-                : travelChoice == 0 ? (state == 2 ? 2 : 1) : 3;
+                : travelChoice == 0 ? (state == 2 || state == 4 ? 2 : 1) : 3;
         try {
             if (CataclysmDDA.nativeTravelControl(command)) {
                 SessionDebugLog.event("TRAVEL_CONTROL",
                         "command=" + command + " from_state=" + state);
+                if (command == 3 && autonomousDriveTravelActive()) {
+                    // Cancel in the trip panel has the same meaning as
+                    // switching Drive -> Map. Native releases controls only
+                    // after the actual car has finished braking.
+                    autonomousDriveCancelRequested = true;
+                    vehicleMode = false;
+                    combatMode = false;
+                    clearPendingWorldDirection();
+                    root.cancelGesture();
+                }
                 feedback(activity.getString(R.string.a11yTravelRequestAccepted));
             } else {
                 feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
@@ -2658,11 +2881,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             });
             rows.addView(button);
         }
+        renderGuideButton();
     }
 
     private void render() {
         if (closed) { return; }
         rows.removeAllViews();
+        if (gestureGuideOpen) {
+            root.setBackgroundColor(0xff161616);
+            renderGestureGuide();
+            return;
+        }
         if (debugReport != null) {
             root.setBackgroundColor(0xff161616);
             TextView report = new TextView(activity);
@@ -2684,12 +2913,14 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 button.setOnClickListener(v -> submitDebugResponse(action));
                 rows.addView(button);
             }
+            renderGuideButton();
             return;
         }
         // Native text entry is still needed for character names and game fields.
         if (editor != null) {
             root.setBackgroundColor(0xff161616);
             rows.addView(editor.getView());
+            renderGuideButton();
         } else if (comprehensiveMenu) {
             root.setBackgroundColor(0xff161616);
             renderHub();
@@ -2737,7 +2968,55 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     @Override
+    public boolean gestureGuideActive() {
+        return gestureGuideOpen;
+    }
+
+    @Override
+    public boolean autonomousDriveTravelActive() {
+        return autonomousDriveTrip && !autonomousDriveCancelRequested
+                && !gestureGuideOpen && !commandPaletteOpen && !comprehensiveMenu
+                && editor == null && !closed && foreground && windowFocused
+                && snapshot != null && "activity".equals(snapshot.category)
+                && snapshot.find("activity:autodrive") != null;
+    }
+
+    private void requestAutonomousRead(String id) {
+        if (!autonomousDriveTravelActive() || snapshot.find(id) == null) { return; }
+        String previous = focus;
+        focus = id;
+        send("activate", "");
+        focus = previous;
+    }
+
+    private void pauseOrResumeAutonomousDrive() {
+        if (!autonomousDriveTravelActive()) { return; }
+        int state = travelState();
+        // Enemy safe mode is not bypassed by a double-tap. Blocked roads
+        // may only retry through native collision checks, never Ignore.
+        if (state == 3) {
+            feedback(travelStatus(state));
+            return;
+        }
+        int command = state == 1 ? 1 : (state == 2 || state == 4 ? 2 : 0);
+        if (command == 0) { return; }
+        try {
+            if (CataclysmDDA.nativeTravelControl(command)) {
+                feedback(activity.getString(R.string.a11yTravelRequestAccepted));
+            } else {
+                feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
+            }
+        } catch (UnsatisfiedLinkError unavailable) {
+            feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+        }
+    }
+
+    @Override
     public String gestureContext() {
+        if (gestureGuideOpen) {
+            return presentationEpoch + ":gesture-guide:"
+                    + (snapshot == null ? "" : snapshot.contextKey());
+        }
         if (debugReport != null) { return presentationEpoch + ":debug"; }
         if (travelState() != 0) {
             return presentationEpoch + ":travel:" + travelState();
@@ -2794,6 +3073,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("NAVIGATE", "delta=" + delta + " focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (delta == 0) { readCurrent(); return; }
+        if (gestureGuideOpen) {
+            gestureGuideIndex = Math.floorMod(gestureGuideIndex + delta,
+                    gestureGuideRows.size());
+            render();
+            readCurrent();
+            return;
+        }
         if (debugReport != null) {
             debugFocus = Math.floorMod(debugFocus + delta, 4);
             readCurrent();
@@ -2809,7 +3095,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (comprehensiveMenu) {
             if (choosingHubAction) {
-                hubActionChoice = Math.floorMod(hubActionChoice + delta, 2);
+                hubActionChoice = Math.floorMod(hubActionChoice + delta, 3);
             } else if (choosingGesture) {
                 gestureChoice = Math.floorMod(gestureChoice + delta,
                         ReaderGestureBindings.CUSTOM_IDS.length + 2);
@@ -2907,7 +3193,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         // Command focus changes are local: native command scopes do not
         // handle focus intents and would report unsupported for every swipe.
-        if (!isAuxiliaryCommand(filtered.get(selected))) { send("focus", ""); }
+        if (!GESTURE_GUIDE_NODE.equals(focus) && !TARGET_TOGGLE_NODE.equals(focus)
+                && !TRAVEL_STATUS_NODE.equals(focus)
+                && !isAuxiliaryCommand(filtered.get(selected))) {
+            send("focus", "");
+        }
         readCurrent();
     }
 
@@ -3163,7 +3453,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void confirm() {
-        if (closed || debugReport != null) { return; }
+        if (closed) { return; }
+        if (gestureGuideOpen) { readCurrent(); return; }
+        if (debugReport != null) { return; }
         if (editor != null) {
             editor.submitCurrent();
             return;
@@ -3304,6 +3596,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         // Two-finger combat moves pass through the same native walking
         // gate, with the normal activity, vehicle and travel safety checks.
         return directWorldGesturesEnabled() && snapshot.swipeMovementAllowed
+                && !vehicleReleasePending && !vehicleDriverReady()
                 && hasCardinalDirections(snapshot);
     }
 
@@ -3311,7 +3604,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public boolean worldMovementEnabled() {
         // One finger attacks during combat; two fingers move. Outside
         // combat, the original one-finger map movement is unchanged.
-        return !combatMode && worldStepAllowed();
+        return !combatMode && !vehicleMode && worldStepAllowed();
     }
 
     private static boolean hasCardinalDirections(ReaderSnapshot snapshot) {
@@ -3323,7 +3616,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public boolean directWorldGesturesEnabled() {
-        return debugReport == null && !comprehensiveMenu && !closed && foreground
+        return debugReport == null && !comprehensiveMenu
+                && !commandPaletteOpen && !gestureGuideOpen && !closed && foreground
                 && windowFocused && !lastSuspended && editor == null
                 && snapshot != null && snapshot.find("world:here") != null
                 && snapshot.find("reader:coordinates") != null;
@@ -3359,11 +3653,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             pendingVehicleHeadingReport = true;
-        } else if ("reader:vehicle:pause".equals(id)
-                || "reader:vehicle:forward".equals(id)
-                || "reader:vehicle:reverse".equals(id)
-                || "reader:vehicle:faster".equals(id)
-                || "reader:vehicle:slower".equals(id)) {
+        } else if ("reader:vehicle:pause".equals(id)) {
+            // Pausing is an explicitly requested state change. Ordinary
+            // throttle commands must not narrate the speed every game turn;
+            // the bent speed-read gesture remains available on demand.
             pendingVehicleSpeedReport = true;
         }
         requestLiveWorldCommand(id);
@@ -3386,24 +3679,79 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
     }
 
-    /** Two-finger swipes are reserved in driving mode, before map scan. */
+    /** In Drive, all four two-finger directions scan 30 tiles relative
+     * to the car's physical heading. One-finger bent gestures own car status. */
     @Override
     public boolean handleVehicleTwoFingerSwipe(int horizontal, int vertical) {
-        if (!vehicleMode || !directWorldGesturesEnabled()) { return false; }
-        if (vertical < 0) {
-            speakVehicleDocument("reader:vehicle:speed");
-        } else if (vertical > 0) {
-            speakVehicleDocument("reader:vehicle:detail");
-        } else if (horizontal < 0) {
-            requestVehicleAction("reader:vehicle:brake");
-        } else if (horizontal > 0) {
-            requestVehicleAction("reader:vehicle:horn");
-        }
+        if (!vehicleMode || (!directWorldGesturesEnabled()
+                && !autonomousDriveTravelActive())) { return false; }
+        scanDirection(horizontal, vertical);
         return true;
     }
 
     @Override
     public boolean handleCustomGesture(String gestureId) {
+        if (autonomousDriveTravelActive()) {
+            // Only these four straight one-finger inputs are disabled.
+            // All read-only inspection, horn, emergency brake and other
+            // non-directional gestures continue to have useful effects.
+            switch (gestureId) {
+                case "swipe_up":
+                case "swipe_down":
+                case "swipe_left":
+                case "swipe_right":
+                    return true;
+                case "swipe_down_left":
+                case "swipe_up_down":
+                case "swipe_down_up":
+                    speakVehicleDocument("reader:vehicle:speed");
+                    return true;
+                case "swipe_down_right":
+                case "swipe_up_right":
+                    speakVehicleDocument("reader:vehicle:summary");
+                    return true;
+                case "swipe_left_right":
+                case "swipe_right_left":
+                    speakVehicleDocument("reader:vehicle:heading");
+                    return true;
+                case "swipe_up_left":
+                    if (travelState() == 1) { pauseOrResumeAutonomousDrive(); }
+                    else { feedback(travelStatus(travelState())); }
+                    return true;
+                case "swipe_right_down":
+                    requestAutonomousRead("reader:vehicle:horn");
+                    return true;
+                default:
+                    // Three-finger saved gestures remain available for
+                    // browsing the hub and reading information. Do not let
+                    // saved movement or control actions steal steering from
+                    // the autonomous pathfinder.
+                    if (gestureId.startsWith("swipe_3_")) {
+                        String target = gestureBindings.targetFor(gestureId);
+                        if (target != null && (target.startsWith("hub:group:")
+                                || "hub:directions".equals(target)
+                                || "hub:favorites".equals(target)
+                                || "hub:search".equals(target)
+                                || "hub:all".equals(target)
+                                || "hub:tts".equals(target)
+                                || "hub:debug_log".equals(target))) {
+                            executeShortcutTarget(target);
+                        } else if ("action:reader:coordinates".equals(target)) {
+                            requestAutonomousRead("reader:coordinates");
+                        } else if ("action:reader:vehicle:speed".equals(target)
+                                || "action:reader:vehicle:heading".equals(target)
+                                || "action:reader:vehicle:summary".equals(target)) {
+                            speakVehicleDocument(target.substring("action:".length()));
+                        }
+                    }
+                    return true;
+            }
+        }
+        // While physical brakes are settling, neither combat actions nor
+        // saved map bindings may escape through a stale Android mode.
+        if (vehicleReleasePending && directWorldGesturesEnabled()) {
+            return true;
+        }
         if (vehicleMode && directWorldGesturesEnabled()) {
             // The native game still handles acceleration, direction and
             // steering physics. Map/Combat bindings cannot override these.
@@ -3434,6 +3782,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     return true;
                 case "swipe_right_left":
                     requestVehicleAction("reader:vehicle:heading:right");
+                    return true;
+                case "swipe_down_left":
+                    speakVehicleDocument("reader:vehicle:speed");
+                    return true;
+                case "swipe_down_right":
+                    speakVehicleDocument("reader:vehicle:summary");
+                    return true;
+                case "swipe_up_left":
+                    requestVehicleAction("reader:vehicle:brake");
+                    return true;
+                case "swipe_right_down":
+                    requestVehicleAction("reader:vehicle:horn");
                     return true;
                 default:
                     // Do not fall through to saved map or combat bindings
@@ -3592,6 +3952,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             moveInCombat(dx, dy);
             return;
         }
+        if (vehicleMode) {
+            if (!vehicleDriverReady()) {
+                feedback(activity.getString(R.string.a11yDriveNotReady));
+                return;
+            }
+            // Native maps the four relative directions to the vehicle's
+            // real heading, including diagonal orientations.
+            String relative = dy < 0 ? "front" : dy > 0 ? "back"
+                    : dx < 0 ? "left" : "right";
+            if (autonomousDriveTravelActive()) {
+                requestAutonomousRead("reader:scan:vehicle:" + relative);
+            } else {
+                requestLiveWorldCommand("reader:scan:vehicle:" + relative);
+            }
+            return;
+        }
         String id = dy < 0 ? "reader:scan:north" : dy > 0 ? "reader:scan:south"
                 : dx < 0 ? "reader:scan:west" : "reader:scan:east";
         requestLiveWorldCommand(id);
@@ -3599,6 +3975,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void twoFingerTap(int count) {
+        if (gestureGuideOpen) {
+            readCurrent();
+            return;
+        }
         if (count == 1 && combatMode && directWorldGesturesEnabled()) {
             ReaderSnapshot.Node node = snapshot.find("reader:combat:enemies");
             String report = node == null ? activity.getString(R.string.a11yCombatNoEnemies)
@@ -3643,11 +4023,36 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void threeFingerTap() {
-        requestLiveWorldCommand("reader:coordinates");
+        if (autonomousDriveTravelActive()) {
+            requestAutonomousRead("reader:coordinates");
+        } else {
+            requestLiveWorldCommand("reader:coordinates");
+        }
     }
 
     @Override
     public void toggleCombatMode() {
+        if (autonomousDriveTravelActive()) {
+            // Drive -> Map is an explicit Cancel, not the regular mode
+            // cycle. Let the game-thread actor brake and discard its route;
+            // do not send the ordinary release-before-cancel input.
+            try {
+                if (!CataclysmDDA.nativeTravelControl(3)) {
+                    feedback(activity.getString(R.string.a11yTravelRequestUnavailable));
+                    return;
+                }
+            } catch (UnsatisfiedLinkError unavailable) {
+                feedback(activity.getString(R.string.a11yReaderNativeUnavailable));
+                return;
+            }
+            autonomousDriveCancelRequested = true;
+            vehicleMode = false;
+            combatMode = false;
+            clearPendingWorldDirection();
+            root.cancelGesture();
+            feedback(activity.getString(R.string.a11yAutoDriveCancelToMap));
+            return;
+        }
         if (!directWorldGesturesEnabled()) { return; }
         if (snapshot.find("reader:vehicle:seat") != null) {
             // On board: Map -> Combat -> Drive -> Map. A seat alone is
@@ -3660,20 +4065,31 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             CataclysmDDA.nativeCancelPendingWorldSteps();
             clearPendingWorldDirection();
             root.cancelGesture();
-            if (vehicleMode && nextMode != 2 && vehicleDriverReady()) {
-                requestVehicleAction("reader:vehicle:brake");
+            if (vehicleMode && nextMode != 2) {
+                // Do not only brake on Android: native must release the
+                // driver's controls AFTER momentum has fallen to zero.
+                vehicleReleasePending = vehicleDriverReady();
+                if (vehicleReleasePending) {
+                    requestLiveWorldCommand("reader:vehicle:release");
+                }
+            } else if (nextMode == 2) {
+                // Native entry performs the normal control/ignition checks.
+                // It also cancels any pending native release if Drive is
+                // reselected before the car finishes stopping.
+                vehicleReleasePending = false;
+                requestLiveWorldCommand("reader:vehicle:begin");
             }
             combatMode = nextMode == 1;
             vehicleMode = nextMode == 2;
-            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode);
-            if (nextMode == 2 && !vehicleDriverReady()) {
-                // An occupied seat is not proof of driver control.
-                feedback(activity.getString(R.string.a11yDriveNeedsControl));
-            } else {
-                feedback(activity.getString(nextMode == 0 ? R.string.a11yMapMode
-                        : nextMode == 1 ? R.string.a11yCombatOn
-                        : R.string.a11yDrivingMode));
-            }
+            SessionDebugLog.event("VEHICLE_MODE", "selected=" + nextMode
+                    + " releasing=" + vehicleReleasePending);
+            // Never announce that Map is ready while native brakes are
+            // still settling and the avatar still controls the vehicle.
+            feedback(activity.getString(vehicleReleasePending && nextMode == 0
+                    ? R.string.a11yDriveBraking
+                    : nextMode == 0 ? R.string.a11yMapMode
+                    : nextMode == 1 ? R.string.a11yCombatOn
+                    : R.string.a11yDrivingMode));
             return;
         }
         vehicleMode = false;
@@ -3703,6 +4119,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     private void requestCombatCommand(String id) {
         if (!combatMode || !directWorldGesturesEnabled()) { return; }
+        if (vehicleReleasePending || vehicleDriverReady()) {
+            feedback(activity.getString(R.string.a11yDriveNotReady));
+            return;
+        }
         if (!snapshot.swipeMovementAllowed) {
             feedback(activity.getString(R.string.a11yCombatUnavailable));
             return;
@@ -3718,7 +4138,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void characterDetails() {
-        if (!directWorldGesturesEnabled()) { return; }
+        if (!directWorldGesturesEnabled() && !autonomousDriveTravelActive()) { return; }
         ReaderSnapshot.Node document = snapshot.find("world:character_detail");
         String spoken = document == null ? "" : document.detail;
         if (spoken.isEmpty()) {
@@ -3838,6 +4258,36 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     public void activate() {
         SessionDebugLog.event("ACTION", "activate focus=" + focus
                 + " hub=" + comprehensiveMenu);
+        if (gestureGuideOpen) {
+            // Read again without executing a potentially unsafe command.
+            readCurrent();
+            return;
+        }
+        if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus)) {
+            openGestureGuide();
+            return;
+        }
+        if (commandPaletteOpen && TRAVEL_STATUS_NODE.equals(focus)) {
+            feedback(travelDetailSpeech(travelContextDrawerState));
+            return;
+        }
+        if (commandPaletteOpen && TARGET_TOGGLE_NODE.equals(focus)) {
+            commandPaletteOpen = false;
+            targetingOriginalControls = !targetingOriginalControls;
+            focus = targetingOriginalControls ? "target:cursor" : "target:fire-direction:0";
+            readerLayerParent = "";
+            root.cancelGesture();
+            render();
+            feedback(activity.getString(targetingOriginalControls
+                    ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections));
+            return;
+        }
+        // The native destination actor, not a separate UI panel, owns
+        // fully autonomous Pause/Resume. Preserve this gesture in Drive.
+        if (autonomousDriveTravelActive()) {
+            pauseOrResumeAutonomousDrive();
+            return;
+        }
         // World double tap becomes Pause/Resume only when Drive is active.
         if (vehicleMode && directWorldGesturesEnabled()) {
             requestVehicleAction("reader:vehicle:pause");
@@ -4155,11 +4605,17 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (!combatMode) {
             result.removeIf(entry -> "reader:combat:aim-toggle".equals(entry.node));
         }
+        // Append the guide after all original actions in every hub section,
+        // including Combat, without changing any existing action index.
+        result.add(new GameActionHub.Entry(
+                activity.getString(R.string.a11yGestureGuideTitle), "",
+                GameActionHub.OPEN_GESTURE_GUIDE, 0));
         return result;
     }
 
     private String hubActionLabel(int choice) {
         if (choice == 0) { return activity.getString(R.string.a11yHubGestureOption); }
+        if (choice == 2) { return activity.getString(R.string.a11yGestureGuideTitle); }
         String target = hubActionItem == null ? null : hubActionItem.shortcutTarget();
         return activity.getString(target != null && favorites.contains(target)
                 ? R.string.a11yHubRemoveFavorite : R.string.a11yHubAddFavorite);
@@ -4207,7 +4663,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         rows.addView(titleView);
 
         List<GameActionHub.Entry> entries = binding || choosingHubAction ? null : hubEntries();
-        int count = choosingHubAction ? 2
+        int count = choosingHubAction ? 3
                 : binding ? ReaderGestureBindings.CUSTOM_IDS.length + 2 : entries.size();
         int selected = choosingHubAction ? hubActionChoice : binding ? gestureChoice : hubIndex;
         if (count == 0) {
@@ -4286,6 +4742,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 readCurrent();
             });
             rows.addView(next);
+        }
+        if (binding || choosingHubAction) {
+            // The gesture assignment/favorite picker itself is also a
+            // screen. Its existing choices stay unchanged, help goes last.
+            renderGuideButton();
         }
     }
 
@@ -4367,7 +4828,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         render();
         feedback(activity.getString(R.string.a11yHubActionMenu, entry.label) + ". "
                 + hubActionLabel(0) + ", "
-                + activity.getString(R.string.a11yPosition, 1, 2));
+                + activity.getString(R.string.a11yPosition, 1, 3));
     }
 
     private void applyHubActionChoice() {
@@ -4375,6 +4836,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         GameActionHub.Entry entry = hubActionItem;
         String target = entry.shortcutTarget();
         int choice = hubActionChoice;
+        if (choice == 2) {
+            // Preserve the original two item actions and the selected hub
+            // row while viewing the final, read-only help entry.
+            openGestureGuide();
+            return;
+        }
         choosingHubAction = false;
         hubActionItem = null;
         if (choice == 0) {
@@ -4509,6 +4976,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         hubIndex = Math.max(0, Math.min(hubIndex, entries.size() - 1));
         GameActionHub.Entry item = entries.get(hubIndex);
         switch (item.kind) {
+            case GameActionHub.OPEN_GESTURE_GUIDE:
+                openGestureGuide();
+                return;
             case GameActionHub.OPEN_SEARCH:
                 if (hubSection == GameActionHub.ROOT) {
                     hubRootIndex = GameActionHub.TITLES.length;
@@ -4571,6 +5041,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void readCurrent() {
+        if (gestureGuideOpen) {
+            feedback(gestureGuideSpeech());
+            return;
+        }
+        if (commandPaletteOpen && TRAVEL_STATUS_NODE.equals(focus)) {
+            feedback(travelDetailSpeech(travelContextDrawerState));
+            return;
+        }
+        if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                || TARGET_TOGGLE_NODE.equals(focus))) {
+            feedback(GESTURE_GUIDE_NODE.equals(focus)
+                    ? activity.getString(R.string.a11yGestureGuideTitle)
+                    : activity.getString(targetingOriginalControls
+                            ? R.string.a11yTargetDirections : R.string.a11yTargetOriginalControls));
+            return;
+        }
         if (snapshot != null && "surroundings".equals(snapshot.category)
                 && !comprehensiveMenu && !commandPaletteOpen) {
             nearbyFirstItemPending = false;
@@ -4597,7 +5083,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (choosingHubAction) {
                 feedback(hubActionLabel(hubActionChoice) + ". "
                         + activity.getString(R.string.a11yControlButton) + ", "
-                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 2));
+                        + activity.getString(R.string.a11yPosition, hubActionChoice + 1, 3));
             } else if (choosingGesture) {
                 feedback(gestureChoiceLabel(gestureChoice) + ". "
                         + activity.getString(R.string.a11yControlButton) + ", "
@@ -4728,6 +5214,13 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     @Override
     public void detail() {
+        if (gestureGuideOpen) { readCurrent(); return; }
+        if (commandPaletteOpen && (GESTURE_GUIDE_NODE.equals(focus)
+                || TARGET_TOGGLE_NODE.equals(focus)
+                || TRAVEL_STATUS_NODE.equals(focus))) {
+            readCurrent();
+            return;
+        }
         pendingLinkedDetail = "";
         pendingLinkedDetailContext = "";
         if (snapshot != null && "surroundings".equals(snapshot.category)
@@ -4892,6 +5385,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         SessionDebugLog.event("ACTION", "back focus=" + focus
                 + " hub=" + comprehensiveMenu);
         if (closed) { return; }
+        if (gestureGuideOpen) { closeGestureGuide(); return; }
         if (debugReport != null) { submitDebugResponse(1); return; }
         if (editor != null) { editor.cancelInput(); return; }
         if (pocketStage != 0) {
@@ -5093,6 +5587,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readerOffAfterAnnouncement = false;
         combatMode = false;
         vehicleMode = false;
+        vehicleReleasePending = false;
+        autonomousDriveTrip = false;
+        autonomousDriveCancelRequested = false;
+        gestureGuideOpen = false;
+        gestureGuideRows.clear();
+        travelContextDrawerState = 0;
         pendingVehicleHeadingReport = false;
         pendingVehicleSpeedReport = false;
         closed = true;

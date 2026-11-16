@@ -49,17 +49,62 @@ Thay đổi tốc độ/giọng cần được nghe lại trên điện thoại 
 - Chạm hai lần bằng một ngón: kích hoạt/xác nhận lựa chọn, khi có hàng hay nút phù hợp.
 - Chạm ba lần bằng một ngón: mở Menu tổng hợp.
 - Nhấn giữ một ngón: mở hành động theo ngữ cảnh.
-- Vuốt hai ngón lên/xuống/trái/phải: đọc từng ô trên đường thẳng 16 ô theo hướng đó. Đây là **quét riêng cho trợ năng, có thể đọc qua tường**.
+- Vuốt hai ngón lên/xuống/trái/phải: quét **tối đa 30 ô** theo hướng Bắc/Nam/Tây/Đông. Chỉ đọc ô có vật phẩm, sinh vật, phương tiện, bẫy, chướng ngại vật, trường nguy hiểm, đồ nội thất hoặc lối đi đặc biệt; bỏ qua sàn nhà, đường và đất trống. Đây là **quét riêng cho trợ năng, có thể đọc qua tường**.
 - Chạm một lần bằng hai ngón: đọc chi tiết lựa chọn hiện tại. Nếu đang ở chế độ chiến đấu, thay vào đó đọc thông tin kẻ địch phù hợp.
 - Chạm hai lần bằng hai ngón: đọc thông báo gần đây ở thế giới.
 - Chạm ba lần bằng hai ngón: mở Menu tổng hợp ở thế giới.
 - Chạm một lần bằng ba ngón: đọc tọa độ.
 - Chạm hai lần bằng ba ngón: đọc đầy đủ thông tin nhân vật hiện tại.
-- Chạm ba lần bằng ba ngón: **bật/tắt chế độ chiến đấu**. Không phải cử chỉ trống để gán lệnh khác.
+- Chạm ba lần bằng ba ngón: **đổi chế độ điều khiển**. Khi đang ngồi trên xe: Bản đồ → Chiến đấu → Lái xe → Bản đồ. Ngoài xe: Bản đồ ↔ Chiến đấu.
+
+**Khi lái xe (ngồi tại vị trí điều khiển):**
+
+- Chuyển sang **Lái xe** tự nhận quyền lái và sử dụng cơ chế khởi động động cơ gốc nếu động cơ chưa chạy. Ghế hành khách không được tự nhận quyền lái.
+- Vuốt **hai ngón lên, xuống, trái, phải**: quét **tối đa 30 ô** phía **trước, sau, trái, phải theo hướng thân xe hiện tại**, kể cả khi xe đang hướng chéo. Chỉ đọc ô đáng chú ý và khoảng cách, không đọc ô trống. Trong chế độ bản đồ, quét hai ngón vẫn giữ Bắc, Nam, Tây, Đông cố định.
+- Vuốt **một ngón** lên / xuống để chọn tiến / lùi, trái / phải để đánh lái, lên-rồi-xuống / xuống-rồi-lên để tăng / giảm tốc độ mục tiêu.
+- Vuốt **một ngón** trái-rồi-phải / phải-rồi-trái để chỉnh hướng lái trái / phải. Chương trình chỉ đọc hướng thực tế của đầu xe (tám hướng la bàn); nếu phát hiện lỗi lái, sẽ đọc nguyên nhân. Xe đứng yên có thể đã đổi góc đánh lái nhưng thân xe chưa xoay.
+- Vuốt **một ngón** xuống-rồi-trái: đọc tốc độ. Xuống-rồi-phải: đọc nhanh tình trạng động cơ, nhiên liệu và hư hỏng đáng chú ý. Lên-rồi-trái: phanh khẩn cấp. Phải-rồi-xuống: bóp còi. Lên-rồi-phải: bật/tắt động cơ.
+- Chuyển về **Bản đồ** tự phanh và chờ tốc độ bằng không trước khi buông quyền lái. Trong khi chờ, thao tác di chuyển bản đồ bị khóa để không đánh lái nhầm; động cơ không tự tắt.
 
 **Trong menu:** vuốt dùng để chuyển mục hoặc đổi nhóm tùy màn; chạm đôi mới kích hoạt. Vuốt hai ngón có thể mang nghĩa xác nhận hoặc quay lại theo ngữ cảnh. Luôn nghe tên, giá trị và trạng thái hàng trước khi chạm đôi; không suy rằng cử chỉ thế giới có nghĩa tương tự trong cửa sổ.
 
 Có 36 mã trong danh mục cử chỉ: 11 được giữ cố định và 25 cho phép gán tùy chỉnh. Các cử chỉ cố định không thể bị thay thế bởi cấu hình cũ. Hướng dẫn thử ánh xạ vuốt ngang/dọc trong 45 giây là **thiết kế lịch sử**, không còn là luồng cài đặt điều hướng hiện hành.
+
+## Khám phá địa điểm: lái xe tự động hoàn toàn
+
+Trong **Menu tổng hợp → Khám phá địa điểm**, chọn một địa điểm đã biết rồi chọn **Đi xe**. Bạn **không phải ngồi sẵn trong xe**: nếu đang đứng gần một chiếc xe có ghế lái sử dụng được (tối đa khoảng 16 ô), trò chơi tự dùng cơ chế gốc để tìm đường tới ghế lái, lên xe, tiếp quản điều khiển và khởi động động cơ. Các bước đi bộ và khởi động vẫn dùng thời gian/thao tác thật của game, không dịch chuyển tức thời, không vượt qua xe bị khóa và không bỏ qua việc xin quyền sử dụng xe. Nếu một bước không thể hoàn thành, hệ thống đọc ngắn gọn nguyên nhân và không tự chạy.
+
+Khi xe sẵn sàng, trò chơi dùng bộ tìm đường gốc `ACT_AUTODRIVE` để tự chọn tuyến, đánh lái và điều chỉnh tốc độ, đồng thời **tự mở giao diện Lái xe**. Bốn cử chỉ vuốt thẳng **một ngón lên, xuống, trái, phải** bị vô hiệu hóa trong chuyến tự lái để không làm lệch đường. Chạm đôi một ngón để **Tạm dừng / Tiếp tục**; chạm ba lần ba ngón để **chuyển về Bản đồ và hủy chuyến**. Các cử chỉ đọc thông tin, quét 30 ô bằng hai ngón, còi xe và menu trợ năng vẫn được hỗ trợ. Khi chuyến kết thúc, các vuốt điều khiển xe được trả về chế độ bình thường.
+
+Nếu địa điểm nằm trong tòa nhà, giữa hồ hoặc nơi xe không thể vào, bộ tìm đường thử tuyến đi rộng hơn và thử **khu vực xe có thể tiếp cận** trong phạm vi hai ô bản đồ lớn quanh đích (khoảng 48 ô nhỏ), đồng thời báo rõ khi điểm dừng không phải đúng tọa độ đã chọn. Đây là mở rộng khả năng tiếp cận cho người khiếm thị, **không phải xuyên tường hoặc miễn nhiễm va chạm**. Khi không tìm được đường an toàn, trò chơi phải dừng và nói rõ lý do. Thiết lập **Lái thủ công** trước đó không được làm mất chức năng tránh vật cản của hành trình tự lái hoàn toàn.
+
+Khi hành trình bắt đầu, trình đọc hiện bảng **Tạm dừng hành trình / Hủy chuyến đi**. Tạm dừng đặt tốc độ mục tiêu về 0, phanh xe bằng cơ chế vật lý gốc, **không xóa tuyến đường**; bấm **Tiếp tục hành trình** để chạy tiếp. Hủy sẽ phanh xe và kết thúc hoạt động điều hướng. Khi tới điểm đến, xe yêu cầu phanh và kết thúc hành trình, không giữ ga ở tốc độ cũ. Phanh vật lý có thể cần thời gian mới dừng hẳn.
+
+Nếu đường bị chặn hoặc phía trước không còn đủ tầm quan sát, xe ngừng tăng ga và phanh, đồng thời chuyển sang trạng thái **Xe dừng vì vật cản** mà vẫn giữ điểm đến. Tại đây chỉ có **Tiếp tục** (thử lại khi đường đã thông thoáng) và **Hủy**, **không có nút bỏ qua vật cản**. Cảnh báo kẻ địch từ chế độ an toàn có bảng riêng, và chỉ cảnh báo kẻ địch mới cho phép yêu cầu bỏ qua theo quy tắc gốc.
+
+Khi đứng yên và bộ tìm đường thực sự yêu cầu đổi hướng, xe có thể xoay thân xe tại chỗ từng bước 15–45 độ. Mỗi bước phải qua kiểm tra khoảng trống quanh thân xe; nếu không an toàn, xe phanh và chờ người chơi quyết định, không cố đâm xuyên vật cản. Hoạt động lái xe tự động hoàn toàn **im lặng khi đường đi bình thường**; chỉ đọc cảnh báo khẩn cấp và các thông tin bạn chủ động yêu cầu.
+
+## Cập nhật lái xe: yên lặng, quay tại chỗ và phanh trước vật cản
+
+**Cả lái tự động và lái thủ công đều im lặng khi di chuyển bình thường.** Trình đọc không tự thông báo lại xe bạn đang ngồi, địa hình, tốc độ hoặc khu vực vừa đi qua. Các cảnh báo khẩn cấp như chướng ngại, va chạm, lỗi động cơ hay tình trạng nguy hiểm của nhân vật vẫn được đọc. Cử chỉ chủ động yêu cầu quét 30 ô, đọc tốc độ, xem tình trạng xe hoặc hỏi hướng đầu xe vẫn đọc đúng nội dung tương ứng.
+
+**Quay thân xe khi đứng yên:** vuốt trái/phải khi xe đã dừng hẳn, kể cả lúc tạm dừng, sẽ xoay thân xe theo từng góc 45 độ ngay tại chỗ thay vì chỉ đánh lái. Vuốt uốn trái rồi phải hoặc phải rồi trái cũng có thể điều chỉnh hướng khi xe dừng. Game kiểm tra tất cả ô mà thân xe quét qua trước khi xoay, và nêu nguyên nhân nếu bị chặn bởi công trình, bụi cây, phương tiện hoặc sinh vật. Xe vẫn đang trôi, trượt bánh, ở dốc, bị kéo hoặc có lái/bánh bị hỏng không được xoay tại chỗ. Xoay không tự tăng ga hay tiếp tục chạy.
+
+**Phanh tự động:** bộ cảm biến quét từng ô liên tiếp từ đầu xe trong phạm vi dự đoán, gồm cả bụi cây có thể va chạm và vật dụng cản trở. Chế độ tự động ngừng ga và phanh khi gặp chướng ngại trên đường dự kiến. Lái thủ công vẫn giữ quyền điều khiển của người chơi và chỉ cảnh báo, không tự phanh. Hệ thống phát hiện là trợ năng bổ sung, không thay thế vật lý va chạm gốc.
+
+## Hướng dẫn cử chỉ theo từng màn hình
+
+**Nhấn giữ một ngón tay** để mở danh sách thao tác của màn hình đang dùng. Mục cuối cùng là **Hướng dẫn cử chỉ**. Trong chế độ lái, nhấn giữ vẫn mở **menu điều khiển xe gốc**; mục Hướng dẫn cử chỉ được đặt ở cuối menu xe. Trong chế độ chiến đấu, nhấn giữ vẫn mở menu chiến đấu, với mục hướng dẫn ở cuối. Túi đồ có túi chứa vẫn giữ **Mở túi chứa** và **Thao tác khác** trước mục hướng dẫn.
+
+Chạm đôi vào **Hướng dẫn cử chỉ** để xem các cử chỉ phù hợp với màn hình hoặc chế độ hiện tại. Mỗi cử chỉ là **một tiêu điểm độc lập**, được đọc ngắn gọn (ví dụ: “Vuốt hai ngón lên: Quét 30 ô phía trước xe”). Vuốt để đọc tiêu điểm tiếp theo; chạm đôi vào một dòng **chỉ đọc lại hướng dẫn, không thực hiện lệnh**. Quay lại để trở về đúng menu và vị trí đang chọn trước đó. Hướng dẫn cử chỉ bản đồ khác với lái xe, chiến đấu, túi đồ, chế tạo, ngắm bắn và các màn hình khác. Các phím tắt đã tự gán ở bản đồ được đọc từ cấu hình hiện hành khi lệnh đang khả dụng.
+
+Giao diện ngắm bắn giữ lệnh **Đổi kiểu điều khiển** trong danh sách nhấn giữ, rồi bổ sung mục hướng dẫn ở cuối. Giao diện hành trình giữ **Đọc trạng thái hành trình** trước mục hướng dẫn. Các màn hình chưa có danh sách lệnh ngữ cảnh cũng có đường truy cập đến hướng dẫn; đối với ô nhập liệu hoặc thông báo hệ thống, hướng dẫn được mở trực tiếp để tránh thay đổi thao tác nhập/xác nhận đang diễn ra.
+
+**Cử chỉ chung trên menu và hộp thoại:** chạm một lần một ngón để dừng lời đọc; chạm hai lần hai ngón để đọc lại thông báo gần đây; chạm một lần hai ngón để đọc chi tiết tiêu điểm (nếu có); **vuốt hai ngón lên để xác nhận** và **vuốt hai ngón xuống để quay lại**. Một lệnh chỉ có tác dụng nếu giao diện hiện tại thực sự cho phép. Trong bản đồ và lái xe, hai ngón vuốt lên/xuống vẫn dùng cho quét 30 ô thay vì xác nhận/quay lại.
+
+**Tạo nhân vật mới:** các bước tạo nhân vật từ 1 đến 6, màn hình tổng kết và lịch chọn ngày/giờ là các ngữ cảnh độc lập. **Vuốt hai ngón lên** ở bước 1-2 xác nhận lựa chọn; ở các bước chọn nhiều thuộc tính (3-6) xác nhận rồi chuyển bước; tại phần tổng kết là hoàn tất tạo nhân vật; trong lịch là xác nhận ngày/giờ. **Vuốt hai ngón xuống** quay lại. Hướng dẫn cho các bước này nay được công bố riêng, không dùng nội dung menu mặc định.
+
+**Túi chứa, đọc tài liệu và trường số liệu:** trình đọc tự nhận biết khi đang duyệt túi chứa, chọn vật phẩm trong túi hoặc đọc tài liệu theo đoạn. Hướng dẫn thay đổi theo thao tác thực sự trong màn hình con. Với trường số hoặc danh sách lựa chọn có khả năng chỉnh giá trị, phần hướng dẫn vuốt dọc được lấy từ khả năng chỉnh sửa của tiêu điểm hiện hành. Cử chỉ người chơi đã gán được đọc theo thiết lập đang dùng ở chế độ bản đồ hoặc khi khả dụng trong chế độ chiến đấu. Hướng dẫn không kích hoạt các thao tác này.
 
 ## Mục 4. Menu tổng hợp
 
@@ -96,7 +141,7 @@ Có hai cơ chế khác nhau, dễ nhầm:
 
 **Quan sát thông thường:** đọc thứ nhân vật nhìn thấy, đã ghi nhớ, nghe hoặc cảm nhận; ô chưa biết thì báo chưa biết. Việc quan sát tầng khác dùng dữ liệu trí nhớ, không tự phơi bày bản đồ sống.
 
-**Quét trợ năng không giới hạn:** vuốt hai ngón một hướng đọc lần lượt các ô 1 đến 16. Danh sách xung quanh quét khu vực 20 ô về mỗi phía trên cả trục ngang và dọc, tức tối đa **41 × 41 vị trí** trong bản đồ đang nạp. Các lệnh này hiện cố ý có thể đọc địa hình, vật phẩm, sinh vật và bẫy **sau tường**. Đây là hành vi mã nguồn hiện tại, không phải chứng nhận cân bằng gameplay.
+**Quét trợ năng không giới hạn tầm nhìn:** vuốt hai ngón một hướng kiểm tra lần lượt **tối đa 30 ô** trong bản đồ đang nạp nhưng **chỉ đọc những ô đáng chú ý**, kèm vị trí chính xác (ví dụ: “Ô 2, cốc nước”). Ô chỉ có sàn nhà, đường nhựa hoặc đất trống bị bỏ qua. Nếu không có thông tin đáng chú ý, hệ thống thông báo: **“Không phát hiện gì đáng chú ý trong phạm vi 30 ô.”** Danh sách xung quanh là cơ chế khác, quét khu vực 20 ô về mỗi phía trên cả trục ngang và dọc, tức tối đa **41 × 41 vị trí**. Các lệnh quét trợ năng này hiện cố ý có thể đọc vật phẩm, sinh vật và bẫy **sau tường**. Chỉ những ô thuộc bản đồ đã nạp mới được kiểm tra; đây không phải chứng nhận cân bằng gameplay.
 
 Mở **Menu tổng hợp → Quan sát và bản đồ → Danh sách xung quanh**. Danh sách đọc tên đối tượng, hướng và khoảng cách; các hàng được sắp gần trước, xa sau. Danh sách không phát mọi ô đất/cỏ/sàn trống, và có trang tiếp theo nếu quá 80 hàng.
 

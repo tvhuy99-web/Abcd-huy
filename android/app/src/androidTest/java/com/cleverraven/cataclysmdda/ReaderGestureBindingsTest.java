@@ -107,6 +107,26 @@ public final class ReaderGestureBindingsTest {
     }
 
     @Test
+    public void classifiesNewVehicleStatusBrakeAndHornSwipes() {
+        // Each bend is a single finger. Two-finger cardinal world scans
+        // continue through their separate pointer classifier.
+        String[][] gestures = {
+            { "swipe_down_left", "0", "90", "-90", "90" },
+            { "swipe_down_right", "0", "90", "90", "90" },
+            { "swipe_up_left", "0", "-90", "-90", "-90" },
+            { "swipe_right_down", "90", "0", "90", "90" }
+        };
+        for (String[] row : gestures) {
+            List<float[]> path = Arrays.asList(
+                    new float[] { 0, 0 },
+                    new float[] { Float.parseFloat(row[1]), Float.parseFloat(row[2]) },
+                    new float[] { Float.parseFloat(row[3]), Float.parseFloat(row[4]) });
+            assertEquals(row[0], ReaderGestureSurface.identifyOneFingerSwipe(path, 48));
+            assertTrue(ReaderGestureBindings.indexOf(row[0]) >= 0);
+        }
+    }
+
+    @Test
     public void classifiesAllTwoStrokeDirectionsWithoutDiagonalMovement() {
         List<float[]> leftRight = Arrays.asList(
                 new float[] { 0, 0 }, new float[] { -90, 0 }, new float[] { 0, 0 });

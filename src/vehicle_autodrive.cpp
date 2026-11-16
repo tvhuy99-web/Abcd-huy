@@ -16,6 +16,7 @@
 #include <utility>
 #include <vector>
 
+#include "a11y_runtime.h"
 #include "avatar.h"
 #include "character.h"
 #include "coordinates.h"
@@ -752,9 +753,12 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
 
     const tripoint_abs_ms pt_abs = here.get_abs( pt );
     const tripoint_abs_omt pt_omt = project_to<coords::omt>( pt_abs );
-    // only check visibility for the current OMT, we'll check other OMTs when
-    // we reach them
-    if( pt_omt == data.current_omt ) {
+    const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
+                                driven_veh.is_autodriving;
+    // The accessibility car uses the engine's actual terrain and obstacles
+    // rather than refusing every unknown-memory tile. These sensors do NOT
+    // make terrain, creatures, furniture or other vehicles passable.
+    if( pt_omt == data.current_omt && !reader_sensors ) {
         // driver must see the tile or have seen it before in order to plan a route over it
         if( !driver.sees( here, pt ) ) {
             if( !driver.is_avatar() ) {
@@ -778,7 +782,7 @@ bool vehicle::autodrive_controller::check_drivable( map &here, const tripoint_bu
     // check for creatures
     // TODO: padding around monsters
     Creature *critter = get_creature_tracker().creature_at( pt, true );
-    if( critter && driver.sees( here, *critter ) ) {
+    if( critter && ( reader_sensors || driver.sees( here, *critter ) ) ) {
         return false;
     }
 
@@ -983,6 +987,12 @@ void vehicle::autodrive_controller::precompute_data( map &here )
                                         MAX_GREEDY_SPEED_TPS,
                                         driven_veh.safe_velocity( here ) / VMIPH_PER_TPS
                                     );
+        if( a11y::enabled() && driver.is_avatar() && driven_veh.is_autodriving ) {
+            // Expanded sensory reach is an accessibility aid, not a reason
+            // to race into unseen hazards. Keep the automatic route slow.
+            data.max_greedy_speed_tps =
+                std::min( data.max_greedy_speed_tps, MAX_CAUTIOUS_SPEED_TPS );
+        }
         data.acceleration.resize( data.max_cautious_speed_tps );
         for( int speed_tps = 0; speed_tps < data.max_cautious_speed_tps; speed_tps++ ) {
             data.acceleration[speed_tps] = driven_veh.acceleration( here, true, speed_tps * VMIPH_PER_TPS );
@@ -1218,7 +1228,9 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
         // Checks further down below in this method will make sure that we instead slow down.
         changed_zlevel |= ( next.z() != veh_pos.z() );
     }
-    if( blind && !changed_zlevel ) {
+    const bool reader_sensors = a11y::enabled() && driver.is_avatar() &&
+                                driven_veh.is_autodriving;
+    if( blind && !changed_zlevel && !reader_sensors ) {
         return collision_check_result::no_visibility;
     }
 
@@ -1255,7 +1267,7 @@ collision_check_result vehicle::autodrive_controller::check_collision_zone( map 
     }
     for( const point_rel_ms &p : collision_zone ) {
         const tripoint_bub_ms next = data.adjust_z( here, veh_pos + p );
-        if( !data.is_flying && !driver.sees( here, next ) ) {
+        if( !reader_sensors && !data.is_flying && !driver.sees( here, next ) ) {
             return collision_check_result::slow_down;
         }
         if( !check_drivable( here, next ) ) {
@@ -1446,14 +1458,35 @@ std::vector<std::tuple<point_rel_ms, int, std::string>> vehicle::get_debug_overl
 
 autodrive_result vehicle::do_autodrive( map &here, Character &driver )
 {
+    const bool reader_autodrive = a11y::enabled() && driver.is_avatar();
     if( !is_autodriving ) {
         return autodrive_result::abort;
     }
     if( !player_in_control( here, driver ) || skidding ) {
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
-        stop_autodriving( false );
+        if( reader_autodrive ) {
+            cruise_velocity = 0;
+            if( velocity != 0 ) {
+                handbrake( here );
+            }
+        }
+        stop_autodriving( reader_autodrive );
         return autodrive_result::abort;
     }
+    // A route from Explore Places is a native autodrive activity. On a
+    // collision/visibility blocker the reader must KEEP the destination,
+    // brake, and present Resume/Cancel, never silently hand control to a
+    // moving vehicle with the former target speed.
+    const auto safety_stop = [&]() {
+        cruise_velocity = 0;
+        if( velocity != 0 ) {
+            handbrake( here );
+        }
+        a11y_obstacle_override = false;
+        a11y_obstacle_stop = true;
+        a11y_continuous_drive = false;
+        return autodrive_result::ok;
+    };
     const tripoint_abs_ms veh_pos = pos_abs();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
@@ -1471,7 +1504,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         }
     }
     if( omt_path.empty() ) {
-        stop_autodriving( false );
+        stop_autodriving( reader_autodrive );
         return autodrive_result::finished;
     }
     if( !active_autodrive_controller ) {
@@ -1485,8 +1518,12 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     active_autodrive_controller->check_safe_speed( here );
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step( here );
     if( !next_step ) {
-        // message handles pathfinding failure either due to obstacles or inability to see
-        driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
+        if( !a11y_obstacle_stop ) {
+            driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
+        }
+        if( reader_autodrive ) {
+            return safety_stop();
+        }
         stop_autodriving( false );
         return autodrive_result::abort;
     }
@@ -1496,7 +1533,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         return autodrive_result::abort;
     }
     if( next_step->target_speed_tps == 0 && velocity == 0 ) {
-        stop_autodriving( false );
+        stop_autodriving( reader_autodrive );
         return autodrive_result::finished;
     }
     cruise_velocity = next_step->target_speed_tps * VMIPH_PER_TPS;
@@ -1505,11 +1542,22 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     // which would cause the vehicle to move and maybe crash
     switch( active_autodrive_controller->check_collision_zone( here, next_step->steering_dir ) ) {
         case collision_check_result::no_visibility:
-            driver.add_msg_if_player( m_warning, _( "You can't see anything in front of your vehicle!" ) );
-            stop_autodriving();
+            if( !a11y_obstacle_stop ) {
+                driver.add_msg_if_player( m_warning,
+                                          _( "You can't see anything in front of your vehicle!" ) );
+            }
+            if( reader_autodrive ) {
+                return safety_stop();
+            }
+            stop_autodriving( true );
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
-            driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
+            if( !a11y_obstacle_stop ) {
+                driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
+            }
+            if( reader_autodrive ) {
+                return safety_stop();
+            }
             stop_autodriving( false );
             return autodrive_result::abort;
         case collision_check_result::slow_down:
@@ -1523,6 +1571,19 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     }
 
     int turn_delta = orientation_diff( next_step->steering_dir, to_orientation( turn_dir ) );
+    if( reader_autodrive && velocity == 0 && turn_delta != 0 && !is_rotorcraft( here ) ) {
+        // The accessibility stationary pivot rotates the ACTUAL car, not
+        // just a requested steering direction. Limit to 45 degrees/turn,
+        // check the entire swept footprint, and recompute the A* route
+        // after the physical heading has changed. No throttle in this turn.
+        cruise_velocity = 0;
+        if( !a11y_rotate_in_place( here, std::clamp( turn_delta, -3, 3 ) ) ) {
+            return safety_stop();
+        }
+        active_autodrive_controller.reset();
+        driver.set_moves( 0 );
+        return autodrive_result::ok;
+    }
     // pldrive() does not handle steering multiple times in one call correctly
     // call it multiple times, matching how a player controls the vehicle
     for( int i = 0; i < std::abs( turn_delta ); i++ ) {

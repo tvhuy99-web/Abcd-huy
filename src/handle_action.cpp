@@ -229,7 +229,8 @@ static bool a11y_continuous_vehicle_ready( avatar &driver, map &here )
     const optional_vpart_position seat = here.veh_at( driver.pos_bub( here ) );
     // Keep simulating residual momentum during a pause or handbrake.
     return seat && seat->vehicle().a11y_continuous_drive &&
-           !seat->vehicle().a11y_manual_drive &&
+           ( !seat->vehicle().a11y_manual_drive ||
+             seat->vehicle().a11y_release_controls_pending ) &&
            ( !seat->vehicle().a11y_drive_paused ||
              ( seat->vehicle().cruise_velocity == 0 && seat->vehicle().velocity != 0 ) ) &&
            !seat->vehicle().is_rotorcraft( here ) &&
@@ -494,6 +495,40 @@ input_context game::get_player_input( std::string &action )
     close_blocking_activity_reader();
     map &here = get_map();
 
+    // A destination chosen while on foot must continue even when the
+    // previous menu action used no game time. Finish native boarding and
+    // ignition before opening the next reader/world input frame.
+    if( a11y::enabled() && ui::omap::accessible_drive_to_place_pending() ) {
+        ui::omap::update_accessible_drive_to_place();
+        // Taking controls of an already-running car is instantaneous.
+        // Finish that second stage now, before waiting for user input,
+        // rather than strand the trip until another unrelated action.
+        if( ui::omap::accessible_drive_to_place_pending() &&
+            !u.activity && !u.has_destination() ) {
+            ui::omap::update_accessible_drive_to_place();
+        }
+    }
+
+    // Complete a pending mode exit only after the car has actually stopped.
+    // This runs on the native input thread before publishing the next frame.
+    if( u.in_vehicle ) {
+        const optional_vpart_position seat = here.veh_at( u.pos_bub( here ) );
+        if( seat && seat->vehicle().a11y_release_controls_pending ) {
+            vehicle &car = seat->vehicle();
+            if( car.velocity == 0 || !u.controlling_vehicle ||
+                !car.player_in_control( here, u ) ) {
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                car.a11y_continuous_drive = false;
+                car.a11y_resume_cruise_velocity = 0;
+                if( u.controlling_vehicle && car.player_in_control( here, u ) ) {
+                    u.controlling_vehicle = false;
+                    add_msg( m_info, _( "You let go of the controls." ) );
+                }
+            }
+        }
+    }
+
     const tripoint_bub_ms pos = u.pos_bub( here );
 
     input_context ctxt;
@@ -536,6 +571,10 @@ input_context game::get_player_input( std::string &action )
                           to_translation( "Select previous weapon" ) );
     ctxt.register_action( "A11Y_INTERNAL_COMBAT_RELOAD",
                           to_translation( "Reload current weapon" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_BEGIN",
+                          to_translation( "Take local vehicle controls" ) );
+    ctxt.register_action( "A11Y_INTERNAL_VEHICLE_RELEASE",
+                          to_translation( "Stop and release local vehicle controls" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_FORWARD",
                           to_translation( "Drive forward" ) );
     ctxt.register_action( "A11Y_INTERNAL_VEHICLE_REVERSE",
@@ -641,6 +680,31 @@ input_context game::get_player_input( std::string &action )
             }
             return std::nullopt;
         }
+        // Mode transitions cannot require driver access to enter, but
+        // they must validate the physical seat on the native game thread.
+        if( intent.action == "activate" &&
+            ( intent.node == "reader:vehicle:begin" ||
+              intent.node == "reader:vehicle:release" ) ) {
+            const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
+            if( !u.in_vehicle || !seat || ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            if( intent.node == "reader:vehicle:begin" ) {
+                if( !seat->part_with_feature( "CONTROLS", true ) &&
+                    !seat->part_with_feature( "CONTROL_ANIMAL", true ) ) {
+                    add_msg( m_info, _( "Sit at the driver's controls before driving." ) );
+                    return std::nullopt;
+                }
+                return "A11Y_INTERNAL_VEHICLE_BEGIN";
+            }
+            if( !u.controlling_vehicle ||
+                !seat->vehicle().player_in_control( get_map(), u ) ) {
+                a11y::android::status( "blocked", &intent );
+                return std::nullopt;
+            }
+            return "A11Y_INTERNAL_VEHICLE_RELEASE";
+        }
         // Drive-only actions are resolved against the current physical seat.
         // Never accept a cached Android focus from a passenger or remote car.
         if( intent.action == "activate" &&
@@ -698,7 +762,17 @@ input_context game::get_player_input( std::string &action )
         // Multi-finger reads are verified against the live world snapshot.
         // They never enqueue movement, consume moves, or change the turn.
         if( intent.action == "activate" && intent.node.rfind( "reader:", 0 ) == 0 ) {
-            if( intent.node == "reader:scan:north" ) {
+            if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
+                const optional_vpart_position seat = get_map().veh_at( u.pos_bub( get_map() ) );
+                if( !u.in_vehicle || !u.controlling_vehicle || !seat ||
+                    !seat->vehicle().player_in_control( get_map(), u ) ||
+                    ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                    a11y::android::status( "blocked", &intent );
+                    return std::nullopt;
+                }
+                a11y::announce_vehicle_relative_scan(
+                    intent.node.substr( std::string( "reader:scan:vehicle:" ).size() ) );
+            } else if( intent.node == "reader:scan:north" ) {
                 a11y::announce_linear_scan( point::north );
             } else if( intent.node == "reader:scan:south" ) {
                 a11y::announce_linear_scan( point::south );
@@ -3264,14 +3338,24 @@ void game::move_or_drive( action_id &act, avatar &player_character, const item_l
         } else {
             const optional_vpart_position seated = here.veh_at(
                         player_character.pos_bub( here ) );
-            if( seated && seated->vehicle().a11y_drive_paused ) {
-                // Turning the wheel remains available while stopped so a
-                // driver can choose a clear heading before resuming thrust.
-                if( direction.x() != 0 && direction.y() == 0 ) {
-                    pldrive( point_rel_ms( direction.x() * nudge, 0 ) );
-                } else {
-                    add_msg( m_info, _( "Driving is paused. Double-tap to resume." ) );
-                }
+            if( a11y::enabled() && seated && player_character.in_vehicle &&
+                player_character.controlling_vehicle &&
+                seated->vehicle().player_in_control( here, player_character ) &&
+                ( !g || g->remoteveh() != &seated->vehicle() ) &&
+                direction.x() != 0 && direction.y() == 0 &&
+                ( seated->vehicle().a11y_drive_paused ||
+                  seated->vehicle().velocity == 0 ) ) {
+                // Explicit accessibility exception: rotate the ACTUAL car
+                // while stopped, including when driving is paused. The
+                // native map updates its occupied cells and passengers.
+                // A single horizontal swipe turns 45 degrees, so the
+                // compass changes immediately without forward throttle.
+                const int steps = direction.x() * std::max( 3, nudge );
+                seated->vehicle().a11y_rotate_in_place( here, steps );
+            } else if( seated && seated->vehicle().a11y_drive_paused ) {
+                // Keep paused throttle disabled. If the vehicle is still
+                // coasting, a turn request reports why it cannot yet pivot.
+                add_msg( m_warning, _( "Driving is paused. Double-tap to resume." ) );
             } else {
                 pldrive( point_rel_ms( direction.x() * nudge, direction.y() ) );
             }
@@ -3529,11 +3613,19 @@ bool game::do_regular_action( action_id &act, avatar &player_character,
         case ACTION_KEYBINDINGS:
             break;
 
-        case ACTION_TIMEOUT:
-            if( check_safe_mode_allowed( false ) ) {
+        case ACTION_TIMEOUT: {
+            // Finishing a requested brake is safer than leaving a moving
+            // car stuck in Drive control because safe mode blocks input.
+            const optional_vpart_position seat = here.veh_at(
+                        player_character.pos_bub( here ) );
+            const bool braking_to_release = seat && player_character.controlling_vehicle &&
+                                            seat->vehicle().a11y_release_controls_pending &&
+                                            seat->vehicle().velocity != 0;
+            if( braking_to_release || check_safe_mode_allowed( false ) ) {
                 player_character.pause();
             }
             break;
+        }
 
         case ACTION_PAUSE:
             if( check_safe_mode_allowed() ) {
@@ -4415,12 +4507,15 @@ bool game::handle_action()
     combat_cycle_direction = 0;
     combat_reload_to_full = false;
 
-    // The reader's travel buttons are UI-thread requests, never movement
-    // intents. Apply them only here on the game thread, before consuming the
-    // next waypoint. Pausing retains the authoritative route/activity intact,
-    // and does not spend a turn or bypass any safe-mode checks.
-    const int travel_control = a11y::android::take_travel_control();
-    if( !player_character.has_destination() ) {
+    // Walking auto-travel owns Character::has_destination(), while fully
+    // autonomous Explore Places driving owns ACT_AUTODRIVE and its own game-
+    // thread control pump. Never consume the car's pending JNI command or
+    // clear its active state just because it has no walking waypoints.
+    const bool driving_destination_activity = player_character.activity &&
+            player_character.activity.id() == activity_id( "ACT_AUTODRIVE" );
+    const int travel_control = driving_destination_activity ? 0 :
+                               a11y::android::take_travel_control();
+    if( !player_character.has_destination() && !driving_destination_activity ) {
         a11y::android::set_travel_state( 0 );
     } else if( !a11y::android::enabled() &&
                ( a11y::android::travel_state() == 2 ||
@@ -4584,6 +4679,54 @@ bool game::handle_action()
                     act = step_actions[dir];
                 }
             }
+        } else if( a11y::enabled() &&
+                   action == "A11Y_INTERNAL_VEHICLE_BEGIN" ) {
+            const optional_vpart_position seat = here.veh_at( player_character.pos_bub( here ) );
+            if( !seat || !player_character.in_vehicle ||
+                ( g && g->remoteveh() == &seat->vehicle() ) ||
+                ( !seat->part_with_feature( "CONTROLS", true ) &&
+                  !seat->part_with_feature( "CONTROL_ANIMAL", true ) ) ) {
+                add_msg( m_warning, _( "Sit at the driver's controls before driving." ) );
+            } else {
+                vehicle &car = seat->vehicle();
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                car.a11y_resume_cruise_velocity = 0;
+                // Preserve native ownership, weapon and ignition checks.
+                if( !player_character.controlling_vehicle ||
+                    !car.player_in_control( here, player_character ) ) {
+                    control_vehicle( std::nullopt );
+                }
+            }
+            return false;
+        } else if( a11y::enabled() &&
+                   action == "A11Y_INTERNAL_VEHICLE_RELEASE" ) {
+            const optional_vpart_position seat = here.veh_at( player_character.pos_bub( here ) );
+            if( !seat || !player_character.in_vehicle ||
+                !player_character.controlling_vehicle ||
+                !seat->vehicle().player_in_control( here, player_character ) ||
+                ( g && g->remoteveh() == &seat->vehicle() ) ) {
+                add_msg( m_warning, _( "Vehicle controls unavailable." ) );
+                return false;
+            }
+            vehicle &car = seat->vehicle();
+            car.a11y_release_controls_pending = true;
+            car.a11y_drive_paused = true;
+            car.a11y_resume_cruise_velocity = 0;
+            car.cruise_velocity = 0;
+            car.a11y_obstacle_stop = false;
+            car.a11y_obstacle_override = false;
+            // Native physics owns the stopping distance. Keep the engine on.
+            car.a11y_continuous_drive = car.velocity != 0;
+            if( car.velocity == 0 ) {
+                car.a11y_release_controls_pending = false;
+                car.a11y_drive_paused = false;
+                player_character.controlling_vehicle = false;
+                add_msg( m_info, _( "You let go of the controls." ) );
+                return false;
+            }
+            add_msg( m_info, _( "Braking to a stop before leaving driving mode." ) );
+            act = ACTION_SMASH;
         } else if( a11y::enabled() &&
                    ( action == "A11Y_INTERNAL_VEHICLE_FORWARD" ||
                      action == "A11Y_INTERNAL_VEHICLE_REVERSE" ||
