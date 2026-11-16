@@ -41,6 +41,12 @@ namespace omap
 void display();
 /** Reader-only list of already discovered landmarks within 500 local tiles. */
 void display_accessible_places();
+/** Game-thread continuation for a selected Explore Places vehicle trip:
+ * use the native path to the driver's seat and timed engine ignition
+ * before assigning the actual autodrive activity. */
+void update_accessible_drive_to_place();
+bool accessible_drive_to_place_pending();
+void cancel_accessible_drive_to_place();
 /**
  * Display overmap centered at starting_pos.
  */
