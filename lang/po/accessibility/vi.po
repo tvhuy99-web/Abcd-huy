@@ -6031,3 +6031,5 @@ msgstr "Không thể điều khiển xe kéo khi chưa buộc con vật kéo và
 msgid "This vehicle has no steering system installed, you can't turn it."
 msgstr "Xe không có hệ thống lái nên không thể quay đầu."
 
+msgid "Switch to driving mode to take control."
+msgstr "Chuyển sang chế độ lái xe để điều khiển."
