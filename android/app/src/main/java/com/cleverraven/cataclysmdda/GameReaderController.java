@@ -2403,6 +2403,87 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         readCurrent();
     }
 
+    private void openGestureGuide() {
+        // Reuse the same native screen and its existing focused row. Nothing
+        // in this read-only guide is sent through the native action gateway.
+        gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
+                vehicleMode, combatMode, comprehensiveMenu, gestureBindings);
+        if (gestureGuideRows.isEmpty()) { return; }
+        gestureGuideIndex = 0;
+        gestureGuideOpen = true;
+        root.cancelGesture();
+        render();
+        feedback(activity.getString(R.string.a11yGestureGuideTitle) + ". "
+                + gestureGuideSpeech());
+    }
+
+    private String gestureGuideSpeech() {
+        if (gestureGuideRows.isEmpty()) { return ""; }
+        int index = Math.max(0, Math.min(gestureGuideIndex, gestureGuideRows.size() - 1));
+        return gestureGuideRows.get(index) + ". " + activity.getString(
+                R.string.a11yPosition, index + 1, gestureGuideRows.size());
+    }
+
+    private void closeGestureGuide() {
+        if (!gestureGuideOpen) { return; }
+        gestureGuideOpen = false;
+        gestureGuideRows.clear();
+        root.cancelGesture();
+        render();
+        readCurrent();
+    }
+
+    private void renderGestureGuide() {
+        TextView heading = new TextView(activity);
+        heading.setText(R.string.a11yGestureGuideTitle);
+        heading.setTextSize(20);
+        heading.setTextColor(0xffeeeeee);
+        heading.setImportantForAccessibility(View.IMPORTANT_FOR_ACCESSIBILITY_NO);
+        rows.addView(heading);
+        Button back = new Button(activity);
+        back.setText(R.string.a11yContextCommandsClose);
+        back.setOnClickListener(view -> closeGestureGuide());
+        rows.addView(back);
+        if (gestureGuideRows.isEmpty()) { return; }
+        final int count = gestureGuideRows.size();
+        final int start = (gestureGuideIndex / HUB_PAGE_SIZE) * HUB_PAGE_SIZE;
+        final int end = Math.min(start + HUB_PAGE_SIZE, count);
+        if (start > 0) {
+            Button previous = new Button(activity);
+            previous.setText(R.string.a11yPreviousPage);
+            previous.setOnClickListener(view -> {
+                gestureGuideIndex = start - 1;
+                render();
+                readCurrent();
+            });
+            rows.addView(previous);
+        }
+        for (int i = start; i < end; i++) {
+            final int index = i;
+            Button row = new Button(activity);
+            row.setText(gestureGuideRows.get(i) + ". " +
+                    activity.getString(R.string.a11yPosition, i + 1, count));
+            row.setSelected(i == gestureGuideIndex);
+            row.setOnClickListener(view -> {
+                if (!gestureGuideOpen) { return; }
+                gestureGuideIndex = index;
+                // A double tap on help NEVER triggers the listed action.
+                readCurrent();
+            });
+            rows.addView(row);
+        }
+        if (end < count) {
+            Button next = new Button(activity);
+            next.setText(R.string.a11yNextPage);
+            next.setOnClickListener(view -> {
+                gestureGuideIndex = end;
+                render();
+                readCurrent();
+            });
+            rows.addView(next);
+        }
+    }
+
     private boolean enterReaderLayer(ReaderSnapshot.Node parent) {
         ReaderSnapshot.Node first = snapshot == null ? null
                 : firstDirectChild(snapshot, parent.id);
