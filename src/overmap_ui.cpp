@@ -3237,6 +3237,7 @@ struct accessible_drive_request {
 };
 std::optional<accessible_drive_request> pending_accessible_drive;
 
+#if defined(__ANDROID__)
 bool accessible_driver_seat_nearby( const avatar &driver, map &here )
 {
     const tripoint_bub_ms origin = driver.pos_bub( here );
@@ -3301,6 +3302,7 @@ std::vector<tripoint_abs_omt> accessible_vehicle_route( const tripoint_abs_omt &
     }
     return {};
 }
+#endif // __ANDROID__
 } // namespace
 
 bool ui::omap::accessible_drive_to_place_pending()
