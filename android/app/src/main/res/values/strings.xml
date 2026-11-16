@@ -267,7 +267,7 @@
     <string name="a11yGuideCoordinates">Read map coordinates</string>
     <string name="a11yGuideCombatEnemy">Read visible enemies</string>
     <string name="a11yGuideDrivePause">Pause or resume driving</string>
-    <string name="a11yGuideHubItemOptions">Open current menu item's options</string>
+    <string name="a11yGuideHubItemOptions">Open current menu item options</string>
     <string name="a11yGuidePreviousCraftTab">Previous crafting category</string>
     <string name="a11yGuideNextCraftTab">Next crafting category</string>
     <string name="a11yGuideAdjustCalendar">Change the selected date or hour</string>
