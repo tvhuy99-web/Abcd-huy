@@ -1,5 +1,6 @@
 #include "a11y_semantics.h"
 #include <utility>
+#include "messages.h"
 #include "output.h"
 #include "string_formatter.h"
 
@@ -425,10 +426,19 @@ std::string snapshot_content_json( const semantic_snapshot &snapshot )
 
 std::string snapshot_json( const semantic_snapshot &snapshot )
 {
+    // Publish the game log alongside every screen. A session can resume
+    // directly inside inventory, before the world has published its
+    // world:messages node. Do not add an extra selectable menu node.
+    std::string recent;
+    const auto messages = Messages::recent_messages( 12 );
+    for( auto it = messages.rbegin(); it != messages.rend(); ++it ) {
+        recent += it->first + ": " + it->second + ". ";
+    }
     return "{\"session\":" + quote( std::to_string( snapshot.token.session ) ) +
            ",\"frame\":" + quote( std::to_string( snapshot.token.frame ) ) +
            ",\"generation\":" + quote( std::to_string( snapshot.token.generation ) ) +
-           ",\"revision\":" + quote( std::to_string( snapshot.revision ) ) + ',' +
+           ",\"revision\":" + quote( std::to_string( snapshot.revision ) ) +
+           ",\"recentMessages\":" + quote_spoken( recent ) + ',' +
            snapshot_content_json( snapshot ) + '}';
 }
 } // namespace a11y

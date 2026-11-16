@@ -109,9 +109,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Loading screens do not publish semantic snapshots. Keep their last
     // visible status available to repeat, even after the main menu clears.
     private String lastLoadingStatus = "";
-    // Only world snapshots carry the recent-messages node. Remember the
-    // last one so two-finger double-tap can re-read notifications on any
-    // screen; the game message log itself is never changed here.
+    // A native recap accompanies every screen, including a freshly loaded
+    // inventory. Cache it for two-finger double-tap without visiting the
+    // world first; the game message log itself is never changed here.
     private String lastRecentMessages = "";
     private final ReaderDocumentReader documentReader;
     private ReaderTextEditor editor;
@@ -764,13 +764,18 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                         });
                     }
                 }
-                // Only world snapshots publish world:messages. Remember the
-                // last non-empty copy so two-finger double-tap can re-read
-                // notifications from any screen. An empty node never wipes
-                // the cache; a lifecycle boundary clears it instead.
-                ReaderSnapshot.Node recentMessages = next.find("world:messages");
-                if (recentMessages != null && !recentMessages.detail.isEmpty()) {
-                    lastRecentMessages = recentMessages.detail;
+                // Every native snapshot publishes the current game message
+                // history, even when the first screen after load is inventory.
+                // An empty history must clear the cache, not replay stale
+                // notifications from a previous snapshot.
+                if (object.has("recentMessages")) {
+                    lastRecentMessages = object.optString("recentMessages");
+                } else {
+                    // Compatibility with older native snapshots.
+                    ReaderSnapshot.Node recentMessages = next.find("world:messages");
+                    if (recentMessages != null) {
+                        lastRecentMessages = recentMessages.detail;
+                    }
                 }
                 if (!"crafting".equals(next.category)) {
                     craftingNavigationPending = false;
@@ -3536,17 +3541,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if (count == 1) { detail(); return; }
         if (count == 2) {
-            // Game-wide notification recap. The current snapshot carries
-            // recent messages only in the live world, so fall back to the
-            // last world snapshot that published them. No new announcement
-            // is created; this only re-reads the game's message history,
-            // newest first, exactly as the world screen already did.
-            ReaderSnapshot.Node recent = snapshot == null
-                    ? null : snapshot.find("world:messages");
-            String spoken = recent == null ? "" : recent.detail;
-            if (spoken.isEmpty()) {
-                spoken = lastRecentMessages;
-            }
+            // Re-read the latest native message-history recap from any
+            // screen, including the first inventory screen after loading.
+            // No new game notification is created.
+            String spoken = lastRecentMessages;
             if (spoken.isEmpty()) {
                 spoken = activity.getString(R.string.a11yHubNoMessages);
             }
