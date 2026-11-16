@@ -303,6 +303,35 @@ void handle_key_blocking_activity()
                             return "pause";
                         }
                     } else if( intent.action == "activate" ) {
+                        const avatar &driver = get_avatar();
+                        if( driver.activity &&
+                            driver.activity.id() == ACT_AUTODRIVE &&
+                            intent.node.rfind( "reader:", 0 ) == 0 ) {
+                            // The activity owns the game-thread vehicle.
+                            // Allow only read-only scans/coordinates and the
+                            // original horn. No steering, throttle or engine
+                            // actions can interfere with autonomous routing.
+                            if( intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0 ) {
+                                a11y::announce_vehicle_relative_scan( intent.node.substr(
+                                            std::string( "reader:scan:vehicle:" ).size() ) );
+                                return std::string( "TIMEOUT" );
+                            }
+                            if( intent.node == "reader:coordinates" ) {
+                                a11y::announce_player_coordinates();
+                                return std::string( "TIMEOUT" );
+                            }
+                            if( intent.node == "reader:vehicle:horn" ) {
+                                map &here = get_map();
+                                const optional_vpart_position seat =
+                                    here.veh_at( driver.pos_bub( here ) );
+                                if( seat && seat->vehicle().player_in_control( here, driver ) &&
+                                    seat->vehicle().has_part( "HORN" ) ) {
+                                    seat->vehicle().honk_horn( here, true );
+                                }
+                                return std::string( "TIMEOUT" );
+                            }
+                            return std::nullopt;
+                        }
                         return intent.node;
                     }
                     return std::nullopt;
