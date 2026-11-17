@@ -99,10 +99,10 @@ class TravelDialogPickupContracts(unittest.TestCase):
         # Only walking should open the travel panel while a driver is active.
         self.assertIn("if (walkingTravelPanelActive())", src)
         self.assertIn("travelChoice = Math.floorMod(travelChoice + delta,", src)
-        self.assertIn("if (travelState() != 0) { activateTravel(); return; }", src)
+        self.assertIn("if (walkingTravelPanelActive()) { activateTravel(); return; }", src)
         self.assertIn("CataclysmDDA.nativeTravelControl(command)", src)
         self.assertIn('state == 3 ? 3 : 2;', src)
-        self.assertIn("if (travelState() != 0) {", src)
+        self.assertIn("if (walkingTravelPanelActive()) {", src)
         self.assertIn("travelStatus(activeTravel)", src)
         for language in ["values", "values-vi"]:
             source = read(ROOT / f"android/app/src/main/res/{language}/a11y_editor.xml")
