@@ -208,6 +208,23 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("no_initial_step", DRIVER)
         self.assertIn("search_budget", DRIVER)
 
+    def test_bounded_reverse_uses_native_physics_and_brakes_after_one_tile(self):
+        method = DRIVER.split("autodrive_result vehicle::do_autodrive(", 1)[1].split(
+            "void vehicle::stop_autodriving(", 1)[0]
+        self.assertIn("safe_straight_reverse_step( here )", method)
+        self.assertIn("a11y_reverse_recovery_attempts < 2", method)
+        self.assertIn("a11y_reverse_recovery_ticks++ >= 6", method)
+        self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, true )", method)
+        self.assertIn("cruise_velocity = -VMIPH_PER_TPS;", method)
+        self.assertIn("handbrake( here );", method)
+        self.assertIn('"result=moved_one_tile', method)
+        self.assertIn('safety_stop( "reverse_recovery_blocked" )', method)
+        self.assertIn("driver.set_moves( 0 );", method)
+        self.assertNotIn("here.displace_vehicle(", method)
+        self.assertNotIn("pos_abs() =", method)
+        self.assertIn("player_vehicle->a11y_reverse_recovery_active = false;", ACTOR)
+        self.assertIn("a11y_reverse_recovery_attempts = 0;", DRIVER)
+
     def test_reverse_probe_rechecks_live_footprint_without_reversing(self):
         part = DRIVER.split("std::string vehicle::autodrive_controller::reverse_clearance_details(", 1)[1]
         part = part.split("std::size_t vehicle::autodrive_controller::forward_start_options(", 1)[0]

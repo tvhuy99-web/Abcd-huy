@@ -1119,6 +1119,11 @@ class vehicle
         bool a11y_pivot_tried = false; // NOLINT(cata-serialize)
         int a11y_pivot_steps_remaining = 0; // NOLINT(cata-serialize)
         bool a11y_route_alternatives_tried = false; // NOLINT(cata-serialize)
+        // Native-physics reverse escape: at most two one-tile moves per OMT.
+        bool a11y_reverse_recovery_active = false; // NOLINT(cata-serialize)
+        int a11y_reverse_recovery_attempts = 0; // NOLINT(cata-serialize)
+        int a11y_reverse_recovery_ticks = 0; // NOLINT(cata-serialize)
+        tripoint_abs_ms a11y_reverse_recovery_start = tripoint_abs_ms::zero; // NOLINT(cata-serialize)
         // Remember which obstacle and heading produced the audible stop.
         // A second Forward swipe must not bypass an unseen NEW obstacle.
         std::string a11y_stopped_obstacle_name; // NOLINT(cata-serialize)

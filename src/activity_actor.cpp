@@ -819,6 +819,9 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
             player_vehicle->a11y_pivot_tried = false;
             player_vehicle->a11y_pivot_steps_remaining = 0;
             player_vehicle->a11y_route_alternatives_tried = false;
+            player_vehicle->a11y_reverse_recovery_active = false;
+            player_vehicle->a11y_reverse_recovery_attempts = 0;
+            player_vehicle->a11y_reverse_recovery_ticks = 0;
             a11y::android::reset_travel_control();
             a11y::android::set_travel_state( 1 );
         }
@@ -899,6 +902,7 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             }
         }
         if( state != 1 ) {
+            player_vehicle->a11y_reverse_recovery_active = false;
             // Braking is physical, not a teleport to zero speed. Keep the
             // activity and its overmap path intact while waiting for a
             // deliberate Resume/Cancel request. Do not consume route steps.

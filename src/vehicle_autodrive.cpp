@@ -18,6 +18,7 @@
 #include <vector>
 
 #include "a11y_android.h"
+#include "a11y_world.h"
 #include "a11y_runtime.h"
 #include "avatar.h"
 #include "character.h"
@@ -478,6 +479,7 @@ class vehicle::autodrive_controller
                 const std::function<bool( int )> &can_pivot_first_step );
         std::string search_details() const;
         std::string reverse_clearance_details( map &here );
+        std::optional<tripoint_abs_ms> safe_straight_reverse_step( map &here );
         std::size_t forward_start_options( map &here );
         collision_check_result check_collision_zone( map &here, orientation turn_dir );
         void reduce_speed();
@@ -1445,6 +1447,61 @@ std::string vehicle::autodrive_controller::reverse_clearance_details( map &here 
            " reverse_probe=diagnostic_only";
 }
 
+// A recovery move uses the existing native vehicle physics, not a map
+// displacement. Only a one-tile STRAIGHT reverse edge may be requested.
+// Check the whole footprint at the present and predicted locations; A*
+// candidates with a steering change are deliberately excluded here.
+std::optional<tripoint_abs_ms> vehicle::autodrive_controller::safe_straight_reverse_step(
+    map &here )
+{
+    precompute_data( here );
+    if( driven_veh.velocity > 0 || !data.land_ok || data.is_flying ||
+        data.max_cautious_speed_tps < MIN_SPEED_TPS ) {
+        return std::nullopt;
+    }
+    const tripoint_abs_ms current = driven_veh.pos_abs();
+    const node_address start = data.nav_to_map.inverse().transform(
+            current.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+    if( !data.nav_bounds.contains( start.get_point() ) ||
+        !data.valid_position( start ) ) {
+        return std::nullopt;
+    }
+    const search_diagnostics saved = last_search;
+    std::vector<std::pair<node_address, navigation_node>> candidates;
+    compute_next_nodes( start, make_start_node( start, driven_veh ), -1, candidates );
+    last_search = saved;
+    const tripoint_bub_ms origin = driven_veh.pos_bub( here );
+    const orientation world_heading = to_orientation( driven_veh.face.dir() );
+    for( const auto &candidate : candidates ) {
+        if( candidate.first.facing_dir != start.facing_dir ) {
+            continue; // Never reverse and pivot in a single unverified move.
+        }
+        const tripoint_abs_ms target_abs( data.nav_to_map.transform(
+                candidate.first.get_point(), data.current_omt.z() ) );
+        if( target_abs.xy() == current.xy() ) {
+            continue;
+        }
+        const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
+        bool safe = true;
+        for( const tripoint_bub_ms &center : { origin, target } ) {
+            for( const point_rel_ms &offset : data.profile( world_heading ).occupied_zone ) {
+                const tripoint_bub_ms tile = center + offset;
+                if( !here.inbounds( tile ) || !check_drivable( here, tile ) ) {
+                    safe = false;
+                    break;
+                }
+            }
+            if( !safe ) {
+                break;
+            }
+        }
+        if( safe ) {
+            return target_abs;
+        }
+    }
+    return std::nullopt;
+}
+
 // Used only to avoid expensive overmap detours when even a first forward
 // step is impossible at the vehicle's current position. Never changes speed.
 std::size_t vehicle::autodrive_controller::forward_start_options( map &here )
@@ -1715,6 +1772,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_obstacle_override = false;
         a11y_obstacle_stop = true;
         a11y_continuous_drive = false;
+        a11y_reverse_recovery_active = false;
         return autodrive_result::ok;
     };
     const tripoint_abs_ms veh_pos = pos_abs();
@@ -1725,6 +1783,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_pivot_tried = false;
         a11y_pivot_steps_remaining = 0;
         a11y_route_alternatives_tried = false;
+        a11y_reverse_recovery_active = false;
+        a11y_reverse_recovery_attempts = 0;
+        a11y_reverse_recovery_ticks = 0;
     }
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
     // following code finds the last overmap path tile matched to the vehicle coordinates
@@ -1753,6 +1814,42 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         return autodrive_result::abort;
     }
     active_autodrive_controller->check_safe_speed( here );
+    if( reader_autodrive && a11y_reverse_recovery_active ) {
+        // No teleport and no repeated reverse beyond the first physical map
+        // tile. Once a tile has been traversed, brake and start fresh A*.
+        if( veh_pos.xy() != a11y_reverse_recovery_start.xy() ) {
+            cruise_velocity = 0;
+            if( velocity != 0 ) {
+                handbrake( here );
+            }
+            a11y_reverse_recovery_active = false;
+            a11y_pivot_tried = false;
+            a11y_route_alternatives_tried = false;
+            active_autodrive_controller.reset();
+            a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                    "result=moved_one_tile from=" + a11y_reverse_recovery_start.to_string() +
+                    " to=" + veh_pos.to_string() );
+            driver.set_moves( 0 );
+            return autodrive_result::ok;
+        }
+        const std::optional<tripoint_abs_ms> target =
+            active_autodrive_controller->safe_straight_reverse_step( here );
+        const std::optional<a11y::vehicle_obstacle> rear =
+            a11y::vehicle_obstacle_ahead( *this, here, true );
+        if( !target || ( rear && rear->distance <= 3 ) ||
+            a11y_reverse_recovery_ticks++ >= 6 || velocity > 0 || skidding ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                    "result=aborted_no_clear_step ticks=" +
+                    std::to_string( a11y_reverse_recovery_ticks ) );
+            return safety_stop( "reverse_recovery_blocked" );
+        }
+        // Native cruise control accelerates the car backwards at 1 tile/s.
+        // The physics engine still determines whether the car actually moves.
+        turn_dir = face.dir();
+        cruise_velocity = -VMIPH_PER_TPS;
+        driver.set_moves( 0 );
+        return autodrive_result::ok;
+    }
     std::optional<navigation_step> next_step = active_autodrive_controller->compute_next_step( here );
     // Cached obstacle maps and paths can become stale when a bush, car or
     // creature blocks the route. Rebuild the full A* map and try another
@@ -1865,6 +1962,35 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         next_step = retry_nearby_route();
     }
     if( !next_step ) {
+        // Final bounded recovery after forward A*, stationary pivots and
+        // alternate overmap routes fail. Only a physically safe straight
+        // backward maneuver is allowed; a new forward plan is tried after
+        // each single-tile movement. Never use this for NPC or aircraft.
+        if( reader_autodrive && velocity == 0 && !is_rotorcraft( here ) &&
+            a11y_reverse_recovery_attempts < 2 ) {
+            const std::optional<tripoint_abs_ms> target =
+                active_autodrive_controller->safe_straight_reverse_step( here );
+            const std::optional<a11y::vehicle_obstacle> rear =
+                a11y::vehicle_obstacle_ahead( *this, here, true );
+            if( target && ( !rear || rear->distance > 3 ) ) {
+                a11y_reverse_recovery_start = veh_pos;
+                a11y_reverse_recovery_active = true;
+                a11y_reverse_recovery_ticks = 0;
+                ++a11y_reverse_recovery_attempts;
+                a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                        "result=started attempt=" +
+                        std::to_string( a11y_reverse_recovery_attempts ) +
+                        " target=" + target->to_string() );
+                turn_dir = face.dir();
+                cruise_velocity = -VMIPH_PER_TPS;
+                driver.set_moves( 0 );
+                return autodrive_result::ok;
+            }
+            a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                    "result=not_safe target=" +
+                    std::string( target ? target->to_string() : "none" ) +
+                    " rear_hazard=" + ( rear ? rear->label : "none" ) );
+        }
         if( reader_autodrive ) {
             return safety_stop( "no_local_path" );
         }
@@ -1983,5 +2109,7 @@ void vehicle::stop_autodriving( bool apply_brakes )
     autopilot_on = false;
     autodrive_local_target = tripoint_abs_ms::zero;
     collision_check_points.clear();
+    a11y_reverse_recovery_active = false;
+    a11y_reverse_recovery_ticks = 0;
     active_autodrive_controller.reset();
 }
