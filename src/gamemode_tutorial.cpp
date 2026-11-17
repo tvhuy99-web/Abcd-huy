@@ -377,8 +377,14 @@ void tutorial_game::add_message( tut_lesson lesson )
     }
     tutorials_seen[lesson] = true;
     g->invalidate_main_ui_adaptor();
-    std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id(
-                                        io::enum_to_string<tut_lesson>( lesson ) ) ).value_or( translation() ).translated();
+    std::string lesson_id = io::enum_to_string<tut_lesson>( lesson );
+#if defined(__ANDROID__)
+    // The Android screen reader uses touch gestures, not keyboard bindings.
+    // Keep the original snippets intact for desktop and other platforms.
+    lesson_id = "ANDROID_READER_" + lesson_id;
+#endif
+    std::string translated_lesson = SNIPPET.get_snippet_by_id( snippet_id( lesson_id ) )
+                                    .value_or( translation() ).translated();
     parse_tags( translated_lesson, get_player_character(), get_player_character() );
     popup( translated_lesson, PF_ON_TOP );
 }
