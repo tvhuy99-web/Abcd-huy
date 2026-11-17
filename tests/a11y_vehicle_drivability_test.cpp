@@ -60,14 +60,16 @@ TEST_CASE( "vehicle_driving_uses_shared_tile_classifier", "[vehicle][a11y][autod
         CHECK( classify( rotor ) == tile_blocker::none );
     }
 
-    SECTION( "furniture_items_and_visible_traps_are_guarded" ) {
+    SECTION( "furniture_and_visible_traps_block_but_loose_items_do_not" ) {
         REQUIRE( here.ter_set( target, ter_str_id( "t_pavement" ).id() ) );
         REQUIRE( here.furn_set( target, furn_str_id( "f_bench" ).id() ) );
         CHECK( classify( road ) == tile_blocker::furniture );
 
         REQUIRE( here.furn_set( target, furn_str_id::NULL_ID().id() ) );
         here.add_item_or_charges( target, item( itype_id( "rock" ) ) );
-        CHECK( classify( road ) == tile_blocker::loose_items );
+        // Loose rocks do not obstruct the real vehicle A* footprint.
+        // They must not trigger phantom emergency braking.
+        CHECK( classify( road ) == tile_blocker::none );
 
         here.i_clear( target );
         here.trap_set( target, trap_str_id( "tr_bubblewrap" ).id() );

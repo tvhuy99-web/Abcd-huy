@@ -53,7 +53,10 @@ class NearbyHubLiveActionsTest(unittest.TestCase):
         self.assertIn("viewer.has_active_mutation(", section)
         self.assertIn("viewer.has_effect( effect_incorporeal )", section)
         self.assertIn('"reader:nearby:available:" + id', section)
-        self.assertIn('if (node.id.startsWith("reader:nearby:available:")) { continue; }',
+        # The reader drops hidden availability markers together with its
+        # non-navigable autonomous-driving semantic marker.
+        self.assertIn('if (node.id.startsWith("reader:nearby:available:")', self.reader)
+        self.assertIn('|| "activity:autodrive".equals(node.id)) { continue; }',
                       self.reader)
 
     def test_contextual_actions_cover_native_interaction_group(self):

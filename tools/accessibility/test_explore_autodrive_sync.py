@@ -35,7 +35,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("you.in_vehicle && you.controlling_vehicle", method)
         self.assertIn("accessible_vehicle_route( destination, nearby_goal )", method)
         self.assertIn("accessible_driver_seat_nearby( you, get_map() )", method)
-        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination, destination_name };", method)
+        self.assertIn(
+            "pending_accessible_drive = accessible_drive_request{ destination, destination_name };",
+            method,
+        )
         self.assertIn("you.omt_path = std::move( route );", method)
         self.assertIn("you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );", method)
         self.assertNotIn("a11y_continuous_drive = true;", method)
@@ -54,7 +57,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("g->control_vehicle( std::nullopt );", PLACES)
         self.assertIn("car.start_engines( here, &driver, true );", PLACES)
         self.assertIn("if( driver.activity )", PLACES)
-        self.assertIn("driver.assign_activity( autodrive_activity_actor( pending_accessible_drive->destination,", PLACES)
+        self.assertIn(
+            "driver.assign_activity( autodrive_activity_actor( pending_accessible_drive->destination,",
+            PLACES,
+        )
         self.assertIn("ui::omap::update_accessible_drive_to_place();", world)
         self.assertIn("ui::omap::update_accessible_drive_to_place();", DISPATCH)
         self.assertIn("ui::omap::cancel_accessible_drive_to_place();", runtime)
