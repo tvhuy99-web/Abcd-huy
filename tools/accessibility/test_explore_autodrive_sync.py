@@ -414,6 +414,31 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("land_ok=", DRIVER)
         self.assertIn("if( !a11y_obstacle_stop )", DRIVER)
 
+    def test_flat_tire_rim_wear_keeps_reader_autodrive_active(self):
+        header = read(SRC / "vehicle.h")
+        movement = read(SRC / "vehicle_move.cpp")
+        wear = VEHICLE.split(
+            "void vehicle::check_flats_do_rim_damage_or_sounds(", 1
+        )[1].split("int vehicle::wheel_area()", 1)[0]
+        damage = VEHICLE.split("int vehicle::damage_direct(", 1)[1].split(
+            "void vehicle::leak_fuel(", 1
+        )[0]
+
+        # Ordinary damage and actual collisions still stop the autopilot.
+        self.assertIn("bool interrupt_autodrive = true", header)
+        self.assertIn("if( is_autodriving && interrupt_autodrive )", damage)
+        self.assertIn('reason=vehicle_part_damage', damage)
+        self.assertIn('reason=physical_collision', movement)
+        self.assertIn("stop_autodriving();", damage)
+        self.assertIn("stop_autodriving();", movement)
+
+        # Natural rim wear from an already flat tire is not a blocked road.
+        # One serious warning survives while the route and planner continue.
+        self.assertIn("const bool reader_trip = is_autodriving", wear)
+        self.assertIn("a11y_flat_tire_alerted = true;", wear)
+        self.assertIn("damage_direct( here, vp, one_damage_level, damage_pure, !reader_trip );",
+                      wear)
+
     def test_arrival_is_announced_and_clears_old_progress(self):
         self.assertIn('a11y::android::announce( "A11Y_AUTODRIVE_END:"', ACTOR)
         self.assertIn('reader_announce( who, "ended", "arrived"', ACTOR)
