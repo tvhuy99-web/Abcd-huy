@@ -4542,10 +4542,10 @@ void vehicle::check_flats_do_rim_damage_or_sounds( map &here )
 
             if( one_in( vp.info().durability ) ) {
                 Character *driver = get_driver( here );
+                const bool reader_trip = is_autodriving && a11y::enabled() &&
+                                         a11y::android::enabled() &&
+                                         driver == &get_player_character();
                 if( driver == &get_player_character() || get_player_character().sees( here, part_bub_pos ) ) {
-                    const bool reader_trip = is_autodriving && a11y::enabled() &&
-                                             a11y::android::enabled() &&
-                                             driver == &get_player_character();
                     if( !reader_trip ) {
                         add_msg( _( "The %s is damaged by driving with a flat!" ), vp.name() );
                     } else if( !a11y_flat_tire_alerted ) {
@@ -4562,7 +4562,10 @@ void vehicle::check_flats_do_rim_damage_or_sounds( map &here )
                 // Each damage instance should be worth exactly one 'level' of vehicle part damage.
                 const int one_damage_level = vp.info().durability *
                                              ( static_cast<double>( itype::damage_scale ) / vp.max_damage() );
-                damage_direct( here, vp, one_damage_level );
+                // Flat-tire rim wear is not a collision or a blocked route.
+                // Keep the accessible trip active; native steering, route safety
+                // and collision checks still decide whether the car can move.
+                damage_direct( here, vp, one_damage_level, damage_pure, !reader_trip );
 
                 // We may have just invalidated the wheelcache, so it is unsafe to continue iterating. (We're inside a for-loop of wheelcache)
                 // This puts an upper limit of one vp damage per call to this function (per turn), but whatever.
@@ -8314,15 +8317,18 @@ bool vehicle::explode_fuel( map &here, vehicle_part &vp, const damage_type_id &t
     return false;
 }
 
-int vehicle::damage_direct( map &here, vehicle_part &vp, int dmg, const damage_type_id &type )
+int vehicle::damage_direct( map &here, vehicle_part &vp, int dmg,
+                            const damage_type_id &type, bool interrupt_autodrive )
 {
     if( vp.removed ) {
         return dmg; // part is already dead
     }
     const vpart_info &vpi = vp.info();
     const tripoint_bub_ms vppos = bub_part_pos( here, vp );
-    // If auto-driving and damage happens, bail out
-    if( is_autodriving ) {
+    // A collision or ordinary damage still interrupts autopilot. Only the
+    // explicitly identified flat-tire rim wear may leave reader autodrive
+    // running, so cosmetic wear cannot masquerade as an immobile vehicle.
+    if( is_autodriving && interrupt_autodrive ) {
         stop_autodriving();
     }
     here.memory_cache_dec_set_dirty( vppos, true );
