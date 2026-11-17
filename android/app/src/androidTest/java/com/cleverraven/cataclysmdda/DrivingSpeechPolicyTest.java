@@ -29,6 +29,17 @@ public final class DrivingSpeechPolicyTest {
         assertFalse(GameReaderController.allowedDuringDriving("Entering area: forest.", 1));
     }
 
+    @Test public void terminalDistanceAndStaleProgressAreHandledSeparately() {
+        assertTrue(GameReaderController.allowedDuringDriving(
+                "A11Y_AUTODRIVE_END:Autodrive canceled. Forest 3 tiles away.", 1));
+        assertTrue(ReaderSpeechQueue.isAutodriveProgressText(
+                "Driving to a reachable area near the selected place."));
+        assertTrue(ReaderSpeechQueue.isAutodriveProgressText(
+                "Autodrive found a new route to an area near the selected place."));
+        assertFalse(ReaderSpeechQueue.isAutodriveProgressText(
+                "Vehicle wheel damaged. Forest 3 tiles away."));
+    }
+
     @Test public void urgentWarningsAreNeverMuted() {
         assertTrue(GameReaderController.allowedDuringDriving("Automatic braking: wall ahead.", 3));
         assertTrue(GameReaderController.allowedDuringDriving("Vehicle skidding.", 3));

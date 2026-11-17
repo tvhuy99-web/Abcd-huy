@@ -93,7 +93,11 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
         self.assertIn("moveInCombat(dx, dy);", scan)
         self.assertIn("requestLiveWorldCommand(id);", scan)
         self.assertIn("private boolean worldStepAllowed()", c)
-        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", c)
+        self.assertIn(
+            "return !combatMode && !vehicleMode && !autonomousDriveTrip",
+            c,
+        )
+        self.assertIn("&& worldStepAllowed();", c)
         self.assertIn("private void moveInCombat(int dx, int dy)", c)
         self.assertIn("boolean enabled = combatMode && worldStepAllowed();", c)
         self.assertIn("dispatchWorldMovement(dx, dy);", c)

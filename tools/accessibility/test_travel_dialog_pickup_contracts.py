@@ -37,8 +37,10 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelControl", self.bridge)
         self.assertIn("static native int nativeTravelState();", self.activity)
         self.assertIn("static native boolean nativeTravelControl(int action);", self.activity)
-        self.assertIn("const int travel_control = a11y::android::take_travel_control();",
-                      self.handler)
+        # Walking uses this mailbox; autonomous driving consumes its own
+        # requests in autodrive_activity_actor without stealing walking input.
+        self.assertIn("const int travel_control = driving_destination_activity ? 0 :", self.handler)
+        self.assertIn("a11y::android::take_travel_control();", self.handler)
         # No game/Character mutation belongs in the JNI callback.
         jni = self.bridge.split(
             "Java_com_cleverraven_cataclysmdda_CataclysmDDA_nativeTravelControl(", 1
@@ -52,7 +54,7 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("a11y::android::set_travel_state( 2 );", src)
         self.assertIn("get_player_input( ignored_action );", src)
         self.assertIn("return false;", src)
-        first = src.index("const int travel_control = a11y::android::take_travel_control();")
+        first = src.index("const int travel_control = driving_destination_activity ? 0 :")
         waypoint = src.index("act = player_character.get_next_auto_move_direction();", first)
         self.assertLess(first, waypoint)
         pause_branch = src.split(
@@ -66,8 +68,8 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn('if( query_yn( _( "%s Cancel auto move?" ), text ) )', self.game)
         self.assertIn("you.abort_automove();", self.game)
         self.assertIn("u.set_destination( u.get_auto_move_route()", self.game)
-        self.assertIn('const int travel_control = a11y::android::take_travel_control();',
-                      self.handler)
+        self.assertIn("const int travel_control = driving_destination_activity ? 0 :", self.handler)
+        self.assertIn("a11y::android::take_travel_control();", self.handler)
         self.assertIn("safe_mode == SAFE_MODE_STOP", self.handler)
         self.assertIn("a11y::android::set_travel_state( 3 );", self.handler)
         self.assertIn("travel_control == 4", self.handler)
@@ -94,12 +96,13 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("if (state != announcedTravelState)", src)
         self.assertIn('|| (!"activity".equals(snapshot.category)', src)
         self.assertIn("private void renderTravelPanel(int state)", src)
-        self.assertIn("else if (travelState() != 0)", src)
+        # Only walking should open the travel panel while a driver is active.
+        self.assertIn("if (walkingTravelPanelActive())", src)
         self.assertIn("travelChoice = Math.floorMod(travelChoice + delta,", src)
-        self.assertIn("if (travelState() != 0) { activateTravel(); return; }", src)
+        self.assertIn("if (walkingTravelPanelActive()) { activateTravel(); return; }", src)
         self.assertIn("CataclysmDDA.nativeTravelControl(command)", src)
         self.assertIn('state == 3 ? 3 : 2;', src)
-        self.assertIn("if (travelState() != 0) {", src)
+        self.assertIn("if (walkingTravelPanelActive()) {", src)
         self.assertIn("travelStatus(activeTravel)", src)
         for language in ["values", "values-vi"]:
             source = read(ROOT / f"android/app/src/main/res/{language}/a11y_editor.xml")

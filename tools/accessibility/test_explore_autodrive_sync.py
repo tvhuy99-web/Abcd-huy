@@ -35,9 +35,15 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("you.in_vehicle && you.controlling_vehicle", method)
         self.assertIn("accessible_vehicle_route( destination, nearby_goal )", method)
         self.assertIn("accessible_driver_seat_nearby( you, get_map() )", method)
-        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination };", method)
+        self.assertIn(
+            "pending_accessible_drive = accessible_drive_request{ destination, destination_name };",
+            method,
+        )
         self.assertIn("you.omt_path = std::move( route );", method)
-        self.assertIn("you.assign_activity( autodrive_activity_actor() );", method)
+        self.assertIn(
+            "you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );",
+            method,
+        )
         self.assertNotIn("a11y_continuous_drive = true;", method)
 
     def test_nearby_boarding_and_ignition_precede_autodrive(self):
@@ -48,13 +54,16 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("here.points_in_radius( origin, 16 )", PLACES)
         self.assertIn('found->part_with_feature( "BOARDABLE", true )', PLACES)
         self.assertIn('found->part_with_feature( "CONTROLS", true )', PLACES)
-        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination };", PLACES)
+        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination, destination_name };", PLACES)
         self.assertIn("void ui::omap::update_accessible_drive_to_place()", PLACES)
         self.assertIn("if( driver.has_destination() )", PLACES)
         self.assertIn("g->control_vehicle( std::nullopt );", PLACES)
         self.assertIn("car.start_engines( here, &driver, true );", PLACES)
         self.assertIn("if( driver.activity )", PLACES)
-        self.assertIn("driver.assign_activity( autodrive_activity_actor() );", PLACES)
+        self.assertIn(
+            "driver.assign_activity( autodrive_activity_actor( pending_accessible_drive->destination,",
+            PLACES,
+        )
         self.assertIn("ui::omap::update_accessible_drive_to_place();", world)
         self.assertIn("ui::omap::update_accessible_drive_to_place();", DISPATCH)
         self.assertIn("ui::omap::cancel_accessible_drive_to_place();", runtime)
@@ -266,7 +275,8 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("skipped=no_executable_first_step", DRIVER)
         self.assertIn("forward_start_options( here )", DRIVER)
         self.assertIn("candidate_controller->check_collision_zone( here,", DRIVER)
-        self.assertIn("A11Y_DRIVE_FEEDBACK:", DRIVER)
+        self.assertNotIn("A11Y_DRIVE_FEEDBACK:", DRIVER)
+        self.assertIn("AUTODRIVE_REROUTE", DRIVER)
 
     def test_autonomous_planner_avoids_obstacles_before_emergency_braking(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving )", VEHICLE)
@@ -405,9 +415,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("if( !a11y_obstacle_stop )", DRIVER)
 
     def test_arrival_is_announced_and_clears_old_progress(self):
-        self.assertIn('a11y::android::announce( "A11Y_DRIVE_FEEDBACK:"', ACTOR)
-        self.assertIn("autodriveStopped || autodriveArrived", CONTROLLER)
-        self.assertIn("You have reached your destination.", CONTROLLER)
+        self.assertIn('a11y::android::announce( "A11Y_AUTODRIVE_END:"', ACTOR)
+        self.assertIn('reader_announce( who, "ended", "arrived"', ACTOR)
+        self.assertIn("autodriveEnd || autodriveStopped || autodriveArrived", CONTROLLER)
+        self.assertIn("You have reached your destination.", ACTOR)
         self.assertIn("lastAutodriveTerminalActionEpoch", CONTROLLER)
         self.assertIn("speech.discardStaleAutodriveProgress();", CONTROLLER)
 

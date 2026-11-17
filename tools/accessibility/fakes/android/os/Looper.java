@@ -27,6 +27,13 @@ public final class Looper {
         return MAIN;
     }
 
+    // Host speech tests dispatch all callbacks on this one deterministic
+    // looper. AndroidSpeech.cancel() now checks the calling looper before
+    // cancelling immediately; expose the matching Android API in the fake.
+    public static Looper myLooper() {
+        return MAIN;
+    }
+
     public static void reset() {
         TASKS.clear();
         now = 0;

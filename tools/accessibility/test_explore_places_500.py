@@ -77,13 +77,13 @@ class ExplorePlaces500Tests(unittest.TestCase):
         self.assertIn("you.in_vehicle && you.controlling_vehicle", code)
         self.assertIn("accessible_vehicle_route( destination, nearby_goal )", code)
         self.assertIn("accessible_driver_seat_nearby( you, get_map() )", code)
-        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination };", code)
+        self.assertIn("pending_accessible_drive = accessible_drive_request{ destination, destination_name };", code)
         self.assertIn("g->control_vehicle( std::nullopt );", code)
         self.assertIn("get_overmap_path_to( destination, false )", code)
         self.assertIn("route.empty()", code)
         self.assertIn("you.omt_path = std::move( route );", code)
         self.assertIn(
-            "you.assign_activity( autodrive_activity_actor() );", code
+            "you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );", code
         )
         self.assertIn("you.assign_activity( ACT_TRAVELLING );", code)
         self.assertIn("you.set_desired_movement_mode(", code)

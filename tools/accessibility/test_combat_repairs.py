@@ -233,7 +233,11 @@ class CombatRepairContracts(unittest.TestCase):
         self.assertNotIn('reader:combat:attack:', scan)
         self.assertIn("requestLiveWorldCommand(id);", scan)
         self.assertIn("dispatchWorldMovement(dx, dy);", self.controller)
-        self.assertIn("!combatMode && !vehicleMode && worldStepAllowed()", self.controller)
+        self.assertIn(
+            "return !combatMode && !vehicleMode && !autonomousDriveTrip",
+            self.controller,
+        )
+        self.assertIn("&& worldStepAllowed();", self.controller)
         self.assertNotIn('case "swipe_3_up": moveInCombat(', combat)
         surface = load(ANDROID / "ReaderGestureSurface.java")
         self.assertIn("swipeHandled = true;", surface)

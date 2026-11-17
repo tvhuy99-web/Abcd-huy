@@ -1108,6 +1108,9 @@ class vehicle
         // A spoken warning is emitted once for a continuing braking event,
         // not on every physics update while a vehicle is still moving.
         bool a11y_brake_alerted = false; // NOLINT(cata-serialize)
+        // A flat-rim damage warning is critical but should only speak
+        // once per accessible autodrive trip, not at every physics tick.
+        bool a11y_flat_tire_alerted = false; // NOLINT(cata-serialize)
         // Session-only spoken driving state; never serialized into a save.
         bool a11y_continuous_drive = false; // NOLINT(cata-serialize)
         // Reader-only per-vehicle control choice. Manual mode advances one

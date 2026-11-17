@@ -600,7 +600,8 @@ public final class ReaderSpeechQueue implements AutoCloseable {
     // progress message, preserving genuine warnings and other game speech.
     static boolean isAutodriveProgressText(String text) {
         return text != null && (text.contains("Driving to a reachable area near the selected place.")
-                || text.contains("Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn."));
+                || text.contains("Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn.")
+                || text.contains("Autodrive found a new route to an area near the selected place."));
     }
 
     public void discardStaleAutodriveProgress() {
