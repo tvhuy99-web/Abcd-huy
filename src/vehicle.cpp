@@ -8329,6 +8329,10 @@ int vehicle::damage_direct( map &here, vehicle_part &vp, int dmg,
     // explicitly identified flat-tire rim wear may leave reader autodrive
     // running, so cosmetic wear cannot masquerade as an immobile vehicle.
     if( is_autodriving && interrupt_autodrive ) {
+        if( a11y::android::enabled() && get_driver( here ) == &get_player_character() ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_STOP",
+                    "reason=vehicle_part_damage velocity=" + std::to_string( velocity ) );
+        }
         stop_autodriving();
     }
     here.memory_cache_dec_set_dirty( vppos, true );
