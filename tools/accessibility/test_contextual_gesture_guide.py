@@ -120,9 +120,9 @@ class ContextGestureGuideContracts(unittest.TestCase):
             "private void openEditor(", 1
         )[0]
         self.assertLess(activate.index("if (gestureGuideOpen)"),
-                        activate.index("if (vehicleMode && directWorldGesturesEnabled())"))
+                        activate.index("if (!activatingHubCommand && vehicleMode && directWorldGesturesEnabled())"))
         self.assertLess(activate.index("if (commandPaletteOpen && GESTURE_GUIDE_NODE.equals(focus))"),
-                        activate.index("if (vehicleMode && directWorldGesturesEnabled())"))
+                        activate.index("if (!activatingHubCommand && vehicleMode && directWorldGesturesEnabled())"))
         guide_methods = CTRL.split("private void openGestureGuide()", 1)[1].split(
             "private boolean enterReaderLayer(", 1
         )[0]
