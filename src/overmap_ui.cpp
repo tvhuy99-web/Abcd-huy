@@ -3317,13 +3317,17 @@ std::vector<std::vector<tripoint_abs_omt>> ui::omap::accessible_vehicle_alternat
 #if defined(__ANDROID__)
     constexpr std::size_t max_results = 4;
     constexpr int max_path_checks = 12;
+    // Overmap routing can be costly on phones. The bound applies to the
+    // complete detour discovery phase, not each candidate independently.
+    const auto deadline = std::chrono::steady_clock::now() + std::chrono::milliseconds( 500 );
+    const auto time_left = [&]() { return std::chrono::steady_clock::now() < deadline; };
     int checks = 0;
     const tripoint_abs_omt here = get_avatar().pos_abs_omt();
-    for( int radius = 1; radius <= 2 && checks < max_path_checks &&
+    for( int radius = 1; radius <= 2 && checks < max_path_checks && time_left() &&
          results.size() < max_results; ++radius ) {
-        for( int dy = -radius; dy <= radius && checks < max_path_checks &&
+        for( int dy = -radius; dy <= radius && checks < max_path_checks && time_left() &&
              results.size() < max_results; ++dy ) {
-            for( int dx = -radius; dx <= radius && checks < max_path_checks &&
+            for( int dx = -radius; dx <= radius && checks < max_path_checks && time_left() &&
                  results.size() < max_results; ++dx ) {
                 if( std::max( std::abs( dx ), std::abs( dy ) ) != radius ) {
                     continue;

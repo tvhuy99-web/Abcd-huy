@@ -170,6 +170,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("accessible_vehicle_alternative_routes(", PLACES)
         self.assertIn("max_path_checks = 12", PLACES)
         self.assertIn("max_results = 4", PLACES)
+        self.assertIn("std::chrono::milliseconds( 500 )", PLACES)
         self.assertIn("route.back() == blocked_step", PLACES)
         self.assertIn("overmap_buffer.seen( candidate )", PLACES)
         self.assertIn("!a11y_route_alternatives_tried", DRIVER)
