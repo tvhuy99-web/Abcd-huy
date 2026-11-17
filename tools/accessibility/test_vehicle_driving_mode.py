@@ -420,6 +420,14 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("const bool preview_only", VEH_MOVE)
         self.assertIn("if( preview_only )", VEH_MOVE)
         self.assertNotIn("here.ter( tile ).obj().is_smashable()", VEH_MOVE)
+        self.assertIn('"AUTODRIVE_PIVOT_BLOCK"', VEH_MOVE)
+        self.assertIn('" terrain_name=" + terrain_name', VEH_MOVE)
+        self.assertIn('" tile=" + tile.to_string()', VEH_MOVE)
+        self.assertIn('" heading_deg="', VEH_MOVE)
+        for category in ("map_boundary", "other_vehicle", "creature", "visible_trap",
+                         "loose_items", "furniture", "terrain", "broken_steering_or_wheels"):
+            self.assertIn('"' + category + '"', VEH_MOVE)
+        self.assertIn("record_block( blocker_kind( obstacle ), tile, step, heading );", VEH_MOVE)
 
     def test_auto_sensor_samples_all_tiles_and_warns_about_brush(self):
         path = VEH.split("std::set<point_abs_ms> vehicle::immediate_path(", 1)[1].split(

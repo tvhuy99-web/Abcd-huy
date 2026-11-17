@@ -1,4 +1,5 @@
 #include "vehicle.h" // IWYU pragma: associated
+#include "a11y_android.h"
 #include "vehicle_autodrive_tiles.h"
 
 #include <algorithm>
@@ -739,13 +740,54 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
     if( steering_steps == 0 ) {
         return true;
     }
+    // Diagnostic-only data: do not announce failures during a preview.
+    // Capture both the first blocked footprint tile and WHY it was blocked.
+    const auto record_block = [&]( const char *kind, const tripoint_bub_ms &tile,
+                                   const int intermediate, const units::angle heading ) {
+        if( !a11y::android::enabled() ) {
+            return;
+        }
+        const std::string terrain_name = here.inbounds( tile ) ?
+                                         here.name( tile ) : "outside_loaded_map";
+        a11y::android::diagnostic_event( "AUTODRIVE_PIVOT_BLOCK",
+                "preview=" + std::string( preview_only ? "true" : "false" ) +
+                " turn_steps=" + std::to_string( steering_steps ) +
+                " intermediate=" + std::to_string( intermediate ) +
+                " heading_deg=" + std::to_string( units::to_degrees( heading ) ) +
+                " tile=" + tile.to_string() +
+                " kind=" + kind +
+                " terrain_name=" + terrain_name );
+    };
+    const auto blocker_kind = []( const vehicle_autodrive::tile_blocker kind ) {
+        switch( kind ) {
+            case vehicle_autodrive::tile_blocker::map_boundary:
+                return "map_boundary";
+            case vehicle_autodrive::tile_blocker::other_vehicle:
+                return "other_vehicle";
+            case vehicle_autodrive::tile_blocker::creature:
+                return "creature";
+            case vehicle_autodrive::tile_blocker::visible_trap:
+                return "visible_trap";
+            case vehicle_autodrive::tile_blocker::loose_items:
+                return "loose_items";
+            case vehicle_autodrive::tile_blocker::furniture:
+                return "furniture";
+            case vehicle_autodrive::tile_blocker::terrain:
+                return "terrain";
+            case vehicle_autodrive::tile_blocker::none:
+                return "none";
+        }
+        return "unknown";
+    };
     if( velocity != 0 ) {
+        record_block( "vehicle_moving", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
                 }
         return false;
     }
     if( skidding || is_on_ramp || is_rotorcraft( here ) || is_towed() || is_towing() ) {
+        record_block( "vehicle_state", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
                 }
@@ -753,6 +795,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
     }
     const float steering = steering_effectiveness( here );
     if( steering == -2.0f ) {
+        record_block( "no_animal_harness", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
                     add_msg( m_warning,
                  _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
@@ -760,6 +803,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
         return false;
     }
     if( steering < 0.0f ) {
+        record_block( "no_steering", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
                     add_msg( m_warning,
                  _( "This vehicle has no steering system installed, you can't turn it." ) );
@@ -767,6 +811,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
         return false;
     }
     if( steering == 0.0f || !valid_wheel_config( here ) ) {
+        record_block( "broken_steering_or_wheels", pos_bub( here ), 0, face.dir() );
         if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
                 }
@@ -799,6 +844,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
             offset.z() = part.precalc[0].z();
             const tripoint_bub_ms tile = origin + offset;
             if( !here.inbounds( tile ) ) {
+                record_block( "map_boundary", tile, step, heading );
                 if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: unloaded map boundary." ) );
                 }
@@ -809,13 +855,16 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
                 continue; // Already occupied by our own body.
             }
             if( occupying ) {
+                record_block( "other_vehicle", tile, step, heading );
                 if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: another vehicle is in the way." ) );
                 }
                 return false;
             }
-            if( vehicle_autodrive::classify_tile( *this, here, tile,
-                    get_avatar(), mobility ) != vehicle_autodrive::tile_blocker::none ) {
+            const vehicle_autodrive::tile_blocker obstacle =
+                vehicle_autodrive::classify_tile( *this, here, tile, get_avatar(), mobility );
+            if( obstacle != vehicle_autodrive::tile_blocker::none ) {
+                record_block( blocker_kind( obstacle ), tile, step, heading );
                 if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
                              here.name( tile ) );
@@ -824,6 +873,7 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
             }
             const Creature *creature = get_creature_tracker().creature_at( tile, true );
             if( creature && creature != &get_avatar() ) {
+                record_block( "creature", tile, step, heading );
                 if( !preview_only ) {
                     add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
                          creature->disp_name() );
