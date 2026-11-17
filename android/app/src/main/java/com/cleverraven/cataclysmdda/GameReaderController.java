@@ -2649,10 +2649,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     }
 
     private void openGestureGuide() {
-        // Reuse the same native screen and its existing focused row. Nothing
-        // in this read-only guide is sent through the native action gateway.
+        // The final help row of the combat menu must explain actual COMBAT
+        // gestures, not the left/right navigation of the menu that opened
+        // it. Keep ordinary menu help for other sections and submenus.
+        // This remains a read-only local guide; opening it never attacks.
+        boolean guideForCombat = combatMode && comprehensiveMenu
+                && hubSection == GameActionHub.COMBAT && !choosingGesture
+                && !choosingHubAction && snapshot != null
+                && "DEFAULTMODE".equals(snapshot.category);
         gestureGuideRows = ReaderGestureGuide.entries(activity, snapshot,
-                vehicleMode, combatMode, comprehensiveMenu,
+                vehicleMode, combatMode, comprehensiveMenu && !guideForCombat,
                 travelContextDrawerState != 0 || walkingTravelPanelActive(),
                 editor != null, debugReport != null, gestureBindings,
                 documentReader.isOpen(), pocketStage);

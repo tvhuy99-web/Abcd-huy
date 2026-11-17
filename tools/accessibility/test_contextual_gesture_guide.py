@@ -69,6 +69,33 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("if (choice == 2) {", CTRL)
         self.assertIn("static final int OPEN_GESTURE_GUIDE = 11;", HUB)
 
+    def test_combat_menu_guide_uses_actual_combat_gestures(self):
+        # Long-hold enters the existing combat menu. Its final help row
+        # must describe combat, not the hub's browsing gestures.
+        guide = CTRL.split("private void openGestureGuide()", 1)[1].split(
+            "private String gestureGuideSpeech()", 1
+        )[0]
+        self.assertIn("combatMode && comprehensiveMenu", guide)
+        self.assertIn("hubSection == GameActionHub.COMBAT", guide)
+        self.assertIn("!choosingGesture", guide)
+        self.assertIn("!choosingHubAction", guide)
+        self.assertIn('"DEFAULTMODE".equals(snapshot.category)', guide)
+        self.assertIn("comprehensiveMenu && !guideForCombat", guide)
+        self.assertIn("openHubSection(GameActionHub.COMBAT);", CTRL)
+        self.assertIn('case GameActionHub.OPEN_GESTURE_GUIDE:', CTRL)
+        self.assertIn("} else if (combat && \"DEFAULTMODE\".equals(category)) {", GUIDE)
+        for label in ("a11yGuideAttackNorth", "a11yGuideAttackSouth",
+                      "a11yGuideAttackWest", "a11yGuideAttackEast",
+                      "a11yGuideAttackNorthwest", "a11yGuideAttackNortheast",
+                      "a11yGuideAttackSouthwest", "a11yGuideAttackSoutheast",
+                      "a11yGuideReload", "a11yGuideWeaponDetails",
+                      "a11yGuideNextWeapon", "a11yGuidePreviousWeapon",
+                      "a11yGuideWalkNorth", "a11yGuideWalkSouth",
+                      "a11yGuideCombatEnemy", "a11yGuideCombatMenu"):
+            self.assertIn("R.string." + label, GUIDE)
+        # The existing guide already has the eight combat directions, item
+        # commands and two-finger movement. No new gesture binding is added.
+
     def test_inventory_pocket_actions_keep_existing_options(self):
         self.assertIn("R.string.a11yPocketOpen, R.string.a11yPocketOtherActions,", CTRL)
         self.assertIn("R.string.a11yGestureGuideTitle", CTRL)

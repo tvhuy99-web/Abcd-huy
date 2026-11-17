@@ -100,6 +100,8 @@ jobs:
           python3 -m unittest discover -s tools/accessibility -p 'test_explore_autodrive_sync.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_hub_vehicles.py' -v
           python3 -m unittest discover -s tools/accessibility -p 'test_world_gestures.py' -v
+          python3 -m unittest discover -s tools/accessibility -p 'test_contextual_gesture_guide.py' -v
+          python3 -m unittest discover -s tools/accessibility -p 'test_hub_combat.py' -v
       - name: Initialize release build evidence
         run: |
           mkdir -p build-evidence
@@ -113,6 +115,17 @@ jobs:
           key: a11y-arm64-release-trial-ndk28-${{ github.sha }}
           restore-keys: |
             a11y-arm64-release-trial-ndk28-
+      # Cache resolved Maven artifacts across trial APK builds. GitHub-hosted
+      # runners share public IPs and Maven Central sometimes responds 429;
+      # restoring known modules reduces repeat traffic and cold starts.
+      - uses: actions/cache@0057852bfaa89a56745cba8c7296529d2fc39830 # v4
+        with:
+          path: |
+            ~/.gradle/caches/modules-2
+            ~/.gradle/wrapper/dists
+          key: a11y-gradle-deps-${{ runner.os }}-${{ hashFiles('android/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}-${{ github.run_id }}
+          restore-keys: |
+            a11y-gradle-deps-${{ runner.os }}-${{ hashFiles('android/build.gradle', 'android/gradle/wrapper/gradle-wrapper.properties') }}-
       - name: Download Gradle with retries
         working-directory: android
         run: |
@@ -141,13 +154,35 @@ jobs:
           # them. Subsequent debug APKs with lower codes cannot downgrade it.
           version_code=$((1100000 + ${{ github.run_number }}))
           printf 'versionCode=%s\nversionName=release-test-%s\n' "$version_code" "$revision" > ../build-evidence/version.txt
-          bash ./gradlew --no-daemon --console=plain \
-            --max-workers=4 -Pj=4 -Pabi_arm_32=false -Pabi_arm_64=true \
-            -Paccessibility_release_test_signing=true \
-            "-Poverride_versionCode=$version_code" \
-            "-Paccessibility_apk_version=release-test-$revision" \
-            assembleAccessibilityRelease 2>&1 | tee ../build-evidence/gradle.log
-          ccache --show-stats --verbose > ../build-evidence/ccache.txt
+          # A 429 from Maven Central is transient and unrelated to Java/C++
+          # compile errors. Retry ONLY network throttling; never hide a real
+          # test or compiler failure. Gradle's dependency cache survives each
+          # attempt, and each retry has its own diagnostic log.
+          for attempt in 1 2 3 4; do
+            if bash ./gradlew --no-daemon --console=plain \
+                -Dorg.gradle.parallel=false \
+                -Dorg.gradle.internal.http.connectionTimeout=120000 \
+                -Dorg.gradle.internal.http.socketTimeout=120000 \
+                --max-workers=4 -Pj=4 -Pabi_arm_32=false -Pabi_arm_64=true \
+                -Paccessibility_release_test_signing=true \
+                "-Poverride_versionCode=$version_code" \
+                "-Paccessibility_apk_version=release-test-$revision" \
+                assembleAccessibilityRelease 2>&1 | tee "../build-evidence/gradle-attempt-${attempt}.log"; then
+              cp "../build-evidence/gradle-attempt-${attempt}.log" ../build-evidence/gradle.log
+              ccache --show-stats --verbose > ../build-evidence/ccache.txt
+              break
+            fi
+            cp "../build-evidence/gradle-attempt-${attempt}.log" ../build-evidence/gradle.log
+            if [ "$attempt" -eq 4 ] || ! grep -Eiq \
+                'status code (429|502|503|504)|Too Many Requests|Read timed out|Connection timed out|Connection reset' \
+                "../build-evidence/gradle-attempt-${attempt}.log"; then
+              echo "Gradle failed for a non-transient reason, or retry limit reached." >&2
+              exit 1
+            fi
+            delay=$((attempt * attempt * 30))
+            echo "Maven network throttled (attempt $attempt). Retry after ${delay}s." >&2
+            sleep "$delay"
+          done
       - name: Validate installable signed ARM64 APK
         run: |
           python3 - <<'PY'
