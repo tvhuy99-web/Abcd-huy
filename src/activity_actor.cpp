@@ -809,11 +809,13 @@ static void a11y_brake_autodrive( vehicle &car, map &here )
 static int reader_distance_to_place( const tripoint_abs_ms &pos,
                                      const tripoint_abs_omt &destination )
 {
+    // One overmap tile contains 24 local map tiles, matching the places UI.
+    constexpr int tiles_per_omt = 24;
     const tripoint_abs_ms top_left = project_to<coords::ms>( destination );
     const int dx = std::max( 0, std::max( top_left.x() - pos.x(),
-                             pos.x() - ( top_left.x() + OMT_SIZE - 1 ) ) );
+                             pos.x() - ( top_left.x() + tiles_per_omt - 1 ) ) );
     const int dy = std::max( 0, std::max( top_left.y() - pos.y(),
-                             pos.y() - ( top_left.y() + OMT_SIZE - 1 ) ) );
+                             pos.y() - ( top_left.y() + tiles_per_omt - 1 ) ) );
     return std::max( dx, dy );
 }
 
