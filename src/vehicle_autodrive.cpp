@@ -1889,6 +1889,38 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y_pivot_steps_remaining = 0;
         }
     }
+    // Shared last-resort escape for no_local_path, blocked pivot, or a
+    // newly obstructed close-forward footprint. Reversal is always physical,
+    // straight, bounded and checked on the live map and rear sensor.
+    const auto try_reverse_escape = [&]() {
+        if( !reader_autodrive || velocity != 0 || is_rotorcraft( here ) ||
+            a11y_reverse_recovery_attempts >= 2 ) {
+            return false;
+        }
+        const std::optional<tripoint_abs_ms> target =
+            active_autodrive_controller->safe_straight_reverse_step( here );
+        const std::optional<a11y::vehicle_obstacle> rear =
+            a11y::vehicle_obstacle_ahead( *this, here, true );
+        if( !target || ( rear && rear->distance <= 3 ) ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                    "result=not_safe target=" +
+                    std::string( target ? target->to_string() : "none" ) +
+                    " rear_hazard=" + ( rear ? rear->label : "none" ) );
+            return false;
+        }
+        a11y_reverse_recovery_start = veh_pos;
+        a11y_reverse_recovery_active = true;
+        a11y_reverse_recovery_ticks = 0;
+        ++a11y_reverse_recovery_attempts;
+        a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
+                "result=started attempt=" +
+                std::to_string( a11y_reverse_recovery_attempts ) +
+                " target=" + target->to_string() );
+        turn_dir = face.dir();
+        cruise_velocity = -VMIPH_PER_TPS;
+        driver.set_moves( 0 );
+        return true;
+    };
     // Reuse bounded alternate-route discovery both for no local A* path
     // and for a turn whose actual swept footprint cannot be rotated.
     const auto retry_nearby_route = [&]() -> std::optional<navigation_step> {
@@ -1897,8 +1929,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         }
         // First establish a locally executable action. A long strategic
         // reroute cannot free a car with no possible forward move or turn.
-        // Reverse candidates are diagnostics only, not an action available
-        // to the current forward-only autonomous controller.
+        // If no forward-first action exists, the bounded native reverse
+        // escape is considered after the strategic route attempts.
         if( velocity == 0 && !is_rotorcraft( here ) ) {
             const std::size_t forward_options =
                 active_autodrive_controller->forward_start_options( here );
@@ -1962,34 +1994,10 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         next_step = retry_nearby_route();
     }
     if( !next_step ) {
-        // Final bounded recovery after forward A*, stationary pivots and
-        // alternate overmap routes fail. Only a physically safe straight
-        // backward maneuver is allowed; a new forward plan is tried after
-        // each single-tile movement. Never use this for NPC or aircraft.
-        if( reader_autodrive && velocity == 0 && !is_rotorcraft( here ) &&
-            a11y_reverse_recovery_attempts < 2 ) {
-            const std::optional<tripoint_abs_ms> target =
-                active_autodrive_controller->safe_straight_reverse_step( here );
-            const std::optional<a11y::vehicle_obstacle> rear =
-                a11y::vehicle_obstacle_ahead( *this, here, true );
-            if( target && ( !rear || rear->distance > 3 ) ) {
-                a11y_reverse_recovery_start = veh_pos;
-                a11y_reverse_recovery_active = true;
-                a11y_reverse_recovery_ticks = 0;
-                ++a11y_reverse_recovery_attempts;
-                a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                        "result=started attempt=" +
-                        std::to_string( a11y_reverse_recovery_attempts ) +
-                        " target=" + target->to_string() );
-                turn_dir = face.dir();
-                cruise_velocity = -VMIPH_PER_TPS;
-                driver.set_moves( 0 );
-                return autodrive_result::ok;
-            }
-            a11y::android::diagnostic_event( "AUTODRIVE_REVERSE",
-                    "result=not_safe target=" +
-                    std::string( target ? target->to_string() : "none" ) +
-                    " rear_hazard=" + ( rear ? rear->label : "none" ) );
+        // No forward A*, physical pivot or strategic detour succeeded.
+        // Try the native-physics reverse escape before pausing.
+        if( try_reverse_escape() ) {
+            return autodrive_result::ok;
         }
         if( reader_autodrive ) {
             return safety_stop( "no_local_path" );
@@ -2043,6 +2051,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             return autodrive_result::abort;
         case collision_check_result::close_obstacle:
             if( reader_autodrive ) {
+                if( try_reverse_escape() ) {
+                    return autodrive_result::ok;
+                }
                 return safety_stop( "close_obstacle" );
             }
             driver.add_msg_if_player( m_warning, _( "You're about to crash into something!" ) );
@@ -2071,6 +2082,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             if( retry_nearby_route() ) {
                 cruise_velocity = 0;
                 driver.set_moves( 0 );
+                return autodrive_result::ok;
+            }
+            if( try_reverse_escape() ) {
                 return autodrive_result::ok;
             }
             return safety_stop( "pivot_blocked" );
