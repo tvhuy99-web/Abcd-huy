@@ -1,4 +1,5 @@
 #include "vehicle.h" // IWYU pragma: associated
+#include "vehicle_autodrive_tiles.h"
 
 #include <algorithm>
 #include <array>
@@ -729,7 +730,8 @@ void vehicle::turn( units::angle deg )
     turn_dir = round_to_multiple_of( turn_dir, vehicles::steer_increment );
 }
 
-bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps )
+bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
+                                   const bool preview_only )
 {
     // A stationary accessibility pivot is an explicit alternative to native
     // steering. Never pretend a stopped vehicle has rotated just because the
@@ -738,31 +740,46 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps )
         return true;
     }
     if( velocity != 0 ) {
-        add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
+        if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place while moving. Brake to a stop first." ) );
+                }
         return false;
     }
     if( skidding || is_on_ramp || is_rotorcraft( here ) || is_towed() || is_towing() ) {
-        add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
+        if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place in the current vehicle state." ) );
+                }
         return false;
     }
     const float steering = steering_effectiveness( here );
     if( steering == -2.0f ) {
-        add_msg( m_warning,
+        if( !preview_only ) {
+                    add_msg( m_warning,
                  _( "You cannot steer an animal-drawn vehicle with no animal harnessed." ) );
+                }
         return false;
     }
     if( steering < 0.0f ) {
-        add_msg( m_warning,
+        if( !preview_only ) {
+                    add_msg( m_warning,
                  _( "This vehicle has no steering system installed, you can't turn it." ) );
+                }
         return false;
     }
     if( steering == 0.0f || !valid_wheel_config( here ) ) {
-        add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
+        if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place: steering or wheels are broken." ) );
+                }
         return false;
     }
 
     const point_rel_ms pivot = pivot_point( here );
     const tripoint_bub_ms origin = pos_bub( here );
+    // Use the same obstacle classification as native A* to avoid rejecting
+    // ordinary bashable pavement while retaining footprint safety checks.
+    const vehicle_autodrive::mobility_profile mobility = {
+        valid_wheel_config( here ), can_float( here ), has_sufficient_rotorlift( here ), true
+    };
     const int sign = steering_steps > 0 ? 1 : -1;
     const int count = std::min( std::abs( steering_steps ), 12 );
     // Check every intermediate 15-degree footprint, not just the final
@@ -782,7 +799,9 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps )
             offset.z() = part.precalc[0].z();
             const tripoint_bub_ms tile = origin + offset;
             if( !here.inbounds( tile ) ) {
-                add_msg( m_warning, _( "Cannot turn in place: unloaded map boundary." ) );
+                if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place: unloaded map boundary." ) );
+                }
                 return false;
             }
             const optional_vpart_position occupying = here.veh_at( tile );
@@ -790,26 +809,35 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps )
                 continue; // Already occupied by our own body.
             }
             if( occupying ) {
-                add_msg( m_warning, _( "Cannot turn in place: another vehicle is in the way." ) );
+                if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place: another vehicle is in the way." ) );
+                }
                 return false;
             }
-            if( here.impassable_ter_furn( tile ) ||
-                ( here.has_furn( tile ) && here.furn( tile ).obj().movecost != 0 ) ||
-                ( here.ter( tile ).obj().is_smashable() &&
-                  !here.ter( tile ).obj().has_flag( ter_furn_flag::TFLAG_NOCOLLIDE ) ) ) {
-                add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
-                         here.name( tile ) );
+            if( vehicle_autodrive::classify_tile( *this, here, tile,
+                    get_avatar(), mobility ) != vehicle_autodrive::tile_blocker::none ) {
+                if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
+                             here.name( tile ) );
+                }
                 return false;
             }
             const Creature *creature = get_creature_tracker().creature_at( tile, true );
             if( creature && creature != &get_avatar() ) {
-                add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
+                if( !preview_only ) {
+                    add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
                          creature->disp_name() );
+                }
                 return false;
             }
         }
     }
 
+    // Preview is a pure clearance check for route selection: never move
+    // the vehicle, consume time, change its heading, or announce anything.
+    if( preview_only ) {
+        return true;
+    }
     const units::angle target = normalize(
         face.dir() + vehicles::steer_increment * sign * count );
     precalc_mounts( 1, target, pivot );

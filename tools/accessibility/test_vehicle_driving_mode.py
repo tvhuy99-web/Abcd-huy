@@ -416,6 +416,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn("is_towed() || is_towing()", VEH_MOVE)
         self.assertIn("steering_effectiveness( here )", VEH_MOVE)
         self.assertIn("Cannot turn in place: %s is in the way.", VEH_MOVE)
+        self.assertIn("vehicle_autodrive::classify_tile( *this, here, tile,", VEH_MOVE)
+        self.assertIn("const bool preview_only", VEH_MOVE)
+        self.assertIn("if( preview_only )", VEH_MOVE)
+        self.assertNotIn("here.ter( tile ).obj().is_smashable()", VEH_MOVE)
 
     def test_auto_sensor_samples_all_tiles_and_warns_about_brush(self):
         path = VEH.split("std::set<point_abs_ms> vehicle::immediate_path(", 1)[1].split(
