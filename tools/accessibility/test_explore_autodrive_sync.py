@@ -161,6 +161,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("a11y_rotate_in_place( here, step )", DRIVER)
         self.assertIn("a11y_pivot_steps_remaining -= step;", DRIVER)
         self.assertIn("a11y_recovery_segment_omt.reset();", ACTOR)
+        self.assertIn("reverse_start_options=", DRIVER)
+        self.assertIn("search_class=", DRIVER)
+        self.assertIn("no_initial_step", DRIVER)
+        self.assertIn("search_budget", DRIVER)
 
     def test_bounded_strategic_alternate_only_after_local_failure(self):
         self.assertIn("accessible_vehicle_alternative_routes(", PLACES)

@@ -477,6 +477,7 @@ class vehicle::autodrive_controller
         std::optional<navigation_step> compute_next_step( map &here );
         std::optional<int> find_accessible_pivot( map &here );
         std::string search_details() const;
+        std::size_t reverse_start_options( map &here );
         collision_check_result check_collision_zone( map &here, orientation turn_dir );
         void reduce_speed();
 
@@ -1355,13 +1356,34 @@ bool vehicle::autodrive_controller::check_greedy_mode()
 
 std::string vehicle::autodrive_controller::search_details() const
 {
-    return " search_nodes=" + std::to_string( last_search.search_nodes ) +
+    const std::string classification = last_search.start_options == 0 ? "no_initial_step" :
+                                       last_search.hit_limit ? "search_budget" : "no_connected_path";
+    return " search_class=" + classification +
+           " search_nodes=" + std::to_string( last_search.search_nodes ) +
            " search_expanded=" + std::to_string( last_search.expanded ) +
            " start_options=" + std::to_string( last_search.start_options ) +
            " rejected_bounds=" + std::to_string( last_search.rejected_bounds ) +
            " rejected_footprint=" + std::to_string( last_search.rejected_footprint ) +
            " rejected_backtrack=" + std::to_string( last_search.rejected_backtrack ) +
            " search_limit=" + ( last_search.hit_limit ? "true" : "false" );
+}
+
+std::size_t vehicle::autodrive_controller::reverse_start_options( map &here )
+{
+    precompute_data( here );
+    const tripoint_abs_ms pos = driven_veh.pos_abs();
+    const node_address start = data.nav_to_map.inverse().transform(
+            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+    if( !data.nav_bounds.contains( start.get_point() ) ||
+        !data.valid_position( start ) ) {
+        return 0;
+    }
+    // Diagnostic only; never physically reverse without a tested safe plan.
+    const search_diagnostics saved = last_search;
+    std::vector<std::pair<node_address, navigation_node>> candidates;
+    compute_next_nodes( start, make_start_node( start, driven_veh ), -1, candidates );
+    last_search = saved;
+    return candidates.size();
 }
 
 std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &here )
@@ -1582,6 +1604,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
                     " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
                     " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
+                    " reverse_start_options=" + std::to_string(
+                        active_autodrive_controller->reverse_start_options( here ) ) +
                     active_autodrive_controller->search_details() );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
