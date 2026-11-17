@@ -474,6 +474,8 @@ class vehicle::autodrive_controller
         }
         void check_safe_speed( map &here );
         std::optional<navigation_step> compute_next_step( map &here );
+        std::optional<int> find_accessible_pivot( map &here );
+        std::string search_details() const;
         collision_check_result check_collision_zone( map &here, orientation turn_dir );
         void reduce_speed();
 
@@ -482,6 +484,16 @@ class vehicle::autodrive_controller
         const Character &driver;
         auto_navigation_data data;
         bool in_greedy_mode;
+        struct search_diagnostics {
+            std::size_t expanded = 0;
+            std::size_t start_options = 0;
+            std::size_t rejected_bounds = 0;
+            std::size_t rejected_footprint = 0;
+            std::size_t rejected_backtrack = 0;
+            std::size_t search_nodes = 0;
+            bool hit_limit = false;
+        };
+        mutable search_diagnostics last_search;
 
         void compute_coordinates();
         bool check_drivable( map &here, const tripoint_bub_ms &pt ) const;
@@ -497,7 +509,8 @@ class vehicle::autodrive_controller
         void compute_next_nodes( const node_address &addr, const navigation_node &node,
                                  int target_speed_tps,
                                  std::vector<std::pair<node_address, navigation_node>> &next_nodes ) const;
-        std::optional<std::vector<navigation_step>> compute_path( int speed_tps ) const;
+        std::optional<std::vector<navigation_step>> compute_path( int speed_tps,
+                std::optional<orientation> starting_heading = std::nullopt ) const;
 };
 
 static const std::array<orientation, NUM_ORIENTATIONS> &all_orientations()
@@ -1107,9 +1120,11 @@ const
                 // after crossing the goal zone
                 if( cur_omt == 0 || !goal_found ) {
                     ok = false;
+                    ++last_search.rejected_bounds;
                 }
             } else if( !data.valid_position( next_addr ) ) {
                 ok = false;
+                ++last_search.rejected_footprint;
             } else if( !goal_found && data.goal_zone.find( next_addr ) != data.goal_zone.end() ) {
                 goal_found = true;
             }
@@ -1120,6 +1135,7 @@ const
         const int next_omt = next_addr.x / OMT_SIZE;
         if( next_omt < cur_omt ) {
             // no going back to a previous omt
+            ++last_search.rejected_backtrack;
             continue;
         }
         navigation_node next_node;
@@ -1135,8 +1151,9 @@ const
 }
 
 std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compute_path(
-            int speed_tps ) const
+            int speed_tps, std::optional<orientation> starting_heading ) const
 {
+    last_search = {};
     if( speed_tps == 0 || speed_tps < -1 ) {
         return std::nullopt;
     }
@@ -1148,12 +1165,19 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
     std::priority_queue<scored_address, std::vector<scored_address>, std::greater<>>
             open_set;
     const tripoint_abs_ms veh_pos = driven_veh.pos_abs();
+    const orientation initial_heading = starting_heading.value_or(
+                                            to_orientation( driven_veh.face.dir() ) );
     const node_address start = data.nav_to_map.inverse().transform(
-                                   veh_pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
-    known_nodes.emplace( start, make_start_node( start, driven_veh ) );
+                                   veh_pos.raw().xy(), initial_heading );
+    navigation_node start_node = make_start_node( start, driven_veh );
+    if( starting_heading ) {
+        start_node.tileray_steps = tileray( to_angle( initial_heading ) ).get_steps();
+    }
+    known_nodes.emplace( start, start_node );
     open_set.push( scored_address{ start, 0 } );
     std::vector<std::pair<node_address, navigation_node>> next_nodes;
     while( !open_set.empty() ) {
+        ++last_search.expanded;
         const node_address cur_addr = open_set.top().addr;
         open_set.pop();
         const navigation_node &cur_node = known_nodes[cur_addr];
@@ -1175,6 +1199,9 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
         }
         next_nodes.clear();
         compute_next_nodes( cur_addr, cur_node, speed_tps, next_nodes );
+        if( cur_addr == start ) {
+            last_search.start_options = next_nodes.size();
+        }
         for( const auto &next : next_nodes ) {
             const node_address &next_addr = next.first;
             const navigation_node &next_node = next.second;
@@ -1191,9 +1218,12 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
             } else if( known_nodes.size() < max_search_count ) {
                 known_nodes[next_addr] = next_node;
                 open_set.push( compute_node_score( next_addr, next_node ) );
+            } else {
+                last_search.hit_limit = true;
             }
         }
     }
+    last_search.search_nodes = known_nodes.size();
     return std::nullopt;
 }
 
@@ -1318,6 +1348,44 @@ bool vehicle::autodrive_controller::check_greedy_mode()
         }
     }
     return straight_path;
+}
+
+std::string vehicle::autodrive_controller::search_details() const
+{
+    return " search_nodes=" + std::to_string( last_search.search_nodes ) +
+           " search_expanded=" + std::to_string( last_search.expanded ) +
+           " start_options=" + std::to_string( last_search.start_options ) +
+           " rejected_bounds=" + std::to_string( last_search.rejected_bounds ) +
+           " rejected_footprint=" + std::to_string( last_search.rejected_footprint ) +
+           " rejected_backtrack=" + std::to_string( last_search.rejected_backtrack ) +
+           " search_limit=" + ( last_search.hit_limit ? "true" : "false" );
+}
+
+std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &here )
+{
+    precompute_data( here );
+    if( driven_veh.velocity != 0 || !data.land_ok || data.is_flying ||
+        data.max_cautious_speed_tps < MIN_SPEED_TPS ) {
+        return std::nullopt;
+    }
+    // Test alternate headings using the native A* and the vehicle footprint.
+    // The actual turn is separately validated against the entire swept body.
+    constexpr std::array<int, 7> turns = { 3, -3, 6, -6, 9, -9, 12 };
+    const orientation current = to_orientation( driven_veh.face.dir() );
+    const tripoint_abs_ms current_pos = driven_veh.pos_abs();
+    for( const int steps : turns ) {
+        const orientation candidate = current + steps;
+        const node_address start = data.nav_to_map.inverse().transform(
+                current_pos.raw().xy(), candidate );
+        if( !data.nav_bounds.contains( start.get_point() ) ||
+            !data.valid_position( start ) ) {
+            continue;
+        }
+        if( compute_path( MIN_SPEED_TPS, candidate ) ) {
+            return steps;
+        }
+    }
+    return std::nullopt;
 }
 
 std::optional<navigation_step> vehicle::autodrive_controller::compute_next_step( map &here )
@@ -1505,7 +1573,11 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
                     " start_valid=" + ( valid_start ? "true" : "false" ) +
                     " segment_dx=" + std::to_string( segment.raw().x ) +
-                    " segment_dy=" + std::to_string( segment.raw().y ) );
+                    " segment_dy=" + std::to_string( segment.raw().y ) +
+                    " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
+                    " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
+                    " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
+                    active_autodrive_controller->search_details() );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
         }
@@ -1520,6 +1592,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     };
     const tripoint_abs_ms veh_pos = pos_abs();
     const tripoint_abs_omt veh_omt = project_to<coords::omt>( veh_pos );
+    if( reader_autodrive && ( !a11y_recovery_segment_omt ||
+                             *a11y_recovery_segment_omt != veh_omt ) ) {
+        a11y_recovery_segment_omt = veh_omt;
+        a11y_pivot_tried = false;
+        a11y_pivot_steps_remaining = 0;
+        a11y_route_alternatives_tried = false;
+    }
     std::vector<tripoint_abs_omt> &omt_path = driver.omt_path;
     // following code finds the last overmap path tile matched to the vehicle coordinates
     // usually it's just the last in the path vector, but we may skip it is we drive fast and cross the tile in a corner
@@ -1559,6 +1638,29 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
     if( !next_step && reader_autodrive ) {
         next_step = retry_local_route();
     }
+    if( !next_step && reader_autodrive && velocity == 0 && !is_rotorcraft( here ) ) {
+        // Native A* cannot propose a stationary heading change. Try a
+        // bounded orientation search and physically rotate only when the
+        // complete swept footprint is clear.
+        if( a11y_pivot_steps_remaining == 0 && !a11y_pivot_tried ) {
+            a11y_pivot_tried = true;
+            const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot( here );
+            if( pivot ) {
+                a11y_pivot_steps_remaining = *pivot;
+            }
+        }
+        if( a11y_pivot_steps_remaining != 0 ) {
+            const int step = std::clamp( a11y_pivot_steps_remaining, -3, 3 );
+            cruise_velocity = 0;
+            if( a11y_rotate_in_place( here, step ) ) {
+                a11y_pivot_steps_remaining -= step;
+                active_autodrive_controller.reset();
+                driver.set_moves( 0 );
+                return autodrive_result::ok;
+            }
+            a11y_pivot_steps_remaining = 0;
+        }
+    }
     if( !next_step ) {
         if( reader_autodrive ) {
             return safety_stop( "no_local_path" );
@@ -1566,6 +1668,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         driver.add_msg_if_player( m_warning, _( "Can't see a path forward." ) );
         stop_autodriving( false );
         return autodrive_result::abort;
+    }
+    if( reader_autodrive ) {
+        a11y_pivot_steps_remaining = 0;
     }
     if( next_step->pos.xy() != veh_pos.xy() ) {
         debugmsg( "compute_next_step returned an invalid result" );

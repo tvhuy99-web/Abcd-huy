@@ -1114,6 +1114,11 @@ class vehicle
         // native game turn per gesture and never applies sensor braking.
         bool a11y_manual_drive = false; // NOLINT(cata-serialize)
         bool a11y_obstacle_stop = false; // NOLINT(cata-serialize)
+        // Recovery state is per trip and per OMT; never serialized.
+        std::optional<tripoint_abs_omt> a11y_recovery_segment_omt; // NOLINT(cata-serialize)
+        bool a11y_pivot_tried = false; // NOLINT(cata-serialize)
+        int a11y_pivot_steps_remaining = 0; // NOLINT(cata-serialize)
+        bool a11y_route_alternatives_tried = false; // NOLINT(cata-serialize)
         // Remember which obstacle and heading produced the audible stop.
         // A second Forward swipe must not bypass an unseen NEW obstacle.
         std::string a11y_stopped_obstacle_name; // NOLINT(cata-serialize)

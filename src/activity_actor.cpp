@@ -815,6 +815,10 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
         if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
             player_vehicle->a11y_obstacle_override = false;
             player_vehicle->a11y_obstacle_stop = false;
+            player_vehicle->a11y_recovery_segment_omt.reset();
+            player_vehicle->a11y_pivot_tried = false;
+            player_vehicle->a11y_pivot_steps_remaining = 0;
+            player_vehicle->a11y_route_alternatives_tried = false;
             a11y::android::reset_travel_control();
             a11y::android::set_travel_state( 1 );
         }

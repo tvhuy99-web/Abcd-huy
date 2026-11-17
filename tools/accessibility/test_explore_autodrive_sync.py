@@ -151,6 +151,16 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("case collision_check_result::no_visibility:", method)
         self.assertIn("if( !next_step )", method)
 
+    def test_diagnose_and_recover_stopped_car_before_stopping(self):
+        for token in ("search_nodes=", "search_expanded=", "start_options=",
+                      "rejected_footprint=", "search_limit=", "facing_degrees="):
+            self.assertIn(token, DRIVER)
+        self.assertIn("find_accessible_pivot( here )", DRIVER)
+        self.assertIn("compute_path( MIN_SPEED_TPS, candidate )", DRIVER)
+        self.assertIn("a11y_rotate_in_place( here, step )", DRIVER)
+        self.assertIn("a11y_pivot_steps_remaining -= step;", DRIVER)
+        self.assertIn("a11y_recovery_segment_omt.reset();", ACTOR)
+
     def test_autonomous_planner_avoids_obstacles_before_emergency_braking(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving )", VEHICLE)
         self.assertIn("( a11y_manual_drive || is_autodriving )", VEHICLE)
