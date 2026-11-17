@@ -327,13 +327,20 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("land_ok=", DRIVER)
         self.assertIn("if( !a11y_obstacle_stop )", DRIVER)
 
+    def test_arrival_is_announced_and_clears_old_progress(self):
+        self.assertIn('a11y::android::announce( "A11Y_DRIVE_FEEDBACK:"', ACTOR)
+        self.assertIn("autodriveStopped || autodriveArrived", CONTROLLER)
+        self.assertIn("You have reached your destination.", CONTROLLER)
+        self.assertIn("lastAutodriveTerminalActionEpoch", CONTROLLER)
+        self.assertIn("speech.discardStaleAutodriveProgress();", CONTROLLER)
+
     def test_stopped_autodrive_discards_old_progress_not_real_warnings(self):
         self.assertIn("discardStaleAutodriveProgress()", SPEECH_QUEUE)
         self.assertIn("isAutodriveProgressText", SPEECH_QUEUE)
         self.assertIn("orderedGameEvents.iterator()", SPEECH_QUEUE)
         self.assertIn("urgentGameEvents.iterator()", SPEECH_QUEUE)
         self.assertIn("speech.discardStaleAutodriveProgress();", CONTROLLER)
-        self.assertIn("lastAutodriveStopActionEpoch == receivedActionEpoch", CONTROLLER)
+        self.assertIn("lastAutodriveTerminalActionEpoch == receivedActionEpoch", CONTROLLER)
         self.assertIn("pendingGameMessages.removeIf", CONTROLLER)
         self.assertIn("No safe route found. Vehicle paused.", CONTROLLER)
 

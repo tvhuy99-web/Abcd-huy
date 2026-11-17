@@ -949,6 +949,12 @@ void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 void autodrive_activity_actor::finish( player_activity &act, Character &who )
 {
     who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
+    // Arrival is a terminal journey event, not ambient driving chatter.
+    // The speech reader clears the stale progress queue before speaking it.
+    if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
+        a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" + std::string(
+                                    _( "You have reached your destination." ) ), 1 );
+    }
     update_player_vehicle( who );
     if( player_vehicle ) {
         if( who.is_avatar() && a11y::enabled() ) {

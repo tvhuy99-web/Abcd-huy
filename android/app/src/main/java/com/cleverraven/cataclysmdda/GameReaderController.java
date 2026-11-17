@@ -32,9 +32,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Distinguish notifications received before a deliberate gesture from
     // the feedback caused by the new action, including posted UI callbacks.
     private final AtomicLong speechActionEpoch = new AtomicLong();
-    // Reject a trip-start announcement delayed until after a terminal stop.
+    // Reject trip-start progress delayed until after a stop or completed trip.
     // User interaction creates a new epoch and permits a new journey.
-    private long lastAutodriveStopActionEpoch = -1;
+    private long lastAutodriveTerminalActionEpoch = -1;
     private static final int HUB_PAGE_SIZE = 30;
     private static final String GESTURE_GUIDE_NODE = "reader:gesture:guide";
     private static final String TARGET_TOGGLE_NODE = "reader:target:toggle-local";
@@ -1378,13 +1378,16 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             if (requestedDetail && !expectingItemDetail()) { return; }
             final boolean autodriveStopped = spokenMessage.contains("No safe route found. Vehicle paused.")
                     || spokenMessage.contains("Không tìm được đường đi an toàn. Xe đã tạm dừng.");
-            if (autodriveStopped) {
-                lastAutodriveStopActionEpoch = receivedActionEpoch;
+            final boolean autodriveArrived = drivingFeedback
+                    && (spokenMessage.contains("You have reached your destination.")
+                        || spokenMessage.contains("Bạn đã đến đích."));
+            if (autodriveStopped || autodriveArrived) {
+                lastAutodriveTerminalActionEpoch = receivedActionEpoch;
                 speech.discardStaleAutodriveProgress();
                 pendingGameMessages.removeIf(old -> ReaderSpeechQueue.isAutodriveProgressText(old.text));
                 SessionDebugLog.event("AUTODRIVE_SPEECH", "discarded_stale_progress");
             } else if (ReaderSpeechQueue.isAutodriveProgressText(spokenMessage)
-                    && lastAutodriveStopActionEpoch == receivedActionEpoch) {
+                    && lastAutodriveTerminalActionEpoch == receivedActionEpoch) {
                 SessionDebugLog.event("AUTODRIVE_SPEECH", "suppressed_late_progress");
                 return;
             }
