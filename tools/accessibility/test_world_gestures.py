@@ -22,7 +22,10 @@ class WorldGestureContracts(unittest.TestCase):
         )[0]
         self.assertIn("snapshot.swipeMovementAllowed", guard)
         self.assertIn("hasCardinalDirections(snapshot)", guard)
-        self.assertIn("return !combatMode && !vehicleMode && worldStepAllowed();", guard)
+        # Manual map swipes remain available, but the same one-finger
+        # movement MUST be locked while ACT_AUTODRIVE owns the car.
+        self.assertIn("return !combatMode && !vehicleMode && !autonomousDriveTrip", guard)
+        self.assertIn("&& worldStepAllowed();", guard)
         self.assertNotIn("preferences.isFastMovementEnabled()", guard)
         self.assertNotIn("hasCompletedMovementPractice()", guard)
 
