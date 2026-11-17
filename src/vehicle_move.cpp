@@ -1229,6 +1229,11 @@ veh_collision vehicle::part_collision( map &here, int part, const tripoint_abs_m
         // Hit nothing or we aren't actually hitting
         return ret;
     }
+    if( is_autodriving && a11y::android::enabled() &&
+        get_driver( here ) == &get_player_character() ) {
+        a11y::android::diagnostic_event( "AUTODRIVE_STOP",
+                "reason=physical_collision velocity=" + std::to_string( velocity ) );
+    }
     stop_autodriving();
     // Calculate mass AFTER checking for collision
     //  because it involves iterating over all cargo
