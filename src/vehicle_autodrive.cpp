@@ -35,6 +35,7 @@
 #include "map_scale_constants.h"
 #include "mapdata.h"
 #include "mdarray.h"
+#include "overmap_ui.h"
 #include "point.h"
 #include "tileray.h"
 #include "translations.h"
@@ -1659,6 +1660,35 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                 return autodrive_result::ok;
             }
             a11y_pivot_steps_remaining = 0;
+        }
+    }
+    if( !next_step && reader_autodrive && !a11y_route_alternatives_tried &&
+        !omt_path.empty() ) {
+        a11y_route_alternatives_tried = true;
+        const std::vector<tripoint_abs_omt> original_route = omt_path;
+        const auto alternatives = ui::omap::accessible_vehicle_alternative_routes(
+                original_route.front(), original_route.back() );
+        for( const std::vector<tripoint_abs_omt> &route : alternatives ) {
+            omt_path = route;
+            auto candidate_controller = std::make_shared<autodrive_controller>( *this, driver );
+            candidate_controller->check_safe_speed( here );
+            const std::optional<navigation_step> candidate_step =
+                candidate_controller->compute_next_step( here );
+            if( !candidate_step || candidate_step->pos.xy() != veh_pos.xy() ) {
+                continue;
+            }
+            active_autodrive_controller = std::move( candidate_controller );
+            next_step = candidate_step;
+            a11y_pivot_steps_remaining = 0;
+            a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
+                    "accepted alternate_route_omts=" + std::to_string( route.size() ) +
+                    " candidates=" + std::to_string( alternatives.size() ) );
+            driver.add_msg_if_player( m_info,
+                                      _( "Autodrive found a new route to an area near the selected place." ) );
+            break;
+        }
+        if( !next_step ) {
+            omt_path = original_route;
         }
     }
     if( !next_step ) {

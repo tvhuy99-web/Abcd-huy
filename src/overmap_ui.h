@@ -47,6 +47,10 @@ void display_accessible_places();
 void update_accessible_drive_to_place();
 bool accessible_drive_to_place_pending();
 void cancel_accessible_drive_to_place();
+/** Candidate nearby destinations whose first overmap step differs from the
+ * segment that the vehicle could not traverse. No UI or game state changes. */
+std::vector<std::vector<tripoint_abs_omt>> accessible_vehicle_alternative_routes(
+    const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step );
 /**
  * Display overmap centered at starting_pos.
  */

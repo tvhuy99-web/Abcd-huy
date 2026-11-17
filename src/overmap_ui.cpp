@@ -3305,6 +3305,54 @@ std::vector<tripoint_abs_omt> accessible_vehicle_route( const tripoint_abs_omt &
 #endif // __ANDROID__
 } // namespace
 
+// Bounded strategic fallback when the actual vehicle footprint cannot follow
+// the current overmap route. Preserve the selected landmark as the center of
+// the search; only consider known nearby destinations and a DIFFERENT first
+// overmap step. The caller tests each candidate with native local A* before
+// replacing the driver's route. No modal UI or implicit walking controls.
+std::vector<std::vector<tripoint_abs_omt>> ui::omap::accessible_vehicle_alternative_routes(
+    const tripoint_abs_omt &destination, const tripoint_abs_omt &blocked_step )
+{
+    std::vector<std::vector<tripoint_abs_omt>> results;
+#if defined(__ANDROID__)
+    constexpr std::size_t max_results = 6;
+    constexpr int max_path_checks = 24;
+    int checks = 0;
+    const tripoint_abs_omt here = get_avatar().pos_abs_omt();
+    for( int radius = 1; radius <= 2 && checks < max_path_checks &&
+         results.size() < max_results; ++radius ) {
+        for( int dy = -radius; dy <= radius && checks < max_path_checks &&
+             results.size() < max_results; ++dy ) {
+            for( int dx = -radius; dx <= radius && checks < max_path_checks &&
+                 results.size() < max_results; ++dx ) {
+                if( std::max( std::abs( dx ), std::abs( dy ) ) != radius ) {
+                    continue;
+                }
+                const tripoint_abs_omt candidate = destination + tripoint_rel_omt( dx, dy, 0 );
+                if( candidate == here || overmap_buffer.seen( candidate ) <=
+                    om_vision_level::outlines ) {
+                    continue;
+                }
+                ++checks;
+                std::vector<tripoint_abs_omt> route =
+                    overmap_ui::get_overmap_path_to( candidate, true );
+                if( route.empty() ) {
+                    route = overmap_ui::get_overmap_path_to( candidate, true, true );
+                }
+                if( route.empty() || route.back() == blocked_step || route.back() == here ) {
+                    continue;
+                }
+                results.push_back( std::move( route ) );
+            }
+        }
+    }
+#else
+    ( void )destination;
+    ( void )blocked_step;
+#endif
+    return results;
+}
+
 bool ui::omap::accessible_drive_to_place_pending()
 {
     return pending_accessible_drive.has_value();
