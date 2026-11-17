@@ -178,9 +178,24 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("a11y_pivot_steps_remaining -= step;", DRIVER)
         self.assertIn("a11y_recovery_segment_omt.reset();", ACTOR)
         self.assertIn("reverse_start_options=", DRIVER)
+        self.assertIn("reverse_live_clear=", DRIVER)
+        self.assertIn("reverse_live_blocked=", DRIVER)
+        self.assertIn("AUTODRIVE_REVERSE_PROBE", DRIVER)
         self.assertIn("search_class=", DRIVER)
         self.assertIn("no_initial_step", DRIVER)
         self.assertIn("search_budget", DRIVER)
+
+    def test_reverse_probe_rechecks_live_footprint_without_reversing(self):
+        part = DRIVER.split("std::string vehicle::autodrive_controller::reverse_clearance_details(", 1)[1]
+        part = part.split("std::size_t vehicle::autodrive_controller::forward_start_options(", 1)[0]
+        self.assertIn("compute_next_nodes(", part)
+        self.assertIn("MIN_SPEED_TPS", DRIVER)
+        self.assertIn("data.profile( placement.second ).occupied_zone", part)
+        self.assertIn("!check_drivable( here, tile )", part)
+        self.assertIn("target_abs.to_string()", part)
+        self.assertIn("last_search = saved;", part)
+        for dangerous in ("pldrive(", "cruise_velocity =", "displace_vehicle(", "handbrake("):
+            self.assertNotIn(dangerous, part)
 
     def test_reroute_after_blocked_stationary_pivot(self):
         self.assertIn("const auto retry_nearby_route =", DRIVER)
@@ -200,6 +215,9 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("omt_path = original_route;", DRIVER)
         self.assertIn("candidate_controller->compute_next_step( here )", DRIVER)
         self.assertIn("AUTODRIVE_REROUTE", DRIVER)
+        self.assertIn("skipped=no_executable_first_step", DRIVER)
+        self.assertIn("forward_start_options( here )", DRIVER)
+        self.assertIn("candidate_controller->check_collision_zone( here,", DRIVER)
         self.assertIn("A11Y_DRIVE_FEEDBACK:", DRIVER)
 
     def test_autonomous_planner_avoids_obstacles_before_emergency_braking(self):

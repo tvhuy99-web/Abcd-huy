@@ -478,7 +478,8 @@ class vehicle::autodrive_controller
         std::optional<int> find_accessible_pivot( map &here,
                 const std::function<bool( int )> &can_pivot_first_step );
         std::string search_details() const;
-        std::size_t reverse_start_options( map &here );
+        std::string reverse_clearance_details( map &here );
+        std::size_t forward_start_options( map &here );
         collision_check_result check_collision_zone( map &here, orientation turn_dir );
         void reduce_speed();
 
@@ -1373,7 +1374,81 @@ std::string vehicle::autodrive_controller::search_details() const
            " search_limit=" + ( last_search.hit_limit ? "true" : "false" );
 }
 
-std::size_t vehicle::autodrive_controller::reverse_start_options( map &here )
+// A reverse proposal is NOT a command to reverse the vehicle. Compare each
+// native A* candidate with the real map's current, turned and displaced body
+// hulls, so a planning-only option is not mistaken for a drivable maneuver.
+std::string vehicle::autodrive_controller::reverse_clearance_details( map &here )
+{
+    precompute_data( here );
+    const tripoint_abs_ms pos = driven_veh.pos_abs();
+    const node_address start = data.nav_to_map.inverse().transform(
+            pos.raw().xy(), to_orientation( driven_veh.face.dir() ) );
+    if( !data.nav_bounds.contains( start.get_point() ) ||
+        !data.valid_position( start ) ) {
+        return " reverse_start_options=0 reverse_live_clear=0"
+               " reverse_live_blocked=0 reverse_probe=start_invalid";
+    }
+
+    const search_diagnostics saved = last_search;
+    std::vector<std::pair<node_address, navigation_node>> candidates;
+    compute_next_nodes( start, make_start_node( start, driven_veh ), -1, candidates );
+    last_search = saved;
+    std::size_t live_clear = 0;
+    std::size_t live_blocked = 0;
+    const tripoint_bub_ms origin = driven_veh.pos_bub( here );
+    const orientation initial_heading = to_orientation( driven_veh.face.dir() );
+    for( const auto &candidate : candidates ) {
+        const node_address &addr = candidate.first;
+        const tripoint_abs_ms target_abs( data.nav_to_map.transform(
+                addr.get_point(), data.current_omt.z() ) );
+        const tripoint_bub_ms target = here.get_bub( data.adjust_z( target_abs ) );
+        const orientation target_heading = data.nav_to_map.transform( addr.facing_dir );
+        // Check the two endpoint footprints AND the turned footprint at
+        // both endpoints. Conservative for a one-tile reverse prediction.
+        const std::array<std::pair<tripoint_bub_ms, orientation>, 4> placements = {{
+                { origin, initial_heading }, { origin, target_heading },
+                { target, initial_heading }, { target, target_heading }
+            }};
+        bool clear = true;
+        std::string blocked_tile = "none";
+        std::string blocked_terrain = "none";
+        for( const auto &placement : placements ) {
+            for( const point_rel_ms &pt : data.profile( placement.second ).occupied_zone ) {
+                const tripoint_bub_ms tile = placement.first + pt;
+                if( !here.inbounds( tile ) || !check_drivable( here, tile ) ) {
+                    clear = false;
+                    blocked_tile = tile.to_string();
+                    blocked_terrain = here.inbounds( tile ) ?
+                                      here.name( tile ) : "outside_loaded_map";
+                    break;
+                }
+            }
+            if( !clear ) {
+                break;
+            }
+        }
+        if( clear ) {
+            ++live_clear;
+        } else {
+            ++live_blocked;
+        }
+        a11y::android::diagnostic_event( "AUTODRIVE_REVERSE_PROBE",
+                "result=" + std::string( clear ? "live_clear" : "live_blocked" ) +
+                " target=" + target_abs.to_string() +
+                " heading_steps=" + std::to_string( orientation_diff(
+                    target_heading, initial_heading ) ) +
+                " blocked_tile=" + blocked_tile +
+                " terrain_name=" + blocked_terrain );
+    }
+    return " reverse_start_options=" + std::to_string( candidates.size() ) +
+           " reverse_live_clear=" + std::to_string( live_clear ) +
+           " reverse_live_blocked=" + std::to_string( live_blocked ) +
+           " reverse_probe=diagnostic_only";
+}
+
+// Used only to avoid expensive overmap detours when even a first forward
+// step is impossible at the vehicle's current position. Never changes speed.
+std::size_t vehicle::autodrive_controller::forward_start_options( map &here )
 {
     precompute_data( here );
     const tripoint_abs_ms pos = driven_veh.pos_abs();
@@ -1383,10 +1458,9 @@ std::size_t vehicle::autodrive_controller::reverse_start_options( map &here )
         !data.valid_position( start ) ) {
         return 0;
     }
-    // Diagnostic only; never physically reverse without a tested safe plan.
     const search_diagnostics saved = last_search;
     std::vector<std::pair<node_address, navigation_node>> candidates;
-    compute_next_nodes( start, make_start_node( start, driven_veh ), -1, candidates );
+    compute_next_nodes( start, make_start_node( start, driven_veh ), MIN_SPEED_TPS, candidates );
     last_search = saved;
     return candidates.size();
 }
@@ -1630,8 +1704,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
                     " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
                     " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
-                    " reverse_start_options=" + std::to_string(
-                        active_autodrive_controller->reverse_start_options( here ) ) +
+                    active_autodrive_controller->reverse_clearance_details( here ) +
                     active_autodrive_controller->search_details() );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
@@ -1726,6 +1799,22 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) ) {
             return std::nullopt;
         }
+        // First establish a locally executable action. A long strategic
+        // reroute cannot free a car with no possible forward move or turn.
+        // Reverse candidates are diagnostics only, not an action available
+        // to the current forward-only autonomous controller.
+        if( velocity == 0 && !is_rotorcraft( here ) ) {
+            const std::size_t forward_options =
+                active_autodrive_controller->forward_start_options( here );
+            const bool pivot_left = a11y_rotate_in_place( here, -3, true );
+            const bool pivot_right = a11y_rotate_in_place( here, 3, true );
+            if( forward_options == 0 && !pivot_left && !pivot_right ) {
+                a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
+                        "skipped=no_executable_first_step forward_options=0"
+                        " pivot_left=false pivot_right=false" );
+                return std::nullopt;
+            }
+        }
         a11y_route_alternatives_tried = true;
         const std::vector<tripoint_abs_omt> original_route = omt_path;
         const auto alternatives = ui::omap::accessible_vehicle_alternative_routes(
@@ -1749,6 +1838,14 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     continue;
                 }
             }
+            // The candidate must have a safe FIRST action on the live map,
+            // not merely a route over the large-scale map.
+            const collision_check_result live_clearance =
+                candidate_controller->check_collision_zone( here, candidate_step->steering_dir );
+            if( live_clearance == collision_check_result::close_obstacle ||
+                live_clearance == collision_check_result::no_visibility ) {
+                continue;
+            }
             active_autodrive_controller = std::move( candidate_controller );
             a11y_pivot_steps_remaining = 0;
             a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
@@ -1761,6 +1858,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             return candidate_step;
         }
         omt_path = original_route;
+        a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
+                "result=no_viable_first_step alternatives=" + std::to_string( alternatives.size() ) );
         return std::nullopt;
     };
     if( !next_step ) {
