@@ -878,7 +878,8 @@ class vehicle
         // direct damage to part (armor protection and internals are not counted)
         // @returns damage still left to apply
         int damage_direct( map &here, vehicle_part &vp, int dmg,
-                           const damage_type_id &type = damage_type_id( "pure" ) );
+                           const damage_type_id &type = damage_type_id( "pure" ),
+                           bool interrupt_autodrive = true );
     private:
         // Removes the part, breaks it into pieces and possibly removes parts attached to it
         int break_off( map &here, vehicle_part &vp, int dmg );
