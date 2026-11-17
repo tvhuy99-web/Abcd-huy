@@ -19,6 +19,7 @@
 #include <unordered_set>
 #include <utility>
 
+#include "a11y_android.h"
 #include "a11y_runtime.h"
 #include "a11y_world.h"
 #include "activity_handlers.h"
@@ -4542,7 +4543,20 @@ void vehicle::check_flats_do_rim_damage_or_sounds( map &here )
             if( one_in( vp.info().durability ) ) {
                 Character *driver = get_driver( here );
                 if( driver == &get_player_character() || get_player_character().sees( here, part_bub_pos ) ) {
-                    add_msg( _( "The %s is damaged by driving with a flat!" ), vp.name() );
+                    const bool reader_trip = is_autodriving && a11y::enabled() &&
+                                             a11y::android::enabled() &&
+                                             driver == &get_player_character();
+                    if( !reader_trip ) {
+                        add_msg( _( "The %s is damaged by driving with a flat!" ), vp.name() );
+                    } else if( !a11y_flat_tire_alerted ) {
+                        // This was a neutral message filtered by Android
+                        // while driving. Speak the real hazard once per trip.
+                        a11y_flat_tire_alerted = true;
+                        add_msg( m_warning, _( "The %s is damaged by driving with a flat!" ),
+                                 vp.name() );
+                        a11y::android::diagnostic_event( "AUTODRIVE_HAZARD",
+                                "type=flat_tire_rim_damage" );
+                    }
                 }
                 // bullshit to work around vehicle::damage_direct() --> vehicle::mod_hp() doing incorrect(??) calculations.
                 // Each damage instance should be worth exactly one 'level' of vehicle part damage.

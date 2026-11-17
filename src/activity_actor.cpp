@@ -879,6 +879,7 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
         // Do not change NPC vehicle or vanilla player behavior. Only the
         // actively connected accessibility avatar owns the trip reader.
         if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
+            player_vehicle->a11y_flat_tire_alerted = false;
             player_vehicle->a11y_obstacle_override = false;
             player_vehicle->a11y_obstacle_stop = false;
             player_vehicle->a11y_recovery_segment_omt.reset();
