@@ -210,6 +210,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
     private String vehicleHeadingBeforeCommand = "";
+    private int pendingVehicleHeadingSnapshots;
     // Preserve the last real engine state across transient ignition/activity
     // screens. Compare only snapshots belonging to the same vehicle.
     private String observedEngineVehicle = "";
@@ -900,20 +901,28 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     observedEngineState = "";
                 }
                 if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
-                    pendingVehicleHeadingReport = false;
                     ReaderSnapshot.Node heading = next.find("reader:vehicle:heading");
-                    // A refused stationary pivot leaves face.dir() unchanged.
-                    // Do not read the same compass direction as a success.
-                    if (heading != null && !heading.detail.isEmpty()
-                            && !heading.detail.equals(vehicleHeadingBeforeCommand)) {
+                    // Only the FIRST sentence is the actual body direction.
+                    // A changed warning suffix is not evidence that the
+                    // vehicle rotated. Physics may update a later snapshot.
+                    String actualCompass = heading == null ? ""
+                            : vehicleCompass(heading.detail);
+                    if (!actualCompass.isEmpty()
+                            && !actualCompass.equals(vehicleHeadingBeforeCommand)) {
+                        pendingVehicleHeadingReport = false;
+                        vehicleHeadingBeforeCommand = "";
                         final String report = heading.detail;
                         handler.post(() -> {
                             if (vehicleMode && directWorldGesturesEnabled()) {
                                 feedback(report);
                             }
                         });
+                    } else if (++pendingVehicleHeadingSnapshots >= 8) {
+                        // A rejected turn already produced a native warning.
+                        // Never read the old compass as a successful turn.
+                        pendingVehicleHeadingReport = false;
+                        vehicleHeadingBeforeCommand = "";
                     }
-                    vehicleHeadingBeforeCommand = "";
                 }
                 // Every native snapshot publishes the current game message
                 // history, even when the first screen after load is inventory.
@@ -3796,6 +3805,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
 
     /** Use only actions published by the current native world frame. A
      * passenger cannot command the vehicle, even with stale Android focus. */
+    private static String vehicleCompass(String description) {
+        if (description == null) { return ""; }
+        int end = description.indexOf('.');
+        return (end < 0 ? description : description.substring(0, end)).trim();
+    }
+
     private void requestVehicleAction(String id) {
         if (!vehicleMode || !directWorldGesturesEnabled()) { return; }
         if (!vehicleDriverReady()) {
@@ -3810,7 +3825,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
             ReaderSnapshot.Node previous = snapshot.find("reader:vehicle:heading");
-            vehicleHeadingBeforeCommand = previous == null ? "" : previous.detail;
+            vehicleHeadingBeforeCommand = vehicleCompass(previous == null ? "" : previous.detail);
+            pendingVehicleHeadingSnapshots = 0;
             pendingVehicleHeadingReport = true;
         }
         // Native pause/resume now announces the actual result. A queued
