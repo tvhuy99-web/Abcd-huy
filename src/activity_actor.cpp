@@ -973,17 +973,22 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             }
         }
         if( state != reader_last_state ) {
-            if( state == 2 ) {
-                const bool blocked = player_vehicle->a11y_obstacle_stop;
-                reader_announce( who, "paused", blocked ? "no_safe_route" : "user_paused",
-                                 blocked ? _( "No safe route found. Autodrive paused." ) :
-                                 _( "Autodrive paused at your request." ) );
-            } else {
-                reader_report( who, state == 1 ? "resumed" : "paused",
-                               state == 3 ? "safe_mode_warning" :
-                               state == 1 ? "route_resumed" : "route_paused" );
-            }
+            reader_pause_report_pending = state == 2;
+            reader_report( who, state == 1 ? "resumed" : "pausing",
+                           state == 3 ? "safe_mode_warning" :
+                           state == 1 ? "route_resumed" :
+                           state == 2 && player_vehicle->a11y_obstacle_stop ?
+                           "no_safe_route" : "user_paused" );
             reader_last_state = state;
+        }
+        if( state == 2 && reader_pause_report_pending && player_vehicle->velocity == 0 ) {
+            // Report distance only after braking has physically stopped
+            // the car; otherwise the final number can already be stale.
+            reader_pause_report_pending = false;
+            const bool blocked = player_vehicle->a11y_obstacle_stop;
+            reader_announce( who, "paused", blocked ? "no_safe_route" : "user_paused",
+                             blocked ? _( "No safe route found. Autodrive paused." ) :
+                             _( "Autodrive paused at your request." ) );
         }
         if( state != 1 ) {
             player_vehicle->a11y_reverse_recovery_active = false;

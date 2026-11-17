@@ -625,6 +625,7 @@ class autodrive_activity_actor : public activity_actor
         bool reader_nearby_goal = false;
         std::string reader_end_reason = "activity_interrupted";
         int reader_last_state = 0;
+        bool reader_pause_report_pending = false;
 
         // Native game-thread-only trip diagnostics and one-shot speech.
         void reader_report( Character &, const char *event, const std::string &reason ) const;
