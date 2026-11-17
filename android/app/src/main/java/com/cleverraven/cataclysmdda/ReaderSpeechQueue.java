@@ -595,6 +595,36 @@ public final class ReaderSpeechQueue implements AutoCloseable {
         say("resume:" + key, text, FOCUS, 2000, start);
     }
 
+    // The native vehicle may stop after the trip-start announcement has
+    // already entered the long-lived game-event FIFO. Discard ONLY that stale
+    // progress message, preserving genuine warnings and other game speech.
+    static boolean isAutodriveProgressText(String text) {
+        return text != null && (text.contains("Driving to a reachable area near the selected place.")
+                || text.contains("Đang lái đến một khu vực xe có thể tiếp cận gần địa điểm đã chọn."));
+    }
+
+    public void discardStaleAutodriveProgress() {
+        if (closed) { return; }
+        for (Iterator<Request> it = orderedGameEvents.iterator(); it.hasNext();) {
+            if (isAutodriveProgressText(it.next().text)) { it.remove(); }
+        }
+        for (Iterator<Request> it = urgentGameEvents.iterator(); it.hasNext();) {
+            if (isAutodriveProgressText(it.next().text)) { it.remove(); }
+        }
+        for (Iterator<Request> it = pending.iterator(); it.hasNext();) {
+            if (isAutodriveProgressText(it.next().text)) { it.remove(); }
+        }
+        if (active != null && isAutodriveProgressText(active.text)) {
+            Request stopped = active;
+            active = null;
+            activeChunk = null;
+            removeCompletionTimeout();
+            speech.cancel();
+            fireInterrupted(stopped.key);
+        }
+        advance();
+    }
+
     public void stop() {
         clearRequests();
         speech.cancel();

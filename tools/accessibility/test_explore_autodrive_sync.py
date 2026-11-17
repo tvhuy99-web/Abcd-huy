@@ -24,6 +24,7 @@ VEHICLE = read(SRC / "vehicle.cpp")
 DISPATCH = read(SRC / "handle_action.cpp")
 BRIDGE = read(SRC / "a11y_android.cpp")
 CONTROLLER = read(JAVA / "GameReaderController.java")
+SPEECH_QUEUE = read(JAVA / "ReaderSpeechQueue.java")
 
 
 class ExploreAutodriveSyncContracts(unittest.TestCase):
@@ -307,6 +308,16 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("goal_states=", DRIVER)
         self.assertIn("land_ok=", DRIVER)
         self.assertIn("if( !a11y_obstacle_stop )", DRIVER)
+
+    def test_stopped_autodrive_discards_old_progress_not_real_warnings(self):
+        self.assertIn("discardStaleAutodriveProgress()", SPEECH_QUEUE)
+        self.assertIn("isAutodriveProgressText", SPEECH_QUEUE)
+        self.assertIn("orderedGameEvents.iterator()", SPEECH_QUEUE)
+        self.assertIn("urgentGameEvents.iterator()", SPEECH_QUEUE)
+        self.assertIn("speech.discardStaleAutodriveProgress();", CONTROLLER)
+        self.assertIn("lastAutodriveStopActionEpoch == receivedActionEpoch", CONTROLLER)
+        self.assertIn("pendingGameMessages.removeIf", CONTROLLER)
+        self.assertIn("No safe route found. Vehicle paused.", CONTROLLER)
 
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
