@@ -51,7 +51,9 @@ void Messages::add_msg( const game_message_params &, std::string m )
 // non-inline Messages API must also be provided here for the linker.
 void Messages::add_msg_silent( const game_message_params &params, std::string m )
 {
-    add_msg( params, std::move( m ) );
+    // Qualify the call: MSVC otherwise considers both this namespace and
+    // the global add_msg overload through argument-dependent lookup.
+    Messages::add_msg( params, std::move( m ) );
 }
 Messages::mute_combat_speech::mute_combat_speech( bool ) : muted( false )
 {
