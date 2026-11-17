@@ -57,7 +57,7 @@ class TutorialCombatDummyContracts(unittest.TestCase):
         )[1].split("};", 1)[0]
         actual = {
             (int(x), int(y))
-            for x, y in re.findall(r"point\\(\\s*(\\d+),\\s*(\\d+)\\s*\\)", code)
+            for x, y in re.findall(r"point\(\s*(\d+),\s*(\d+)\s*\)", code)
         }
         self.assertEqual(actual, expected)
         self.assertIn((21, 9), expected)
