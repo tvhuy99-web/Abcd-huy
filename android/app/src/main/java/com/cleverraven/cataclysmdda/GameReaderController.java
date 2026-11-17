@@ -88,6 +88,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     private static final String COMBAT_ALERT_PREFIX = "A11Y_COMBAT_ALERT:";
     private static final String QUERY_PREFIX = "A11Y_QUERY:";
     private static final String DRIVE_FEEDBACK_PREFIX = "A11Y_DRIVE_FEEDBACK:";
+    private static final String AUTODRIVE_END_PREFIX = "A11Y_AUTODRIVE_END:";
     private static final String AREA_PREFIX = "A11Y_AREA:";
 
     /** Manual and autonomous driving share this speech policy.
@@ -99,6 +100,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         return priority >= ReaderSpeechQueue.URGENT
                 || message.startsWith(QUERY_PREFIX)
                 || message.startsWith(DRIVE_FEEDBACK_PREFIX)
+                || message.startsWith(AUTODRIVE_END_PREFIX)
                 || message.startsWith(AREA_PREFIX)
                 || message.startsWith("A11Y_SCAN:")
                 || message.startsWith("A11Y_DETAIL:")
@@ -1326,6 +1328,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         final boolean combatAlert = message.startsWith(COMBAT_ALERT_PREFIX);
         final boolean userQuery = message.startsWith(QUERY_PREFIX);
         final boolean drivingFeedback = message.startsWith(DRIVE_FEEDBACK_PREFIX);
+        final boolean autodriveEnd = message.startsWith(AUTODRIVE_END_PREFIX);
         final boolean areaChange = message.startsWith(AREA_PREFIX);
         final String spokenMessage = ReaderSpokenText.clean(
                 loading ? message.substring("A11Y_LOADING:".length())
@@ -1333,6 +1336,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 : requestedDetail ? message.substring("A11Y_DETAIL:".length())
                 : userQuery ? message.substring(QUERY_PREFIX.length())
                 : drivingFeedback ? message.substring(DRIVE_FEEDBACK_PREFIX.length())
+                : autodriveEnd ? message.substring(AUTODRIVE_END_PREFIX.length())
                 : areaChange ? message.substring(AREA_PREFIX.length())
                 : combatAlert ? message.substring(COMBAT_ALERT_PREFIX.length()) : message);
         // During movement, generating a new map area can emit this repeatedly.
@@ -1398,11 +1402,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             final boolean autodriveArrived = drivingFeedback
                     && (spokenMessage.contains("You have reached your destination.")
                         || spokenMessage.contains("Bạn đã đến đích."));
-            if (autodriveStopped || autodriveArrived) {
+            if (autodriveEnd || autodriveStopped || autodriveArrived) {
                 lastAutodriveTerminalActionEpoch = receivedActionEpoch;
                 speech.discardStaleAutodriveProgress();
                 pendingGameMessages.removeIf(old -> ReaderSpeechQueue.isAutodriveProgressText(old.text));
-                SessionDebugLog.event("AUTODRIVE_SPEECH", "discarded_stale_progress");
+                SessionDebugLog.event("AUTODRIVE_SPEECH",
+                        "discarded_stale_progress terminal=" + (autodriveEnd ? "native" : "legacy"));
             } else if (ReaderSpeechQueue.isAutodriveProgressText(spokenMessage)
                     && lastAutodriveTerminalActionEpoch == receivedActionEpoch) {
                 SessionDebugLog.event("AUTODRIVE_SPEECH", "suppressed_late_progress");

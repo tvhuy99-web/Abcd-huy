@@ -618,11 +618,27 @@ class autodrive_activity_actor : public activity_actor
         // to make sure the pointer is still valid; the pointer might be invalid due to summoning despawn.
         vehicle *player_vehicle = nullptr;
 
+        // Preserve the originally selected place, not the reachable road
+        // chosen by A*. Both endpoints may be different overmap tiles.
+        std::optional<tripoint_abs_omt> reader_destination;
+        std::string reader_destination_name;
+        bool reader_nearby_goal = false;
+        std::string reader_end_reason = "activity_interrupted";
+        int reader_last_state = 0;
+
+        // Native game-thread-only trip diagnostics and one-shot speech.
+        void reader_report( Character &, const char *event, const std::string &reason ) const;
+        void reader_announce( Character &, const char *event,
+                              const std::string &reason, const std::string &message ) const;
+
         // Update player_vehicle; will set it to nullptr if the player no longer has a vehicle.
         void update_player_vehicle( Character & );
 
     public:
         autodrive_activity_actor() = default;
+        autodrive_activity_actor( tripoint_abs_omt destination, std::string name, bool nearby ) :
+            reader_destination( destination ), reader_destination_name( std::move( name ) ),
+            reader_nearby_goal( nearby ) { }
 
         const activity_id &get_type() const override {
             static const activity_id ACT_AUTODRIVE( "ACT_AUTODRIVE" );

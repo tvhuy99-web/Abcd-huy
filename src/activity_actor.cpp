@@ -803,10 +803,63 @@ static void a11y_brake_autodrive( vehicle &car, map &here )
     }
 }
 
+
+void autodrive_activity_actor::reader_report( Character &who, const char *event,
+        const std::string &reason ) const
+{
+    if( !who.is_avatar() || !a11y::enabled() || !a11y::android::enabled() ) {
+        return;
+    }
+    const tripoint_abs_ms pos = player_vehicle ? player_vehicle->pos_abs() : who.pos_abs();
+    const int remaining = reader_destination ?
+                          std::max( std::abs( project_to<coords::ms>( *reader_destination ).x() +
+                                              OMT_SIZE / 2 - pos.x() ),
+                                    std::abs( project_to<coords::ms>( *reader_destination ).y() +
+                                              OMT_SIZE / 2 - pos.y() ) ) : -1;
+    a11y::android::diagnostic_event( "AUTODRIVE_STATE",
+            std::string( "event=" ) + event + " reason=" + reason +
+            " x=" + std::to_string( pos.x() ) +
+            " y=" + std::to_string( pos.y() ) +
+            " z=" + std::to_string( pos.z() ) +
+            " velocity=" + std::to_string( player_vehicle ? player_vehicle->velocity : 0 ) +
+            " distance_tiles=" + std::to_string( remaining ) +
+            " reachable_goal=" + ( reader_nearby_goal ? "true" : "false" ) );
+}
+
+void autodrive_activity_actor::reader_announce( Character &who, const char *event,
+        const std::string &reason, const std::string &message ) const
+{
+    reader_report( who, event, reason );
+    if( !who.is_avatar() || !a11y::enabled() || !a11y::android::enabled() ) {
+        return;
+    }
+    std::string announcement = message;
+    if( reader_destination ) {
+        const tripoint_abs_ms pos = player_vehicle ? player_vehicle->pos_abs() : who.pos_abs();
+        const tripoint_abs_ms center = project_to<coords::ms>( *reader_destination );
+        const int remaining = std::max( std::abs( center.x() + OMT_SIZE / 2 - pos.x() ),
+                                        std::abs( center.y() + OMT_SIZE / 2 - pos.y() ) );
+        const std::string name = reader_destination_name.empty() ?
+                                 _( "the selected place" ) : reader_destination_name;
+        announcement += " " + string_format( _( "%s is approximately %d tiles away." ),
+                                             name, remaining );
+        if( reader_nearby_goal ) {
+            announcement += " " + std::string( _( "The vehicle can only reach a nearby area." ) );
+        }
+    }
+    // Terminal/pause speech is emitted exactly once, never on every car tick.
+    // The Android reader drops queued trip-start progress before speaking it.
+    a11y::android::announce( "A11Y_AUTODRIVE_END:" + announcement, 1 );
+}
+
 void autodrive_activity_actor::start( player_activity &, Character &who )
 {
     update_player_vehicle( who );
+    if( !reader_destination && !who.omt_path.empty() ) {
+        reader_destination = who.omt_path.front();
+    }
     if( player_vehicle == nullptr ) {
+        reader_end_reason = "no_driver_vehicle";
         who.cancel_activity();
     } else {
         player_vehicle->is_autodriving = true;
@@ -824,6 +877,8 @@ void autodrive_activity_actor::start( player_activity &, Character &who )
             player_vehicle->a11y_reverse_recovery_ticks = 0;
             a11y::android::reset_travel_control();
             a11y::android::set_travel_state( 1 );
+            reader_last_state = 1;
+            reader_report( who, "started", "route_started" );
         }
     }
 }
@@ -833,6 +888,7 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
     map &here = get_map();
 
     if( !( who.in_vehicle && who.controlling_vehicle && player_vehicle ) ) {
+        reader_end_reason = "driver_controls_lost";
         who.cancel_activity();
         return;
     }
@@ -844,6 +900,7 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             state = 1;
         }
         if( control == 3 ) {
+            reader_end_reason = "user_cancelled";
             // Cancel means Drive -> Map for the reader. Braking must finish
             // before native driving controls are released; otherwise the
             // map appears while the avatar still holds a moving steering
@@ -901,6 +958,19 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
                 a11y::android::set_travel_state( state );
             }
         }
+        if( state != reader_last_state ) {
+            if( state == 2 ) {
+                const bool blocked = player_vehicle->a11y_obstacle_stop;
+                reader_announce( who, "paused", blocked ? "no_safe_route" : "user_paused",
+                                 blocked ? _( "No safe route found. Autodrive paused." ) :
+                                 _( "Autodrive paused at your request." ) );
+            } else {
+                reader_report( who, state == 1 ? "resumed" : "paused",
+                               state == 3 ? "safe_mode_warning" :
+                               state == 1 ? "route_resumed" : "route_paused" );
+            }
+            reader_last_state = state;
+        }
         if( state != 1 ) {
             player_vehicle->a11y_reverse_recovery_active = false;
             // Braking is physical, not a teleport to zero speed. Keep the
@@ -923,6 +993,9 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
             sounds::reset_markers();
             break;
         case autodrive_result::abort:
+            reader_end_reason = player_vehicle->skidding ? "vehicle_skidding" :
+                                !player_vehicle->player_in_control( here, who ) ?
+                                "driver_controls_lost" : "native_autodrive_abort";
             who.cancel_activity();
             break;
         case autodrive_result::finished:
@@ -934,7 +1007,18 @@ void autodrive_activity_actor::do_turn( player_activity &act, Character &who )
 void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 {
     update_player_vehicle( who );
-    who.add_msg_if_player( m_info, _( "Auto drive canceled." ) );
+    if( !who.is_avatar() || !a11y::enabled() || !a11y::android::enabled() ) {
+        who.add_msg_if_player( m_info, _( "Auto drive canceled." ) );
+    }
+    // Do not guess that a damaged wheel caused the cancellation. Record the
+    // exact known branch, and distinguish an unidentified native abort.
+    const std::string reason = reader_end_reason;
+    reader_announce( who, "ended", reason,
+                     reason == "user_cancelled" ? _( "Autodrive canceled at your request." ) :
+                     reason == "vehicle_skidding" ? _( "Autodrive canceled: vehicle skidding." ) :
+                     reason == "driver_controls_lost" || reason == "no_driver_vehicle" ?
+                     _( "Autodrive canceled: driver controls lost." ) :
+                     _( "Autodrive canceled: the vehicle could not continue." ) );
     if( player_vehicle ) {
         if( who.is_avatar() && a11y::enabled() ) {
             a11y_brake_autodrive( *player_vehicle, get_map() );
@@ -952,14 +1036,11 @@ void autodrive_activity_actor::canceled( player_activity &act, Character &who )
 
 void autodrive_activity_actor::finish( player_activity &act, Character &who )
 {
-    who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
-    // Arrival is a terminal journey event, not ambient driving chatter.
-    // The speech reader clears the stale progress queue before speaking it.
-    if( who.is_avatar() && a11y::enabled() && a11y::android::enabled() ) {
-        a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" + std::string(
-                                    _( "You have reached your destination." ) ), 1 );
+    if( !who.is_avatar() || !a11y::enabled() || !a11y::android::enabled() ) {
+        who.add_msg_if_player( m_info, _( "You have reached your destination." ) );
     }
     update_player_vehicle( who );
+    reader_announce( who, "ended", "arrived", _( "You have reached your destination." ) );
     if( player_vehicle ) {
         if( who.is_avatar() && a11y::enabled() ) {
             a11y_brake_autodrive( *player_vehicle, get_map() );

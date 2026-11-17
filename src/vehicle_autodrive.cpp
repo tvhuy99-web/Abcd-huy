@@ -1762,8 +1762,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
                     active_autodrive_controller->reverse_clearance_details( here ) +
                     active_autodrive_controller->search_details() );
-            driver.add_msg_if_player( m_warning,
-                                      _( "No safe route found. Vehicle paused." ) );
+            // One speech report with real remaining distance is produced
+            // on the following activity state transition. Never also enqueue
+            // a separate warning that duplicates that report.
+            if( !reader_autodrive ) {
+                driver.add_msg_if_player( m_warning,
+                                          _( "No safe route found. Vehicle paused." ) );
+            }
         }
         cruise_velocity = 0;
         if( velocity != 0 ) {
@@ -1979,10 +1984,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
                     "accepted alternate_route_omts=" + std::to_string( route.size() ) +
                     " candidates=" + std::to_string( alternatives.size() ) );
-            driver.add_msg_if_player( m_info,
-                                      _( "Autodrive found a new route to an area near the selected place." ) );
-            a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" + std::string(
-                                        _( "Autodrive found a new route to an area near the selected place." ) ), 1 );
+            // A reroute is diagnostic progress, not a new spoken tile event.
+            // Only the end/pause report announces the remaining distance.
             return candidate_step;
         }
         omt_path = original_route;

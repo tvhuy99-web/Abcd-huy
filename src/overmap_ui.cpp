@@ -3232,6 +3232,7 @@ namespace
 // ignition activities. No teleporting, forced boarding or bypass of ownership.
 struct accessible_drive_request {
     tripoint_abs_omt destination;
+    std::string destination_name;
     bool controls_requested = false;
     bool ignition_requested = false;
 };
@@ -3452,8 +3453,9 @@ void ui::omap::update_accessible_drive_to_place()
         add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
     }
     driver.omt_path = std::move( route );
+    driver.assign_activity( autodrive_activity_actor( pending_accessible_drive->destination,
+                            pending_accessible_drive->destination_name, nearby_goal ) );
     pending_accessible_drive.reset();
-    driver.assign_activity( autodrive_activity_actor() );
 #endif
 }
 
@@ -3680,6 +3682,8 @@ void ui::omap::display_accessible_places()
             return std::string( "TIMEOUT" );
         }
         tripoint_abs_omt destination = places[*selected].target;
+        const std::string destination_name = places[*selected].name + " " +
+                                             direction_words( places[*selected].dx, places[*selected].dy );
         // Recheck the discovery boundary when starting a route. The known
         // place may have changed since the list was opened.
         if( overmap_buffer.seen( destination ) <= om_vision_level::outlines ) {
@@ -3735,7 +3739,7 @@ void ui::omap::display_accessible_places()
                 // checks ownership and starts the engine with actual time.
                 // A game-thread continuation starts the route only AFTER
                 // those actions have really completed.
-                pending_accessible_drive = accessible_drive_request{ destination };
+                pending_accessible_drive = accessible_drive_request{ destination, destination_name };
                 if( !you.in_vehicle || !you.controlling_vehicle ) {
                     g->control_vehicle( std::nullopt );
                 }
@@ -3756,7 +3760,7 @@ void ui::omap::display_accessible_places()
                 add_msg( m_info, _( "Driving to a reachable area near the selected place." ) );
             }
             you.omt_path = std::move( route );
-            you.assign_activity( autodrive_activity_actor() );
+            you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );
         } else {
             std::vector<tripoint_abs_omt> route = overmap_ui::get_overmap_path_to( destination, false );
             if( route.empty() ) {
