@@ -830,7 +830,11 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             || !next.focus.equals(snapshot.focus)
                             || next.nodes.size() != snapshot.nodes.size());
                 snapshot = next;
-                final boolean nativeAutodrive = "activity".equals(next.category)
+                // The game still runs ACT_AUTODRIVE, but publishes its reader
+                // as DEFAULTMODE; the semantic marker identifies the route,
+                // not the screen type. Keep the existing Drive gestures.
+                final boolean nativeAutodrive =
+                        ("activity".equals(next.category) || "DEFAULTMODE".equals(next.category))
                         && next.find("activity:autodrive") != null;
                 if (nativeAutodrive && !autonomousDriveCancelRequested) {
                     autonomousDriveTrip = true;
@@ -2474,7 +2478,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         if (commandPaletteOpen) { return contextualCommands(); }
         for (ReaderSnapshot.Node node : snapshot.nodes) {
             // Group 2 capability markers must not appear as world rows.
-            if (node.id.startsWith("reader:nearby:available:")) { continue; }
+            if (node.id.startsWith("reader:nearby:available:")
+                    || "activity:autodrive".equals(node.id)) { continue; }
             if (readerLayerParent.equals(node.parentId)) { result.add(node); }
         }
         if ("targeting".equals(snapshot.category)

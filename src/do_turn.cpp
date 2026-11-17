@@ -261,6 +261,7 @@ namespace
 struct blocking_activity_reader_state {
     std::unique_ptr<input_context> context;
     std::unique_ptr<a11y::screen_scope> reader;
+    bool reader_is_autodrive = false;
 };
 
 blocking_activity_reader_state &blocking_activity_reader()
@@ -275,6 +276,7 @@ void close_blocking_activity_reader()
     blocking_activity_reader_state &state = blocking_activity_reader();
     state.reader.reset();
     state.context.reset();
+    state.reader_is_autodrive = false;
 }
 
 void handle_key_blocking_activity()
@@ -308,9 +310,19 @@ void handle_key_blocking_activity()
             state.context = std::make_unique<input_context>( get_default_mode_input_context() );
         }
         input_context &ctxt = *state.context;
+        // ACT_AUTODRIVE is gameplay ownership, not an activity *screen*.
+        // Keep the car in the ordinary Drive reader so native blocked-input
+        // handling cannot replace it with "Activity in progress".
+        const bool drive_reader = u.activity && u.activity.id() == ACT_AUTODRIVE &&
+                                  u.in_vehicle && u.controlling_vehicle;
         if( a11y::enabled() ) {
+            if( state.reader && drive_reader != state.reader_is_autodrive ) {
+                state.reader.reset();
+            }
             if( !state.reader ) {
-                state.reader = std::make_unique<a11y::screen_scope>( &ctxt, "activity",
+                state.reader_is_autodrive = drive_reader;
+                state.reader = std::make_unique<a11y::screen_scope>(
+                    &ctxt, drive_reader ? "DEFAULTMODE" : "activity",
                 []( const a11y::semantic_intent &intent ) -> std::optional<std::string> {
                     if( intent.action == "cancel" ) {
                         const avatar &player = get_avatar();
@@ -359,9 +371,37 @@ void handle_key_blocking_activity()
                     return std::nullopt;
                 } );
             }
-            state.reader->update( a11y::activity_snapshot( ctxt ) );
+            if( drive_reader ) {
+                // Reuse the already restricted ACT_AUTODRIVE documents and
+                // real world:here row, but expose them as the normal World
+                // screen. The activity remains alive ONLY on the game thread.
+                a11y::semantic_snapshot drive = a11y::activity_snapshot( ctxt );
+                drive.title = _( "World" );
+                drive.summary.clear();
+                drive.focus = "world:here";
+                drive.nodes.erase( std::remove_if( drive.nodes.begin(), drive.nodes.end(),
+                []( const a11y::semantic_node &node ) {
+                    return node.id != "world:here" &&
+                           node.id != "activity:autodrive" &&
+                           node.id != "world:status" &&
+                           node.id != "world:messages" &&
+                           node.id != "world:character_detail" &&
+                           node.id != "control_vehicle" &&
+                           node.id != "reader:coordinates" &&
+                           node.id.rfind( "reader:vehicle:", 0 ) != 0 &&
+                           node.id.rfind( "reader:scan:vehicle:", 0 ) != 0;
+                } ), drive.nodes.end() );
+                for( std::size_t i = 0; i < drive.nodes.size(); ++i ) {
+                    drive.nodes[i].position = i + 1;
+                    drive.nodes[i].total = drive.nodes.size();
+                }
+                state.reader->update( std::move( drive ) );
+            } else {
+                state.reader->update( a11y::activity_snapshot( ctxt ) );
+            }
         } else {
             state.reader.reset();
+            state.reader_is_autodrive = false;
         }
         const std::string action = ctxt.handle_input( 0 );
         bool refresh = true;

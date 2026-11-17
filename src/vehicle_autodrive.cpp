@@ -1489,10 +1489,23 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( !a11y_obstacle_stop ) {
             // A single diagnostic record per blocked segment. This records
             // why re-planning failed without flooding the spoken interface.
+            const auto_navigation_data &nav = active_autodrive_controller->get_data();
+            const node_address start = nav.nav_to_map.inverse().transform(
+                                           pos_abs().raw().xy(), to_orientation( face.dir() ) );
+            const bool valid_start = nav.nav_bounds.contains( start.get_point() ) &&
+                                     nav.valid_position( start );
+            const tripoint_rel_omt segment = nav.next_omt - nav.current_omt;
             a11y::android::diagnostic_event( "AUTODRIVE_ROUTE",
                     std::string( "paused reason=" ) + reason +
                     " remaining_omts=" + std::to_string( driver.omt_path.size() ) +
-                    " velocity=" + std::to_string( velocity ) );
+                    " velocity=" + std::to_string( velocity ) +
+                    " safe_speed_tps=" + std::to_string(
+                        active_autodrive_controller->get_data().max_cautious_speed_tps ) +
+                    " goal_states=" + std::to_string( nav.goal_zone.size() ) +
+                    " land_ok=" + ( nav.land_ok ? "true" : "false" ) +
+                    " start_valid=" + ( valid_start ? "true" : "false" ) +
+                    " segment_dx=" + std::to_string( segment.raw().x ) +
+                    " segment_dy=" + std::to_string( segment.raw().y ) );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
         }

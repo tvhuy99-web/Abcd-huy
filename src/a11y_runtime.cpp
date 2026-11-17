@@ -314,7 +314,8 @@ std::optional<std::string> poll_input( const void *input_owner )
         // revision-tolerant. The context token and monotonic request ID
         // remain mandatory; below we revalidate the node, permission and
         // native driver seat against the CURRENT snapshot before dispatch.
-        const bool activity_autodrive = screen.category == "activity" &&
+        const bool activity_autodrive =
+                ( screen.category == "activity" || screen.category == "DEFAULTMODE" ) &&
                 std::any_of( screen.snapshot.nodes.begin(), screen.snapshot.nodes.end(),
         []( const semantic_node &n ) { return n.id == "activity:autodrive"; } );
         const std::string &query = intent->node;

@@ -226,7 +226,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
 
     def test_activity_reader_allows_only_live_autodrive_queries(self):
         runtime = read(SRC / "a11y_runtime.cpp")
-        self.assertIn('screen.category == "activity"', runtime)
+        self.assertIn('screen.category == "activity" || screen.category == "DEFAULTMODE"', runtime)
         self.assertIn('n.id == "activity:autodrive"', runtime)
         self.assertIn('query.rfind( "reader:scan:vehicle:", 0 ) == 0', runtime)
         self.assertIn('query == "reader:coordinates"', runtime)
@@ -256,6 +256,36 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
                       CONTROLLER)
         self.assertNotIn("hub.setOnClickListener(view -> showComprehensiveMenu());",
                          CONTROLLER)
+
+    def test_autodrive_uses_world_reader_without_activity_menu(self):
+        world = read(SRC / "do_turn.cpp")
+        activity = read(SRC / "a11y_world.cpp")
+        self.assertIn('drive_reader ? "DEFAULTMODE" : "activity"', world)
+        self.assertIn('drive.title = _( "World" )', world)
+        self.assertIn('drive.focus = "world:here";', world)
+        self.assertIn('node.id != "activity:autodrive"', world)
+        self.assertIn('node.id != "world:here"', world)
+        self.assertIn('node.id.rfind( "reader:vehicle:", 0 )', world)
+        self.assertIn('reader_is_autodrive = drive_reader;', world)
+        self.assertIn('"world:here", "reader:vehicle:seat"', activity)
+        self.assertIn('next.find("activity:autodrive") != null;', CONTROLLER)
+        self.assertIn('if (autonomousDriveTrip || vehicleMode) {', CONTROLLER)
+        self.assertIn('"activity:autodrive".equals(node.id)', CONTROLLER)
+        self.assertIn('if (walkingTravelPanelActive()) {', CONTROLLER)
+
+    def test_compact_diagnostics_preserve_route_failures(self):
+        bridge = read(SRC / "a11y_android.cpp")
+        self.assertIn('std::array<performance_sample, 4> samples', bridge)
+        for category in ("WORLD_CACHE_PHASE", "WORLD_AI_COUNTS",
+                         "WORLD_SIM_TIMING", "WORLD_RENDER_BREAKDOWN"):
+            self.assertIn('"' + category + '"', bridge)
+        self.assertIn('std::chrono::seconds( 1 )', bridge)
+        self.assertIn("suppressed_samples=", bridge)
+        self.assertIn('diagnostic_event( "AUTODRIVE_ROUTE"', DRIVER)
+        self.assertIn("safe_speed_tps=", DRIVER)
+        self.assertIn("goal_states=", DRIVER)
+        self.assertIn("land_ok=", DRIVER)
+        self.assertIn("if( !a11y_obstacle_stop )", DRIVER)
 
     def test_quiet_journey_but_urgent_warnings_survive(self):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',

@@ -3,6 +3,7 @@
 #include "a11y_world_input_gate.h"
 
 #include <algorithm>
+#include <array>
 #include <atomic>
 #include <chrono>
 #include <deque>
@@ -613,6 +614,40 @@ void diagnostic_event( const std::string_view category, const std::string_view d
     if( !performance_profile_active.load( std::memory_order_acquire ) ) {
         return;
     }
+    // Performance counters were being written 300+ times a second while a
+    // paused autonomous car waited for input, evicting the rare diagnosis.
+    // Limit ONLY the four high-frequency profiling counters to one sample
+    // per second per category. Every action, screen, warning, error and route
+    // failure retains full fidelity. State is game-thread-only.
+    struct performance_sample {
+        std::string_view name;
+        std::chrono::steady_clock::time_point last{};
+        unsigned int suppressed = 0;
+    };
+    static std::array<performance_sample, 4> samples{{
+        { "WORLD_CACHE_PHASE", {}, 0 },
+        { "WORLD_AI_COUNTS", {}, 0 },
+        { "WORLD_SIM_TIMING", {}, 0 },
+        { "WORLD_RENDER_BREAKDOWN", {}, 0 }
+    }};
+    std::string emitted_detail( detail );
+    for( performance_sample &sample : samples ) {
+        if( category != sample.name ) {
+            continue;
+        }
+        const auto now = std::chrono::steady_clock::now();
+        if( sample.last != std::chrono::steady_clock::time_point{} &&
+            now - sample.last < std::chrono::seconds( 1 ) ) {
+            ++sample.suppressed;
+            return;
+        }
+        if( sample.suppressed != 0 ) {
+            emitted_detail += " suppressed_samples=" + std::to_string( sample.suppressed );
+        }
+        sample.last = now;
+        sample.suppressed = 0;
+        break;
+    }
     // Called on the native game thread; only ASCII internal action IDs are
     // sent here. User-entered text never crosses this diagnostic bridge.
     JNIEnv *env = static_cast<JNIEnv *>( GetAndroidJNIEnv() );
@@ -628,7 +663,7 @@ void diagnostic_event( const std::string_view category, const std::string_view d
                                              "(Ljava/lang/String;Ljava/lang/String;)V" );
         if( method != nullptr ) {
             jstring kind = env->NewStringUTF( std::string( category ).c_str() );
-            jstring info = env->NewStringUTF( std::string( detail ).c_str() );
+            jstring info = env->NewStringUTF( emitted_detail.c_str() );
             if( kind != nullptr && info != nullptr ) {
                 env->CallVoidMethod( activity, method, kind, info );
             }

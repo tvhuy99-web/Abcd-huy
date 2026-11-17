@@ -2124,7 +2124,9 @@ semantic_snapshot activity_snapshot( const input_context &context )
                                    "Switch to Map to cancel the trip." ) ) );
         semantic_snapshot car = world_snapshot( context, 1, 1, world_scan_filter::all );
         const std::vector<std::string> allowed = {
-            "reader:vehicle:seat", "reader:vehicle:driver",
+            // The native Drive snapshot needs a real world focus row to
+            // remain in the existing one-finger/two-finger reading context.
+            "world:here", "reader:vehicle:seat", "reader:vehicle:driver",
             "reader:vehicle:speed", "reader:vehicle:summary",
             "reader:vehicle:engine-state", "reader:vehicle:heading", "reader:vehicle:road",
             "reader:vehicle:detail", "reader:vehicle:horn",
