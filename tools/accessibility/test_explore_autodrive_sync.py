@@ -220,7 +220,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("safe_straight_reverse_step( here )", method)
         self.assertIn("const auto try_reverse_escape =", method)
         self.assertIn("if( try_reverse_escape() )", method)
-        self.assertIn("a11y_reverse_recovery_attempts < 2", method)
+        self.assertIn("a11y_reverse_recovery_attempts >= 2", method)
         self.assertIn("a11y_reverse_recovery_ticks++ >= 6", method)
         self.assertIn("a11y::vehicle_obstacle_ahead( *this, here, true )", method)
         self.assertIn("cruise_velocity = -VMIPH_PER_TPS;", method)
