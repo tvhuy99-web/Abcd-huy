@@ -40,7 +40,10 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
             method,
         )
         self.assertIn("you.omt_path = std::move( route );", method)
-        self.assertIn("you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );", method)
+        self.assertIn(
+            "you.assign_activity( autodrive_activity_actor( destination, destination_name, nearby_goal ) );",
+            method,
+        )
         self.assertNotIn("a11y_continuous_drive = true;", method)
 
     def test_nearby_boarding_and_ignition_precede_autodrive(self):
