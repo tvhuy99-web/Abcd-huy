@@ -475,7 +475,8 @@ class vehicle::autodrive_controller
         }
         void check_safe_speed( map &here );
         std::optional<navigation_step> compute_next_step( map &here );
-        std::optional<int> find_accessible_pivot( map &here );
+        std::optional<int> find_accessible_pivot( map &here,
+                const std::function<bool( int )> &can_pivot_first_step );
         std::string search_details() const;
         std::size_t reverse_start_options( map &here );
         collision_check_result check_collision_zone( map &here, orientation turn_dir );
@@ -1390,31 +1391,52 @@ std::size_t vehicle::autodrive_controller::reverse_start_options( map &here )
     return candidates.size();
 }
 
-std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &here )
+std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &here,
+        const std::function<bool( int )> &can_pivot_first_step )
 {
     precompute_data( here );
     if( driven_veh.velocity != 0 || !data.land_ok || data.is_flying ||
         data.max_cautious_speed_tps < MIN_SPEED_TPS ) {
         return std::nullopt;
     }
-    // Test alternate headings using the native A* and the vehicle footprint.
-    // The actual turn is separately validated against the entire swept body.
+    // Require only the NEXT 45-degree physical turn to be safe. Later
+    // increments will be checked again against the live swept footprint.
+    // Requiring the whole 90-180 degree rotation before the first step
+    // rejected viable turns and regressed Android autodrive.
     constexpr std::array<int, 7> turns = { 3, -3, 6, -6, 9, -9, 12 };
     const orientation current = to_orientation( driven_veh.face.dir() );
     const tripoint_abs_ms current_pos = driven_veh.pos_abs();
+    int blocked_first_turns = 0;
+    int invalid_headings = 0;
+    int no_path_headings = 0;
     for( const int steps : turns ) {
+        const int first_step = std::clamp( steps, -3, 3 );
+        if( !can_pivot_first_step( first_step ) ) {
+            ++blocked_first_turns;
+            continue;
+        }
         const orientation candidate = current + steps;
         const node_address start = data.nav_to_map.inverse().transform(
                 current_pos.raw().xy(), candidate );
         if( !data.nav_bounds.contains( start.get_point() ) ||
             !data.valid_position( start ) ) {
+            ++invalid_headings;
             continue;
         }
-        // Each alternate heading probe is bounded for mobile devices.
         if( compute_path( MIN_SPEED_TPS, candidate, 2000 ) ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
+                    "result=selected steps=" + std::to_string( steps ) +
+                    " first_step=" + std::to_string( first_step ) +
+                    " blocked_first=" + std::to_string( blocked_first_turns ) +
+                    " invalid_headings=" + std::to_string( invalid_headings ) );
             return steps;
         }
+        ++no_path_headings;
     }
+    a11y::android::diagnostic_event( "AUTODRIVE_PIVOT",
+            "result=none blocked_first=" + std::to_string( blocked_first_turns ) +
+            " invalid_headings=" + std::to_string( invalid_headings ) +
+            " no_path=" + std::to_string( no_path_headings ) );
     return std::nullopt;
 }
 
@@ -1677,9 +1699,12 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         // complete swept footprint is clear.
         if( a11y_pivot_steps_remaining == 0 && !a11y_pivot_tried ) {
             a11y_pivot_tried = true;
-            const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot( here );
-            if( pivot && a11y_rotate_in_place( here, *pivot, true ) ) {
-                // Never start a multi-turn pivot that cannot finish safely.
+            const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot(
+                    here, [&]( const int first_step ) {
+                return a11y_rotate_in_place( here, first_step, true );
+            } );
+            if( pivot ) {
+                // Every increment is still checked before physical rotation.
                 a11y_pivot_steps_remaining = *pivot;
             }
         }

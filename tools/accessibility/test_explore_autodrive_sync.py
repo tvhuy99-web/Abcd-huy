@@ -152,6 +152,15 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("case collision_check_result::no_visibility:", method)
         self.assertIn("if( !next_step )", method)
 
+    def test_pivot_preflight_checks_one_increment_and_continues_other_headings(self):
+        self.assertIn("constexpr std::array<int, 7> turns", DRIVER)
+        self.assertIn("std::clamp( steps, -3, 3 )", DRIVER)
+        self.assertIn("if( !can_pivot_first_step( first_step ) )", DRIVER)
+        self.assertIn("++blocked_first_turns;", DRIVER)
+        self.assertIn("++no_path_headings;", DRIVER)
+        self.assertIn("result=selected steps=", DRIVER)
+        self.assertIn("result=none blocked_first=", DRIVER)
+
     def test_successful_astar_reports_real_state_count(self):
         self.assertIn("last_search.search_nodes = known_nodes.size();", DRIVER)
         self.assertIn("last_search.found_goal = true;", DRIVER)
@@ -161,7 +170,9 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         for token in ("search_nodes=", "search_expanded=", "start_options=",
                       "rejected_footprint=", "search_limit=", "facing_degrees="):
             self.assertIn(token, DRIVER)
-        self.assertIn("find_accessible_pivot( here )", DRIVER)
+        self.assertIn("find_accessible_pivot(", DRIVER)
+        self.assertIn("can_pivot_first_step( first_step )", DRIVER)
+        self.assertIn('"AUTODRIVE_PIVOT"', DRIVER)
         self.assertIn("compute_path( MIN_SPEED_TPS, candidate, 2000 )", DRIVER)
         self.assertIn("a11y_rotate_in_place( here, step )", DRIVER)
         self.assertIn("a11y_pivot_steps_remaining -= step;", DRIVER)
@@ -174,7 +185,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_reroute_after_blocked_stationary_pivot(self):
         self.assertIn("const auto retry_nearby_route =", DRIVER)
         self.assertIn("if( retry_nearby_route() )", DRIVER)
-        self.assertIn("a11y_rotate_in_place( here, *pivot, true )", DRIVER)
+        self.assertIn("a11y_rotate_in_place( here, first_step, true )", DRIVER)
         self.assertIn("std::clamp( candidate_turn, -3, 3 ), true", DRIVER)
         self.assertIn('return safety_stop( "pivot_blocked" );', DRIVER)
 
