@@ -511,7 +511,8 @@ class vehicle::autodrive_controller
                                  int target_speed_tps,
                                  std::vector<std::pair<node_address, navigation_node>> &next_nodes ) const;
         std::optional<std::vector<navigation_step>> compute_path( int speed_tps,
-                std::optional<orientation> starting_heading = std::nullopt ) const;
+                std::optional<orientation> starting_heading = std::nullopt,
+                int search_limit = 10000 ) const;
 };
 
 static const std::array<orientation, NUM_ORIENTATIONS> &all_orientations()
@@ -1152,14 +1153,15 @@ const
 }
 
 std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compute_path(
-            int speed_tps, std::optional<orientation> starting_heading ) const
+            int speed_tps, std::optional<orientation> starting_heading,
+            int search_limit ) const
 {
     last_search = {};
     if( speed_tps == 0 || speed_tps < -1 ) {
         return std::nullopt;
     }
     // TODO: tweak this
-    constexpr int max_search_count = 10000;
+    const int max_search_count = search_limit;
     std::vector<navigation_step> ret;
     // TODO: check simple reachability first and bail out or set upper bound on node score
     std::unordered_map<node_address, navigation_node, node_address_hasher> known_nodes;
@@ -1382,7 +1384,8 @@ std::optional<int> vehicle::autodrive_controller::find_accessible_pivot( map &he
             !data.valid_position( start ) ) {
             continue;
         }
-        if( compute_path( MIN_SPEED_TPS, candidate ) ) {
+        // Each alternate heading probe is bounded for mobile devices.
+        if( compute_path( MIN_SPEED_TPS, candidate, 2000 ) ) {
             return steps;
         }
     }
@@ -1578,6 +1581,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " facing_degrees=" + std::to_string( units::to_degrees( face.dir() ) ) +
                     " pivot_attempted=" + ( a11y_pivot_tried ? "true" : "false" ) +
                     " pivot_remaining=" + std::to_string( a11y_pivot_steps_remaining ) +
+                    " alternatives_tried=" + ( a11y_route_alternatives_tried ? "true" : "false" ) +
                     active_autodrive_controller->search_details() );
             driver.add_msg_if_player( m_warning,
                                       _( "No safe route found. Vehicle paused." ) );
@@ -1685,6 +1689,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                     " candidates=" + std::to_string( alternatives.size() ) );
             driver.add_msg_if_player( m_info,
                                       _( "Autodrive found a new route to an area near the selected place." ) );
+            a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" + std::string(
+                                        _( "Autodrive found a new route to an area near the selected place." ) ), 1 );
             break;
         }
         if( !next_step ) {

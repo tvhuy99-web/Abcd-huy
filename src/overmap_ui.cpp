@@ -3315,8 +3315,8 @@ std::vector<std::vector<tripoint_abs_omt>> ui::omap::accessible_vehicle_alternat
 {
     std::vector<std::vector<tripoint_abs_omt>> results;
 #if defined(__ANDROID__)
-    constexpr std::size_t max_results = 6;
-    constexpr int max_path_checks = 24;
+    constexpr std::size_t max_results = 4;
+    constexpr int max_path_checks = 12;
     int checks = 0;
     const tripoint_abs_omt here = get_avatar().pos_abs_omt();
     for( int radius = 1; radius <= 2 && checks < max_path_checks &&

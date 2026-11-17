@@ -157,21 +157,22 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
                       "rejected_footprint=", "search_limit=", "facing_degrees="):
             self.assertIn(token, DRIVER)
         self.assertIn("find_accessible_pivot( here )", DRIVER)
-        self.assertIn("compute_path( MIN_SPEED_TPS, candidate )", DRIVER)
+        self.assertIn("compute_path( MIN_SPEED_TPS, candidate, 2000 )", DRIVER)
         self.assertIn("a11y_rotate_in_place( here, step )", DRIVER)
         self.assertIn("a11y_pivot_steps_remaining -= step;", DRIVER)
         self.assertIn("a11y_recovery_segment_omt.reset();", ACTOR)
 
     def test_bounded_strategic_alternate_only_after_local_failure(self):
         self.assertIn("accessible_vehicle_alternative_routes(", PLACES)
-        self.assertIn("max_path_checks = 24", PLACES)
-        self.assertIn("max_results = 6", PLACES)
+        self.assertIn("max_path_checks = 12", PLACES)
+        self.assertIn("max_results = 4", PLACES)
         self.assertIn("route.back() == blocked_step", PLACES)
         self.assertIn("overmap_buffer.seen( candidate )", PLACES)
         self.assertIn("!a11y_route_alternatives_tried", DRIVER)
         self.assertIn("omt_path = original_route;", DRIVER)
         self.assertIn("candidate_controller->compute_next_step( here )", DRIVER)
         self.assertIn("AUTODRIVE_REROUTE", DRIVER)
+        self.assertIn("A11Y_DRIVE_FEEDBACK:", DRIVER)
 
     def test_autonomous_planner_avoids_obstacles_before_emergency_braking(self):
         self.assertIn("if( a11y_manual_drive && !is_autodriving )", VEHICLE)
