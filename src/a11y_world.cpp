@@ -1760,9 +1760,9 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
         }
         return std::max( 1, closest );
     };
-    // Use exactly the same vehicle-specific collision rules as the native
-    // pathfinder, including wheels, floating capability, rotor lift,
-    // visible traps, loose objects, furniture and other vehicles.
+    // Use the native pathfinder's physical obstacle classification.
+    // Loose ground items do not stop real vehicle motion and must not
+    // trigger a false automatic-braking warning.
     const vehicle_autodrive::mobility_profile mobility{
         veh.valid_wheel_config( here ), veh.can_float( here ),
         veh.has_sufficient_rotorlift( here ), true
@@ -1799,9 +1799,6 @@ std::optional<vehicle_obstacle> vehicle_obstacle_ahead( vehicle &veh, map &here,
             }
             case vehicle_autodrive::tile_blocker::visible_trap:
                 label = here.tr_at( tile ).name();
-                break;
-            case vehicle_autodrive::tile_blocker::loose_items:
-                label = _( "Loose items on the route" );
                 break;
             case vehicle_autodrive::tile_blocker::furniture:
                 label = here.furnname( tile );

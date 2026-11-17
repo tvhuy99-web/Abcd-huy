@@ -169,6 +169,9 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Only the requested comprehensive menu appears as an Android overlay;
     // routine gameplay keeps the transparent, dashboard-free surface.
     private boolean comprehensiveMenu;
+    // Hub commands must be activated as their own action, never reinterpreted
+    // as a world double-tap that pauses the car.
+    private boolean activatingHubCommand;
     private int hubSection = GameActionHub.ROOT;
     private int hubIndex;
     private int hubRootIndex;
@@ -206,6 +209,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
     // Map gestures stay locked until the native driver has actually let go.
     private boolean vehicleReleasePending;
     private boolean pendingVehicleHeadingReport;
+    private String vehicleHeadingBeforeCommand = "";
     // Preserve the last real engine state across transient ignition/activity
     // screens. Compare only snapshots belonging to the same vehicle.
     private String observedEngineVehicle = "";
@@ -898,7 +902,10 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 if (pendingVehicleHeadingReport && "DEFAULTMODE".equals(next.category)) {
                     pendingVehicleHeadingReport = false;
                     ReaderSnapshot.Node heading = next.find("reader:vehicle:heading");
-                    if (heading != null && !heading.detail.isEmpty()) {
+                    // A refused stationary pivot leaves face.dir() unchanged.
+                    // Do not read the same compass direction as a success.
+                    if (heading != null && !heading.detail.isEmpty()
+                            && !heading.detail.equals(vehicleHeadingBeforeCommand)) {
                         final String report = heading.detail;
                         handler.post(() -> {
                             if (vehicleMode && directWorldGesturesEnabled()) {
@@ -906,6 +913,7 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                             }
                         });
                     }
+                    vehicleHeadingBeforeCommand = "";
                 }
                 // Every native snapshot publishes the current game message
                 // history, even when the first screen after load is inventory.
@@ -3801,6 +3809,8 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
         }
         if ("LEFT".equals(id) || "RIGHT".equals(id)
                 || id.startsWith("reader:vehicle:heading:")) {
+            ReaderSnapshot.Node previous = snapshot.find("reader:vehicle:heading");
+            vehicleHeadingBeforeCommand = previous == null ? "" : previous.detail;
             pendingVehicleHeadingReport = true;
         }
         // Native pause/resume now announces the actual result. A queued
@@ -4433,14 +4443,22 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                     ? R.string.a11yTargetOriginalControls : R.string.a11yTargetDirections));
             return;
         }
+        // The hub is a menu, even when a driving mode remains active.
+        // Prioritise its selected command over the world pause gesture.
+        if (comprehensiveMenu) {
+            if (choosingHubAction) { applyHubActionChoice(); }
+            else if (choosingGesture) { applyGestureChoice(); }
+            else { activateHub(); }
+            return;
+        }
         // The native destination actor, not a separate UI panel, owns
         // fully autonomous Pause/Resume. Preserve this gesture in Drive.
-        if (autonomousDriveTravelActive()) {
+        if (!activatingHubCommand && autonomousDriveTravelActive()) {
             pauseOrResumeAutonomousDrive();
             return;
         }
         // World double tap becomes Pause/Resume only when Drive is active.
-        if (vehicleMode && directWorldGesturesEnabled()) {
+        if (!activatingHubCommand && vehicleMode && directWorldGesturesEnabled()) {
             requestVehicleAction("reader:vehicle:pause");
             return;
         }
@@ -4450,12 +4468,6 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
             return;
         }
         if (editor != null) { editor.activate(); return; }
-        if (comprehensiveMenu) {
-            if (choosingHubAction) { applyHubActionChoice(); }
-            else if (choosingGesture) { applyGestureChoice(); }
-            else { activateHub(); }
-            return;
-        }
         if (pocketStage != 0) {
             activatePocketPicker();
             return;
@@ -5185,7 +5197,12 @@ public final class GameReaderController implements AutoCloseable, ReaderGestureS
                 root.cancelGesture();
                 focus = item.node;
                 render();
-                activate();
+                activatingHubCommand = true;
+                try {
+                    activate();
+                } finally {
+                    activatingHubCommand = false;
+                }
                 return;
             default:
                 return;

@@ -415,8 +415,10 @@ vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(
                tile_blocker::none : tile_blocker::other_vehicle;
     }
 
-    // Do not diverge from native autodrive's classification of creatures,
-    // visible traps, loose objects or obstructing furniture.
+    // Physical obstacles are classified identically for A*, stationary
+    // rotation and the reader's forward/reverse sensors. Ground item stacks
+    // are NOT solid walls: native vehicle wheels drive over loose items and
+    // may damage them or take damage according to the ordinary physics.
     const Creature *creature = get_creature_tracker().creature_at( pt, true );
     if( creature && ( mobility.unrestricted_creatures ||
                       driver.sees( here, *creature ) ) ) {
@@ -424,9 +426,6 @@ vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(
     }
     if( here.can_see_trap_at( pt, driver ) ) {
         return tile_blocker::visible_trap;
-    }
-    if( here.has_items( pt ) ) {
-        return tile_blocker::loose_items;
     }
     const furn_id &furniture = here.furn( pt );
     if( furniture != furn_str_id::NULL_ID() && furniture.obj().movecost != 0 ) {

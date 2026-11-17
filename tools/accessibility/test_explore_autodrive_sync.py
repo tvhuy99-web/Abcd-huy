@@ -166,6 +166,29 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("last_search.found_goal = true;", DRIVER)
         self.assertIn('"goal_found"', DRIVER)
 
+    def test_ground_items_are_not_fabricated_solid_vehicle_obstacles(self):
+        classifier = DRIVER.split("vehicle_autodrive::tile_blocker vehicle_autodrive::classify_tile(", 1)[1].split("class vehicle::autodrive_controller", 1)[0]
+        self.assertNotIn("here.has_items( pt )", classifier)
+        self.assertIn("tile_blocker::other_vehicle", classifier)
+        self.assertIn("tile_blocker::creature", classifier)
+        self.assertIn("tile_blocker::visible_trap", classifier)
+        self.assertIn("tile_blocker::furniture", classifier)
+        self.assertIn("tile_blocker::terrain", classifier)
+        self.assertIn("vehicle_autodrive::classify_tile( veh, here, tile,", read(SRC / "a11y_world.cpp"))
+        self.assertIn("vehicle_autodrive::classify_tile( *this, here, tile,", read(SRC / "vehicle_move.cpp"))
+
+    def test_hub_selection_cannot_pause_or_resume_a_vehicle(self):
+        part = CONTROLLER.split("public void activate()", 1)[1].split("public void readCurrent()", 1)[0]
+        self.assertLess(part.index("if (comprehensiveMenu)"), part.index("if (!activatingHubCommand && autonomousDriveTravelActive())"))
+        self.assertLess(part.index("if (comprehensiveMenu)"), part.index("if (!activatingHubCommand && vehicleMode"))
+        self.assertIn("activatingHubCommand = true;", CONTROLLER)
+        self.assertIn("activatingHubCommand = false;", CONTROLLER)
+
+    def test_heading_speech_only_after_real_body_heading_change(self):
+        self.assertIn("vehicleHeadingBeforeCommand = previous", CONTROLLER)
+        self.assertIn("!heading.detail.equals(vehicleHeadingBeforeCommand)", CONTROLLER)
+        self.assertIn("pendingVehicleHeadingReport = false;", CONTROLLER)
+
     def test_diagnose_and_recover_stopped_car_before_stopping(self):
         for token in ("search_nodes=", "search_expanded=", "start_options=",
                       "rejected_footprint=", "search_limit=", "facing_degrees="):

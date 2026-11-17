@@ -768,8 +768,6 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
                 return "creature";
             case vehicle_autodrive::tile_blocker::visible_trap:
                 return "visible_trap";
-            case vehicle_autodrive::tile_blocker::loose_items:
-                return "loose_items";
             case vehicle_autodrive::tile_blocker::furniture:
                 return "furniture";
             case vehicle_autodrive::tile_blocker::terrain:
@@ -861,6 +859,8 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
                 }
                 return false;
             }
+            // An ordinary loose item on a drivable tile is not a wall.
+            // This shared classification is also used by both drive sensors.
             const vehicle_autodrive::tile_blocker obstacle =
                 vehicle_autodrive::classify_tile( *this, here, tile, get_avatar(), mobility );
             if( obstacle != vehicle_autodrive::tile_blocker::none ) {

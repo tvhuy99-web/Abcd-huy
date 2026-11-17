@@ -31,6 +31,7 @@
 #include "veh_appliance.h"
 #include "veh_type.h"
 #include "vehicle.h"
+#include "vehicle_autodrive_tiles.h"
 #include "vpart_position.h"
 #include "vpart_range.h"
 
@@ -1015,4 +1016,38 @@ TEST_CASE( "vehicle_wheels_damaged_by_running_over_items", "[vehicle]" )
 
         run_squish_test( test_items, test_point, here, veh_ptr, vp_wheel );
     }
+}
+
+
+TEST_CASE( "accessible_vehicle_collision_classifier_ignores_loose_ground_items",
+           "[vehicle][a11y][autodrive]" )
+{
+    clear_map_without_vision();
+    clear_vehicles();
+    clear_creatures();
+    map &here = get_map();
+    Character &driver = get_player_character();
+    const tripoint_bub_ms tile( 65, 65, 0 );
+    const tripoint_bub_ms car_pos( 60, 60, 0 );
+    here.ter_set( tile, ter_str_id( "t_pavement" ).id() );
+    here.furn_set( tile, furn_str_id::NULL_ID().id() );
+    here.i_clear( tile );
+    vehicle *car = here.add_vehicle( vehicle_prototype_car, car_pos, 0_degrees, 0,
+                                     veh_spawn_status::UNDAMAGED );
+    REQUIRE( car != nullptr );
+    const vehicle_autodrive::mobility_profile wheels{ true, false, false, true };
+    CHECK( vehicle_autodrive::classify_tile( *car, here, tile, driver, wheels ) ==
+           vehicle_autodrive::tile_blocker::none );
+
+    // A physical item lying on clear pavement must not become a solid wall.
+    here.add_item_or_charges( tile, item( itype_jeans ) );
+    REQUIRE( here.has_items( tile ) );
+    CHECK( vehicle_autodrive::classify_tile( *car, here, tile, driver, wheels ) ==
+           vehicle_autodrive::tile_blocker::none );
+
+    // Genuine impassable terrain still stops every accessible driving mode.
+    here.ter_set( tile, ter_str_id( "t_wall" ).id() );
+    CHECK( vehicle_autodrive::classify_tile( *car, here, tile, driver, wheels ) ==
+           vehicle_autodrive::tile_blocker::terrain );
+    here.i_clear( tile );
 }

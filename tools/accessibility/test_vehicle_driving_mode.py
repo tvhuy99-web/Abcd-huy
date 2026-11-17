@@ -425,7 +425,7 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertIn('" tile=" + tile.to_string()', VEH_MOVE)
         self.assertIn('" heading_deg="', VEH_MOVE)
         for category in ("map_boundary", "other_vehicle", "creature", "visible_trap",
-                         "loose_items", "furniture", "terrain", "broken_steering_or_wheels"):
+                         "furniture", "terrain", "broken_steering_or_wheels"):
             self.assertIn('"' + category + '"', VEH_MOVE)
         self.assertIn("record_block( blocker_kind( obstacle ), tile, step, heading );", VEH_MOVE)
 

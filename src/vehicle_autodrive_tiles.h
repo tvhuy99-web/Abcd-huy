@@ -20,7 +20,6 @@ enum class tile_blocker {
     other_vehicle,
     creature,
     visible_trap,
-    loose_items,
     furniture,
     terrain
 };
