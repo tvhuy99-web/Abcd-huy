@@ -749,6 +749,28 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
         }
         const std::string terrain_name = here.inbounds( tile ) ?
                                          here.name( tile ) : "outside_loaded_map";
+        // Report the ACTUAL obstacle, not the ground's name. A trap hidden
+        // on grass is a trap, not "grass blocking the vehicle".
+        std::string obstacle_name = terrain_name;
+        if( here.inbounds( tile ) ) {
+            if( std::string( kind ) == "visible_trap" ) {
+                obstacle_name = here.tr_at( tile ).name();
+            } else if( std::string( kind ) == "furniture" ) {
+                obstacle_name = here.furnname( tile );
+            } else if( std::string( kind ) == "creature" ) {
+                const Creature *creature = get_creature_tracker().creature_at( tile, true );
+                if( creature ) {
+                    obstacle_name = creature->disp_name();
+                }
+            } else if( std::string( kind ) == "other_vehicle" ) {
+                const optional_vpart_position other = here.veh_at( tile );
+                if( other ) {
+                    obstacle_name = other->vehicle().name;
+                }
+            } else if( std::string( kind ) == "terrain" ) {
+                obstacle_name = here.tername( tile );
+            }
+        }
         a11y::android::diagnostic_event( "AUTODRIVE_PIVOT_BLOCK",
                 "preview=" + std::string( preview_only ? "true" : "false" ) +
                 " turn_steps=" + std::to_string( steering_steps ) +
@@ -756,7 +778,8 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
                 " heading_deg=" + std::to_string( units::to_degrees( heading ) ) +
                 " tile=" + tile.to_string() +
                 " kind=" + kind +
-                " terrain_name=" + terrain_name );
+                " terrain_name=" + terrain_name +
+                " blocker_name=" + obstacle_name );
     };
     const auto blocker_kind = []( const vehicle_autodrive::tile_blocker kind ) {
         switch( kind ) {
@@ -866,8 +889,15 @@ bool vehicle::a11y_rotate_in_place( map &here, const int steering_steps,
             if( obstacle != vehicle_autodrive::tile_blocker::none ) {
                 record_block( blocker_kind( obstacle ), tile, step, heading );
                 if( !preview_only ) {
+                    const std::string blocker_name =
+                        obstacle == vehicle_autodrive::tile_blocker::visible_trap ?
+                        here.tr_at( tile ).name() :
+                        obstacle == vehicle_autodrive::tile_blocker::furniture ?
+                        here.furnname( tile ) :
+                        obstacle == vehicle_autodrive::tile_blocker::terrain ?
+                        here.tername( tile ) : here.name( tile );
                     add_msg( m_warning, _( "Cannot turn in place: %s is in the way." ),
-                             here.name( tile ) );
+                             blocker_name );
                 }
                 return false;
             }

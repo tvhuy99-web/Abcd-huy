@@ -422,6 +422,10 @@ class AccessibleVehicleContracts(unittest.TestCase):
         self.assertNotIn("here.ter( tile ).obj().is_smashable()", VEH_MOVE)
         self.assertIn('"AUTODRIVE_PIVOT_BLOCK"', VEH_MOVE)
         self.assertIn('" terrain_name=" + terrain_name', VEH_MOVE)
+        self.assertIn('" blocker_name=" + obstacle_name', VEH_MOVE)
+        self.assertIn("here.tr_at( tile ).name()", VEH_MOVE)
+        self.assertIn("here.furnname( tile )", VEH_MOVE)
+        self.assertIn("here.tername( tile )", VEH_MOVE)
         self.assertIn('" tile=" + tile.to_string()', VEH_MOVE)
         self.assertIn('" heading_deg="', VEH_MOVE)
         for category in ("map_boundary", "other_vehicle", "creature", "visible_trap",
