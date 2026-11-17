@@ -1,10 +1,12 @@
 #include "gamemode_tutorial.h" // IWYU pragma: associated
 
+#include <array>
 #include <memory>
 #include <optional>
 #include <string>
 
 #include "action.h"
+#include "a11y_android.h"
 #include "avatar.h"
 #include "calendar.h"
 #include "character.h"
@@ -185,6 +187,29 @@ bool tutorial_game::init()
 
     // This shifts the view to center the players pos
     g->update_map( player_character );
+#if defined(__ANDROID__)
+    // The tutorial map has four stationary practice dummies. On Android the
+    // map can be available before its mapgen monsters are activated, leaving
+    // the screen-reader tutorial asking for a melee hit when no target exists.
+    // Restore only empty prescribed tiles, never overwrite an existing
+    // creature, and never respawn dummies killed during play.
+    const std::array<point, 4> dummy_offsets = {
+        point( 21, 9 ), point( 8, 10 ), point( 15, 12 ), point( 18, 22 )
+    };
+    const tripoint_abs_ms tutorial_origin = project_to<coords::ms>( lp_abs );
+    const mtype_id tutorial_dummy( "mon_dummy_tutorial" );
+    map &tutorial_map = get_map();
+    for( const point &offset : dummy_offsets ) {
+        const tripoint_bub_ms tile = tutorial_map.get_bub( tutorial_origin + offset );
+        if( tutorial_map.inbounds( tile ) && g->is_empty( tile ) ) {
+            const monster *placed = g->place_critter_at( tutorial_dummy, tile );
+            a11y::android::diagnostic_event( "TUTORIAL_DUMMY",
+                    std::string( "action=" ) + ( placed ? "restored" : "restore_failed" ) +
+                    " x=" + std::to_string( tutorial_origin.x() + offset.x ) +
+                    " y=" + std::to_string( tutorial_origin.y() + offset.y ) );
+        }
+    }
+#endif
     return true;
 }
 
