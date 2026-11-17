@@ -493,6 +493,7 @@ class vehicle::autodrive_controller
             std::size_t rejected_footprint = 0;
             std::size_t rejected_backtrack = 0;
             std::size_t search_nodes = 0;
+            bool found_goal = false;
             bool hit_limit = false;
         };
         mutable search_diagnostics last_search;
@@ -1186,6 +1187,8 @@ std::optional<std::vector<navigation_step>> vehicle::autodrive_controller::compu
         open_set.pop();
         const navigation_node &cur_node = known_nodes[cur_addr];
         if( cur_node.is_goal ) {
+            last_search.search_nodes = known_nodes.size();
+            last_search.found_goal = true;
             node_address addr = cur_addr;
             while( !( addr == start ) ) {
                 const navigation_node &node = known_nodes.at( addr );
@@ -1356,7 +1359,8 @@ bool vehicle::autodrive_controller::check_greedy_mode()
 
 std::string vehicle::autodrive_controller::search_details() const
 {
-    const std::string classification = last_search.start_options == 0 ? "no_initial_step" :
+    const std::string classification = last_search.found_goal ? "goal_found" :
+                                       last_search.start_options == 0 ? "no_initial_step" :
                                        last_search.hit_limit ? "search_budget" : "no_connected_path";
     return " search_class=" + classification +
            " search_nodes=" + std::to_string( last_search.search_nodes ) +
@@ -1674,7 +1678,8 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         if( a11y_pivot_steps_remaining == 0 && !a11y_pivot_tried ) {
             a11y_pivot_tried = true;
             const std::optional<int> pivot = active_autodrive_controller->find_accessible_pivot( here );
-            if( pivot ) {
+            if( pivot && a11y_rotate_in_place( here, *pivot, true ) ) {
+                // Never start a multi-turn pivot that cannot finish safely.
                 a11y_pivot_steps_remaining = *pivot;
             }
         }
@@ -1690,8 +1695,12 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             a11y_pivot_steps_remaining = 0;
         }
     }
-    if( !next_step && reader_autodrive && !a11y_route_alternatives_tried &&
-        !omt_path.empty() ) {
+    // Reuse bounded alternate-route discovery both for no local A* path
+    // and for a turn whose actual swept footprint cannot be rotated.
+    const auto retry_nearby_route = [&]() -> std::optional<navigation_step> {
+        if( !( reader_autodrive && !a11y_route_alternatives_tried && !omt_path.empty() ) ) {
+            return std::nullopt;
+        }
         a11y_route_alternatives_tried = true;
         const std::vector<tripoint_abs_omt> original_route = omt_path;
         const auto alternatives = ui::omap::accessible_vehicle_alternative_routes(
@@ -1705,8 +1714,17 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             if( !candidate_step || candidate_step->pos.xy() != veh_pos.xy() ) {
                 continue;
             }
+            // A valid A* step is not enough: reject routes whose first
+            // stationary turn cannot physically clear the body sweep.
+            if( velocity == 0 && !is_rotorcraft( here ) ) {
+                const int candidate_turn = orientation_diff( candidate_step->steering_dir,
+                                           to_orientation( turn_dir ) );
+                if( candidate_turn != 0 && !a11y_rotate_in_place(
+                        here, std::clamp( candidate_turn, -3, 3 ), true ) ) {
+                    continue;
+                }
+            }
             active_autodrive_controller = std::move( candidate_controller );
-            next_step = candidate_step;
             a11y_pivot_steps_remaining = 0;
             a11y::android::diagnostic_event( "AUTODRIVE_REROUTE",
                     "accepted alternate_route_omts=" + std::to_string( route.size() ) +
@@ -1715,11 +1733,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
                                       _( "Autodrive found a new route to an area near the selected place." ) );
             a11y::android::announce( "A11Y_DRIVE_FEEDBACK:" + std::string(
                                         _( "Autodrive found a new route to an area near the selected place." ) ), 1 );
-            break;
+            return candidate_step;
         }
-        if( !next_step ) {
-            omt_path = original_route;
-        }
+        omt_path = original_route;
+        return std::nullopt;
+    };
+    if( !next_step ) {
+        next_step = retry_nearby_route();
     }
     if( !next_step ) {
         if( reader_autodrive ) {
@@ -1797,6 +1817,13 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         // after the physical heading has changed. No throttle in this turn.
         cruise_velocity = 0;
         if( !a11y_rotate_in_place( here, std::clamp( turn_delta, -3, 3 ) ) ) {
+            // A* found a turn but the real vehicle cannot execute it.
+            // Try a different initial segment before giving up.
+            if( retry_nearby_route() ) {
+                cruise_velocity = 0;
+                driver.set_moves( 0 );
+                return autodrive_result::ok;
+            }
             return safety_stop( "pivot_blocked" );
         }
         active_autodrive_controller.reset();

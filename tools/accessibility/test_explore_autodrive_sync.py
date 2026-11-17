@@ -152,6 +152,11 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("case collision_check_result::no_visibility:", method)
         self.assertIn("if( !next_step )", method)
 
+    def test_successful_astar_reports_real_state_count(self):
+        self.assertIn("last_search.search_nodes = known_nodes.size();", DRIVER)
+        self.assertIn("last_search.found_goal = true;", DRIVER)
+        self.assertIn('"goal_found"', DRIVER)
+
     def test_diagnose_and_recover_stopped_car_before_stopping(self):
         for token in ("search_nodes=", "search_expanded=", "start_options=",
                       "rejected_footprint=", "search_limit=", "facing_degrees="):
@@ -165,6 +170,13 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn("search_class=", DRIVER)
         self.assertIn("no_initial_step", DRIVER)
         self.assertIn("search_budget", DRIVER)
+
+    def test_reroute_after_blocked_stationary_pivot(self):
+        self.assertIn("const auto retry_nearby_route =", DRIVER)
+        self.assertIn("if( retry_nearby_route() )", DRIVER)
+        self.assertIn("a11y_rotate_in_place( here, *pivot, true )", DRIVER)
+        self.assertIn("std::clamp( candidate_turn, -3, 3 ), true", DRIVER)
+        self.assertIn('return safety_stop( "pivot_blocked" );', DRIVER)
 
     def test_bounded_strategic_alternate_only_after_local_failure(self):
         self.assertIn("accessible_vehicle_alternative_routes(", PLACES)
