@@ -1719,9 +1719,16 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
 {
     const bool reader_autodrive = a11y::enabled() && driver.is_avatar();
     if( !is_autodriving ) {
+        if( reader_autodrive ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_ABORT", "reason=already_stopped" );
+        }
         return autodrive_result::abort;
     }
     if( !player_in_control( here, driver ) || skidding ) {
+        if( reader_autodrive ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_ABORT",
+                    skidding ? "reason=skidding" : "reason=driver_controls_lost" );
+        }
         driver.add_msg_if_player( m_warning, _( "You lose control as the vehicle starts skidding." ) );
         if( reader_autodrive ) {
             cruise_velocity = 0;
@@ -1765,7 +1772,7 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
             // One speech report with real remaining distance is produced
             // on the following activity state transition. Never also enqueue
             // a separate warning that duplicates that report.
-            if( !reader_autodrive ) {
+            if( !reader_autodrive || !a11y::android::enabled() ) {
                 driver.add_msg_if_player( m_warning,
                                           _( "No safe route found. Vehicle paused." ) );
             }
@@ -1814,6 +1821,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         active_autodrive_controller = std::make_shared<autodrive_controller>( *this, driver );
     }
     if( &active_autodrive_controller->get_driver() != &driver ) {
+        if( reader_autodrive ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_ABORT", "reason=driver_changed" );
+        }
         debugmsg( "Driver changed while auto-driving" );
         stop_autodriving();
         return autodrive_result::abort;
@@ -2013,6 +2023,9 @@ autodrive_result vehicle::do_autodrive( map &here, Character &driver )
         a11y_pivot_steps_remaining = 0;
     }
     if( next_step->pos.xy() != veh_pos.xy() ) {
+        if( reader_autodrive ) {
+            a11y::android::diagnostic_event( "AUTODRIVE_ABORT", "reason=invalid_next_step" );
+        }
         debugmsg( "compute_next_step returned an invalid result" );
         stop_autodriving();
         return autodrive_result::abort;

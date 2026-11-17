@@ -804,6 +804,19 @@ static void a11y_brake_autodrive( vehicle &car, map &here )
 }
 
 
+// Distance to the nearest real tile of the selected 24x24 map area,
+// not its center. Arrival in that area is zero tiles, not a misleading 11.
+static int reader_distance_to_place( const tripoint_abs_ms &pos,
+                                     const tripoint_abs_omt &destination )
+{
+    const tripoint_abs_ms top_left = project_to<coords::ms>( destination );
+    const int dx = std::max( 0, std::max( top_left.x() - pos.x(),
+                             pos.x() - ( top_left.x() + OMT_SIZE - 1 ) ) );
+    const int dy = std::max( 0, std::max( top_left.y() - pos.y(),
+                             pos.y() - ( top_left.y() + OMT_SIZE - 1 ) ) );
+    return std::max( dx, dy );
+}
+
 void autodrive_activity_actor::reader_report( Character &who, const char *event,
         const std::string &reason ) const
 {
@@ -812,18 +825,20 @@ void autodrive_activity_actor::reader_report( Character &who, const char *event,
     }
     const tripoint_abs_ms pos = player_vehicle ? player_vehicle->pos_abs() : who.pos_abs();
     const int remaining = reader_destination ?
-                          std::max( std::abs( project_to<coords::ms>( *reader_destination ).x() +
-                                              OMT_SIZE / 2 - pos.x() ),
-                                    std::abs( project_to<coords::ms>( *reader_destination ).y() +
-                                              OMT_SIZE / 2 - pos.y() ) ) : -1;
-    a11y::android::diagnostic_event( "AUTODRIVE_STATE",
-            std::string( "event=" ) + event + " reason=" + reason +
-            " x=" + std::to_string( pos.x() ) +
-            " y=" + std::to_string( pos.y() ) +
-            " z=" + std::to_string( pos.z() ) +
-            " velocity=" + std::to_string( player_vehicle ? player_vehicle->velocity : 0 ) +
-            " distance_tiles=" + std::to_string( remaining ) +
-            " reachable_goal=" + ( reader_nearby_goal ? "true" : "false" ) );
+                          reader_distance_to_place( pos, *reader_destination ) : -1;
+    const std::string detail = std::string( "event=" ) + event + " reason=" + reason +
+                               " x=" + std::to_string( pos.x() ) +
+                               " y=" + std::to_string( pos.y() ) +
+                               " z=" + std::to_string( pos.z() ) +
+                               " position_source=" + ( player_vehicle ? "vehicle" : "avatar" ) +
+                               " velocity=" + ( player_vehicle ? std::to_string( player_vehicle->velocity ) :
+                                                "unknown" ) +
+                               " distance_tiles=" + std::to_string( remaining ) +
+                               " reachable_goal=" + ( reader_nearby_goal ? "true" : "false" );
+    a11y::android::diagnostic_event( "AUTODRIVE_STATE", detail );
+    if( std::string( event ) == "ended" ) {
+        a11y::android::diagnostic_event( "AUTODRIVE_END", detail );
+    }
 }
 
 void autodrive_activity_actor::reader_announce( Character &who, const char *event,
@@ -836,9 +851,7 @@ void autodrive_activity_actor::reader_announce( Character &who, const char *even
     std::string announcement = message;
     if( reader_destination ) {
         const tripoint_abs_ms pos = player_vehicle ? player_vehicle->pos_abs() : who.pos_abs();
-        const tripoint_abs_ms center = project_to<coords::ms>( *reader_destination );
-        const int remaining = std::max( std::abs( center.x() + OMT_SIZE / 2 - pos.x() ),
-                                        std::abs( center.y() + OMT_SIZE / 2 - pos.y() ) );
+        const int remaining = reader_distance_to_place( pos, *reader_destination );
         const std::string name = reader_destination_name.empty() ?
                                  _( "the selected place" ) : reader_destination_name;
         announcement += " " + string_format( _( "%s is approximately %d tiles away." ),
