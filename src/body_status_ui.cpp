@@ -997,6 +997,30 @@ void body_status_ui_impl::draw_info()
 }
 
 
+void body_status_ui_impl::draw_info_imgui( const std::vector<std::string> &lines ) const
+{
+    for( const std::string &line : lines ) {
+        if( line == "--" ) {
+            ImGui::Separator();
+        } else {
+            cataimgui::draw_colored_text( line );
+        }
+    }
+}
+
+void body_status_ui_impl::draw_graph_imgui(
+    const std::optional<std::string> &bodypart_or_subpart_id )
+{
+    // Preserve the colored text and fragment highlighting supplied by the
+    // bodygraph renderer instead of replacing it with a generic picture.
+    const std::string graph = ui_parent->bs_uistate.prepare_bodygraph_text( bodypart_or_subpart_id );
+    std::istringstream lines( graph );
+    std::string line;
+    while( std::getline( lines, line ) ) {
+        cataimgui::draw_colored_text( line );
+    }
+}
+
 void body_status_ui_impl::draw_worn_items_by_limb()
 {
     const body_status_uistate &bs_uistate = ui_parent->bs_uistate;
