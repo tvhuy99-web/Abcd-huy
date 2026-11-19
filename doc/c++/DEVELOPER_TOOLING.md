@@ -147,8 +147,7 @@ LLVM_VERSION=21 COMPILER=clang++-21 CATA_CLANG_TIDY=clang-tidy-21 \
 
 The build directory can be overridden with `CATA_BUILD_DIR` (default `build`),
 which is honoured by `clang-tidy-build.sh`, `clang-tidy-run.sh`,
-`clang-tidy-wrapper.sh`, `tools/repeat_clang_tidy.sh`, and
-`tools/llama/clang_tidy.sh`.
+`clang-tidy-wrapper.sh`, and `tools/repeat_clang_tidy.sh`.
 
 #### Ubuntu Focal
 

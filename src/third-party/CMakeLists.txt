@@ -64,30 +64,6 @@ target_link_libraries(
         )
 
 
-# GHC filesystem
-file(GLOB GHC_HEADERS ghc/*.hpp)
-
-add_library(
-        ghc-filesystem
-        INTERFACE)
-
-target_sources(
-        ghc-filesystem
-        INTERFACE
-        ${GHC_HEADERS})
-
-target_include_directories(
-        ghc-filesystem
-        SYSTEM
-        INTERFACE
-        ${CMAKE_CURRENT_SOURCE_DIR})
-
-target_link_libraries(
-        third-party
-        INTERFACE
-        ghc-filesystem
-        )
-
 # ImGUI
 if (TILES)
         set(_imgui_backend_sources

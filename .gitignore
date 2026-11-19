@@ -10,7 +10,6 @@
 !/.gitattributes
 !/.github/
 !/.gitignore
-!/.gitmessage
 !/.tx/
 !/.vscode/
 /.vscode/**
