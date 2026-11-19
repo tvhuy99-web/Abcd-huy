@@ -9853,6 +9853,9 @@ bool npc::item_whitelisted( const item &it )
     return item_name_whitelisted( to_match );
 }
 
+namespace talk_topic_all
+{
+
 const json_talk_topic *get_talk_topic( const std::string &id )
 {
     auto it = json_talk_topics.find( id );
@@ -9871,3 +9874,5 @@ std::vector<std::string> get_all_talk_topic_ids()
     }
     return dialogue_ids;
 }
+
+} // namespace talk_topic_all
