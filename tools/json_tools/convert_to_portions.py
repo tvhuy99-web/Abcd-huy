@@ -38,8 +38,6 @@ def portionize(jo):
 def gen_new(path):
     change = False
 
-
-
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -68,8 +66,6 @@ def gen_new(path):
                     jo["armor_data"] = new_data
                     change = True
                 continue
-
-
 
             new_jo = portionize(jo)
             if new_jo is not None:

@@ -298,7 +298,6 @@ class Handler:
             if key not in JSON_INFO:
                 raise HandlerUnhandledType(key)
 
-
             total_squares = math.ceil(
                 JSON_INFO[key]['tiles_per'] * len(value) / 576)
             square_length = math.ceil(math.sqrt(total_squares))

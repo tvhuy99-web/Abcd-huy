@@ -84,7 +84,6 @@ class NativeBumpCombatGestures(unittest.TestCase):
 
     def test_nearby_direction_description_is_declared_before_use(self):
 
-
         definition = self.nearby.index("const auto relative_words = [](")
         handler = self.nearby.index('a11y::screen_scope reader( &ctxt, "surroundings"')
         first_use = self.nearby.index("relative_words( target.relative )")

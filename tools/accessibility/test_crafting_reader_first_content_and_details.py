@@ -29,7 +29,6 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
 
     def test_no_visual_panel_required_for_recipe_description(self):
 
-
         self.assertIn("static std::string accessible_recipe_description(", self.crafting)
         self.assertIn("return rec.get_description( crafter );", self.crafting)
         self.assertIn("accessible_recipe_description( rec, *crafter )", self.crafting)
@@ -53,7 +52,6 @@ class CraftingReaderFirstContentTest(unittest.TestCase):
         )[0]
         self.assertIn('prefix = "craft:";', linked)
         self.assertIn('prefix = "construction:";', linked)
-
 
         self.assertIn("speakInlineDetail(full.toString());", linked)
         self.assertNotIn("documentReader.open(", linked)

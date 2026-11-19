@@ -35,7 +35,6 @@ if __name__ == "__main__":
     json_data, load_errors = import_data(json_fmatch=args.fnmatch)
     if load_errors:
 
-
         print("Error loading JSON data.")
         for e in load_errors:
             print(e)
@@ -43,8 +42,6 @@ if __name__ == "__main__":
     elif not json_data:
         print("No data loaded.")
         sys.exit(1)
-
-
 
     plucked = [
         item for item in json_data if matches_all_wheres(item, args.where)]
@@ -55,8 +52,6 @@ if __name__ == "__main__":
     elif plucked and not args.all:
         print(CDDAJSONWriter(plucked[0]).dumps())
     else:
-
-
 
         print("[")
         for i, p in enumerate(plucked):

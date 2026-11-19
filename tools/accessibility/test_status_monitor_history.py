@@ -67,8 +67,6 @@ class StatusMonitorHistory(unittest.TestCase):
     def test_silent_write_never_speaks(self):
         body = add_msg_silent_body()
 
-
-
         self.assertIn("player_messages.add_msg_string( std::move( msg ), params )", body)
         self.assertNotIn("announce_message", body)
 
@@ -96,15 +94,10 @@ class StatusMonitorHistory(unittest.TestCase):
     def test_monitor_keeps_direct_live_announcement(self):
         body = monitor_body()
 
-
-
         self.assertIn("announce_game_message( message, urgent );", body)
 
     def test_monitor_logs_same_warning_silently(self):
         body = monitor_body()
-
-
-
 
         self.assertIn(
             "Messages::add_msg_silent( urgent ? m_warning : m_info, message );", body
@@ -120,15 +113,11 @@ class StatusMonitorHistory(unittest.TestCase):
     def test_monitor_log_write_gated_on_reader_enabled(self):
         body = monitor_body()
 
-
-
         guard = body.index("if( !enabled() || suspended() )")
         silent = body.index("Messages::add_msg_silent(")
         self.assertLess(guard, silent)
 
     def test_silent_entries_reach_double_tap_history(self):
-
-
 
         impl = (SRC / "messages.cpp").read_text("utf-8")
         self.assertIn("messages.emplace_back( m );", impl)

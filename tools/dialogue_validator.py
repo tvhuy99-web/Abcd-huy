@@ -114,7 +114,6 @@ def validate(dialogue):
     for topic_id in defined_ids:
         add_topic_by_id(topics, topic_id)
 
-
     refered_ids = [
         "TALK_WAKE_UP", "TALK_RADIO", "TALK_MISSION_DESCRIBE_URGENT",
         "TALK_MISSION_DESCRIBE", "TALK_SHELTER", "TALK_SIZE_UP",
@@ -124,7 +123,6 @@ def validate(dialogue):
     ]
     for topic_id in refered_ids:
         add_topic_by_chat(topics, topic_id)
-
 
     start_topics = [
         "TALK_RADIO", "TALK_LEADER", "TALK_FRIEND", "TALK_STOLE_ITEM",
@@ -192,8 +190,6 @@ def validate(dialogue):
             for response_id in branch_record["responses"]:
                 if topic_branches.get(response_id, {}).get("ends", False):
 
-
-
                     branch_record["ends"] = True
                     no_change = False
                     break
@@ -220,7 +216,6 @@ def validate(dialogue):
                     continue
                 response_record["parent"] = branch_record["parent"]
                 no_change = False
-
 
     skip_topics = ["TALK_DONE", "TALK_SIZE_UP", "TALK_LOOK_AT", "TALK_OPINION",
                    "TALK_SHOUT"]

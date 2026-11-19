@@ -27,7 +27,6 @@ def get_data(argsDict, resource_name):
     return resource
 
 
-
 def write_to_json(pathname, data):
     with open(pathname, "w", encoding="utf-8") as fp:
         try:
@@ -51,7 +50,6 @@ def really_add_parts(xpoint, ypoint, xparts, new_parts):
     for part in y_part["parts"]:
         temp_parts += '"{}"'.format(part)
 
-
         if len(temp_parts) > LINE_LIMIT:
             pretty_parts.append(pretty_subparts)
             pretty_subparts = []
@@ -59,7 +57,6 @@ def really_add_parts(xpoint, ypoint, xparts, new_parts):
         temp_parts += ", "
         pretty_subparts.append(part)
     pretty_parts.append(pretty_subparts)
-
 
     for subpart_list in pretty_parts:
         if len(subpart_list) > 1:
@@ -130,8 +127,6 @@ for datafile in argsDict.get("vehicle_sources", []):
                     new_parts[part_x][part_y]["parts"].append(new_part)
                 else:
                     new_parts[part_x][part_y]["parts"].append(part.get("part"))
-
-
 
         revised_parts = []
         last_center = add_parts(revised_parts, 0, 0, new_parts)

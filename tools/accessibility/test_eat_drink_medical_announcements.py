@@ -49,12 +49,8 @@ class EatDrinkOutcomeMessages(unittest.TestCase):
         self.assertIn("you.add_msg_if_player( m_good, _( \"You feel full.\" ) )", body)
         self.assertIn("you.add_msg_if_player( m_info, _( \"You are still hungry.\" ) )", body)
 
-
-
         self.assertIn("you.stomach.would_be_full_with( you, 0_ml", body)
         self.assertIn("you.stomach.would_be_engorged_with( you, 0_ml", body)
-
-
 
         self.assertIn("you.has_calorie_deficit()", body)
         self.assertIn("you.stomach.contains() <= you.stomach.capacity( you ) / 2", body)
@@ -72,13 +68,10 @@ class EatDrinkOutcomeMessages(unittest.TestCase):
         self.assertIn(
             "you.add_msg_if_player( m_info, _( \"You are still thirsty.\" ) )", body)
 
-
-
         self.assertIn("you.get_instant_thirst() < 0", body)
         self.assertIn("you.get_instant_thirst() > 40", body)
 
     def test_outcome_lines_only_cover_food_and_drink(self):
-
 
         body = eat_body()
         block = body[body.index("// The reader speaks every game message"):
@@ -105,23 +98,18 @@ class MedicalOutcomeMessages(unittest.TestCase):
     def test_plain_bandage_and_disinfectant_are_named(self):
         body = finish_using_body()
 
-
         self.assertIn('_( "You bandage the wound." )', body)
         self.assertIn('_( "The wound is bandaged." )', body)
-
 
         finish = body.index('_( "You finish using the %s." )')
         bandage = body.index('_( "You bandage the wound." )')
         self.assertLess(bandage, finish)
-
-
 
         self.assertIn("bool treatment_reported = false;", body)
         self.assertIn("treatment_reported = true;", body)
         self.assertIn("if( !treatment_reported ) {", body)
 
     def test_oral_medicine_already_announces_act_and_outcome(self):
-
 
         iuse = (SRC / "iuse.cpp").read_text("utf-8")
         self.assertIn('_( "You take some antibiotics." )', iuse)
@@ -144,7 +132,6 @@ class OutcomeMessagesReachSpeechAndHistory(unittest.TestCase):
         self.assertIn("public void onAccessibilityAnnouncement(String text, int priority)",
                       activity)
         self.assertIn("reader.announceGameMessage(text, priority);", activity)
-
 
         world = (SRC / "a11y_world.cpp").read_text("utf-8")
         for line in ("You feel full.", "You are still hungry.",

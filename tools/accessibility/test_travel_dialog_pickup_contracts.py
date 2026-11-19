@@ -38,7 +38,6 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("static native int nativeTravelState();", self.activity)
         self.assertIn("static native boolean nativeTravelControl(int action);", self.activity)
 
-
         self.assertIn("const int travel_control = driving_destination_activity ? 0 :", self.handler)
         self.assertIn("a11y::android::take_travel_control();", self.handler)
 
@@ -76,8 +75,6 @@ class TravelDialogPickupContracts(unittest.TestCase):
         self.assertIn("set_safe_mode( SAFE_MODE_ON );", self.handler)
         self.assertNotIn("set_safe_mode( SAFE_MODE_OFF );\n        a11y::android::set_travel_state",
                          self.handler)
-
-
 
         self.assertIn("const auto keep_safety_stopped_route =", self.handler)
         self.assertIn("&route = player_character.get_auto_move_route();", self.handler)

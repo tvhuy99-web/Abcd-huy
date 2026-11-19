@@ -27,7 +27,6 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("reader_all_categories ? std::string", CRAFT)
         self.assertIn('!reader_all_categories && ( subtab.cur() == "CSC_*_RECENT" )', CRAFT)
 
-
         self.assertIn("( !a11y::enabled() || !cat.is_wildcard )", CRAFT)
         self.assertIn("entry->category.str() ) != crafting_cats.end()", CRAFT)
         self.assertNotIn("picking.insert( picking.end(), available_recipes->begin(),", CRAFT)
@@ -98,7 +97,6 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
 
     def test_native_category_selection_cannot_be_reverted_by_imgui(self):
 
-
         self.assertIn("reader_all_categories = a11y::enabled() && !goto_recipe.is_valid();", CRAFT)
         self.assertIn("ImGui::IsItemClicked() && !reader_all_categories", CRAFT)
         self.assertIn("( !a11y::enabled() || ImGui::IsItemClicked() )", CRAFT)
@@ -106,7 +104,6 @@ class AccessibleCraftingCategoryGesturesTest(unittest.TestCase):
         self.assertIn("category=", CRAFT)
 
     def test_swipe_left_at_first_recipe_wraps_to_last_without_detail_rows(self):
-
 
         self.assertIn("if( current.size() > 1 )", CRAFT)
         self.assertIn("line = first < 0 ? static_cast<int>( current.size() ) - 1 :", CRAFT)

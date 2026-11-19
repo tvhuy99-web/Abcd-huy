@@ -26,7 +26,6 @@ class DirectionalSonarContracts(unittest.TestCase):
         self.assertIn("result.creatures[direction] < 0", sonar)
         self.assertIn("result.items[direction] < 0", sonar)
 
-
         self.assertNotIn("observe_tile( target )", sonar)
         self.assertNotIn("seen.source != observation_source::visible", sonar)
         self.assertNotIn("tile.impassable", sonar)
@@ -64,7 +63,6 @@ class DirectionalSonarContracts(unittest.TestCase):
         self.assertIn("setMaxStreams(DIRECTIONS * 2)", player)
         self.assertIn("private boolean enabled;", player)
         self.assertIn('getBoolean("directional_sonar", false)', preferences)
-
 
         self.assertIn("prefs.setCreatureSonarEnabled(checked)", ui)
         self.assertIn("prefs.setItemSonarEnabled(checked)", ui)

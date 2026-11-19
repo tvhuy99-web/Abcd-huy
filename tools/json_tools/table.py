@@ -21,7 +21,6 @@ import sys
 import util
 
 
-
 parser = argparse.ArgumentParser(
     description=__doc__,
     formatter_class=argparse.RawDescriptionHelpFormatter)
@@ -227,7 +226,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     if args.tileset_types_only:
         args.type = TILESET_TYPES
-
 
     json_data, _ = util.import_data(json_fmatch=args.fnmatch)
 

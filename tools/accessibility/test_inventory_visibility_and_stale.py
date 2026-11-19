@@ -53,7 +53,6 @@ class AccessibleInventoryVisibilityAndStale(unittest.TestCase):
 
     def test_noninteractive_nodes_do_not_generate_stale_tap_receipts(self):
 
-
         self.assertIn('header.id = "pd:skill:category:"', PLAYER)
         self.assertIn('header.actions = { "focus" };', PLAYER)
         tap = CTRL.split("public void activate()", 1)[1].split(

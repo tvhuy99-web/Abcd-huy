@@ -64,8 +64,6 @@ def init_known_words(DefaultKnownWords, KnownWords):
             (default_dict, DefaultKnownWords), (custom_dict, KnownWords)]:
         for word in dictionary:
 
-
-
             knownwords.add(word)
             if word == word.lower():
                 knownwords.add(word.capitalize())

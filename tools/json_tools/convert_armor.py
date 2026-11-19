@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 
-
-
-
 import argparse
 import json
 import os
@@ -12,7 +9,6 @@ import os
 args = argparse.ArgumentParser()
 args.add_argument("dir", action="store", help="specify json directory")
 args_dict = vars(args.parse_args())
-
 
 
 all_filepaths = set()
@@ -54,8 +50,6 @@ def id_or_abstract(jo):
     return jo["abstract"]
 
 
-
-
 def extract_armor_add_path(path):
     with open(path, "r", encoding="utf-8") as json_file:
         try:
@@ -84,7 +78,6 @@ def extract_armor_add_path(path):
             if def_id not in items_at_path:
                 items_at_path[def_id] = set()
             items_at_path[def_id].add(path)
-
 
             '''
             color_discard = "\x1b[31m"
@@ -126,13 +119,10 @@ def assign_if_absent(dat, key, value):
         dat[key] = value
 
 
-
 def read_armor_data(jo, dat):
     for key in transferred_keys:
         if key in jo:
             assign_if_absent(dat, key, jo[key])
-
-
 
 
 def get_armor_data_rec(jo, dat):
@@ -146,12 +136,8 @@ def get_armor_data_rec(jo, dat):
         get_armor_data_rec(all_armor_defs[jo["copy-from"]], dat)
 
 
-
-
-
 def get_armor_data(jo):
     dat = dict()
-
 
     read_armor_data(jo, dat)
     if ("armor" not in jo and
@@ -160,8 +146,6 @@ def get_armor_data(jo):
 
     get_armor_data_rec(jo, dat)
     return dat
-
-
 
 
 def actually_distinct(jo):
@@ -181,7 +165,6 @@ def actually_distinct(jo):
             return True
 
     return False
-
 
 
 def merge_with_armor(jo, dat):

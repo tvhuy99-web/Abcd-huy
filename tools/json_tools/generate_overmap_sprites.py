@@ -93,7 +93,6 @@ def generate_image(
         for index_y, char in enumerate(row):
             terrain_id = get_first_valid(terrain_dict.get(char), fill_ter)
 
-
             color = SCHEME['override_terrain_color'].get(terrain_id)
             if not color:
                 color = SCHEME['colors'].get(
@@ -109,9 +108,6 @@ def generate_image(
             except TypeError:
                 print(color)
                 raise
-
-
-
 
     return image
 
@@ -149,7 +145,6 @@ def read_scheme(
             terrain_ids = (terrain_ids,)
         for terrain_id in terrain_ids:
             SCHEME['override_terrain_color'][terrain_id] = color
-
 
     SCHEME['override_terrain_color'][None] = 0, 0, 0, 0
 
@@ -332,7 +327,6 @@ def output_sprite(
 
     if name not in CREATED_IDS:
 
-
         image_colors = image.getcolors()
         if len(image_colors) < 2:
             SINGLE_COLOR_SPRITES[image_colors[0][1]].add(name)
@@ -357,7 +351,6 @@ def output_sprite(
     duplicates_subdir = duplicates_dir / name
 
     if name not in VARIANTS:
-
 
         duplicates_subdir.mkdir(parents=True, exist_ok=True)
         (output_dir / f'{name}.png').rename(
@@ -421,7 +414,6 @@ def get_initial_rotation(rotation: Union[None, int, list]) -> int:
 
     if rotation in ([0, 3], [0, 1]):
         return 0
-
 
     print(f'WARNING: unexpected rotation value {rotation}')
 
@@ -504,7 +496,6 @@ def main():
     generate_json = args_dict.get('json')
     context_coloring = args_dict.get('context_coloring')
 
-
     read_scheme(color_scheme_path)
 
     read_terrain_color_names()
@@ -525,17 +516,14 @@ def main():
         pattern=args_dict.get('mapgen_files_pattern'),
     )
 
-
     for entry in mapgen_data:
         if entry.get('type') == 'palette':
             add_palette(entry)
-
 
     for entry in mapgen_data:
 
         if entry.get('type') != 'mapgen':
             continue
-
 
         if entry.get('method') != 'json':
             continue
@@ -544,11 +532,9 @@ def main():
         if not om_id or om_id == 'FEMA_entrance':
             continue
 
-
         mapgen = entry.get('object')
         if not mapgen:
             continue
-
 
         terrain_dict = {}
         palettes = mapgen.get('palettes')
@@ -564,17 +550,11 @@ def main():
                 else:
                     print(f'WARNING: unknown palette {palette_id}')
 
-
         terrain_defs = mapgen.get('terrain')
         if terrain_defs:
             terrain_dict.update(terrain_defs)
 
-
-
-
-
         raw_rotation = mapgen.get('rotation')
-
 
         rows = mapgen.get('rows')
         fill_ter = mapgen.get('fill_ter')
@@ -589,11 +569,9 @@ def main():
                     SKIPPED['no_rows'].append(om_id)
                 continue
 
-
         image = generate_image(
             rows=rows, terrain_dict=terrain_dict, fill_ter=fill_ter,
         )
-
 
         if isinstance(om_id, list) and isinstance(om_id[0], list):
             generator = split_image(image=image, om_ids=om_id)

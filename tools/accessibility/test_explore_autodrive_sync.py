@@ -313,9 +313,6 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
 
     def test_stopped_car_can_process_cancel_without_player_moves(self):
 
-
-
-
         world = read(SRC / "do_turn.cpp")
         character = read(SRC / "character.cpp")
         header = read(SRC / "a11y_android.h")
@@ -333,8 +330,6 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
     def test_autonomous_drive_keeps_existing_gestures_without_modal(self):
         self.assertIn("else if (walkingTravelPanelActive()", CONTROLLER)
         self.assertIn("if (activeTravel != 0 && !autonomousDriveTrip && !vehicleMode)", CONTROLLER)
-
-
 
         self.assertIn("if (autonomousDriveTrip || vehicleMode) {", CONTROLLER)
         self.assertIn("private boolean walkingTravelPanelActive()", CONTROLLER)
@@ -424,15 +419,12 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
             "void vehicle::leak_fuel(", 1
         )[0]
 
-
         self.assertIn("bool interrupt_autodrive = true", header)
         self.assertIn("if( is_autodriving && interrupt_autodrive )", damage)
         self.assertIn('reason=vehicle_part_damage', damage)
         self.assertIn('reason=physical_collision', movement)
         self.assertIn("stop_autodriving();", damage)
         self.assertIn("stop_autodriving();", movement)
-
-
 
         self.assertIn("const bool reader_trip = is_autodriving", wear)
         self.assertIn("a11y_flat_tire_alerted = true;", wear)
@@ -461,9 +453,7 @@ class ExploreAutodriveSyncContracts(unittest.TestCase):
         self.assertIn('travelState() != 0 && "activity".equals(snapshot.category)',
                       CONTROLLER)
 
-
         self.assertIn("priority >= ReaderSpeechQueue.URGENT", CONTROLLER)
-
 
         self.assertIn('|| message.startsWith("A11Y_SCAN:")', CONTROLLER)
         self.assertIn('|| message.startsWith("A11Y_DETAIL:")', CONTROLLER)

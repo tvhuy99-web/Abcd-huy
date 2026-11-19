@@ -26,7 +26,6 @@ class FastLoadAndAnnouncements(unittest.TestCase):
 
     def test_new_messages_survive_native_snapshot_invalidation(self):
 
-
         self.assertIn("if (!loading && (snapshot == null", self.controller)
         self.assertIn("pendingGameMessages.addLast(", self.controller)
         self.assertIn("speech.setContext(next.contextKey());", self.controller)
@@ -96,7 +95,6 @@ class FastLoadAndAnnouncements(unittest.TestCase):
         self.assertIn("cached_flexbuffers_[key]", self.cache)
         self.assertIn("cache_hits.fetch_add", self.cache)
         self.assertIn("cache_misses.fetch_add", self.cache)
-
 
         self.assertIn("load_world_modfiles();", self.game)
 

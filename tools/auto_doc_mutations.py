@@ -28,7 +28,6 @@ def find_files(
                     dirnames.clear()
                     filenames.clear()
 
-
                 if include_mods and "modinfo.json" in filenames:
 
                     if filenames.count("modinfo.json") > 1:
@@ -77,13 +76,10 @@ def write_mutations(mutations: list[Mutation], filename: Path) -> None:
         else:
             categories["NONE"].append(mut)
 
-
     categories = dict(sorted(categories.items()))
-
 
     for mutations in categories.values():
         mutations.sort()
-
 
         for mut in mutations:
             mut.categories.sort()
@@ -97,7 +93,6 @@ def write_mutations(mutations: list[Mutation], filename: Path) -> None:
                 f'  - [{category}](#{category.replace(" ", "-").lower()})\n'
             )
         fd.write("\n\n")
-
 
         for category, mutations in categories.items():
             fd.write(f"## {category}\n")
@@ -193,7 +188,6 @@ class Mod:
 def cli(paths, outfile, include_mods) -> None:
     """Search PATHS for JSON files and generate documentation for mutations."""
 
-
     if not include_mods:
         mutations = []
 
@@ -233,10 +227,6 @@ def cli(paths, outfile, include_mods) -> None:
                 with open(file, "rb") as fd:
                     jfile = orjson.loads(fd.read())
 
-
-
-
-
                 if isinstance(jfile, list) and len(jfile) > 0:
                     mod_info = jfile[0]
                 else:
@@ -251,7 +241,6 @@ def cli(paths, outfile, include_mods) -> None:
                 else:
                     click.echo(f"{file} is an invalid modinfo.json file.")
                     sys.exit()
-
 
         for id_, mod in mods.items():
             if not mod.dependencies:

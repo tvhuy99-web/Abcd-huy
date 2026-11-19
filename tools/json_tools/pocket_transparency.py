@@ -58,8 +58,6 @@ def gen_new(path):
     change = False
     new_datas = list()
 
-
-
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -104,7 +102,6 @@ def format_json(path):
         os.system(f"{format_path_win} {path}")
     else:
         print("No json formatter found")
-
 
 
 json_path = os.path.join(args_dict["dir"], "json")

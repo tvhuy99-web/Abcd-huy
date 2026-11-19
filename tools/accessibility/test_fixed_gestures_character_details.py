@@ -77,9 +77,6 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
     def test_combat_two_finger_swipes_use_world_movement_without_cap(self):
         c = self.controller
 
-
-
-
         segment = c.split("public boolean handleCustomGesture(", 1)[1]
         segment = segment.split("if (combatMode && directWorldGesturesEnabled()) {", 1)[1]
         segment = segment.split("gestureBindings.targetFor(gestureId)", 1)[0]
@@ -112,8 +109,6 @@ class LockedGestureAndCharacterDetailsContracts(unittest.TestCase):
 
     def test_native_combat_buttons_obey_computed_world_gate(self):
         world = self.world
-
-
 
         gate = world.index("result.swipe_movement_allowed =")
         attack = world.index("attack.enabled = result.swipe_movement_allowed;")

@@ -58,8 +58,6 @@ def to_damage_vals(jo):
 def gen_new(path):
     change = False
 
-
-
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)

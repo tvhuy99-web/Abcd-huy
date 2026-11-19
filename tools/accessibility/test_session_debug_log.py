@@ -65,9 +65,6 @@ class SessionDebugLogSourceTest(unittest.TestCase):
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text("utf-8")
         self.assertIn("public void setContent(View content, int initialFocus)", surface)
 
-
-
-
         manifest = ET.parse(RES.parent / "AndroidManifest.xml").getroot()
         android = "{http://schemas.android.com/apk/res/android}"
         activities = manifest.find("application").findall("activity")

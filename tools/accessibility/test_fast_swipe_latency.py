@@ -111,7 +111,6 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertIn("sm == nullptr || sm->is_uniform()", reconcile)
         self.assertIn("for( int sx = 0; sx < SEEX; ++sx )", reconcile)
 
-
         self.assertIn("get_vehicles()", reconcile)
         self.assertIn("walk_character( get_avatar() );", reconcile)
 
@@ -127,7 +126,6 @@ class FastSwipeLatencyContracts(unittest.TestCase):
         self.assertLess(actualize.index("explosion_handler::process_explosions();"),
                         actualize.index("if( tmpsub->is_uniform() )"))
         self.assertIn("for( int x = 0; x < SEEX; x++ )", actualize)
-
 
         self.assertIn("void map::build_map_cache(", code)
         self.assertIn("void map::invalidate_map_cache(", code)

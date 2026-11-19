@@ -48,14 +48,12 @@ class CharacterCreatorSixSteps(unittest.TestCase):
     def test_attributes_and_skills_have_retryable_value_picker(self):
         self.assertIn('choices.input_category = "character-creator-value";', self.source)
 
-
         self.assertIn('value <= max_value', self.source)
         self.assertIn(
             'name, stat_queried, CHARACTER_STAT_MIN,\n'
             '                                                      CHARACTER_STAT_MAX,',
             self.source
         )
-
 
         self.assertIn('const int manual_entry = max_value + 1;', self.source)
         self.assertIn('choices.addentry( manual_entry, true, -1, _( "Enter manually" ) );', self.source)

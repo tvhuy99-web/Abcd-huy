@@ -125,8 +125,6 @@ def main() -> int:
               ", ".join(unknown)), file=sys.stderr)
         return 2
 
-
-
     if formats & {"dxil", "msl"}:
         formats.add("spv")
 

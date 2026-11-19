@@ -14,8 +14,6 @@ import re
 import subprocess
 
 
-
-
 TOKEN = re.compile(
     r'R"(?P<raw_delim>[^ ()\\\t\r\n]{0,16})\(.*?\)(?P=raw_delim)"'
     r'|"(?:\\.|[^"\\])*"|\'(?:\\.|[^\'\\])*\''
@@ -44,7 +42,6 @@ def mask_comments(text):
 
 def scan(path, text):
     masked = mask_comments(text)
-
 
     code = TOKEN.sub(lambda m: ''.join('\n' if c == '\n' else ' ' for c in m.group()), masked)
     for kind, pattern in CALLS:

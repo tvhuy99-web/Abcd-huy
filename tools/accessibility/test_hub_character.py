@@ -21,8 +21,6 @@ class CharacterHubTest(unittest.TestCase):
         self.assertEqual(self.mutation.count(
             "!mut_data.stamina || get_stamina() >= mut_data.cost"), 2)
 
-
-
         self.assertEqual(self.mutation.count(
             "activation_shortage( mut_data )"), 2)
         self.assertEqual(self.mutation.count(

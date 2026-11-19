@@ -21,11 +21,7 @@ class IncludesParser:
         for include in includes:
             if len(include) == 0 or include[0] != '.':
 
-
-
                 break
-
-
 
             include_actual = include[include.index(' ') + 1:]
             if include_actual[0] == '/':
@@ -39,14 +35,10 @@ class IncludesParser:
                 set(),
             ).add(source_file_path)
 
-
         self.includes_to_sources.setdefault(
             source_file_path,
             set(),
         ).add(source_file_path)
-
-
-
 
     def parse_includes_files_from(
             self,
@@ -70,7 +62,6 @@ class IncludesParser:
 
         for includes_file_path in includes_files:
             source_file = includes_file_path[folder_len:-3] + "cpp"
-
 
             if source_file.startswith("tiles/"):
                 source_file = source_file[6:]
@@ -128,7 +119,6 @@ def main():
     if not parser.parse_includes_files_from("obj", "src", "."):
         return 1
 
-
     if not parser.parse_includes_files_from("tests/obj", "tests", "tests"):
         return 1
 
@@ -137,7 +127,6 @@ def main():
         for affected_file in parser.get_files_affected_by(changed_file):
             lintable_files.add(affected_file)
     changed_files = set(changed_files)
-
 
     lintable_files_sorted = []
     lintable_files_sorted.extend(sorted(lintable_files & changed_files))

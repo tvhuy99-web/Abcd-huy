@@ -30,7 +30,6 @@ class LoadingWorldSpeech(unittest.TestCase):
         reader = (JAVA / "GameReaderController.java").read_text(encoding="utf-8")
         self.assertIn('message.startsWith("A11Y_LOADING:")', reader)
 
-
         self.assertIn("if (!loading && (snapshot == null", reader)
         self.assertIn("replayBufferedGameMessages();", reader)
         self.assertIn("lastLoadingStatus = spokenMessage;", reader)

@@ -95,7 +95,6 @@ def matches_where(item, where_key, where_value):
         return False
     elif type(item_value) is dict:
 
-
         for next_level in item_value:
             if match_primitive_values(next_level, where_value):
                 return True
@@ -184,14 +183,12 @@ def key_counter(data, where_fn_list):
                     if not subkey.startswith('//'):
                         stats[key + '.' + subkey] += 1
 
-
             elif type(val) is list:
                 if all(type(e) is OrderedDict for e in val):
                     for obj in val:
                         for subkey in obj.keys():
                             if not subkey.startswith('//'):
                                 stats[key + '.' + subkey] += 1
-
 
             else:
                 stats[key] += 1
@@ -242,10 +239,6 @@ def value_counter(data, search_key, where_fn_list):
     stats = Counter()
     matching_data = [i for i in data if matches_all_wheres(i, where_fn_list)]
 
-
-
-
-
     if search_key.count('.') == 1:
         parent_key, child_key = search_key.split('.')
 
@@ -262,10 +255,7 @@ def value_counter(data, search_key, where_fn_list):
 
         parent_val = item[parent_key]
 
-
         stat_vals = []
-
-
 
         if type(parent_val) is list and all(type(e) is OrderedDict
                                             for e in parent_val):
@@ -273,14 +263,11 @@ def value_counter(data, search_key, where_fn_list):
                 if child_key in od:
                     stat_vals.append(od[child_key])
 
-
         elif type(parent_val) is OrderedDict and child_key in parent_val:
             stat_vals.append(parent_val[child_key])
 
-
         else:
             stat_vals.append(parent_val)
-
 
         for val in stat_vals:
             stats += item_value_counter(val)
@@ -307,7 +294,6 @@ def ui_counts_to_columns(counts):
     column.
     """
 
-
     key_vals = counts.most_common()
     key_field_len = len(max(list(counts.keys()), key=len)) + 1
     output_template = "%%-%ds: %%s" % key_field_len
@@ -332,7 +318,6 @@ class CDDAJSONWriter(object):
         self.d = d
 
         self.indent_multiplier = indent_multiplier
-
 
     def indented_write(self, s):
         self.buf.write(self.indent * self.indent_multiplier + s)
@@ -384,7 +369,6 @@ class CDDAJSONWriter(object):
                 self.list_of_lists(k, v)
             else:
                 self.write_primitive_key_val(k, v)
-
 
             if items:
                 self.buf.write(",\n")

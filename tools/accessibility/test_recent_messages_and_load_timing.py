@@ -19,23 +19,16 @@ class MessageRecencyAndLoadTiming(unittest.TestCase):
         self.assertIn("messages.rbegin(); it != messages.rend(); ++it", world)
         self.assertIn("it->first + \": \" + it->second", world)
 
-
         self.assertIn("begin( messages ) + offset, end( messages )", messages)
 
     def test_two_finger_double_tap_reads_recent_messages_on_any_screen(self):
         controller = (JAVA / "GameReaderController.java").read_text("utf-8")
         surface = (JAVA / "ReaderGestureSurface.java").read_text("utf-8")
 
-
-
-
         self.assertIn(
             "if (count == 1 || count == 2 || listener.directWorldGesturesEnabled()",
             surface)
         self.assertIn("|| listener.autonomousDriveTravelActive()) {", surface)
-
-
-
 
         self.assertIn("private String lastRecentMessages", controller)
         self.assertIn("lastRecentMessages = recentMessages.detail;", controller)
@@ -43,7 +36,6 @@ class MessageRecencyAndLoadTiming(unittest.TestCase):
         body = body.split("public void threeFingerTap()", 1)[0]
         self.assertIn("if (count == 2) {", body)
         self.assertIn("spoken = lastRecentMessages;", body)
-
 
         self.assertIn("if (count == 1) { detail(); return; }", body)
         self.assertIn("if (!directWorldGesturesEnabled()) { return; }", body)

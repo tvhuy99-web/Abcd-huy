@@ -54,7 +54,6 @@ class NearbyHubLiveActionsTest(unittest.TestCase):
         self.assertIn("viewer.has_effect( effect_incorporeal )", section)
         self.assertIn('"reader:nearby:available:" + id', section)
 
-
         self.assertIn('if (node.id.startsWith("reader:nearby:available:")', self.reader)
         self.assertIn('|| "activity:autodrive".equals(node.id)) { continue; }',
                       self.reader)

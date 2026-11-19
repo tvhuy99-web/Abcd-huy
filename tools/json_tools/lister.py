@@ -33,9 +33,6 @@ parser.add_argument(
 if __name__ == "__main__":
     args = parser.parse_args()
 
-
-
-
     mode = os.fstat(0).st_mode
     if not stat.S_ISFIFO(mode) and not stat.S_ISREG(mode):
 
@@ -49,11 +46,9 @@ if __name__ == "__main__":
         print("Could not read json data from stdin")
         sys.exit(1)
 
-
     if type(json_data) is dict:
 
         json_data = [json_data]
-
 
     keys = set()
     for item in json_data:

@@ -168,7 +168,6 @@ def get_item_data(entries, categories=None, ignore=None):
             item_group[igroup_id] = entry
             continue
 
-
         item_id = entry.get("id")
         item_entry[item_id] = entry
     for igroup in item_group:

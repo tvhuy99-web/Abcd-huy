@@ -22,7 +22,6 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
 
     def test_visual_list_keeps_original_search(self):
 
-
         self.assertIn("const int radius = 60;", self.header)
         self.assertIn("closest_points_first( pos, radius )", self.menu)
         self.assertIn("get_visible_creatures( radius )", self.menu)
@@ -41,7 +40,6 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
                       self.menu)
         self.assertIn("lhs.distance < rhs.distance", self.menu)
         self.assertIn('"nearby:target:"', self.menu)
-
 
         self.assertIn("node.value = relative_words( entry.relative );",
                       self.menu)
@@ -67,7 +65,6 @@ class NearbyAccessibleNavigationTest(unittest.TestCase):
         self.assertIn("execute_accessible();", self.menu)
 
     def test_out_of_sight_nearby_destinations_can_be_routed_safely(self):
-
 
         call = self.menu.split(
             "g->safe_route_to( you, target.target", 1

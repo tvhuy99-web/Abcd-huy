@@ -243,7 +243,6 @@ JSON parsing functions
 """
 
 
-
 def parse_unit(val, stops):
 
     if type(val) is not str:
@@ -273,7 +272,6 @@ def parse_unit(val, stops):
     return total
 
 
-
 def simplify_gun_data(jo):
 
     if "modes" in jo:
@@ -290,7 +288,6 @@ def simplify_gun_data(jo):
         jo["ranged_damage"] = jo["ranged_damage"]["amount"]
     else:
         jo["ranged_damage"] = 0
-
 
     if "pocket_data" not in jo:
         if VERBOSE:
@@ -320,9 +317,7 @@ def simplify_gun_data(jo):
     return True
 
 
-
 def simplify_object(jo):
-
 
     if "id" not in jo or jo["id"] in GUNS_BLACKLIST:
         if VERBOSE:
@@ -337,12 +332,10 @@ def simplify_object(jo):
     req_keys = {"weight", "volume", "ammo", "id"}
     all_keys = req_keys | set(INHERITED_KEYS)
 
-
     removed = list(filter(lambda key: key not in all_keys, jo.keys()))
 
     for key in removed:
         del jo[key]
-
 
     for key in filter(lambda key: key not in jo, req_keys):
         if VERBOSE:
@@ -355,7 +348,6 @@ def simplify_object(jo):
         return False
 
     return simplify_gun_data(jo)
-
 
 
 def name_of(jo):
@@ -509,9 +501,7 @@ CHECK 1: Should a gun be a variant?
 """
 
 
-
 def guns_are_similar(jo, gun):
-
 
     def in_range(lhs, rhs, bucket_size):
         return abs((lhs // bucket_size) - (rhs // bucket_size)) < 2
@@ -521,7 +511,6 @@ def guns_are_similar(jo, gun):
         high = 1 + pct
         return ((lhs >= rhs * low and lhs <= rhs * high) or
                 (rhs >= lhs * low and rhs <= lhs * high))
-
 
     def sets_match(lhs, rhs):
         return len(set(lhs) ^ set(rhs)) == 0
@@ -543,7 +532,6 @@ def guns_are_similar(jo, gun):
     if ("longest_side" in jo and "longest_side" in gun and
        not in_range(jo["longest_side"], gun["longest_side"], 50)):
         return False
-
 
     if not in_pct(jo["dispersion"] if "dispersion" in jo else 0,
                   gun["dispersion"] if "dispersion" in gun else 0, 0.05):
@@ -572,17 +560,6 @@ def guns_are_similar(jo, gun):
        not in_range(jo["barrel_length"], gun["barrel_length"], 10)):
         return False
 
-
-
-
-
-
-
-
-
-
-
-
     return True
 
 
@@ -590,7 +567,6 @@ def find_variants(all_guns):
     similar_guns = []
     for i in range(len(all_guns)):
         gun = all_guns[i]
-
 
         for compared in all_guns[i + 1:]:
             lid = gun["id"]
@@ -608,8 +584,6 @@ CHECK 2: Are the default gun names linking the gun and it's mags
 """
 
 
-
-
 def longest_common_substring(dat):
     substr = ''
     if len(dat) > 1 and len(dat[0]) > 0:
@@ -618,7 +592,6 @@ def longest_common_substring(dat):
                 if j > len(substr) and all(dat[0][i:i + j] in x for x in dat):
                     substr = dat[0][i:i + j]
     return substr
-
 
 
 def clean_names(names):
@@ -630,13 +603,10 @@ def clean_names(names):
     return ret
 
 
-
 def common_token(names):
     names = clean_names(names)
 
-
     common_token = " ".join(longest_common_substring(names).split())
-
 
     if len(common_token) < 3 and common_token not in SHORT_COMMON_TOKENS:
         return None
@@ -646,7 +616,6 @@ def common_token(names):
     if VERBOSE > 1:
         print(f" --- Token '{common_token}': {names}")
     return common_token
-
 
 
 def print_identifier_info(token, gun, magazines):
@@ -751,7 +720,6 @@ def find_dupe_names(all_guns):
     for gun in all_guns:
         name = name_of(gun) + str(sorted(gun["ammo"]))
 
-
         for mag_type in gun.get("magazines"):
             if type(mag_type) is int:
                 name += f",{mag_type}-round"
@@ -775,7 +743,6 @@ def find_dupe_names(all_guns):
 """
 Driver functions
 """
-
 
 
 def check_combination(all_guns):
@@ -811,7 +778,6 @@ def check_identifiers(all_guns):
                     good_token_list[good[2]].append(good[0]["id"])
                 else:
                     good_token_list[good[2]] = [good[0]["id"]]
-
 
             print("The following valid identifiers were found.",
                   "Please check to ensure they make sense.")

@@ -27,7 +27,6 @@ class NearbySquareScanTests(unittest.TestCase):
         self.assertIn("here.inbounds( position )", code)
         self.assertNotIn("closest_points_first(", code)
 
-
         coords = {
             (x, y)
             for radius in range(21)
@@ -54,7 +53,6 @@ class NearbySquareScanTests(unittest.TestCase):
         )[1].split("void surroundings_menu::execute_accessible()", 1)[0])
         self.assertIn("noteworthy_nearby_feature( terrain, position )", s)
 
-
         self.assertIn("!tile.furniture.empty()", self.reader)
         self.assertNotIn("noteworthy_nearby_feature( furniture, position )",
                          self.reader)
@@ -76,7 +74,6 @@ class NearbySquareScanTests(unittest.TestCase):
     def test_short_spoken_entries_no_preamble(self):
         code = self.reader
         self.assertIn('snapshot.title = _( "Nearby" );', code)
-
 
         self.assertIn("snapshot.summary = filtered.empty() ?", code)
         self.assertIn('_( "%1$s. %2$d entries." )', code)

@@ -191,10 +191,6 @@ class CDDAPullRequest(PullRequest):
     def _get_summary(self, body):
         matches = list(re.finditer(self.SUMMARY_REGEX, body))
 
-
-
-
-
         def summary_filter(x):
             return ((x.group('pr_type'), x.group('pr_desc')) not in
                     self.EXAMPLE_SUMMARIES_IN_TEMPLATE)
@@ -317,7 +313,6 @@ class CommitRepository:
                 return
             yield commit
 
-
         raise MissingCommitException(
             "Can't generate commit list for specified hash range."
             " There are missing Commits in CommitRepository."
@@ -328,12 +323,10 @@ class CommitRepository:
         (excluding) connected by the first Parent."""
         for commit in self.traverse_commits_by_first_parent():
 
-
             if commit.commit_dttm <= oldest_dttm:
                 return
             if latest_dttm >= commit.commit_dttm > oldest_dttm:
                 yield commit
-
 
         raise MissingCommitException(
             "Can't generate commit list for specified date range."
@@ -564,14 +557,6 @@ class CommitApi:
             return None
         commit_sha = commit_data['sha']
 
-
-
-
-
-
-
-
-
         if commit_data['author'] is not None:
             if 'login' in commit_data['author']:
                 commit_author = commit_data['author']['login']
@@ -624,18 +609,6 @@ class PullRequestApi:
                                                      params)
 
         api_data = do_github_request(api_request)
-
-
-
-
-
-
-
-
-
-
-
-
 
         if api_data['total_count'] == 0 or api_data['items'][0]['score'] < 100:
             return None
@@ -690,9 +663,6 @@ class PullRequestApi:
             for pr in pull_request_list:
                 results_queue.append(pr)
 
-
-
-
             target_page_found = not any(
                 pr.updated_after(min_dttm) for pr in pull_request_list)
 
@@ -715,7 +685,6 @@ class PullRequestApi:
         pr_state = pr_data['state']
         pr_merge_hash = pr_data['merge_commit_sha']
 
-
         if pr_data['merged_at']:
             pr_merge_dttm = datetime.fromisoformat(
                 pr_data['merged_at'].rstrip('Z'))
@@ -726,7 +695,6 @@ class PullRequestApi:
                 pr_data['updated_at'].rstrip('Z'))
         else:
             pr_update_dttm = None
-
 
         pr_body = pr_data['body'] if pr_data['body'] else ''
 
@@ -758,7 +726,6 @@ class MultiThreadedGitHubApi:
             t.daemon = True
             t.start()
             time.sleep(0.1)
-
 
         for t in threads:
             t.join()
@@ -1201,7 +1168,6 @@ def build_output_by_date(pr_repo, commit_repo, target_dttm, end_dttm,
         if not pr_repo.get_pr_by_merge_hash(commit.hash):
             commits_with_no_pr[commit.commit_date].append(commit)
 
-
     pr_with_summary = collections.defaultdict(list)
     pr_with_invalid_summary = collections.defaultdict(list)
     pr_with_summary_none = collections.defaultdict(list)
@@ -1212,7 +1178,6 @@ def build_output_by_date(pr_repo, commit_repo, target_dttm, end_dttm,
             pr_with_summary[pr.merge_date].append(pr)
         elif not pr.has_valid_summary:
             pr_with_invalid_summary[pr.merge_date].append(pr)
-
 
     offset_dates = (
         end_dttm.date() - timedelta(days=x) for x in itertools.count())
@@ -1281,14 +1246,11 @@ def build_output_by_date(pr_repo, commit_repo, target_dttm, end_dttm,
 def build_output_by_build(build_repo, pr_repo, commit_repo, output_file,
                           include_summary_none):
 
-
-
     def has_hash(build):
         return build.last_hash is not None
     sorted_builds = build_repo.get_all_builds(
         filter_by=has_hash, sort_by=lambda x: -x.build_dttm.timestamp())
     for build in sorted_builds:
-
 
         prev_build = build_repo.get_previous_build(build.number, has_hash)
         if prev_build is None:
@@ -1299,7 +1261,6 @@ def build_output_by_build(build_repo, pr_repo, commit_repo, output_file,
                 build.last_hash, prev_build.last_hash))
         except MissingCommitException:
 
-
             break
 
         print(f'BUILD {build.number} / {build.build_dttm} UTC+0 / '
@@ -1307,32 +1268,6 @@ def build_output_by_build(build_repo, pr_repo, commit_repo, output_file,
         if build.last_hash == prev_build.last_hash:
             print(f'  * No changes. Same code as BUILD {prev_build.number}.',
                   file=output_file)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
         pull_requests = (
             pr_repo.get_pr_by_merge_hash(c.hash) for c in commits

@@ -49,7 +49,6 @@ class ContextGestureGuideContracts(unittest.TestCase):
                            menu.index("a11y_manual_drive = !a11y_manual_drive;"))
         self.assertIn(".keep_menu_open()", menu)
 
-
         self.assertIn('guide.title = is_autodriving ? _( "Gesture guide: autonomous driving" ) :', menu)
         self.assertIn('_( "Gesture guide: driving" );', menu)
         self.assertIn("guide.addentry( index++, true, 0, line );", menu)
@@ -70,7 +69,6 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("static final int OPEN_GESTURE_GUIDE = 11;", HUB)
 
     def test_combat_menu_guide_uses_actual_combat_gestures(self):
-
 
         guide = CTRL.split("private void openGestureGuide()", 1)[1].split(
             "private String gestureGuideSpeech()", 1
@@ -93,8 +91,6 @@ class ContextGestureGuideContracts(unittest.TestCase):
                       "a11yGuideWalkNorth", "a11yGuideWalkSouth",
                       "a11yGuideCombatEnemy", "a11yGuideCombatMenu"):
             self.assertIn("R.string." + label, GUIDE)
-
-
 
     def test_inventory_pocket_actions_keep_existing_options(self):
         self.assertIn("R.string.a11yPocketOpen, R.string.a11yPocketOtherActions,", CTRL)
@@ -166,7 +162,6 @@ class ContextGestureGuideContracts(unittest.TestCase):
         self.assertIn("R.string.a11yGuideDrivePause", GUIDE)
 
     def test_character_creator_steps_have_their_native_two_finger_up_action(self):
-
 
         self.assertIn('category.startsWith("character-creator-step-")', GUIDE)
         for step in range(3, 7):

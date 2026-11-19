@@ -142,8 +142,6 @@ class CraftingDetailScreenTest(unittest.TestCase):
         self.assertIn("manual_batch = reader_detail_quantity;", confirm)
         self.assertIn('return "CONFIRM";', confirm)
 
-
-
         self.assertNotIn("announce", confirm)
 
     def test_back_closes_detail_instead_of_the_menu(self):
@@ -218,8 +216,6 @@ class ConstructionDetailScreenTest(unittest.TestCase):
 
 class DetailScreenSharedTest(unittest.TestCase):
     def test_requirement_labels_stay_in_sync_but_crafting_groups_are_local(self):
-
-
 
         craft = _region(CRAFT, "static int reader_requirement_have(",
                         "static void append_reader_requirement_nodes(")

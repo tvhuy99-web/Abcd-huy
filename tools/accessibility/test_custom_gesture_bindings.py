@@ -39,9 +39,6 @@ class CustomGestureContracts(unittest.TestCase):
         self.assertIn("mapping.values().removeAll(", src)
         self.assertIn('putString(KEY, json.toString())', src)
 
-
-
-
         prefs = (JAVA / "ReaderPreferences.java").read_text(
             encoding="utf-8"
         )

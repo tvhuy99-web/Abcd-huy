@@ -12,7 +12,6 @@ class ExternalScreenGestures(unittest.TestCase):
         detector = (JAVA / "TwoFingerBackGesture.java").read_text(encoding="utf-8")
         surface = (JAVA / "BootstrapSelfVoiceSurface.java").read_text(encoding="utf-8")
 
-
         accessibility = (JAVA / "AccessibilitySettingsActivity.java").read_text(encoding="utf-8")
         backup = (JAVA / "BackupRestoreActivity.java").read_text(encoding="utf-8")
         self.assertIn("dy1 >= minimumDistance && dy2 >= minimumDistance", detector)

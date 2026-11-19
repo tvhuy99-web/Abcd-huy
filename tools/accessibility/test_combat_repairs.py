@@ -29,7 +29,6 @@ class CombatRepairContracts(unittest.TestCase):
 
     def test_combat_shot_debug_log_formats_float_recoil_correctly(self):
 
-
         shot_log = self.ranged.split('diagnostic_event( "COMBAT_SHOT"', 1)[1]
         shot_log = shot_log.split(");", 1)[0]
         self.assertIn(

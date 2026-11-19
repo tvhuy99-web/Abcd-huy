@@ -21,19 +21,15 @@ def gen_new(path):
             if type(jo) is str:
                 return None
 
-
             if "type" not in jo:
                 return None
-
 
             kind = jo["type"]
             if kind != "recipe" and kind != "uncraft":
                 return None
 
-
             if "result" not in jo:
                 return None
-
 
             if "obsolete" in jo and jo["obsolete"]:
                 return None

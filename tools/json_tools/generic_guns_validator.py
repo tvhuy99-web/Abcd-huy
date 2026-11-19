@@ -9,7 +9,6 @@ GG_DIR = os.path.normpath(os.path.join(
     SCRIPT_DIR, '..', '..', 'data', 'mods', 'Generic_Guns'))
 
 
-
 AMMO_TYPE_WHITELIST = {
     '40x46mm',
     'atgm',

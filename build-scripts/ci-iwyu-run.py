@@ -1,11 +1,5 @@
 
 
-
-
-
-
-
-
 # (assuming both the iwyu source root and its build dir are in the PATH):
 # python iwyu_tool.py \
 
@@ -36,11 +30,9 @@ def main():
 
     print("::group::Determining files to analyze")
 
-
     changed_files = get_changed_files()
     print("changed files:")
     print_long_list(changed_files)
-
 
     affected_files = get_affected_files(changed_files)
     print("affected files:")
@@ -63,10 +55,8 @@ def main():
 
 def get_changed_files() -> list[Path]:
 
-
     files_index = Path(CHANGED_FILES_INDEX)
     if not files_index.exists():
-
 
         # Pretend that the core iwyu definitions changed to
 
@@ -86,7 +76,6 @@ def get_changed_files() -> list[Path]:
 
 def get_affected_files(changed_files: list[Path]) -> list[Path]:
 
-
     global_files = set(Path(x) for x in [
         MARKER_FORCE_GLOBAL_RUN,
         ".github/workflows/iwyu.yml",
@@ -104,14 +93,6 @@ def get_affected_files(changed_files: list[Path]) -> list[Path]:
                 "File %s affects global IWYU configuration so "
                 "we will analyze all files" % changed)
             return generate_global_file_list()
-
-
-
-
-
-
-
-
 
     out = subprocess.run(
         [GET_AFFECTED_FILES_SCRIPT,
@@ -133,8 +114,6 @@ def get_affected_files(changed_files: list[Path]) -> list[Path]:
     return out_paths
 
 
-
-
 def generate_global_file_list() -> list[Path]:
     paths = []
     for d in [Path("src"), Path("tests")]:
@@ -144,7 +123,6 @@ def generate_global_file_list() -> list[Path]:
                 paths.append(p)
     paths.sort()
     return paths
-
 
 
 # This is equivalent to Linux ` | grep -v -f tools/iwyu/bad_files.txt `
@@ -223,7 +201,6 @@ def run_iwyu_on(iwyu_tool_path: str, files: list[Path]) -> int:
     print("Return code ", iwyu_proc.returncode)
     print("::endgroup::")
 
-
     print("::remove-matcher owner=gcc-problem-matcher::")
     print("\n")
     if problem_lines:
@@ -236,8 +213,6 @@ def run_iwyu_on(iwyu_tool_path: str, files: list[Path]) -> int:
         print("No suggestions provided, but the process still failed somehow?")
 
     return iwyu_proc.returncode
-
-
 
 
 def print_long_list(things: list):

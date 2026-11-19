@@ -28,8 +28,6 @@ class SessionDebugLogFixes(unittest.TestCase):
             "oter_id overmap::get_or_migrate_oter(", 1
         )[0]
 
-
-
         header = (SRC / "overmap.h").read_text("utf-8")
         self.assertIn("std::map<point_abs_omt, basecamp> camps;", header)
         self.assertIn("const tripoint_abs_omt &point : points", migration)
@@ -59,7 +57,6 @@ class SessionDebugLogFixes(unittest.TestCase):
         self.assertIn("priority > active.priority", self.queue)
 
     def test_ascii_armor_silhouette_is_not_spoken_as_numbers(self):
-
 
         self.assertIn("ASCII_ARMOR_DIAGRAM_LINE", self.speech_text)
         self.assertIn(r'(?m)^[ \\t]*(?:#[ \\t]*){2,}\\r?$', self.speech_text)

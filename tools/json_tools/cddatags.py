@@ -45,7 +45,6 @@ def main(args):
 
     definitions = []
 
-
     id_keys = (
         'id', 'abstract', 'ident',
         'nested_mapgen_id', 'om_terrain', 'update_mapgen_id', 'result')
@@ -80,7 +79,6 @@ def main(args):
                             "Problem parsing data from file %s, reason: "
                             "expected a list." % filename)
                         continue
-
 
                     for obj in json_data:
                         for id_key in id_keys:

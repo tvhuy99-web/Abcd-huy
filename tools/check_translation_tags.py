@@ -17,8 +17,6 @@ PO_PATH = pathlib.Path("lang/po/")
 PO_FILES = dict([f.stem, f] for f in sorted(PO_PATH.glob("*.po")))
 
 
-
-
 TAGS_OPTIONAL = (
     "<zombie>", "<zombies>",
     "<name_b>", "<name_g>",
@@ -49,11 +47,6 @@ def _f(input_list):
     return f"`{' '.join(input_list)}`"
 
 
-
-
-
-
-
 def check_ellipses(entry):
     """Checks if translations use three dots instead of the ellipsis symbol"""
 
@@ -63,11 +56,6 @@ def check_ellipses(entry):
         return [" * It's recommended to use the `…` symbol "
                 "instead of three dots."]
     return []
-
-
-
-
-
 
 
 def _is_mixed(tags):
@@ -105,9 +93,7 @@ def check_printf(entry):
     """Checks whether formatting arguments %s/%1$d"""
     """in the source string and in the translation match."""
 
-
     msgs = []
-
 
     tags_msgid = PATTERN_PRINTF.findall(entry.msgid)
 
@@ -119,20 +105,17 @@ def check_printf(entry):
                           for v in entry.msgstr_plural.values()]
         tags_msgstr = tags_msgstr_pl[0]
 
-
         for tag in tags_msgstr_pl:
             if tag != tags_msgstr:
                 msgs.append(" * Plural strings have"
                             " different sets of arguments;")
                 break
 
-
     if _is_mixed(tags_msgid) or _is_mixed(tags_msgstr):
         msgs.append(" * Cannot mix positional and non-positional "
                     "arguments in format string;")
     if msgs:
         return msgs
-
 
     if tags_msgid == tags_msgstr:
         return msgs
@@ -141,9 +124,7 @@ def check_printf(entry):
     if tags_msgid_pos == _make_pos_arg(tags_msgstr):
         return msgs
 
-
     if len(tags_msgid) == len(tags_msgstr):
-
 
         if sorted(tags_msgid) == sorted(tags_msgstr):
             msgs.append(" * The types of arguments differ;\n"
@@ -160,17 +141,10 @@ def check_printf(entry):
     return msgs
 
 
-
-
-
-
-
 def check_tags(entry):
     """Checks if <tags> in the source string match those in the translation."""
 
-
     msgs = []
-
 
     tags_msgid = sorted(PATTERN_TAG.findall(entry.msgid))
 
@@ -182,23 +156,18 @@ def check_tags(entry):
                           for v in entry.msgstr_plural.values()]
         tags_msgstr = tags_msgstr_pl[0]
 
-
         for tag in tags_msgstr_pl:
             if tag != tags_msgstr:
                 msgs.append(" * Plural strings have different sets of tags;")
                 break
 
-
     if tags_msgid == tags_msgstr:
         return msgs
-
-
 
     for tag in reversed(tags_msgid):
         if tag in reversed(tags_msgstr):
             tags_msgid.remove(tag)
             tags_msgstr.remove(tag)
-
 
     for tag in reversed(tags_msgid):
         if tag in TAGS_OPTIONAL:
@@ -206,17 +175,11 @@ def check_tags(entry):
                 msgs.append(f" * Missing OPTIONAL tag(s): {_f(tag)};")
             tags_msgid.remove(tag)
 
-
     if tags_msgid:
         msgs.append(f" * Missing tag(s): {_f(tags_msgid)};")
     if tags_msgstr:
         msgs.append(f" * Bad/extra tag(s): {_f(tags_msgstr)};")
     return msgs
-
-
-
-
-
 
 
 def check_po_file(input_path):
@@ -228,7 +191,6 @@ def check_po_file(input_path):
     error_list = []
 
     for entry in po.translated_entries():
-
 
         if entry.msgid in SKIP_STRINGS:
             continue

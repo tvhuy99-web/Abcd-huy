@@ -76,7 +76,6 @@ def migrateMonsterGroupNameToId(jo):
     if jo["type"] == "monstergroup" and "name" in jo:
         assert type(jo["name"]) is str
 
-
         pos = list(jo.keys()).index("name")
         items = list(jo.items())
         items.insert(pos, ("id", jo["name"]))

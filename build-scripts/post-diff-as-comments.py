@@ -1,11 +1,6 @@
 #!/usr/bin/env python3
 
 
-
-
-
-
-
 import base64
 import json
 import os
@@ -122,8 +117,6 @@ def parse_hunks(diff: list[str], i: int) -> tuple[list[list[dict]], int]:
     end = len(diff)
     while i < end and (header := diff[i]).startswith("@@ -"):
 
-
-
         offset = int(header[4:].split(' ', 1)[0].split(',')[0])
         assert offset > 0
 
@@ -131,9 +124,6 @@ def parse_hunks(diff: list[str], i: int) -> tuple[list[list[dict]], int]:
         hunks.append(hunk)
 
     return hunks, i
-
-
-
 
 
 def parse_hunk(diff: list[str], i: int, offset: int):
@@ -162,11 +152,6 @@ def parse_hunk(diff: list[str], i: int, offset: int):
 
 def hunk_to_suggestions(hunks: list[dict[str, any]]):
 
-
-
-
-
-
     trimmed_hunks = []
     trimmed_hunk = []
 
@@ -192,19 +177,6 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
 
     if trimmed_hunk:
         trimmed_hunks.append(trimmed_hunk)
-
-
-
-
-
-
-
-
-
-
-
-
-
 
     suggestions = []
 
@@ -258,7 +230,6 @@ def hunk_to_suggestions(hunks: list[dict[str, any]]):
 
             continue
 
-
         to -= 1
 
         suggestions.append({
@@ -281,8 +252,6 @@ def post_suggestions(
     from github import GithubException
     """Post review comments with suggestion blocks for each hunk."""
     print("::group::Posting suggestions")
-
-
 
     for comment in pr.get_review_comments():
         if comment_marker in comment.body:

@@ -90,8 +90,6 @@ class AccessiblePocketPickerContracts(unittest.TestCase):
         )[0]
         self.assertIn("commitPocketChoices();", activate)
 
-
-
         self.assertIn("cancelPocketPicker();", activate)
 
     def test_native_pockets_validate_live_items_and_preserve_sealed_rules(self):

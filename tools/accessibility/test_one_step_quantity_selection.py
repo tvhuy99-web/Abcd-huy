@@ -77,8 +77,6 @@ class OneStepQuantitySelectionTests(unittest.TestCase):
 
     def test_container_rows_select_before_opening_read_only_pockets(self):
 
-
-
         code = self.controller.split("public void activate()", 1)[1].split(
             "private void openEditor(", 1)[0]
         self.assertIn('node.id.startsWith("item:")', code)

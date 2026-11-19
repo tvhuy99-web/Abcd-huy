@@ -1,9 +1,6 @@
 #!/usr/bin/env python3
 
 
-
-
-
 """Split a tileset's tile_config.json into one directory per tile
 containing the tile data and png.
 """
@@ -80,8 +77,6 @@ class TileSheetData(object):
         self.pngnum_min = refs.last_pngnum
         self.pngnum_max = \
             refs.last_pngnum + self.ts_tiles_per_row * self.ts_rows - 1
-
-
 
         self.expansions = []
         self.fallback = tilesheet_data.get("ascii")
@@ -217,8 +212,6 @@ class TileSheetData(object):
 
     def summarize(self, tile_info, refs):
 
-
-
         if self.fallback:
             refs.ts_data[self.ts_filename] = self
             ts_tile_info = {
@@ -246,7 +239,6 @@ class TileSheetData(object):
                         self.sprite_offset_y_retracted
             if self.pixelscale != 1.0:
                 ts_tile_info["pixelscale"] = self.pixelscale
-
 
             tile_info.append({self.ts_filename: ts_tile_info})
 
@@ -324,7 +316,6 @@ class PngRefs(object):
         self.pngnum_to_pngname = {}
 
         self.pngname_to_pngnum = {}
-
 
         self.pngnum_to_tspathname = {}
         self.tspathname_to_tsfilename = {}
@@ -425,8 +416,6 @@ class PngRefs(object):
         entity_id = tile_entry["id"]
         if isinstance(entity_id, list):
 
-
-
             new_id = "_".join(entity_id)[0:150]
         else:
             new_id = entity_id
@@ -484,14 +473,6 @@ if __name__ == '__main__':
                 tile_entries[tile_id].append(tile_entry)
         ts_data.tile_entries = tile_entries
 
-
-
-
-
-
-
-
-
     for ts_filename in ts_sequence:
         out_data = ExtractionData(ts_filename, refs)
 
@@ -501,7 +482,6 @@ if __name__ == '__main__':
 
         for tile_id, tile_entrys in out_data.ts_data.tile_entries.items():
 
-
             for idx, tile_entry in enumerate(tile_entrys):
                 subdir_pathname = out_data.increment_dir()
                 tile_entry_name, tile_entry = \
@@ -510,8 +490,6 @@ if __name__ == '__main__':
                     continue
                 tile_entry_pathname = "{}/{}_{}.json".format(
                     subdir_pathname, tile_entry_name, idx)
-
-
 
                 write_to_json(tile_entry_pathname, tile_entry)
         out_data.write_images(refs)

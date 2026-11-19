@@ -35,7 +35,6 @@ class PracticeSpeechContract(unittest.TestCase):
         self.assertIn("std::string practice_source_description;", RECIPE_H)
         self.assertIn("accessible_crafting_recipe_name( rec )", CRAFTING)
 
-
         self.assertIn("return accessible_practice_description( rec, crafter );",
                       CRAFTING)
         self.assertIn("accessible_recipe_description( rec, *crafter )", CRAFTING)
@@ -43,7 +42,6 @@ class PracticeSpeechContract(unittest.TestCase):
         self.assertIn('msgstr "Luyện máy tính, cơ bản"', PO)
         self.assertIn('msgid "Dodging practice, beginner"', PO)
         self.assertIn('msgstr "Luyện né tránh, cơ bản"', PO)
-
 
         self.assertIn("rec.practice_source_description", CRAFTING)
 

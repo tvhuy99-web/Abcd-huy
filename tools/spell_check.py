@@ -8,10 +8,6 @@ pofile = polib.pofile('./lang/po/cataclysm-dda.pot')
 for entry in pofile:
     typos = spell_check(entry.msgid)
 
-
-
-
-
     if typos:
         print(typos, "<=", entry.msgid.replace('\n', '\\n'))
     if entry.msgid_plural:

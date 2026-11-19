@@ -36,7 +36,6 @@ except ImportError:
     from gi.repository import Vips
 
 
-
 run_silent = True
 
 
@@ -44,11 +43,6 @@ no_tqdm = False
 
 
 ignore_file = ".scratch"
-
-
-
-
-
 
 
 def setup_progress_bar() -> str:
@@ -320,8 +314,6 @@ class Tileset:
         }
         fallback_name = 'fallback.png'
 
-
-
         added_first_null = False
         for config in self.info[1:]:
             sheet = Tilesheet(self, config)
@@ -345,7 +337,6 @@ class Tileset:
             if sheet_type != 'fallback':
                 sheet.walk_dirs()
 
-
                 if no_tqdm and not run_silent:
                     print("done.", flush=True)
                 if not run_silent:
@@ -359,10 +350,8 @@ class Tileset:
 
             typed_sheets[sheet_type].append(sheet)
 
-
         sheet_configs = typed_sheets['main'] + typed_sheets['filler'] \
             + typed_sheets['fallback']
-
 
         tiles_new_dict = dict()
 
@@ -464,7 +453,6 @@ class Tileset:
             fillers=True,
         )
 
-
         tiles_new = list(tiles_new_dict.values())
 
         FALLBACK['file'] = fallback_name
@@ -481,7 +469,6 @@ class Tileset:
             }],
             'tiles-new': tiles_new
         }
-
 
         write_to_json(tileset_confpath, output_conf, self.format_json)
         if no_tqdm and not run_silent:
@@ -709,7 +696,6 @@ class Tilesheet:
         if not self.sprites:
             return False
 
-
         self.tileset.pngnum += self.sprites_across - \
             ((len(self.sprites) % self.sprites_across) or self.sprites_across)
 
@@ -770,11 +756,9 @@ class TileEntry:
             )
             return None
 
-
         if entry_ids:
             if not isinstance(entry_ids, list):
                 entry_ids = [entry_ids]
-
 
         if fg_layer:
             entry['fg'] = list_or_first(self.convert_entry_layer(fg_layer))
@@ -782,19 +766,16 @@ class TileEntry:
 
             entry.pop('fg', None)
 
-
         if bg_layer:
             entry['bg'] = list_or_first(self.convert_entry_layer(bg_layer))
         else:
 
             entry.pop('bg', None)
 
-
         additional_entries = entry.get('additional_tiles', [])
         for additional_entry in additional_entries:
 
             self.convert(additional_entry, f'{entry_ids[0]}_')
-
 
         for entry_id in entry_ids:
             full_id = f'{prefix}{entry_id}'
@@ -815,7 +796,6 @@ class TileEntry:
                     log.error(
                         '%s encountered more than once, last time in %s',
                         full_id, self.filepath)
-
 
         if entry_ids:
             entry['id'] = list_or_first(entry_ids)
@@ -982,7 +962,6 @@ def main() -> Union[int, ComposingException]:
         run_silent = False
         global no_tqdm
         no_tqdm = True
-
 
     try:
         tileset_worker = Tileset(

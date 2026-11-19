@@ -88,7 +88,6 @@ ter_pal = {}
 ter_conflicts = {}
 
 
-
 for om_tile in mapgen:
     om_object = om_tile.get("object", {})
     om_furn = om_object.get("furniture", {})

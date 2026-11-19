@@ -86,7 +86,6 @@ class NearbyCategoryGestures(unittest.TestCase):
 
     def test_double_tap_route_to_selected_object_is_unchanged(self):
 
-
         self.assertIn('g->safe_route_to( you, target.target, target.stop_distance,', self.native)
         self.assertIn('you.set_destination( *route );', self.native)
         self.assertIn('if( !route )', self.native)

@@ -63,7 +63,6 @@ class ConciseSpeechTest(unittest.TestCase):
 
     def test_real_game_safety_warnings_stay_available(self):
 
-
         self.assertIn('if( part.bleeding > old->bleeding )', self.world)
         self.assertIn('announce_game_message( message, urgent );', self.world)
         self.assertIn("Delete the world", self.po)

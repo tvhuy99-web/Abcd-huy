@@ -55,8 +55,6 @@ class TouchToSilenceTest(unittest.TestCase):
         self.assertIn("clearRequests();", stop)
         self.assertIn("speech.cancel();", stop)
 
-
-
         speech = self.controller.split("public void stopSpeech()", 1)[1].split(
             "public void onBackPressed()", 1)[0]
         self.assertIn("speech.stop();", speech)

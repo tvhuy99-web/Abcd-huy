@@ -19,10 +19,6 @@ import datetime
 import math
 
 
-
-
-
-
 SPRITE_OFFSET_FROM_BOTTOM = 1.0 / 8
 
 parser = argparse.ArgumentParser(
@@ -62,16 +58,11 @@ def iso_ize(tile_num, initial_rotation=0, override=False):
     return False
 
 
-
-
 def tile_convert(otile, main_id, new_tile_number):
     print("tile_convert %s %s" % (main_id, new_tile_number))
     ntile = dict()
     ntile['id'] = otile['id']
     ntile['ntn'] = int(new_tile_number)
-
-
-
 
     if 'rotates' in otile:
         ntile['rotates'] = otile['rotates']
@@ -97,19 +88,10 @@ def tile_convert(otile, main_id, new_tile_number):
             't_connection',
         ]
 
-
-
-
-
-
-
-
-
         if len(otile[g]) == 0:
             continue
         elif len(otile[g]) == 1:
             ntile[g] = otile[g]
-
 
             terrain_or_lighting = isinstance(main_id, str) and (
                 main_id.startswith('t_') or main_id.startswith('lighting_'))
@@ -161,7 +143,6 @@ def tile_convert(otile, main_id, new_tile_number):
 
             for tile in ntile[g]:
 
-
                 if type(tile) is dict and "sprite" in tile:
                     iso_ize(tile["sprite"])
                 elif type(tile) is int:
@@ -180,9 +161,6 @@ def tile_convert(otile, main_id, new_tile_number):
 
     print("returning tile, next tile number now " + str(ntile['ntn']))
     return ntile
-
-
-
 
 
 old_tileset_name = os.path.abspath(args.tileset)
@@ -257,7 +235,6 @@ for otn in otc['tiles-new']:
     ntn['file'] = os.path.join(new_tileset_name, base_filename)
     ntn['tiles'] = list()
 
-
     command = (
         'convert -crop ' + str(oheight) + 'x' + str(owidth) + ' ' + filename +
         ' +repage ' + new_tiles_dir + '/tile-%06d.png')
@@ -268,7 +245,6 @@ for otn in otc['tiles-new']:
 
     os.system(
         'cp ' + new_tiles_dir + '/tile-*.png ' + new_tiles_dir + '/to_merge')
-
 
     tile_count = len([
         name for name in os.listdir(new_tiles_dir)

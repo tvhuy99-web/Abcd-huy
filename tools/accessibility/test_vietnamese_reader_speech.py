@@ -28,7 +28,6 @@ class VietnameseReaderSpeechTests(unittest.TestCase):
 
     def test_logged_english_speech_has_exact_vietnamese_gettext_entries(self):
 
-
         pairs = {
             "Preparing a new world.  Please wait.": "Đang chuẩn bị thế giới mới. Vui lòng chờ.",
             "Creating your character and starting the game.": "Đang tạo nhân vật và bắt đầu trò chơi.",

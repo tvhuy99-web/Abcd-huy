@@ -1,8 +1,6 @@
 #!/usr/bin/env python3
 
 
-
-
 """Rename a png file, its associated tile_entry.json, and update all
 other tile_entry.json in the tileset dir to reflect the new name.
 """

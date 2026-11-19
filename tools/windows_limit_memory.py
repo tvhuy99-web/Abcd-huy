@@ -50,8 +50,6 @@ from typing import Any, Dict, Optional
 logger = logging.getLogger(__name__)
 
 
-
-
 LPCWSTR = ctypes.c_wchar_p
 BOOL = ctypes.c_long
 HANDLE = ctypes.c_void_p
@@ -66,8 +64,6 @@ PVOID = ctypes.c_void_p
 LPVOID = PVOID
 LPDWORD = ctypes.POINTER(DWORD)
 PULONG_PTR = ctypes.POINTER(ULONG_PTR)
-
-
 
 
 CREATE_SUSPENDED = 0x4
@@ -95,10 +91,6 @@ JOB_OBJECT_MSG_JOB_MEMORY_LIMIT = 10
 JOB_OBJECT_MSG_NOTIFICATION_LIMIT = 11
 JOB_OBJECT_MSG_JOB_CYCLE_TIME_LIMIT = 12
 JOB_OBJECT_MSG_SILO_TERMINATED = 13
-
-
-
-
 
 
 class SECURITY_ATTRIBUTES(ctypes.Structure):
@@ -195,10 +187,6 @@ class Kernel32Wrapper:
 
         self._kernel32: ctypes.WinDLL = ctypes.WinDLL(
             "kernel32", use_last_error=True)
-
-
-
-
 
         self._create_job_object = self._kernel32.CreateJobObjectW
         self._create_job_object.argtypes = (LPSECURITY_ATTRIBUTES, LPCWSTR)
@@ -452,7 +440,6 @@ class ProcessLimiter:
         ret_val = self._kernel32.ResumeThread(self._handle_thread)
         if ret_val == -1:
 
-
             logger.error(
                 "Error: ResumeThread failed but the process is started!")
 
@@ -523,7 +510,6 @@ class ProcessLimiter:
             raise ctypes.WinError(ctypes.get_last_error())
         logger.debug(f"Job object: {handle_job:#x}")
         self._handle_job = handle_job
-
 
         if not self._handle_io_port:
             return
@@ -624,7 +610,6 @@ class ProcessLimiter:
         job_info = self._query_information_job_object(
             job_info, JobObjectExtendedLimitInformation)
 
-
         logger.debug("Setting job information.")
         job_info.BasicLimitInformation.LimitFlags |= \
             JOB_OBJECT_LIMIT_PROCESS_MEMORY
@@ -693,7 +678,6 @@ class ProcessLimiter:
                 break
             if completion_key.value != self._handle_job:
 
-
                 continue
 
             msg = msg_map.get(completion_code.value)
@@ -713,11 +697,9 @@ def main(args: argparse.Namespace) -> int:
         logger.error("This script only works on Microsoft Windows systems.")
         return -1
 
-
     if args.memory <= 0:
         logger.debug(f"Memory limit must be above 0, got: {args.memory}")
         return -1
-
 
     if args.command_name == "process":
 
@@ -760,9 +742,6 @@ if __name__ == "__main__":
     arg_parser = argparse.ArgumentParser(
         description="C:DDA Memory Limit test script.")
 
-
-
-
     arg_parser.add_argument(
         "-l",
         "--log-level",
@@ -774,9 +753,6 @@ if __name__ == "__main__":
         "-m", "--memory", action="store", type=int, default=1024,
         help="Maximum process memory size in MiB."
     )
-
-
-
 
     subparsers = arg_parser.add_subparsers(help='help for sub-commands',
                                            dest="command_name")

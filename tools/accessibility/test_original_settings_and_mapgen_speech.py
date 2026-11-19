@@ -20,7 +20,6 @@ class NativeSettingsAndMapGenerationSpeech(unittest.TestCase):
 
     def test_existing_nine_settings_are_preserved_and_two_appended(self):
 
-
         if "vSettingsSubItems.clear();" in self.menu:
             start = self.menu.index("vSettingsSubItems.clear();")
             end = self.menu.index("vSettingsHotkeys.clear();", start)

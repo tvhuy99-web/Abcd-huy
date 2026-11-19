@@ -57,7 +57,6 @@ class Group16SettingsCleanup(unittest.TestCase):
         self.assertIn("setSwipeDistanceLevel(level)", self.accessibility)
         self.assertIn("setSwipeDurationLevel(level)", self.accessibility)
 
-
         self.assertEqual(self.accessibility.count("new CheckBox(this)"), 5)
         self.assertIn("setSoundCuesEnabled(checked)", self.accessibility)
         self.assertIn("setHapticCuesEnabled(checked)", self.accessibility)

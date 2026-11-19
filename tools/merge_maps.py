@@ -80,8 +80,6 @@ def validate_keyed(key_term, old_obj, entry):
     return new_keyset
 
 
-
-
 def validate_old_map(old_map, entry):
     old_obj = old_map.get("object", {})
 
@@ -119,7 +117,6 @@ def validate_old_map(old_map, entry):
         entry["object"]["palettes"] = new_palettes
 
     return True
-
 
 
 def adjust_place(term, old_obj, offset_x, offset_y):
@@ -243,12 +240,8 @@ basic_entry = {
 }
 
 
-
-
-
 for z, zlevel in merge_sets.items():
     for x_y, mapset in zlevel.items():
-
 
         chunks = []
         chunks = [{"maps": [], "entry": copy.deepcopy(basic_entry)}]
@@ -263,11 +256,9 @@ for z, zlevel in merge_sets.items():
                 validated = False
                 for chunk_data in chunks:
 
-
                     if chunk_data["maps"] and not adjacent_to_set(
                             x, y, chunk_data["maps"]):
                         continue
-
 
                     if validate_old_map(old_map, chunk_data["entry"]):
                         chunk_data["maps"].append({"x": x, "y": y})
@@ -276,9 +267,6 @@ for z, zlevel in merge_sets.items():
                     new_entry = copy.deepcopy(basic_entry)
                     chunks.append({"maps": [{"x": x, "y": y}],
                                    "entry": new_entry})
-
-
-
 
         final_chunks = []
         for chunk_data in chunks:
@@ -305,9 +293,6 @@ for z, zlevel in merge_sets.items():
 
         if not final_chunks:
             continue
-
-
-
 
         for chunk_data in final_chunks:
             new_rows = []
@@ -341,7 +326,6 @@ for z, zlevel in merge_sets.items():
                     else:
                         entry["om_terrain"][y - first_y].append(om_id)
 
-
                 for place_term in PLACE_TERMS:
                     new_terms = adjust_place(place_term, old_obj, col_offset,
                                              row_offset)
@@ -352,7 +336,6 @@ for z, zlevel in merge_sets.items():
 
             entry["object"]["rows"] = new_rows
             new_mapgen.append(entry)
-
 
 
 if output_name:

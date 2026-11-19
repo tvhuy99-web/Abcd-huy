@@ -23,7 +23,6 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("snapshot.swipeMovementAllowed", guard)
         self.assertIn("hasCardinalDirections(snapshot)", guard)
 
-
         self.assertIn("return !combatMode && !vehicleMode && !autonomousDriveTrip", guard)
         self.assertIn("&& worldStepAllowed();", guard)
         self.assertNotIn("preferences.isFastMovementEnabled()", guard)
@@ -79,8 +78,6 @@ class WorldGestureContracts(unittest.TestCase):
             self.assertIn('"Scan 30 tiles ' + direction + '"', world)
             self.assertIn('intent.node == "reader:scan:' + direction + '"', handler)
 
-
-
         self.assertIn('intent.node.rfind( "reader:scan:vehicle:", 0 ) == 0', handler)
         self.assertIn("a11y::announce_vehicle_relative_scan(", handler)
         for direction in ("front", "back", "left", "right"):
@@ -101,7 +98,6 @@ class WorldGestureContracts(unittest.TestCase):
             "semantic_snapshot activity_snapshot(", 1
         )[0]
 
-
         self.assertIn('_( "Coordinates.  X %1$d. Y %2$d. Z %3$d." )', reader)
         self.assertIn("viewer.pos_abs_omt()", reader)
         self.assertIn("overmap_buffer.seen( omt )", reader)
@@ -111,7 +107,6 @@ class WorldGestureContracts(unittest.TestCase):
         self.assertIn("terrain.is_valid()", reader)
         self.assertIn("terrain->get_name( vision )", reader)
         self.assertIn('_( "Area: %1$s. %2$s" )', reader)
-
 
         self.assertIn('a11y::android::announce( "A11Y_QUERY:" + spoken, 1 );', reader)
         po = (ROOT / "lang/po/accessibility/vi.po").read_text(encoding="utf-8")

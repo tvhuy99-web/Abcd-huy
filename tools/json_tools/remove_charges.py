@@ -465,8 +465,6 @@ def gen_new(path, src, is_item=True):
     change = False
     new_datas = list()
 
-
-
     with open(path, "r", encoding="utf-8") as json_file:
         try:
             json_data = json.load(json_file)
@@ -571,7 +569,6 @@ def collect_data(path, src):
                 if src not in recipes:
                     recipes[src] = dict()
                 recipes[src][jo["result"]] = recipe
-
 
 
 json_path = os.path.join(args_dict["dir"], "json")

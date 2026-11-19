@@ -50,9 +50,6 @@ class SpokenOnlyWorldContracts(unittest.TestCase):
         self.assertIn("a11y::scan_directional_sonar(", reader)
         observer = native("a11y_perception.cpp")
 
-
-
-
         self.assertIn("const unrestricted_tile tile = scan_unrestricted_tile( target );", observer)
         self.assertNotIn("const tile_observation seen = observe_tile( target );", observer)
 

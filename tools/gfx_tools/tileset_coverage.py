@@ -160,10 +160,7 @@ def merge_datasets(
 
     tileset_ids['id'] = tileset_ids['tileset_id'].apply(strip_overlay_id)
 
-
     overlay_ids['id'] = overlay_ids['overlay_id'].apply(strip_overlay_id)
-
-
 
     result = all_game_ids.merge(
         tileset_ids,
