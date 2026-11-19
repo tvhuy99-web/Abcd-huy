@@ -1,6 +1,9 @@
 #include "body_status_ui.h" // IWYU pragma: associated
 
+#include <algorithm>
 #include <functional>
+#include <set>
+#include <sstream>
 #include <memory>
 
 #include "avatar_action.h"
@@ -59,9 +62,7 @@ body_status_uistate::body_status_uistate( Character &displayed_character, bodygr
         body_status_tab initial_tab ) :
     displayed_character( displayed_character ), initial_tab( initial_tab )
 {
-    if( bg_id == bodygraph_id::NULL_ID() ) {
-        displayed_graph_id = bodygraph_full_body;
-    }
+    displayed_graph_id = bg_id == bodygraph_id::NULL_ID() ? bodygraph_full_body : bg_id;
 }
 
 void body_status_uistate::update_blink()
@@ -93,6 +94,90 @@ std::string bodygraph_part_info::get_part() const
     const sub_bodypart_str_id selected_subpart = sbp_id;
     return !sbp_id.is_null() ? selected_subpart->id.str() :
            bp_id.id().str();
+}
+
+void body_status_uistate::prepare_partlist()
+{
+    partlist.clear();
+    if( !displayed_graph_id.is_valid() ) {
+        return;
+    }
+    for( const auto &section : displayed_graph_id->parts ) {
+        const bodygraph_part &graph_part = section.second;
+        for( const bodypart_id &bp : graph_part.bodyparts ) {
+            partlist.emplace_back( bp, sub_bodypart_str_id::NULL_ID(),
+                                   &graph_part, displayed_character.has_part( bp, body_part_filter::equivalent ) );
+        }
+        for( const sub_bodypart_id &sbp : graph_part.sub_bodyparts ) {
+            const bodypart_id parent = sbp->parent.id();
+            partlist.emplace_back( parent, sbp->id, &graph_part,
+                                   displayed_character.has_part( parent, body_part_filter::equivalent ) );
+        }
+    }
+    std::sort( partlist.begin(), partlist.end(), []( const bodygraph_part_info &a,
+    const bodygraph_part_info &b ) {
+        const std::string a_name = a.sbp_id.is_null() ? a.bp_id->name.translated() :
+                                   a.sbp_id->name.translated();
+        const std::string b_name = b.sbp_id.is_null() ? b.bp_id->name.translated() :
+                                   b.sbp_id->name.translated();
+        return a_name < b_name;
+    } );
+    if( partlist.empty() ) {
+        selected_index = 0;
+        selected_bodypart = bodypart_str_id::NULL_ID();
+    } else {
+        selected_index = std::clamp( selected_index, 0, static_cast<int>( partlist.size() ) - 1 );
+        selected_bodypart = partlist[selected_index].bp_id;
+    }
+}
+
+void body_status_uistate::prepare_infolist()
+{
+    info = bodygraph_info();
+    info_txt.clear();
+    if( partlist.empty() || selected_index < 0 ||
+        selected_index >= static_cast<int>( partlist.size() ) ) {
+        return;
+    }
+    const bodygraph_part_info &selected = partlist[selected_index];
+    if( !selected.present_on_character ) {
+        return;
+    }
+    const bodypart_id &bp = selected.bp_id;
+    std::set<sub_bodypart_id> sub_parts;
+    if( !selected.sbp_id.is_null() ) {
+        sub_parts.emplace( selected.sbp_id.id() );
+    } else {
+        for( const sub_bodypart_str_id &sbp : bp->sub_parts ) {
+            if( !sbp->secondary ) {
+                sub_parts.emplace( sbp.id() );
+            }
+        }
+    }
+    displayed_character.worn.prepare_bodymap_info( info, bp, sub_parts,
+            displayed_character );
+    info_txt.emplace_back( string_format( _( "Health: %1$d/%2$d" ),
+                                          info.part_hp_cur, info.part_hp_max ) );
+    info_txt.emplace_back( string_format( _( "Wetness: %d%%" ),
+                                          static_cast<int>( info.wetness * 100.0f ) ) );
+    info_txt.emplace_back( string_format( _( "Body temperature: %s" ), info.temp_approx ) );
+    info_txt.emplace_back( string_format( _( "Encumbrance: %d" ), info.total_encumbrance ) );
+    info_txt.emplace_back( string_format( _( "Coverage: %d%%" ), info.avg_coverage ) );
+    info_txt.emplace_back( string_format( _( "Environmental protection: %d" ), info.avg_env_protection ) );
+    if( !info.effects.empty() ) {
+        info_txt.emplace_back( _( "Effects:" ) );
+        for( const effect &eff : info.effects ) {
+            if( eff.get_id()->is_show_in_info() ) {
+                info_txt.emplace_back( eff.disp_name() );
+            }
+        }
+    }
+    if( !info.worn_names.empty() ) {
+        info_txt.emplace_back( _( "Worn:" ) );
+        for( const std::string &name : info.worn_names ) {
+            info_txt.emplace_back( name );
+        }
+    }
 }
 
 void body_status_uistate::init()
@@ -203,6 +288,9 @@ bool body_status_ui::display()
     body_status_ui_impl bsui( this );
 
     bs_uistate.init();
+    if( bs_uistate.partlist.empty() ) {
+        return false;
+    }
 
     // setup all uilists/inputs
     body_status_tab preserve_first_tab = bs_uistate.initial_tab;
