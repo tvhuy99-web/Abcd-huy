@@ -102,6 +102,7 @@ static const damage_type_id damage_bullet( "bullet" );
 static const damage_type_id damage_cut( "cut" );
 static const damage_type_id damage_electric( "electric" );
 static const damage_type_id damage_heat( "heat" );
+static const damage_type_id damage_psi_telekinetic_damage( "psi_telekinetic_damage" );
 static const damage_type_id damage_stab( "stab" );
 
 static const efftype_id effect_absorbed_electric( "absorbed_electric" );
@@ -1663,7 +1664,7 @@ Creature *monster::attack_target()
 
     Creature *target = get_creature_tracker().creature_at( get_dest() );
     if( target == nullptr || target == this ||
-        attitude_to( *target ) == Attitude::FRIENDLY || !sees( here,  *target ) ||
+        attitude_to( *target ) != Attitude::HOSTILE || !sees( here,  *target ) ||
         target->is_hallucination() ) {
         return nullptr;
     }
@@ -1795,6 +1796,11 @@ monster_attitude monster::attitude( const Character *u ) const
 
     if( effect_cache[FLEEING] ) {
         return MATT_FLEE;
+    }
+
+    if( u && u->is_avatar() && !get_parent_faction().is_null() &&
+        get_parent_faction()->guaranteed_hostile() ) {
+        return MATT_ATTACK;
     }
 
     // CHECK FOR ANGER RELATIONS **HERE**
@@ -2501,7 +2507,7 @@ void monster::deal_damage_handle_type( const effect_source &source, const damage
         return; // immunity
     }
     // FIXME: Hardcoded damage type effects (bash, bullet)
-    if( du.type == damage_bash ) {
+    if( du.type == damage_bash || du.type == damage_psi_telekinetic_damage ) {
         if( has_flag( mon_flag_PLASTIC ) ) {
             damage += du.amount / rng( 2, 4 ); // lessened effect
             pain += du.amount / 4;
