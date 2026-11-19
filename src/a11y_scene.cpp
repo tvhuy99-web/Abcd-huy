@@ -300,7 +300,8 @@ struct scan_results {
     int outdoor = 0;
     int scanned = 0;
     int item_stacks = 0;
-    bool limit_hit = false;
+    bool tile_limit_hit = false;
+    bool item_limit_hit = false;
     bool has_inside_bounds = false;
     scene_detail::extent inside_bounds;
 };
@@ -378,12 +379,17 @@ void collect_tile( scan_results &result, map &here, const tripoint_bub_ms &p,
     }
     // Preserve counts and the first location; a shelf of 80 identical cans
     // is one meaningful summary entry rather than 80 spoken repetitions.
-    if( result.item_stacks < 10000 ) {
+    if( result.item_stacks >= 10000 ) {
+        if( here.has_items( p ) ) {
+            result.item_limit_hit = true;
+        }
+    } else {
         for( const item &obj : here.i_at( p ) ) {
-            if( ++result.item_stacks > 10000 ) {
-                result.limit_hit = true;
+            if( result.item_stacks >= 10000 ) {
+                result.item_limit_hit = true;
                 break;
             }
+            ++result.item_stacks;
             count_entry( result.items, remove_color_tags( obj.tname() ), world, 1 );
         }
     }
@@ -600,6 +606,11 @@ std::string build_survey()
     const tripoint_abs_omt omt = viewer.pos_abs_omt();
     const site_region site = find_site( omt );
     const std::optional<local_place_coordinates> local = local_coordinates_at( player );
+    // When no site is established the survey also contains neighboring
+    // places, whose positions must not be falsely labeled with one site's
+    // local coordinate system.
+    const std::optional<local_place_coordinates> landmark_local =
+        site.identified ? local : std::nullopt;
 
     const oter_id &terrain = overmap_buffer.ter_existing( omt );
     const std::string name = terrain.is_valid() ?
@@ -655,12 +666,12 @@ std::string build_survey()
                 continue;
             }
             if( found.scanned >= maximum_survey_tiles ) {
-                found.limit_hit = true;
+                found.tile_limit_hit = true;
                 break;
             }
             collect_tile( found, here, p, absolute, bounds );
         }
-        if( found.limit_hit && found.scanned >= maximum_survey_tiles ) {
+        if( found.tile_limit_hit && found.scanned >= maximum_survey_tiles ) {
             break;
         }
     }
@@ -670,7 +681,7 @@ std::string build_survey()
     const std::size_t region_tiles = floor_omts * static_cast<std::size_t>( omt_size * omt_size );
     const bool full_loaded = bounded_site &&
                              static_cast<std::size_t>( found.scanned ) == region_tiles &&
-                             !found.limit_hit;
+                             !found.tile_limit_hit;
     report += " " + string_format( _( "Map squares examined: %d." ), found.scanned );
     if( !full_loaded ) {
         report += " " + std::string( _( "Only part of the location is currently loaded or within the survey boundary. Counts below apply only to examined tiles." ) );
@@ -696,20 +707,23 @@ std::string build_survey()
     }
 
     report += " " + std::string( _( "Doors, windows, stairs and routes." ) );
-    append_features( report, _( "Doors" ), found.doors, player, local, 30 );
-    append_features( report, _( "Windows" ), found.windows, player, local, 12 );
-    append_features( report, _( "Stairs and vertical links" ), found.stairs, player, local, 20 );
+    append_features( report, _( "Doors" ), found.doors, player, landmark_local, 30 );
+    append_features( report, _( "Windows" ), found.windows, player, landmark_local, 12 );
+    append_features( report, _( "Stairs and vertical links" ), found.stairs, player, landmark_local, 20 );
 
     report += " " + std::string( _( "Furniture, vehicles, and noteworthy items." ) );
-    append_groups( report, _( "Furniture" ), found.furniture, player, local, 18 );
-    append_features( report, _( "Vehicles" ), found.vehicles, player, local, 16 );
-    append_groups( report, _( "Item types" ), found.items, player, local, 22 );
+    append_groups( report, _( "Furniture" ), found.furniture, player, landmark_local, 18 );
+    append_features( report, _( "Vehicles" ), found.vehicles, player, landmark_local, 16 );
+    append_groups( report, _( "Item types" ), found.items, player, landmark_local, 22 );
 
     report += " " + std::string( _( "Creatures and dangers detected by extended survey." ) );
-    append_features( report, _( "Creatures" ), found.creatures, player, local, 40 );
-    append_features( report, _( "Traps and fields" ), found.dangers, player, local, 40 );
-    if( found.limit_hit ) {
+    append_features( report, _( "Creatures" ), found.creatures, player, landmark_local, 40 );
+    append_features( report, _( "Traps and fields" ), found.dangers, player, landmark_local, 40 );
+    if( found.tile_limit_hit ) {
         report += " " + std::string( _( "A safety scan limit was reached. The unlisted portion was not examined." ) );
+    }
+    if( found.item_limit_hit ) {
+        report += " " + std::string( _( "Ground-item stack limit reached. Additional ground items were not counted." ) );
     }
 
     report += " " + std::string( _( "Orientation summary." ) );
@@ -723,11 +737,11 @@ std::string build_survey()
                                    static_cast<int>( found.doors.size() ),
                                    static_cast<int>( found.stairs.size() ) );
     append_nearest( report, _( "Nearest exterior door in the surveyed map" ),
-                    found.doors, player, local, true );
+                    found.doors, player, landmark_local, true );
     append_nearest( report, _( "Nearest detected stairway" ),
-                    found.stairs, player, local, false );
+                    found.stairs, player, landmark_local, false );
     append_nearest( report, _( "Nearest detected creature" ),
-                    found.creatures, player, local, false );
+                    found.creatures, player, landmark_local, false );
     append_adjacent_places( report, site, omt );
     report += " " + std::string( _( "Distances to features are map-position distances, not guaranteed walking routes. End of survey." ) );
     return report;

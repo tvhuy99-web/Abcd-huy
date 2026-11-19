@@ -6412,3 +6412,6 @@ msgstr "Cầu thang gần nhất được phát hiện"
 
 msgid "Nearest detected creature"
 msgstr "Sinh vật gần nhất được phát hiện"
+
+msgid "Ground-item stack limit reached. Additional ground items were not counted."
+msgstr "Đã chạm giới hạn đếm chồng vật phẩm trên mặt đất. Những vật phẩm tiếp theo chưa được tính."
