@@ -35,7 +35,7 @@ jobs:
           make -k -j2 \
             obj/monster.o obj/creature.o obj/character.o \
             obj/avatar.o obj/vehicle_use.o obj/character_body.o \
-            obj/game.o obj/handle_action.o obj/inventory_ui.o \
+            obj/game.o obj/game_inventory.o obj/game_io.o obj/handle_action.o obj/inventory_ui.o \
             obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
             obj/activity_actor.o obj/body_status_ui.o \
             obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
@@ -71,7 +71,7 @@ jobs:
           make -j2 \
             obj/monster.o obj/creature.o obj/character.o \
             obj/avatar.o obj/vehicle_use.o obj/character_body.o \
-            obj/game.o obj/handle_action.o obj/inventory_ui.o \
+            obj/game.o obj/game_inventory.o obj/game_io.o obj/handle_action.o obj/inventory_ui.o \
             obj/vehicle.o obj/vehicle_autodrive.o obj/advanced_inv.o obj/flexbuffer_cache.o \
             obj/activity_actor.o obj/body_status_ui.o \
             obj/bodygraph.o obj/character_inventory.o obj/crafting.o \
