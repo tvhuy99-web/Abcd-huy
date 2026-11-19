@@ -201,6 +201,7 @@ class faction : public faction_template
         nc_color food_supply_color() const;
 
         bool guaranteed_hostile() const;
+        bool wont_talk_to_you() const;
 
         std::pair<nc_color, std::string> vitamin_stores( vitamin_type vit ) const;
 
