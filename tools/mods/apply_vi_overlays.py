@@ -19,10 +19,10 @@ OVERLAYS = {
         "folder": "Arcana_StrangeAeons", "id": "Arcana",
         "revision": "080d8e9e454d2179bc98eb07de075f74e58bcbd1",
         "file": "translations/arcana_vi_overlay.b64",
-        "sha256": "ffcfe0ad2c43f627febe1f456dab3c442549a48ba7611726b7d89b9d6aaeaa1d",
+        "sha256": "c90dede89fb5b31852256e3b57828d235e908ff70ecea633fceab7046c060d37",
         "max_bytes": 1_500_000, "max_files": 339,
         "source_blobs": "translations/arcana_upstream_blob_shas.json",
-        "expected_strings": 6546,
+        "expected_strings": 6794,
     },
     "cataplusplus": {
         "folder": "CataclysmPlusPlus", "id": "Cata++",
@@ -95,6 +95,11 @@ def allowed_arcana_pointer(name, pointer):
         return name == "monsters/speech.json"
     if leaf in {"pull", "open", "close", "fail"}:
         return name == "furniture_and_terrain/gates.json"
+    if "dialogue" in labels and leaf in {
+        "offer", "accepted", "rejected", "advice",
+        "inquire", "success", "success_lie", "failure",
+    }:
+        return True
     allowed = {
         "name", "str", "str_pl", "str_sp", "description", "desc", "text",
         "dynamic_line", "msg", "message", "done_message", "apply_message",

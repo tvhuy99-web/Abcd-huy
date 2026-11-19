@@ -14,7 +14,7 @@ class CuratedVietnameseModsTest(unittest.TestCase):
             "mst_extra": (23, 235, "MST_Extra"),
             "blazemod": (50, 703, "Blazemod"),
             "cataplusplus": (52, 1656, "CataclysmPlusPlus"),
-            "arcana": (185, 6546, "Arcana_StrangeAeons"),
+            "arcana": (185, 6794, "Arcana_StrangeAeons"),
         }
         for name, (files, strings, folder) in expected.items():
             with self.subTest(mod=name):

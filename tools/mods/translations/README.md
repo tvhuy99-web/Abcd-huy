@@ -7,10 +7,10 @@ not an override of CDDA gameplay mechanics.
 | Bundled CDDA mod | Pinned upstream commit | Selected Vietnamese text fields | JSON files |
 |---|---|---:|---:|
 | Cataclysm++ | `46982a63da25b064c8d0fdee9b68c23dccc1f671` | 1,656 | 52 |
-| Arcana: Strange Aeons | `080d8e9e454d2179bc98eb07de075f74e58bcbd1` | 6,546 | 185 |
+| Arcana: Strange Aeons | `080d8e9e454d2179bc98eb07de075f74e58bcbd1` | 6,794 | 185 |
 | Blazemod | `14530cc7ebfaac6c85586e7d7728635f8fda7d6d` | 703 | 50 |
 | MST Extra | `5f9dbfef550d5c140865ce5f6a32c40eb34c07ca` | 235 | 23 |
-| **Total** | | **9,140** | **310** |
+| **Total** | | **9,388** | **310** |
 
 The build first installs the original mods with `install_curated.py` and then
 applies localized strings from the four base64-encoded LZMA JSON overlays using
