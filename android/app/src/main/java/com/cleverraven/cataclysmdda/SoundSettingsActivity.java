@@ -51,6 +51,7 @@ public final class SoundSettingsActivity extends Activity {
     private SharedPreferences preferences;
     private String selectedSoundpack;
     private String pendingSelection;
+    private String pendingStatus;
     private boolean foreground;
     private boolean ready;
     private boolean busy;
@@ -70,6 +71,10 @@ public final class SoundSettingsActivity extends Activity {
         }
         selectedSoundpack = getIntent().getStringExtra("native_selected_soundpack");
         if (selectedSoundpack == null) { selectedSoundpack = ""; }
+        if (state != null) {
+            selectedSoundpack = state.getString("selected_soundpack", selectedSoundpack);
+            pendingSelection = state.getString("pending_soundpack");
+        }
 
         int nativeMusic = getIntent().getIntExtra("native_music_volume", 100);
         int nativeEffects = getIntent().getIntExtra("native_effects_volume", 100);
@@ -156,7 +161,13 @@ public final class SoundSettingsActivity extends Activity {
         speech = new AndroidSpeech(this, new AndroidSpeech.Listener() {
             @Override public void onState(AndroidSpeech.State state) {
                 if (state == AndroidSpeech.State.READY && foreground && !usesTalkBack()) {
-                    surface.speakFocused();
+                    if (pendingStatus != null) {
+                        String message = pendingStatus;
+                        pendingStatus = null;
+                        speakLocal(message);
+                    } else {
+                        surface.speakFocused();
+                    }
                 }
             }
             @Override public void onUtterance(String id, AndroidSpeech.Event event) { }
@@ -287,7 +298,8 @@ public final class SoundSettingsActivity extends Activity {
             entry.setOnClickListener(view -> {
                 pendingSelection = pack.id;
                 showPanel(homeControls);
-                showStatus(getString(R.string.a11ySoundpackApplying, pack.display));
+                surface.post(() -> showStatus(
+                        getString(R.string.a11ySoundpackApplying, pack.display)));
                 CataclysmDDA.nativeQueueSoundpackSelection(pack.id);
                 pollSelection();
             });
@@ -375,7 +387,7 @@ public final class SoundSettingsActivity extends Activity {
                 busy = false;
                 updateSelectedButton();
                 showPanel(homeControls);
-                showStatus(completed);
+                surface.post(() -> showStatus(completed));
             });
         }, "soundpack-zip-io").start();
     }
@@ -383,10 +395,15 @@ public final class SoundSettingsActivity extends Activity {
     private void showStatus(String message) {
         if (status == null) { return; }
         status.setText(message);
-        if (!foreground) { return; }
-        if (usesTalkBack()) {
+        if (!foreground) {
+            pendingStatus = message;
+        } else if (usesTalkBack()) {
+            pendingStatus = null;
             status.announceForAccessibility(message);
+        } else if (speech == null || speech.getState() != AndroidSpeech.State.READY) {
+            pendingStatus = message;
         } else {
+            pendingStatus = null;
             speakLocal(message);
         }
     }
@@ -430,6 +447,12 @@ public final class SoundSettingsActivity extends Activity {
         }
     }
 
+    @Override protected void onSaveInstanceState(Bundle state) {
+        state.putString("selected_soundpack", selectedSoundpack);
+        state.putString("pending_soundpack", pendingSelection);
+        super.onSaveInstanceState(state);
+    }
+
     @Override protected void onResume() {
         super.onResume();
         foreground = true;
@@ -442,6 +465,11 @@ public final class SoundSettingsActivity extends Activity {
         }
         if (pendingSelection != null) {
             pollSelection();
+        }
+        if (pendingStatus != null && usesTalkBack() && status != null) {
+            String message = pendingStatus;
+            pendingStatus = null;
+            status.announceForAccessibility(message);
         }
     }
 
